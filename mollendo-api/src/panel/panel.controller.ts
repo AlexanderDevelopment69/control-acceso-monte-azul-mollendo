@@ -22,11 +22,45 @@ export class PanelController {
   @Get('health')
   @Public()
   async health() {
+    const inicio = Date.now();
     try {
       await this.prisma.$queryRaw`SELECT 1`;
-      return { status: 'ok', database: 'up' };
+      return { status: 'ok', database: 'up', latenciaMs: Date.now() - inicio, fecha: new Date().toISOString() };
     } catch {
-      return { status: 'degraded', database: 'down' };
+      return { status: 'degraded', database: 'down', latenciaMs: Date.now() - inicio, fecha: new Date().toISOString() };
     }
+  }
+
+  // Vista ampliada para el panel de Administración: además de la base de
+  // datos, reporta qué integraciones externas están configuradas (SMTP,
+  // clave de equipos) — no si el hardware real responde, ya que aún no hay
+  // proveedor definido (spec, sección 12).
+  @Get('panel/estado-sistema')
+  @Roles('administracion')
+  async estadoSistema() {
+    const inicio = Date.now();
+    let baseDeDatos: { estado: 'up' | 'down'; latenciaMs: number };
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      baseDeDatos = { estado: 'up', latenciaMs: Date.now() - inicio };
+    } catch {
+      baseDeDatos = { estado: 'down', latenciaMs: Date.now() - inicio };
+    }
+
+    return {
+      api: {
+        estado: 'up' as const,
+        entorno: process.env.NODE_ENV ?? 'development',
+        uptimeSegundos: Math.round(process.uptime()),
+        nodeVersion: process.version,
+        fecha: new Date().toISOString(),
+      },
+      baseDeDatos,
+      integraciones: {
+        smtpConfigurado: !!process.env.SMTP_HOST,
+        claveEquiposConfigurada: !!process.env.DEVICE_API_KEY,
+      },
+      websocket: { namespace: '/ws/eventos' },
+    };
   }
 }

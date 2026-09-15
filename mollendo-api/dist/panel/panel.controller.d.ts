@@ -12,5 +12,27 @@ export declare class PanelController {
     health(): Promise<{
         status: string;
         database: string;
+        latenciaMs: number;
+        fecha: string;
+    }>;
+    estadoSistema(): Promise<{
+        api: {
+            estado: "up";
+            entorno: string;
+            uptimeSegundos: number;
+            nodeVersion: string;
+            fecha: string;
+        };
+        baseDeDatos: {
+            estado: "up" | "down";
+            latenciaMs: number;
+        };
+        integraciones: {
+            smtpConfigurado: boolean;
+            claveEquiposConfigurada: boolean;
+        };
+        websocket: {
+            namespace: string;
+        };
     }>;
 }

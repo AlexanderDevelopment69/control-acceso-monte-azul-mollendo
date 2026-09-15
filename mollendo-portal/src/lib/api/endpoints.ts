@@ -3,6 +3,7 @@ import type {
   AuditoriaEntry,
   DocumentoPersona,
   Empresa,
+  EstadoSistema,
   EventoAcceso,
   Persona,
   Puesto,
@@ -140,6 +141,7 @@ export const eventosAccesoApi = {
 // ---- panel ----
 export const panelApi = {
   resumen: () => apiRequest<ResumenPanel>("/panel/resumen"),
+  estadoSistema: () => apiRequest<EstadoSistema>("/panel/estado-sistema"),
 };
 
 // ---- auditoria ----

@@ -12,6 +12,7 @@ import {
   GroupIcon,
   HorizontaLDots,
   ListIcon,
+  PlugInIcon,
   TaskIcon,
 } from "../icons/index";
 import type { RolUsuario } from "@/lib/api/types";
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { icon: <TaskIcon />, name: "Puestos", path: "/puestos", roles: ["administracion"] },
   { icon: <DocsIcon />, name: "Tipos de documento", path: "/tipos-documento", roles: ["administracion"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administracion"] },
+  { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administracion"] },
   { icon: <GroupIcon />, name: "Mi personal", path: "/personal", roles: ["empresa"] },
   { icon: <CalenderIcon />, name: "Solicitudes de visita", path: "/visitas", roles: ["empresa"] },
   { icon: <BoltIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administracion"] },

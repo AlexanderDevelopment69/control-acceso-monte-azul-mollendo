@@ -23,13 +23,40 @@ let PanelController = class PanelController {
         return this.panelService.resumen();
     }
     async health() {
+        const inicio = Date.now();
         try {
             await this.prisma.$queryRaw `SELECT 1`;
-            return { status: 'ok', database: 'up' };
+            return { status: 'ok', database: 'up', latenciaMs: Date.now() - inicio, fecha: new Date().toISOString() };
         }
         catch {
-            return { status: 'degraded', database: 'down' };
+            return { status: 'degraded', database: 'down', latenciaMs: Date.now() - inicio, fecha: new Date().toISOString() };
         }
+    }
+    async estadoSistema() {
+        const inicio = Date.now();
+        let baseDeDatos;
+        try {
+            await this.prisma.$queryRaw `SELECT 1`;
+            baseDeDatos = { estado: 'up', latenciaMs: Date.now() - inicio };
+        }
+        catch {
+            baseDeDatos = { estado: 'down', latenciaMs: Date.now() - inicio };
+        }
+        return {
+            api: {
+                estado: 'up',
+                entorno: process.env.NODE_ENV ?? 'development',
+                uptimeSegundos: Math.round(process.uptime()),
+                nodeVersion: process.version,
+                fecha: new Date().toISOString(),
+            },
+            baseDeDatos,
+            integraciones: {
+                smtpConfigurado: !!process.env.SMTP_HOST,
+                claveEquiposConfigurada: !!process.env.DEVICE_API_KEY,
+            },
+            websocket: { namespace: '/ws/eventos' },
+        };
     }
 };
 __decorate([
@@ -46,6 +73,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], PanelController.prototype, "health", null);
+__decorate([
+    Get('panel/estado-sistema'),
+    Roles('administracion'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], PanelController.prototype, "estadoSistema", null);
 PanelController = __decorate([
     Controller(),
     __metadata("design:paramtypes", [PanelService,

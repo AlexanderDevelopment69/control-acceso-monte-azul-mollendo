@@ -128,3 +128,8 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
   - Vigilancia: `vigilancia@mollendo.local`
   - Empresa (demo, RUC `20000000001` "Empresa Demo SAC"): `empresa@mollendo.local`
   - Las 3 verificadas con login real vía curl.
+
+- **2026-09-15** — A pedido del usuario: nueva sección **"Sistema y APIs"** en el panel de Administración (`/sistema`, solo admin).
+  - Backend: `GET /panel/estado-sistema` (admin) — reporta si el backend responde, latencia de la base de datos, y si SMTP/`DEVICE_API_KEY` están configurados (no verifica hardware real, ya que el proveedor de alcoholímetro/torniquete sigue sin definirse). `GET /health` (ya existía, pública) se le agregaron `latenciaMs` y `fecha`.
+  - Frontend: tarjetas de estado (backend, base de datos, SMTP, clave de equipos) que se refrescan solas cada 15s, más la **documentación interactiva de Swagger embebida directamente en la página** (`iframe` a `/api/docs`, que ya existía en el backend pero solo era accesible entrando directo por esa URL) con un link para abrirla aparte.
+  - Confirmado que Swagger no manda `X-Frame-Options`/CSP restrictiva, así que el iframe funciona sin configuración adicional.

@@ -94,6 +94,19 @@ export interface ResumenPanel {
   documentosVencidos: number;
 }
 
+export interface EstadoSistema {
+  api: {
+    estado: "up";
+    entorno: string;
+    uptimeSegundos: number;
+    nodeVersion: string;
+    fecha: string;
+  };
+  baseDeDatos: { estado: "up" | "down"; latenciaMs: number };
+  integraciones: { smtpConfigurado: boolean; claveEquiposConfigurada: boolean };
+  websocket: { namespace: string };
+}
+
 export interface AuditoriaEntry {
   id: number;
   usuarioId: number | null;
