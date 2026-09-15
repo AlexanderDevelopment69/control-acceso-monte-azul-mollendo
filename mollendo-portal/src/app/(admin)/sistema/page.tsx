@@ -167,17 +167,23 @@ function SistemaContent() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">APIs de integración (equipos físicos y proveedores externos)</h2>
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+        <div className="flex items-center justify-between px-5 py-4">
+          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Documentación de la API (Swagger)</h2>
           <a
             href={DOCS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-brand-500 hover:text-brand-600 dark:text-brand-400"
+            className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
           >
-            Ver documentación técnica completa (Swagger) ↗
+            Abrir en pestaña nueva ↗
           </a>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">APIs de integración (equipos físicos y proveedores externos)</h2>
         </div>
         <div className="overflow-x-auto">
           <Table>
