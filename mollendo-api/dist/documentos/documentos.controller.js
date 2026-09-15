@@ -1,0 +1,75 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UploadedFile, UseInterceptors, BadRequestException, } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { DocumentosService } from './documentos.service.js';
+import { CreateDocumentoDto } from './dto/create-documento.dto.js';
+import { UpdateEstadoDocumentoDto } from './dto/update-estado-documento.dto.js';
+import { documentosMulterStorage } from './documentos-storage.util.js';
+import { Roles } from '../common/decorators/roles.decorator.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+let DocumentosController = class DocumentosController {
+    documentosService;
+    constructor(documentosService) {
+        this.documentosService = documentosService;
+    }
+    subirDocumento(personaId, dto, archivo, user) {
+        if (!archivo) {
+            throw new BadRequestException('El archivo del documento es obligatorio');
+        }
+        return this.documentosService.subirDocumento(personaId, dto, archivo.path, user);
+    }
+    findHistorial(personaId, user) {
+        return this.documentosService.findHistorial(personaId, user);
+    }
+    updateEstado(id, dto, user) {
+        return this.documentosService.updateEstado(id, dto, user);
+    }
+};
+__decorate([
+    Post('personas/:personaId/documentos'),
+    Roles('empresa'),
+    UseInterceptors(FileInterceptor('archivo', { storage: documentosMulterStorage })),
+    __param(0, Param('personaId', ParseIntPipe)),
+    __param(1, Body()),
+    __param(2, UploadedFile()),
+    __param(3, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, CreateDocumentoDto, Object, Object]),
+    __metadata("design:returntype", void 0)
+], DocumentosController.prototype, "subirDocumento", null);
+__decorate([
+    Get('personas/:personaId/documentos'),
+    Roles('administracion', 'empresa', 'vigilancia'),
+    __param(0, Param('personaId', ParseIntPipe)),
+    __param(1, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], DocumentosController.prototype, "findHistorial", null);
+__decorate([
+    Patch('documentos/:id'),
+    Roles('empresa'),
+    __param(0, Param('id', ParseIntPipe)),
+    __param(1, Body()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, UpdateEstadoDocumentoDto, Object]),
+    __metadata("design:returntype", void 0)
+], DocumentosController.prototype, "updateEstado", null);
+DocumentosController = __decorate([
+    Controller(),
+    __metadata("design:paramtypes", [DocumentosService])
+], DocumentosController);
+export { DocumentosController };
+//# sourceMappingURL=documentos.controller.js.map

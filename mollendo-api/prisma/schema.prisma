@@ -1,0 +1,311 @@
+// Prisma schema — Sistema de Control de Acceso, Terminal de Mollendo
+// Traducido 1:1 del script SQL en Especificacion_Desarrollo_Control_Acceso_Mollendo.md (sección 5.1)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------
+// Enums (reflejan los CHECK constraints del script SQL original)
+// ---------------------------------------------------------------------
+
+enum EstadoEmpresa {
+  activa
+  inactiva
+
+  @@map("estado_empresa")
+}
+
+enum EstadoCuenta {
+  invitado
+  activo
+  baja
+
+  @@map("estado_cuenta")
+}
+
+// No presente en el script SQL original de la spec (sección 5.1) — se agrega
+// porque la sección 3.1 (Roles y permisos) exige distinguir Administración /
+// Empresa / Vigilancia y el modelo de datos no tenía cómo representarlo.
+enum RolUsuario {
+  administracion
+  empresa
+  vigilancia
+
+  @@map("rol_usuario")
+}
+
+enum CasoPuesto {
+  visita
+  personal_propio
+  contratista
+  tercero
+
+  @@map("caso_puesto")
+}
+
+enum TipoDocumentoIdentidad {
+  DNI
+  CE
+  PASAPORTE
+
+  @@map("tipo_documento_identidad")
+}
+
+enum EstadoPersona {
+  activo
+  inactivo
+
+  @@map("estado_persona")
+}
+
+enum TipoValidacionDocumento {
+  fecha_vencimiento
+  si_no
+  vigente_por_actividad
+
+  @@map("tipo_validacion_documento")
+}
+
+enum EstadoAprobacionDocumento {
+  pendiente
+  aprobado
+  rechazado
+
+  @@map("estado_aprobacion_documento")
+}
+
+enum EstadoSolicitudVisita {
+  programada
+  completada
+  cancelada
+
+  @@map("estado_solicitud_visita")
+}
+
+enum TipoMovimiento {
+  ingreso
+  salida
+
+  @@map("tipo_movimiento")
+}
+
+enum ResultadoAcceso {
+  autorizado
+  denegado
+
+  @@map("resultado_acceso")
+}
+
+enum AccionAuditoria {
+  crear
+  modificar
+  aprobar
+  eliminar
+
+  @@map("accion_auditoria")
+}
+
+// ---------------------------------------------------------------------
+// EMPRESA (proveedor / cliente, incluye OTP/MAS como una empresa más)
+// ---------------------------------------------------------------------
+model Empresa {
+  id                     Int           @id @default(autoincrement())
+  ruc                    String        @unique @db.VarChar(11)
+  razonSocial            String        @map("razon_social") @db.VarChar(200)
+  correoContacto         String        @map("correo_contacto") @db.VarChar(150)
+  telefonoContacto       String?       @map("telefono_contacto") @db.VarChar(20)
+  estado                 EstadoEmpresa @default(activa)
+  contratoVigenciaInicio DateTime?     @map("contrato_vigencia_inicio") @db.Date
+  contratoVigenciaFin    DateTime?     @map("contrato_vigencia_fin") @db.Date
+  creadoEn               DateTime      @default(now()) @map("creado_en")
+  actualizadoEn          DateTime      @default(now()) @updatedAt @map("actualizado_en")
+
+  usuarios          Usuario[]
+  personas          Persona[]
+  solicitudesVisita SolicitudVisita[]
+
+  @@map("empresa")
+}
+
+// ---------------------------------------------------------------------
+// USUARIO (acceso al portal web, pertenece a una empresa)
+// ---------------------------------------------------------------------
+model Usuario {
+  id              Int          @id @default(autoincrement())
+  empresaId       Int          @map("empresa_id")
+  empresa         Empresa      @relation(fields: [empresaId], references: [id])
+  rol             RolUsuario
+  correo          String       @unique @db.VarChar(150)
+  passwordHash    String?      @map("password_hash") @db.VarChar(255)
+  estadoCuenta    EstadoCuenta @default(invitado) @map("estado_cuenta")
+  tokenInvitacion String?      @map("token_invitacion") @db.VarChar(255)
+  tokenExpira     DateTime?    @map("token_expira")
+  creadoEn        DateTime     @default(now()) @map("creado_en")
+
+  auditorias Auditoria[]
+
+  @@index([empresaId])
+  @@map("usuario")
+}
+
+// ---------------------------------------------------------------------
+// PUESTO (catálogo por caso — PENDIENTE DE POBLAR CON EL CLIENTE)
+// ---------------------------------------------------------------------
+model Puesto {
+  id     Int        @id @default(autoincrement())
+  nombre String     @db.VarChar(100)
+  caso   CasoPuesto
+
+  personas   Persona[]
+  requisitos RequisitoPorPuesto[]
+
+  @@unique([nombre, caso])
+  @@map("puesto")
+}
+
+// ---------------------------------------------------------------------
+// PERSONA
+// puestoId es nullable por ahora: se vuelve obligatorio una vez que el
+// catálogo de puestos esté poblado y en uso (ver spec, sección 5.1).
+// ---------------------------------------------------------------------
+model Persona {
+  id                     Int                    @id @default(autoincrement())
+  empresaId              Int                    @map("empresa_id")
+  empresa                Empresa                @relation(fields: [empresaId], references: [id])
+  puestoId               Int?                   @map("puesto_id")
+  puesto                 Puesto?                @relation(fields: [puestoId], references: [id])
+  tipoDocumentoIdentidad TipoDocumentoIdentidad @map("tipo_documento_identidad")
+  numeroDocumento        String                 @map("numero_documento") @db.VarChar(20)
+  nombres                String                 @db.VarChar(150)
+  apellidos              String                 @db.VarChar(150)
+  area                   String?                @db.VarChar(100)
+  estado                 EstadoPersona          @default(activo)
+  creadoEn               DateTime               @default(now()) @map("creado_en")
+
+  documentos        DocumentoPersona[]
+  solicitudesVisita SolicitudVisita[]
+  eventosAcceso     EventoAcceso[]
+
+  // Global: una persona pertenece a una sola empresa a la vez
+  @@unique([tipoDocumentoIdentidad, numeroDocumento])
+  @@index([empresaId])
+  @@index([puestoId])
+  @@index([numeroDocumento])
+  @@map("persona")
+}
+
+// ---------------------------------------------------------------------
+// TIPO_DOCUMENTO (catálogo de documentos posibles: SCTR, CAMO, etc.)
+// ---------------------------------------------------------------------
+model TipoDocumento {
+  id             Int                     @id @default(autoincrement())
+  nombre         String                  @unique @db.VarChar(100)
+  tipoValidacion TipoValidacionDocumento @map("tipo_validacion")
+
+  requisitos RequisitoPorPuesto[]
+  documentos DocumentoPersona[]
+
+  @@map("tipo_documento")
+}
+
+// ---------------------------------------------------------------------
+// REQUISITO_POR_PUESTO (matriz puesto × documento — PENDIENTE DE POBLAR)
+// ---------------------------------------------------------------------
+model RequisitoPorPuesto {
+  puestoId        Int           @map("puesto_id")
+  puesto          Puesto        @relation(fields: [puestoId], references: [id])
+  tipoDocumentoId Int           @map("tipo_documento_id")
+  tipoDocumento   TipoDocumento @relation(fields: [tipoDocumentoId], references: [id])
+  obligatorio     Boolean       @default(true)
+
+  @@id([puestoId, tipoDocumentoId])
+  @@map("requisito_por_puesto")
+}
+
+// ---------------------------------------------------------------------
+// DOCUMENTO_PERSONA (historial completo, nunca se borra)
+// ---------------------------------------------------------------------
+model DocumentoPersona {
+  id               Int                       @id @default(autoincrement())
+  personaId        Int                       @map("persona_id")
+  persona          Persona                   @relation(fields: [personaId], references: [id])
+  tipoDocumentoId  Int                       @map("tipo_documento_id")
+  tipoDocumento    TipoDocumento             @relation(fields: [tipoDocumentoId], references: [id])
+  fechaEmision     DateTime?                 @map("fecha_emision") @db.Date
+  fechaVencimiento DateTime?                 @map("fecha_vencimiento") @db.Date
+  archivoUrl       String?                   @map("archivo_url") @db.VarChar(500)
+  vigente          Boolean                   @default(true)
+  estadoAprobacion EstadoAprobacionDocumento @default(pendiente) @map("estado_aprobacion")
+  version          Int                       @default(1)
+  creadoEn         DateTime                  @default(now()) @map("creado_en")
+
+  @@index([personaId])
+  @@index([personaId, tipoDocumentoId, vigente])
+  @@map("documento_persona")
+}
+
+// ---------------------------------------------------------------------
+// SOLICITUD_VISITA (la registra la empresa proveedora, no la persona)
+// ---------------------------------------------------------------------
+model SolicitudVisita {
+  id                  Int                   @id @default(autoincrement())
+  personaId           Int                   @map("persona_id")
+  persona             Persona               @relation(fields: [personaId], references: [id])
+  empresaId           Int                   @map("empresa_id")
+  empresa             Empresa               @relation(fields: [empresaId], references: [id])
+  personaVisitada     String                @map("persona_visitada") @db.VarChar(150)
+  motivo              String                @db.VarChar(300)
+  fechaHoraProgramada DateTime              @map("fecha_hora_programada")
+  // Autoaprobada al crearse — no hay un estado "pendiente_aprobacion"
+  estado              EstadoSolicitudVisita @default(programada)
+  creadoEn            DateTime              @default(now()) @map("creado_en")
+
+  @@index([personaId])
+  @@index([fechaHoraProgramada])
+  @@map("solicitud_visita")
+}
+
+// ---------------------------------------------------------------------
+// EVENTO_ACCESO (ingreso / salida por torniquete)
+// Tres booleanos de denegación en vez de un solo motivo: un evento puede
+// denegarse por alcohol y documentos a la vez, y una baja deniega de
+// inmediato sin evaluar lo demás.
+// ---------------------------------------------------------------------
+model EventoAcceso {
+  id                       Int             @id @default(autoincrement())
+  personaId                Int             @map("persona_id")
+  persona                  Persona         @relation(fields: [personaId], references: [id])
+  tipoMovimiento           TipoMovimiento  @map("tipo_movimiento")
+  resultado                ResultadoAcceso
+  denegadoPorBaja          Boolean         @default(false) @map("denegado_por_baja")
+  denegadoPorAlcohol       Boolean         @default(false) @map("denegado_por_alcohol")
+  denegadoPorDocumentos    Boolean         @default(false) @map("denegado_por_documentos")
+  denegadoSinIngresoPrevio Boolean         @default(false) @map("denegado_sin_ingreso_previo")
+  fechaHora                DateTime        @default(now()) @map("fecha_hora")
+  torniqueteId             String?         @map("torniquete_id") @db.VarChar(50)
+
+  @@index([personaId, fechaHora])
+  @@map("evento_acceso")
+}
+
+// ---------------------------------------------------------------------
+// AUDITORIA (quién creó/modificó/aprobó cada registro)
+// ---------------------------------------------------------------------
+model Auditoria {
+  id            Int             @id @default(autoincrement())
+  usuarioId     Int?            @map("usuario_id")
+  usuario       Usuario?        @relation(fields: [usuarioId], references: [id])
+  tablaAfectada String          @map("tabla_afectada") @db.VarChar(50)
+  registroId    Int             @map("registro_id")
+  accion        AccionAuditoria
+  fechaHora     DateTime        @default(now()) @map("fecha_hora")
+
+  @@index([tablaAfectada, registroId])
+  @@map("auditoria")
+}
