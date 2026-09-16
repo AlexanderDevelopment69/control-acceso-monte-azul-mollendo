@@ -9,6 +9,7 @@ import DatePicker from '@/components/form/date-picker';
 
 export default function DefaultInputs() {
   const [showPassword, setShowPassword] = useState(false);
+  const [fecha, setFecha] = useState("");
   const options = [
     { value: "marketing", label: "Marketing" },
     { value: "template", label: "Template" },
@@ -67,10 +68,8 @@ export default function DefaultInputs() {
             id="date-picker"
             label="Date Picker Input"
             placeholder="Select a date"
-            onChange={(dates, currentDateString) => {
-              // Handle your logic
-              console.log({ dates, currentDateString });
-            }}
+            value={fecha}
+            onChange={setFecha}
           />
         </div>
 

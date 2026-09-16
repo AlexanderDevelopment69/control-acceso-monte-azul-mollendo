@@ -92,6 +92,7 @@ function NuevaSolicitudModal({
           <Select
             defaultValue={personaId}
             onChange={setPersonaId}
+            placeholder="Selecciona una persona"
             options={personas.map((p) => ({ value: String(p.id), label: `${p.nombres} ${p.apellidos}` }))}
           />
         </div>

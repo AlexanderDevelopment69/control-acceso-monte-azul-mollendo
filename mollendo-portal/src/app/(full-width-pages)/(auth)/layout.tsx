@@ -21,16 +21,16 @@ export default function AuthLayout({
               {/* <!-- ===== Common Grid Shape Start ===== --> */}
               <GridShape />
               <div className="flex flex-col items-center max-w-xs">
-                <Link href="/" className="block mb-4">
+                <Link href="/" className="mb-4 block rounded-2xl bg-white p-5 shadow-theme-lg">
                   <Image
-                    width={231}
-                    height={48}
-                    src="./images/logo/auth-logo.svg"
-                    alt="Logo"
+                    width={260}
+                    height={128}
+                    src="/images/logo/auth-logo-mollendo.png"
+                    alt="Monte Azul Sur"
                   />
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
-                  Sistema de Control de Acceso — Terminal de Mollendo
+                  Sistema de Control de Acceso del Terminal de Mollendo
                 </p>
               </div>
             </div>

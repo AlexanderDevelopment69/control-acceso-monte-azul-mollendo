@@ -12,7 +12,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
-import Input from "@/components/form/input/InputField";
+import DatePicker from "@/components/form/date-picker";
 import FileInput from "@/components/form/input/FileInput";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { TableFooter } from "@/components/tables/TableFooter";
@@ -65,12 +65,18 @@ function SubirDocumentoForm({ personaId, tiposDocumento, onSubido }: { personaId
         <Select
           defaultValue={tipoDocumentoId}
           onChange={setTipoDocumentoId}
+          placeholder="Selecciona un tipo de documento"
           options={tiposDocumento.map((t) => ({ value: String(t.id), label: t.nombre }))}
         />
       </div>
       <div className="flex-1">
         <Label>Fecha de vencimiento (si aplica)</Label>
-        <Input type="date" defaultValue={fechaVencimiento} onChange={(e) => setFechaVencimiento(e.target.value)} />
+        <DatePicker
+          id="fecha-vencimiento-documento"
+          placeholder="AAAA-MM-DD"
+          value={fechaVencimiento}
+          onChange={setFechaVencimiento}
+        />
       </div>
       <div className="flex-1">
         <Label>Archivo</Label>
