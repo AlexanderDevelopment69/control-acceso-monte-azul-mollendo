@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 interface ModalProps {
   isOpen: boolean;
@@ -48,6 +48,16 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen]);
 
+  // Entra con una transición suave en vez de aparecer de golpe: se monta oculto
+  // y un frame después pasa a visible, para que la transición CSS tenga un
+  // punto de partida del que animar.
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(isOpen));
+    return () => cancelAnimationFrame(id);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const contentClasses = isFullscreen
@@ -58,13 +68,13 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
       {!isFullscreen && (
         <div
-          className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
+          className={`fixed inset-0 h-full w-full bg-gray-400/50 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
           onClick={onClose}
         ></div>
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses}  ${className}`}
+        className={`${contentClasses} transition-all duration-200 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-95"} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
