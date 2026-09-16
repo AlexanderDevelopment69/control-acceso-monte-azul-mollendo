@@ -6,7 +6,7 @@ import { panelApi } from "@/lib/api/endpoints";
 import type { EstadoSistema } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { ChevronDownIcon } from "@/icons";
+import { BoltIcon, BoxCubeIcon, ChevronDownIcon, LockIcon, MailIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
@@ -142,10 +142,13 @@ function ConfiguradoBadge({ ok }: { ok: boolean }) {
   return <Badge color={ok ? "success" : "warning"}>{ok ? "Configurado" : "No configurado"}</Badge>;
 }
 
-function StatusCard({ children }: { children: React.ReactNode }) {
+function StatusCard({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      {children}
+      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+        {icon}
+      </div>
+      <div className="mt-4">{children}</div>
     </div>
   );
 }
@@ -290,7 +293,7 @@ function SistemaContent() {
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatusCard>
+        <StatusCard icon={<BoltIcon width={20} height={20} className="text-gray-800 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
             <EstadoBadge ok={!error && !!estado} />
@@ -302,7 +305,7 @@ function SistemaContent() {
           )}
         </StatusCard>
 
-        <StatusCard>
+        <StatusCard icon={<BoxCubeIcon width={20} height={20} className="text-gray-800 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Base de datos</p>
           <div className="mt-2">
             <EstadoBadge ok={estado?.baseDeDatos.estado === "up"} />
@@ -310,7 +313,7 @@ function SistemaContent() {
           {estado && <p className="mt-2 text-xs text-gray-400">Latencia: {estado.baseDeDatos.latenciaMs} ms</p>}
         </StatusCard>
 
-        <StatusCard>
+        <StatusCard icon={<MailIcon width={20} height={20} className="text-gray-800 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Correo (SMTP)</p>
           <div className="mt-2">
             <ConfiguradoBadge ok={!!estado?.integraciones.smtpConfigurado} />
@@ -318,7 +321,7 @@ function SistemaContent() {
           <p className="mt-2 text-xs text-gray-400">Invitaciones y recuperación de contraseña</p>
         </StatusCard>
 
-        <StatusCard>
+        <StatusCard icon={<LockIcon width={20} height={20} className="text-gray-800 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Clave de equipos físicos</p>
           <div className="mt-2">
             <ConfiguradoBadge ok={!!estado?.integraciones.claveEquiposConfigurada} />

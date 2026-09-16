@@ -187,6 +187,12 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  html {
+    /* Reserva el espacio de la barra de scroll siempre, para que el
+       contenido no se corra cuando aparece/desaparece (ej. al desplegar
+       una fila de una tabla que hace crecer la página). */
+    scrollbar-gutter: stable;
+  }
   body {
     @apply relative font-normal font-outfit z-1 bg-gray-50;
   }
