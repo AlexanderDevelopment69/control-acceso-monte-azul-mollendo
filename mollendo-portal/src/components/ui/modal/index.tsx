@@ -82,7 +82,6 @@ export const Modal: React.FC<ModalProps> = ({
       {!isFullscreen && (
         <div
           className={`fixed inset-0 h-full w-full bg-gray-400/30 transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"}`}
-          onClick={onClose}
         ></div>
       )}
       <div
