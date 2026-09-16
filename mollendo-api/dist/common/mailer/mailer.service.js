@@ -10,27 +10,28 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var MailerService_1;
 import { Injectable, Logger } from '@nestjs/common';
 import { createTransport } from 'nodemailer';
+import { ConfiguracionSmtpService } from '../../configuracion-smtp/configuracion-smtp.service.js';
 let MailerService = MailerService_1 = class MailerService {
+    configuracionSmtpService;
     logger = new Logger(MailerService_1.name);
-    transporter;
-    constructor() {
-        this.transporter = createTransport({
-            host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT ?? 587),
-            secure: false,
-            auth: process.env.SMTP_USER
-                ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-                : undefined,
-        });
+    constructor(configuracionSmtpService) {
+        this.configuracionSmtpService = configuracionSmtpService;
     }
     async enviarCorreo({ to, subject, html }) {
-        if (!process.env.SMTP_HOST) {
+        const config = await this.configuracionSmtpService.obtenerConfigTransporte();
+        if (!config) {
             this.logger.warn(`SMTP no configurado — correo a "${to}" no enviado. Asunto: "${subject}"`);
             this.logger.debug(html);
             return;
         }
-        await this.transporter.sendMail({
-            from: process.env.SMTP_FROM ?? 'no-reply@mollendo.local',
+        const transporter = createTransport({
+            host: config.host,
+            port: config.puerto,
+            secure: config.seguro,
+            auth: config.usuario ? { user: config.usuario, pass: config.password } : undefined,
+        });
+        await transporter.sendMail({
+            from: config.remitente,
             to,
             subject,
             html,
@@ -64,7 +65,7 @@ let MailerService = MailerService_1 = class MailerService {
 };
 MailerService = MailerService_1 = __decorate([
     Injectable(),
-    __metadata("design:paramtypes", [])
+    __metadata("design:paramtypes", [ConfiguracionSmtpService])
 ], MailerService);
 export { MailerService };
 //# sourceMappingURL=mailer.service.js.map

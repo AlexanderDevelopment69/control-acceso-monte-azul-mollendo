@@ -18,6 +18,7 @@ export const ModelName = {
     DocumentoPersona: 'DocumentoPersona',
     SolicitudVisita: 'SolicitudVisita',
     EventoAcceso: 'EventoAcceso',
+    ConfiguracionSmtp: 'ConfiguracionSmtp',
     Auditoria: 'Auditoria'
 };
 export const TransactionIsolationLevel = runtime.makeStrictEnum({
@@ -109,6 +110,16 @@ export const EventoAccesoScalarFieldEnum = {
     denegadoSinIngresoPrevio: 'denegadoSinIngresoPrevio',
     fechaHora: 'fechaHora',
     torniqueteId: 'torniqueteId'
+};
+export const ConfiguracionSmtpScalarFieldEnum = {
+    id: 'id',
+    host: 'host',
+    puerto: 'puerto',
+    seguro: 'seguro',
+    usuario: 'usuario',
+    password: 'password',
+    remitente: 'remitente',
+    actualizadoEn: 'actualizadoEn'
 };
 export const AuditoriaScalarFieldEnum = {
     id: 'id',

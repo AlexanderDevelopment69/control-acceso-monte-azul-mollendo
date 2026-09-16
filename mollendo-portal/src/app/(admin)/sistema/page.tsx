@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
 import type { EstadoSistema } from "@/lib/api/types";
@@ -324,6 +325,9 @@ function SistemaContent() {
             <ConfiguradoBadge ok={!!estado?.integraciones.smtpConfigurado} />
           </div>
           <p className="mt-2 text-xs text-gray-400">Invitaciones y recuperación de contraseña</p>
+          <Link href="/configuracion" className="mt-2 inline-block text-xs text-brand-500 hover:text-brand-600 dark:text-brand-400">
+            Configurar →
+          </Link>
         </StatusCard>
 
         <StatusCard icon={<LockIcon className="text-gray-800 size-6 dark:text-white/90" />}>

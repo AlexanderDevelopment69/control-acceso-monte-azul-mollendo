@@ -12,6 +12,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { ConfiguracionSmtpModule } from './configuracion-smtp/configuracion-smtp.module.js';
 import { MailerModule } from './common/mailer/mailer.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { EmpresasModule } from './empresas/empresas.module.js';
@@ -35,6 +36,7 @@ AppModule = __decorate([
             EventEmitterModule.forRoot(),
             PassportModule,
             PrismaModule,
+            ConfiguracionSmtpModule,
             MailerModule,
             AuditoriaModule,
             AuthModule,

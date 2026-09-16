@@ -4,6 +4,11 @@ interface ButtonProps {
   children: ReactNode; // Button text or content
   size?: "sm" | "md"; // Button size
   variant?: "primary" | "outline"; // Button variant
+  // "submit" por defecto — igual al comportamiento nativo que ya tenían todos
+  // los botones existentes al no declarar `type` dentro de un <form>. Pasar
+  // "button" para una acción secundaria dentro de un form que no debe
+  // enviarlo (ej. un botón de "Cancelar"/"Quitar" junto al de guardar).
+  type?: "button" | "submit" | "reset";
   startIcon?: ReactNode; // Icon before the text
   endIcon?: ReactNode; // Icon after the text
   onClick?: () => void; // Click handler
@@ -15,6 +20,7 @@ const Button: React.FC<ButtonProps> = ({
   children,
   size = "md",
   variant = "primary",
+  type = "submit",
   startIcon,
   endIcon,
   onClick,
@@ -37,6 +43,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
+      type={type}
       className={`inline-flex items-center justify-center font-medium gap-2 rounded-lg transition ${className} ${
         sizeClasses[size]
       } ${variantClasses[variant]} ${

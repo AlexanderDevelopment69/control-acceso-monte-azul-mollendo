@@ -1,6 +1,7 @@
 import { apiRequest } from "./client";
 import type {
   AuditoriaEntry,
+  ConfiguracionSmtp,
   DocumentoPersona,
   Empresa,
   EstadoSistema,
@@ -142,6 +143,22 @@ export const eventosAccesoApi = {
 export const panelApi = {
   resumen: () => apiRequest<ResumenPanel>("/panel/resumen"),
   estadoSistema: () => apiRequest<EstadoSistema>("/panel/estado-sistema"),
+};
+
+// ---- configuracion-smtp ----
+export const configuracionSmtpApi = {
+  obtener: () => apiRequest<ConfiguracionSmtp>("/configuracion/smtp"),
+  guardar: (data: {
+    host: string;
+    puerto: number;
+    seguro?: boolean;
+    usuario?: string;
+    password?: string;
+    remitente: string;
+  }) => apiRequest<ConfiguracionSmtp>("/configuracion/smtp", { method: "PUT", body: data }),
+  eliminar: () => apiRequest<{ eliminado: boolean }>("/configuracion/smtp", { method: "DELETE" }),
+  probar: (correoDestino: string) =>
+    apiRequest<{ enviado: boolean }>("/configuracion/smtp/probar", { method: "POST", body: { correoDestino } }),
 };
 
 // ---- auditoria ----

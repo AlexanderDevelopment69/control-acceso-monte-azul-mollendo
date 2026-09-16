@@ -5,16 +5,16 @@ export declare class AuditoriaController {
     constructor(auditoriaService: AuditoriaService);
     findAll(query: QueryAuditoriaDto): Promise<({
         usuario: {
-            correo: string;
             id: number;
             rol: import("../generated/prisma/enums.js").RolUsuario;
+            correo: string;
         } | null;
     } & {
         id: number;
+        fechaHora: Date;
+        usuarioId: number | null;
         tablaAfectada: string;
         registroId: number;
         accion: import("../generated/prisma/enums.js").AccionAuditoria;
-        fechaHora: Date;
-        usuarioId: number | null;
     })[]>;
 }

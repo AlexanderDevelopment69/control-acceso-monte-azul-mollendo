@@ -57,6 +57,9 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get eventoAcceso(): Prisma.EventoAccesoDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    get configuracionSmtp(): Prisma.ConfiguracionSmtpDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
     get auditoria(): Prisma.AuditoriaDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;

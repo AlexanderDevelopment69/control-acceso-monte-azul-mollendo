@@ -1,9 +1,11 @@
 import { PanelService } from './panel.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ConfiguracionSmtpService } from '../configuracion-smtp/configuracion-smtp.service.js';
 export declare class PanelController {
     private readonly panelService;
     private readonly prisma;
-    constructor(panelService: PanelService, prisma: PrismaService);
+    private readonly configuracionSmtpService;
+    constructor(panelService: PanelService, prisma: PrismaService, configuracionSmtpService: ConfiguracionSmtpService);
     resumen(): Promise<{
         denegacionesHoy: number;
         alcoholNoConformeHoy: number;

@@ -94,6 +94,20 @@ export interface ResumenPanel {
   documentosVencidos: number;
 }
 
+export type ConfiguracionSmtp =
+  | { configurado: false }
+  | {
+      configurado: true;
+      id: number;
+      host: string;
+      puerto: number;
+      seguro: boolean;
+      usuario: string | null;
+      remitente: string;
+      actualizadoEn: string;
+      passwordConfigurada: boolean;
+    };
+
 export interface EstadoSistema {
   api: {
     estado: "up";

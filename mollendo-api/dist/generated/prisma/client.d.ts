@@ -15,4 +15,5 @@ export type RequisitoPorPuesto = Prisma.RequisitoPorPuestoModel;
 export type DocumentoPersona = Prisma.DocumentoPersonaModel;
 export type SolicitudVisita = Prisma.SolicitudVisitaModel;
 export type EventoAcceso = Prisma.EventoAccesoModel;
+export type ConfiguracionSmtp = Prisma.ConfiguracionSmtpModel;
 export type Auditoria = Prisma.AuditoriaModel;

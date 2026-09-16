@@ -12,6 +12,7 @@ import {
   GroupIcon,
   HorizontaLDots,
   ListIcon,
+  MailIcon,
   PlugInIcon,
   TaskIcon,
 } from "../icons/index";
@@ -31,6 +32,7 @@ const navItems: NavItem[] = [
   { icon: <DocsIcon />, name: "Tipos de documento", path: "/tipos-documento", roles: ["administracion"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administracion"] },
   { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administracion"] },
+  { icon: <MailIcon />, name: "Configuración", path: "/configuracion", roles: ["administracion"] },
   { icon: <GroupIcon />, name: "Mi personal", path: "/personal", roles: ["empresa"] },
   { icon: <CalenderIcon />, name: "Solicitudes de visita", path: "/visitas", roles: ["empresa"] },
   { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administracion"] },

@@ -9,12 +9,12 @@ export declare class DocumentosController {
         id: number;
         creadoEn: Date;
         tipoDocumentoId: number;
+        personaId: number;
         fechaEmision: Date | null;
         fechaVencimiento: Date | null;
-        estadoAprobacion: import("../generated/prisma/enums.js").EstadoAprobacionDocumento;
-        personaId: number;
         archivoUrl: string | null;
         vigente: boolean;
+        estadoAprobacion: import("../generated/prisma/enums.js").EstadoAprobacionDocumento;
         version: number;
     }>;
     findHistorial(personaId: number, user: AuthenticatedUser): Promise<({
@@ -27,24 +27,24 @@ export declare class DocumentosController {
         id: number;
         creadoEn: Date;
         tipoDocumentoId: number;
+        personaId: number;
         fechaEmision: Date | null;
         fechaVencimiento: Date | null;
-        estadoAprobacion: import("../generated/prisma/enums.js").EstadoAprobacionDocumento;
-        personaId: number;
         archivoUrl: string | null;
         vigente: boolean;
+        estadoAprobacion: import("../generated/prisma/enums.js").EstadoAprobacionDocumento;
         version: number;
     })[]>;
     updateEstado(id: number, dto: UpdateEstadoDocumentoDto, user: AuthenticatedUser): Promise<{
         id: number;
         creadoEn: Date;
         tipoDocumentoId: number;
+        personaId: number;
         fechaEmision: Date | null;
         fechaVencimiento: Date | null;
-        estadoAprobacion: import("../generated/prisma/enums.js").EstadoAprobacionDocumento;
-        personaId: number;
         archivoUrl: string | null;
         vigente: boolean;
+        estadoAprobacion: import("../generated/prisma/enums.js").EstadoAprobacionDocumento;
         version: number;
     }>;
 }

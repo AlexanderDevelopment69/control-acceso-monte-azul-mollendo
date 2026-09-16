@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createTransport, type Transporter } from 'nodemailer';
+import { createTransport } from 'nodemailer';
+import { ConfiguracionSmtpService } from '../../configuracion-smtp/configuracion-smtp.service.js';
 
 interface EnviarCorreoOptions {
   to: string;
@@ -10,28 +11,29 @@ interface EnviarCorreoOptions {
 @Injectable()
 export class MailerService {
   private readonly logger = new Logger(MailerService.name);
-  private readonly transporter: Transporter;
 
-  constructor() {
-    this.transporter = createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT ?? 587),
-      secure: false,
-      auth: process.env.SMTP_USER
-        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-        : undefined,
-    });
-  }
+  constructor(private readonly configuracionSmtpService: ConfiguracionSmtpService) {}
 
   async enviarCorreo({ to, subject, html }: EnviarCorreoOptions): Promise<void> {
-    if (!process.env.SMTP_HOST) {
+    // Se arma el transportador en cada envío (no se cachea) para que un
+    // cambio de configuración desde el portal se aplique de inmediato, sin
+    // reiniciar el servidor.
+    const config = await this.configuracionSmtpService.obtenerConfigTransporte();
+    if (!config) {
       this.logger.warn(`SMTP no configurado — correo a "${to}" no enviado. Asunto: "${subject}"`);
       this.logger.debug(html);
       return;
     }
 
-    await this.transporter.sendMail({
-      from: process.env.SMTP_FROM ?? 'no-reply@mollendo.local',
+    const transporter = createTransport({
+      host: config.host,
+      port: config.puerto,
+      secure: config.seguro,
+      auth: config.usuario ? { user: config.usuario, pass: config.password } : undefined,
+    });
+
+    await transporter.sendMail({
+      from: config.remitente,
       to,
       subject,
       html,

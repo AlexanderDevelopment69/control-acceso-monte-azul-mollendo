@@ -3,12 +3,14 @@ import { PanelService } from './panel.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ConfiguracionSmtpService } from '../configuracion-smtp/configuracion-smtp.service.js';
 
 @Controller()
 export class PanelController {
   constructor(
     private readonly panelService: PanelService,
     private readonly prisma: PrismaService,
+    private readonly configuracionSmtpService: ConfiguracionSmtpService,
   ) {}
 
   @Get('panel/resumen')
@@ -47,6 +49,8 @@ export class PanelController {
       baseDeDatos = { estado: 'down', latenciaMs: Date.now() - inicio };
     }
 
+    const smtp = await this.configuracionSmtpService.obtenerConfigTransporte();
+
     return {
       api: {
         estado: 'up' as const,
@@ -57,7 +61,7 @@ export class PanelController {
       },
       baseDeDatos,
       integraciones: {
-        smtpConfigurado: !!process.env.SMTP_HOST,
+        smtpConfigurado: !!smtp,
         claveEquiposConfigurada: !!process.env.DEVICE_API_KEY,
       },
       websocket: { namespace: '/ws/eventos' },

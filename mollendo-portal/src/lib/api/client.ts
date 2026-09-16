@@ -33,7 +33,7 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   isFormData?: boolean;
   /** No adjunta el Authorization header (endpoints públicos de /auth). */

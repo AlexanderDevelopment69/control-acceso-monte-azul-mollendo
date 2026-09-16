@@ -20,6 +20,7 @@ export declare const ModelName: {
     readonly DocumentoPersona: "DocumentoPersona";
     readonly SolicitudVisita: "SolicitudVisita";
     readonly EventoAcceso: "EventoAcceso";
+    readonly ConfiguracionSmtp: "ConfiguracionSmtp";
     readonly Auditoria: "Auditoria";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -123,6 +124,17 @@ export declare const EventoAccesoScalarFieldEnum: {
     readonly torniqueteId: "torniqueteId";
 };
 export type EventoAccesoScalarFieldEnum = (typeof EventoAccesoScalarFieldEnum)[keyof typeof EventoAccesoScalarFieldEnum];
+export declare const ConfiguracionSmtpScalarFieldEnum: {
+    readonly id: "id";
+    readonly host: "host";
+    readonly puerto: "puerto";
+    readonly seguro: "seguro";
+    readonly usuario: "usuario";
+    readonly password: "password";
+    readonly remitente: "remitente";
+    readonly actualizadoEn: "actualizadoEn";
+};
+export type ConfiguracionSmtpScalarFieldEnum = (typeof ConfiguracionSmtpScalarFieldEnum)[keyof typeof ConfiguracionSmtpScalarFieldEnum];
 export declare const AuditoriaScalarFieldEnum: {
     readonly id: "id";
     readonly usuarioId: "usuarioId";

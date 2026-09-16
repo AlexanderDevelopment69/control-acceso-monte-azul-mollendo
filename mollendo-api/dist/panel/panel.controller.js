@@ -12,12 +12,15 @@ import { PanelService } from './panel.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ConfiguracionSmtpService } from '../configuracion-smtp/configuracion-smtp.service.js';
 let PanelController = class PanelController {
     panelService;
     prisma;
-    constructor(panelService, prisma) {
+    configuracionSmtpService;
+    constructor(panelService, prisma, configuracionSmtpService) {
         this.panelService = panelService;
         this.prisma = prisma;
+        this.configuracionSmtpService = configuracionSmtpService;
     }
     resumen() {
         return this.panelService.resumen();
@@ -42,6 +45,7 @@ let PanelController = class PanelController {
         catch {
             baseDeDatos = { estado: 'down', latenciaMs: Date.now() - inicio };
         }
+        const smtp = await this.configuracionSmtpService.obtenerConfigTransporte();
         return {
             api: {
                 estado: 'up',
@@ -52,7 +56,7 @@ let PanelController = class PanelController {
             },
             baseDeDatos,
             integraciones: {
-                smtpConfigurado: !!process.env.SMTP_HOST,
+                smtpConfigurado: !!smtp,
                 claveEquiposConfigurada: !!process.env.DEVICE_API_KEY,
             },
             websocket: { namespace: '/ws/eventos' },
@@ -83,7 +87,8 @@ __decorate([
 PanelController = __decorate([
     Controller(),
     __metadata("design:paramtypes", [PanelService,
-        PrismaService])
+        PrismaService,
+        ConfiguracionSmtpService])
 ], PanelController);
 export { PanelController };
 //# sourceMappingURL=panel.controller.js.map

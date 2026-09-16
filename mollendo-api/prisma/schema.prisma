@@ -295,6 +295,31 @@ model EventoAcceso {
 }
 
 // ---------------------------------------------------------------------
+// CONFIGURACION_SMTP (fila única, id siempre 1)
+// No está en el script SQL original de la spec (sección 5.1) — la spec solo
+// pedía que el SMTP fuera "configurable por variable de entorno" (sección
+// 10). Se agrega esta tabla para que Administración pueda configurar el
+// correo desde el portal sin editar el .env ni reiniciar el servidor; las
+// variables de entorno se mantienen como fallback si esta tabla está vacía.
+// ---------------------------------------------------------------------
+model ConfiguracionSmtp {
+  id            Int      @id @default(1)
+  host          String   @db.VarChar(200)
+  puerto        Int      @default(587)
+  seguro        Boolean  @default(false)
+  usuario       String?  @db.VarChar(200)
+  // Se guarda en texto plano (igual que la variable de entorno SMTP_PASS que
+  // reemplaza): es la contraseña que el propio servidor necesita enviarle al
+  // proveedor SMTP, no una contraseña de un usuario final — no se puede
+  // hashear porque hay que volver a usarla tal cual para autenticarse.
+  password      String?  @db.VarChar(255)
+  remitente     String   @db.VarChar(200)
+  actualizadoEn DateTime @default(now()) @updatedAt @map("actualizado_en")
+
+  @@map("configuracion_smtp")
+}
+
+// ---------------------------------------------------------------------
 // AUDITORIA (quién creó/modificó/aprobó cada registro)
 // ---------------------------------------------------------------------
 model Auditoria {
