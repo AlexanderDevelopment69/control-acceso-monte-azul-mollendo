@@ -193,7 +193,7 @@ function FilaApiIntegracion({
       >
         <TableCell className="px-5 py-4 text-sm">
           <ChevronDownIcon
-            className={`h-4 w-4 text-gray-400 transition-transform ${abierto ? "rotate-180" : ""}`}
+            className={`h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${abierto ? "rotate-180" : ""}`}
           />
         </TableCell>
         <TableCell className="px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300">{api.nombre}</TableCell>
@@ -206,35 +206,45 @@ function FilaApiIntegracion({
           <EstadoIntegracionBadge api={api} backendUp={backendUp} claveConfigurada={claveConfigurada} />
         </TableCell>
       </TableRow>
-      {abierto && (
-        <TableRow>
-          <TableCell colSpan={5} className="bg-gray-50 px-5 py-5 dark:bg-white/[0.02]">
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-300">{api.descripcion}</p>
+      <TableRow>
+        <TableCell colSpan={5} className="bg-gray-50 p-0 dark:bg-white/[0.02]">
+          <div
+            className={`grid transition-all duration-300 ease-in-out ${
+              abierto ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div
+                className={`space-y-4 px-5 py-5 transition-opacity duration-300 ease-in-out ${
+                  abierto ? "opacity-100 delay-100" : "opacity-0"
+                }`}
+              >
+                <p className="text-sm text-gray-600 dark:text-gray-300">{api.descripcion}</p>
 
-              <div>
-                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">Headers</p>
-                <ul className="space-y-1">
-                  {api.headers.map((h) => (
-                    <li key={h}>
-                      <code className="rounded bg-gray-900 px-2 py-1 text-xs text-gray-200 dark:bg-black/40">{h}</code>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <div>
+                  <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">Headers</p>
+                  <ul className="space-y-1">
+                    {api.headers.map((h) => (
+                      <li key={h}>
+                        <code className="rounded bg-gray-900 px-2 py-1 text-xs text-gray-200 dark:bg-black/40">{h}</code>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <CodeBlock title="Ejemplo de solicitud (body)" code={api.ejemploRequest} />
-                <CodeBlock title="Ejemplo de respuesta" code={api.ejemploRespuesta} />
-              </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <CodeBlock title="Ejemplo de solicitud (body)" code={api.ejemploRequest} />
+                  <CodeBlock title="Ejemplo de respuesta" code={api.ejemploRespuesta} />
+                </div>
 
-              <div className="rounded-lg bg-brand-50 px-4 py-3 text-xs text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
-                {api.notas}
+                <div className="rounded-lg bg-brand-50 px-4 py-3 text-xs text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
+                  {api.notas}
+                </div>
               </div>
             </div>
-          </TableCell>
-        </TableRow>
-      )}
+          </div>
+        </TableCell>
+      </TableRow>
     </>
   );
 }
