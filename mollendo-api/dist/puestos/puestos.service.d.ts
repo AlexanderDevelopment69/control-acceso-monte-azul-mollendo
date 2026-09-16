@@ -28,9 +28,9 @@ export declare class PuestosService {
             tipoValidacion: import("../generated/prisma/enums.js").TipoValidacionDocumento;
         };
     } & {
-        puestoId: number;
         tipoDocumentoId: number;
         obligatorio: boolean;
+        puestoId: number;
     })[]>;
     setRequisitos(puestoId: number, dto: SetRequisitosDto, usuarioId: number): Promise<({
         tipoDocumento: {
@@ -39,8 +39,8 @@ export declare class PuestosService {
             tipoValidacion: import("../generated/prisma/enums.js").TipoValidacionDocumento;
         };
     } & {
-        puestoId: number;
         tipoDocumentoId: number;
         obligatorio: boolean;
+        puestoId: number;
     })[]>;
 }

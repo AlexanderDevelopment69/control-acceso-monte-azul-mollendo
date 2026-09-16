@@ -10,6 +10,8 @@ import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import Pagination from "@/components/tables/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 const VALIDACION_LABEL: Record<string, string> = {
   fecha_vencimiento: "Fecha de vencimiento",
@@ -52,6 +54,8 @@ function TiposDocumentoContent() {
       setCreando(false);
     }
   }
+
+  const { page, setPage, totalPages, paginated } = usePagination(tipos, 10);
 
   return (
     <div>
@@ -104,7 +108,7 @@ function TiposDocumentoContent() {
                 <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={2}>No hay tipos de documento registrados.</TableCell>
               </TableRow>
             )}
-            {tipos.map((tipo) => (
+            {paginated.map((tipo) => (
               <TableRow key={tipo.id}>
                 <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{tipo.nombre}</TableCell>
                 <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
@@ -114,6 +118,11 @@ function TiposDocumentoContent() {
             ))}
           </TableBody>
         </Table>
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -14,6 +14,8 @@ import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
 import FileInput from "@/components/form/input/FileInput";
+import Pagination from "@/components/tables/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 const ESTADO_APROBACION_COLOR: Record<string, "success" | "warning" | "error"> = {
   pendiente: "warning",
@@ -124,6 +126,8 @@ function PersonaDetailContent() {
     cargar();
   }
 
+  const { page, setPage, totalPages, paginated } = usePagination(documentos, 10);
+
   if (loading || !persona) {
     return <div className="text-sm text-gray-400">Cargando…</div>;
   }
@@ -176,7 +180,7 @@ function PersonaDetailContent() {
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Sin documentos cargados todavía.</TableCell>
                 </TableRow>
               )}
-              {documentos.map((doc) => (
+              {paginated.map((doc) => (
                 <TableRow key={doc.id}>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{doc.tipoDocumento?.nombre}</TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">v{doc.version}</TableCell>
@@ -208,6 +212,11 @@ function PersonaDetailContent() {
             </TableBody>
           </Table>
         </div>
+        {totalPages > 1 && (
+          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
       </div>
     </div>
   );

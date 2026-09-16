@@ -11,6 +11,8 @@ import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
+import Pagination from "@/components/tables/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 function NuevaEmpresaModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onClose: () => void; onCreated: () => void }) {
   const [ruc, setRuc] = useState("");
@@ -106,6 +108,8 @@ function EmpresasPageContent() {
     cargar();
   }
 
+  const { page, setPage, totalPages, paginated } = usePagination(empresas, 10);
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -144,7 +148,7 @@ function EmpresasPageContent() {
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>No hay empresas registradas todavía.</TableCell>
                 </TableRow>
               )}
-              {empresas.map((empresa) => (
+              {paginated.map((empresa) => (
                 <TableRow key={empresa.id}>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{empresa.ruc}</TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{empresa.razonSocial}</TableCell>
@@ -167,6 +171,11 @@ function EmpresasPageContent() {
             </TableBody>
           </Table>
         </div>
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
       </div>
 
       <NuevaEmpresaModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onCreated={cargar} />

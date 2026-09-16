@@ -13,6 +13,8 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Checkbox from "@/components/form/input/Checkbox";
+import Pagination from "@/components/tables/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 const CASO_LABEL: Record<string, string> = {
   visita: "Visita",
@@ -168,6 +170,8 @@ function PuestosContent() {
     cargar();
   }, []);
 
+  const { page, setPage, totalPages, paginated } = usePagination(puestos, 10);
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -199,7 +203,7 @@ function PuestosContent() {
                 </TableCell>
               </TableRow>
             )}
-            {puestos.map((puesto) => (
+            {paginated.map((puesto) => (
               <TableRow key={puesto.id}>
                 <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{puesto.nombre}</TableCell>
                 <TableCell className="px-5 py-4 text-sm">
@@ -214,6 +218,11 @@ function PuestosContent() {
             ))}
           </TableBody>
         </Table>
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
       </div>
 
       <NuevoPuestoModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onCreated={cargar} />

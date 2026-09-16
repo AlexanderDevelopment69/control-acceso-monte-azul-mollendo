@@ -8,9 +8,9 @@ export declare class SolicitudesVisitaController {
     constructor(solicitudesVisitaService: SolicitudesVisitaService);
     create(dto: CreateSolicitudVisitaDto, user: AuthenticatedUser): Promise<{
         id: number;
-        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
-        creadoEn: Date;
         empresaId: number;
+        creadoEn: Date;
+        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
         personaId: number;
         personaVisitada: string;
         motivo: string;
@@ -24,9 +24,9 @@ export declare class SolicitudesVisitaController {
         };
     } & {
         id: number;
-        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
-        creadoEn: Date;
         empresaId: number;
+        creadoEn: Date;
+        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
         personaId: number;
         personaVisitada: string;
         motivo: string;
@@ -34,9 +34,9 @@ export declare class SolicitudesVisitaController {
     })[]>;
     update(id: number, dto: UpdateSolicitudVisitaDto, user: AuthenticatedUser): Promise<{
         id: number;
-        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
-        creadoEn: Date;
         empresaId: number;
+        creadoEn: Date;
+        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
         personaId: number;
         personaVisitada: string;
         motivo: string;

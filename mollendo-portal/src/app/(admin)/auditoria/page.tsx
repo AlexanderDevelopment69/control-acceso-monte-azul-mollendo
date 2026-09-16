@@ -6,6 +6,8 @@ import { auditoriaApi } from "@/lib/api/endpoints";
 import type { AuditoriaEntry } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
+import Pagination from "@/components/tables/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 const ACCION_COLOR: Record<string, "success" | "warning" | "error" | "info"> = {
   crear: "success",
@@ -24,6 +26,8 @@ function AuditoriaContent() {
       setLoading(false);
     });
   }, []);
+
+  const { page, setPage, totalPages, paginated } = usePagination(entradas, 15);
 
   return (
     <div>
@@ -52,7 +56,7 @@ function AuditoriaContent() {
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin registros de auditoría todavía.</TableCell>
                 </TableRow>
               )}
-              {entradas.map((entrada) => (
+              {paginated.map((entrada) => (
                 <TableRow key={entrada.id}>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {new Date(entrada.fechaHora).toLocaleString("es-PE")}
@@ -70,6 +74,11 @@ function AuditoriaContent() {
             </TableBody>
           </Table>
         </div>
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -15,17 +15,17 @@ export declare class AuditoriaService {
         registroId?: number;
     }): Promise<({
         usuario: {
+            correo: string;
             id: number;
             rol: import("../generated/prisma/enums.js").RolUsuario;
-            correo: string;
         } | null;
     } & {
         id: number;
-        fechaHora: Date;
-        usuarioId: number | null;
         tablaAfectada: string;
         registroId: number;
         accion: AccionAuditoria;
+        fechaHora: Date;
+        usuarioId: number | null;
     })[]>;
 }
 export {};

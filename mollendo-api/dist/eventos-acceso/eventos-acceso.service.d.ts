@@ -46,14 +46,14 @@ export declare class EventosAccesoService {
         };
     } & {
         id: number;
+        fechaHora: Date;
         personaId: number;
-        tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
+        torniqueteId: string | null;
         resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
+        tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
         denegadoPorBaja: boolean;
         denegadoPorAlcohol: boolean;
         denegadoPorDocumentos: boolean;
         denegadoSinIngresoPrevio: boolean;
-        fechaHora: Date;
-        torniqueteId: string | null;
     })[]>;
 }

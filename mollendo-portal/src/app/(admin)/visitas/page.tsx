@@ -12,6 +12,8 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import Pagination from "@/components/tables/Pagination";
+import { usePagination } from "@/lib/usePagination";
 import TextArea from "@/components/form/input/TextArea";
 
 const ESTADO_COLOR: Record<string, "success" | "warning" | "light"> = {
@@ -128,6 +130,8 @@ function VisitasContent() {
     cargar();
   }
 
+  const { page, setPage, totalPages, paginated } = usePagination(solicitudes, 10);
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -160,7 +164,7 @@ function VisitasContent() {
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>No hay solicitudes de visita registradas.</TableCell>
                 </TableRow>
               )}
-              {solicitudes.map((s) => (
+              {paginated.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {s.persona ? `${s.persona.nombres} ${s.persona.apellidos}` : `#${s.personaId}`}
@@ -184,6 +188,11 @@ function VisitasContent() {
             </TableBody>
           </Table>
         </div>
+        {!loading && totalPages > 1 && (
+          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          </div>
+        )}
       </div>
 
       <NuevaSolicitudModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onCreated={cargar} personas={personas} />
