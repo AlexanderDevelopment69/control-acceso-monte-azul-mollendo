@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
-  BoltIcon,
   CalenderIcon,
   DocsIcon,
+  EyeIcon,
   GridIcon,
   GroupIcon,
   HorizontaLDots,
@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
   { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administracion"] },
   { icon: <GroupIcon />, name: "Mi personal", path: "/personal", roles: ["empresa"] },
   { icon: <CalenderIcon />, name: "Solicitudes de visita", path: "/visitas", roles: ["empresa"] },
-  { icon: <BoltIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administracion"] },
+  { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administracion"] },
 ];
 
 const AppSidebar: React.FC = () => {
