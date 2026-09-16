@@ -41,7 +41,7 @@ export default function SignInForm() {
               Iniciar sesión
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Sistema de Control de Acceso del Terminal de Mollendo
+              Control de Acceso · Terminal de Mollendo
             </p>
           </div>
           <form onSubmit={handleSubmit}>

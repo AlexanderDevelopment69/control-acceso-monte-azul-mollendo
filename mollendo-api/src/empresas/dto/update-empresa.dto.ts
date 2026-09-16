@@ -4,6 +4,6 @@ import { CreateEmpresaDto } from './create-empresa.dto.js';
 
 export class UpdateEmpresaDto extends PartialType(CreateEmpresaDto) {
   @IsOptional()
-  @IsIn(['activa', 'inactiva'])
+  @IsIn(['activa', 'inactiva'], { message: 'El estado debe ser "activa" o "inactiva"' })
   estado?: 'activa' | 'inactiva';
 }

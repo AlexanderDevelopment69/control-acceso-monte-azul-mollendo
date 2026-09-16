@@ -12,7 +12,7 @@ export class RecuperarPasswordDto {
     correo;
 }
 __decorate([
-    IsEmail(),
+    IsEmail({}, { message: 'Ingrese un correo válido' }),
     __metadata("design:type", String)
 ], RecuperarPasswordDto.prototype, "correo", void 0);
 //# sourceMappingURL=recuperar-password.dto.js.map

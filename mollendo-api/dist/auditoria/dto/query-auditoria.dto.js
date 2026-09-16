@@ -15,13 +15,13 @@ export class QueryAuditoriaDto {
 }
 __decorate([
     IsOptional(),
-    IsString(),
+    IsString({ message: 'La tabla afectada debe ser texto' }),
     __metadata("design:type", String)
 ], QueryAuditoriaDto.prototype, "tablaAfectada", void 0);
 __decorate([
     IsOptional(),
     Transform(({ value }) => Number(value)),
-    IsInt(),
+    IsInt({ message: 'El ID del registro debe ser un número' }),
     __metadata("design:type", Number)
 ], QueryAuditoriaDto.prototype, "registroId", void 0);
 //# sourceMappingURL=query-auditoria.dto.js.map

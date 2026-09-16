@@ -4,14 +4,14 @@ import { IsDateString, IsInt, IsOptional } from 'class-validator';
 export class QuerySolicitudesVisitaDto {
   @IsOptional()
   @Transform(({ value }) => Number(value))
-  @IsInt()
+  @IsInt({ message: 'El ID de la empresa debe ser un número' })
   empresaId?: number;
 
   @IsOptional()
-  @IsDateString()
+  @IsDateString({}, { message: 'La fecha "desde" no es válida' })
   desde?: string;
 
   @IsOptional()
-  @IsDateString()
+  @IsDateString({}, { message: 'La fecha "hasta" no es válida' })
   hasta?: string;
 }

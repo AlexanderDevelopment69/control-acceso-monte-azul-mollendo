@@ -13,12 +13,12 @@ export class ResetPasswordDto {
     password;
 }
 __decorate([
-    IsString(),
+    IsString({ message: 'El token debe ser texto' }),
     IsNotEmpty({ message: 'El token es obligatorio' }),
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "token", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'La contraseña debe ser texto' }),
     MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' }),
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "password", void 0);

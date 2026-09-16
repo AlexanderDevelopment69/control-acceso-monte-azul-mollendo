@@ -13,12 +13,12 @@ export class TorniqueteComandoDto {
     comando;
 }
 __decorate([
-    IsString(),
+    IsString({ message: 'El identificador del torniquete debe ser texto' }),
     IsNotEmpty({ message: 'El identificador del torniquete es obligatorio' }),
     __metadata("design:type", String)
 ], TorniqueteComandoDto.prototype, "torniqueteId", void 0);
 __decorate([
-    IsIn(['abrir', 'cerrar']),
+    IsIn(['abrir', 'cerrar'], { message: 'El comando debe ser "abrir" o "cerrar"' }),
     __metadata("design:type", String)
 ], TorniqueteComandoDto.prototype, "comando", void 0);
 //# sourceMappingURL=torniquete-comando.dto.js.map

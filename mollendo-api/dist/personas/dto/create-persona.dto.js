@@ -20,36 +20,36 @@ export class CreatePersonaDto {
 }
 __decorate([
     IsOptional(),
-    IsInt(),
+    IsInt({ message: 'El puesto debe ser válido' }),
     __metadata("design:type", Number)
 ], CreatePersonaDto.prototype, "puestoId", void 0);
 __decorate([
-    IsIn(['DNI', 'CE', 'PASAPORTE']),
+    IsIn(['DNI', 'CE', 'PASAPORTE'], { message: 'El tipo de documento debe ser DNI, CE o PASAPORTE' }),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "tipoDocumentoIdentidad", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'El número de documento debe ser texto' }),
     IsNotEmpty({ message: 'El número de documento es obligatorio' }),
-    MaxLength(20),
+    MaxLength(20, { message: 'El número de documento no puede tener más de 20 caracteres' }),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "numeroDocumento", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'Los nombres deben ser texto' }),
     IsNotEmpty({ message: 'Los nombres son obligatorios' }),
-    MaxLength(150),
+    MaxLength(150, { message: 'Los nombres no pueden tener más de 150 caracteres' }),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "nombres", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'Los apellidos deben ser texto' }),
     IsNotEmpty({ message: 'Los apellidos son obligatorios' }),
-    MaxLength(150),
+    MaxLength(150, { message: 'Los apellidos no pueden tener más de 150 caracteres' }),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "apellidos", void 0);
 __decorate([
     Transform(vacioComoIndefinido),
     IsOptional(),
-    IsString(),
-    MaxLength(100),
+    IsString({ message: 'El área debe ser texto' }),
+    MaxLength(100, { message: 'El área no puede tener más de 100 caracteres' }),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "area", void 0);
 //# sourceMappingURL=create-persona.dto.js.map

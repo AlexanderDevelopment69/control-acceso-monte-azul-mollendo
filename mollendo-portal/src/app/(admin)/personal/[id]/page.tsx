@@ -73,7 +73,7 @@ function SubirDocumentoForm({ personaId, tiposDocumento, onSubido }: { personaId
         <Label>Fecha de vencimiento (si aplica)</Label>
         <DatePicker
           id="fecha-vencimiento-documento"
-          placeholder="AAAA-MM-DD"
+          placeholder="DD-MM-AAAA"
           value={fechaVencimiento}
           onChange={setFechaVencimiento}
         />

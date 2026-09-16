@@ -14,18 +14,18 @@ class RequisitoItemDto {
     obligatorio;
 }
 __decorate([
-    IsInt(),
+    IsInt({ message: 'El tipo de documento debe ser válido' }),
     __metadata("design:type", Number)
 ], RequisitoItemDto.prototype, "tipoDocumentoId", void 0);
 __decorate([
-    IsBoolean(),
+    IsBoolean({ message: 'El campo obligatorio debe ser sí o no' }),
     __metadata("design:type", Boolean)
 ], RequisitoItemDto.prototype, "obligatorio", void 0);
 export class SetRequisitosDto {
     requisitos;
 }
 __decorate([
-    IsArray(),
+    IsArray({ message: 'Los requisitos deben ser una lista' }),
     ArrayMinSize(0),
     ValidateNested({ each: true }),
     Type(() => RequisitoItemDto),

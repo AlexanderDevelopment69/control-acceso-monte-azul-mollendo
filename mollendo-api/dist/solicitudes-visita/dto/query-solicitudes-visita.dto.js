@@ -17,17 +17,17 @@ export class QuerySolicitudesVisitaDto {
 __decorate([
     IsOptional(),
     Transform(({ value }) => Number(value)),
-    IsInt(),
+    IsInt({ message: 'El ID de la empresa debe ser un número' }),
     __metadata("design:type", Number)
 ], QuerySolicitudesVisitaDto.prototype, "empresaId", void 0);
 __decorate([
     IsOptional(),
-    IsDateString(),
+    IsDateString({}, { message: 'La fecha "desde" no es válida' }),
     __metadata("design:type", String)
 ], QuerySolicitudesVisitaDto.prototype, "desde", void 0);
 __decorate([
     IsOptional(),
-    IsDateString(),
+    IsDateString({}, { message: 'La fecha "hasta" no es válida' }),
     __metadata("design:type", String)
 ], QuerySolicitudesVisitaDto.prototype, "hasta", void 0);
 //# sourceMappingURL=query-solicitudes-visita.dto.js.map

@@ -30,7 +30,7 @@ export default function AuthLayout({
                   />
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
-                  Sistema de Control de Acceso del Terminal de Mollendo
+                  Control de Acceso · Terminal de Mollendo
                 </p>
               </div>
             </div>

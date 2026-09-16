@@ -17,14 +17,14 @@ export class CreateEmpresaDto {
     telefonoContacto;
 }
 __decorate([
-    IsString(),
+    IsString({ message: 'El RUC debe ser texto' }),
     Length(11, 11, { message: 'El RUC debe tener 11 dígitos' }),
     __metadata("design:type", String)
 ], CreateEmpresaDto.prototype, "ruc", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'La razón social debe ser texto' }),
     IsNotEmpty({ message: 'La razón social es obligatoria' }),
-    MaxLength(200),
+    MaxLength(200, { message: 'La razón social no puede tener más de 200 caracteres' }),
     __metadata("design:type", String)
 ], CreateEmpresaDto.prototype, "razonSocial", void 0);
 __decorate([
@@ -34,8 +34,8 @@ __decorate([
 __decorate([
     Transform(vacioComoIndefinido),
     IsOptional(),
-    IsString(),
-    MaxLength(20),
+    IsString({ message: 'El teléfono debe ser texto' }),
+    MaxLength(20, { message: 'El teléfono no puede tener más de 20 caracteres' }),
     __metadata("design:type", String)
 ], CreateEmpresaDto.prototype, "telefonoContacto", void 0);
 //# sourceMappingURL=create-empresa.dto.js.map

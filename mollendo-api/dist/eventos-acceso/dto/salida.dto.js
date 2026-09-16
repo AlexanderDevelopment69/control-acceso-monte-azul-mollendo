@@ -14,18 +14,18 @@ export class SalidaDto {
     torniqueteId;
 }
 __decorate([
-    IsIn(['DNI', 'CE', 'PASAPORTE']),
+    IsIn(['DNI', 'CE', 'PASAPORTE'], { message: 'El tipo de documento debe ser DNI, CE o PASAPORTE' }),
     __metadata("design:type", String)
 ], SalidaDto.prototype, "tipoDocumentoIdentidad", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'El número de documento debe ser texto' }),
     IsNotEmpty({ message: 'El número de documento es obligatorio' }),
     __metadata("design:type", String)
 ], SalidaDto.prototype, "numeroDocumento", void 0);
 __decorate([
     IsOptional(),
-    IsString(),
-    MaxLength(50),
+    IsString({ message: 'El ID del torniquete debe ser texto' }),
+    MaxLength(50, { message: 'El ID del torniquete no puede tener más de 50 caracteres' }),
     __metadata("design:type", String)
 ], SalidaDto.prototype, "torniqueteId", void 0);
 //# sourceMappingURL=salida.dto.js.map

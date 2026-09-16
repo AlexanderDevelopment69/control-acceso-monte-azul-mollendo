@@ -13,13 +13,15 @@ export class CreatePuestoDto {
     caso;
 }
 __decorate([
-    IsString(),
+    IsString({ message: 'El nombre debe ser texto' }),
     IsNotEmpty({ message: 'El nombre es obligatorio' }),
-    MaxLength(100),
+    MaxLength(100, { message: 'El nombre no puede tener más de 100 caracteres' }),
     __metadata("design:type", String)
 ], CreatePuestoDto.prototype, "nombre", void 0);
 __decorate([
-    IsIn(['visita', 'personal_propio', 'contratista', 'tercero']),
+    IsIn(['visita', 'personal_propio', 'contratista', 'tercero'], {
+        message: 'El caso debe ser "visita", "personal_propio", "contratista" o "tercero"',
+    }),
     __metadata("design:type", String)
 ], CreatePuestoDto.prototype, "caso", void 0);
 //# sourceMappingURL=create-puesto.dto.js.map

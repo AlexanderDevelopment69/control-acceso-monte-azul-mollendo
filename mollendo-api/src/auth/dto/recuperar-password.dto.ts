@@ -1,6 +1,6 @@
 import { IsEmail } from 'class-validator';
 
 export class RecuperarPasswordDto {
-  @IsEmail()
+  @IsEmail({}, { message: 'Ingrese un correo válido' })
   correo!: string;
 }

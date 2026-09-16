@@ -19,41 +19,41 @@ export class UpdateConfiguracionSmtpDto {
     remitente;
 }
 __decorate([
-    IsString(),
+    IsString({ message: 'El host debe ser texto' }),
     IsNotEmpty({ message: 'El host es obligatorio' }),
-    MaxLength(200),
+    MaxLength(200, { message: 'El host no puede tener más de 200 caracteres' }),
     __metadata("design:type", String)
 ], UpdateConfiguracionSmtpDto.prototype, "host", void 0);
 __decorate([
     IsInt({ message: 'El puerto debe ser un número' }),
-    Min(1),
-    Max(65535),
+    Min(1, { message: 'El puerto debe ser mayor a 0' }),
+    Max(65535, { message: 'El puerto no puede ser mayor a 65535' }),
     __metadata("design:type", Number)
 ], UpdateConfiguracionSmtpDto.prototype, "puerto", void 0);
 __decorate([
     IsOptional(),
-    IsBoolean(),
+    IsBoolean({ message: 'La conexión segura debe ser sí o no' }),
     __metadata("design:type", Boolean)
 ], UpdateConfiguracionSmtpDto.prototype, "seguro", void 0);
 __decorate([
     Transform(vacioComoIndefinido),
     IsOptional(),
-    IsString(),
-    MaxLength(200),
+    IsString({ message: 'El usuario debe ser texto' }),
+    MaxLength(200, { message: 'El usuario no puede tener más de 200 caracteres' }),
     __metadata("design:type", String)
 ], UpdateConfiguracionSmtpDto.prototype, "usuario", void 0);
 __decorate([
     Transform(vacioComoIndefinido),
     IsOptional(),
-    IsString(),
-    MaxLength(255),
+    IsString({ message: 'La contraseña debe ser texto' }),
+    MaxLength(255, { message: 'La contraseña no puede tener más de 255 caracteres' }),
     __metadata("design:type", String)
 ], UpdateConfiguracionSmtpDto.prototype, "password", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'El remitente debe ser texto' }),
     IsNotEmpty({ message: 'El remitente es obligatorio' }),
     IsEmail({}, { message: 'El remitente debe ser un correo válido' }),
-    MaxLength(200),
+    MaxLength(200, { message: 'El remitente no puede tener más de 200 caracteres' }),
     __metadata("design:type", String)
 ], UpdateConfiguracionSmtpDto.prototype, "remitente", void 0);
 //# sourceMappingURL=update-configuracion-smtp.dto.js.map

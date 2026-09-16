@@ -7,18 +7,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 export class LoginDto {
     correo;
     password;
 }
 __decorate([
-    IsEmail(),
+    IsEmail({}, { message: 'Ingrese un correo válido' }),
     __metadata("design:type", String)
 ], LoginDto.prototype, "correo", void 0);
 __decorate([
-    IsString(),
-    MinLength(1),
+    IsString({ message: 'La contraseña debe ser texto' }),
+    IsNotEmpty({ message: 'La contraseña es obligatoria' }),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
 //# sourceMappingURL=login.dto.js.map

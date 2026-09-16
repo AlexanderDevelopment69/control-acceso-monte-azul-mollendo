@@ -12,7 +12,7 @@ export class UpdateEstadoDocumentoDto {
     estadoAprobacion;
 }
 __decorate([
-    IsIn(['aprobado', 'rechazado']),
+    IsIn(['aprobado', 'rechazado'], { message: 'El estado debe ser "aprobado" o "rechazado"' }),
     __metadata("design:type", String)
 ], UpdateEstadoDocumentoDto.prototype, "estadoAprobacion", void 0);
 //# sourceMappingURL=update-estado-documento.dto.js.map

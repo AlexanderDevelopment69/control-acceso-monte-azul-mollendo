@@ -14,12 +14,12 @@ export class QueryEmpresasDto {
 }
 __decorate([
     IsOptional(),
-    IsIn(['activa', 'inactiva']),
+    IsIn(['activa', 'inactiva'], { message: 'El estado debe ser "activa" o "inactiva"' }),
     __metadata("design:type", String)
 ], QueryEmpresasDto.prototype, "estado", void 0);
 __decorate([
     IsOptional(),
-    IsString(),
+    IsString({ message: 'La búsqueda debe ser texto' }),
     __metadata("design:type", String)
 ], QueryEmpresasDto.prototype, "busqueda", void 0);
 //# sourceMappingURL=query-empresas.dto.js.map

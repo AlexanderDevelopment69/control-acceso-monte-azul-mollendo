@@ -12,7 +12,7 @@ export class UpdateEstadoPersonaDto {
     estado;
 }
 __decorate([
-    IsIn(['activo', 'inactivo']),
+    IsIn(['activo', 'inactivo'], { message: 'El estado debe ser "activo" o "inactivo"' }),
     __metadata("design:type", String)
 ], UpdateEstadoPersonaDto.prototype, "estado", void 0);
 //# sourceMappingURL=update-estado-persona.dto.js.map

@@ -14,12 +14,14 @@ export class UpdateSolicitudVisitaDto {
 }
 __decorate([
     IsOptional(),
-    IsDateString(),
+    IsDateString({}, { message: 'La fecha y hora programada no es válida' }),
     __metadata("design:type", String)
 ], UpdateSolicitudVisitaDto.prototype, "fechaHoraProgramada", void 0);
 __decorate([
     IsOptional(),
-    IsIn(['programada', 'completada', 'cancelada']),
+    IsIn(['programada', 'completada', 'cancelada'], {
+        message: 'El estado debe ser "programada", "completada" o "cancelada"',
+    }),
     __metadata("design:type", String)
 ], UpdateSolicitudVisitaDto.prototype, "estado", void 0);
 //# sourceMappingURL=update-solicitud-visita.dto.js.map

@@ -4,18 +4,18 @@ import { IsDateString, IsIn, IsInt, IsOptional } from 'class-validator';
 export class QueryEventosAccesoDto {
   @IsOptional()
   @Transform(({ value }) => Number(value))
-  @IsInt()
+  @IsInt({ message: 'El ID de la persona debe ser un número' })
   personaId?: number;
 
   @IsOptional()
-  @IsIn(['autorizado', 'denegado'])
+  @IsIn(['autorizado', 'denegado'], { message: 'El resultado debe ser "autorizado" o "denegado"' })
   resultado?: 'autorizado' | 'denegado';
 
   @IsOptional()
-  @IsDateString()
+  @IsDateString({}, { message: 'La fecha "desde" no es válida' })
   desde?: string;
 
   @IsOptional()
-  @IsDateString()
+  @IsDateString({}, { message: 'La fecha "hasta" no es válida' })
   hasta?: string;
 }

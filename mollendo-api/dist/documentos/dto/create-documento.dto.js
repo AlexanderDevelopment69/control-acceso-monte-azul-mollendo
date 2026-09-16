@@ -16,17 +16,17 @@ export class CreateDocumentoDto {
 }
 __decorate([
     Transform(({ value }) => Number(value)),
-    IsInt(),
+    IsInt({ message: 'El tipo de documento es obligatorio' }),
     __metadata("design:type", Number)
 ], CreateDocumentoDto.prototype, "tipoDocumentoId", void 0);
 __decorate([
     IsOptional(),
-    IsDateString(),
+    IsDateString({}, { message: 'La fecha de emisión no es válida' }),
     __metadata("design:type", String)
 ], CreateDocumentoDto.prototype, "fechaEmision", void 0);
 __decorate([
     IsOptional(),
-    IsDateString(),
+    IsDateString({}, { message: 'La fecha de vencimiento no es válida' }),
     __metadata("design:type", String)
 ], CreateDocumentoDto.prototype, "fechaVencimiento", void 0);
 //# sourceMappingURL=create-documento.dto.js.map

@@ -15,23 +15,23 @@ export class CreateSolicitudVisitaDto {
     fechaHoraProgramada;
 }
 __decorate([
-    IsInt(),
+    IsInt({ message: 'La persona es obligatoria' }),
     __metadata("design:type", Number)
 ], CreateSolicitudVisitaDto.prototype, "personaId", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'La persona visitada debe ser texto' }),
     IsNotEmpty({ message: 'Indique a quién visita' }),
-    MaxLength(150),
+    MaxLength(150, { message: 'La persona visitada no puede tener más de 150 caracteres' }),
     __metadata("design:type", String)
 ], CreateSolicitudVisitaDto.prototype, "personaVisitada", void 0);
 __decorate([
-    IsString(),
+    IsString({ message: 'El motivo debe ser texto' }),
     IsNotEmpty({ message: 'El motivo es obligatorio' }),
-    MaxLength(300),
+    MaxLength(300, { message: 'El motivo no puede tener más de 300 caracteres' }),
     __metadata("design:type", String)
 ], CreateSolicitudVisitaDto.prototype, "motivo", void 0);
 __decorate([
-    IsDateString(),
+    IsDateString({}, { message: 'La fecha y hora programada no es válida' }),
     __metadata("design:type", String)
 ], CreateSolicitudVisitaDto.prototype, "fechaHoraProgramada", void 0);
 //# sourceMappingURL=create-solicitud-visita.dto.js.map

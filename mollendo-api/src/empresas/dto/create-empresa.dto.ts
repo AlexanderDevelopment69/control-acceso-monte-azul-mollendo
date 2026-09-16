@@ -6,13 +6,13 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString, Length, MaxLength } from 'cl
 const vacioComoIndefinido = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
 
 export class CreateEmpresaDto {
-  @IsString()
+  @IsString({ message: 'El RUC debe ser texto' })
   @Length(11, 11, { message: 'El RUC debe tener 11 dígitos' })
   ruc!: string;
 
-  @IsString()
+  @IsString({ message: 'La razón social debe ser texto' })
   @IsNotEmpty({ message: 'La razón social es obligatoria' })
-  @MaxLength(200)
+  @MaxLength(200, { message: 'La razón social no puede tener más de 200 caracteres' })
   razonSocial!: string;
 
   @IsEmail({}, { message: 'Ingrese un correo válido' })
@@ -20,7 +20,7 @@ export class CreateEmpresaDto {
 
   @Transform(vacioComoIndefinido)
   @IsOptional()
-  @IsString()
-  @MaxLength(20)
+  @IsString({ message: 'El teléfono debe ser texto' })
+  @MaxLength(20, { message: 'El teléfono no puede tener más de 20 caracteres' })
   telefonoContacto?: string;
 }

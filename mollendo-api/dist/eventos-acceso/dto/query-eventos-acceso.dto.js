@@ -18,22 +18,22 @@ export class QueryEventosAccesoDto {
 __decorate([
     IsOptional(),
     Transform(({ value }) => Number(value)),
-    IsInt(),
+    IsInt({ message: 'El ID de la persona debe ser un número' }),
     __metadata("design:type", Number)
 ], QueryEventosAccesoDto.prototype, "personaId", void 0);
 __decorate([
     IsOptional(),
-    IsIn(['autorizado', 'denegado']),
+    IsIn(['autorizado', 'denegado'], { message: 'El resultado debe ser "autorizado" o "denegado"' }),
     __metadata("design:type", String)
 ], QueryEventosAccesoDto.prototype, "resultado", void 0);
 __decorate([
     IsOptional(),
-    IsDateString(),
+    IsDateString({}, { message: 'La fecha "desde" no es válida' }),
     __metadata("design:type", String)
 ], QueryEventosAccesoDto.prototype, "desde", void 0);
 __decorate([
     IsOptional(),
-    IsDateString(),
+    IsDateString({}, { message: 'La fecha "hasta" no es válida' }),
     __metadata("design:type", String)
 ], QueryEventosAccesoDto.prototype, "hasta", void 0);
 //# sourceMappingURL=query-eventos-acceso.dto.js.map

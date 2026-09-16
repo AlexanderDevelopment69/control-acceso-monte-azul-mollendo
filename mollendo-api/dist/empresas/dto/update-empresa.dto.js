@@ -15,7 +15,7 @@ export class UpdateEmpresaDto extends PartialType(CreateEmpresaDto) {
 }
 __decorate([
     IsOptional(),
-    IsIn(['activa', 'inactiva']),
+    IsIn(['activa', 'inactiva'], { message: 'El estado debe ser "activa" o "inactiva"' }),
     __metadata("design:type", String)
 ], UpdateEmpresaDto.prototype, "estado", void 0);
 //# sourceMappingURL=update-empresa.dto.js.map

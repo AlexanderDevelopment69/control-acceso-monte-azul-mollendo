@@ -3,11 +3,11 @@ import { Transform } from 'class-transformer';
 
 export class QueryAuditoriaDto {
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'La tabla afectada debe ser texto' })
   tablaAfectada?: string;
 
   @IsOptional()
   @Transform(({ value }) => Number(value))
-  @IsInt()
+  @IsInt({ message: 'El ID del registro debe ser un número' })
   registroId?: number;
 }

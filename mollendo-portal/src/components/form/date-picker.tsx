@@ -10,6 +10,9 @@ const MESES = [
 ];
 const DIAS_SEMANA = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"];
 
+// El valor interno (lo que se manda por `onChange` y se recibe por `value`)
+// siempre es "YYYY-MM-DD" — es lo que espera el backend. Lo que ve y escribe
+// la persona en el campo es "DD-MM-YYYY", que es el formato pedido.
 function formatearFecha(fecha: Date): string {
   const y = fecha.getFullYear();
   const m = String(fecha.getMonth() + 1).padStart(2, "0");
@@ -24,6 +27,22 @@ function parsearFecha(texto: string): Date | null {
   const fecha = new Date(y, m - 1, d);
   // new Date() "corrige" fechas imposibles (ej. 30 de febrero pasa a marzo)
   // en vez de fallar — hay que confirmar que lo que se armó es lo que se pidió.
+  if (fecha.getFullYear() !== y || fecha.getMonth() !== m - 1 || fecha.getDate() !== d) return null;
+  return fecha;
+}
+
+function formatearVisible(fecha: Date): string {
+  const d = String(fecha.getDate()).padStart(2, "0");
+  const m = String(fecha.getMonth() + 1).padStart(2, "0");
+  const y = fecha.getFullYear();
+  return `${d}-${m}-${y}`;
+}
+
+function parsearVisible(texto: string): Date | null {
+  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(texto.trim());
+  if (!match) return null;
+  const [, d, m, y] = match.map(Number) as unknown as [never, number, number, number];
+  const fecha = new Date(y, m - 1, d);
   if (fecha.getFullYear() !== y || fecha.getMonth() !== m - 1 || fecha.getDate() !== d) return null;
   return fecha;
 }
@@ -56,7 +75,10 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
   const [abierto, setAbierto] = useState(false);
   const [vista, setVista] = useState<"dias" | "meses">("dias");
   const [mesVisible, setMesVisible] = useState<Date>(() => parsearFecha(value) ?? new Date());
-  const [texto, setTexto] = useState(value);
+  const [texto, setTexto] = useState(() => {
+    const fecha = parsearFecha(value);
+    return fecha ? formatearVisible(fecha) : "";
+  });
   // Si `value` cambia desde afuera (el padre lo resetea, por ejemplo), hay
   // que reflejarlo en el texto — pero ajustar el estado durante el render
   // (patrón recomendado por React para esto) en vez de un useEffect, para no
@@ -65,8 +87,8 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
   const [valorPrevio, setValorPrevio] = useState(value);
   if (value !== valorPrevio) {
     setValorPrevio(value);
-    setTexto(value);
     const fecha = parsearFecha(value);
+    setTexto(fecha ? formatearVisible(fecha) : "");
     if (fecha) setMesVisible(fecha);
   }
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -108,9 +130,9 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
       onChange("");
       return;
     }
-    const fecha = parsearFecha(nuevoTexto);
+    const fecha = parsearVisible(nuevoTexto);
     if (fecha) {
-      onChange(nuevoTexto);
+      onChange(formatearFecha(fecha));
       setMesVisible(fecha);
     }
   }
@@ -118,7 +140,11 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
   function handleInputBlur() {
     // Si lo que quedó escrito no es una fecha válida, se descarta y vuelve
     // a mostrar el último valor válido — no se deja texto suelto sin sentido.
-    if (texto !== "" && !parsearFecha(texto)) setTexto(value);
+    if (texto === "") return;
+    if (!parsearVisible(texto)) {
+      const fecha = parsearFecha(value);
+      setTexto(fecha ? formatearVisible(fecha) : "");
+    }
   }
 
   const seleccionada = parsearFecha(value);

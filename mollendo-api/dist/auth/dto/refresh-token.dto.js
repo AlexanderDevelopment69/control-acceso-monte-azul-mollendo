@@ -12,7 +12,7 @@ export class RefreshTokenDto {
     refreshToken;
 }
 __decorate([
-    IsString(),
+    IsString({ message: 'El refresh token debe ser texto' }),
     IsNotEmpty({ message: 'El refresh token es obligatorio' }),
     __metadata("design:type", String)
 ], RefreshTokenDto.prototype, "refreshToken", void 0);
