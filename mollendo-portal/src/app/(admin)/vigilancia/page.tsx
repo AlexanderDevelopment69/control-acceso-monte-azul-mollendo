@@ -8,7 +8,8 @@ import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import type { EventoAcceso, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
-import Pagination from "@/components/tables/Pagination";
+import { TableFooter } from "@/components/tables/TableFooter";
+import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
@@ -93,7 +94,14 @@ function VigilanciaContent() {
     return () => clearInterval(interval);
   }, []);
 
-  const { page, setPage, totalPages, paginated } = usePagination(eventos, 10);
+  const [busqueda, setBusqueda] = useState("");
+  const filtrados = eventos.filter((ev) => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return true;
+    const nombre = ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : "";
+    return nombre.toLowerCase().includes(q);
+  });
+  const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtrados, 10);
 
   return (
     <div>
@@ -126,6 +134,10 @@ function VigilanciaContent() {
         </div>
       )}
 
+      <div className="mb-4">
+        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre…" />
+      </div>
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="overflow-x-auto">
           <Table>
@@ -149,6 +161,11 @@ function VigilanciaContent() {
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin eventos registrados todavía.</TableCell>
                 </TableRow>
               )}
+              {!loading && eventos.length > 0 && filtrados.length === 0 && (
+                <TableRow>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin resultados para esa búsqueda.</TableCell>
+                </TableRow>
+              )}
               {paginated.map((ev) => (
                 <TableRow key={ev.id}>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
@@ -169,11 +186,7 @@ function VigilanciaContent() {
             </TableBody>
           </Table>
         </div>
-        {!loading && totalPages > 1 && (
-          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        )}
+        {!loading && <TableFooter from={from} to={to} total={total} page={page} totalPages={totalPages} onPageChange={setPage} />}
       </div>
     </div>
   );

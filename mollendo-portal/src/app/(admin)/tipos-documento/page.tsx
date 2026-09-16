@@ -10,7 +10,8 @@ import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
-import Pagination from "@/components/tables/Pagination";
+import { TableFooter } from "@/components/tables/TableFooter";
+import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
 
 const VALIDACION_LABEL: Record<string, string> = {
@@ -55,7 +56,9 @@ function TiposDocumentoContent() {
     }
   }
 
-  const { page, setPage, totalPages, paginated } = usePagination(tipos, 10);
+  const [busqueda, setBusqueda] = useState("");
+  const filtrados = tipos.filter((t) => !busqueda.trim() || t.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()));
+  const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtrados, 10);
 
   return (
     <div>
@@ -89,6 +92,10 @@ function TiposDocumentoContent() {
         </form>
       </div>
 
+      <div className="mb-4">
+        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre…" />
+      </div>
+
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <Table>
           <TableHeader className="border-b border-gray-100 dark:border-gray-800">
@@ -108,6 +115,11 @@ function TiposDocumentoContent() {
                 <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={2}>No hay tipos de documento registrados.</TableCell>
               </TableRow>
             )}
+            {!loading && tipos.length > 0 && filtrados.length === 0 && (
+              <TableRow>
+                <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={2}>Sin resultados para esa búsqueda.</TableCell>
+              </TableRow>
+            )}
             {paginated.map((tipo) => (
               <TableRow key={tipo.id}>
                 <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{tipo.nombre}</TableCell>
@@ -118,11 +130,7 @@ function TiposDocumentoContent() {
             ))}
           </TableBody>
         </Table>
-        {!loading && totalPages > 1 && (
-          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        )}
+        {!loading && <TableFooter from={from} to={to} total={total} page={page} totalPages={totalPages} onPageChange={setPage} />}
       </div>
     </div>
   );

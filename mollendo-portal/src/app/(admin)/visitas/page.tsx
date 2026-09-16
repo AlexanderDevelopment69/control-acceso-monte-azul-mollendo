@@ -12,7 +12,8 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
-import Pagination from "@/components/tables/Pagination";
+import { TableFooter } from "@/components/tables/TableFooter";
+import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
 import TextArea from "@/components/form/input/TextArea";
 
@@ -130,7 +131,14 @@ function VisitasContent() {
     cargar();
   }
 
-  const { page, setPage, totalPages, paginated } = usePagination(solicitudes, 10);
+  const [busqueda, setBusqueda] = useState("");
+  const filtradas = solicitudes.filter((s) => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return true;
+    const nombreVisita = s.persona ? `${s.persona.nombres} ${s.persona.apellidos}` : "";
+    return nombreVisita.toLowerCase().includes(q) || s.personaVisitada.toLowerCase().includes(q);
+  });
+  const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtradas, 10);
 
   return (
     <div>
@@ -139,6 +147,10 @@ function VisitasContent() {
         <Button size="sm" onClick={() => setModalOpen(true)}>
           + Nueva solicitud
         </Button>
+      </div>
+
+      <div className="mb-4">
+        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre…" />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -162,6 +174,11 @@ function VisitasContent() {
               {!loading && solicitudes.length === 0 && (
                 <TableRow>
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>No hay solicitudes de visita registradas.</TableCell>
+                </TableRow>
+              )}
+              {!loading && solicitudes.length > 0 && filtradas.length === 0 && (
+                <TableRow>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin resultados para esa búsqueda.</TableCell>
                 </TableRow>
               )}
               {paginated.map((s) => (
@@ -188,11 +205,7 @@ function VisitasContent() {
             </TableBody>
           </Table>
         </div>
-        {!loading && totalPages > 1 && (
-          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        )}
+        {!loading && <TableFooter from={from} to={to} total={total} page={page} totalPages={totalPages} onPageChange={setPage} />}
       </div>
 
       <NuevaSolicitudModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onCreated={cargar} personas={personas} />

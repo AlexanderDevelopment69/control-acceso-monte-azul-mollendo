@@ -13,7 +13,8 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Checkbox from "@/components/form/input/Checkbox";
-import Pagination from "@/components/tables/Pagination";
+import { TableFooter } from "@/components/tables/TableFooter";
+import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
 
 const CASO_LABEL: Record<string, string> = {
@@ -170,7 +171,9 @@ function PuestosContent() {
     cargar();
   }, []);
 
-  const { page, setPage, totalPages, paginated } = usePagination(puestos, 10);
+  const [busqueda, setBusqueda] = useState("");
+  const filtrados = puestos.filter((p) => !busqueda.trim() || p.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()));
+  const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtrados, 10);
 
   return (
     <div>
@@ -179,6 +182,10 @@ function PuestosContent() {
         <Button size="sm" onClick={() => setModalOpen(true)}>
           + Nuevo puesto
         </Button>
+      </div>
+
+      <div className="mb-4">
+        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre…" />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -203,6 +210,11 @@ function PuestosContent() {
                 </TableCell>
               </TableRow>
             )}
+            {!loading && puestos.length > 0 && filtrados.length === 0 && (
+              <TableRow>
+                <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={3}>Sin resultados para esa búsqueda.</TableCell>
+              </TableRow>
+            )}
             {paginated.map((puesto) => (
               <TableRow key={puesto.id}>
                 <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{puesto.nombre}</TableCell>
@@ -218,11 +230,7 @@ function PuestosContent() {
             ))}
           </TableBody>
         </Table>
-        {!loading && totalPages > 1 && (
-          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        )}
+        {!loading && <TableFooter from={from} to={to} total={total} page={page} totalPages={totalPages} onPageChange={setPage} />}
       </div>
 
       <NuevoPuestoModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onCreated={cargar} />

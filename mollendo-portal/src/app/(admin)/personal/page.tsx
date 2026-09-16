@@ -13,7 +13,8 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
-import Pagination from "@/components/tables/Pagination";
+import { TableFooter } from "@/components/tables/TableFooter";
+import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
 
 function NuevaPersonaModal({
@@ -141,7 +142,17 @@ function PersonalContent() {
     cargar();
   }, []);
 
-  const { page, setPage, totalPages, paginated } = usePagination(personas, 10);
+  const [busqueda, setBusqueda] = useState("");
+  const filtradas = personas.filter((p) => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      p.nombres.toLowerCase().includes(q) ||
+      p.apellidos.toLowerCase().includes(q) ||
+      p.numeroDocumento.includes(q)
+    );
+  });
+  const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtradas, 10);
 
   return (
     <div>
@@ -150,6 +161,10 @@ function PersonalContent() {
         <Button size="sm" onClick={() => setModalOpen(true)}>
           + Nuevo
         </Button>
+      </div>
+
+      <div className="mb-4">
+        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre o documento…" />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -173,6 +188,11 @@ function PersonalContent() {
               {!loading && personas.length === 0 && (
                 <TableRow>
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Todavía no ha registrado personal.</TableCell>
+                </TableRow>
+              )}
+              {!loading && personas.length > 0 && filtradas.length === 0 && (
+                <TableRow>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin resultados para esa búsqueda.</TableCell>
                 </TableRow>
               )}
               {paginated.map((persona) => (
@@ -199,11 +219,7 @@ function PersonalContent() {
             </TableBody>
           </Table>
         </div>
-        {!loading && totalPages > 1 && (
-          <div className="flex justify-center border-t border-gray-100 px-5 py-4 dark:border-gray-800">
-            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        )}
+        {!loading && <TableFooter from={from} to={to} total={total} page={page} totalPages={totalPages} onPageChange={setPage} />}
       </div>
 
       <NuevaPersonaModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onCreated={cargar} puestos={puestos} />
