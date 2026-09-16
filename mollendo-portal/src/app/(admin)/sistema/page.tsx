@@ -5,6 +5,7 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
 import type { EstadoSistema } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, LockIcon, MailIcon } from "@/icons";
@@ -335,9 +336,9 @@ function SistemaContent() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
+        <ErrorBanner className="mb-6">
           No se pudo contactar al backend — verifica que mollendo-api esté corriendo.
-        </div>
+        </ErrorBanner>
       )}
 
       <div className="mb-6 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">

@@ -7,7 +7,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsEmail, IsOptional, IsString, Length, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Length, MaxLength } from 'class-validator';
+const vacioComoIndefinido = ({ value }) => (value === '' ? undefined : value);
 export class CreateEmpresaDto {
     ruc;
     razonSocial;
@@ -21,14 +23,16 @@ __decorate([
 ], CreateEmpresaDto.prototype, "ruc", void 0);
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'La razón social es obligatoria' }),
     MaxLength(200),
     __metadata("design:type", String)
 ], CreateEmpresaDto.prototype, "razonSocial", void 0);
 __decorate([
-    IsEmail(),
+    IsEmail({}, { message: 'Ingrese un correo válido' }),
     __metadata("design:type", String)
 ], CreateEmpresaDto.prototype, "correoContacto", void 0);
 __decorate([
+    Transform(vacioComoIndefinido),
     IsOptional(),
     IsString(),
     MaxLength(20),

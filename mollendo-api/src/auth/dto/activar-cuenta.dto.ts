@@ -1,7 +1,8 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class ActivarCuentaDto {
   @IsString()
+  @IsNotEmpty({ message: 'El token es obligatorio' })
   token!: string;
 
   @IsString()

@@ -7,7 +7,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsIn, IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+const vacioComoIndefinido = ({ value }) => (value === '' ? undefined : value);
 export class CreatePersonaDto {
     puestoId;
     tipoDocumentoIdentidad;
@@ -27,20 +29,24 @@ __decorate([
 ], CreatePersonaDto.prototype, "tipoDocumentoIdentidad", void 0);
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'El número de documento es obligatorio' }),
     MaxLength(20),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "numeroDocumento", void 0);
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'Los nombres son obligatorios' }),
     MaxLength(150),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "nombres", void 0);
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'Los apellidos son obligatorios' }),
     MaxLength(150),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "apellidos", void 0);
 __decorate([
+    Transform(vacioComoIndefinido),
     IsOptional(),
     IsString(),
     MaxLength(100),

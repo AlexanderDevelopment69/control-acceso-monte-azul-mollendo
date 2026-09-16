@@ -13,6 +13,7 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Checkbox from "@/components/form/input/Checkbox";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
@@ -121,9 +122,7 @@ function NuevoPuestoModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onC
       <h2 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90">Nuevo puesto</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
-            {error}
-          </div>
+          <ErrorBanner>{error}</ErrorBanner>
         )}
         <div>
           <Label>Nombre</Label>

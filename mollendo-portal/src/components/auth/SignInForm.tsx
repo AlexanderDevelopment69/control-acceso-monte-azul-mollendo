@@ -3,6 +3,7 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { EyeCloseIcon, EyeIcon } from "@/icons";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ApiError } from "@/lib/api/client";
 import Link from "next/link";
@@ -47,9 +48,7 @@ export default function SignInForm() {
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               {error && (
-                <div className="rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
-                  {error}
-                </div>
+                <ErrorBanner>{error}</ErrorBanner>
               )}
               <div>
                 <Label>

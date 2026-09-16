@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsDateString, IsInt, IsString, MaxLength } from 'class-validator';
+import { IsDateString, IsInt, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 export class CreateSolicitudVisitaDto {
     personaId;
     personaVisitada;
@@ -20,11 +20,13 @@ __decorate([
 ], CreateSolicitudVisitaDto.prototype, "personaId", void 0);
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'Indique a quién visita' }),
     MaxLength(150),
     __metadata("design:type", String)
 ], CreateSolicitudVisitaDto.prototype, "personaVisitada", void 0);
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'El motivo es obligatorio' }),
     MaxLength(300),
     __metadata("design:type", String)
 ], CreateSolicitudVisitaDto.prototype, "motivo", void 0);

@@ -10,6 +10,7 @@ import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
@@ -70,11 +71,9 @@ function TiposDocumentoContent() {
 
       <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
         <h2 className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">Agregar tipo de documento</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-end">
           {error && (
-            <div className="w-full rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
-              {error}
-            </div>
+            <ErrorBanner className="w-full">{error}</ErrorBanner>
           )}
           <div className="flex-1">
             <Label>Nombre</Label>

@@ -14,6 +14,7 @@ import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
 import Input from "@/components/form/input/InputField";
 import FileInput from "@/components/form/input/FileInput";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { usePagination } from "@/lib/usePagination";
 
@@ -56,11 +57,9 @@ function SubirDocumentoForm({ personaId, tiposDocumento, onSubido }: { personaId
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+    <form onSubmit={handleSubmit} className="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-end">
       {error && (
-        <div className="w-full rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
-          {error}
-        </div>
+        <ErrorBanner className="w-full">{error}</ErrorBanner>
       )}
       <div className="flex-1">
         <Label>Tipo de documento</Label>

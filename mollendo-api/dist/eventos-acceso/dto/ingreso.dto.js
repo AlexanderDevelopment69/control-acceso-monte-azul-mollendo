@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 export class IngresoDto {
     tipoDocumentoIdentidad;
     numeroDocumento;
@@ -20,6 +20,7 @@ __decorate([
 ], IngresoDto.prototype, "tipoDocumentoIdentidad", void 0);
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'El número de documento es obligatorio' }),
     __metadata("design:type", String)
 ], IngresoDto.prototype, "numeroDocumento", void 0);
 __decorate([

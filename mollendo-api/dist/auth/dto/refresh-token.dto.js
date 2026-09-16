@@ -7,12 +7,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 export class RefreshTokenDto {
     refreshToken;
 }
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'El refresh token es obligatorio' }),
     __metadata("design:type", String)
 ], RefreshTokenDto.prototype, "refreshToken", void 0);
 //# sourceMappingURL=refresh-token.dto.js.map

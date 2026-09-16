@@ -7,13 +7,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 export class ActivarCuentaDto {
     token;
     password;
 }
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'El token es obligatorio' }),
     __metadata("design:type", String)
 ], ActivarCuentaDto.prototype, "token", void 0);
 __decorate([

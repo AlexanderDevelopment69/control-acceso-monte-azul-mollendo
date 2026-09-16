@@ -11,6 +11,7 @@ import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
@@ -47,11 +48,7 @@ function NuevaEmpresaModal({ isOpen, onClose, onCreated }: { isOpen: boolean; on
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-md p-6">
       <h2 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90">Nueva empresa</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
-            {error}
-          </div>
-        )}
+        {error && <ErrorBanner>{error}</ErrorBanner>}
         <div>
           <Label>RUC</Label>
           <Input defaultValue={ruc} onChange={(e) => setRuc(e.target.value)} placeholder="20123456789" />

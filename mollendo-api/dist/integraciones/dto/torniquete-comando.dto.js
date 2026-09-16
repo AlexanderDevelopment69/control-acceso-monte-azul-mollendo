@@ -7,13 +7,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsIn, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsString } from 'class-validator';
 export class TorniqueteComandoDto {
     torniqueteId;
     comando;
 }
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'El identificador del torniquete es obligatorio' }),
     __metadata("design:type", String)
 ], TorniqueteComandoDto.prototype, "torniqueteId", void 0);
 __decorate([

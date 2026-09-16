@@ -7,13 +7,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsIn, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 export class CreateTipoDocumentoDto {
     nombre;
     tipoValidacion;
 }
 __decorate([
     IsString(),
+    IsNotEmpty({ message: 'El nombre es obligatorio' }),
     MaxLength(100),
     __metadata("design:type", String)
 ], CreateTipoDocumentoDto.prototype, "nombre", void 0);
