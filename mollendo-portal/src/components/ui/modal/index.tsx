@@ -49,13 +49,26 @@ export const Modal: React.FC<ModalProps> = ({
   }, [isOpen]);
 
   // Entra con una transición suave en vez de aparecer de golpe: se monta oculto
-  // y un frame después pasa a visible, para que la transición CSS tenga un
-  // punto de partida del que animar.
+  // y pasa a visible en el SIGUIENTE frame, no en el mismo. Un solo
+  // requestAnimationFrame no lo garantiza (el navegador puede pintar el
+  // cambio a "oculto" y el cambio a "visible" en el mismo frame, sin nada de
+  // qué animar) — con dos anidados forzamos que el estado oculto se pinte de
+  // verdad antes de pasar al visible.
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => setVisible(isOpen));
-    return () => cancelAnimationFrame(id);
+    if (!isOpen) {
+      const id = requestAnimationFrame(() => setVisible(false));
+      return () => cancelAnimationFrame(id);
+    }
+    let innerId = 0;
+    const outerId = requestAnimationFrame(() => {
+      innerId = requestAnimationFrame(() => setVisible(true));
+    });
+    return () => {
+      cancelAnimationFrame(outerId);
+      cancelAnimationFrame(innerId);
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -68,13 +81,13 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
       {!isFullscreen && (
         <div
-          className={`fixed inset-0 h-full w-full bg-gray-400/50 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+          className={`fixed inset-0 h-full w-full bg-gray-400/30 transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"}`}
           onClick={onClose}
         ></div>
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses} transition-all duration-200 ${visible ? "opacity-100 scale-100" : "opacity-0 scale-95"} ${className}`}
+        className={`${contentClasses} transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
