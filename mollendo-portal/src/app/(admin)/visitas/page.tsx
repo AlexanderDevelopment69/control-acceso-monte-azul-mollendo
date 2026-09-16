@@ -56,7 +56,6 @@ function NuevaSolicitudModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     if (!personaId) {
       setError("Seleccione a la persona que visita");
       return;

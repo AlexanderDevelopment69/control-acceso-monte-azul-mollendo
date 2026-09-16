@@ -38,7 +38,6 @@ function NuevaEmpresaModal({ isOpen, onClose, onCreated }: { isOpen: boolean; on
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       await empresasApi.create({ ruc, razonSocial, correoContacto, telefonoContacto: telefonoContacto || undefined });

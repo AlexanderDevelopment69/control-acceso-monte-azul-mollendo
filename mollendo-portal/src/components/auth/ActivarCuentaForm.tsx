@@ -22,7 +22,6 @@ export default function ActivarCuentaForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
 
     if (!token) {
       setError("El enlace de activación no es válido — falta el token");

@@ -33,7 +33,6 @@ function SubirDocumentoForm({ personaId, tiposDocumento, onSubido }: { personaId
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     if (!archivo || !tipoDocumentoId) {
       setError("Seleccione el tipo de documento y el archivo");
       return;
@@ -77,7 +76,7 @@ function SubirDocumentoForm({ personaId, tiposDocumento, onSubido }: { personaId
         <Label>Archivo</Label>
         <FileInput onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
       </div>
-      <Button disabled={loading}>{loading ? "Subiendo…" : "Subir documento"}</Button>
+      <Button disabled={loading} className="min-w-[152px] shrink-0">{loading ? "Subiendo…" : "Subir documento"}</Button>
     </form>
   );
 }

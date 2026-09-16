@@ -45,7 +45,6 @@ function TiposDocumentoContent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setCreando(true);
     try {
       await tiposDocumentoApi.create({ nombre, tipoValidacion });
@@ -91,7 +90,7 @@ function TiposDocumentoContent() {
               ]}
             />
           </div>
-          <Button disabled={creando}>{creando ? "Agregando…" : "Agregar"}</Button>
+          <Button disabled={creando} className="min-w-[132px] shrink-0">{creando ? "Agregando…" : "Agregar"}</Button>
         </form>
       </div>
 

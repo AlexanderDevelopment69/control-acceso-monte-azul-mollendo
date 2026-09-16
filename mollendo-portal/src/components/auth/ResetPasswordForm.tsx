@@ -22,7 +22,6 @@ export default function ResetPasswordForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
 
     if (!token) {
       setError("El enlace no es válido — falta el token");

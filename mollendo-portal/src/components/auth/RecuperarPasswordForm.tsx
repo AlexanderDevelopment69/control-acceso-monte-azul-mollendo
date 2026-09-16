@@ -16,7 +16,6 @@ export default function RecuperarPasswordForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       await authApi.recuperarPassword(correo);

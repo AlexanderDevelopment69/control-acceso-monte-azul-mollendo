@@ -54,7 +54,6 @@ function NuevaPersonaModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       await personasApi.create({
