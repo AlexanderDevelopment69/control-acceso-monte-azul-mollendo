@@ -11,6 +11,7 @@ import {
   GridIcon,
   GroupIcon,
   HorizontaLDots,
+  InfoIcon,
   ListIcon,
   MailIcon,
   PlugInIcon,
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { icon: <GroupIcon />, name: "Mi personal", path: "/personal", roles: ["empresa"] },
   { icon: <CalenderIcon />, name: "Solicitudes de visita", path: "/visitas", roles: ["empresa"] },
   { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administracion"] },
+  { icon: <InfoIcon />, name: "Manual", path: "/manual", roles: ["administracion", "empresa", "vigilancia"] },
 ];
 
 const AppSidebar: React.FC = () => {
