@@ -13,6 +13,7 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
@@ -156,12 +157,15 @@ function PersonalContent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">Mi personal</h1>
-        <Button size="sm" onClick={() => setModalOpen(true)}>
-          + Nuevo
-        </Button>
-      </div>
+      <PageHeader
+        title="Mi personal"
+        description="Trabajadores y visitas registrados por tu empresa."
+        actions={
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            + Nuevo
+          </Button>
+        }
+      />
 
       <div className="mb-4">
         <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre o documento…" />

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { auditoriaApi, empresasApi, panelApi } from "@/lib/api/endpoints";
 import type { AuditoriaEntry, Empresa, ResumenPanel } from "@/lib/api/types";
 import { MetricCard } from "@/components/common/MetricCard";
+import { PageHeader } from "@/components/common/PageHeader";
 import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertIcon, DocsIcon, GroupIcon, TaskIcon } from "@/icons";
@@ -37,9 +38,10 @@ export function AdminHome() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">
-        Inicio — Administración
-      </h1>
+      <PageHeader
+        title="Inicio"
+        description="Resumen general del sistema: empresas, denegaciones de acceso y actividad reciente."
+      />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard

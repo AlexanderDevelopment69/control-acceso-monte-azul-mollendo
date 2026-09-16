@@ -10,6 +10,7 @@ import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
@@ -62,7 +63,10 @@ function TiposDocumentoContent() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">Tipos de documento</h1>
+      <PageHeader
+        title="Tipos de documento"
+        description="Catálogo de documentos que las empresas deben presentar para su personal."
+      />
 
       <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
         <h2 className="mb-4 text-sm font-medium text-gray-700 dark:text-gray-300">Agregar tipo de documento</h2>

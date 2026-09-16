@@ -5,6 +5,7 @@ import Link from "next/link";
 import { personasApi, solicitudesVisitaApi } from "@/lib/api/endpoints";
 import type { Persona, SolicitudVisita } from "@/lib/api/types";
 import { MetricCard } from "@/components/common/MetricCard";
+import { PageHeader } from "@/components/common/PageHeader";
 import Badge from "@/components/ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { CalenderIcon, GroupIcon, TaskIcon } from "@/icons";
@@ -30,7 +31,7 @@ export function EmpresaHome() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">Inicio</h1>
+      <PageHeader title="Inicio" description="Resumen de tu personal y tus solicitudes de visita." />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <MetricCard

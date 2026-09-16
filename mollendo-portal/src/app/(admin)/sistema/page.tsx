@@ -5,6 +5,7 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
 import type { EstadoSistema } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, LockIcon, MailIcon } from "@/icons";
 
@@ -283,14 +284,17 @@ function SistemaContent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">Sistema y APIs</h1>
-        {ultimaActualizacion && (
-          <p className="text-xs text-gray-400">
-            Última verificación: {ultimaActualizacion.toLocaleTimeString("es-PE")}
-          </p>
-        )}
-      </div>
+      <PageHeader
+        title="Sistema y APIs"
+        description="Estado del backend, la base de datos y las integraciones externas."
+        actions={
+          ultimaActualizacion ? (
+            <p className="text-xs text-gray-400">
+              Última verificación: {ultimaActualizacion.toLocaleTimeString("es-PE")}
+            </p>
+          ) : undefined
+        }
+      />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatusCard icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>

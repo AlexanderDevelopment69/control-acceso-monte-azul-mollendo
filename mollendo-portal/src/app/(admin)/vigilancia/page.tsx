@@ -8,6 +8,7 @@ import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import type { EventoAcceso, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
+import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
@@ -105,12 +106,15 @@ function VigilanciaContent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">Panel de vigilancia</h1>
-        {contingencia && (
-          <Badge color="error" size="md">⚠ Modo contingencia — servidor central no responde</Badge>
-        )}
-      </div>
+      <PageHeader
+        title="Panel de vigilancia"
+        description="Estado en tiempo real de los ingresos y salidas al Terminal."
+        actions={
+          contingencia ? (
+            <Badge color="error" size="md">⚠ Modo contingencia — servidor central no responde</Badge>
+          ) : undefined
+        }
+      />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Denegaciones hoy" value={resumen?.denegacionesHoy ?? 0} color="text-error-500" />

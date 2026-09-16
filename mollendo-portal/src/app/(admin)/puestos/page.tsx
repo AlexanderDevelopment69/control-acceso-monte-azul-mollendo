@@ -13,6 +13,7 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import Checkbox from "@/components/form/input/Checkbox";
+import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
@@ -177,12 +178,15 @@ function PuestosContent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">Puestos</h1>
-        <Button size="sm" onClick={() => setModalOpen(true)}>
-          + Nuevo puesto
-        </Button>
-      </div>
+      <PageHeader
+        title="Puestos"
+        description="Catálogo de puestos y los documentos obligatorios que exige cada uno."
+        actions={
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            + Nuevo puesto
+          </Button>
+        }
+      />
 
       <div className="mb-4">
         <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre…" />

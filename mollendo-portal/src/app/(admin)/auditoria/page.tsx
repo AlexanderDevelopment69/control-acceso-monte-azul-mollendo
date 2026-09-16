@@ -6,6 +6,7 @@ import { auditoriaApi } from "@/lib/api/endpoints";
 import type { AuditoriaEntry } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
+import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
@@ -38,7 +39,10 @@ function AuditoriaContent() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-gray-800 dark:text-white/90">Auditoría</h1>
+      <PageHeader
+        title="Auditoría"
+        description="Registro de quién creó, modificó o aprobó cada cambio en el sistema."
+      />
 
       <div className="mb-4">
         <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por usuario o tabla…" />

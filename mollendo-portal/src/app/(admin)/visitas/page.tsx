@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
+import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
@@ -142,12 +143,15 @@ function VisitasContent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">Solicitudes de visita</h1>
-        <Button size="sm" onClick={() => setModalOpen(true)}>
-          + Nueva solicitud
-        </Button>
-      </div>
+      <PageHeader
+        title="Solicitudes de visita"
+        description="Visitas programadas por tu empresa al Terminal."
+        actions={
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            + Nueva solicitud
+          </Button>
+        }
+      />
 
       <div className="mb-4">
         <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre…" />

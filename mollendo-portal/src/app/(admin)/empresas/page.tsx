@@ -11,6 +11,7 @@ import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
+import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
@@ -123,12 +124,15 @@ function EmpresasPageContent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white/90">Empresas</h1>
-        <Button size="sm" onClick={() => setModalOpen(true)}>
-          + Nueva empresa
-        </Button>
-      </div>
+      <PageHeader
+        title="Empresas"
+        description="Alta y gestión de las empresas proveedoras que operan en el Terminal."
+        actions={
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            + Nueva empresa
+          </Button>
+        }
+      />
 
       {mensaje && (
         <div className="mb-4 rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
