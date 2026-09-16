@@ -25,6 +25,17 @@ function NuevaEmpresaModal({ isOpen, onClose, onCreated }: { isOpen: boolean; on
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setRuc("");
+      setRazonSocial("");
+      setCorreoContacto("");
+      setTelefonoContacto("");
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);

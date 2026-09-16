@@ -43,6 +43,17 @@ function NuevaSolicitudModal({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setPersonaId("");
+      setPersonaVisitada("");
+      setMotivo("");
+      setFechaHora("");
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);

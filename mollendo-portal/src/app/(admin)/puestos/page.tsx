@@ -101,6 +101,15 @@ function NuevoPuestoModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onC
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setNombre("");
+      setCaso("personal_propio");
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);

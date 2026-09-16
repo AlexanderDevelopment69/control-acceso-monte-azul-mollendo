@@ -39,6 +39,19 @@ function NuevaPersonaModal({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setTipoDocumentoIdentidad("DNI");
+      setNumeroDocumento("");
+      setNombres("");
+      setApellidos("");
+      setArea("");
+      setPuestoId("");
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
