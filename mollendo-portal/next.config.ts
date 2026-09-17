@@ -21,6 +21,16 @@ const svgrSvgoConfig = {
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Reenvía las llamadas a la API hacia el backend local. Sirve para poder
+  // exponer solo el frontend por un túnel (ej. ngrok en el plan gratis, que
+  // solo da un dominio) y que el navegador del cliente llame a la API por
+  // ese mismo dominio en vez de necesitar un segundo túnel para el backend.
+  // No afecta el desarrollo normal (ahí NEXT_PUBLIC_API_URL ya apunta
+  // directo a localhost:3001 y esta regla queda sin uso).
+  async rewrites() {
+    return [{ source: "/api/v1/:path*", destination: "http://localhost:3001/api/v1/:path*" }];
+  },
+
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,

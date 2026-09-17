@@ -84,7 +84,7 @@ function VigilanciaContent() {
   useEffect(() => {
     async function chequear() {
       try {
-        const res = await fetch(`${API_URL}/health`);
+        const res = await fetch(`${API_URL}/health`, { headers: { "ngrok-skip-browser-warning": "true" } });
         setContingencia(!res.ok);
       } catch {
         setContingencia(true);

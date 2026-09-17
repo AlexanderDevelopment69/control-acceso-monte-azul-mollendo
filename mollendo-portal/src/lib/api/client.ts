@@ -46,7 +46,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
   const res = await fetch(`${API_URL}/auth/refresh-token`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
     body: JSON.stringify({ refreshToken }),
   });
   if (!res.ok) return null;
@@ -60,7 +60,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const { method = "GET", body, isFormData = false, skipAuth = false } = options;
 
   const doFetch = async (token: string | null) => {
-    const headers: Record<string, string> = {};
+    // Evita la página de advertencia que ngrok le muestra a un visitante
+    // nuevo antes de dejarlo pasar — sin esto, esa página HTML llegaría en
+    // vez de la respuesta JSON real cuando la API se expone por un túnel.
+    // No tiene efecto si no se está usando ngrok.
+    const headers: Record<string, string> = { "ngrok-skip-browser-warning": "true" };
     if (!isFormData && body !== undefined) headers["Content-Type"] = "application/json";
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
