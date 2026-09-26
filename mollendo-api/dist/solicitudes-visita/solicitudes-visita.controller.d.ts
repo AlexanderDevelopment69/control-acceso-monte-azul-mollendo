@@ -7,36 +7,36 @@ export declare class SolicitudesVisitaController {
     private readonly solicitudesVisitaService;
     constructor(solicitudesVisitaService: SolicitudesVisitaService);
     create(dto: CreateSolicitudVisitaDto, user: AuthenticatedUser): Promise<{
+        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
+        creadoEn: Date;
         id: number;
         empresaId: number;
-        creadoEn: Date;
-        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
         personaId: number;
         personaVisitada: string;
         motivo: string;
         fechaHoraProgramada: Date;
     }>;
-    findAll(query: QuerySolicitudesVisitaDto, user: AuthenticatedUser): Promise<({
+    findAll(query: QuerySolicitudesVisitaDto): Promise<({
         persona: {
-            id: number;
             nombres: string;
             apellidos: string;
+            id: number;
         };
     } & {
+        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
+        creadoEn: Date;
         id: number;
         empresaId: number;
-        creadoEn: Date;
-        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
         personaId: number;
         personaVisitada: string;
         motivo: string;
         fechaHoraProgramada: Date;
     })[]>;
     update(id: number, dto: UpdateSolicitudVisitaDto, user: AuthenticatedUser): Promise<{
+        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
+        creadoEn: Date;
         id: number;
         empresaId: number;
-        creadoEn: Date;
-        estado: import("../generated/prisma/enums.js").EstadoSolicitudVisita;
         personaId: number;
         personaVisitada: string;
         motivo: string;

@@ -1,7 +1,6 @@
 import { apiRequest } from "./client";
 import type {
   AuditoriaEntry,
-  ConfiguracionSmtp,
   DocumentoPersona,
   Empresa,
   EstadoSistema,
@@ -13,6 +12,7 @@ import type {
   RolUsuario,
   SolicitudVisita,
   TipoDocumento,
+  Usuario,
 } from "./types";
 
 // ---- auth ----
@@ -23,24 +23,6 @@ export interface LoginResponse {
 export const authApi = {
   login: (correo: string, password: string) =>
     apiRequest<LoginResponse>("/auth/login", { method: "POST", body: { correo, password }, skipAuth: true }),
-  activarCuenta: (token: string, password: string) =>
-    apiRequest<{ mensaje: string }>("/auth/activar-cuenta", {
-      method: "POST",
-      body: { token, password },
-      skipAuth: true,
-    }),
-  recuperarPassword: (correo: string) =>
-    apiRequest<{ mensaje: string }>("/auth/recuperar-password", {
-      method: "POST",
-      body: { correo },
-      skipAuth: true,
-    }),
-  resetPassword: (token: string, password: string) =>
-    apiRequest<{ mensaje: string }>("/auth/reset-password", {
-      method: "POST",
-      body: { token, password },
-      skipAuth: true,
-    }),
 };
 
 // ---- empresas ----
@@ -54,7 +36,6 @@ export const empresasApi = {
     apiRequest<Empresa>("/empresas", { method: "POST", body: data }),
   update: (id: number, data: Partial<Empresa>) =>
     apiRequest<Empresa>(`/empresas/${id}`, { method: "PATCH", body: data }),
-  invitar: (id: number) => apiRequest<{ mensaje: string }>(`/empresas/${id}/invitar`, { method: "POST" }),
 };
 
 // ---- personas ----
@@ -67,6 +48,7 @@ export const personasApi = {
   },
   get: (id: number) => apiRequest<Persona>(`/personas/${id}`),
   create: (data: {
+    empresaId: number;
     puestoId?: number;
     tipoDocumentoIdentidad: string;
     numeroDocumento: string;
@@ -74,7 +56,10 @@ export const personasApi = {
     apellidos: string;
     area?: string;
   }) => apiRequest<Persona>("/personas", { method: "POST", body: data }),
-  update: (id: number, data: Partial<Persona>) =>
+  update: (
+    id: number,
+    data: Partial<Pick<Persona, "empresaId" | "puestoId" | "nombres" | "apellidos" | "area">>,
+  ) =>
     apiRequest<Persona>(`/personas/${id}`, { method: "PATCH", body: data }),
   updateEstado: (id: number, estado: "activo" | "inactivo") =>
     apiRequest<Persona>(`/personas/${id}/estado`, { method: "PATCH", body: { estado } }),
@@ -108,16 +93,11 @@ export const documentosApi = {
       body: formData,
       isFormData: true,
     }),
-  updateEstado: (documentoId: number, estadoAprobacion: "aprobado" | "rechazado") =>
-    apiRequest<DocumentoPersona>(`/documentos/${documentoId}`, {
-      method: "PATCH",
-      body: { estadoAprobacion },
-    }),
 };
 
 // ---- solicitudes-visita ----
 export const solicitudesVisitaApi = {
-  list: (params?: { empresaId?: number; desde?: string; hasta?: string }) => {
+  list: (params?: { empresaId?: number; personaId?: number; desde?: string; hasta?: string }) => {
     const qs = new URLSearchParams(
       Object.fromEntries(Object.entries(params ?? {}).map(([k, v]) => [k, String(v)])),
     ).toString();
@@ -145,20 +125,13 @@ export const panelApi = {
   estadoSistema: () => apiRequest<EstadoSistema>("/panel/estado-sistema"),
 };
 
-// ---- configuracion-smtp ----
-export const configuracionSmtpApi = {
-  obtener: () => apiRequest<ConfiguracionSmtp>("/configuracion/smtp"),
-  guardar: (data: {
-    host: string;
-    puerto: number;
-    seguro?: boolean;
-    usuario?: string;
-    password?: string;
-    remitente: string;
-  }) => apiRequest<ConfiguracionSmtp>("/configuracion/smtp", { method: "PUT", body: data }),
-  eliminar: () => apiRequest<{ eliminado: boolean }>("/configuracion/smtp", { method: "DELETE" }),
-  probar: (correoDestino: string) =>
-    apiRequest<{ enviado: boolean }>("/configuracion/smtp/probar", { method: "POST", body: { correoDestino } }),
+// ---- usuarios (solo administrador) ----
+export const usuariosApi = {
+  list: () => apiRequest<Usuario[]>("/usuarios"),
+  create: (data: { correo: string; rol: RolUsuario; password: string }) =>
+    apiRequest<Usuario>("/usuarios", { method: "POST", body: data }),
+  update: (id: number, data: { estadoCuenta?: "activo" | "baja"; password?: string }) =>
+    apiRequest<Usuario>(`/usuarios/${id}`, { method: "PATCH", body: data }),
 };
 
 // ---- auditoria ----

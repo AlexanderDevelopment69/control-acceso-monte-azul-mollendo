@@ -1,23 +1,19 @@
-// Datos de simulación realistas para probar el sistema con algo más que las
-// 2 cuentas mínimas de seed.ts — 3 empresas proveedoras adicionales, un
-// catálogo de puestos/documentos del rubro portuario, personal con
-// documentos en distintos estados (aprobado, pendiente, rechazado, vencido),
-// solicitudes de visita y un historial de eventos de ingreso/salida (algunos
-// autorizados, otros denegados por cada motivo posible) para que el
-// dashboard, el panel de vigilancia y la auditoría tengan algo real que
-// mostrar. No se usa en producción — es solo para desarrollo/demostración.
+// Datos de simulación realistas (alcance base) para probar el sistema con algo
+// más que las cuentas mínimas de seed.ts — 3 empresas proveedoras adicionales,
+// un catálogo de puestos/documentos del rubro portuario, personal con
+// documentos vigentes, vencidos o faltantes (todo cargado por el
+// administrador, sin aprobación), solicitudes de visita y un historial de
+// eventos de ingreso/salida (algunos autorizados, otros denegados por cada
+// motivo posible). No se usa en producción — es solo para desarrollo/demostración.
 //
 // Es re-ejecutable sin duplicar datos: si la empresa "Transportes Costa Sur"
 // ya existe, el script no hace nada más y termina.
 import 'dotenv/config';
-import { hash } from 'bcryptjs';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import type { AccionAuditoria } from '../src/generated/prisma/enums.js';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
-
-const DEMO_PASSWORD = process.env.EMPRESA_DEMO_PASSWORD ?? 'Cambiar123!';
 
 function hace(dias: number, hora = 9, minuto = 0): Date {
   const fecha = new Date();
@@ -41,9 +37,9 @@ async function main() {
     return;
   }
 
-  const adminInterno = await prisma.usuario.findFirst({ where: { rol: 'administracion' } });
+  const adminInterno = await prisma.usuario.findFirst({ where: { rol: 'administrador' } });
   if (!adminInterno) {
-    throw new Error('No hay un usuario de Administración todavía — corre primero "npm run db:seed".');
+    throw new Error('No hay un usuario administrador todavía — corre primero "npm run db:seed".');
   }
 
   // ---------------------------------------------------------------------
@@ -96,39 +92,24 @@ async function main() {
   }
 
   // ---------------------------------------------------------------------
-  // Empresas proveedoras + su usuario (activo, para poder probar el rol)
+  // Empresas proveedoras (sin usuario: las carga el administrador)
   // ---------------------------------------------------------------------
   const empresasData = [
-    { ruc: '20456789013', razonSocial: 'Transportes Costa Sur S.A.C.', correoContacto: 'operaciones@costasur.pe', correoLogin: 'costasur@mollendo.local' },
-    { ruc: '20512345678', razonSocial: 'Estibajes del Sur E.I.R.L.', correoContacto: 'gerencia@estibajesdelsur.pe', correoLogin: 'estibajes@mollendo.local' },
-    { ruc: '20487654321', razonSocial: 'Mantenimiento Industrial Arequipa S.A.', correoContacto: 'contacto@miasa.pe', correoLogin: 'miasa@mollendo.local' },
+    { ruc: '20456789013', razonSocial: 'Transportes Costa Sur S.A.C.', correoContacto: 'operaciones@costasur.pe' },
+    { ruc: '20512345678', razonSocial: 'Estibajes del Sur E.I.R.L.', correoContacto: 'gerencia@estibajesdelsur.pe' },
+    { ruc: '20487654321', razonSocial: 'Mantenimiento Industrial Arequipa S.A.', correoContacto: 'contacto@miasa.pe' },
   ];
-  const empresas: Record<string, { id: number; usuarioId: number }> = {};
-  const passwordHash = await hash(DEMO_PASSWORD, 10);
+  const empresas: Record<string, { id: number }> = {};
   for (const [i, e] of empresasData.entries()) {
-    const empresa = await prisma.empresa.create({
-      data: { ruc: e.ruc, razonSocial: e.razonSocial, correoContacto: e.correoContacto, estado: 'activa' },
-    });
+    const empresa = await prisma.empresa.create({ data: { ...e, estado: 'activa' } });
     await auditar(adminInterno.id, 'empresa', empresa.id, 'crear', hace(18 - i));
-    const usuario = await prisma.usuario.create({
-      data: {
-        empresaId: empresa.id,
-        rol: 'empresa',
-        correo: e.correoLogin,
-        passwordHash,
-        estadoCuenta: 'activo',
-      },
-    });
-    empresas[e.razonSocial] = { id: empresa.id, usuarioId: usuario.id };
+    empresas[e.razonSocial] = { id: empresa.id };
   }
 
-  // Reusar la empresa demo que ya crea seed.ts (empresa@mollendo.local)
+  // Reusar la empresa demo que ya crea seed.ts
   const empresaDemo = await prisma.empresa.findUnique({ where: { ruc: '20000000001' } });
-  const usuarioDemo = empresaDemo
-    ? await prisma.usuario.findFirst({ where: { empresaId: empresaDemo.id, rol: 'empresa' } })
-    : null;
-  if (empresaDemo && usuarioDemo) {
-    empresas['Empresa Demo SAC'] = { id: empresaDemo.id, usuarioId: usuarioDemo.id };
+  if (empresaDemo) {
+    empresas['Empresa Demo SAC'] = { id: empresaDemo.id };
   }
 
   // ---------------------------------------------------------------------
@@ -141,31 +122,32 @@ async function main() {
     apellidos: string;
     puesto?: string;
     estado: 'activo' | 'inactivo';
-    documentos: { tipo: number; estado: 'aprobado' | 'pendiente' | 'rechazado'; vencimientoDias?: number }[];
+    // vencimientoDias negativo = documento vencido; tipo sin documento = faltante.
+    documentos: { tipo: number; vencimientoDias?: number }[];
   };
 
   const personasData: PersonaSeed[] = [
     // Transportes Costa Sur
-    { empresa: 'Transportes Costa Sur S.A.C.', dni: '45678912', nombres: 'Luis Alberto', apellidos: 'Quispe Mamani', puesto: 'Transportista de carga', estado: 'activo', documentos: [{ tipo: LICENCIA, estado: 'aprobado', vencimientoDias: 240 }, { tipo: SCTR, estado: 'aprobado', vencimientoDias: 150 }] },
-    { empresa: 'Transportes Costa Sur S.A.C.', dni: '47123456', nombres: 'Rosa Elena', apellidos: 'Huamán Ccama', puesto: 'Transportista de carga', estado: 'activo', documentos: [{ tipo: LICENCIA, estado: 'pendiente' }, { tipo: SCTR, estado: 'aprobado', vencimientoDias: 90 }] },
-    { empresa: 'Transportes Costa Sur S.A.C.', dni: '44892371', nombres: 'Jorge', apellidos: 'Condori Apaza', puesto: 'Visita administrativa', estado: 'activo', documentos: [{ tipo: CARNE_VACUNA, estado: 'aprobado' }] },
-    { empresa: 'Transportes Costa Sur S.A.C.', dni: '48219765', nombres: 'Miguel Ángel', apellidos: 'Flores Ticona', puesto: 'Transportista de carga', estado: 'inactivo', documentos: [{ tipo: LICENCIA, estado: 'aprobado', vencimientoDias: -30 }, { tipo: SCTR, estado: 'rechazado' }] },
+    { empresa: 'Transportes Costa Sur S.A.C.', dni: '45678912', nombres: 'Luis Alberto', apellidos: 'Quispe Mamani', puesto: 'Transportista de carga', estado: 'activo', documentos: [{ tipo: LICENCIA, vencimientoDias: 240 }, { tipo: SCTR, vencimientoDias: 150 }] },
+    { empresa: 'Transportes Costa Sur S.A.C.', dni: '47123456', nombres: 'Rosa Elena', apellidos: 'Huamán Ccama', puesto: 'Transportista de carga', estado: 'activo', documentos: [{ tipo: SCTR, vencimientoDias: 90 }] },
+    { empresa: 'Transportes Costa Sur S.A.C.', dni: '44892371', nombres: 'Jorge', apellidos: 'Condori Apaza', puesto: 'Visita administrativa', estado: 'activo', documentos: [{ tipo: CARNE_VACUNA }] },
+    { empresa: 'Transportes Costa Sur S.A.C.', dni: '48219765', nombres: 'Miguel Ángel', apellidos: 'Flores Ticona', puesto: 'Transportista de carga', estado: 'inactivo', documentos: [{ tipo: LICENCIA, vencimientoDias: -30 }] },
 
     // Estibajes del Sur
-    { empresa: 'Estibajes del Sur E.I.R.L.', dni: '43567890', nombres: 'Carlos Alberto', apellidos: 'Mamani Choque', puesto: 'Estibador', estado: 'activo', documentos: [{ tipo: SCTR, estado: 'aprobado', vencimientoDias: 210 }, { tipo: CERT_MEDICO, estado: 'aprobado', vencimientoDias: 120 }, { tipo: CURSO_INDUCCION, estado: 'aprobado', vencimientoDias: 300 }] },
-    { empresa: 'Estibajes del Sur E.I.R.L.', dni: '46781234', nombres: 'Juan Pablo', apellidos: 'Vilca Turpo', puesto: 'Estibador', estado: 'activo', documentos: [{ tipo: SCTR, estado: 'aprobado', vencimientoDias: -15 }, { tipo: CERT_MEDICO, estado: 'aprobado', vencimientoDias: 60 }, { tipo: CURSO_INDUCCION, estado: 'pendiente' }] },
-    { empresa: 'Estibajes del Sur E.I.R.L.', dni: '41239876', nombres: 'Pedro Pablo', apellidos: 'Yucra Huanca', puesto: 'Operador de grúa portuaria', estado: 'activo', documentos: [{ tipo: SCTR, estado: 'aprobado', vencimientoDias: 180 }, { tipo: CERT_MEDICO, estado: 'aprobado', vencimientoDias: 90 }, { tipo: CURSO_INDUCCION, estado: 'aprobado', vencimientoDias: 270 }, { tipo: LICENCIA, estado: 'aprobado', vencimientoDias: 365 }] },
-    { empresa: 'Estibajes del Sur E.I.R.L.', dni: '47890123', nombres: 'Ana María', apellidos: 'Ccopa Sucari', puesto: 'Supervisor de operaciones', estado: 'activo', documentos: [{ tipo: CURSO_INDUCCION, estado: 'aprobado', vencimientoDias: 330 }, { tipo: CERT_MEDICO, estado: 'aprobado', vencimientoDias: 150 }] },
+    { empresa: 'Estibajes del Sur E.I.R.L.', dni: '43567890', nombres: 'Carlos Alberto', apellidos: 'Mamani Choque', puesto: 'Estibador', estado: 'activo', documentos: [{ tipo: SCTR, vencimientoDias: 210 }, { tipo: CERT_MEDICO, vencimientoDias: 120 }, { tipo: CURSO_INDUCCION, vencimientoDias: 300 }] },
+    { empresa: 'Estibajes del Sur E.I.R.L.', dni: '46781234', nombres: 'Juan Pablo', apellidos: 'Vilca Turpo', puesto: 'Estibador', estado: 'activo', documentos: [{ tipo: SCTR, vencimientoDias: -15 }, { tipo: CERT_MEDICO, vencimientoDias: 60 }] },
+    { empresa: 'Estibajes del Sur E.I.R.L.', dni: '41239876', nombres: 'Pedro Pablo', apellidos: 'Yucra Huanca', puesto: 'Operador de grúa portuaria', estado: 'activo', documentos: [{ tipo: SCTR, vencimientoDias: 180 }, { tipo: CERT_MEDICO, vencimientoDias: 90 }, { tipo: CURSO_INDUCCION, vencimientoDias: 270 }, { tipo: LICENCIA, vencimientoDias: 365 }] },
+    { empresa: 'Estibajes del Sur E.I.R.L.', dni: '47890123', nombres: 'Ana María', apellidos: 'Ccopa Sucari', puesto: 'Supervisor de operaciones', estado: 'activo', documentos: [{ tipo: CURSO_INDUCCION, vencimientoDias: 330 }, { tipo: CERT_MEDICO, vencimientoDias: 150 }] },
 
     // Mantenimiento Industrial Arequipa
-    { empresa: 'Mantenimiento Industrial Arequipa S.A.', dni: '42345678', nombres: 'Fernando José', apellidos: 'Rojas Peralta', puesto: 'Técnico de mantenimiento', estado: 'activo', documentos: [{ tipo: SCTR, estado: 'aprobado', vencimientoDias: 120 }, { tipo: CURSO_INDUCCION, estado: 'rechazado' }] },
-    { empresa: 'Mantenimiento Industrial Arequipa S.A.', dni: '45012389', nombres: 'Marco Antonio', apellidos: 'Salas Delgado', puesto: 'Soldador industrial', estado: 'activo', documentos: [{ tipo: SCTR, estado: 'aprobado', vencimientoDias: 180 }, { tipo: CERT_MEDICO, estado: 'aprobado', vencimientoDias: 60 }, { tipo: CURSO_INDUCCION, estado: 'aprobado', vencimientoDias: 240 }] },
-    { empresa: 'Mantenimiento Industrial Arequipa S.A.', dni: '48765432', nombres: 'Diego Alonso', apellidos: 'Zegarra Núñez', puesto: 'Visita técnica', estado: 'activo', documentos: [{ tipo: CURSO_INDUCCION, estado: 'aprobado', vencimientoDias: 365 }, { tipo: CARNE_VACUNA, estado: 'aprobado' }] },
+    { empresa: 'Mantenimiento Industrial Arequipa S.A.', dni: '42345678', nombres: 'Fernando José', apellidos: 'Rojas Peralta', puesto: 'Técnico de mantenimiento', estado: 'activo', documentos: [{ tipo: SCTR, vencimientoDias: 120 }] },
+    { empresa: 'Mantenimiento Industrial Arequipa S.A.', dni: '45012389', nombres: 'Marco Antonio', apellidos: 'Salas Delgado', puesto: 'Soldador industrial', estado: 'activo', documentos: [{ tipo: SCTR, vencimientoDias: 180 }, { tipo: CERT_MEDICO, vencimientoDias: 60 }, { tipo: CURSO_INDUCCION, vencimientoDias: 240 }] },
+    { empresa: 'Mantenimiento Industrial Arequipa S.A.', dni: '48765432', nombres: 'Diego Alonso', apellidos: 'Zegarra Núñez', puesto: 'Visita técnica', estado: 'activo', documentos: [{ tipo: CURSO_INDUCCION, vencimientoDias: 365 }, { tipo: CARNE_VACUNA }] },
 
     // Empresa Demo SAC
-    { empresa: 'Empresa Demo SAC', dni: '46123789', nombres: 'Katherine Milagros', apellidos: 'Torres Begazo', puesto: 'Estibador', estado: 'activo', documentos: [{ tipo: SCTR, estado: 'aprobado', vencimientoDias: 150 }, { tipo: CERT_MEDICO, estado: 'aprobado', vencimientoDias: 90 }, { tipo: CURSO_INDUCCION, estado: 'aprobado', vencimientoDias: 270 }] },
-    { empresa: 'Empresa Demo SAC', dni: '44567123', nombres: 'Renato Sebastián', apellidos: 'Apaza Quenta', puesto: 'Supervisor de operaciones', estado: 'activo', documentos: [{ tipo: CURSO_INDUCCION, estado: 'aprobado', vencimientoDias: 300 }, { tipo: CERT_MEDICO, estado: 'pendiente' }] },
-    { empresa: 'Empresa Demo SAC', dni: '47234561', nombres: 'José Luis', apellidos: 'Mendoza Chura', puesto: 'Visita administrativa', estado: 'activo', documentos: [{ tipo: CARNE_VACUNA, estado: 'aprobado' }] },
+    { empresa: 'Empresa Demo SAC', dni: '46123789', nombres: 'Katherine Milagros', apellidos: 'Torres Begazo', puesto: 'Estibador', estado: 'activo', documentos: [{ tipo: SCTR, vencimientoDias: 150 }, { tipo: CERT_MEDICO, vencimientoDias: 90 }, { tipo: CURSO_INDUCCION, vencimientoDias: 270 }] },
+    { empresa: 'Empresa Demo SAC', dni: '44567123', nombres: 'Renato Sebastián', apellidos: 'Apaza Quenta', puesto: 'Supervisor de operaciones', estado: 'activo', documentos: [{ tipo: CURSO_INDUCCION, vencimientoDias: 300 }] },
+    { empresa: 'Empresa Demo SAC', dni: '47234561', nombres: 'José Luis', apellidos: 'Mendoza Chura', puesto: 'Visita administrativa', estado: 'activo', documentos: [{ tipo: CARNE_VACUNA }] },
     { empresa: 'Empresa Demo SAC', dni: '43890124', nombres: 'Lucía Fernanda', apellidos: 'Paredes Vilcapoma', estado: 'activo', documentos: [] },
   ];
 
@@ -185,7 +167,7 @@ async function main() {
       },
     });
     personas[`${p.nombres} ${p.apellidos}`] = { id: persona.id, empresaId: empresaInfo.id };
-    await auditar(empresaInfo.usuarioId, 'persona', persona.id, 'crear', hace(14 - Math.floor(i / 2)));
+    await auditar(adminInterno.id, 'persona', persona.id, 'crear', hace(14 - Math.floor(i / 2)));
 
     for (const [j, doc] of p.documentos.entries()) {
       const fechaVencimiento = doc.vencimientoDias !== undefined ? enDias(doc.vencimientoDias) : null;
@@ -197,17 +179,10 @@ async function main() {
           fechaEmision: hace(30),
           fechaVencimiento,
           archivoUrl: null,
-          vigente: fechaVencimiento ? fechaVencimiento >= new Date() : true,
-          estadoAprobacion: doc.estado,
           creadoEn: fechaCreacion,
         },
       });
-      await auditar(empresaInfo.usuarioId, 'documento_persona', documento.id, 'crear', fechaCreacion);
-      if (doc.estado === 'aprobado') {
-        await auditar(empresaInfo.usuarioId, 'documento_persona', documento.id, 'aprobar', hace(10 - j, 15, 0));
-      } else if (doc.estado === 'rechazado') {
-        await auditar(empresaInfo.usuarioId, 'documento_persona', documento.id, 'modificar', hace(10 - j, 15, 0));
-      }
+      await auditar(adminInterno.id, 'documento_persona', documento.id, 'crear', fechaCreacion);
     }
   }
 
@@ -222,7 +197,6 @@ async function main() {
   ];
   for (const s of solicitudesData) {
     const persona = personas[s.persona];
-    const empresaUsuario = Object.values(empresas).find((e) => e.id === persona.empresaId)!;
     const solicitud = await prisma.solicitudVisita.create({
       data: {
         personaId: persona.id,
@@ -234,7 +208,7 @@ async function main() {
         creadoEn: s.fecha < new Date() ? s.fecha : hace(1),
       },
     });
-    await auditar(empresaUsuario.usuarioId, 'solicitud_visita', solicitud.id, 'crear', solicitud.creadoEn);
+    await auditar(adminInterno.id, 'solicitud_visita', solicitud.id, 'crear', solicitud.creadoEn);
   }
 
   // ---------------------------------------------------------------------
@@ -247,7 +221,7 @@ async function main() {
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinIngresoPrevio?: boolean;
+    denegadoSinPuesto?: boolean;
     dias: number;
     hora: number;
     minuto: number;
@@ -264,7 +238,7 @@ async function main() {
     { persona: 'Miguel Ángel Flores Ticona', tipoMovimiento: 'ingreso', resultado: 'denegado', denegadoPorBaja: true, dias: 0, hora: 7, minuto: 5 },
     { persona: 'Ana María Ccopa Sucari', tipoMovimiento: 'ingreso', resultado: 'denegado', denegadoPorAlcohol: true, dias: 0, hora: 7, minuto: 30 },
     { persona: 'Fernando José Rojas Peralta', tipoMovimiento: 'ingreso', resultado: 'denegado', denegadoPorDocumentos: true, dias: 0, hora: 7, minuto: 45 },
-    { persona: 'Renato Sebastián Apaza Quenta', tipoMovimiento: 'salida', resultado: 'denegado', denegadoSinIngresoPrevio: true, dias: 0, hora: 8, minuto: 0 },
+    { persona: 'Lucía Fernanda Paredes Vilcapoma', tipoMovimiento: 'ingreso', resultado: 'denegado', denegadoSinPuesto: true, dias: 0, hora: 8, minuto: 0 },
     { persona: 'Carlos Alberto Mamani Choque', tipoMovimiento: 'salida', resultado: 'autorizado', dias: 0, hora: 14, minuto: 10 },
     { persona: 'Pedro Pablo Yucra Huanca', tipoMovimiento: 'salida', resultado: 'autorizado', dias: 0, hora: 14, minuto: 20 },
     { persona: 'Marco Antonio Salas Delgado', tipoMovimiento: 'salida', resultado: 'autorizado', dias: 0, hora: 15, minuto: 5 },
@@ -284,7 +258,7 @@ async function main() {
         denegadoPorBaja: ev.denegadoPorBaja ?? false,
         denegadoPorAlcohol: ev.denegadoPorAlcohol ?? false,
         denegadoPorDocumentos: ev.denegadoPorDocumentos ?? false,
-        denegadoSinIngresoPrevio: ev.denegadoSinIngresoPrevio ?? false,
+        denegadoSinPuesto: ev.denegadoSinPuesto ?? false,
         fechaHora: hace(ev.dias, ev.hora, ev.minuto),
         torniqueteId: 'T1',
       },
@@ -294,10 +268,6 @@ async function main() {
   console.log('Datos de simulación creados:');
   console.log(`  ${tiposData.length} tipos de documento, ${puestosData.length} puestos, ${empresasData.length} empresas nuevas (+ Empresa Demo SAC reutilizada)`);
   console.log(`  ${personasData.length} personas, ${personasData.reduce((n, p) => n + p.documentos.length, 0)} documentos, ${solicitudesData.length} solicitudes de visita, ${eventosData.length} eventos de acceso`);
-  console.log('Cuentas de empresa nuevas (todas con la misma contraseña):');
-  for (const e of empresasData) {
-    console.log(`  ${e.razonSocial}: ${e.correoLogin} / ${DEMO_PASSWORD}`);
-  }
 }
 
 main()

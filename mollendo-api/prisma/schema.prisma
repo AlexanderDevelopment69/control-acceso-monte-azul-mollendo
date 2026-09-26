@@ -1,5 +1,5 @@
 // Prisma schema — Sistema de Control de Acceso, Terminal de Mollendo
-// Traducido 1:1 del script SQL en Especificacion_Desarrollo_Control_Acceso_Mollendo.md (sección 5.1)
+// Alcance base: ver Especificacion_Desarrollo_Control_Acceso_Mollendo_base.md (sección 8)
 
 generator client {
   provider = "prisma-client"
@@ -22,19 +22,15 @@ enum EstadoEmpresa {
 }
 
 enum EstadoCuenta {
-  invitado
   activo
   baja
 
   @@map("estado_cuenta")
 }
 
-// No presente en el script SQL original de la spec (sección 5.1) — se agrega
-// porque la sección 3.1 (Roles y permisos) exige distinguir Administración /
-// Empresa / Vigilancia y el modelo de datos no tenía cómo representarlo.
+// Alcance base: un administrador único carga todo; Vigilancia solo consulta.
 enum RolUsuario {
-  administracion
-  empresa
+  administrador
   vigilancia
 
   @@map("rol_usuario")
@@ -72,14 +68,6 @@ enum TipoValidacionDocumento {
   @@map("tipo_validacion_documento")
 }
 
-enum EstadoAprobacionDocumento {
-  pendiente
-  aprobado
-  rechazado
-
-  @@map("estado_aprobacion_documento")
-}
-
 enum EstadoSolicitudVisita {
   programada
   completada
@@ -105,7 +93,6 @@ enum ResultadoAcceso {
 enum AccionAuditoria {
   crear
   modificar
-  aprobar
   eliminar
 
   @@map("accion_auditoria")
@@ -134,19 +121,18 @@ model Empresa {
 }
 
 // ---------------------------------------------------------------------
-// USUARIO (acceso al portal web, pertenece a una empresa)
+// USUARIO (administrador o vigilancia — personal interno de OTP/MAS)
+// Sin invitación por correo: las cuentas las crea el administrador.
 // ---------------------------------------------------------------------
 model Usuario {
-  id              Int          @id @default(autoincrement())
-  empresaId       Int          @map("empresa_id")
-  empresa         Empresa      @relation(fields: [empresaId], references: [id])
-  rol             RolUsuario
-  correo          String       @unique @db.VarChar(150)
-  passwordHash    String?      @map("password_hash") @db.VarChar(255)
-  estadoCuenta    EstadoCuenta @default(invitado) @map("estado_cuenta")
-  tokenInvitacion String?      @map("token_invitacion") @db.VarChar(255)
-  tokenExpira     DateTime?    @map("token_expira")
-  creadoEn        DateTime     @default(now()) @map("creado_en")
+  id           Int          @id @default(autoincrement())
+  empresaId    Int          @map("empresa_id")
+  empresa      Empresa      @relation(fields: [empresaId], references: [id])
+  rol          RolUsuario
+  correo       String       @unique @db.VarChar(150)
+  passwordHash String       @map("password_hash") @db.VarChar(255)
+  estadoCuenta EstadoCuenta @default(activo) @map("estado_cuenta")
+  creadoEn     DateTime     @default(now()) @map("creado_en")
 
   auditorias Auditoria[]
 
@@ -230,28 +216,28 @@ model RequisitoPorPuesto {
 
 // ---------------------------------------------------------------------
 // DOCUMENTO_PERSONA (historial completo, nunca se borra)
+// Alcance base: sin aprobación — lo carga el administrador y ya es válido.
+// La vigencia se calcula contra fechaVencimiento; cuenta la última versión.
 // ---------------------------------------------------------------------
 model DocumentoPersona {
-  id               Int                       @id @default(autoincrement())
-  personaId        Int                       @map("persona_id")
-  persona          Persona                   @relation(fields: [personaId], references: [id])
-  tipoDocumentoId  Int                       @map("tipo_documento_id")
-  tipoDocumento    TipoDocumento             @relation(fields: [tipoDocumentoId], references: [id])
-  fechaEmision     DateTime?                 @map("fecha_emision") @db.Date
-  fechaVencimiento DateTime?                 @map("fecha_vencimiento") @db.Date
-  archivoUrl       String?                   @map("archivo_url") @db.VarChar(500)
-  vigente          Boolean                   @default(true)
-  estadoAprobacion EstadoAprobacionDocumento @default(pendiente) @map("estado_aprobacion")
-  version          Int                       @default(1)
-  creadoEn         DateTime                  @default(now()) @map("creado_en")
+  id               Int           @id @default(autoincrement())
+  personaId        Int           @map("persona_id")
+  persona          Persona       @relation(fields: [personaId], references: [id])
+  tipoDocumentoId  Int           @map("tipo_documento_id")
+  tipoDocumento    TipoDocumento @relation(fields: [tipoDocumentoId], references: [id])
+  fechaEmision     DateTime?     @map("fecha_emision") @db.Date
+  fechaVencimiento DateTime?     @map("fecha_vencimiento") @db.Date
+  archivoUrl       String?       @map("archivo_url") @db.VarChar(500)
+  version          Int           @default(1)
+  creadoEn         DateTime      @default(now()) @map("creado_en")
 
   @@index([personaId])
-  @@index([personaId, tipoDocumentoId, vigente])
+  @@index([personaId, tipoDocumentoId, version])
   @@map("documento_persona")
 }
 
 // ---------------------------------------------------------------------
-// SOLICITUD_VISITA (la registra la empresa proveedora, no la persona)
+// SOLICITUD_VISITA (la agenda el administrador, sin flujo de aprobación)
 // ---------------------------------------------------------------------
 model SolicitudVisita {
   id                  Int                   @id @default(autoincrement())
@@ -262,7 +248,6 @@ model SolicitudVisita {
   personaVisitada     String                @map("persona_visitada") @db.VarChar(150)
   motivo              String                @db.VarChar(300)
   fechaHoraProgramada DateTime              @map("fecha_hora_programada")
-  // Autoaprobada al crearse — no hay un estado "pendiente_aprobacion"
   estado              EstadoSolicitudVisita @default(programada)
   creadoEn            DateTime              @default(now()) @map("creado_en")
 
@@ -273,9 +258,10 @@ model SolicitudVisita {
 
 // ---------------------------------------------------------------------
 // EVENTO_ACCESO (ingreso / salida por torniquete)
-// Tres booleanos de denegación en vez de un solo motivo: un evento puede
+// Booleanos de denegación en vez de un solo motivo: un evento puede
 // denegarse por alcohol y documentos a la vez, y una baja deniega de
-// inmediato sin evaluar lo demás.
+// inmediato sin evaluar lo demás. Sin antipassback (alcance base): la
+// salida siempre se registra como autorizada.
 // ---------------------------------------------------------------------
 model EventoAcceso {
   id                       Int             @id @default(autoincrement())
@@ -286,37 +272,12 @@ model EventoAcceso {
   denegadoPorBaja          Boolean         @default(false) @map("denegado_por_baja")
   denegadoPorAlcohol       Boolean         @default(false) @map("denegado_por_alcohol")
   denegadoPorDocumentos    Boolean         @default(false) @map("denegado_por_documentos")
-  denegadoSinIngresoPrevio Boolean         @default(false) @map("denegado_sin_ingreso_previo")
+  denegadoSinPuesto        Boolean         @default(false) @map("denegado_sin_puesto")
   fechaHora                DateTime        @default(now()) @map("fecha_hora")
   torniqueteId             String?         @map("torniquete_id") @db.VarChar(50)
 
   @@index([personaId, fechaHora])
   @@map("evento_acceso")
-}
-
-// ---------------------------------------------------------------------
-// CONFIGURACION_SMTP (fila única, id siempre 1)
-// No está en el script SQL original de la spec (sección 5.1) — la spec solo
-// pedía que el SMTP fuera "configurable por variable de entorno" (sección
-// 10). Se agrega esta tabla para que Administración pueda configurar el
-// correo desde el portal sin editar el .env ni reiniciar el servidor; las
-// variables de entorno se mantienen como fallback si esta tabla está vacía.
-// ---------------------------------------------------------------------
-model ConfiguracionSmtp {
-  id            Int      @id @default(1)
-  host          String   @db.VarChar(200)
-  puerto        Int      @default(587)
-  seguro        Boolean  @default(false)
-  usuario       String?  @db.VarChar(200)
-  // Se guarda en texto plano (igual que la variable de entorno SMTP_PASS que
-  // reemplaza): es la contraseña que el propio servidor necesita enviarle al
-  // proveedor SMTP, no una contraseña de un usuario final — no se puede
-  // hashear porque hay que volver a usarla tal cual para autenticarse.
-  password      String?  @db.VarChar(255)
-  remitente     String   @db.VarChar(200)
-  actualizadoEn DateTime @default(now()) @updatedAt @map("actualizado_en")
-
-  @@map("configuracion_smtp")
 }
 
 // ---------------------------------------------------------------------

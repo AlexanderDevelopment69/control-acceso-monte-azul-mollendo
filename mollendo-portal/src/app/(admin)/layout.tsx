@@ -22,7 +22,7 @@ export default function AdminLayout({
     : "lg:ml-[90px]";
 
   return (
-    <RequireRole roles={["administracion", "empresa", "vigilancia"]}>
+    <RequireRole roles={["administrador", "vigilancia"]}>
       <div className="min-h-screen xl:flex">
         {/* Sidebar and Backdrop */}
         <AppSidebar />

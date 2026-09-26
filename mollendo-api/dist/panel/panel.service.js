@@ -24,9 +24,7 @@ let PanelService = class PanelService {
         const [denegacionesHoy, alcoholNoConformeHoy, documentosVencidos] = await Promise.all([
             this.prisma.eventoAcceso.count({ where: { resultado: 'denegado', fechaHora: { gte: desde } } }),
             this.prisma.eventoAcceso.count({ where: { denegadoPorAlcohol: true, fechaHora: { gte: desde } } }),
-            this.prisma.documentoPersona.count({
-                where: { estadoAprobacion: 'aprobado', fechaVencimiento: { lt: new Date() } },
-            }),
+            this.prisma.documentoPersona.count({ where: { fechaVencimiento: { lt: desde } } }),
         ]);
         return { denegacionesHoy, alcoholNoConformeHoy, documentosVencidos };
     }

@@ -18,138 +18,85 @@ const SECCIONES: SeccionManual[] = [
   {
     id: "introduccion",
     titulo: "Introducción",
-    roles: ["administracion", "empresa", "vigilancia"],
+    roles: ["administrador", "vigilancia"],
     contenido: (
       <div className="space-y-3">
         <p>
-          Este sistema controla el ingreso y salida de personas al Terminal de Mollendo. Hay tres tipos de cuenta,
+          Este sistema controla el ingreso y salida de personas al Terminal de Mollendo. Hay dos tipos de cuenta, y
           cada una ve solo las secciones que le corresponden en el menú de la izquierda:
         </p>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong>Administración</strong>: da de alta empresas proveedoras, define los puestos y qué documentos
-            exige cada uno, y supervisa todo el sistema (auditoría, estado técnico, configuración de correo).
+            <strong>Administrador</strong>: carga todo en el sistema. Su pantalla de trabajo es{" "}
+            <strong>Personal y documentos</strong>, donde registra al personal, sube sus documentos y agenda visitas.
+            En <strong>Configuración</strong> define empresas, puestos, tipos de documento y usuarios, y además
+            supervisa el sistema (panel de vigilancia, auditoría y estado técnico).
           </li>
           <li>
-            <strong>Empresa</strong>: cada empresa proveedora gestiona a su propio personal (trabajadores y
-            visitas) y sus solicitudes de visita — solo ve lo que pertenece a su empresa.
-          </li>
-          <li>
-            <strong>Vigilancia</strong>: ve en tiempo real los ingresos/salidas del personal por el torniquete, y
-            por qué se autoriza o deniega cada uno.
+            <strong>Vigilancia</strong>: ve en tiempo real cada ingreso y salida por el molinete, y por qué se
+            autoriza o deniega cada uno. No modifica datos.
           </li>
         </ul>
+        <p className="text-xs text-gray-400">
+          Las empresas proveedoras no tienen cuenta propia: el administrador carga sus datos.
+        </p>
       </div>
     ),
   },
   {
-    id: "empresas",
-    titulo: "Empresas",
-    roles: ["administracion"],
+    id: "personal",
+    titulo: "Personal y documentos",
+    roles: ["administrador"],
     contenido: (
       <div className="space-y-3">
         <p>
-          Antes de que el personal de una empresa proveedora pueda acceder al sistema, hay que darla de alta desde{" "}
-          <Link href="/empresas" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Empresas</Link>.
+          <Link href="/" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Personal y documentos</Link> es
+          la pantalla de trabajo diario. A la izquierda está la lista del personal de todas las empresas; cada persona
+          lleva un <strong>✔</strong> si hoy puede ingresar o un <strong>✖</strong> con el motivo si no puede. Puedes
+          buscar por nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar.
         </p>
         <ol className="list-decimal space-y-1 pl-5">
-          <li>“+ Nueva empresa” → completa RUC, razón social y correo de contacto (el teléfono es opcional).</li>
           <li>
-            Con la empresa creada, presiona <strong>“Invitar”</strong> — se envía un correo al correo de contacto
-            con un enlace para que esa empresa active su cuenta y cree su propia contraseña. El enlace vence en 48
-            horas.
+            <strong>“+ Nueva persona”</strong> → empresa, tipo y número de documento, nombres, apellidos, puesto y,
+            opcionalmente, el área. El número de documento debe coincidir con el que el terminal de reconocimiento facial
+            tiene enrolado para esa persona.
           </li>
           <li>
-            Si necesitas suspender a una empresa temporalmente (por ejemplo, contrato vencido), usa{" "}
-            <strong>“Desactivar”</strong> — no borra sus datos, solo le impide operar hasta reactivarla.
+            Al elegir a una persona se abre su ficha, con la tabla de <strong>documentos que exige su puesto</strong>:
+            cuáles faltan, cuáles están vencidos y cuáles están vigentes.
+          </li>
+          <li>
+            Usa <strong>“Subir”</strong> o <strong>“Renovar”</strong> en la fila del documento: el formulario de abajo
+            queda con ese documento elegido, y solo tienes que poner la fecha de vencimiento y el archivo.{" "}
+            <strong>El documento queda válido desde que lo cargas</strong>; no hay aprobación. Al renovar, solo cuenta la
+            versión más reciente; las anteriores quedan en el historial como “Reemplazado”.
+          </li>
+          <li>Desde la misma ficha puedes <strong>cambiar el puesto</strong> de la persona.</li>
+          <li>
+            Si alguien deja de trabajar en el Terminal, usa <strong>“Dar de baja”</strong>. Desde ese momento se le
+            deniega el ingreso automáticamente, sin importar sus documentos.
           </li>
         </ol>
         <p className="text-xs text-gray-400">
-          El envío del correo de invitación depende de que el correo (SMTP) esté configurado — ver la sección{" "}
-          <a href="#configuracion-smtp" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
-            Configuración (correo SMTP)
-          </a>
-          .
+          El ✔ supone que la prueba de alcohol saldrá conforme: el alcohol solo se sabe en garita. Una persona sin puesto
+          asignado siempre tiene ✖.
         </p>
-      </div>
-    ),
-  },
-  {
-    id: "puestos",
-    titulo: "Puestos y requisitos",
-    roles: ["administracion"],
-    contenido: (
-      <div className="space-y-3">
-        <p>
-          Un <strong>puesto</strong> (en <Link href="/puestos" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Puestos</Link>) agrupa a personas con el mismo caso de uso — por ejemplo “Estibador”,
-          “Visita administrativa”, “Contratista de mantenimiento” — y cada uno pertenece a uno de 4 casos: visita,
-          personal propio, contratista o tercero.
-        </p>
-        <p>
-          Cada puesto tiene su propia <strong>matriz de requisitos</strong>: qué tipos de documento debe presentar
-          esa persona (y si son obligatorios u opcionales) para que se le autorice el ingreso. Se configura
-          entrando al ícono de requisitos de cada puesto en la tabla.
-        </p>
-        <p className="text-xs text-gray-400">
-          Si una persona no tiene puesto asignado, el sistema no tiene reglas de documentos que evaluar para ella y
-          la autoriza sin exigir documentos — asigna un puesto apenas el catálogo esté definido.
-        </p>
-      </div>
-    ),
-  },
-  {
-    id: "tipos-documento",
-    titulo: "Tipos de documento",
-    roles: ["administracion"],
-    contenido: (
-      <div className="space-y-3">
-        <p>
-          En <Link href="/tipos-documento" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Tipos de documento</Link> se define el catálogo de documentos que se le pueden exigir a una persona
-          (SCTR, CAMO, carné de vacunación, etc.), y cómo se valida cada uno:
-        </p>
-        <ul className="list-disc space-y-1 pl-5">
-          <li><strong>Fecha de vencimiento</strong>: el documento deja de ser válido después de una fecha.</li>
-          <li><strong>Sí/No</strong>: el documento simplemente está presente o no, sin fecha de vencimiento.</li>
-          <li><strong>Vigente por actividad</strong>: válido mientras dure la actividad para la que se emitió.</li>
-        </ul>
-        <p>Un documento creado aquí puede luego marcarse como requisito (obligatorio u opcional) en uno o más puestos.</p>
-      </div>
-    ),
-  },
-  {
-    id: "mi-personal",
-    titulo: "Mi personal",
-    roles: ["empresa"],
-    contenido: (
-      <div className="space-y-3">
-        <p>
-          En <Link href="/personal" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Mi personal</Link> registras a los trabajadores y visitas de tu empresa. Solo ves y gestionas tu propio
-          personal, nunca el de otras empresas.
-        </p>
-        <ol className="list-decimal space-y-1 pl-5">
-          <li>“+ Nueva persona” → tipo y número de documento, nombres, apellidos, y opcionalmente el puesto y el área.</li>
-          <li>
-            Entra al expediente de la persona para subir los documentos que su puesto exige (archivo real, no solo
-            un dato) — quedan en estado “pendiente” hasta que Administración los apruebe o rechace.
-          </li>
-          <li>
-            Si alguien deja de trabajar para tu empresa, usa <strong>“Dar de baja”</strong> en su expediente — a
-            partir de ese momento se le deniega el ingreso automáticamente, sin importar sus documentos.
-          </li>
-        </ol>
       </div>
     ),
   },
   {
     id: "visitas",
-    titulo: "Solicitudes de visita",
-    roles: ["empresa"],
+    titulo: "Visitas",
+    roles: ["administrador"],
     contenido: (
       <div className="space-y-3">
         <p>
-          En <Link href="/visitas" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Solicitudes de visita</Link> registras una visita programada: a quién visita dentro del Terminal, el
-          motivo y la fecha/hora. Queda “programada” automáticamente (no requiere aprobación aparte) y puede
-          cancelarse mientras no se haya realizado.
+          Una visita se registra como cualquier persona (con un puesto de visita y los documentos que ese puesto exige).
+          Luego, en la sección <strong>Visitas</strong> de su ficha, agendas a quién visita, el motivo y la fecha y hora.
+        </p>
+        <p>
+          La visita no pasa por aprobación: queda “programada” y puede cancelarse. Es solo informativa: en garita la
+          persona se valida igual que cualquier otra (puesto, documentos vigentes y alcohol).
         </p>
       </div>
     ),
@@ -157,32 +104,90 @@ const SECCIONES: SeccionManual[] = [
   {
     id: "vigilancia",
     titulo: "Panel de vigilancia",
-    roles: ["vigilancia", "administracion"],
+    roles: ["vigilancia", "administrador"],
     contenido: (
       <div className="space-y-3">
         <p>
-          El <Link href="/vigilancia" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Panel de vigilancia</Link> muestra en vivo cada intento de ingreso/salida por el torniquete —
-          autorizado o denegado — apenas ocurre, junto con el motivo cuando se deniega: persona dada de baja,
-          alcohol no conforme, documentos faltantes/vencidos, o (en la salida) que no hubo un ingreso previo
-          registrado.
+          El <Link href="/vigilancia" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Panel de vigilancia</Link> muestra
+          en vivo cada ingreso y salida por el molinete apenas ocurre, autorizado o denegado.
         </p>
+        <p>Cuando la persona se identifica en el terminal y hace la prueba de alcohol, el sistema revisa en este orden:</p>
+        <ol className="list-decimal space-y-1 pl-5">
+          <li>
+            Si el documento <strong>no está registrado</strong> o la persona está <strong>dada de baja</strong>, se
+            deniega de inmediato.
+          </li>
+          <li>
+            Si no, se revisan juntos: que tenga <strong>puesto asignado</strong>, que sus{" "}
+            <strong>documentos obligatorios estén vigentes</strong> y que la <strong>prueba de alcohol</strong> sea
+            conforme. Si falla algo, se muestran todos los motivos a la vez.
+          </li>
+          <li>Si todo está conforme, el molinete se abre.</li>
+        </ol>
         <p>
-          Un indicador de <strong>modo contingencia</strong> avisa si el servidor central deja de responder (hace
-          ping cada 15 segundos), para saber si hay que operar temporalmente de otra forma.
+          La salida solo se registra y abre el molinete; no se exige un ingreso previo. Si el servidor deja de
+          responder, aparece un aviso arriba a la derecha: mientras dure, no se valida ningún ingreso.
         </p>
+      </div>
+    ),
+  },
+  {
+    id: "configuracion",
+    titulo: "Configuración",
+    roles: ["administrador"],
+    contenido: (
+      <div className="space-y-4">
+        <p>
+          <Link href="/configuracion" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Configuración</Link> reúne
+          los catálogos que se cargan al inicio y cambian poco, en cuatro pestañas:
+        </p>
+        <div>
+          <p className="font-medium text-gray-700 dark:text-gray-200">Empresas</p>
+          <p>
+            Alta de las empresas proveedoras o clientes (RUC, razón social, correo de contacto). Toda persona pertenece a
+            una empresa. <strong>“Desactivar”</strong> no borra sus datos; solo deja de aparecer al registrar personal
+            nuevo. Las empresas no tienen cuenta propia: el administrador carga sus datos.
+          </p>
+        </div>
+        <div>
+          <p className="font-medium text-gray-700 dark:text-gray-200">Puestos y requisitos</p>
+          <p>
+            Un puesto agrupa a personas que deben presentar los mismos documentos (por ejemplo “Estibador” o “Visita
+            administrativa”). Desde el ícono de requisitos de cada puesto marcas qué documentos son{" "}
+            <strong>obligatorios</strong>: esos son los que bloquean el ingreso si faltan o están vencidos.
+          </p>
+        </div>
+        <div>
+          <p className="font-medium text-gray-700 dark:text-gray-200">Tipos de documento</p>
+          <p>El catálogo de documentos que se pueden exigir (SCTR, inducción, carné de vacunación, etc.) y cómo se validan:</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">
+            <li><strong>Fecha de vencimiento</strong>: deja de ser válido al día siguiente de su fecha de vencimiento.</li>
+            <li><strong>Sí/No</strong>: basta con que esté cargado; no vence.</li>
+            <li><strong>Vigente por actividad</strong>: igual que “Sí/No”, salvo que se le cargue una fecha de vencimiento.</li>
+          </ul>
+        </div>
+        <div>
+          <p className="font-medium text-gray-700 dark:text-gray-200">Usuarios</p>
+          <p>
+            Crea las cuentas de Vigilancia (o de otro administrador) con su correo y una contraseña inicial. El sistema no
+            envía correos, así que no hay recuperación de contraseña: si alguien la olvida, usa{" "}
+            <strong>“Restablecer contraseña”</strong> y comunícale la nueva. <strong>“Dar de baja”</strong> impide que
+            esa cuenta vuelva a iniciar sesión. No puedes dar de baja tu propia cuenta.
+          </p>
+        </div>
       </div>
     ),
   },
   {
     id: "auditoria",
     titulo: "Auditoría",
-    roles: ["administracion"],
+    roles: ["administrador"],
     contenido: (
       <div className="space-y-3">
         <p>
-          <Link href="/auditoria" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Auditoría</Link> es un registro de solo lectura de quién creó, modificó o aprobó cada dato importante del
-          sistema (empresas, personas, documentos, puestos, etc.) y cuándo — útil para rastrear un cambio o resolver
-          una duda sobre “quién hizo esto”.
+          <Link href="/auditoria" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Auditoría</Link> es
+          un registro de solo lectura de quién creó o modificó cada dato del sistema (empresas, personas, documentos,
+          puestos, visitas, usuarios) y cuándo. Sirve para rastrear un cambio o responder “¿quién cargó esto?”.
         </p>
       </div>
     ),
@@ -190,46 +195,15 @@ const SECCIONES: SeccionManual[] = [
   {
     id: "sistema-apis",
     titulo: "Sistema y APIs",
-    roles: ["administracion"],
+    roles: ["administrador"],
     contenido: (
       <div className="space-y-3">
         <p>
-          <Link href="/sistema" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Sistema y APIs</Link> muestra si el backend, la base de datos y las integraciones (correo, clave de
-          equipos) están arriba y configuradas, y trae la documentación técnica (con ejemplos) de las APIs que usan
-          los equipos físicos — el lector de DNI, el alcoholímetro y el torniquete — para quien tenga que
+          <Link href="/sistema" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Sistema y APIs</Link> muestra
+          si el backend y la base de datos responden y si la clave de equipos está configurada. También trae la
+          documentación técnica, con ejemplos, de las APIs que usan los equipos físicos: el terminal ZKTeco G4 Pro
+          con su alcoholímetro (a través de ZKBio CVSecurity) y el molinete. Está pensada para quien tenga que
           conectarlos o dar soporte técnico.
-        </p>
-      </div>
-    ),
-  },
-  {
-    id: "configuracion-smtp",
-    titulo: "Configuración (correo SMTP)",
-    roles: ["administracion"],
-    contenido: (
-      <div className="space-y-3">
-        <p>
-          En <Link href="/configuracion" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Configuración</Link> se define qué servidor de correo usa el sistema para enviar las invitaciones a
-          empresas y los correos de recuperación de contraseña.
-        </p>
-        <ul className="list-disc space-y-1 pl-5">
-          <li><strong>Host / Puerto</strong>: la dirección del servidor SMTP de tu proveedor de correo.</li>
-          <li>
-            <strong>Conexión segura (TLS/SSL)</strong>: actívala solo si tu proveedor usa el puerto 465; para el
-            puerto 587 (el más común) déjala desactivada.
-          </li>
-          <li><strong>Usuario / Contraseña</strong>: las credenciales para autenticarse contra ese servidor.</li>
-          <li>
-            <strong>Remitente</strong>: la dirección que aparece como “De:” en los correos que reciben las
-            personas — normalmente debe coincidir con el usuario configurado (algunos proveedores, como Gmail, lo
-            exigen).
-          </li>
-        </ul>
-        <p>
-          Después de guardar, usa <strong>“Enviar correo de prueba”</strong> para confirmar que de verdad funciona
-          antes de depender de él. Si quitas la configuración, el sistema vuelve a intentar usar las variables de
-          entorno del servidor (si existen) — y si tampoco hay ninguna, los correos simplemente quedan registrados
-          en el log del backend en vez de enviarse.
         </p>
       </div>
     ),
@@ -280,7 +254,7 @@ function ManualContent() {
 
 export default function ManualPage() {
   return (
-    <RequireRole roles={["administracion", "empresa", "vigilancia"]}>
+    <RequireRole roles={["administrador", "vigilancia"]}>
       <ManualContent />
     </RequireRole>
   );

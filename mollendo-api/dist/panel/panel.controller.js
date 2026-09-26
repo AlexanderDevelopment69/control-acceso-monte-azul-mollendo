@@ -12,15 +12,12 @@ import { PanelService } from './panel.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { ConfiguracionSmtpService } from '../configuracion-smtp/configuracion-smtp.service.js';
 let PanelController = class PanelController {
     panelService;
     prisma;
-    configuracionSmtpService;
-    constructor(panelService, prisma, configuracionSmtpService) {
+    constructor(panelService, prisma) {
         this.panelService = panelService;
         this.prisma = prisma;
-        this.configuracionSmtpService = configuracionSmtpService;
     }
     resumen() {
         return this.panelService.resumen();
@@ -45,7 +42,6 @@ let PanelController = class PanelController {
         catch {
             baseDeDatos = { estado: 'down', latenciaMs: Date.now() - inicio };
         }
-        const smtp = await this.configuracionSmtpService.obtenerConfigTransporte();
         return {
             api: {
                 estado: 'up',
@@ -56,7 +52,6 @@ let PanelController = class PanelController {
             },
             baseDeDatos,
             integraciones: {
-                smtpConfigurado: !!smtp,
                 claveEquiposConfigurada: !!process.env.DEVICE_API_KEY,
             },
             websocket: { namespace: '/ws/eventos' },
@@ -65,7 +60,7 @@ let PanelController = class PanelController {
 };
 __decorate([
     Get('panel/resumen'),
-    Roles('administracion', 'vigilancia'),
+    Roles('administrador', 'vigilancia'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -79,7 +74,7 @@ __decorate([
 ], PanelController.prototype, "health", null);
 __decorate([
     Get('panel/estado-sistema'),
-    Roles('administracion'),
+    Roles('administrador'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
@@ -87,8 +82,7 @@ __decorate([
 PanelController = __decorate([
     Controller(),
     __metadata("design:paramtypes", [PanelService,
-        PrismaService,
-        ConfiguracionSmtpService])
+        PrismaService])
 ], PanelController);
 export { PanelController };
 //# sourceMappingURL=panel.controller.js.map

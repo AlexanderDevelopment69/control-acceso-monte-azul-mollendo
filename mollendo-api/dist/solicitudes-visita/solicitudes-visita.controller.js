@@ -25,8 +25,8 @@ let SolicitudesVisitaController = class SolicitudesVisitaController {
     create(dto, user) {
         return this.solicitudesVisitaService.create(dto, user);
     }
-    findAll(query, user) {
-        return this.solicitudesVisitaService.findAll(query, user);
+    findAll(query) {
+        return this.solicitudesVisitaService.findAll(query);
     }
     update(id, dto, user) {
         return this.solicitudesVisitaService.update(id, dto, user);
@@ -34,7 +34,7 @@ let SolicitudesVisitaController = class SolicitudesVisitaController {
 };
 __decorate([
     Post(),
-    Roles('empresa'),
+    Roles('administrador'),
     __param(0, Body()),
     __param(1, CurrentUser()),
     __metadata("design:type", Function),
@@ -43,16 +43,15 @@ __decorate([
 ], SolicitudesVisitaController.prototype, "create", null);
 __decorate([
     Get(),
-    Roles('administracion', 'empresa', 'vigilancia'),
+    Roles('administrador', 'vigilancia'),
     __param(0, Query()),
-    __param(1, CurrentUser()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [QuerySolicitudesVisitaDto, Object]),
+    __metadata("design:paramtypes", [QuerySolicitudesVisitaDto]),
     __metadata("design:returntype", void 0)
 ], SolicitudesVisitaController.prototype, "findAll", null);
 __decorate([
     Patch(':id'),
-    Roles('empresa'),
+    Roles('administrador'),
     __param(0, Param('id', ParseIntPipe)),
     __param(1, Body()),
     __param(2, CurrentUser()),

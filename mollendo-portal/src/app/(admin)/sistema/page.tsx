@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
 import type { EstadoSistema } from "@/lib/api/types";
@@ -9,7 +8,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, LockIcon, MailIcon } from "@/icons";
+import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, LockIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
@@ -29,10 +28,30 @@ interface ApiIntegracion {
 
 const APIS_INTEGRACION: ApiIntegracion[] = [
   {
-    nombre: "Ingreso (lector DNI + alcoholímetro)",
+    nombre: "Webhook ZKBio CVSecurity (terminal ZKTeco G4 Pro + alcoholímetro)",
+    endpoint: "/integraciones/zkbio/webhook",
+    metodo: "POST",
+    descripcion:
+      "ZKBio CVSecurity avisa que el terminal identificó a una persona por rostro y el resultado de su prueba de alcohol. El backend ejecuta el ingreso (motor de validación) y, si es autorizado, ordena abrir el molinete.",
+    autenticacion: "Clave de equipo (X-API-Key)",
+    tipo: "mock",
+    headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
+    ejemploRequest: `{
+  "tipoDocumentoIdentidad": "DNI",   // opcional, por defecto DNI
+  "numeroDocumento": "12345678",
+  "resultadoAlcohol": "conforme",    // "conforme" | "no_conforme"
+  "torniqueteId": "T1"               // opcional
+}`,
+    ejemploRespuesta: `// 200 OK — misma respuesta que /eventos-acceso/ingreso`,
+    notas:
+      "Contrato provisional: el formato real del evento de ZKBio (webhook o polling) se definirá cuando el cliente entregue la documentación/SDK. Hoy acepta este JSON y ya ejecuta el ingreso de verdad.",
+  },
+  {
+    nombre: "Ingreso",
     endpoint: "/eventos-acceso/ingreso",
     metodo: "POST",
-    descripcion: "Recibe el DNI leído y el resultado del alcohol, corre el motor de validación y responde autorizado/denegado.",
+    descripcion:
+      "Recibe el documento de la persona y el resultado del alcohol, corre el motor de validación y responde autorizado/denegado. Si es autorizado, ordena abrir el molinete.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -45,10 +64,14 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
     ejemploRespuesta: `// 200 OK — autorizado
 {
   "eventoId": 42,
+  "tipoMovimiento": "ingreso",
   "resultado": "autorizado",
+  "fechaHora": "2026-09-26T13:05:00.000Z",
   "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" },
+  "numeroDocumento": "12345678",
   "motivos": {
     "dadoDeBaja": false,
+    "sinPuesto": false,
     "alcohol": false,
     "documentos": false,
     "documentosFaltantes": []
@@ -59,24 +82,34 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
 {
   "eventoId": 43,
   "resultado": "denegado",
-  "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" },
+  ...
   "motivos": {
     "dadoDeBaja": false,
+    "sinPuesto": false,
     "alcohol": true,
     "documentos": true,
     "documentosFaltantes": ["SCTR"]
   }
 }
 
-// 404 — el número de documento no está registrado
+// 200 OK — documento no registrado (no se guarda evento)
+{
+  "eventoId": null,
+  "resultado": "denegado",
+  "persona": null,
+  "numeroDocumento": "99999999",
+  "motivos": { "personaNoRegistrada": true }
+}
+
 // 401 — X-API-Key inválida o ausente`,
-    notas: "Si la persona está dada de baja, se deniega de inmediato con \"dadoDeBaja: true\" y no se evalúan alcohol ni documentos — es un motivo con prioridad sobre los demás.",
+    notas:
+      "Orden de evaluación: persona dada de baja → se deniega de inmediato sin evaluar nada más. Si no, se revisan juntos puesto asignado, documentos vigentes (última versión de cada uno) y alcohol, y se informan todos los motivos.",
   },
   {
-    nombre: "Salida (torniquete)",
+    nombre: "Salida",
     endpoint: "/eventos-acceso/salida",
     metodo: "POST",
-    descripcion: "Valida el anti-passback (que exista un ingreso previo) y responde apertura/no apertura.",
+    descripcion: "Registro básico de salida: siempre se autoriza y se ordena abrir el molinete.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -85,46 +118,26 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
   "numeroDocumento": "12345678",
   "torniqueteId": "T1"
 }`,
-    ejemploRespuesta: `// 200 OK — autorizado (el último movimiento fue un ingreso)
+    ejemploRespuesta: `// 200 OK
 {
   "eventoId": 44,
+  "tipoMovimiento": "salida",
   "resultado": "autorizado",
+  "fechaHora": "2026-09-26T21:10:00.000Z",
   "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" },
-  "motivos": { "sinIngresoPrevio": false }
-}
-
-// 200 OK — denegado (no hay ingreso previo, o ya salió antes)
-{
-  "eventoId": 45,
-  "resultado": "denegado",
-  "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" },
-  "motivos": { "sinIngresoPrevio": true }
+  "numeroDocumento": "12345678",
+  "motivos": {}
 }`,
-    notas: "Anti-passback: solo se permite la salida si el último movimiento autorizado de la persona fue un ingreso. Un ingreso denegado no cuenta como ingreso previo.",
+    notas:
+      "Sin antipassback (alcance base): no se exige un ingreso previo ni se bloquea un segundo ingreso sin salida. Solo se deniega si el documento no está registrado.",
   },
   {
-    nombre: "Webhook alcoholímetro",
-    endpoint: "/integraciones/alcoholimetro/webhook",
-    metodo: "POST",
-    descripcion: "Recibe el resultado del proveedor del alcoholímetro. Proveedor real aún sin definir con el cliente.",
-    autenticacion: "Clave de equipo (X-API-Key)",
-    tipo: "mock",
-    headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
-    ejemploRequest: `// El formato exacto lo define el SDK del proveedor que se elija.
-// Por ahora se acepta cualquier payload y solo se registra en el log.
-{
-  "cualquier campo del proveedor": "..."
-}`,
-    ejemploRespuesta: `// 200 OK
-{ "recibido": true }`,
-    notas: "Contrato provisional: hoy solo registra el payload recibido en el log del servidor, para poder programar el resto del flujo mientras se define el proveedor real (spec, sección 9.8 y 12).",
-  },
-  {
-    nombre: "Comando torniquete",
+    nombre: "Comando molinete",
     endpoint: "/integraciones/torniquete/comando",
     metodo: "POST",
-    descripcion: "Envía la orden de apertura/cierre al controlador del torniquete. Marca/SDK real aún sin definir con el cliente.",
-    autenticacion: "JWT (Administración / Vigilancia)",
+    descripcion:
+      "Envía una orden de apertura/cierre al molinete. El backend la usa automáticamente tras cada ingreso autorizado y cada salida; también se puede llamar a mano.",
+    autenticacion: "JWT (Administrador / Vigilancia)",
     tipo: "mock",
     headers: ["Content-Type: application/json", "Authorization: Bearer <token>"],
     ejemploRequest: `{
@@ -133,7 +146,8 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
 }`,
     ejemploRespuesta: `// 200 OK
 { "enviado": true }`,
-    notas: "Contrato provisional: hoy solo registra el comando en el log del servidor — no está conectado a ningún SDK/hardware real todavía.",
+    notas:
+      "Contrato provisional: hoy solo registra el comando en el log del servidor. Falta la marca/modelo del molinete y su SDK para conectarlo al equipo real.",
   },
 ];
 
@@ -298,7 +312,7 @@ function SistemaContent() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatusCard icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
@@ -319,23 +333,13 @@ function SistemaContent() {
           {estado && <p className="mt-2 text-xs text-gray-400">Latencia: {estado.baseDeDatos.latenciaMs} ms</p>}
         </StatusCard>
 
-        <StatusCard icon={<MailIcon className="text-gray-800 size-6 dark:text-white/90" />}>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Correo (SMTP)</p>
-          <div className="mt-2">
-            <ConfiguradoBadge ok={!!estado?.integraciones.smtpConfigurado} />
-          </div>
-          <p className="mt-2 text-xs text-gray-400">Invitaciones y recuperación de contraseña</p>
-          <Link href="/configuracion" className="mt-2 inline-block text-xs text-brand-500 hover:text-brand-600 dark:text-brand-400">
-            Configurar →
-          </Link>
-        </StatusCard>
 
         <StatusCard icon={<LockIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Clave de equipos físicos</p>
           <div className="mt-2">
             <ConfiguradoBadge ok={!!estado?.integraciones.claveEquiposConfigurada} />
           </div>
-          <p className="mt-2 text-xs text-gray-400">Lector DNI / alcoholímetro / torniquete</p>
+          <p className="mt-2 text-xs text-gray-400">ZKBio CVSecurity / molinete</p>
         </StatusCard>
       </div>
 
@@ -361,7 +365,7 @@ function SistemaContent() {
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">APIs de integración (equipos físicos y proveedores externos)</h2>
+          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">APIs de integración (terminal ZKTeco, alcoholímetro y molinete)</h2>
           <p className="mt-1 text-xs text-gray-400">Haz clic en una fila para ver el detalle de uso.</p>
         </div>
         <div className="overflow-x-auto">
@@ -394,7 +398,7 @@ function SistemaContent() {
 
 export default function SistemaPage() {
   return (
-    <RequireRole roles={["administracion"]}>
+    <RequireRole roles={["administrador"]}>
       <SistemaContent />
     </RequireRole>
   );

@@ -14,7 +14,6 @@ import { usePagination } from "@/lib/usePagination";
 const ACCION_COLOR: Record<string, "success" | "warning" | "error" | "info"> = {
   crear: "success",
   modificar: "info",
-  aprobar: "success",
   eliminar: "error",
 };
 
@@ -41,7 +40,7 @@ function AuditoriaContent() {
     <div>
       <PageHeader
         title="Auditoría"
-        description="Registro de quién creó, modificó o aprobó cada cambio en el sistema."
+        description="Registro de quién creó o modificó cada dato del sistema, y cuándo."
       />
 
       <div className="mb-4">
@@ -102,7 +101,7 @@ function AuditoriaContent() {
 
 export default function AuditoriaPage() {
   return (
-    <RequireRole roles={["administracion"]}>
+    <RequireRole roles={["administrador"]}>
       <AuditoriaContent />
     </RequireRole>
   );

@@ -53,7 +53,7 @@ __decorate([
 ], EventosAccesoController.prototype, "registrarSalida", null);
 __decorate([
     Get(),
-    Roles('administracion', 'vigilancia'),
+    Roles('administrador', 'vigilancia'),
     __param(0, Query()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [QueryEventosAccesoDto]),

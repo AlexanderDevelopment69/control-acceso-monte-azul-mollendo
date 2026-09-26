@@ -26,7 +26,7 @@ export class EventosAccesoController {
   }
 
   @Get()
-  @Roles('administracion', 'vigilancia')
+  @Roles('administrador', 'vigilancia')
   findAll(@Query() query: QueryEventosAccesoDto) {
     return this.eventosAccesoService.findAll(query);
   }

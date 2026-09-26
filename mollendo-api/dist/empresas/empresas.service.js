@@ -7,19 +7,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { randomBytes } from 'node:crypto';
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { MailerService } from '../common/mailer/mailer.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
-const INVITACION_EXPIRA_MS = 48 * 60 * 60 * 1000;
 let EmpresasService = class EmpresasService {
     prisma;
-    mailerService;
     auditoriaService;
-    constructor(prisma, mailerService, auditoriaService) {
+    constructor(prisma, auditoriaService) {
         this.prisma = prisma;
-        this.mailerService = mailerService;
         this.auditoriaService = auditoriaService;
     }
     async create(dto, usuarioId) {
@@ -68,43 +63,10 @@ let EmpresasService = class EmpresasService {
         });
         return empresa;
     }
-    async invitar(id) {
-        const empresa = await this.findOne(id);
-        const usuarioExistente = await this.prisma.usuario.findUnique({
-            where: { correo: empresa.correoContacto },
-        });
-        if (usuarioExistente?.estadoCuenta === 'activo') {
-            throw new BadRequestException('El representante de esta empresa ya activó su cuenta');
-        }
-        const token = randomBytes(32).toString('hex');
-        const tokenExpira = new Date(Date.now() + INVITACION_EXPIRA_MS);
-        if (usuarioExistente) {
-            await this.prisma.usuario.update({
-                where: { id: usuarioExistente.id },
-                data: { tokenInvitacion: token, tokenExpira, estadoCuenta: 'invitado' },
-            });
-        }
-        else {
-            await this.prisma.usuario.create({
-                data: {
-                    empresaId: empresa.id,
-                    rol: 'empresa',
-                    correo: empresa.correoContacto,
-                    estadoCuenta: 'invitado',
-                    tokenInvitacion: token,
-                    tokenExpira,
-                },
-            });
-        }
-        const enlace = `${process.env.CORS_ORIGIN}/activar-cuenta?token=${token}`;
-        await this.mailerService.enviarInvitacionEmpresa(empresa.correoContacto, enlace);
-        return { mensaje: 'Invitación enviada correctamente' };
-    }
 };
 EmpresasService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
-        MailerService,
         AuditoriaService])
 ], EmpresasService);
 export { EmpresasService };

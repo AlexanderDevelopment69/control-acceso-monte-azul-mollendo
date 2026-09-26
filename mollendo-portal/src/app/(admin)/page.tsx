@@ -3,8 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { AdminHome } from "./AdminHome";
-import { EmpresaHome } from "./EmpresaHome";
+import { PersonalDocumentos } from "./PersonalDocumentos";
 
 export default function Home() {
   const { user } = useAuth();
@@ -22,12 +21,8 @@ export default function Home() {
     return <div className="flex h-40 items-center justify-center text-gray-400 text-sm">Cargando…</div>;
   }
 
-  if (user.rol === "administracion") {
-    return <AdminHome />;
-  }
-
-  if (user.rol === "empresa") {
-    return <EmpresaHome />;
+  if (user.rol === "administrador") {
+    return <PersonalDocumentos />;
   }
 
   return <div className="flex h-40 items-center justify-center text-gray-400 text-sm">Cargando…</div>;

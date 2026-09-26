@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 let SolicitudesVisitaService = class SolicitudesVisitaService {
@@ -18,20 +18,14 @@ let SolicitudesVisitaService = class SolicitudesVisitaService {
         this.auditoriaService = auditoriaService;
     }
     async create(dto, user) {
-        if (user.rol !== 'empresa') {
-            throw new ForbiddenException('Solo la empresa proveedora registra solicitudes de visita');
-        }
         const persona = await this.prisma.persona.findUnique({ where: { id: dto.personaId } });
         if (!persona) {
             throw new NotFoundException('Persona no encontrada');
         }
-        if (persona.empresaId !== user.empresaId) {
-            throw new ForbiddenException('La persona no pertenece a su empresa');
-        }
         const solicitud = await this.prisma.solicitudVisita.create({
             data: {
                 personaId: dto.personaId,
-                empresaId: user.empresaId,
+                empresaId: persona.empresaId,
                 personaVisitada: dto.personaVisitada,
                 motivo: dto.motivo,
                 fechaHoraProgramada: new Date(dto.fechaHoraProgramada),
@@ -46,11 +40,11 @@ let SolicitudesVisitaService = class SolicitudesVisitaService {
         });
         return solicitud;
     }
-    async findAll(query, user) {
-        const empresaId = user.rol === 'empresa' ? user.empresaId : query.empresaId;
+    async findAll(query) {
         return this.prisma.solicitudVisita.findMany({
             where: {
-                empresaId,
+                empresaId: query.empresaId,
+                personaId: query.personaId,
                 fechaHoraProgramada: {
                     gte: query.desde ? new Date(query.desde) : undefined,
                     lte: query.hasta ? new Date(query.hasta) : undefined,
@@ -60,7 +54,7 @@ let SolicitudesVisitaService = class SolicitudesVisitaService {
             orderBy: { fechaHoraProgramada: 'desc' },
         });
     }
-    async findOne(id, user) {
+    async findOne(id) {
         const solicitud = await this.prisma.solicitudVisita.findUnique({
             where: { id },
             include: { persona: { select: { id: true, nombres: true, apellidos: true } } },
@@ -68,16 +62,10 @@ let SolicitudesVisitaService = class SolicitudesVisitaService {
         if (!solicitud) {
             throw new NotFoundException('Solicitud de visita no encontrada');
         }
-        if (user.rol === 'empresa' && solicitud.empresaId !== user.empresaId) {
-            throw new ForbiddenException('No puede ver solicitudes de otra empresa');
-        }
         return solicitud;
     }
     async update(id, dto, user) {
-        const solicitud = await this.findOne(id, user);
-        if (user.rol === 'empresa' && solicitud.empresaId !== user.empresaId) {
-            throw new ForbiddenException('No puede modificar solicitudes de otra empresa');
-        }
+        const solicitud = await this.findOne(id);
         const actualizada = await this.prisma.solicitudVisita.update({
             where: { id: solicitud.id },
             data: {

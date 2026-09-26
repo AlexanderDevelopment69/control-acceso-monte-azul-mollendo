@@ -11,6 +11,7 @@ import { Transform } from 'class-transformer';
 import { IsDateString, IsInt, IsOptional } from 'class-validator';
 export class QuerySolicitudesVisitaDto {
     empresaId;
+    personaId;
     desde;
     hasta;
 }
@@ -20,6 +21,12 @@ __decorate([
     IsInt({ message: 'El ID de la empresa debe ser un número' }),
     __metadata("design:type", Number)
 ], QuerySolicitudesVisitaDto.prototype, "empresaId", void 0);
+__decorate([
+    IsOptional(),
+    Transform(({ value }) => Number(value)),
+    IsInt({ message: 'El ID de la persona debe ser un número' }),
+    __metadata("design:type", Number)
+], QuerySolicitudesVisitaDto.prototype, "personaId", void 0);
 __decorate([
     IsOptional(),
     IsDateString({}, { message: 'La fecha "desde" no es válida' }),

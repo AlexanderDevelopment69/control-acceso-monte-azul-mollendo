@@ -34,9 +34,6 @@ let EmpresasController = class EmpresasController {
     update(id, dto, user) {
         return this.empresasService.update(id, dto, user.id);
     }
-    invitar(id) {
-        return this.empresasService.invitar(id);
-    }
 };
 __decorate([
     Post(),
@@ -69,16 +66,9 @@ __decorate([
     __metadata("design:paramtypes", [Number, UpdateEmpresaDto, Object]),
     __metadata("design:returntype", void 0)
 ], EmpresasController.prototype, "update", null);
-__decorate([
-    Post(':id/invitar'),
-    __param(0, Param('id', ParseIntPipe)),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
-], EmpresasController.prototype, "invitar", null);
 EmpresasController = __decorate([
     Controller('empresas'),
-    Roles('administracion'),
+    Roles('administrador'),
     __metadata("design:paramtypes", [EmpresasService])
 ], EmpresasController);
 export { EmpresasController };

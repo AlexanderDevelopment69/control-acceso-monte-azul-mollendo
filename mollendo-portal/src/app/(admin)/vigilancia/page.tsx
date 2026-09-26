@@ -15,11 +15,39 @@ import { usePagination } from "@/lib/usePagination";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
+// Payload del WebSocket (ver EventosAccesoService en el backend). Una persona
+// no registrada llega sin eventoId ni persona.
 interface EventoLive {
-  eventoId: number;
+  eventoId: number | null;
+  tipoMovimiento: "ingreso" | "salida";
   resultado: "autorizado" | "denegado";
-  persona: { id: number; nombres: string; apellidos: string };
-  motivos: Record<string, unknown>;
+  fechaHora: string;
+  persona: { id: number; nombres: string; apellidos: string } | null;
+  numeroDocumento: string;
+  motivos: {
+    personaNoRegistrada?: boolean;
+    dadoDeBaja?: boolean;
+    sinPuesto?: boolean;
+    alcohol?: boolean;
+    documentos?: boolean;
+    documentosFaltantes?: string[];
+  };
+}
+
+function motivosEnVivo(motivos: EventoLive["motivos"]): string[] {
+  if (motivos.personaNoRegistrada) return ["Persona no registrada"];
+  if (motivos.dadoDeBaja) return ["Dado de baja"];
+  const lista: string[] = [];
+  if (motivos.sinPuesto) lista.push("Sin puesto asignado");
+  if (motivos.alcohol) lista.push("Alcohol no conforme");
+  if (motivos.documentos) {
+    lista.push(
+      motivos.documentosFaltantes?.length
+        ? `Documentos faltantes o vencidos: ${motivos.documentosFaltantes.join(", ")}`
+        : "Documentos faltantes o vencidos",
+    );
+  }
+  return lista;
 }
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -31,12 +59,12 @@ function StatCard({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function MotivoDenegacion({ evento }: { evento: Pick<EventoAcceso, "denegadoPorBaja" | "denegadoPorAlcohol" | "denegadoPorDocumentos" | "denegadoSinIngresoPrevio"> }) {
+function MotivoDenegacion({ evento }: { evento: Pick<EventoAcceso, "denegadoPorBaja" | "denegadoSinPuesto" | "denegadoPorAlcohol" | "denegadoPorDocumentos"> }) {
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
   const motivos: string[] = [];
+  if (evento.denegadoSinPuesto) motivos.push("Sin puesto");
   if (evento.denegadoPorAlcohol) motivos.push("Alcohol");
   if (evento.denegadoPorDocumentos) motivos.push("Documentos");
-  if (evento.denegadoSinIngresoPrevio) motivos.push("Sin ingreso previo");
   if (motivos.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1">
@@ -51,7 +79,7 @@ function VigilanciaContent() {
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
   const [eventos, setEventos] = useState<EventoAcceso[]>([]);
   const [eventosVivos, setEventosVivos] = useState<EventoLive[]>([]);
-  const [contingencia, setContingencia] = useState(false);
+  const [servidorCaido, setServidorCaido] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,15 +107,15 @@ function VigilanciaContent() {
     };
   }, []);
 
-  // Modo contingencia: si /health deja de responder, el servidor central
-  // no está disponible (spec, sección 4.5 / 9.9).
+  // Aviso si el servidor deja de responder. El alcance base no incluye modo
+  // contingencia: sin servidor no se valida ningún ingreso.
   useEffect(() => {
     async function chequear() {
       try {
         const res = await fetch(`${API_URL}/health`, { headers: { "ngrok-skip-browser-warning": "true" } });
-        setContingencia(!res.ok);
+        setServidorCaido(!res.ok);
       } catch {
-        setContingencia(true);
+        setServidorCaido(true);
       }
     }
     chequear();
@@ -108,10 +136,10 @@ function VigilanciaContent() {
     <div>
       <PageHeader
         title="Panel de vigilancia"
-        description="Estado en tiempo real de los ingresos y salidas al Terminal."
+        description="Resultado de cada ingreso y salida en tiempo real, con el motivo cuando se deniega."
         actions={
-          contingencia ? (
-            <Badge color="error" size="md">⚠ Modo contingencia — servidor central no responde</Badge>
+          servidorCaido ? (
+            <Badge color="error" size="md">⚠ El servidor no responde — no se están validando ingresos</Badge>
           ) : undefined
         }
       />
@@ -125,15 +153,26 @@ function VigilanciaContent() {
       {eventosVivos.length > 0 && (
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
           <h2 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Eventos en tiempo real</h2>
-          <ul className="space-y-2">
-            {eventosVivos.map((ev, i) => (
-              <li key={`${ev.eventoId}-${i}`} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 dark:text-gray-300">
-                  {ev.persona.nombres} {ev.persona.apellidos}
-                </span>
-                <Badge color={ev.resultado === "autorizado" ? "success" : "error"}>{ev.resultado}</Badge>
-              </li>
-            ))}
+          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+            {eventosVivos.map((ev, i) => {
+              const motivos = motivosEnVivo(ev.motivos);
+              return (
+                <li key={`${ev.eventoId ?? "sin-registro"}-${i}`} className="flex items-start justify-between gap-4 py-2 text-sm">
+                  <div>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      {ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : `Documento ${ev.numeroDocumento}`}
+                      <span className="ml-2 text-xs text-gray-400">
+                        {ev.tipoMovimiento} · {new Date(ev.fechaHora).toLocaleTimeString("es-PE")}
+                      </span>
+                    </p>
+                    {motivos.length > 0 && (
+                      <p className="mt-0.5 text-xs text-error-600 dark:text-error-400">{motivos.join(" · ")}</p>
+                    )}
+                  </div>
+                  <Badge color={ev.resultado === "autorizado" ? "success" : "error"}>{ev.resultado}</Badge>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -198,7 +237,7 @@ function VigilanciaContent() {
 
 export default function VigilanciaPage() {
   return (
-    <RequireRole roles={["vigilancia", "administracion"]}>
+    <RequireRole roles={["vigilancia", "administrador"]}>
       <VigilanciaContent />
     </RequireRole>
   );

@@ -26,11 +26,11 @@ let PersonasController = class PersonasController {
     create(dto, user) {
         return this.personasService.create(dto, user);
     }
-    findAll(query, user) {
-        return this.personasService.findAll(query, user);
+    findAll(query) {
+        return this.personasService.findAll(query);
     }
-    findOne(id, user) {
-        return this.personasService.findOne(id, user);
+    findOne(id) {
+        return this.personasService.findOne(id);
     }
     update(id, dto, user) {
         return this.personasService.update(id, dto, user);
@@ -41,7 +41,7 @@ let PersonasController = class PersonasController {
 };
 __decorate([
     Post(),
-    Roles('empresa'),
+    Roles('administrador'),
     __param(0, Body()),
     __param(1, CurrentUser()),
     __metadata("design:type", Function),
@@ -50,25 +50,23 @@ __decorate([
 ], PersonasController.prototype, "create", null);
 __decorate([
     Get(),
-    Roles('administracion', 'empresa', 'vigilancia'),
+    Roles('administrador', 'vigilancia'),
     __param(0, Query()),
-    __param(1, CurrentUser()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [QueryPersonasDto, Object]),
+    __metadata("design:paramtypes", [QueryPersonasDto]),
     __metadata("design:returntype", void 0)
 ], PersonasController.prototype, "findAll", null);
 __decorate([
     Get(':id'),
-    Roles('administracion', 'empresa', 'vigilancia'),
+    Roles('administrador', 'vigilancia'),
     __param(0, Param('id', ParseIntPipe)),
-    __param(1, CurrentUser()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], PersonasController.prototype, "findOne", null);
 __decorate([
     Patch(':id'),
-    Roles('empresa'),
+    Roles('administrador'),
     __param(0, Param('id', ParseIntPipe)),
     __param(1, Body()),
     __param(2, CurrentUser()),
@@ -78,7 +76,7 @@ __decorate([
 ], PersonasController.prototype, "update", null);
 __decorate([
     Patch(':id/estado'),
-    Roles('empresa'),
+    Roles('administrador'),
     __param(0, Param('id', ParseIntPipe)),
     __param(1, Body()),
     __param(2, CurrentUser()),

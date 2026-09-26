@@ -1,4 +1,12 @@
-export type RolUsuario = "administracion" | "empresa" | "vigilancia";
+export type RolUsuario = "administrador" | "vigilancia";
+
+export interface Usuario {
+  id: number;
+  correo: string;
+  rol: RolUsuario;
+  estadoCuenta: "activo" | "baja";
+  creadoEn: string;
+}
 
 export interface Empresa {
   id: number;
@@ -46,6 +54,25 @@ export interface Persona {
   empresa?: { id: number; razonSocial: string };
   puesto?: Puesto | null;
   documentos?: DocumentoPersona[];
+  /** ¿Podría ingresar hoy (suponiendo alcohol conforme)? Mismo motor que el molinete. */
+  cumplimiento?: Cumplimiento;
+  /** Solo en el detalle: documentos que exige su puesto y el estado de la última versión. */
+  requisitos?: RequisitoPersona[];
+}
+
+export interface Cumplimiento {
+  habilitado: boolean;
+  dadoDeBaja: boolean;
+  sinPuesto: boolean;
+  documentosFaltantes: string[];
+}
+
+export interface RequisitoPersona {
+  tipoDocumentoId: number;
+  nombre: string;
+  obligatorio: boolean;
+  documento: { id: number; version: number; fechaVencimiento: string | null; creadoEn: string } | null;
+  vigente: boolean;
 }
 
 export interface DocumentoPersona {
@@ -55,8 +82,6 @@ export interface DocumentoPersona {
   fechaEmision: string | null;
   fechaVencimiento: string | null;
   archivoUrl: string | null;
-  vigente: boolean;
-  estadoAprobacion: "pendiente" | "aprobado" | "rechazado";
   version: number;
   creadoEn: string;
   tipoDocumento?: TipoDocumento;
@@ -80,9 +105,9 @@ export interface EventoAcceso {
   tipoMovimiento: "ingreso" | "salida";
   resultado: "autorizado" | "denegado";
   denegadoPorBaja: boolean;
+  denegadoSinPuesto: boolean;
   denegadoPorAlcohol: boolean;
   denegadoPorDocumentos: boolean;
-  denegadoSinIngresoPrevio: boolean;
   fechaHora: string;
   torniqueteId: string | null;
   persona?: { id: number; nombres: string; apellidos: string; empresaId: number };
@@ -94,20 +119,6 @@ export interface ResumenPanel {
   documentosVencidos: number;
 }
 
-export type ConfiguracionSmtp =
-  | { configurado: false }
-  | {
-      configurado: true;
-      id: number;
-      host: string;
-      puerto: number;
-      seguro: boolean;
-      usuario: string | null;
-      remitente: string;
-      actualizadoEn: string;
-      passwordConfigurada: boolean;
-    };
-
 export interface EstadoSistema {
   api: {
     estado: "up";
@@ -117,7 +128,7 @@ export interface EstadoSistema {
     fecha: string;
   };
   baseDeDatos: { estado: "up" | "down"; latenciaMs: number };
-  integraciones: { smtpConfigurado: boolean; claveEquiposConfigurada: boolean };
+  integraciones: { claveEquiposConfigurada: boolean };
   websocket: { namespace: string };
 }
 
@@ -126,7 +137,7 @@ export interface AuditoriaEntry {
   usuarioId: number | null;
   tablaAfectada: string;
   registroId: number;
-  accion: "crear" | "modificar" | "aprobar" | "eliminar";
+  accion: "crear" | "modificar" | "eliminar";
   fechaHora: string;
   usuario?: { id: number; correo: string; rol: RolUsuario } | null;
 }

@@ -21,6 +21,8 @@ interface AuthContextValue {
   logout: () => void;
 }
 
+const ROLES_VALIDOS: RolUsuario[] = ["administrador", "vigilancia"];
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -36,7 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const payload = decodeJwt(token);
-    if (!payload || isTokenExpired(payload)) {
+    // Un token con un rol que ya no existe (p. ej. "administracion" o "empresa",
+    // anteriores al alcance base) se descarta para forzar un nuevo login.
+    if (!payload || isTokenExpired(payload) || !ROLES_VALIDOS.includes(payload.rol)) {
+      clearTokens();
       setUser(null);
       setLoading(false);
       return;

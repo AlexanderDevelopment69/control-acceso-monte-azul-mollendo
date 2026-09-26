@@ -11,6 +11,7 @@ import { Transform } from 'class-transformer';
 import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 const vacioComoIndefinido = ({ value }) => (value === '' ? undefined : value);
 export class CreatePersonaDto {
+    empresaId;
     puestoId;
     tipoDocumentoIdentidad;
     numeroDocumento;
@@ -18,6 +19,10 @@ export class CreatePersonaDto {
     apellidos;
     area;
 }
+__decorate([
+    IsInt({ message: 'La empresa es obligatoria' }),
+    __metadata("design:type", Number)
+], CreatePersonaDto.prototype, "empresaId", void 0);
 __decorate([
     IsOptional(),
     IsInt({ message: 'El puesto debe ser válido' }),

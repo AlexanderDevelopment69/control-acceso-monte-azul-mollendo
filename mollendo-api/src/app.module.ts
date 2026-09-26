@@ -6,9 +6,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
-import { ConfiguracionSmtpModule } from './configuracion-smtp/configuracion-smtp.module.js';
-import { MailerModule } from './common/mailer/mailer.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { UsuariosModule } from './usuarios/usuarios.module.js';
 import { EmpresasModule } from './empresas/empresas.module.js';
 import { AuditoriaModule } from './auditoria/auditoria.module.js';
 import { TiposDocumentoModule } from './tipos-documento/tipos-documento.module.js';
@@ -28,10 +27,9 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     EventEmitterModule.forRoot(),
     PassportModule,
     PrismaModule,
-    ConfiguracionSmtpModule,
-    MailerModule,
     AuditoriaModule,
     AuthModule,
+    UsuariosModule,
     EmpresasModule,
     TiposDocumentoModule,
     PuestosModule,

@@ -1,24 +1,41 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { EventosAccesoService, type AbrirMolineteEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
+import type { ZkbioWebhookDto } from './dto/zkbio-webhook.dto.js';
 
 /**
- * Contrato provisional (spec, sección 9.8): el proveedor del alcoholímetro
- * y la marca/SDK del torniquete todavía no están definidos (sección 12,
- * puntos pendientes de confirmar con el cliente). Estos endpoints solo
- * registran el payload recibido/enviado para poder programar el resto del
- * flujo contra un mock mientras se define el proveedor real.
+ * Adaptadores de los equipos físicos (spec base, sección 5.3):
+ * - ZKBio CVSecurity → backend: webhook con identificación + alcohol.
+ * - Backend → molinete: orden de apertura.
+ *
+ * Ambos siguen siendo PROVISIONALES: falta la documentación/SDK de ZKBio y la
+ * marca/modelo del molinete (spec base, sección 12). El molinete solo se
+ * registra en el log hasta tener su SDK real.
  */
 @Injectable()
 export class IntegracionesService {
   private readonly logger = new Logger(IntegracionesService.name);
 
-  async recibirWebhookAlcoholimetro(payload: unknown): Promise<{ recibido: boolean }> {
-    this.logger.log(`Webhook alcoholímetro recibido: ${JSON.stringify(payload)}`);
-    return { recibido: true };
+  constructor(private readonly eventosAccesoService: EventosAccesoService) {}
+
+  async recibirWebhookZkbio(dto: ZkbioWebhookDto) {
+    this.logger.log(`Webhook ZKBio recibido: ${JSON.stringify(dto)}`);
+    return this.eventosAccesoService.registrarIngreso({
+      tipoDocumentoIdentidad: dto.tipoDocumentoIdentidad ?? 'DNI',
+      numeroDocumento: dto.numeroDocumento,
+      alcoholConforme: dto.resultadoAlcohol === 'conforme',
+      torniqueteId: dto.torniqueteId,
+    });
+  }
+
+  @OnEvent('molinete.abrir')
+  async abrirMolinete(evento: AbrirMolineteEvent): Promise<void> {
+    await this.enviarComandoTorniquete({ torniqueteId: evento.torniqueteId ?? 'T1', comando: 'abrir' });
   }
 
   async enviarComandoTorniquete(dto: TorniqueteComandoDto): Promise<{ enviado: boolean }> {
-    this.logger.log(`Comando torniquete ${dto.torniqueteId}: ${dto.comando} (mock, sin SDK real todavía)`);
+    this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (mock, sin SDK real todavía)`);
     return { enviado: true };
   }
 }

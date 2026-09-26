@@ -15,7 +15,7 @@ export class TiposDocumentoController {
   }
 
   @Post()
-  @Roles('administracion')
+  @Roles('administrador')
   create(@Body() dto: CreateTipoDocumentoDto, @CurrentUser() user: AuthenticatedUser) {
     return this.tiposDocumentoService.create(dto, user.id);
   }

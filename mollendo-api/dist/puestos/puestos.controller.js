@@ -42,7 +42,7 @@ __decorate([
 ], PuestosController.prototype, "findAll", null);
 __decorate([
     Post(),
-    Roles('administracion'),
+    Roles('administrador'),
     __param(0, Body()),
     __param(1, CurrentUser()),
     __metadata("design:type", Function),
@@ -58,7 +58,7 @@ __decorate([
 ], PuestosController.prototype, "findRequisitos", null);
 __decorate([
     Post(':id/requisitos'),
-    Roles('administracion'),
+    Roles('administrador'),
     __param(0, Param('id', ParseIntPipe)),
     __param(1, Body()),
     __param(2, CurrentUser()),

@@ -33,7 +33,6 @@ export const ModelName = {
     DocumentoPersona: 'DocumentoPersona',
     SolicitudVisita: 'SolicitudVisita',
     EventoAcceso: 'EventoAcceso',
-    ConfiguracionSmtp: 'ConfiguracionSmtp',
     Auditoria: 'Auditoria'
 };
 export const TransactionIsolationLevel = runtime.makeStrictEnum({
@@ -61,8 +60,6 @@ export const UsuarioScalarFieldEnum = {
     correo: 'correo',
     passwordHash: 'passwordHash',
     estadoCuenta: 'estadoCuenta',
-    tokenInvitacion: 'tokenInvitacion',
-    tokenExpira: 'tokenExpira',
     creadoEn: 'creadoEn'
 };
 export const PuestoScalarFieldEnum = {
@@ -99,8 +96,6 @@ export const DocumentoPersonaScalarFieldEnum = {
     fechaEmision: 'fechaEmision',
     fechaVencimiento: 'fechaVencimiento',
     archivoUrl: 'archivoUrl',
-    vigente: 'vigente',
-    estadoAprobacion: 'estadoAprobacion',
     version: 'version',
     creadoEn: 'creadoEn'
 };
@@ -122,19 +117,9 @@ export const EventoAccesoScalarFieldEnum = {
     denegadoPorBaja: 'denegadoPorBaja',
     denegadoPorAlcohol: 'denegadoPorAlcohol',
     denegadoPorDocumentos: 'denegadoPorDocumentos',
-    denegadoSinIngresoPrevio: 'denegadoSinIngresoPrevio',
+    denegadoSinPuesto: 'denegadoSinPuesto',
     fechaHora: 'fechaHora',
     torniqueteId: 'torniqueteId'
-};
-export const ConfiguracionSmtpScalarFieldEnum = {
-    id: 'id',
-    host: 'host',
-    puerto: 'puerto',
-    seguro: 'seguro',
-    usuario: 'usuario',
-    password: 'password',
-    remitente: 'remitente',
-    actualizadoEn: 'actualizadoEn'
 };
 export const AuditoriaScalarFieldEnum = {
     id: 'id',

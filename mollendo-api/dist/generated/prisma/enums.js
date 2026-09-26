@@ -3,13 +3,11 @@ export const EstadoEmpresa = {
     inactiva: 'inactiva'
 };
 export const EstadoCuenta = {
-    invitado: 'invitado',
     activo: 'activo',
     baja: 'baja'
 };
 export const RolUsuario = {
-    administracion: 'administracion',
-    empresa: 'empresa',
+    administrador: 'administrador',
     vigilancia: 'vigilancia'
 };
 export const CasoPuesto = {
@@ -32,11 +30,6 @@ export const TipoValidacionDocumento = {
     si_no: 'si_no',
     vigente_por_actividad: 'vigente_por_actividad'
 };
-export const EstadoAprobacionDocumento = {
-    pendiente: 'pendiente',
-    aprobado: 'aprobado',
-    rechazado: 'rechazado'
-};
 export const EstadoSolicitudVisita = {
     programada: 'programada',
     completada: 'completada',
@@ -53,7 +46,6 @@ export const ResultadoAcceso = {
 export const AccionAuditoria = {
     crear: 'crear',
     modificar: 'modificar',
-    aprobar: 'aprobar',
     eliminar: 'eliminar'
 };
 //# sourceMappingURL=enums.js.map

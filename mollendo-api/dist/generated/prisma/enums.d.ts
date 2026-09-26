@@ -4,14 +4,12 @@ export declare const EstadoEmpresa: {
 };
 export type EstadoEmpresa = (typeof EstadoEmpresa)[keyof typeof EstadoEmpresa];
 export declare const EstadoCuenta: {
-    readonly invitado: "invitado";
     readonly activo: "activo";
     readonly baja: "baja";
 };
 export type EstadoCuenta = (typeof EstadoCuenta)[keyof typeof EstadoCuenta];
 export declare const RolUsuario: {
-    readonly administracion: "administracion";
-    readonly empresa: "empresa";
+    readonly administrador: "administrador";
     readonly vigilancia: "vigilancia";
 };
 export type RolUsuario = (typeof RolUsuario)[keyof typeof RolUsuario];
@@ -39,12 +37,6 @@ export declare const TipoValidacionDocumento: {
     readonly vigente_por_actividad: "vigente_por_actividad";
 };
 export type TipoValidacionDocumento = (typeof TipoValidacionDocumento)[keyof typeof TipoValidacionDocumento];
-export declare const EstadoAprobacionDocumento: {
-    readonly pendiente: "pendiente";
-    readonly aprobado: "aprobado";
-    readonly rechazado: "rechazado";
-};
-export type EstadoAprobacionDocumento = (typeof EstadoAprobacionDocumento)[keyof typeof EstadoAprobacionDocumento];
 export declare const EstadoSolicitudVisita: {
     readonly programada: "programada";
     readonly completada: "completada";
@@ -64,7 +56,6 @@ export type ResultadoAcceso = (typeof ResultadoAcceso)[keyof typeof ResultadoAcc
 export declare const AccionAuditoria: {
     readonly crear: "crear";
     readonly modificar: "modificar";
-    readonly aprobar: "aprobar";
     readonly eliminar: "eliminar";
 };
 export type AccionAuditoria = (typeof AccionAuditoria)[keyof typeof AccionAuditoria];

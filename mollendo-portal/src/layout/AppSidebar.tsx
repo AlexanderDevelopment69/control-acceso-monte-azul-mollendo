@@ -5,15 +5,11 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
-  CalenderIcon,
-  DocsIcon,
   EyeIcon,
-  GridIcon,
   GroupIcon,
   HorizontaLDots,
   InfoIcon,
   ListIcon,
-  MailIcon,
   PlugInIcon,
   TaskIcon,
 } from "../icons/index";
@@ -27,17 +23,12 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { icon: <GridIcon />, name: "Inicio", path: "/", roles: ["administracion", "empresa", "vigilancia"] },
-  { icon: <GroupIcon />, name: "Empresas", path: "/empresas", roles: ["administracion"] },
-  { icon: <TaskIcon />, name: "Puestos", path: "/puestos", roles: ["administracion"] },
-  { icon: <DocsIcon />, name: "Tipos de documento", path: "/tipos-documento", roles: ["administracion"] },
-  { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administracion"] },
-  { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administracion"] },
-  { icon: <MailIcon />, name: "Configuración", path: "/configuracion", roles: ["administracion"] },
-  { icon: <GroupIcon />, name: "Mi personal", path: "/personal", roles: ["empresa"] },
-  { icon: <CalenderIcon />, name: "Solicitudes de visita", path: "/visitas", roles: ["empresa"] },
-  { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administracion"] },
-  { icon: <InfoIcon />, name: "Manual", path: "/manual", roles: ["administracion", "empresa", "vigilancia"] },
+  { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
+  { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
+  { icon: <TaskIcon />, name: "Configuración", path: "/configuracion", roles: ["administrador"] },
+  { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },
+  { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador"] },
+  { icon: <InfoIcon />, name: "Manual", path: "/manual", roles: ["administrador", "vigilancia"] },
 ];
 
 const AppSidebar: React.FC = () => {

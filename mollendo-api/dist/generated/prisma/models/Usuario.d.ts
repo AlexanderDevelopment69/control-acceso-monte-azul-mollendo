@@ -24,8 +24,6 @@ export type UsuarioMinAggregateOutputType = {
     correo: string | null;
     passwordHash: string | null;
     estadoCuenta: $Enums.EstadoCuenta | null;
-    tokenInvitacion: string | null;
-    tokenExpira: Date | null;
     creadoEn: Date | null;
 };
 export type UsuarioMaxAggregateOutputType = {
@@ -35,8 +33,6 @@ export type UsuarioMaxAggregateOutputType = {
     correo: string | null;
     passwordHash: string | null;
     estadoCuenta: $Enums.EstadoCuenta | null;
-    tokenInvitacion: string | null;
-    tokenExpira: Date | null;
     creadoEn: Date | null;
 };
 export type UsuarioCountAggregateOutputType = {
@@ -46,8 +42,6 @@ export type UsuarioCountAggregateOutputType = {
     correo: number;
     passwordHash: number;
     estadoCuenta: number;
-    tokenInvitacion: number;
-    tokenExpira: number;
     creadoEn: number;
     _all: number;
 };
@@ -66,8 +60,6 @@ export type UsuarioMinAggregateInputType = {
     correo?: true;
     passwordHash?: true;
     estadoCuenta?: true;
-    tokenInvitacion?: true;
-    tokenExpira?: true;
     creadoEn?: true;
 };
 export type UsuarioMaxAggregateInputType = {
@@ -77,8 +69,6 @@ export type UsuarioMaxAggregateInputType = {
     correo?: true;
     passwordHash?: true;
     estadoCuenta?: true;
-    tokenInvitacion?: true;
-    tokenExpira?: true;
     creadoEn?: true;
 };
 export type UsuarioCountAggregateInputType = {
@@ -88,8 +78,6 @@ export type UsuarioCountAggregateInputType = {
     correo?: true;
     passwordHash?: true;
     estadoCuenta?: true;
-    tokenInvitacion?: true;
-    tokenExpira?: true;
     creadoEn?: true;
     _all?: true;
 };
@@ -126,10 +114,8 @@ export type UsuarioGroupByOutputType = {
     empresaId: number;
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash: string | null;
+    passwordHash: string;
     estadoCuenta: $Enums.EstadoCuenta;
-    tokenInvitacion: string | null;
-    tokenExpira: Date | null;
     creadoEn: Date;
     _count: UsuarioCountAggregateOutputType | null;
     _avg: UsuarioAvgAggregateOutputType | null;
@@ -148,10 +134,8 @@ export type UsuarioWhereInput = {
     empresaId?: Prisma.IntFilter<"Usuario"> | number;
     rol?: Prisma.EnumRolUsuarioFilter<"Usuario"> | $Enums.RolUsuario;
     correo?: Prisma.StringFilter<"Usuario"> | string;
-    passwordHash?: Prisma.StringNullableFilter<"Usuario"> | string | null;
+    passwordHash?: Prisma.StringFilter<"Usuario"> | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFilter<"Usuario"> | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.StringNullableFilter<"Usuario"> | string | null;
-    tokenExpira?: Prisma.DateTimeNullableFilter<"Usuario"> | Date | string | null;
     creadoEn?: Prisma.DateTimeFilter<"Usuario"> | Date | string;
     empresa?: Prisma.XOR<Prisma.EmpresaScalarRelationFilter, Prisma.EmpresaWhereInput>;
     auditorias?: Prisma.AuditoriaListRelationFilter;
@@ -161,10 +145,8 @@ export type UsuarioOrderByWithRelationInput = {
     empresaId?: Prisma.SortOrder;
     rol?: Prisma.SortOrder;
     correo?: Prisma.SortOrder;
-    passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder;
+    passwordHash?: Prisma.SortOrder;
     estadoCuenta?: Prisma.SortOrder;
-    tokenInvitacion?: Prisma.SortOrderInput | Prisma.SortOrder;
-    tokenExpira?: Prisma.SortOrderInput | Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
     empresa?: Prisma.EmpresaOrderByWithRelationInput;
     auditorias?: Prisma.AuditoriaOrderByRelationAggregateInput;
@@ -177,10 +159,8 @@ export type UsuarioWhereUniqueInput = Prisma.AtLeast<{
     NOT?: Prisma.UsuarioWhereInput | Prisma.UsuarioWhereInput[];
     empresaId?: Prisma.IntFilter<"Usuario"> | number;
     rol?: Prisma.EnumRolUsuarioFilter<"Usuario"> | $Enums.RolUsuario;
-    passwordHash?: Prisma.StringNullableFilter<"Usuario"> | string | null;
+    passwordHash?: Prisma.StringFilter<"Usuario"> | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFilter<"Usuario"> | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.StringNullableFilter<"Usuario"> | string | null;
-    tokenExpira?: Prisma.DateTimeNullableFilter<"Usuario"> | Date | string | null;
     creadoEn?: Prisma.DateTimeFilter<"Usuario"> | Date | string;
     empresa?: Prisma.XOR<Prisma.EmpresaScalarRelationFilter, Prisma.EmpresaWhereInput>;
     auditorias?: Prisma.AuditoriaListRelationFilter;
@@ -190,10 +170,8 @@ export type UsuarioOrderByWithAggregationInput = {
     empresaId?: Prisma.SortOrder;
     rol?: Prisma.SortOrder;
     correo?: Prisma.SortOrder;
-    passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder;
+    passwordHash?: Prisma.SortOrder;
     estadoCuenta?: Prisma.SortOrder;
-    tokenInvitacion?: Prisma.SortOrderInput | Prisma.SortOrder;
-    tokenExpira?: Prisma.SortOrderInput | Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
     _count?: Prisma.UsuarioCountOrderByAggregateInput;
     _avg?: Prisma.UsuarioAvgOrderByAggregateInput;
@@ -209,19 +187,15 @@ export type UsuarioScalarWhereWithAggregatesInput = {
     empresaId?: Prisma.IntWithAggregatesFilter<"Usuario"> | number;
     rol?: Prisma.EnumRolUsuarioWithAggregatesFilter<"Usuario"> | $Enums.RolUsuario;
     correo?: Prisma.StringWithAggregatesFilter<"Usuario"> | string;
-    passwordHash?: Prisma.StringNullableWithAggregatesFilter<"Usuario"> | string | null;
+    passwordHash?: Prisma.StringWithAggregatesFilter<"Usuario"> | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaWithAggregatesFilter<"Usuario"> | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.StringNullableWithAggregatesFilter<"Usuario"> | string | null;
-    tokenExpira?: Prisma.DateTimeNullableWithAggregatesFilter<"Usuario"> | Date | string | null;
     creadoEn?: Prisma.DateTimeWithAggregatesFilter<"Usuario"> | Date | string;
 };
 export type UsuarioCreateInput = {
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash?: string | null;
+    passwordHash: string;
     estadoCuenta?: $Enums.EstadoCuenta;
-    tokenInvitacion?: string | null;
-    tokenExpira?: Date | string | null;
     creadoEn?: Date | string;
     empresa: Prisma.EmpresaCreateNestedOneWithoutUsuariosInput;
     auditorias?: Prisma.AuditoriaCreateNestedManyWithoutUsuarioInput;
@@ -231,20 +205,16 @@ export type UsuarioUncheckedCreateInput = {
     empresaId: number;
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash?: string | null;
+    passwordHash: string;
     estadoCuenta?: $Enums.EstadoCuenta;
-    tokenInvitacion?: string | null;
-    tokenExpira?: Date | string | null;
     creadoEn?: Date | string;
     auditorias?: Prisma.AuditoriaUncheckedCreateNestedManyWithoutUsuarioInput;
 };
 export type UsuarioUpdateInput = {
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     empresa?: Prisma.EmpresaUpdateOneRequiredWithoutUsuariosNestedInput;
     auditorias?: Prisma.AuditoriaUpdateManyWithoutUsuarioNestedInput;
@@ -254,10 +224,8 @@ export type UsuarioUncheckedUpdateInput = {
     empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     auditorias?: Prisma.AuditoriaUncheckedUpdateManyWithoutUsuarioNestedInput;
 };
@@ -266,19 +234,15 @@ export type UsuarioCreateManyInput = {
     empresaId: number;
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash?: string | null;
+    passwordHash: string;
     estadoCuenta?: $Enums.EstadoCuenta;
-    tokenInvitacion?: string | null;
-    tokenExpira?: Date | string | null;
     creadoEn?: Date | string;
 };
 export type UsuarioUpdateManyMutationInput = {
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type UsuarioUncheckedUpdateManyInput = {
@@ -286,10 +250,8 @@ export type UsuarioUncheckedUpdateManyInput = {
     empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type UsuarioListRelationFilter = {
@@ -307,8 +269,6 @@ export type UsuarioCountOrderByAggregateInput = {
     correo?: Prisma.SortOrder;
     passwordHash?: Prisma.SortOrder;
     estadoCuenta?: Prisma.SortOrder;
-    tokenInvitacion?: Prisma.SortOrder;
-    tokenExpira?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
 export type UsuarioAvgOrderByAggregateInput = {
@@ -322,8 +282,6 @@ export type UsuarioMaxOrderByAggregateInput = {
     correo?: Prisma.SortOrder;
     passwordHash?: Prisma.SortOrder;
     estadoCuenta?: Prisma.SortOrder;
-    tokenInvitacion?: Prisma.SortOrder;
-    tokenExpira?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
 export type UsuarioMinOrderByAggregateInput = {
@@ -333,8 +291,6 @@ export type UsuarioMinOrderByAggregateInput = {
     correo?: Prisma.SortOrder;
     passwordHash?: Prisma.SortOrder;
     estadoCuenta?: Prisma.SortOrder;
-    tokenInvitacion?: Prisma.SortOrder;
-    tokenExpira?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
 export type UsuarioSumOrderByAggregateInput = {
@@ -406,10 +362,8 @@ export type UsuarioUpdateOneWithoutAuditoriasNestedInput = {
 export type UsuarioCreateWithoutEmpresaInput = {
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash?: string | null;
+    passwordHash: string;
     estadoCuenta?: $Enums.EstadoCuenta;
-    tokenInvitacion?: string | null;
-    tokenExpira?: Date | string | null;
     creadoEn?: Date | string;
     auditorias?: Prisma.AuditoriaCreateNestedManyWithoutUsuarioInput;
 };
@@ -417,10 +371,8 @@ export type UsuarioUncheckedCreateWithoutEmpresaInput = {
     id?: number;
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash?: string | null;
+    passwordHash: string;
     estadoCuenta?: $Enums.EstadoCuenta;
-    tokenInvitacion?: string | null;
-    tokenExpira?: Date | string | null;
     creadoEn?: Date | string;
     auditorias?: Prisma.AuditoriaUncheckedCreateNestedManyWithoutUsuarioInput;
 };
@@ -453,19 +405,15 @@ export type UsuarioScalarWhereInput = {
     empresaId?: Prisma.IntFilter<"Usuario"> | number;
     rol?: Prisma.EnumRolUsuarioFilter<"Usuario"> | $Enums.RolUsuario;
     correo?: Prisma.StringFilter<"Usuario"> | string;
-    passwordHash?: Prisma.StringNullableFilter<"Usuario"> | string | null;
+    passwordHash?: Prisma.StringFilter<"Usuario"> | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFilter<"Usuario"> | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.StringNullableFilter<"Usuario"> | string | null;
-    tokenExpira?: Prisma.DateTimeNullableFilter<"Usuario"> | Date | string | null;
     creadoEn?: Prisma.DateTimeFilter<"Usuario"> | Date | string;
 };
 export type UsuarioCreateWithoutAuditoriasInput = {
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash?: string | null;
+    passwordHash: string;
     estadoCuenta?: $Enums.EstadoCuenta;
-    tokenInvitacion?: string | null;
-    tokenExpira?: Date | string | null;
     creadoEn?: Date | string;
     empresa: Prisma.EmpresaCreateNestedOneWithoutUsuariosInput;
 };
@@ -474,10 +422,8 @@ export type UsuarioUncheckedCreateWithoutAuditoriasInput = {
     empresaId: number;
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash?: string | null;
+    passwordHash: string;
     estadoCuenta?: $Enums.EstadoCuenta;
-    tokenInvitacion?: string | null;
-    tokenExpira?: Date | string | null;
     creadoEn?: Date | string;
 };
 export type UsuarioCreateOrConnectWithoutAuditoriasInput = {
@@ -496,10 +442,8 @@ export type UsuarioUpdateToOneWithWhereWithoutAuditoriasInput = {
 export type UsuarioUpdateWithoutAuditoriasInput = {
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     empresa?: Prisma.EmpresaUpdateOneRequiredWithoutUsuariosNestedInput;
 };
@@ -508,29 +452,23 @@ export type UsuarioUncheckedUpdateWithoutAuditoriasInput = {
     empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type UsuarioCreateManyEmpresaInput = {
     id?: number;
     rol: $Enums.RolUsuario;
     correo: string;
-    passwordHash?: string | null;
+    passwordHash: string;
     estadoCuenta?: $Enums.EstadoCuenta;
-    tokenInvitacion?: string | null;
-    tokenExpira?: Date | string | null;
     creadoEn?: Date | string;
 };
 export type UsuarioUpdateWithoutEmpresaInput = {
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     auditorias?: Prisma.AuditoriaUpdateManyWithoutUsuarioNestedInput;
 };
@@ -538,10 +476,8 @@ export type UsuarioUncheckedUpdateWithoutEmpresaInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     auditorias?: Prisma.AuditoriaUncheckedUpdateManyWithoutUsuarioNestedInput;
 };
@@ -549,10 +485,8 @@ export type UsuarioUncheckedUpdateManyWithoutEmpresaInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     rol?: Prisma.EnumRolUsuarioFieldUpdateOperationsInput | $Enums.RolUsuario;
     correo?: Prisma.StringFieldUpdateOperationsInput | string;
-    passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     estadoCuenta?: Prisma.EnumEstadoCuentaFieldUpdateOperationsInput | $Enums.EstadoCuenta;
-    tokenInvitacion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    tokenExpira?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type UsuarioCountOutputType = {
@@ -574,8 +508,6 @@ export type UsuarioSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     correo?: boolean;
     passwordHash?: boolean;
     estadoCuenta?: boolean;
-    tokenInvitacion?: boolean;
-    tokenExpira?: boolean;
     creadoEn?: boolean;
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
     auditorias?: boolean | Prisma.Usuario$auditoriasArgs<ExtArgs>;
@@ -588,8 +520,6 @@ export type UsuarioSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
     correo?: boolean;
     passwordHash?: boolean;
     estadoCuenta?: boolean;
-    tokenInvitacion?: boolean;
-    tokenExpira?: boolean;
     creadoEn?: boolean;
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["usuario"]>;
@@ -600,8 +530,6 @@ export type UsuarioSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
     correo?: boolean;
     passwordHash?: boolean;
     estadoCuenta?: boolean;
-    tokenInvitacion?: boolean;
-    tokenExpira?: boolean;
     creadoEn?: boolean;
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["usuario"]>;
@@ -612,11 +540,9 @@ export type UsuarioSelectScalar = {
     correo?: boolean;
     passwordHash?: boolean;
     estadoCuenta?: boolean;
-    tokenInvitacion?: boolean;
-    tokenExpira?: boolean;
     creadoEn?: boolean;
 };
-export type UsuarioOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "empresaId" | "rol" | "correo" | "passwordHash" | "estadoCuenta" | "tokenInvitacion" | "tokenExpira" | "creadoEn", ExtArgs["result"]["usuario"]>;
+export type UsuarioOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "empresaId" | "rol" | "correo" | "passwordHash" | "estadoCuenta" | "creadoEn", ExtArgs["result"]["usuario"]>;
 export type UsuarioInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
     auditorias?: boolean | Prisma.Usuario$auditoriasArgs<ExtArgs>;
@@ -639,10 +565,8 @@ export type $UsuarioPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
         empresaId: number;
         rol: $Enums.RolUsuario;
         correo: string;
-        passwordHash: string | null;
+        passwordHash: string;
         estadoCuenta: $Enums.EstadoCuenta;
-        tokenInvitacion: string | null;
-        tokenExpira: Date | null;
         creadoEn: Date;
     }, ExtArgs["result"]["usuario"]>;
     composites: {};
@@ -709,8 +633,6 @@ export interface UsuarioFieldRefs {
     readonly correo: Prisma.FieldRef<"Usuario", 'String'>;
     readonly passwordHash: Prisma.FieldRef<"Usuario", 'String'>;
     readonly estadoCuenta: Prisma.FieldRef<"Usuario", 'EstadoCuenta'>;
-    readonly tokenInvitacion: Prisma.FieldRef<"Usuario", 'String'>;
-    readonly tokenExpira: Prisma.FieldRef<"Usuario", 'DateTime'>;
     readonly creadoEn: Prisma.FieldRef<"Usuario", 'DateTime'>;
 }
 export type UsuarioFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {

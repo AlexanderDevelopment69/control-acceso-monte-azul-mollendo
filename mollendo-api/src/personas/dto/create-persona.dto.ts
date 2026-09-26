@@ -6,6 +6,9 @@ import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-
 const vacioComoIndefinido = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
 
 export class CreatePersonaDto {
+  @IsInt({ message: 'La empresa es obligatoria' })
+  empresaId!: number;
+
   @IsOptional()
   @IsInt({ message: 'El puesto debe ser válido' })
   puestoId?: number;

@@ -169,7 +169,6 @@ export declare const ModelName: {
     readonly DocumentoPersona: "DocumentoPersona";
     readonly SolicitudVisita: "SolicitudVisita";
     readonly EventoAcceso: "EventoAcceso";
-    readonly ConfiguracionSmtp: "ConfiguracionSmtp";
     readonly Auditoria: "Auditoria";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -183,7 +182,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "empresa" | "usuario" | "puesto" | "persona" | "tipoDocumento" | "requisitoPorPuesto" | "documentoPersona" | "solicitudVisita" | "eventoAcceso" | "configuracionSmtp" | "auditoria";
+        modelProps: "empresa" | "usuario" | "puesto" | "persona" | "tipoDocumento" | "requisitoPorPuesto" | "documentoPersona" | "solicitudVisita" | "eventoAcceso" | "auditoria";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -853,80 +852,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
-        ConfiguracionSmtp: {
-            payload: Prisma.$ConfiguracionSmtpPayload<ExtArgs>;
-            fields: Prisma.ConfiguracionSmtpFieldRefs;
-            operations: {
-                findUnique: {
-                    args: Prisma.ConfiguracionSmtpFindUniqueArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload> | null;
-                };
-                findUniqueOrThrow: {
-                    args: Prisma.ConfiguracionSmtpFindUniqueOrThrowArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>;
-                };
-                findFirst: {
-                    args: Prisma.ConfiguracionSmtpFindFirstArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload> | null;
-                };
-                findFirstOrThrow: {
-                    args: Prisma.ConfiguracionSmtpFindFirstOrThrowArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>;
-                };
-                findMany: {
-                    args: Prisma.ConfiguracionSmtpFindManyArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>[];
-                };
-                create: {
-                    args: Prisma.ConfiguracionSmtpCreateArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>;
-                };
-                createMany: {
-                    args: Prisma.ConfiguracionSmtpCreateManyArgs<ExtArgs>;
-                    result: BatchPayload;
-                };
-                createManyAndReturn: {
-                    args: Prisma.ConfiguracionSmtpCreateManyAndReturnArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>[];
-                };
-                delete: {
-                    args: Prisma.ConfiguracionSmtpDeleteArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>;
-                };
-                update: {
-                    args: Prisma.ConfiguracionSmtpUpdateArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>;
-                };
-                deleteMany: {
-                    args: Prisma.ConfiguracionSmtpDeleteManyArgs<ExtArgs>;
-                    result: BatchPayload;
-                };
-                updateMany: {
-                    args: Prisma.ConfiguracionSmtpUpdateManyArgs<ExtArgs>;
-                    result: BatchPayload;
-                };
-                updateManyAndReturn: {
-                    args: Prisma.ConfiguracionSmtpUpdateManyAndReturnArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>[];
-                };
-                upsert: {
-                    args: Prisma.ConfiguracionSmtpUpsertArgs<ExtArgs>;
-                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ConfiguracionSmtpPayload>;
-                };
-                aggregate: {
-                    args: Prisma.ConfiguracionSmtpAggregateArgs<ExtArgs>;
-                    result: runtime.Types.Utils.Optional<Prisma.AggregateConfiguracionSmtp>;
-                };
-                groupBy: {
-                    args: Prisma.ConfiguracionSmtpGroupByArgs<ExtArgs>;
-                    result: runtime.Types.Utils.Optional<Prisma.ConfiguracionSmtpGroupByOutputType>[];
-                };
-                count: {
-                    args: Prisma.ConfiguracionSmtpCountArgs<ExtArgs>;
-                    result: runtime.Types.Utils.Optional<Prisma.ConfiguracionSmtpCountAggregateOutputType> | number;
-                };
-            };
-        };
         Auditoria: {
             payload: Prisma.$AuditoriaPayload<ExtArgs>;
             fields: Prisma.AuditoriaFieldRefs;
@@ -1052,8 +977,6 @@ export declare const UsuarioScalarFieldEnum: {
     readonly correo: "correo";
     readonly passwordHash: "passwordHash";
     readonly estadoCuenta: "estadoCuenta";
-    readonly tokenInvitacion: "tokenInvitacion";
-    readonly tokenExpira: "tokenExpira";
     readonly creadoEn: "creadoEn";
 };
 export type UsuarioScalarFieldEnum = (typeof UsuarioScalarFieldEnum)[keyof typeof UsuarioScalarFieldEnum];
@@ -1095,8 +1018,6 @@ export declare const DocumentoPersonaScalarFieldEnum: {
     readonly fechaEmision: "fechaEmision";
     readonly fechaVencimiento: "fechaVencimiento";
     readonly archivoUrl: "archivoUrl";
-    readonly vigente: "vigente";
-    readonly estadoAprobacion: "estadoAprobacion";
     readonly version: "version";
     readonly creadoEn: "creadoEn";
 };
@@ -1120,22 +1041,11 @@ export declare const EventoAccesoScalarFieldEnum: {
     readonly denegadoPorBaja: "denegadoPorBaja";
     readonly denegadoPorAlcohol: "denegadoPorAlcohol";
     readonly denegadoPorDocumentos: "denegadoPorDocumentos";
-    readonly denegadoSinIngresoPrevio: "denegadoSinIngresoPrevio";
+    readonly denegadoSinPuesto: "denegadoSinPuesto";
     readonly fechaHora: "fechaHora";
     readonly torniqueteId: "torniqueteId";
 };
 export type EventoAccesoScalarFieldEnum = (typeof EventoAccesoScalarFieldEnum)[keyof typeof EventoAccesoScalarFieldEnum];
-export declare const ConfiguracionSmtpScalarFieldEnum: {
-    readonly id: "id";
-    readonly host: "host";
-    readonly puerto: "puerto";
-    readonly seguro: "seguro";
-    readonly usuario: "usuario";
-    readonly password: "password";
-    readonly remitente: "remitente";
-    readonly actualizadoEn: "actualizadoEn";
-};
-export type ConfiguracionSmtpScalarFieldEnum = (typeof ConfiguracionSmtpScalarFieldEnum)[keyof typeof ConfiguracionSmtpScalarFieldEnum];
 export declare const AuditoriaScalarFieldEnum: {
     readonly id: "id";
     readonly usuarioId: "usuarioId";
@@ -1181,8 +1091,6 @@ export type ListEnumEstadoPersonaFieldRefInput<$PrismaModel> = FieldRefInputType
 export type EnumTipoValidacionDocumentoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoValidacionDocumento'>;
 export type ListEnumTipoValidacionDocumentoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoValidacionDocumento[]'>;
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>;
-export type EnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoAprobacionDocumento'>;
-export type ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoAprobacionDocumento[]'>;
 export type EnumEstadoSolicitudVisitaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoSolicitudVisita'>;
 export type ListEnumEstadoSolicitudVisitaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoSolicitudVisita[]'>;
 export type EnumTipoMovimientoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoMovimiento'>;
@@ -1230,7 +1138,6 @@ export type GlobalOmitConfig = {
     documentoPersona?: Prisma.DocumentoPersonaOmit;
     solicitudVisita?: Prisma.SolicitudVisitaOmit;
     eventoAcceso?: Prisma.EventoAccesoOmit;
-    configuracionSmtp?: Prisma.ConfiguracionSmtpOmit;
     auditoria?: Prisma.AuditoriaOmit;
 };
 export type LogLevel = 'info' | 'query' | 'warn' | 'error';

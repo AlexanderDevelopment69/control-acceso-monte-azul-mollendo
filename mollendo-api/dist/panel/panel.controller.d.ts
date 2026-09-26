@@ -1,11 +1,9 @@
 import { PanelService } from './panel.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { ConfiguracionSmtpService } from '../configuracion-smtp/configuracion-smtp.service.js';
 export declare class PanelController {
     private readonly panelService;
     private readonly prisma;
-    private readonly configuracionSmtpService;
-    constructor(panelService: PanelService, prisma: PrismaService, configuracionSmtpService: ConfiguracionSmtpService);
+    constructor(panelService: PanelService, prisma: PrismaService);
     resumen(): Promise<{
         denegacionesHoy: number;
         alcoholNoConformeHoy: number;
@@ -30,7 +28,6 @@ export declare class PanelController {
             latenciaMs: number;
         };
         integraciones: {
-            smtpConfigurado: boolean;
             claveEquiposConfigurada: boolean;
         };
         websocket: {

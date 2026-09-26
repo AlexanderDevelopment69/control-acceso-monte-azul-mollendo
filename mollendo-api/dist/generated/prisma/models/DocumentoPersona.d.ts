@@ -1,5 +1,4 @@
 import type * as runtime from "@prisma/client/runtime/client";
-import type * as $Enums from "../enums.js";
 import type * as Prisma from "../internal/prismaNamespace.js";
 export type DocumentoPersonaModel = runtime.Types.Result.DefaultSelection<Prisma.$DocumentoPersonaPayload>;
 export type AggregateDocumentoPersona = {
@@ -28,8 +27,6 @@ export type DocumentoPersonaMinAggregateOutputType = {
     fechaEmision: Date | null;
     fechaVencimiento: Date | null;
     archivoUrl: string | null;
-    vigente: boolean | null;
-    estadoAprobacion: $Enums.EstadoAprobacionDocumento | null;
     version: number | null;
     creadoEn: Date | null;
 };
@@ -40,8 +37,6 @@ export type DocumentoPersonaMaxAggregateOutputType = {
     fechaEmision: Date | null;
     fechaVencimiento: Date | null;
     archivoUrl: string | null;
-    vigente: boolean | null;
-    estadoAprobacion: $Enums.EstadoAprobacionDocumento | null;
     version: number | null;
     creadoEn: Date | null;
 };
@@ -52,8 +47,6 @@ export type DocumentoPersonaCountAggregateOutputType = {
     fechaEmision: number;
     fechaVencimiento: number;
     archivoUrl: number;
-    vigente: number;
-    estadoAprobacion: number;
     version: number;
     creadoEn: number;
     _all: number;
@@ -77,8 +70,6 @@ export type DocumentoPersonaMinAggregateInputType = {
     fechaEmision?: true;
     fechaVencimiento?: true;
     archivoUrl?: true;
-    vigente?: true;
-    estadoAprobacion?: true;
     version?: true;
     creadoEn?: true;
 };
@@ -89,8 +80,6 @@ export type DocumentoPersonaMaxAggregateInputType = {
     fechaEmision?: true;
     fechaVencimiento?: true;
     archivoUrl?: true;
-    vigente?: true;
-    estadoAprobacion?: true;
     version?: true;
     creadoEn?: true;
 };
@@ -101,8 +90,6 @@ export type DocumentoPersonaCountAggregateInputType = {
     fechaEmision?: true;
     fechaVencimiento?: true;
     archivoUrl?: true;
-    vigente?: true;
-    estadoAprobacion?: true;
     version?: true;
     creadoEn?: true;
     _all?: true;
@@ -142,8 +129,6 @@ export type DocumentoPersonaGroupByOutputType = {
     fechaEmision: Date | null;
     fechaVencimiento: Date | null;
     archivoUrl: string | null;
-    vigente: boolean;
-    estadoAprobacion: $Enums.EstadoAprobacionDocumento;
     version: number;
     creadoEn: Date;
     _count: DocumentoPersonaCountAggregateOutputType | null;
@@ -165,8 +150,6 @@ export type DocumentoPersonaWhereInput = {
     fechaEmision?: Prisma.DateTimeNullableFilter<"DocumentoPersona"> | Date | string | null;
     fechaVencimiento?: Prisma.DateTimeNullableFilter<"DocumentoPersona"> | Date | string | null;
     archivoUrl?: Prisma.StringNullableFilter<"DocumentoPersona"> | string | null;
-    vigente?: Prisma.BoolFilter<"DocumentoPersona"> | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFilter<"DocumentoPersona"> | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFilter<"DocumentoPersona"> | number;
     creadoEn?: Prisma.DateTimeFilter<"DocumentoPersona"> | Date | string;
     persona?: Prisma.XOR<Prisma.PersonaScalarRelationFilter, Prisma.PersonaWhereInput>;
@@ -179,8 +162,6 @@ export type DocumentoPersonaOrderByWithRelationInput = {
     fechaEmision?: Prisma.SortOrderInput | Prisma.SortOrder;
     fechaVencimiento?: Prisma.SortOrderInput | Prisma.SortOrder;
     archivoUrl?: Prisma.SortOrderInput | Prisma.SortOrder;
-    vigente?: Prisma.SortOrder;
-    estadoAprobacion?: Prisma.SortOrder;
     version?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
     persona?: Prisma.PersonaOrderByWithRelationInput;
@@ -196,8 +177,6 @@ export type DocumentoPersonaWhereUniqueInput = Prisma.AtLeast<{
     fechaEmision?: Prisma.DateTimeNullableFilter<"DocumentoPersona"> | Date | string | null;
     fechaVencimiento?: Prisma.DateTimeNullableFilter<"DocumentoPersona"> | Date | string | null;
     archivoUrl?: Prisma.StringNullableFilter<"DocumentoPersona"> | string | null;
-    vigente?: Prisma.BoolFilter<"DocumentoPersona"> | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFilter<"DocumentoPersona"> | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFilter<"DocumentoPersona"> | number;
     creadoEn?: Prisma.DateTimeFilter<"DocumentoPersona"> | Date | string;
     persona?: Prisma.XOR<Prisma.PersonaScalarRelationFilter, Prisma.PersonaWhereInput>;
@@ -210,8 +189,6 @@ export type DocumentoPersonaOrderByWithAggregationInput = {
     fechaEmision?: Prisma.SortOrderInput | Prisma.SortOrder;
     fechaVencimiento?: Prisma.SortOrderInput | Prisma.SortOrder;
     archivoUrl?: Prisma.SortOrderInput | Prisma.SortOrder;
-    vigente?: Prisma.SortOrder;
-    estadoAprobacion?: Prisma.SortOrder;
     version?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
     _count?: Prisma.DocumentoPersonaCountOrderByAggregateInput;
@@ -230,8 +207,6 @@ export type DocumentoPersonaScalarWhereWithAggregatesInput = {
     fechaEmision?: Prisma.DateTimeNullableWithAggregatesFilter<"DocumentoPersona"> | Date | string | null;
     fechaVencimiento?: Prisma.DateTimeNullableWithAggregatesFilter<"DocumentoPersona"> | Date | string | null;
     archivoUrl?: Prisma.StringNullableWithAggregatesFilter<"DocumentoPersona"> | string | null;
-    vigente?: Prisma.BoolWithAggregatesFilter<"DocumentoPersona"> | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoWithAggregatesFilter<"DocumentoPersona"> | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntWithAggregatesFilter<"DocumentoPersona"> | number;
     creadoEn?: Prisma.DateTimeWithAggregatesFilter<"DocumentoPersona"> | Date | string;
 };
@@ -239,8 +214,6 @@ export type DocumentoPersonaCreateInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
     persona: Prisma.PersonaCreateNestedOneWithoutDocumentosInput;
@@ -253,8 +226,6 @@ export type DocumentoPersonaUncheckedCreateInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
 };
@@ -262,8 +233,6 @@ export type DocumentoPersonaUpdateInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     persona?: Prisma.PersonaUpdateOneRequiredWithoutDocumentosNestedInput;
@@ -276,8 +245,6 @@ export type DocumentoPersonaUncheckedUpdateInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -288,8 +255,6 @@ export type DocumentoPersonaCreateManyInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
 };
@@ -297,8 +262,6 @@ export type DocumentoPersonaUpdateManyMutationInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -309,8 +272,6 @@ export type DocumentoPersonaUncheckedUpdateManyInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -329,8 +290,6 @@ export type DocumentoPersonaCountOrderByAggregateInput = {
     fechaEmision?: Prisma.SortOrder;
     fechaVencimiento?: Prisma.SortOrder;
     archivoUrl?: Prisma.SortOrder;
-    vigente?: Prisma.SortOrder;
-    estadoAprobacion?: Prisma.SortOrder;
     version?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
@@ -347,8 +306,6 @@ export type DocumentoPersonaMaxOrderByAggregateInput = {
     fechaEmision?: Prisma.SortOrder;
     fechaVencimiento?: Prisma.SortOrder;
     archivoUrl?: Prisma.SortOrder;
-    vigente?: Prisma.SortOrder;
-    estadoAprobacion?: Prisma.SortOrder;
     version?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
@@ -359,8 +316,6 @@ export type DocumentoPersonaMinOrderByAggregateInput = {
     fechaEmision?: Prisma.SortOrder;
     fechaVencimiento?: Prisma.SortOrder;
     archivoUrl?: Prisma.SortOrder;
-    vigente?: Prisma.SortOrder;
-    estadoAprobacion?: Prisma.SortOrder;
     version?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
@@ -446,15 +401,10 @@ export type DocumentoPersonaUncheckedUpdateManyWithoutTipoDocumentoNestedInput =
     updateMany?: Prisma.DocumentoPersonaUpdateManyWithWhereWithoutTipoDocumentoInput | Prisma.DocumentoPersonaUpdateManyWithWhereWithoutTipoDocumentoInput[];
     deleteMany?: Prisma.DocumentoPersonaScalarWhereInput | Prisma.DocumentoPersonaScalarWhereInput[];
 };
-export type EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput = {
-    set?: $Enums.EstadoAprobacionDocumento;
-};
 export type DocumentoPersonaCreateWithoutPersonaInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
     tipoDocumento: Prisma.TipoDocumentoCreateNestedOneWithoutDocumentosInput;
@@ -465,8 +415,6 @@ export type DocumentoPersonaUncheckedCreateWithoutPersonaInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
 };
@@ -501,8 +449,6 @@ export type DocumentoPersonaScalarWhereInput = {
     fechaEmision?: Prisma.DateTimeNullableFilter<"DocumentoPersona"> | Date | string | null;
     fechaVencimiento?: Prisma.DateTimeNullableFilter<"DocumentoPersona"> | Date | string | null;
     archivoUrl?: Prisma.StringNullableFilter<"DocumentoPersona"> | string | null;
-    vigente?: Prisma.BoolFilter<"DocumentoPersona"> | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFilter<"DocumentoPersona"> | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFilter<"DocumentoPersona"> | number;
     creadoEn?: Prisma.DateTimeFilter<"DocumentoPersona"> | Date | string;
 };
@@ -510,8 +456,6 @@ export type DocumentoPersonaCreateWithoutTipoDocumentoInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
     persona: Prisma.PersonaCreateNestedOneWithoutDocumentosInput;
@@ -522,8 +466,6 @@ export type DocumentoPersonaUncheckedCreateWithoutTipoDocumentoInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
 };
@@ -554,8 +496,6 @@ export type DocumentoPersonaCreateManyPersonaInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
 };
@@ -563,8 +503,6 @@ export type DocumentoPersonaUpdateWithoutPersonaInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     tipoDocumento?: Prisma.TipoDocumentoUpdateOneRequiredWithoutDocumentosNestedInput;
@@ -575,8 +513,6 @@ export type DocumentoPersonaUncheckedUpdateWithoutPersonaInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -586,8 +522,6 @@ export type DocumentoPersonaUncheckedUpdateManyWithoutPersonaInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -597,8 +531,6 @@ export type DocumentoPersonaCreateManyTipoDocumentoInput = {
     fechaEmision?: Date | string | null;
     fechaVencimiento?: Date | string | null;
     archivoUrl?: string | null;
-    vigente?: boolean;
-    estadoAprobacion?: $Enums.EstadoAprobacionDocumento;
     version?: number;
     creadoEn?: Date | string;
 };
@@ -606,8 +538,6 @@ export type DocumentoPersonaUpdateWithoutTipoDocumentoInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     persona?: Prisma.PersonaUpdateOneRequiredWithoutDocumentosNestedInput;
@@ -618,8 +548,6 @@ export type DocumentoPersonaUncheckedUpdateWithoutTipoDocumentoInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -629,8 +557,6 @@ export type DocumentoPersonaUncheckedUpdateManyWithoutTipoDocumentoInput = {
     fechaEmision?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     fechaVencimiento?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
     archivoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    vigente?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    estadoAprobacion?: Prisma.EnumEstadoAprobacionDocumentoFieldUpdateOperationsInput | $Enums.EstadoAprobacionDocumento;
     version?: Prisma.IntFieldUpdateOperationsInput | number;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -641,8 +567,6 @@ export type DocumentoPersonaSelect<ExtArgs extends runtime.Types.Extensions.Inte
     fechaEmision?: boolean;
     fechaVencimiento?: boolean;
     archivoUrl?: boolean;
-    vigente?: boolean;
-    estadoAprobacion?: boolean;
     version?: boolean;
     creadoEn?: boolean;
     persona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>;
@@ -655,8 +579,6 @@ export type DocumentoPersonaSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
     fechaEmision?: boolean;
     fechaVencimiento?: boolean;
     archivoUrl?: boolean;
-    vigente?: boolean;
-    estadoAprobacion?: boolean;
     version?: boolean;
     creadoEn?: boolean;
     persona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>;
@@ -669,8 +591,6 @@ export type DocumentoPersonaSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
     fechaEmision?: boolean;
     fechaVencimiento?: boolean;
     archivoUrl?: boolean;
-    vigente?: boolean;
-    estadoAprobacion?: boolean;
     version?: boolean;
     creadoEn?: boolean;
     persona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>;
@@ -683,12 +603,10 @@ export type DocumentoPersonaSelectScalar = {
     fechaEmision?: boolean;
     fechaVencimiento?: boolean;
     archivoUrl?: boolean;
-    vigente?: boolean;
-    estadoAprobacion?: boolean;
     version?: boolean;
     creadoEn?: boolean;
 };
-export type DocumentoPersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "personaId" | "tipoDocumentoId" | "fechaEmision" | "fechaVencimiento" | "archivoUrl" | "vigente" | "estadoAprobacion" | "version" | "creadoEn", ExtArgs["result"]["documentoPersona"]>;
+export type DocumentoPersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "personaId" | "tipoDocumentoId" | "fechaEmision" | "fechaVencimiento" | "archivoUrl" | "version" | "creadoEn", ExtArgs["result"]["documentoPersona"]>;
 export type DocumentoPersonaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     persona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>;
     tipoDocumento?: boolean | Prisma.TipoDocumentoDefaultArgs<ExtArgs>;
@@ -714,8 +632,6 @@ export type $DocumentoPersonaPayload<ExtArgs extends runtime.Types.Extensions.In
         fechaEmision: Date | null;
         fechaVencimiento: Date | null;
         archivoUrl: string | null;
-        vigente: boolean;
-        estadoAprobacion: $Enums.EstadoAprobacionDocumento;
         version: number;
         creadoEn: Date;
     }, ExtArgs["result"]["documentoPersona"]>;
@@ -783,8 +699,6 @@ export interface DocumentoPersonaFieldRefs {
     readonly fechaEmision: Prisma.FieldRef<"DocumentoPersona", 'DateTime'>;
     readonly fechaVencimiento: Prisma.FieldRef<"DocumentoPersona", 'DateTime'>;
     readonly archivoUrl: Prisma.FieldRef<"DocumentoPersona", 'String'>;
-    readonly vigente: Prisma.FieldRef<"DocumentoPersona", 'Boolean'>;
-    readonly estadoAprobacion: Prisma.FieldRef<"DocumentoPersona", 'EstadoAprobacionDocumento'>;
     readonly version: Prisma.FieldRef<"DocumentoPersona", 'Int'>;
     readonly creadoEn: Prisma.FieldRef<"DocumentoPersona", 'DateTime'>;
 }

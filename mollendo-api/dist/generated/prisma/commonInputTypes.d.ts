@@ -278,21 +278,6 @@ export type BoolWithAggregatesFilter<$PrismaModel = never> = {
     _min?: Prisma.NestedBoolFilter<$PrismaModel>;
     _max?: Prisma.NestedBoolFilter<$PrismaModel>;
 };
-export type EnumEstadoAprobacionDocumentoFilter<$PrismaModel = never> = {
-    equals?: $Enums.EstadoAprobacionDocumento | Prisma.EnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    in?: $Enums.EstadoAprobacionDocumento[] | Prisma.ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    notIn?: $Enums.EstadoAprobacionDocumento[] | Prisma.ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    not?: Prisma.NestedEnumEstadoAprobacionDocumentoFilter<$PrismaModel> | $Enums.EstadoAprobacionDocumento;
-};
-export type EnumEstadoAprobacionDocumentoWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.EstadoAprobacionDocumento | Prisma.EnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    in?: $Enums.EstadoAprobacionDocumento[] | Prisma.ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    notIn?: $Enums.EstadoAprobacionDocumento[] | Prisma.ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    not?: Prisma.NestedEnumEstadoAprobacionDocumentoWithAggregatesFilter<$PrismaModel> | $Enums.EstadoAprobacionDocumento;
-    _count?: Prisma.NestedIntFilter<$PrismaModel>;
-    _min?: Prisma.NestedEnumEstadoAprobacionDocumentoFilter<$PrismaModel>;
-    _max?: Prisma.NestedEnumEstadoAprobacionDocumentoFilter<$PrismaModel>;
-};
 export type EnumEstadoSolicitudVisitaFilter<$PrismaModel = never> = {
     equals?: $Enums.EstadoSolicitudVisita | Prisma.EnumEstadoSolicitudVisitaFieldRefInput<$PrismaModel>;
     in?: $Enums.EstadoSolicitudVisita[] | Prisma.ListEnumEstadoSolicitudVisitaFieldRefInput<$PrismaModel>;
@@ -642,21 +627,6 @@ export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
     _count?: Prisma.NestedIntFilter<$PrismaModel>;
     _min?: Prisma.NestedBoolFilter<$PrismaModel>;
     _max?: Prisma.NestedBoolFilter<$PrismaModel>;
-};
-export type NestedEnumEstadoAprobacionDocumentoFilter<$PrismaModel = never> = {
-    equals?: $Enums.EstadoAprobacionDocumento | Prisma.EnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    in?: $Enums.EstadoAprobacionDocumento[] | Prisma.ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    notIn?: $Enums.EstadoAprobacionDocumento[] | Prisma.ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    not?: Prisma.NestedEnumEstadoAprobacionDocumentoFilter<$PrismaModel> | $Enums.EstadoAprobacionDocumento;
-};
-export type NestedEnumEstadoAprobacionDocumentoWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.EstadoAprobacionDocumento | Prisma.EnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    in?: $Enums.EstadoAprobacionDocumento[] | Prisma.ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    notIn?: $Enums.EstadoAprobacionDocumento[] | Prisma.ListEnumEstadoAprobacionDocumentoFieldRefInput<$PrismaModel>;
-    not?: Prisma.NestedEnumEstadoAprobacionDocumentoWithAggregatesFilter<$PrismaModel> | $Enums.EstadoAprobacionDocumento;
-    _count?: Prisma.NestedIntFilter<$PrismaModel>;
-    _min?: Prisma.NestedEnumEstadoAprobacionDocumentoFilter<$PrismaModel>;
-    _max?: Prisma.NestedEnumEstadoAprobacionDocumentoFilter<$PrismaModel>;
 };
 export type NestedEnumEstadoSolicitudVisitaFilter<$PrismaModel = never> = {
     equals?: $Enums.EstadoSolicitudVisita | Prisma.EnumEstadoSolicitudVisitaFieldRefInput<$PrismaModel>;

@@ -6,31 +6,56 @@ export declare class EventosAccesoController {
     private readonly eventosAccesoService;
     constructor(eventosAccesoService: EventosAccesoService);
     registrarIngreso(dto: IngresoDto): Promise<{
+        eventoId: null;
+        tipoMovimiento: "ingreso" | "salida";
+        resultado: "denegado";
+        fechaHora: string;
+        persona: null;
+        numeroDocumento: string;
+        motivos: {
+            personaNoRegistrada: boolean;
+        };
+    } | {
         eventoId: number;
+        tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
         resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
+        fechaHora: string;
         persona: {
             id: number;
             nombres: string;
             apellidos: string;
         };
+        numeroDocumento: string;
         motivos: {
             dadoDeBaja: boolean;
+            sinPuesto: boolean;
             alcohol: boolean;
             documentos: boolean;
             documentosFaltantes: string[];
         };
     }>;
     registrarSalida(dto: SalidaDto): Promise<{
+        eventoId: null;
+        tipoMovimiento: "ingreso" | "salida";
+        resultado: "denegado";
+        fechaHora: string;
+        persona: null;
+        numeroDocumento: string;
+        motivos: {
+            personaNoRegistrada: boolean;
+        };
+    } | {
         eventoId: number;
+        tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
         resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
+        fechaHora: string;
         persona: {
             id: number;
             nombres: string;
             apellidos: string;
         };
-        motivos: {
-            sinIngresoPrevio: boolean;
-        };
+        numeroDocumento: string;
+        motivos: {};
     }>;
     findAll(query: QueryEventosAccesoDto): Promise<({
         persona: {
@@ -40,15 +65,15 @@ export declare class EventosAccesoController {
             apellidos: string;
         };
     } & {
-        fechaHora: Date;
-        id: number;
-        personaId: number;
-        torniqueteId: string | null;
-        resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
         tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
+        resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
         denegadoPorBaja: boolean;
         denegadoPorAlcohol: boolean;
         denegadoPorDocumentos: boolean;
-        denegadoSinIngresoPrevio: boolean;
+        denegadoSinPuesto: boolean;
+        fechaHora: Date;
+        torniqueteId: string | null;
+        id: number;
+        personaId: number;
     })[]>;
 }

@@ -1,19 +1,14 @@
-import { randomBytes } from 'node:crypto';
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { MailerService } from '../common/mailer/mailer.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { CreateEmpresaDto } from './dto/create-empresa.dto.js';
 import type { UpdateEmpresaDto } from './dto/update-empresa.dto.js';
 import type { QueryEmpresasDto } from './dto/query-empresas.dto.js';
 
-const INVITACION_EXPIRA_MS = 48 * 60 * 60 * 1000; // 48 horas
-
 @Injectable()
 export class EmpresasService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly mailerService: MailerService,
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
@@ -66,42 +61,5 @@ export class EmpresasService {
       accion: 'modificar',
     });
     return empresa;
-  }
-
-  async invitar(id: number) {
-    const empresa = await this.findOne(id);
-
-    const usuarioExistente = await this.prisma.usuario.findUnique({
-      where: { correo: empresa.correoContacto },
-    });
-    if (usuarioExistente?.estadoCuenta === 'activo') {
-      throw new BadRequestException('El representante de esta empresa ya activó su cuenta');
-    }
-
-    const token = randomBytes(32).toString('hex');
-    const tokenExpira = new Date(Date.now() + INVITACION_EXPIRA_MS);
-
-    if (usuarioExistente) {
-      await this.prisma.usuario.update({
-        where: { id: usuarioExistente.id },
-        data: { tokenInvitacion: token, tokenExpira, estadoCuenta: 'invitado' },
-      });
-    } else {
-      await this.prisma.usuario.create({
-        data: {
-          empresaId: empresa.id,
-          rol: 'empresa',
-          correo: empresa.correoContacto,
-          estadoCuenta: 'invitado',
-          tokenInvitacion: token,
-          tokenExpira,
-        },
-      });
-    }
-
-    const enlace = `${process.env.CORS_ORIGIN}/activar-cuenta?token=${token}`;
-    await this.mailerService.enviarInvitacionEmpresa(empresa.correoContacto, enlace);
-
-    return { mensaje: 'Invitación enviada correctamente' };
   }
 }

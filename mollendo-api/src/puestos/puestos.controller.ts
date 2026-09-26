@@ -16,7 +16,7 @@ export class PuestosController {
   }
 
   @Post()
-  @Roles('administracion')
+  @Roles('administrador')
   create(@Body() dto: CreatePuestoDto, @CurrentUser() user: AuthenticatedUser) {
     return this.puestosService.create(dto, user.id);
   }
@@ -27,7 +27,7 @@ export class PuestosController {
   }
 
   @Post(':id/requisitos')
-  @Roles('administracion')
+  @Roles('administrador')
   setRequisitos(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: SetRequisitosDto,

@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
@@ -13,24 +13,17 @@ export class SolicitudesVisitaService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  // Alcance base: la agenda el administrador, sin flujo de aprobación.
   async create(dto: CreateSolicitudVisitaDto, user: AuthenticatedUser) {
-    if (user.rol !== 'empresa') {
-      throw new ForbiddenException('Solo la empresa proveedora registra solicitudes de visita');
-    }
-
     const persona = await this.prisma.persona.findUnique({ where: { id: dto.personaId } });
     if (!persona) {
       throw new NotFoundException('Persona no encontrada');
     }
-    if (persona.empresaId !== user.empresaId) {
-      throw new ForbiddenException('La persona no pertenece a su empresa');
-    }
 
-    // Autoaprobada al crearse — no hay paso de aprobación aparte (spec, sección 9.6)
     const solicitud = await this.prisma.solicitudVisita.create({
       data: {
         personaId: dto.personaId,
-        empresaId: user.empresaId,
+        empresaId: persona.empresaId,
         personaVisitada: dto.personaVisitada,
         motivo: dto.motivo,
         fechaHoraProgramada: new Date(dto.fechaHoraProgramada),
@@ -48,12 +41,11 @@ export class SolicitudesVisitaService {
     return solicitud;
   }
 
-  async findAll(query: QuerySolicitudesVisitaDto, user: AuthenticatedUser) {
-    const empresaId = user.rol === 'empresa' ? user.empresaId : query.empresaId;
-
+  async findAll(query: QuerySolicitudesVisitaDto) {
     return this.prisma.solicitudVisita.findMany({
       where: {
-        empresaId,
+        empresaId: query.empresaId,
+        personaId: query.personaId,
         fechaHoraProgramada: {
           gte: query.desde ? new Date(query.desde) : undefined,
           lte: query.hasta ? new Date(query.hasta) : undefined,
@@ -64,7 +56,7 @@ export class SolicitudesVisitaService {
     });
   }
 
-  async findOne(id: number, user: AuthenticatedUser) {
+  async findOne(id: number) {
     const solicitud = await this.prisma.solicitudVisita.findUnique({
       where: { id },
       include: { persona: { select: { id: true, nombres: true, apellidos: true } } },
@@ -72,17 +64,11 @@ export class SolicitudesVisitaService {
     if (!solicitud) {
       throw new NotFoundException('Solicitud de visita no encontrada');
     }
-    if (user.rol === 'empresa' && solicitud.empresaId !== user.empresaId) {
-      throw new ForbiddenException('No puede ver solicitudes de otra empresa');
-    }
     return solicitud;
   }
 
   async update(id: number, dto: UpdateSolicitudVisitaDto, user: AuthenticatedUser) {
-    const solicitud = await this.findOne(id, user);
-    if (user.rol === 'empresa' && solicitud.empresaId !== user.empresaId) {
-      throw new ForbiddenException('No puede modificar solicitudes de otra empresa');
-    }
+    const solicitud = await this.findOne(id);
 
     const actualizada = await this.prisma.solicitudVisita.update({
       where: { id: solicitud.id },

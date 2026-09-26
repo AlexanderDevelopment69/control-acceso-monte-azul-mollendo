@@ -8,7 +8,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 
 @Controller('empresas')
-@Roles('administracion')
+@Roles('administrador')
 export class EmpresasController {
   constructor(private readonly empresasService: EmpresasService) {}
 
@@ -30,10 +30,5 @@ export class EmpresasController {
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateEmpresaDto, @CurrentUser() user: AuthenticatedUser) {
     return this.empresasService.update(id, dto, user.id);
-  }
-
-  @Post(':id/invitar')
-  invitar(@Param('id', ParseIntPipe) id: number) {
-    return this.empresasService.invitar(id);
   }
 }

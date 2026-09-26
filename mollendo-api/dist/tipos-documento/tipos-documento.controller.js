@@ -35,7 +35,7 @@ __decorate([
 ], TiposDocumentoController.prototype, "findAll", null);
 __decorate([
     Post(),
-    Roles('administracion'),
+    Roles('administrador'),
     __param(0, Body()),
     __param(1, CurrentUser()),
     __metadata("design:type", Function),

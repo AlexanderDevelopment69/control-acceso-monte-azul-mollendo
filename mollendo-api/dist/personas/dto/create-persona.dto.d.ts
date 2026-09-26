@@ -1,4 +1,5 @@
 export declare class CreatePersonaDto {
+    empresaId: number;
     puestoId?: number;
     tipoDocumentoIdentidad: 'DNI' | 'CE' | 'PASAPORTE';
     numeroDocumento: string;

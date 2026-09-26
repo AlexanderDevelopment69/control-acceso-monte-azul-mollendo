@@ -13,6 +13,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { IntegracionesService } from './integraciones.service.js';
 import { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
+import { ZkbioWebhookDto } from './dto/zkbio-webhook.dto.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { ApiKeyGuard } from '../common/guards/api-key.guard.js';
@@ -21,25 +22,25 @@ let IntegracionesController = class IntegracionesController {
     constructor(integracionesService) {
         this.integracionesService = integracionesService;
     }
-    recibirWebhookAlcoholimetro(payload) {
-        return this.integracionesService.recibirWebhookAlcoholimetro(payload);
+    recibirWebhookZkbio(dto) {
+        return this.integracionesService.recibirWebhookZkbio(dto);
     }
     enviarComandoTorniquete(dto) {
         return this.integracionesService.enviarComandoTorniquete(dto);
     }
 };
 __decorate([
-    Post('alcoholimetro/webhook'),
+    Post('zkbio/webhook'),
     Public(),
     UseGuards(ApiKeyGuard),
     __param(0, Body()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [ZkbioWebhookDto]),
     __metadata("design:returntype", void 0)
-], IntegracionesController.prototype, "recibirWebhookAlcoholimetro", null);
+], IntegracionesController.prototype, "recibirWebhookZkbio", null);
 __decorate([
     Post('torniquete/comando'),
-    Roles('administracion', 'vigilancia'),
+    Roles('administrador', 'vigilancia'),
     __param(0, Body()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [TorniqueteComandoDto]),

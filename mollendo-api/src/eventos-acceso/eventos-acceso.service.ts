@@ -1,10 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { evaluarIngreso, evaluarSalida } from './validacion-acceso.engine.js';
+import { evaluarIngreso, tiposDocumentoVigentes } from './validacion-acceso.engine.js';
 import type { IngresoDto } from './dto/ingreso.dto.js';
 import type { SalidaDto } from './dto/salida.dto.js';
 import type { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
+
+/** Payload del evento interno que ordena abrir el molinete (lo atiende IntegracionesModule). */
+export interface AbrirMolineteEvent {
+  torniqueteId?: string;
+  eventoId: number;
+  tipoMovimiento: 'ingreso' | 'salida';
+}
 
 @Injectable()
 export class EventosAccesoService {
@@ -13,27 +20,31 @@ export class EventosAccesoService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  private async findPersonaPorDocumento(tipoDocumentoIdentidad: string, numeroDocumento: string) {
-    const persona = await this.prisma.persona.findUnique({
-      where: {
-        tipoDocumentoIdentidad_numeroDocumento: {
-          tipoDocumentoIdentidad: tipoDocumentoIdentidad as never,
-          numeroDocumento,
-        },
-      },
+  private findPersonaPorDocumento(tipoDocumentoIdentidad: IngresoDto['tipoDocumentoIdentidad'], numeroDocumento: string) {
+    return this.prisma.persona.findUnique({
+      where: { tipoDocumentoIdentidad_numeroDocumento: { tipoDocumentoIdentidad, numeroDocumento } },
     });
-    if (!persona) {
-      throw new NotFoundException('Persona no registrada en el sistema');
-    }
-    return persona;
   }
 
-  private async getDocumentosRequeridos(puestoId: number | null) {
-    if (!puestoId) {
-      // Catálogo de puestos/requisitos aún pendiente de poblar con el cliente
-      // (spec, sección 5.1) — sin puesto asignado no hay reglas que evaluar.
-      return [];
-    }
+  /**
+   * Una persona no registrada no genera fila en evento_acceso (no hay a quién
+   * vincularla), pero sí se deniega y se muestra en la pantalla de garita.
+   */
+  private responderNoRegistrada(numeroDocumento: string, tipoMovimiento: 'ingreso' | 'salida') {
+    const respuesta = {
+      eventoId: null,
+      tipoMovimiento,
+      resultado: 'denegado' as const,
+      fechaHora: new Date().toISOString(),
+      persona: null,
+      numeroDocumento,
+      motivos: { personaNoRegistrada: true },
+    };
+    this.eventEmitter.emit('evento-acceso.registrado', respuesta);
+    return respuesta;
+  }
+
+  private async getDocumentosRequeridos(puestoId: number) {
     const requisitos = await this.prisma.requisitoPorPuesto.findMany({
       where: { puestoId, obligatorio: true },
       include: { tipoDocumento: true },
@@ -41,43 +52,29 @@ export class EventosAccesoService {
     return requisitos.map((r) => ({ tipoDocumentoId: r.tipoDocumentoId, nombre: r.tipoDocumento.nombre }));
   }
 
-  private async getDocumentosVigentesAprobados(personaId: number): Promise<Set<number>> {
-    const documentos = await this.prisma.documentoPersona.findMany({
-      where: { personaId },
-      orderBy: { version: 'desc' },
-    });
-
-    const ultimaVersionPorTipo = new Map<number, (typeof documentos)[number]>();
-    for (const doc of documentos) {
-      if (!ultimaVersionPorTipo.has(doc.tipoDocumentoId)) {
-        ultimaVersionPorTipo.set(doc.tipoDocumentoId, doc);
-      }
-    }
-
-    const hoy = new Date();
-    const vigentesAprobados = new Set<number>();
-    for (const [tipoDocumentoId, doc] of ultimaVersionPorTipo) {
-      const vigente = doc.fechaVencimiento ? doc.fechaVencimiento >= hoy : true;
-      if (doc.estadoAprobacion === 'aprobado' && vigente) {
-        vigentesAprobados.add(tipoDocumentoId);
-      }
-    }
-    return vigentesAprobados;
+  /** Tipos de documento cuya ÚLTIMA versión está vigente hoy. Sin aprobación (alcance base). */
+  private async getDocumentosVigentes(personaId: number): Promise<Set<number>> {
+    const documentos = await this.prisma.documentoPersona.findMany({ where: { personaId } });
+    return tiposDocumentoVigentes(documentos, new Date());
   }
 
   async registrarIngreso(dto: IngresoDto) {
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
+    if (!persona) {
+      return this.responderNoRegistrada(dto.numeroDocumento, 'ingreso');
+    }
 
-    const [documentosRequeridos, documentosVigentesAprobados] = await Promise.all([
-      this.getDocumentosRequeridos(persona.puestoId),
-      this.getDocumentosVigentesAprobados(persona.id),
+    const [documentosRequeridos, documentosVigentes] = await Promise.all([
+      persona.puestoId ? this.getDocumentosRequeridos(persona.puestoId) : Promise.resolve([]),
+      this.getDocumentosVigentes(persona.id),
     ]);
 
     const resultado = evaluarIngreso({
       personaActiva: persona.estado === 'activo',
+      tienePuesto: persona.puestoId !== null,
       alcoholConforme: dto.alcoholConforme,
       documentosRequeridos,
-      documentosVigentesAprobados,
+      documentosVigentes,
     });
 
     const evento = await this.prisma.eventoAcceso.create({
@@ -86,18 +83,31 @@ export class EventosAccesoService {
         tipoMovimiento: 'ingreso',
         resultado: resultado.autorizado ? 'autorizado' : 'denegado',
         denegadoPorBaja: resultado.denegadoPorBaja,
+        denegadoSinPuesto: resultado.denegadoSinPuesto,
         denegadoPorAlcohol: resultado.denegadoPorAlcohol,
         denegadoPorDocumentos: resultado.denegadoPorDocumentos,
         torniqueteId: dto.torniqueteId,
       },
     });
 
+    if (resultado.autorizado) {
+      this.eventEmitter.emit('molinete.abrir', {
+        torniqueteId: dto.torniqueteId,
+        eventoId: evento.id,
+        tipoMovimiento: 'ingreso',
+      } satisfies AbrirMolineteEvent);
+    }
+
     const respuesta = {
       eventoId: evento.id,
+      tipoMovimiento: evento.tipoMovimiento,
       resultado: evento.resultado,
+      fechaHora: evento.fechaHora.toISOString(),
       persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+      numeroDocumento: persona.numeroDocumento,
       motivos: {
         dadoDeBaja: resultado.denegadoPorBaja,
+        sinPuesto: resultado.denegadoSinPuesto,
         alcohol: resultado.denegadoPorAlcohol,
         documentos: resultado.denegadoPorDocumentos,
         documentosFaltantes: resultado.documentosFaltantes,
@@ -108,31 +118,36 @@ export class EventosAccesoService {
     return respuesta;
   }
 
+  /** Registro básico de salida: sin antipassback, siempre se autoriza y abre el molinete. */
   async registrarSalida(dto: SalidaDto) {
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
-
-    const ultimoAutorizado = await this.prisma.eventoAcceso.findFirst({
-      where: { personaId: persona.id, resultado: 'autorizado' },
-      orderBy: { fechaHora: 'desc' },
-    });
-
-    const resultado = evaluarSalida(ultimoAutorizado?.tipoMovimiento ?? null);
+    if (!persona) {
+      return this.responderNoRegistrada(dto.numeroDocumento, 'salida');
+    }
 
     const evento = await this.prisma.eventoAcceso.create({
       data: {
         personaId: persona.id,
         tipoMovimiento: 'salida',
-        resultado: resultado.autorizado ? 'autorizado' : 'denegado',
-        denegadoSinIngresoPrevio: resultado.denegadoSinIngresoPrevio,
+        resultado: 'autorizado',
         torniqueteId: dto.torniqueteId,
       },
     });
 
+    this.eventEmitter.emit('molinete.abrir', {
+      torniqueteId: dto.torniqueteId,
+      eventoId: evento.id,
+      tipoMovimiento: 'salida',
+    } satisfies AbrirMolineteEvent);
+
     const respuesta = {
       eventoId: evento.id,
+      tipoMovimiento: evento.tipoMovimiento,
       resultado: evento.resultado,
+      fechaHora: evento.fechaHora.toISOString(),
       persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
-      motivos: { sinIngresoPrevio: resultado.denegadoSinIngresoPrevio },
+      numeroDocumento: persona.numeroDocumento,
+      motivos: {},
     };
 
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);

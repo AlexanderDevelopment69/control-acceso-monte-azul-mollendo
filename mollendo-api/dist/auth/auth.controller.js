@@ -13,9 +13,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
-import { ActivarCuentaDto } from './dto/activar-cuenta.dto.js';
-import { RecuperarPasswordDto } from './dto/recuperar-password.dto.js';
-import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import { Public } from '../common/decorators/public.decorator.js';
 let AuthController = class AuthController {
@@ -25,15 +22,6 @@ let AuthController = class AuthController {
     }
     login(dto) {
         return this.authService.login(dto);
-    }
-    activarCuenta(dto) {
-        return this.authService.activarCuenta(dto);
-    }
-    recuperarPassword(dto) {
-        return this.authService.recuperarPassword(dto);
-    }
-    resetPassword(dto) {
-        return this.authService.resetPassword(dto);
     }
     refreshToken(dto) {
         return this.authService.refreshToken(dto.refreshToken);
@@ -47,30 +35,6 @@ __decorate([
     __metadata("design:paramtypes", [LoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
-__decorate([
-    Post('activar-cuenta'),
-    HttpCode(HttpStatus.OK),
-    __param(0, Body()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [ActivarCuentaDto]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "activarCuenta", null);
-__decorate([
-    Post('recuperar-password'),
-    HttpCode(HttpStatus.OK),
-    __param(0, Body()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [RecuperarPasswordDto]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "recuperarPassword", null);
-__decorate([
-    Post('reset-password'),
-    HttpCode(HttpStatus.OK),
-    __param(0, Body()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [ResetPasswordDto]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "resetPassword", null);
 __decorate([
     Post('refresh-token'),
     HttpCode(HttpStatus.OK),

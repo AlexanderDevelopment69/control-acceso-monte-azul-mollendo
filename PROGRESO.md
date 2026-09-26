@@ -1,6 +1,7 @@
 # Progreso — Sistema de Control de Acceso, Terminal de Mollendo
 
-Referencia funcional completa: `Especificacion_Desarrollo_Control_Acceso_Mollendo.md`.
+Referencia funcional vigente: **`Especificacion_Desarrollo_Control_Acceso_Mollendo_base.md` (alcance base)** — ver bitácora 2026-09-26.
+La especificación completa (`Especificacion_Desarrollo_Control_Acceso_Mollendo_final.md`) queda como referencia de alcances futuros.
 Este archivo es solo para llevar el estado de avance — no repite el detalle funcional.
 
 Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
@@ -21,57 +22,58 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
 
 ## 1. mollendo-api — módulos NestJS
 
-- [x] Módulo `auth` (login, activar-cuenta, recuperar/reset password, refresh-token, JWT) — probado end-to-end
-- [x] Módulo `empresas` (alta, listado, detalle, editar/estado, invitar) — probado end-to-end
-- [x] Módulo `personas` (alta, listado, detalle, editar, dar de baja/reactivar) — probado end-to-end, ownership por empresa
+- [x] Módulo `auth` (login, refresh-token, JWT) — alcance base: sin activación ni recuperación por correo
+- [x] Módulo `empresas` (alta, listado, detalle, editar/estado) — sin invitación (alcance base)
+- [x] Módulo `usuarios` (alta de cuentas administrador/vigilancia, baja/reactivación, restablecer contraseña) — alcance base
+- [x] Módulo `personas` (alta con empresa, listado, detalle, editar/cambiar puesto, dar de baja/reactivar) — lo gestiona el administrador
 - [x] Módulo `tipos-documento` (catálogo) — probado end-to-end
-- [x] Módulo `documentos` (subir/renovar con archivo real a disco, historial, aprobar/rechazar) — probado end-to-end
+- [x] Módulo `documentos` (subir/renovar con archivo real a disco, historial) — sin aprobación: válido desde que se carga
 - [x] Módulo `puestos` (catálogo por caso + matriz de requisitos) — probado end-to-end
 - [x] Módulo `solicitudes-visita` (registro, listado, reprogramar/cancelar) — probado end-to-end
-- [x] Módulo `eventos-acceso` (ingreso, salida, motor de validación, anti-passback) — probado end-to-end, todos los casos de denegación
-- [x] Módulo `integraciones` (webhook alcoholímetro, comando torniquete — **mock/stub**, proveedor real pendiente de definir con el cliente)
+- [x] Módulo `eventos-acceso` (ingreso, salida básica sin antipassback, motor de validación) — probado end-to-end, todos los casos de denegación
+- [x] Módulo `integraciones` (webhook ZKBio CVSecurity que ya ejecuta el ingreso, apertura automática del molinete — el molinete sigue **mock**; contrato de ZKBio provisional)
 - [x] Módulo `panel` (resumen para vigilancia, WebSocket `/ws/eventos`, `/health`) — probado
 - [x] Módulo `auditoria` — conectado a empresas/personas/documentos/puestos
-- [x] Motor de validación de acceso (lógica crítica) — función pura en `validacion-acceso.engine.ts`, **9 tests unitarios con Vitest** (equivalente a Jest, ver bitácora), todos pasan
+- [x] Motor de validación de acceso (lógica crítica) — función pura en `validacion-acceso.engine.ts`, **12 tests unitarios con Vitest** (equivalente a Jest, ver bitácora), todos pasan
 - [ ] Pruebas e2e de flujo ingreso/salida (hay smoke test manual end-to-end con curl, pero no un test automatizado e2e todavía)
 - [x] Swagger/OpenAPI expuesto en `/api/docs` (solo fuera de producción)
-- [x] Envío de correos (SMTP, Mailtrap/Ethereal en desarrollo) — cae a log si no hay SMTP configurado
+- [~] ~~Envío de correos (SMTP)~~ — eliminado en el alcance base (no hay invitaciones ni recuperación por correo)
 
 ## 2. mollendo-portal — portal y paneles
 
 - [x] Adaptar layout base del template (sidebar por rol, header con usuario real y logout)
-- [x] Login / activación de cuenta / recuperación de contraseña / reset de contraseña
-- [x] Panel Administración: alta y gestión de empresas (crear, listar, invitar, activar/desactivar)
+- [x] Login (la activación/recuperación por correo se eliminaron en el alcance base)
+- [x] Panel Administración: alta y gestión de empresas (crear, listar, activar/desactivar)
+- [x] Panel Administración: usuarios (crear cuentas, dar de baja, restablecer contraseña)
 - [x] Panel Administración: catálogo de puestos y requisitos por puesto (matriz de checkboxes)
 - [x] Panel Administración: catálogo de tipos de documento
 - [x] Panel Administración: auditoría (vista completa, solo lectura)
-- [x] Portal Empresa: gestión de su propio personal (alta, expediente, dar de baja/reactivar)
-- [x] Portal Empresa: carga y aprobación/rechazo de documentos de su personal (subida real de archivo)
-- [x] Portal Empresa: registro de solicitudes de visita (crear, cancelar)
+- [x] Panel Administración: personal de todas las empresas (alta, expediente, cambio de puesto, dar de baja/reactivar)
+- [x] Panel Administración: carga de documentos ya válidos (subida real de archivo, historial de versiones)
+- [x] Panel Administración: visitas (crear, cancelar)
+- [x] ~~Portal Empresa~~ — eliminado en el alcance base (el administrador carga todo)
 - [x] Panel Vigilancia: vista en tiempo real (WebSocket) + resumen (denegaciones, alcohol no conforme, documentos vencidos) + historial
-- [x] Panel Vigilancia: indicador de modo contingencia (polling a `/health` cada 15s)
+- [x] Panel Vigilancia: aviso de servidor caído (polling a `/health` cada 15s) — sin modo contingencia en el alcance base
 - [ ] **Verificación interactiva en navegador real** — la extensión Claude en Chrome no estaba conectada en esta sesión, así que no se pudo hacer clic a través de los flujos. Se verificó: type-check limpio, lint limpio, todas las rutas devuelven 200 sin errores de render en el servidor, y el HTML servido contiene el contenido esperado. **Falta la prueba real de clic a clic — recomendado antes de dar por cerrado el frontend.**
 
 ## 3. Integraciones físicas (dependen de datos del cliente)
 
-- [ ] Definir proveedor de alcoholímetro → implementar webhook real
-- [ ] Definir marca/SDK del torniquete → implementar comando real
-- [ ] Lector de DNI (código de barras) — integración en el flujo de ingreso
+- [ ] Documentación/SDK de ZKBio CVSecurity (webhook o polling, formato del evento) → ajustar `POST /integraciones/zkbio/webhook`
+- [ ] Marca/modelo/SDK del molinete → reemplazar el mock de `IntegracionesService.enviarComandoTorniquete`
 
 ## 4. Infraestructura y despliegue
 
 - [ ] Dockerfile + docker-compose (mollendo-api + mollendo-portal + PostgreSQL) para desarrollo
 - [ ] Configuración de entornos (dev / staging / producción)
-- [ ] Servidor local de contingencia: réplica Docker + cola de eventos offline + sincronización
+- [ ] ~~Servidor local de contingencia~~ — fuera del alcance base
 - [ ] Backups (servidor + disco externo + nube)
 - [ ] Despliegue en Azure o Hostinger (según decisión final de infraestructura)
 
 ## 5. Pendiente de confirmar con el cliente (bloquea trabajo relacionado)
 
 - [ ] Catálogo de puestos por caso y documentos exigidos por cada uno
-- [ ] Proveedor del alcoholímetro
-- [ ] Equipo/marca del torniquete
-- [ ] Horario límite para registrar solicitud de visita
+- [ ] Documentación/SDK de ZKBio CVSecurity (terminal ZKTeco G4 Pro + alcoholímetro)
+- [ ] Marca y modelo del molinete
 - [ ] Proveedor final de infraestructura (Azure vs. Hostinger) y región
 
 ---
@@ -307,3 +309,22 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
   - **Limitación real documentada, no resuelta por código** (no tiene arreglo del lado del cliente): la conexión WebSocket del panel de Vigilancia (`lib/ws.ts`, `transports: ["websocket"]`) no puede llevar ese header porque los navegadores no permiten headers personalizados en el handshake de WebSocket — se le indicó al usuario que abra la URL del backend una vez en el navegador y haga clic en "Visit Site" antes de la demo, para que ngrok no vuelva a interceptar esa conexión en esa sesión del navegador.
   - Se le explicó el resto del flujo (2 túneles, uno por cada servidor; variables de entorno `NEXT_PUBLIC_API_URL` y `CORS_ORIGIN` a actualizar con las URLs de ngrok; reiniciar ambos servidores; que las URLs gratis cambian al reiniciar el túnel, con la opción de un dominio estático gratis de ngrok si eso es un problema recurrente) directamente en el chat, no en el código — son pasos que solo el usuario puede ejecutar.
   - Verificado con `npm run build`/`npx vitest run`/`npm run lint` del backend y `npx tsc --noEmit`/`npx eslint` del frontend, todos limpios.
+
+- **2026-09-26** — **Cambio de alcance: solo se desarrolla el ALCANCE BASE** de `Costo_y_Plazo_por_Alcance_TMAM.docx` (S/ 2,500 · 5 días). Nueva especificación: `Especificacion_Desarrollo_Control_Acceso_Mollendo_base.md`. Lo construido antes correspondía al alcance menor y se recortó:
+  - **Roles**: solo `administrador` (renombrado desde `administracion`) y `vigilancia`. Se eliminó el rol `empresa`, su portal (`EmpresaHome`, "Mi personal") y las cuentas de empresa de la BD. El administrador gestiona personal, documentos y visitas de cualquier empresa (las personas se crean con `empresaId`).
+  - **Sin correo**: se eliminaron invitación/activación de cuentas, recuperación de contraseña, el módulo `configuracion-smtp` (tabla y página `/configuracion`), el `MailerModule` y la dependencia `nodemailer`. Nuevo módulo **`usuarios`** (página `/usuarios`): el administrador crea cuentas, las da de baja y restablece contraseñas.
+  - **Documentos sin aprobación**: se quitaron `estado_aprobacion` y `vigente` de `documento_persona` y el `PATCH /documentos/:id`. La vigencia se calcula al validar (última versión de cada tipo, por fecha). Arreglado de paso: antes un documento que vencía **hoy** se daba por vencido (se comparaba la fecha DATE contra `new Date()` con hora); ahora `esDocumentoVigente` compara por día.
+  - **Motor de validación**: persona **sin puesto se deniega** (antes se autorizaba) con el nuevo motivo `denegado_sin_puesto`; baja sigue con prioridad; puesto/documentos/alcohol se informan juntos. **Salida sin antipassback**: siempre autorizada (se quitó `evaluarSalida` y `denegado_sin_ingreso_previo`). Un documento no registrado ya no responde 404: devuelve `denegado` con `personaNoRegistrada` y se muestra en la pantalla de garita (sin fila en `evento_acceso`).
+  - **Integraciones**: `POST /integraciones/zkbio/webhook` (contrato provisional) reemplaza al webhook de alcoholímetro y ya ejecuta el ingreso. Tras cada ingreso autorizado y cada salida se emite `molinete.abrir` (EventEmitter) y `IntegracionesService` envía la orden al molinete (sigue siendo mock en el log).
+  - **Auditoría**: sin la acción `aprobar` (las existentes pasaron a `modificar`). Se mantienen las secciones **Auditoría**, **Sistema y APIs** (documentación de APIs reescrita para ZKBio/ingreso/salida/molinete, sin tarjeta SMTP) y **Manual** (reescrito para los dos roles).
+  - **Migración** `20260926120000_alcance_base` escrita a mano para convertir los datos en vez de perderlos (renombra enums, borra usuarios de empresa dejando su auditoría con `usuario_id` NULL, etc.). Se aplicó con `psql` dentro del contenedor y `prisma migrate resolve --applied`, porque el reenvío de puertos de WSL daba `P1001` de forma intermitente a Prisma; `prisma migrate diff` confirma que el esquema y la BD coinciden. Los documentos de la BD de desarrollo que estaban `pendiente`/`rechazado` ahora cuentan como válidos (no existe aprobación); `seed-demo.ts` ya no los crea.
+  - `docker-compose.yml` tenía `postgres:` e `image:` en la misma línea (YAML inválido, también en el commit) — corregido.
+  - El portal descarta tokens guardados con un rol que ya no existe (evita un bucle de redirecciones para quien tenía sesión abierta con `administracion`).
+  - Verificado: backend `tsc`/`vitest` (13/13)/`lint`/`build` OK; portal `tsc` y `next build` OK, lint con los mismos 5 errores preexistentes del template/AuthContext. Prueba de humo con curl contra la API corriendo (19 casos: sin puesto, documento faltante, vencido, que vence hoy, alcohol, webhook ZKBio, dos salidas seguidas, baja con prioridad, no registrado, permisos de vigilancia, usuarios, auditoría) — todos OK; los datos de prueba se borraron después. **No se probó clic a clic en el navegador.**
+
+- **2026-09-26 (2)** — **Interfaz simplificada a "una sola vista"**: el usuario veía el menú casi igual (11 opciones). Menú del administrador ahora: **Personal y documentos** (`/`, pantalla principal), **Panel de vigilancia**, **Configuración**, **Auditoría**, **Sistema y APIs**, **Manual**. Vigilancia: Panel de vigilancia y Manual.
+  - **Personal y documentos** (`app/(admin)/PersonalDocumentos.tsx` + `components/personal/PersonaFicha.tsx`): lista de todo el personal con ✔/✖ de si hoy puede ingresar (y el motivo), búsqueda y filtros por empresa y por habilitado. La ficha muestra los documentos que exige el puesto (falta/vencido/vigente) con botón "Subir"/"Renovar" que preselecciona el tipo en el formulario, cambio de puesto, baja/reactivación, visitas (agendar/cancelar) e historial de documentos.
+  - **Configuración** (`/configuracion`): pestañas Empresas, Puestos y requisitos, Tipos de documento y Usuarios (las páginas anteriores se movieron a `components/configuracion/*Tab.tsx`). Se eliminaron las rutas `/empresas`, `/personal`, `/personal/[id]`, `/visitas`, `/puestos`, `/tipos-documento`, `/usuarios` y el dashboard `AdminHome`.
+  - Backend: `GET /personas` y `GET /personas/:id` devuelven `cumplimiento` (calculado con el **mismo motor** del molinete, suponiendo alcohol conforme) y el detalle devuelve `requisitos` con el estado de la última versión de cada documento. La lógica de "última versión vigente" pasó al motor (`ultimasVersiones`, `tiposDocumentoVigentes`, con test) y la usan ambos servicios. `GET /solicitudes-visita` acepta `personaId`.
+  - Manual reescrito para el menú nuevo. Verificado: backend tsc/vitest (14/14)/lint; portal tsc y eslint de los archivos nuevos limpios; rutas nuevas 200 y eliminadas 404 en el servidor de desarrollo. **Sin prueba clic a clic** (la extensión de Chrome no estaba conectada).
+

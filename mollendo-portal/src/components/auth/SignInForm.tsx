@@ -6,7 +6,6 @@ import { EyeCloseIcon, EyeIcon } from "@/icons";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ApiError } from "@/lib/api/client";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -80,14 +79,6 @@ export default function SignInForm() {
                     )}
                   </span>
                 </div>
-              </div>
-              <div className="flex items-center justify-end">
-                <Link
-                  href="/recuperar-password"
-                  className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                >
-                  ¿Olvidó su contraseña?
-                </Link>
               </div>
               <div>
                 <Button className="w-full" size="sm" disabled={loading}>

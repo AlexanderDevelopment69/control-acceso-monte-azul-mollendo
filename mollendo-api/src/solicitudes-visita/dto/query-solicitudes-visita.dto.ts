@@ -8,6 +8,11 @@ export class QuerySolicitudesVisitaDto {
   empresaId?: number;
 
   @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsInt({ message: 'El ID de la persona debe ser un número' })
+  personaId?: number;
+
+  @IsOptional()
   @IsDateString({}, { message: 'La fecha "desde" no es válida' })
   desde?: string;
 

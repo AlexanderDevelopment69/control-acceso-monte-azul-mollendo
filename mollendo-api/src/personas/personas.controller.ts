@@ -13,25 +13,25 @@ export class PersonasController {
   constructor(private readonly personasService: PersonasService) {}
 
   @Post()
-  @Roles('empresa')
+  @Roles('administrador')
   create(@Body() dto: CreatePersonaDto, @CurrentUser() user: AuthenticatedUser) {
     return this.personasService.create(dto, user);
   }
 
   @Get()
-  @Roles('administracion', 'empresa', 'vigilancia')
-  findAll(@Query() query: QueryPersonasDto, @CurrentUser() user: AuthenticatedUser) {
-    return this.personasService.findAll(query, user);
+  @Roles('administrador', 'vigilancia')
+  findAll(@Query() query: QueryPersonasDto) {
+    return this.personasService.findAll(query);
   }
 
   @Get(':id')
-  @Roles('administracion', 'empresa', 'vigilancia')
-  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
-    return this.personasService.findOne(id, user);
+  @Roles('administrador', 'vigilancia')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.personasService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles('empresa')
+  @Roles('administrador')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePersonaDto,
@@ -41,7 +41,7 @@ export class PersonasController {
   }
 
   @Patch(':id/estado')
-  @Roles('empresa')
+  @Roles('administrador')
   updateEstado(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEstadoPersonaDto,

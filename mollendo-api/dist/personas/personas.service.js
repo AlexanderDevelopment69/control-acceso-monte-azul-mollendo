@@ -7,9 +7,30 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { esDocumentoVigente, evaluarIngreso, tiposDocumentoVigentes, ultimasVersiones, } from '../eventos-acceso/validacion-acceso.engine.js';
+const EMPRESA_SELECT = { select: { id: true, razonSocial: true } };
+const PUESTO_CON_REQUISITOS = { include: { requisitos: { include: { tipoDocumento: true } } } };
+function evaluarCumplimiento(persona, documentos) {
+    const documentosRequeridos = (persona.puesto?.requisitos ?? [])
+        .filter((r) => r.obligatorio)
+        .map((r) => ({ tipoDocumentoId: r.tipoDocumentoId, nombre: r.tipoDocumento.nombre }));
+    const resultado = evaluarIngreso({
+        personaActiva: persona.estado === 'activo',
+        tienePuesto: persona.puestoId !== null,
+        alcoholConforme: true,
+        documentosRequeridos,
+        documentosVigentes: tiposDocumentoVigentes(documentos, new Date()),
+    });
+    return {
+        habilitado: resultado.autorizado,
+        dadoDeBaja: resultado.denegadoPorBaja,
+        sinPuesto: resultado.denegadoSinPuesto,
+        documentosFaltantes: resultado.documentosFaltantes,
+    };
+}
 let PersonasService = class PersonasService {
     prisma;
     auditoriaService;
@@ -17,15 +38,14 @@ let PersonasService = class PersonasService {
         this.prisma = prisma;
         this.auditoriaService = auditoriaService;
     }
-    assertPuedeGestionar(persona, user) {
-        if (user.rol === 'empresa' && persona.empresaId !== user.empresaId) {
-            throw new ForbiddenException('No puede gestionar personal de otra empresa');
+    async assertEmpresaExiste(empresaId) {
+        const empresa = await this.prisma.empresa.findUnique({ where: { id: empresaId } });
+        if (!empresa) {
+            throw new NotFoundException('Empresa no encontrada');
         }
     }
     async create(dto, user) {
-        if (user.rol !== 'empresa') {
-            throw new ForbiddenException('Solo la empresa proveedora registra a su propio personal');
-        }
+        await this.assertEmpresaExiste(dto.empresaId);
         const existente = await this.prisma.persona.findUnique({
             where: {
                 tipoDocumentoIdentidad_numeroDocumento: {
@@ -38,7 +58,7 @@ let PersonasService = class PersonasService {
             throw new ConflictException('Ya existe una persona registrada con ese documento');
         }
         const persona = await this.prisma.persona.create({
-            data: { ...dto, empresaId: user.empresaId },
+            data: dto,
         });
         await this.auditoriaService.registrar({
             usuarioId: user.id,
@@ -48,31 +68,73 @@ let PersonasService = class PersonasService {
         });
         return persona;
     }
-    async findAll(query, user) {
-        const empresaId = user.rol === 'empresa' ? user.empresaId : query.empresaId;
-        return this.prisma.persona.findMany({
-            where: { empresaId, puestoId: query.puestoId, estado: query.estado },
-            include: { empresa: { select: { id: true, razonSocial: true } }, puesto: true },
-            orderBy: { creadoEn: 'desc' },
+    async findAll(query) {
+        const personas = await this.prisma.persona.findMany({
+            where: { empresaId: query.empresaId, puestoId: query.puestoId, estado: query.estado },
+            include: {
+                empresa: EMPRESA_SELECT,
+                puesto: PUESTO_CON_REQUISITOS,
+                documentos: { select: { id: true, tipoDocumentoId: true, version: true, fechaVencimiento: true } },
+            },
+            orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
         });
+        return personas.map(({ documentos, puesto, ...persona }) => ({
+            ...persona,
+            puesto: puesto && { id: puesto.id, nombre: puesto.nombre, caso: puesto.caso },
+            cumplimiento: evaluarCumplimiento({ ...persona, puesto }, documentos),
+        }));
     }
-    async findOne(id, user) {
+    async findOne(id) {
         const persona = await this.prisma.persona.findUnique({
             where: { id },
             include: {
-                empresa: { select: { id: true, razonSocial: true } },
-                puesto: true,
-                documentos: { include: { tipoDocumento: true }, orderBy: { creadoEn: 'desc' } },
+                empresa: EMPRESA_SELECT,
+                puesto: PUESTO_CON_REQUISITOS,
+                documentos: { include: { tipoDocumento: true }, orderBy: [{ tipoDocumentoId: 'asc' }, { version: 'desc' }] },
             },
         });
         if (!persona) {
             throw new NotFoundException('Persona no encontrada');
         }
-        this.assertPuedeGestionar(persona, user);
+        const hoy = new Date();
+        const ultimas = ultimasVersiones(persona.documentos);
+        const requisitos = (persona.puesto?.requisitos ?? [])
+            .map((r) => {
+            const documento = ultimas.get(r.tipoDocumentoId) ?? null;
+            return {
+                tipoDocumentoId: r.tipoDocumentoId,
+                nombre: r.tipoDocumento.nombre,
+                obligatorio: r.obligatorio,
+                documento: documento && {
+                    id: documento.id,
+                    version: documento.version,
+                    fechaVencimiento: documento.fechaVencimiento,
+                    creadoEn: documento.creadoEn,
+                },
+                vigente: documento ? esDocumentoVigente(documento.fechaVencimiento, hoy) : false,
+            };
+        })
+            .sort((a, b) => a.nombre.localeCompare(b.nombre));
+        const { puesto, ...resto } = persona;
+        return {
+            ...resto,
+            puesto: puesto && { id: puesto.id, nombre: puesto.nombre, caso: puesto.caso },
+            cumplimiento: evaluarCumplimiento(persona, persona.documentos),
+            requisitos,
+        };
+    }
+    async findPersona(id) {
+        const persona = await this.prisma.persona.findUnique({ where: { id } });
+        if (!persona) {
+            throw new NotFoundException('Persona no encontrada');
+        }
         return persona;
     }
     async update(id, dto, user) {
-        const persona = await this.findOne(id, user);
+        const persona = await this.findPersona(id);
+        if (dto.empresaId !== undefined && dto.empresaId !== persona.empresaId) {
+            await this.assertEmpresaExiste(dto.empresaId);
+        }
         const actualizada = await this.prisma.persona.update({ where: { id: persona.id }, data: dto });
         await this.auditoriaService.registrar({
             usuarioId: user.id,
@@ -83,7 +145,7 @@ let PersonasService = class PersonasService {
         return actualizada;
     }
     async updateEstado(id, dto, user) {
-        const persona = await this.findOne(id, user);
+        const persona = await this.findPersona(id);
         const actualizada = await this.prisma.persona.update({
             where: { id: persona.id },
             data: { estado: dto.estado },

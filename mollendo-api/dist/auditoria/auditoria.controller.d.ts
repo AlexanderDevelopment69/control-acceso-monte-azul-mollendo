@@ -10,11 +10,11 @@ export declare class AuditoriaController {
             correo: string;
         } | null;
     } & {
+        id: number;
+        fechaHora: Date;
+        usuarioId: number | null;
         tablaAfectada: string;
         registroId: number;
         accion: import("../generated/prisma/enums.js").AccionAuditoria;
-        fechaHora: Date;
-        id: number;
-        usuarioId: number | null;
     })[]>;
 }

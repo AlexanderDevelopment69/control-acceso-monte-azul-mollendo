@@ -32,7 +32,7 @@ __decorate([
 ], AuditoriaController.prototype, "findAll", null);
 AuditoriaController = __decorate([
     Controller('auditoria'),
-    Roles('administracion'),
+    Roles('administrador'),
     __metadata("design:paramtypes", [AuditoriaService])
 ], AuditoriaController);
 export { AuditoriaController };

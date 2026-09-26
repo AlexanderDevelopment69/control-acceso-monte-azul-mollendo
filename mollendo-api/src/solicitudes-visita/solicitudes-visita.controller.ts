@@ -12,19 +12,19 @@ export class SolicitudesVisitaController {
   constructor(private readonly solicitudesVisitaService: SolicitudesVisitaService) {}
 
   @Post()
-  @Roles('empresa')
+  @Roles('administrador')
   create(@Body() dto: CreateSolicitudVisitaDto, @CurrentUser() user: AuthenticatedUser) {
     return this.solicitudesVisitaService.create(dto, user);
   }
 
   @Get()
-  @Roles('administracion', 'empresa', 'vigilancia')
-  findAll(@Query() query: QuerySolicitudesVisitaDto, @CurrentUser() user: AuthenticatedUser) {
-    return this.solicitudesVisitaService.findAll(query, user);
+  @Roles('administrador', 'vigilancia')
+  findAll(@Query() query: QuerySolicitudesVisitaDto) {
+    return this.solicitudesVisitaService.findAll(query);
   }
 
   @Patch(':id')
-  @Roles('empresa')
+  @Roles('administrador')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSolicitudVisitaDto,

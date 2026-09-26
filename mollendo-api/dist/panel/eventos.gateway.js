@@ -23,7 +23,7 @@ let EventosGateway = EventosGateway_1 = class EventosGateway {
         const token = client.handshake.auth?.['token'] ?? client.handshake.query?.['token'];
         try {
             const payload = this.jwtService.verify(String(token), { secret: process.env.JWT_SECRET });
-            if (payload.rol !== 'administracion' && payload.rol !== 'vigilancia') {
+            if (payload.rol !== 'administrador' && payload.rol !== 'vigilancia') {
                 throw new Error('Rol no autorizado para el panel de vigilancia');
             }
         }
