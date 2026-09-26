@@ -11,6 +11,8 @@ export declare class EmpresasService {
     constructor(prisma: PrismaService, mailerService: MailerService, auditoriaService: AuditoriaService);
     create(dto: CreateEmpresaDto, usuarioId: number): Promise<{
         id: number;
+        creadoEn: Date;
+        actualizadoEn: Date;
         ruc: string;
         razonSocial: string;
         correoContacto: string;
@@ -18,11 +20,11 @@ export declare class EmpresasService {
         estado: import("../generated/prisma/enums.js").EstadoEmpresa;
         contratoVigenciaInicio: Date | null;
         contratoVigenciaFin: Date | null;
-        creadoEn: Date;
-        actualizadoEn: Date;
     }>;
     findAll(query: QueryEmpresasDto): Promise<{
         id: number;
+        creadoEn: Date;
+        actualizadoEn: Date;
         ruc: string;
         razonSocial: string;
         correoContacto: string;
@@ -30,11 +32,11 @@ export declare class EmpresasService {
         estado: import("../generated/prisma/enums.js").EstadoEmpresa;
         contratoVigenciaInicio: Date | null;
         contratoVigenciaFin: Date | null;
-        creadoEn: Date;
-        actualizadoEn: Date;
     }[]>;
     findOne(id: number): Promise<{
         id: number;
+        creadoEn: Date;
+        actualizadoEn: Date;
         ruc: string;
         razonSocial: string;
         correoContacto: string;
@@ -42,11 +44,11 @@ export declare class EmpresasService {
         estado: import("../generated/prisma/enums.js").EstadoEmpresa;
         contratoVigenciaInicio: Date | null;
         contratoVigenciaFin: Date | null;
-        creadoEn: Date;
-        actualizadoEn: Date;
     }>;
     update(id: number, dto: UpdateEmpresaDto, usuarioId: number): Promise<{
         id: number;
+        creadoEn: Date;
+        actualizadoEn: Date;
         ruc: string;
         razonSocial: string;
         correoContacto: string;
@@ -54,8 +56,6 @@ export declare class EmpresasService {
         estado: import("../generated/prisma/enums.js").EstadoEmpresa;
         contratoVigenciaInicio: Date | null;
         contratoVigenciaFin: Date | null;
-        creadoEn: Date;
-        actualizadoEn: Date;
     }>;
     invitar(id: number): Promise<{
         mensaje: string;

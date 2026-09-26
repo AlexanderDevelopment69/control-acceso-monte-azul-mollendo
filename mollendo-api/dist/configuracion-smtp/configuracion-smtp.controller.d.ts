@@ -11,24 +11,24 @@ export declare class ConfiguracionSmtpController {
         configurado: false;
     } | {
         passwordConfigurada: boolean;
+        usuario: string | null;
         id: number;
-        actualizadoEn: Date;
         host: string;
         puerto: number;
         seguro: boolean;
-        usuario: string | null;
         remitente: string;
+        actualizadoEn: Date;
         configurado: true;
     }>;
     guardar(dto: UpdateConfiguracionSmtpDto, user: AuthenticatedUser): Promise<{
         passwordConfigurada: boolean;
+        usuario: string | null;
         id: number;
-        actualizadoEn: Date;
         host: string;
         puerto: number;
         seguro: boolean;
-        usuario: string | null;
         remitente: string;
+        actualizadoEn: Date;
         configurado: true;
     }>;
     eliminar(): Promise<{

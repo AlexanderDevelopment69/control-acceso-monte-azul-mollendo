@@ -20,12 +20,12 @@ export declare class AuditoriaService {
             correo: string;
         } | null;
     } & {
-        id: number;
-        fechaHora: Date;
-        usuarioId: number | null;
         tablaAfectada: string;
         registroId: number;
         accion: AccionAuditoria;
+        fechaHora: Date;
+        id: number;
+        usuarioId: number | null;
     })[]>;
 }
 export {};

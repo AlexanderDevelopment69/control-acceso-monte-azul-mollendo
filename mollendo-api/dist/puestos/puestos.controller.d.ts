@@ -22,9 +22,9 @@ export declare class PuestosController {
             tipoValidacion: import("../generated/prisma/enums.js").TipoValidacionDocumento;
         };
     } & {
-        puestoId: number;
         tipoDocumentoId: number;
         obligatorio: boolean;
+        puestoId: number;
     })[]>;
     setRequisitos(id: number, dto: SetRequisitosDto, user: AuthenticatedUser): Promise<({
         tipoDocumento: {
@@ -33,8 +33,8 @@ export declare class PuestosController {
             tipoValidacion: import("../generated/prisma/enums.js").TipoValidacionDocumento;
         };
     } & {
-        puestoId: number;
         tipoDocumentoId: number;
         obligatorio: boolean;
+        puestoId: number;
     })[]>;
 }
