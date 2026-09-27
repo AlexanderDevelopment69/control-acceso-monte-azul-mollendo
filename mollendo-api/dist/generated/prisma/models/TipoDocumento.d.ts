@@ -1,5 +1,4 @@
 import type * as runtime from "@prisma/client/runtime/client";
-import type * as $Enums from "../enums.js";
 import type * as Prisma from "../internal/prismaNamespace.js";
 export type TipoDocumentoModel = runtime.Types.Result.DefaultSelection<Prisma.$TipoDocumentoPayload>;
 export type AggregateTipoDocumento = {
@@ -18,17 +17,14 @@ export type TipoDocumentoSumAggregateOutputType = {
 export type TipoDocumentoMinAggregateOutputType = {
     id: number | null;
     nombre: string | null;
-    tipoValidacion: $Enums.TipoValidacionDocumento | null;
 };
 export type TipoDocumentoMaxAggregateOutputType = {
     id: number | null;
     nombre: string | null;
-    tipoValidacion: $Enums.TipoValidacionDocumento | null;
 };
 export type TipoDocumentoCountAggregateOutputType = {
     id: number;
     nombre: number;
-    tipoValidacion: number;
     _all: number;
 };
 export type TipoDocumentoAvgAggregateInputType = {
@@ -40,17 +36,14 @@ export type TipoDocumentoSumAggregateInputType = {
 export type TipoDocumentoMinAggregateInputType = {
     id?: true;
     nombre?: true;
-    tipoValidacion?: true;
 };
 export type TipoDocumentoMaxAggregateInputType = {
     id?: true;
     nombre?: true;
-    tipoValidacion?: true;
 };
 export type TipoDocumentoCountAggregateInputType = {
     id?: true;
     nombre?: true;
-    tipoValidacion?: true;
     _all?: true;
 };
 export type TipoDocumentoAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -84,7 +77,6 @@ export type TipoDocumentoGroupByArgs<ExtArgs extends runtime.Types.Extensions.In
 export type TipoDocumentoGroupByOutputType = {
     id: number;
     nombre: string;
-    tipoValidacion: $Enums.TipoValidacionDocumento;
     _count: TipoDocumentoCountAggregateOutputType | null;
     _avg: TipoDocumentoAvgAggregateOutputType | null;
     _sum: TipoDocumentoSumAggregateOutputType | null;
@@ -100,15 +92,11 @@ export type TipoDocumentoWhereInput = {
     NOT?: Prisma.TipoDocumentoWhereInput | Prisma.TipoDocumentoWhereInput[];
     id?: Prisma.IntFilter<"TipoDocumento"> | number;
     nombre?: Prisma.StringFilter<"TipoDocumento"> | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFilter<"TipoDocumento"> | $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoListRelationFilter;
     documentos?: Prisma.DocumentoPersonaListRelationFilter;
 };
 export type TipoDocumentoOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
     nombre?: Prisma.SortOrder;
-    tipoValidacion?: Prisma.SortOrder;
-    requisitos?: Prisma.RequisitoPorPuestoOrderByRelationAggregateInput;
     documentos?: Prisma.DocumentoPersonaOrderByRelationAggregateInput;
 };
 export type TipoDocumentoWhereUniqueInput = Prisma.AtLeast<{
@@ -117,14 +105,11 @@ export type TipoDocumentoWhereUniqueInput = Prisma.AtLeast<{
     AND?: Prisma.TipoDocumentoWhereInput | Prisma.TipoDocumentoWhereInput[];
     OR?: Prisma.TipoDocumentoWhereInput[];
     NOT?: Prisma.TipoDocumentoWhereInput | Prisma.TipoDocumentoWhereInput[];
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFilter<"TipoDocumento"> | $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoListRelationFilter;
     documentos?: Prisma.DocumentoPersonaListRelationFilter;
 }, "id" | "nombre">;
 export type TipoDocumentoOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
     nombre?: Prisma.SortOrder;
-    tipoValidacion?: Prisma.SortOrder;
     _count?: Prisma.TipoDocumentoCountOrderByAggregateInput;
     _avg?: Prisma.TipoDocumentoAvgOrderByAggregateInput;
     _max?: Prisma.TipoDocumentoMaxOrderByAggregateInput;
@@ -137,52 +122,39 @@ export type TipoDocumentoScalarWhereWithAggregatesInput = {
     NOT?: Prisma.TipoDocumentoScalarWhereWithAggregatesInput | Prisma.TipoDocumentoScalarWhereWithAggregatesInput[];
     id?: Prisma.IntWithAggregatesFilter<"TipoDocumento"> | number;
     nombre?: Prisma.StringWithAggregatesFilter<"TipoDocumento"> | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoWithAggregatesFilter<"TipoDocumento"> | $Enums.TipoValidacionDocumento;
 };
 export type TipoDocumentoCreateInput = {
     nombre: string;
-    tipoValidacion: $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoCreateNestedManyWithoutTipoDocumentoInput;
     documentos?: Prisma.DocumentoPersonaCreateNestedManyWithoutTipoDocumentoInput;
 };
 export type TipoDocumentoUncheckedCreateInput = {
     id?: number;
     nombre: string;
-    tipoValidacion: $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoUncheckedCreateNestedManyWithoutTipoDocumentoInput;
     documentos?: Prisma.DocumentoPersonaUncheckedCreateNestedManyWithoutTipoDocumentoInput;
 };
 export type TipoDocumentoUpdateInput = {
     nombre?: Prisma.StringFieldUpdateOperationsInput | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFieldUpdateOperationsInput | $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoUpdateManyWithoutTipoDocumentoNestedInput;
     documentos?: Prisma.DocumentoPersonaUpdateManyWithoutTipoDocumentoNestedInput;
 };
 export type TipoDocumentoUncheckedUpdateInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     nombre?: Prisma.StringFieldUpdateOperationsInput | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFieldUpdateOperationsInput | $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoUncheckedUpdateManyWithoutTipoDocumentoNestedInput;
     documentos?: Prisma.DocumentoPersonaUncheckedUpdateManyWithoutTipoDocumentoNestedInput;
 };
 export type TipoDocumentoCreateManyInput = {
     id?: number;
     nombre: string;
-    tipoValidacion: $Enums.TipoValidacionDocumento;
 };
 export type TipoDocumentoUpdateManyMutationInput = {
     nombre?: Prisma.StringFieldUpdateOperationsInput | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFieldUpdateOperationsInput | $Enums.TipoValidacionDocumento;
 };
 export type TipoDocumentoUncheckedUpdateManyInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     nombre?: Prisma.StringFieldUpdateOperationsInput | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFieldUpdateOperationsInput | $Enums.TipoValidacionDocumento;
 };
 export type TipoDocumentoCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     nombre?: Prisma.SortOrder;
-    tipoValidacion?: Prisma.SortOrder;
 };
 export type TipoDocumentoAvgOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -190,12 +162,10 @@ export type TipoDocumentoAvgOrderByAggregateInput = {
 export type TipoDocumentoMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     nombre?: Prisma.SortOrder;
-    tipoValidacion?: Prisma.SortOrder;
 };
 export type TipoDocumentoMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     nombre?: Prisma.SortOrder;
-    tipoValidacion?: Prisma.SortOrder;
 };
 export type TipoDocumentoSumOrderByAggregateInput = {
     id?: Prisma.SortOrder;
@@ -203,21 +173,6 @@ export type TipoDocumentoSumOrderByAggregateInput = {
 export type TipoDocumentoScalarRelationFilter = {
     is?: Prisma.TipoDocumentoWhereInput;
     isNot?: Prisma.TipoDocumentoWhereInput;
-};
-export type EnumTipoValidacionDocumentoFieldUpdateOperationsInput = {
-    set?: $Enums.TipoValidacionDocumento;
-};
-export type TipoDocumentoCreateNestedOneWithoutRequisitosInput = {
-    create?: Prisma.XOR<Prisma.TipoDocumentoCreateWithoutRequisitosInput, Prisma.TipoDocumentoUncheckedCreateWithoutRequisitosInput>;
-    connectOrCreate?: Prisma.TipoDocumentoCreateOrConnectWithoutRequisitosInput;
-    connect?: Prisma.TipoDocumentoWhereUniqueInput;
-};
-export type TipoDocumentoUpdateOneRequiredWithoutRequisitosNestedInput = {
-    create?: Prisma.XOR<Prisma.TipoDocumentoCreateWithoutRequisitosInput, Prisma.TipoDocumentoUncheckedCreateWithoutRequisitosInput>;
-    connectOrCreate?: Prisma.TipoDocumentoCreateOrConnectWithoutRequisitosInput;
-    upsert?: Prisma.TipoDocumentoUpsertWithoutRequisitosInput;
-    connect?: Prisma.TipoDocumentoWhereUniqueInput;
-    update?: Prisma.XOR<Prisma.XOR<Prisma.TipoDocumentoUpdateToOneWithWhereWithoutRequisitosInput, Prisma.TipoDocumentoUpdateWithoutRequisitosInput>, Prisma.TipoDocumentoUncheckedUpdateWithoutRequisitosInput>;
 };
 export type TipoDocumentoCreateNestedOneWithoutDocumentosInput = {
     create?: Prisma.XOR<Prisma.TipoDocumentoCreateWithoutDocumentosInput, Prisma.TipoDocumentoUncheckedCreateWithoutDocumentosInput>;
@@ -231,51 +186,12 @@ export type TipoDocumentoUpdateOneRequiredWithoutDocumentosNestedInput = {
     connect?: Prisma.TipoDocumentoWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.TipoDocumentoUpdateToOneWithWhereWithoutDocumentosInput, Prisma.TipoDocumentoUpdateWithoutDocumentosInput>, Prisma.TipoDocumentoUncheckedUpdateWithoutDocumentosInput>;
 };
-export type TipoDocumentoCreateWithoutRequisitosInput = {
-    nombre: string;
-    tipoValidacion: $Enums.TipoValidacionDocumento;
-    documentos?: Prisma.DocumentoPersonaCreateNestedManyWithoutTipoDocumentoInput;
-};
-export type TipoDocumentoUncheckedCreateWithoutRequisitosInput = {
-    id?: number;
-    nombre: string;
-    tipoValidacion: $Enums.TipoValidacionDocumento;
-    documentos?: Prisma.DocumentoPersonaUncheckedCreateNestedManyWithoutTipoDocumentoInput;
-};
-export type TipoDocumentoCreateOrConnectWithoutRequisitosInput = {
-    where: Prisma.TipoDocumentoWhereUniqueInput;
-    create: Prisma.XOR<Prisma.TipoDocumentoCreateWithoutRequisitosInput, Prisma.TipoDocumentoUncheckedCreateWithoutRequisitosInput>;
-};
-export type TipoDocumentoUpsertWithoutRequisitosInput = {
-    update: Prisma.XOR<Prisma.TipoDocumentoUpdateWithoutRequisitosInput, Prisma.TipoDocumentoUncheckedUpdateWithoutRequisitosInput>;
-    create: Prisma.XOR<Prisma.TipoDocumentoCreateWithoutRequisitosInput, Prisma.TipoDocumentoUncheckedCreateWithoutRequisitosInput>;
-    where?: Prisma.TipoDocumentoWhereInput;
-};
-export type TipoDocumentoUpdateToOneWithWhereWithoutRequisitosInput = {
-    where?: Prisma.TipoDocumentoWhereInput;
-    data: Prisma.XOR<Prisma.TipoDocumentoUpdateWithoutRequisitosInput, Prisma.TipoDocumentoUncheckedUpdateWithoutRequisitosInput>;
-};
-export type TipoDocumentoUpdateWithoutRequisitosInput = {
-    nombre?: Prisma.StringFieldUpdateOperationsInput | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFieldUpdateOperationsInput | $Enums.TipoValidacionDocumento;
-    documentos?: Prisma.DocumentoPersonaUpdateManyWithoutTipoDocumentoNestedInput;
-};
-export type TipoDocumentoUncheckedUpdateWithoutRequisitosInput = {
-    id?: Prisma.IntFieldUpdateOperationsInput | number;
-    nombre?: Prisma.StringFieldUpdateOperationsInput | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFieldUpdateOperationsInput | $Enums.TipoValidacionDocumento;
-    documentos?: Prisma.DocumentoPersonaUncheckedUpdateManyWithoutTipoDocumentoNestedInput;
-};
 export type TipoDocumentoCreateWithoutDocumentosInput = {
     nombre: string;
-    tipoValidacion: $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoCreateNestedManyWithoutTipoDocumentoInput;
 };
 export type TipoDocumentoUncheckedCreateWithoutDocumentosInput = {
     id?: number;
     nombre: string;
-    tipoValidacion: $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoUncheckedCreateNestedManyWithoutTipoDocumentoInput;
 };
 export type TipoDocumentoCreateOrConnectWithoutDocumentosInput = {
     where: Prisma.TipoDocumentoWhereUniqueInput;
@@ -292,28 +208,19 @@ export type TipoDocumentoUpdateToOneWithWhereWithoutDocumentosInput = {
 };
 export type TipoDocumentoUpdateWithoutDocumentosInput = {
     nombre?: Prisma.StringFieldUpdateOperationsInput | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFieldUpdateOperationsInput | $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoUpdateManyWithoutTipoDocumentoNestedInput;
 };
 export type TipoDocumentoUncheckedUpdateWithoutDocumentosInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     nombre?: Prisma.StringFieldUpdateOperationsInput | string;
-    tipoValidacion?: Prisma.EnumTipoValidacionDocumentoFieldUpdateOperationsInput | $Enums.TipoValidacionDocumento;
-    requisitos?: Prisma.RequisitoPorPuestoUncheckedUpdateManyWithoutTipoDocumentoNestedInput;
 };
 export type TipoDocumentoCountOutputType = {
-    requisitos: number;
     documentos: number;
 };
 export type TipoDocumentoCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    requisitos?: boolean | TipoDocumentoCountOutputTypeCountRequisitosArgs;
     documentos?: boolean | TipoDocumentoCountOutputTypeCountDocumentosArgs;
 };
 export type TipoDocumentoCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.TipoDocumentoCountOutputTypeSelect<ExtArgs> | null;
-};
-export type TipoDocumentoCountOutputTypeCountRequisitosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.RequisitoPorPuestoWhereInput;
 };
 export type TipoDocumentoCountOutputTypeCountDocumentosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.DocumentoPersonaWhereInput;
@@ -321,29 +228,23 @@ export type TipoDocumentoCountOutputTypeCountDocumentosArgs<ExtArgs extends runt
 export type TipoDocumentoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     nombre?: boolean;
-    tipoValidacion?: boolean;
-    requisitos?: boolean | Prisma.TipoDocumento$requisitosArgs<ExtArgs>;
     documentos?: boolean | Prisma.TipoDocumento$documentosArgs<ExtArgs>;
     _count?: boolean | Prisma.TipoDocumentoCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["tipoDocumento"]>;
 export type TipoDocumentoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     nombre?: boolean;
-    tipoValidacion?: boolean;
 }, ExtArgs["result"]["tipoDocumento"]>;
 export type TipoDocumentoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     nombre?: boolean;
-    tipoValidacion?: boolean;
 }, ExtArgs["result"]["tipoDocumento"]>;
 export type TipoDocumentoSelectScalar = {
     id?: boolean;
     nombre?: boolean;
-    tipoValidacion?: boolean;
 };
-export type TipoDocumentoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nombre" | "tipoValidacion", ExtArgs["result"]["tipoDocumento"]>;
+export type TipoDocumentoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nombre", ExtArgs["result"]["tipoDocumento"]>;
 export type TipoDocumentoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    requisitos?: boolean | Prisma.TipoDocumento$requisitosArgs<ExtArgs>;
     documentos?: boolean | Prisma.TipoDocumento$documentosArgs<ExtArgs>;
     _count?: boolean | Prisma.TipoDocumentoCountOutputTypeDefaultArgs<ExtArgs>;
 };
@@ -352,13 +253,11 @@ export type TipoDocumentoIncludeUpdateManyAndReturn<ExtArgs extends runtime.Type
 export type $TipoDocumentoPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "TipoDocumento";
     objects: {
-        requisitos: Prisma.$RequisitoPorPuestoPayload<ExtArgs>[];
         documentos: Prisma.$DocumentoPersonaPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: number;
         nombre: string;
-        tipoValidacion: $Enums.TipoValidacionDocumento;
     }, ExtArgs["result"]["tipoDocumento"]>;
     composites: {};
 };
@@ -411,7 +310,6 @@ export interface TipoDocumentoDelegate<ExtArgs extends runtime.Types.Extensions.
 }
 export interface Prisma__TipoDocumentoClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
-    requisitos<T extends Prisma.TipoDocumento$requisitosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TipoDocumento$requisitosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RequisitoPorPuestoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     documentos<T extends Prisma.TipoDocumento$documentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TipoDocumento$documentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentoPersonaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
     catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): runtime.Types.Utils.JsPromise<T | TResult>;
@@ -420,7 +318,6 @@ export interface Prisma__TipoDocumentoClient<T, Null = never, ExtArgs extends ru
 export interface TipoDocumentoFieldRefs {
     readonly id: Prisma.FieldRef<"TipoDocumento", 'Int'>;
     readonly nombre: Prisma.FieldRef<"TipoDocumento", 'String'>;
-    readonly tipoValidacion: Prisma.FieldRef<"TipoDocumento", 'TipoValidacionDocumento'>;
 }
 export type TipoDocumentoFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.TipoDocumentoSelect<ExtArgs> | null;
@@ -519,17 +416,6 @@ export type TipoDocumentoDeleteArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type TipoDocumentoDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.TipoDocumentoWhereInput;
     limit?: number;
-};
-export type TipoDocumento$requisitosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    select?: Prisma.RequisitoPorPuestoSelect<ExtArgs> | null;
-    omit?: Prisma.RequisitoPorPuestoOmit<ExtArgs> | null;
-    include?: Prisma.RequisitoPorPuestoInclude<ExtArgs> | null;
-    where?: Prisma.RequisitoPorPuestoWhereInput;
-    orderBy?: Prisma.RequisitoPorPuestoOrderByWithRelationInput | Prisma.RequisitoPorPuestoOrderByWithRelationInput[];
-    cursor?: Prisma.RequisitoPorPuestoWhereUniqueInput;
-    take?: number;
-    skip?: number;
-    distinct?: Prisma.RequisitoPorPuestoScalarFieldEnum | Prisma.RequisitoPorPuestoScalarFieldEnum[];
 };
 export type TipoDocumento$documentosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.DocumentoPersonaSelect<ExtArgs> | null;

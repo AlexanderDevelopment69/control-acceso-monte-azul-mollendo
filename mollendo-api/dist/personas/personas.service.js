@@ -7,36 +7,37 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+var PersonasService_1;
+import { existsSync, unlinkSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
-import { esDocumentoVigente, evaluarIngreso, tiposDocumentoVigentes, ultimasVersiones, } from '../eventos-acceso/validacion-acceso.engine.js';
+import { documentosActuales, esDocumentoVigente, evaluarIngreso, ultimasVersiones, } from '../eventos-acceso/validacion-acceso.engine.js';
 const EMPRESA_SELECT = { select: { id: true, razonSocial: true } };
-const PUESTO_CON_REQUISITOS = { include: { requisitos: { include: { tipoDocumento: true } } } };
-function evaluarCumplimiento(persona, documentos) {
-    const documentosRequeridos = (persona.puesto?.requisitos ?? [])
-        .filter((r) => r.obligatorio)
-        .map((r) => ({ tipoDocumentoId: r.tipoDocumentoId, nombre: r.tipoDocumento.nombre }));
+function evaluarCumplimiento(estado, documentos) {
     const resultado = evaluarIngreso({
-        personaActiva: persona.estado === 'activo',
-        tienePuesto: persona.puestoId !== null,
+        personaActiva: estado === 'activo',
         alcoholConforme: true,
-        documentosRequeridos,
-        documentosVigentes: tiposDocumentoVigentes(documentos, new Date()),
+        documentos: documentosActuales(documentos, new Date()),
     });
     return {
         habilitado: resultado.autorizado,
         dadoDeBaja: resultado.denegadoPorBaja,
-        sinPuesto: resultado.denegadoSinPuesto,
-        documentosFaltantes: resultado.documentosFaltantes,
+        sinDocumentos: resultado.denegadoSinDocumentos,
+        documentosVencidos: resultado.documentosVencidos,
     };
 }
-let PersonasService = class PersonasService {
+let PersonasService = PersonasService_1 = class PersonasService {
     prisma;
     auditoriaService;
-    constructor(prisma, auditoriaService) {
+    eventEmitter;
+    logger = new Logger(PersonasService_1.name);
+    constructor(prisma, auditoriaService, eventEmitter) {
         this.prisma = prisma;
         this.auditoriaService = auditoriaService;
+        this.eventEmitter = eventEmitter;
     }
     async assertEmpresaExiste(empresaId) {
         const empresa = await this.prisma.empresa.findUnique({ where: { id: empresaId } });
@@ -70,18 +71,24 @@ let PersonasService = class PersonasService {
     }
     async findAll(query) {
         const personas = await this.prisma.persona.findMany({
-            where: { empresaId: query.empresaId, puestoId: query.puestoId, estado: query.estado },
+            where: { empresaId: query.empresaId, estado: query.estado },
             include: {
                 empresa: EMPRESA_SELECT,
-                puesto: PUESTO_CON_REQUISITOS,
-                documentos: { select: { id: true, tipoDocumentoId: true, version: true, fechaVencimiento: true } },
+                documentos: {
+                    select: {
+                        id: true,
+                        tipoDocumentoId: true,
+                        version: true,
+                        fechaVencimiento: true,
+                        tipoDocumento: { select: { nombre: true } },
+                    },
+                },
             },
             orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
         });
-        return personas.map(({ documentos, puesto, ...persona }) => ({
+        return personas.map(({ documentos, ...persona }) => ({
             ...persona,
-            puesto: puesto && { id: puesto.id, nombre: puesto.nombre, caso: puesto.caso },
-            cumplimiento: evaluarCumplimiento({ ...persona, puesto }, documentos),
+            cumplimiento: evaluarCumplimiento(persona.estado, documentos),
         }));
     }
     async findOne(id) {
@@ -89,7 +96,6 @@ let PersonasService = class PersonasService {
             where: { id },
             include: {
                 empresa: EMPRESA_SELECT,
-                puesto: PUESTO_CON_REQUISITOS,
                 documentos: { include: { tipoDocumento: true }, orderBy: [{ tipoDocumentoId: 'asc' }, { version: 'desc' }] },
             },
         });
@@ -97,30 +103,21 @@ let PersonasService = class PersonasService {
             throw new NotFoundException('Persona no encontrada');
         }
         const hoy = new Date();
-        const ultimas = ultimasVersiones(persona.documentos);
-        const requisitos = (persona.puesto?.requisitos ?? [])
-            .map((r) => {
-            const documento = ultimas.get(r.tipoDocumentoId) ?? null;
-            return {
-                tipoDocumentoId: r.tipoDocumentoId,
-                nombre: r.tipoDocumento.nombre,
-                obligatorio: r.obligatorio,
-                documento: documento && {
-                    id: documento.id,
-                    version: documento.version,
-                    fechaVencimiento: documento.fechaVencimiento,
-                    creadoEn: documento.creadoEn,
-                },
-                vigente: documento ? esDocumentoVigente(documento.fechaVencimiento, hoy) : false,
-            };
-        })
+        const documentosVigentes = [...ultimasVersiones(persona.documentos).values()]
+            .map((doc) => ({
+            id: doc.id,
+            tipoDocumentoId: doc.tipoDocumentoId,
+            nombre: doc.tipoDocumento.nombre,
+            version: doc.version,
+            fechaVencimiento: doc.fechaVencimiento,
+            creadoEn: doc.creadoEn,
+            vigente: esDocumentoVigente(doc.fechaVencimiento, hoy),
+        }))
             .sort((a, b) => a.nombre.localeCompare(b.nombre));
-        const { puesto, ...resto } = persona;
         return {
-            ...resto,
-            puesto: puesto && { id: puesto.id, nombre: puesto.nombre, caso: puesto.caso },
-            cumplimiento: evaluarCumplimiento(persona, persona.documentos),
-            requisitos,
+            ...persona,
+            cumplimiento: evaluarCumplimiento(persona.estado, persona.documentos),
+            documentosActuales: documentosVigentes,
         };
     }
     async findPersona(id) {
@@ -158,11 +155,44 @@ let PersonasService = class PersonasService {
         });
         return actualizada;
     }
+    async guardarFoto(id, rutaArchivo, user) {
+        const persona = await this.findPersona(id);
+        const actualizada = await this.prisma.persona.update({ where: { id }, data: { fotoUrl: rutaArchivo } });
+        if (persona.fotoUrl && persona.fotoUrl !== rutaArchivo && existsSync(persona.fotoUrl)) {
+            try {
+                unlinkSync(persona.fotoUrl);
+            }
+            catch (error) {
+                this.logger.warn(`No se pudo borrar la foto anterior ${persona.fotoUrl}: ${String(error)}`);
+            }
+        }
+        await this.auditoriaService.registrar({
+            usuarioId: user.id,
+            tablaAfectada: 'persona',
+            registroId: id,
+            accion: 'modificar',
+        });
+        this.eventEmitter.emit('persona.foto-actualizada', {
+            personaId: id,
+            tipoDocumentoIdentidad: actualizada.tipoDocumentoIdentidad,
+            numeroDocumento: actualizada.numeroDocumento,
+            rutaFoto: rutaArchivo,
+        });
+        return actualizada;
+    }
+    async rutaFoto(id) {
+        const persona = await this.findPersona(id);
+        if (!persona.fotoUrl || !existsSync(persona.fotoUrl)) {
+            throw new NotFoundException('El trabajador no tiene foto');
+        }
+        return resolve(persona.fotoUrl);
+    }
 };
-PersonasService = __decorate([
+PersonasService = PersonasService_1 = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
-        AuditoriaService])
+        AuditoriaService,
+        EventEmitter2])
 ], PersonasService);
 export { PersonasService };
 //# sourceMappingURL=personas.service.js.map

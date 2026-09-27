@@ -12,46 +12,41 @@ export type AggregatePersona = {
 export type PersonaAvgAggregateOutputType = {
     id: number | null;
     empresaId: number | null;
-    puestoId: number | null;
 };
 export type PersonaSumAggregateOutputType = {
     id: number | null;
     empresaId: number | null;
-    puestoId: number | null;
 };
 export type PersonaMinAggregateOutputType = {
     id: number | null;
     empresaId: number | null;
-    puestoId: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad | null;
     numeroDocumento: string | null;
     nombres: string | null;
     apellidos: string | null;
-    area: string | null;
+    fotoUrl: string | null;
     estado: $Enums.EstadoPersona | null;
     creadoEn: Date | null;
 };
 export type PersonaMaxAggregateOutputType = {
     id: number | null;
     empresaId: number | null;
-    puestoId: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad | null;
     numeroDocumento: string | null;
     nombres: string | null;
     apellidos: string | null;
-    area: string | null;
+    fotoUrl: string | null;
     estado: $Enums.EstadoPersona | null;
     creadoEn: Date | null;
 };
 export type PersonaCountAggregateOutputType = {
     id: number;
     empresaId: number;
-    puestoId: number;
     tipoDocumentoIdentidad: number;
     numeroDocumento: number;
     nombres: number;
     apellidos: number;
-    area: number;
+    fotoUrl: number;
     estado: number;
     creadoEn: number;
     _all: number;
@@ -59,46 +54,41 @@ export type PersonaCountAggregateOutputType = {
 export type PersonaAvgAggregateInputType = {
     id?: true;
     empresaId?: true;
-    puestoId?: true;
 };
 export type PersonaSumAggregateInputType = {
     id?: true;
     empresaId?: true;
-    puestoId?: true;
 };
 export type PersonaMinAggregateInputType = {
     id?: true;
     empresaId?: true;
-    puestoId?: true;
     tipoDocumentoIdentidad?: true;
     numeroDocumento?: true;
     nombres?: true;
     apellidos?: true;
-    area?: true;
+    fotoUrl?: true;
     estado?: true;
     creadoEn?: true;
 };
 export type PersonaMaxAggregateInputType = {
     id?: true;
     empresaId?: true;
-    puestoId?: true;
     tipoDocumentoIdentidad?: true;
     numeroDocumento?: true;
     nombres?: true;
     apellidos?: true;
-    area?: true;
+    fotoUrl?: true;
     estado?: true;
     creadoEn?: true;
 };
 export type PersonaCountAggregateInputType = {
     id?: true;
     empresaId?: true;
-    puestoId?: true;
     tipoDocumentoIdentidad?: true;
     numeroDocumento?: true;
     nombres?: true;
     apellidos?: true;
-    area?: true;
+    fotoUrl?: true;
     estado?: true;
     creadoEn?: true;
     _all?: true;
@@ -134,12 +124,11 @@ export type PersonaGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 export type PersonaGroupByOutputType = {
     id: number;
     empresaId: number;
-    puestoId: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area: string | null;
+    fotoUrl: string | null;
     estado: $Enums.EstadoPersona;
     creadoEn: Date;
     _count: PersonaCountAggregateOutputType | null;
@@ -157,35 +146,29 @@ export type PersonaWhereInput = {
     NOT?: Prisma.PersonaWhereInput | Prisma.PersonaWhereInput[];
     id?: Prisma.IntFilter<"Persona"> | number;
     empresaId?: Prisma.IntFilter<"Persona"> | number;
-    puestoId?: Prisma.IntNullableFilter<"Persona"> | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFilter<"Persona"> | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFilter<"Persona"> | string;
     nombres?: Prisma.StringFilter<"Persona"> | string;
     apellidos?: Prisma.StringFilter<"Persona"> | string;
-    area?: Prisma.StringNullableFilter<"Persona"> | string | null;
+    fotoUrl?: Prisma.StringNullableFilter<"Persona"> | string | null;
     estado?: Prisma.EnumEstadoPersonaFilter<"Persona"> | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFilter<"Persona"> | Date | string;
     empresa?: Prisma.XOR<Prisma.EmpresaScalarRelationFilter, Prisma.EmpresaWhereInput>;
-    puesto?: Prisma.XOR<Prisma.PuestoNullableScalarRelationFilter, Prisma.PuestoWhereInput> | null;
     documentos?: Prisma.DocumentoPersonaListRelationFilter;
-    solicitudesVisita?: Prisma.SolicitudVisitaListRelationFilter;
     eventosAcceso?: Prisma.EventoAccesoListRelationFilter;
 };
 export type PersonaOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
     empresaId?: Prisma.SortOrder;
-    puestoId?: Prisma.SortOrderInput | Prisma.SortOrder;
     tipoDocumentoIdentidad?: Prisma.SortOrder;
     numeroDocumento?: Prisma.SortOrder;
     nombres?: Prisma.SortOrder;
     apellidos?: Prisma.SortOrder;
-    area?: Prisma.SortOrderInput | Prisma.SortOrder;
+    fotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
     empresa?: Prisma.EmpresaOrderByWithRelationInput;
-    puesto?: Prisma.PuestoOrderByWithRelationInput;
     documentos?: Prisma.DocumentoPersonaOrderByRelationAggregateInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaOrderByRelationAggregateInput;
     eventosAcceso?: Prisma.EventoAccesoOrderByRelationAggregateInput;
 };
 export type PersonaWhereUniqueInput = Prisma.AtLeast<{
@@ -195,29 +178,25 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
     OR?: Prisma.PersonaWhereInput[];
     NOT?: Prisma.PersonaWhereInput | Prisma.PersonaWhereInput[];
     empresaId?: Prisma.IntFilter<"Persona"> | number;
-    puestoId?: Prisma.IntNullableFilter<"Persona"> | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFilter<"Persona"> | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFilter<"Persona"> | string;
     nombres?: Prisma.StringFilter<"Persona"> | string;
     apellidos?: Prisma.StringFilter<"Persona"> | string;
-    area?: Prisma.StringNullableFilter<"Persona"> | string | null;
+    fotoUrl?: Prisma.StringNullableFilter<"Persona"> | string | null;
     estado?: Prisma.EnumEstadoPersonaFilter<"Persona"> | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFilter<"Persona"> | Date | string;
     empresa?: Prisma.XOR<Prisma.EmpresaScalarRelationFilter, Prisma.EmpresaWhereInput>;
-    puesto?: Prisma.XOR<Prisma.PuestoNullableScalarRelationFilter, Prisma.PuestoWhereInput> | null;
     documentos?: Prisma.DocumentoPersonaListRelationFilter;
-    solicitudesVisita?: Prisma.SolicitudVisitaListRelationFilter;
     eventosAcceso?: Prisma.EventoAccesoListRelationFilter;
 }, "id" | "tipoDocumentoIdentidad_numeroDocumento">;
 export type PersonaOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
     empresaId?: Prisma.SortOrder;
-    puestoId?: Prisma.SortOrderInput | Prisma.SortOrder;
     tipoDocumentoIdentidad?: Prisma.SortOrder;
     numeroDocumento?: Prisma.SortOrder;
     nombres?: Prisma.SortOrder;
     apellidos?: Prisma.SortOrder;
-    area?: Prisma.SortOrderInput | Prisma.SortOrder;
+    fotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
     _count?: Prisma.PersonaCountOrderByAggregateInput;
@@ -232,12 +211,11 @@ export type PersonaScalarWhereWithAggregatesInput = {
     NOT?: Prisma.PersonaScalarWhereWithAggregatesInput | Prisma.PersonaScalarWhereWithAggregatesInput[];
     id?: Prisma.IntWithAggregatesFilter<"Persona"> | number;
     empresaId?: Prisma.IntWithAggregatesFilter<"Persona"> | number;
-    puestoId?: Prisma.IntNullableWithAggregatesFilter<"Persona"> | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadWithAggregatesFilter<"Persona"> | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringWithAggregatesFilter<"Persona"> | string;
     nombres?: Prisma.StringWithAggregatesFilter<"Persona"> | string;
     apellidos?: Prisma.StringWithAggregatesFilter<"Persona"> | string;
-    area?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null;
+    fotoUrl?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null;
     estado?: Prisma.EnumEstadoPersonaWithAggregatesFilter<"Persona"> | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeWithAggregatesFilter<"Persona"> | Date | string;
 };
@@ -246,28 +224,24 @@ export type PersonaCreateInput = {
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
     empresa: Prisma.EmpresaCreateNestedOneWithoutPersonasInput;
-    puesto?: Prisma.PuestoCreateNestedOneWithoutPersonasInput;
     documentos?: Prisma.DocumentoPersonaCreateNestedManyWithoutPersonaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaCreateNestedManyWithoutPersonaInput;
     eventosAcceso?: Prisma.EventoAccesoCreateNestedManyWithoutPersonaInput;
 };
 export type PersonaUncheckedCreateInput = {
     id?: number;
     empresaId: number;
-    puestoId?: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
     documentos?: Prisma.DocumentoPersonaUncheckedCreateNestedManyWithoutPersonaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedCreateNestedManyWithoutPersonaInput;
     eventosAcceso?: Prisma.EventoAccesoUncheckedCreateNestedManyWithoutPersonaInput;
 };
 export type PersonaUpdateInput = {
@@ -275,39 +249,34 @@ export type PersonaUpdateInput = {
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     empresa?: Prisma.EmpresaUpdateOneRequiredWithoutPersonasNestedInput;
-    puesto?: Prisma.PuestoUpdateOneWithoutPersonasNestedInput;
     documentos?: Prisma.DocumentoPersonaUpdateManyWithoutPersonaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUpdateManyWithoutPersonaNestedInput;
     eventosAcceso?: Prisma.EventoAccesoUpdateManyWithoutPersonaNestedInput;
 };
 export type PersonaUncheckedUpdateInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
-    puestoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     documentos?: Prisma.DocumentoPersonaUncheckedUpdateManyWithoutPersonaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedUpdateManyWithoutPersonaNestedInput;
     eventosAcceso?: Prisma.EventoAccesoUncheckedUpdateManyWithoutPersonaNestedInput;
 };
 export type PersonaCreateManyInput = {
     id?: number;
     empresaId: number;
-    puestoId?: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
 };
@@ -316,19 +285,18 @@ export type PersonaUpdateManyMutationInput = {
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type PersonaUncheckedUpdateManyInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
-    puestoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -347,48 +315,43 @@ export type PersonaTipoDocumentoIdentidadNumeroDocumentoCompoundUniqueInput = {
 export type PersonaCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     empresaId?: Prisma.SortOrder;
-    puestoId?: Prisma.SortOrder;
     tipoDocumentoIdentidad?: Prisma.SortOrder;
     numeroDocumento?: Prisma.SortOrder;
     nombres?: Prisma.SortOrder;
     apellidos?: Prisma.SortOrder;
-    area?: Prisma.SortOrder;
+    fotoUrl?: Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
 export type PersonaAvgOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     empresaId?: Prisma.SortOrder;
-    puestoId?: Prisma.SortOrder;
 };
 export type PersonaMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     empresaId?: Prisma.SortOrder;
-    puestoId?: Prisma.SortOrder;
     tipoDocumentoIdentidad?: Prisma.SortOrder;
     numeroDocumento?: Prisma.SortOrder;
     nombres?: Prisma.SortOrder;
     apellidos?: Prisma.SortOrder;
-    area?: Prisma.SortOrder;
+    fotoUrl?: Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
 export type PersonaMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     empresaId?: Prisma.SortOrder;
-    puestoId?: Prisma.SortOrder;
     tipoDocumentoIdentidad?: Prisma.SortOrder;
     numeroDocumento?: Prisma.SortOrder;
     nombres?: Prisma.SortOrder;
     apellidos?: Prisma.SortOrder;
-    area?: Prisma.SortOrder;
+    fotoUrl?: Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     creadoEn?: Prisma.SortOrder;
 };
 export type PersonaSumOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     empresaId?: Prisma.SortOrder;
-    puestoId?: Prisma.SortOrder;
 };
 export type PersonaScalarRelationFilter = {
     is?: Prisma.PersonaWhereInput;
@@ -432,56 +395,11 @@ export type PersonaUncheckedUpdateManyWithoutEmpresaNestedInput = {
     updateMany?: Prisma.PersonaUpdateManyWithWhereWithoutEmpresaInput | Prisma.PersonaUpdateManyWithWhereWithoutEmpresaInput[];
     deleteMany?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[];
 };
-export type PersonaCreateNestedManyWithoutPuestoInput = {
-    create?: Prisma.XOR<Prisma.PersonaCreateWithoutPuestoInput, Prisma.PersonaUncheckedCreateWithoutPuestoInput> | Prisma.PersonaCreateWithoutPuestoInput[] | Prisma.PersonaUncheckedCreateWithoutPuestoInput[];
-    connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutPuestoInput | Prisma.PersonaCreateOrConnectWithoutPuestoInput[];
-    createMany?: Prisma.PersonaCreateManyPuestoInputEnvelope;
-    connect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-};
-export type PersonaUncheckedCreateNestedManyWithoutPuestoInput = {
-    create?: Prisma.XOR<Prisma.PersonaCreateWithoutPuestoInput, Prisma.PersonaUncheckedCreateWithoutPuestoInput> | Prisma.PersonaCreateWithoutPuestoInput[] | Prisma.PersonaUncheckedCreateWithoutPuestoInput[];
-    connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutPuestoInput | Prisma.PersonaCreateOrConnectWithoutPuestoInput[];
-    createMany?: Prisma.PersonaCreateManyPuestoInputEnvelope;
-    connect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-};
-export type PersonaUpdateManyWithoutPuestoNestedInput = {
-    create?: Prisma.XOR<Prisma.PersonaCreateWithoutPuestoInput, Prisma.PersonaUncheckedCreateWithoutPuestoInput> | Prisma.PersonaCreateWithoutPuestoInput[] | Prisma.PersonaUncheckedCreateWithoutPuestoInput[];
-    connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutPuestoInput | Prisma.PersonaCreateOrConnectWithoutPuestoInput[];
-    upsert?: Prisma.PersonaUpsertWithWhereUniqueWithoutPuestoInput | Prisma.PersonaUpsertWithWhereUniqueWithoutPuestoInput[];
-    createMany?: Prisma.PersonaCreateManyPuestoInputEnvelope;
-    set?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-    disconnect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-    delete?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-    connect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-    update?: Prisma.PersonaUpdateWithWhereUniqueWithoutPuestoInput | Prisma.PersonaUpdateWithWhereUniqueWithoutPuestoInput[];
-    updateMany?: Prisma.PersonaUpdateManyWithWhereWithoutPuestoInput | Prisma.PersonaUpdateManyWithWhereWithoutPuestoInput[];
-    deleteMany?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[];
-};
-export type PersonaUncheckedUpdateManyWithoutPuestoNestedInput = {
-    create?: Prisma.XOR<Prisma.PersonaCreateWithoutPuestoInput, Prisma.PersonaUncheckedCreateWithoutPuestoInput> | Prisma.PersonaCreateWithoutPuestoInput[] | Prisma.PersonaUncheckedCreateWithoutPuestoInput[];
-    connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutPuestoInput | Prisma.PersonaCreateOrConnectWithoutPuestoInput[];
-    upsert?: Prisma.PersonaUpsertWithWhereUniqueWithoutPuestoInput | Prisma.PersonaUpsertWithWhereUniqueWithoutPuestoInput[];
-    createMany?: Prisma.PersonaCreateManyPuestoInputEnvelope;
-    set?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-    disconnect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-    delete?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-    connect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[];
-    update?: Prisma.PersonaUpdateWithWhereUniqueWithoutPuestoInput | Prisma.PersonaUpdateWithWhereUniqueWithoutPuestoInput[];
-    updateMany?: Prisma.PersonaUpdateManyWithWhereWithoutPuestoInput | Prisma.PersonaUpdateManyWithWhereWithoutPuestoInput[];
-    deleteMany?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[];
-};
 export type EnumTipoDocumentoIdentidadFieldUpdateOperationsInput = {
     set?: $Enums.TipoDocumentoIdentidad;
 };
 export type EnumEstadoPersonaFieldUpdateOperationsInput = {
     set?: $Enums.EstadoPersona;
-};
-export type NullableIntFieldUpdateOperationsInput = {
-    set?: number | null;
-    increment?: number;
-    decrement?: number;
-    multiply?: number;
-    divide?: number;
 };
 export type PersonaCreateNestedOneWithoutDocumentosInput = {
     create?: Prisma.XOR<Prisma.PersonaCreateWithoutDocumentosInput, Prisma.PersonaUncheckedCreateWithoutDocumentosInput>;
@@ -494,18 +412,6 @@ export type PersonaUpdateOneRequiredWithoutDocumentosNestedInput = {
     upsert?: Prisma.PersonaUpsertWithoutDocumentosInput;
     connect?: Prisma.PersonaWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.PersonaUpdateToOneWithWhereWithoutDocumentosInput, Prisma.PersonaUpdateWithoutDocumentosInput>, Prisma.PersonaUncheckedUpdateWithoutDocumentosInput>;
-};
-export type PersonaCreateNestedOneWithoutSolicitudesVisitaInput = {
-    create?: Prisma.XOR<Prisma.PersonaCreateWithoutSolicitudesVisitaInput, Prisma.PersonaUncheckedCreateWithoutSolicitudesVisitaInput>;
-    connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutSolicitudesVisitaInput;
-    connect?: Prisma.PersonaWhereUniqueInput;
-};
-export type PersonaUpdateOneRequiredWithoutSolicitudesVisitaNestedInput = {
-    create?: Prisma.XOR<Prisma.PersonaCreateWithoutSolicitudesVisitaInput, Prisma.PersonaUncheckedCreateWithoutSolicitudesVisitaInput>;
-    connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutSolicitudesVisitaInput;
-    upsert?: Prisma.PersonaUpsertWithoutSolicitudesVisitaInput;
-    connect?: Prisma.PersonaWhereUniqueInput;
-    update?: Prisma.XOR<Prisma.XOR<Prisma.PersonaUpdateToOneWithWhereWithoutSolicitudesVisitaInput, Prisma.PersonaUpdateWithoutSolicitudesVisitaInput>, Prisma.PersonaUncheckedUpdateWithoutSolicitudesVisitaInput>;
 };
 export type PersonaCreateNestedOneWithoutEventosAccesoInput = {
     create?: Prisma.XOR<Prisma.PersonaCreateWithoutEventosAccesoInput, Prisma.PersonaUncheckedCreateWithoutEventosAccesoInput>;
@@ -524,26 +430,22 @@ export type PersonaCreateWithoutEmpresaInput = {
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
-    puesto?: Prisma.PuestoCreateNestedOneWithoutPersonasInput;
     documentos?: Prisma.DocumentoPersonaCreateNestedManyWithoutPersonaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaCreateNestedManyWithoutPersonaInput;
     eventosAcceso?: Prisma.EventoAccesoCreateNestedManyWithoutPersonaInput;
 };
 export type PersonaUncheckedCreateWithoutEmpresaInput = {
     id?: number;
-    puestoId?: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
     documentos?: Prisma.DocumentoPersonaUncheckedCreateNestedManyWithoutPersonaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedCreateNestedManyWithoutPersonaInput;
     eventosAcceso?: Prisma.EventoAccesoUncheckedCreateNestedManyWithoutPersonaInput;
 };
 export type PersonaCreateOrConnectWithoutEmpresaInput = {
@@ -573,88 +475,35 @@ export type PersonaScalarWhereInput = {
     NOT?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[];
     id?: Prisma.IntFilter<"Persona"> | number;
     empresaId?: Prisma.IntFilter<"Persona"> | number;
-    puestoId?: Prisma.IntNullableFilter<"Persona"> | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFilter<"Persona"> | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFilter<"Persona"> | string;
     nombres?: Prisma.StringFilter<"Persona"> | string;
     apellidos?: Prisma.StringFilter<"Persona"> | string;
-    area?: Prisma.StringNullableFilter<"Persona"> | string | null;
+    fotoUrl?: Prisma.StringNullableFilter<"Persona"> | string | null;
     estado?: Prisma.EnumEstadoPersonaFilter<"Persona"> | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFilter<"Persona"> | Date | string;
-};
-export type PersonaCreateWithoutPuestoInput = {
-    tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
-    numeroDocumento: string;
-    nombres: string;
-    apellidos: string;
-    area?: string | null;
-    estado?: $Enums.EstadoPersona;
-    creadoEn?: Date | string;
-    empresa: Prisma.EmpresaCreateNestedOneWithoutPersonasInput;
-    documentos?: Prisma.DocumentoPersonaCreateNestedManyWithoutPersonaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaCreateNestedManyWithoutPersonaInput;
-    eventosAcceso?: Prisma.EventoAccesoCreateNestedManyWithoutPersonaInput;
-};
-export type PersonaUncheckedCreateWithoutPuestoInput = {
-    id?: number;
-    empresaId: number;
-    tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
-    numeroDocumento: string;
-    nombres: string;
-    apellidos: string;
-    area?: string | null;
-    estado?: $Enums.EstadoPersona;
-    creadoEn?: Date | string;
-    documentos?: Prisma.DocumentoPersonaUncheckedCreateNestedManyWithoutPersonaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedCreateNestedManyWithoutPersonaInput;
-    eventosAcceso?: Prisma.EventoAccesoUncheckedCreateNestedManyWithoutPersonaInput;
-};
-export type PersonaCreateOrConnectWithoutPuestoInput = {
-    where: Prisma.PersonaWhereUniqueInput;
-    create: Prisma.XOR<Prisma.PersonaCreateWithoutPuestoInput, Prisma.PersonaUncheckedCreateWithoutPuestoInput>;
-};
-export type PersonaCreateManyPuestoInputEnvelope = {
-    data: Prisma.PersonaCreateManyPuestoInput | Prisma.PersonaCreateManyPuestoInput[];
-    skipDuplicates?: boolean;
-};
-export type PersonaUpsertWithWhereUniqueWithoutPuestoInput = {
-    where: Prisma.PersonaWhereUniqueInput;
-    update: Prisma.XOR<Prisma.PersonaUpdateWithoutPuestoInput, Prisma.PersonaUncheckedUpdateWithoutPuestoInput>;
-    create: Prisma.XOR<Prisma.PersonaCreateWithoutPuestoInput, Prisma.PersonaUncheckedCreateWithoutPuestoInput>;
-};
-export type PersonaUpdateWithWhereUniqueWithoutPuestoInput = {
-    where: Prisma.PersonaWhereUniqueInput;
-    data: Prisma.XOR<Prisma.PersonaUpdateWithoutPuestoInput, Prisma.PersonaUncheckedUpdateWithoutPuestoInput>;
-};
-export type PersonaUpdateManyWithWhereWithoutPuestoInput = {
-    where: Prisma.PersonaScalarWhereInput;
-    data: Prisma.XOR<Prisma.PersonaUpdateManyMutationInput, Prisma.PersonaUncheckedUpdateManyWithoutPuestoInput>;
 };
 export type PersonaCreateWithoutDocumentosInput = {
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
     empresa: Prisma.EmpresaCreateNestedOneWithoutPersonasInput;
-    puesto?: Prisma.PuestoCreateNestedOneWithoutPersonasInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaCreateNestedManyWithoutPersonaInput;
     eventosAcceso?: Prisma.EventoAccesoCreateNestedManyWithoutPersonaInput;
 };
 export type PersonaUncheckedCreateWithoutDocumentosInput = {
     id?: number;
     empresaId: number;
-    puestoId?: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedCreateNestedManyWithoutPersonaInput;
     eventosAcceso?: Prisma.EventoAccesoUncheckedCreateNestedManyWithoutPersonaInput;
 };
 export type PersonaCreateOrConnectWithoutDocumentosInput = {
@@ -675,93 +524,22 @@ export type PersonaUpdateWithoutDocumentosInput = {
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     empresa?: Prisma.EmpresaUpdateOneRequiredWithoutPersonasNestedInput;
-    puesto?: Prisma.PuestoUpdateOneWithoutPersonasNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUpdateManyWithoutPersonaNestedInput;
     eventosAcceso?: Prisma.EventoAccesoUpdateManyWithoutPersonaNestedInput;
 };
 export type PersonaUncheckedUpdateWithoutDocumentosInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
-    puestoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedUpdateManyWithoutPersonaNestedInput;
-    eventosAcceso?: Prisma.EventoAccesoUncheckedUpdateManyWithoutPersonaNestedInput;
-};
-export type PersonaCreateWithoutSolicitudesVisitaInput = {
-    tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
-    numeroDocumento: string;
-    nombres: string;
-    apellidos: string;
-    area?: string | null;
-    estado?: $Enums.EstadoPersona;
-    creadoEn?: Date | string;
-    empresa: Prisma.EmpresaCreateNestedOneWithoutPersonasInput;
-    puesto?: Prisma.PuestoCreateNestedOneWithoutPersonasInput;
-    documentos?: Prisma.DocumentoPersonaCreateNestedManyWithoutPersonaInput;
-    eventosAcceso?: Prisma.EventoAccesoCreateNestedManyWithoutPersonaInput;
-};
-export type PersonaUncheckedCreateWithoutSolicitudesVisitaInput = {
-    id?: number;
-    empresaId: number;
-    puestoId?: number | null;
-    tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
-    numeroDocumento: string;
-    nombres: string;
-    apellidos: string;
-    area?: string | null;
-    estado?: $Enums.EstadoPersona;
-    creadoEn?: Date | string;
-    documentos?: Prisma.DocumentoPersonaUncheckedCreateNestedManyWithoutPersonaInput;
-    eventosAcceso?: Prisma.EventoAccesoUncheckedCreateNestedManyWithoutPersonaInput;
-};
-export type PersonaCreateOrConnectWithoutSolicitudesVisitaInput = {
-    where: Prisma.PersonaWhereUniqueInput;
-    create: Prisma.XOR<Prisma.PersonaCreateWithoutSolicitudesVisitaInput, Prisma.PersonaUncheckedCreateWithoutSolicitudesVisitaInput>;
-};
-export type PersonaUpsertWithoutSolicitudesVisitaInput = {
-    update: Prisma.XOR<Prisma.PersonaUpdateWithoutSolicitudesVisitaInput, Prisma.PersonaUncheckedUpdateWithoutSolicitudesVisitaInput>;
-    create: Prisma.XOR<Prisma.PersonaCreateWithoutSolicitudesVisitaInput, Prisma.PersonaUncheckedCreateWithoutSolicitudesVisitaInput>;
-    where?: Prisma.PersonaWhereInput;
-};
-export type PersonaUpdateToOneWithWhereWithoutSolicitudesVisitaInput = {
-    where?: Prisma.PersonaWhereInput;
-    data: Prisma.XOR<Prisma.PersonaUpdateWithoutSolicitudesVisitaInput, Prisma.PersonaUncheckedUpdateWithoutSolicitudesVisitaInput>;
-};
-export type PersonaUpdateWithoutSolicitudesVisitaInput = {
-    tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
-    numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
-    nombres?: Prisma.StringFieldUpdateOperationsInput | string;
-    apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
-    creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    empresa?: Prisma.EmpresaUpdateOneRequiredWithoutPersonasNestedInput;
-    puesto?: Prisma.PuestoUpdateOneWithoutPersonasNestedInput;
-    documentos?: Prisma.DocumentoPersonaUpdateManyWithoutPersonaNestedInput;
-    eventosAcceso?: Prisma.EventoAccesoUpdateManyWithoutPersonaNestedInput;
-};
-export type PersonaUncheckedUpdateWithoutSolicitudesVisitaInput = {
-    id?: Prisma.IntFieldUpdateOperationsInput | number;
-    empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
-    puestoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
-    tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
-    numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
-    nombres?: Prisma.StringFieldUpdateOperationsInput | string;
-    apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
-    creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    documentos?: Prisma.DocumentoPersonaUncheckedUpdateManyWithoutPersonaNestedInput;
     eventosAcceso?: Prisma.EventoAccesoUncheckedUpdateManyWithoutPersonaNestedInput;
 };
 export type PersonaCreateWithoutEventosAccesoInput = {
@@ -769,27 +547,23 @@ export type PersonaCreateWithoutEventosAccesoInput = {
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
     empresa: Prisma.EmpresaCreateNestedOneWithoutPersonasInput;
-    puesto?: Prisma.PuestoCreateNestedOneWithoutPersonasInput;
     documentos?: Prisma.DocumentoPersonaCreateNestedManyWithoutPersonaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaCreateNestedManyWithoutPersonaInput;
 };
 export type PersonaUncheckedCreateWithoutEventosAccesoInput = {
     id?: number;
     empresaId: number;
-    puestoId?: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
     documentos?: Prisma.DocumentoPersonaUncheckedCreateNestedManyWithoutPersonaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedCreateNestedManyWithoutPersonaInput;
 };
 export type PersonaCreateOrConnectWithoutEventosAccesoInput = {
     where: Prisma.PersonaWhereUniqueInput;
@@ -809,36 +583,31 @@ export type PersonaUpdateWithoutEventosAccesoInput = {
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     empresa?: Prisma.EmpresaUpdateOneRequiredWithoutPersonasNestedInput;
-    puesto?: Prisma.PuestoUpdateOneWithoutPersonasNestedInput;
     documentos?: Prisma.DocumentoPersonaUpdateManyWithoutPersonaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUpdateManyWithoutPersonaNestedInput;
 };
 export type PersonaUncheckedUpdateWithoutEventosAccesoInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
     empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
-    puestoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     documentos?: Prisma.DocumentoPersonaUncheckedUpdateManyWithoutPersonaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedUpdateManyWithoutPersonaNestedInput;
 };
 export type PersonaCreateManyEmpresaInput = {
     id?: number;
-    puestoId?: number | null;
     tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    area?: string | null;
+    fotoUrl?: string | null;
     estado?: $Enums.EstadoPersona;
     creadoEn?: Date | string;
 };
@@ -847,96 +616,40 @@ export type PersonaUpdateWithoutEmpresaInput = {
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    puesto?: Prisma.PuestoUpdateOneWithoutPersonasNestedInput;
     documentos?: Prisma.DocumentoPersonaUpdateManyWithoutPersonaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUpdateManyWithoutPersonaNestedInput;
     eventosAcceso?: Prisma.EventoAccesoUpdateManyWithoutPersonaNestedInput;
 };
 export type PersonaUncheckedUpdateWithoutEmpresaInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
-    puestoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     documentos?: Prisma.DocumentoPersonaUncheckedUpdateManyWithoutPersonaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedUpdateManyWithoutPersonaNestedInput;
     eventosAcceso?: Prisma.EventoAccesoUncheckedUpdateManyWithoutPersonaNestedInput;
 };
 export type PersonaUncheckedUpdateManyWithoutEmpresaInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
-    puestoId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
     numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
     nombres?: Prisma.StringFieldUpdateOperationsInput | string;
     apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
-    creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-};
-export type PersonaCreateManyPuestoInput = {
-    id?: number;
-    empresaId: number;
-    tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
-    numeroDocumento: string;
-    nombres: string;
-    apellidos: string;
-    area?: string | null;
-    estado?: $Enums.EstadoPersona;
-    creadoEn?: Date | string;
-};
-export type PersonaUpdateWithoutPuestoInput = {
-    tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
-    numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
-    nombres?: Prisma.StringFieldUpdateOperationsInput | string;
-    apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
-    creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    empresa?: Prisma.EmpresaUpdateOneRequiredWithoutPersonasNestedInput;
-    documentos?: Prisma.DocumentoPersonaUpdateManyWithoutPersonaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUpdateManyWithoutPersonaNestedInput;
-    eventosAcceso?: Prisma.EventoAccesoUpdateManyWithoutPersonaNestedInput;
-};
-export type PersonaUncheckedUpdateWithoutPuestoInput = {
-    id?: Prisma.IntFieldUpdateOperationsInput | number;
-    empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
-    tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
-    numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
-    nombres?: Prisma.StringFieldUpdateOperationsInput | string;
-    apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
-    creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    documentos?: Prisma.DocumentoPersonaUncheckedUpdateManyWithoutPersonaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedUpdateManyWithoutPersonaNestedInput;
-    eventosAcceso?: Prisma.EventoAccesoUncheckedUpdateManyWithoutPersonaNestedInput;
-};
-export type PersonaUncheckedUpdateManyWithoutPuestoInput = {
-    id?: Prisma.IntFieldUpdateOperationsInput | number;
-    empresaId?: Prisma.IntFieldUpdateOperationsInput | number;
-    tipoDocumentoIdentidad?: Prisma.EnumTipoDocumentoIdentidadFieldUpdateOperationsInput | $Enums.TipoDocumentoIdentidad;
-    numeroDocumento?: Prisma.StringFieldUpdateOperationsInput | string;
-    nombres?: Prisma.StringFieldUpdateOperationsInput | string;
-    apellidos?: Prisma.StringFieldUpdateOperationsInput | string;
-    area?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    fotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     estado?: Prisma.EnumEstadoPersonaFieldUpdateOperationsInput | $Enums.EstadoPersona;
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type PersonaCountOutputType = {
     documentos: number;
-    solicitudesVisita: number;
     eventosAcceso: number;
 };
 export type PersonaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     documentos?: boolean | PersonaCountOutputTypeCountDocumentosArgs;
-    solicitudesVisita?: boolean | PersonaCountOutputTypeCountSolicitudesVisitaArgs;
     eventosAcceso?: boolean | PersonaCountOutputTypeCountEventosAccesoArgs;
 };
 export type PersonaCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -945,105 +658,87 @@ export type PersonaCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
 export type PersonaCountOutputTypeCountDocumentosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.DocumentoPersonaWhereInput;
 };
-export type PersonaCountOutputTypeCountSolicitudesVisitaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.SolicitudVisitaWhereInput;
-};
 export type PersonaCountOutputTypeCountEventosAccesoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.EventoAccesoWhereInput;
 };
 export type PersonaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     empresaId?: boolean;
-    puestoId?: boolean;
     tipoDocumentoIdentidad?: boolean;
     numeroDocumento?: boolean;
     nombres?: boolean;
     apellidos?: boolean;
-    area?: boolean;
+    fotoUrl?: boolean;
     estado?: boolean;
     creadoEn?: boolean;
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
-    puesto?: boolean | Prisma.Persona$puestoArgs<ExtArgs>;
     documentos?: boolean | Prisma.Persona$documentosArgs<ExtArgs>;
-    solicitudesVisita?: boolean | Prisma.Persona$solicitudesVisitaArgs<ExtArgs>;
     eventosAcceso?: boolean | Prisma.Persona$eventosAccesoArgs<ExtArgs>;
     _count?: boolean | Prisma.PersonaCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["persona"]>;
 export type PersonaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     empresaId?: boolean;
-    puestoId?: boolean;
     tipoDocumentoIdentidad?: boolean;
     numeroDocumento?: boolean;
     nombres?: boolean;
     apellidos?: boolean;
-    area?: boolean;
+    fotoUrl?: boolean;
     estado?: boolean;
     creadoEn?: boolean;
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
-    puesto?: boolean | Prisma.Persona$puestoArgs<ExtArgs>;
 }, ExtArgs["result"]["persona"]>;
 export type PersonaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     empresaId?: boolean;
-    puestoId?: boolean;
     tipoDocumentoIdentidad?: boolean;
     numeroDocumento?: boolean;
     nombres?: boolean;
     apellidos?: boolean;
-    area?: boolean;
+    fotoUrl?: boolean;
     estado?: boolean;
     creadoEn?: boolean;
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
-    puesto?: boolean | Prisma.Persona$puestoArgs<ExtArgs>;
 }, ExtArgs["result"]["persona"]>;
 export type PersonaSelectScalar = {
     id?: boolean;
     empresaId?: boolean;
-    puestoId?: boolean;
     tipoDocumentoIdentidad?: boolean;
     numeroDocumento?: boolean;
     nombres?: boolean;
     apellidos?: boolean;
-    area?: boolean;
+    fotoUrl?: boolean;
     estado?: boolean;
     creadoEn?: boolean;
 };
-export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "empresaId" | "puestoId" | "tipoDocumentoIdentidad" | "numeroDocumento" | "nombres" | "apellidos" | "area" | "estado" | "creadoEn", ExtArgs["result"]["persona"]>;
+export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "empresaId" | "tipoDocumentoIdentidad" | "numeroDocumento" | "nombres" | "apellidos" | "fotoUrl" | "estado" | "creadoEn", ExtArgs["result"]["persona"]>;
 export type PersonaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
-    puesto?: boolean | Prisma.Persona$puestoArgs<ExtArgs>;
     documentos?: boolean | Prisma.Persona$documentosArgs<ExtArgs>;
-    solicitudesVisita?: boolean | Prisma.Persona$solicitudesVisitaArgs<ExtArgs>;
     eventosAcceso?: boolean | Prisma.Persona$eventosAccesoArgs<ExtArgs>;
     _count?: boolean | Prisma.PersonaCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type PersonaIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
-    puesto?: boolean | Prisma.Persona$puestoArgs<ExtArgs>;
 };
 export type PersonaIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     empresa?: boolean | Prisma.EmpresaDefaultArgs<ExtArgs>;
-    puesto?: boolean | Prisma.Persona$puestoArgs<ExtArgs>;
 };
 export type $PersonaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "Persona";
     objects: {
         empresa: Prisma.$EmpresaPayload<ExtArgs>;
-        puesto: Prisma.$PuestoPayload<ExtArgs> | null;
         documentos: Prisma.$DocumentoPersonaPayload<ExtArgs>[];
-        solicitudesVisita: Prisma.$SolicitudVisitaPayload<ExtArgs>[];
         eventosAcceso: Prisma.$EventoAccesoPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: number;
         empresaId: number;
-        puestoId: number | null;
         tipoDocumentoIdentidad: $Enums.TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
         apellidos: string;
-        area: string | null;
+        fotoUrl: string | null;
         estado: $Enums.EstadoPersona;
         creadoEn: Date;
     }, ExtArgs["result"]["persona"]>;
@@ -1099,9 +794,7 @@ export interface PersonaDelegate<ExtArgs extends runtime.Types.Extensions.Intern
 export interface Prisma__PersonaClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
     empresa<T extends Prisma.EmpresaDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EmpresaDefaultArgs<ExtArgs>>): Prisma.Prisma__EmpresaClient<runtime.Types.Result.GetResult<Prisma.$EmpresaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
-    puesto<T extends Prisma.Persona$puestoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$puestoArgs<ExtArgs>>): Prisma.Prisma__PuestoClient<runtime.Types.Result.GetResult<Prisma.$PuestoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>;
     documentos<T extends Prisma.Persona$documentosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$documentosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentoPersonaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
-    solicitudesVisita<T extends Prisma.Persona$solicitudesVisitaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$solicitudesVisitaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SolicitudVisitaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     eventosAcceso<T extends Prisma.Persona$eventosAccesoArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$eventosAccesoArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventoAccesoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
     catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): runtime.Types.Utils.JsPromise<T | TResult>;
@@ -1110,12 +803,11 @@ export interface Prisma__PersonaClient<T, Null = never, ExtArgs extends runtime.
 export interface PersonaFieldRefs {
     readonly id: Prisma.FieldRef<"Persona", 'Int'>;
     readonly empresaId: Prisma.FieldRef<"Persona", 'Int'>;
-    readonly puestoId: Prisma.FieldRef<"Persona", 'Int'>;
     readonly tipoDocumentoIdentidad: Prisma.FieldRef<"Persona", 'TipoDocumentoIdentidad'>;
     readonly numeroDocumento: Prisma.FieldRef<"Persona", 'String'>;
     readonly nombres: Prisma.FieldRef<"Persona", 'String'>;
     readonly apellidos: Prisma.FieldRef<"Persona", 'String'>;
-    readonly area: Prisma.FieldRef<"Persona", 'String'>;
+    readonly fotoUrl: Prisma.FieldRef<"Persona", 'String'>;
     readonly estado: Prisma.FieldRef<"Persona", 'EstadoPersona'>;
     readonly creadoEn: Prisma.FieldRef<"Persona", 'DateTime'>;
 }
@@ -1219,12 +911,6 @@ export type PersonaDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
     where?: Prisma.PersonaWhereInput;
     limit?: number;
 };
-export type Persona$puestoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    select?: Prisma.PuestoSelect<ExtArgs> | null;
-    omit?: Prisma.PuestoOmit<ExtArgs> | null;
-    include?: Prisma.PuestoInclude<ExtArgs> | null;
-    where?: Prisma.PuestoWhereInput;
-};
 export type Persona$documentosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.DocumentoPersonaSelect<ExtArgs> | null;
     omit?: Prisma.DocumentoPersonaOmit<ExtArgs> | null;
@@ -1235,17 +921,6 @@ export type Persona$documentosArgs<ExtArgs extends runtime.Types.Extensions.Inte
     take?: number;
     skip?: number;
     distinct?: Prisma.DocumentoPersonaScalarFieldEnum | Prisma.DocumentoPersonaScalarFieldEnum[];
-};
-export type Persona$solicitudesVisitaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    select?: Prisma.SolicitudVisitaSelect<ExtArgs> | null;
-    omit?: Prisma.SolicitudVisitaOmit<ExtArgs> | null;
-    include?: Prisma.SolicitudVisitaInclude<ExtArgs> | null;
-    where?: Prisma.SolicitudVisitaWhereInput;
-    orderBy?: Prisma.SolicitudVisitaOrderByWithRelationInput | Prisma.SolicitudVisitaOrderByWithRelationInput[];
-    cursor?: Prisma.SolicitudVisitaWhereUniqueInput;
-    take?: number;
-    skip?: number;
-    distinct?: Prisma.SolicitudVisitaScalarFieldEnum | Prisma.SolicitudVisitaScalarFieldEnum[];
 };
 export type Persona$eventosAccesoArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.EventoAccesoSelect<ExtArgs> | null;

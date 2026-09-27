@@ -36,15 +36,6 @@ enum RolUsuario {
   @@map("rol_usuario")
 }
 
-enum CasoPuesto {
-  visita
-  personal_propio
-  contratista
-  tercero
-
-  @@map("caso_puesto")
-}
-
 enum TipoDocumentoIdentidad {
   DNI
   CE
@@ -58,22 +49,6 @@ enum EstadoPersona {
   inactivo
 
   @@map("estado_persona")
-}
-
-enum TipoValidacionDocumento {
-  fecha_vencimiento
-  si_no
-  vigente_por_actividad
-
-  @@map("tipo_validacion_documento")
-}
-
-enum EstadoSolicitudVisita {
-  programada
-  completada
-  cancelada
-
-  @@map("estado_solicitud_visita")
 }
 
 enum TipoMovimiento {
@@ -115,7 +90,6 @@ model Empresa {
 
   usuarios          Usuario[]
   personas          Persona[]
-  solicitudesVisita SolicitudVisita[]
 
   @@map("empresa")
 }
@@ -141,77 +115,44 @@ model Usuario {
 }
 
 // ---------------------------------------------------------------------
-// PUESTO (catálogo por caso — PENDIENTE DE POBLAR CON EL CLIENTE)
-// ---------------------------------------------------------------------
-model Puesto {
-  id     Int        @id @default(autoincrement())
-  nombre String     @db.VarChar(100)
-  caso   CasoPuesto
-
-  personas   Persona[]
-  requisitos RequisitoPorPuesto[]
-
-  @@unique([nombre, caso])
-  @@map("puesto")
-}
-
-// ---------------------------------------------------------------------
-// PERSONA
-// puestoId es nullable por ahora: se vuelve obligatorio una vez que el
-// catálogo de puestos esté poblado y en uso (ver spec, sección 5.1).
+// PERSONA (trabajador). Alcance base: sin perfiles ni puestos — el
+// administrador registra empresa, trabajador y documentos, nada más.
 // ---------------------------------------------------------------------
 model Persona {
   id                     Int                    @id @default(autoincrement())
   empresaId              Int                    @map("empresa_id")
   empresa                Empresa                @relation(fields: [empresaId], references: [id])
-  puestoId               Int?                   @map("puesto_id")
-  puesto                 Puesto?                @relation(fields: [puestoId], references: [id])
   tipoDocumentoIdentidad TipoDocumentoIdentidad @map("tipo_documento_identidad")
   numeroDocumento        String                 @map("numero_documento") @db.VarChar(20)
   nombres                String                 @db.VarChar(150)
   apellidos              String                 @db.VarChar(150)
-  area                   String?                @db.VarChar(100)
+  // Foto para el reconocimiento facial del terminal ZKTeco (ruta en disco).
+  fotoUrl                String?                @map("foto_url") @db.VarChar(500)
   estado                 EstadoPersona          @default(activo)
   creadoEn               DateTime               @default(now()) @map("creado_en")
 
   documentos        DocumentoPersona[]
-  solicitudesVisita SolicitudVisita[]
   eventosAcceso     EventoAcceso[]
 
   // Global: una persona pertenece a una sola empresa a la vez
   @@unique([tipoDocumentoIdentidad, numeroDocumento])
   @@index([empresaId])
-  @@index([puestoId])
   @@index([numeroDocumento])
   @@map("persona")
 }
 
 // ---------------------------------------------------------------------
-// TIPO_DOCUMENTO (catálogo de documentos posibles: SCTR, CAMO, etc.)
+// TIPO_DOCUMENTO (nombres de documento: SCTR, Inducción, etc.). El
+// administrador los agrega al subir un documento. Si un documento vence o no
+// lo define su fecha de vencimiento (vacía = no vence).
 // ---------------------------------------------------------------------
 model TipoDocumento {
-  id             Int                     @id @default(autoincrement())
-  nombre         String                  @unique @db.VarChar(100)
-  tipoValidacion TipoValidacionDocumento @map("tipo_validacion")
+  id     Int    @id @default(autoincrement())
+  nombre String @unique @db.VarChar(100)
 
-  requisitos RequisitoPorPuesto[]
   documentos DocumentoPersona[]
 
   @@map("tipo_documento")
-}
-
-// ---------------------------------------------------------------------
-// REQUISITO_POR_PUESTO (matriz puesto × documento — PENDIENTE DE POBLAR)
-// ---------------------------------------------------------------------
-model RequisitoPorPuesto {
-  puestoId        Int           @map("puesto_id")
-  puesto          Puesto        @relation(fields: [puestoId], references: [id])
-  tipoDocumentoId Int           @map("tipo_documento_id")
-  tipoDocumento   TipoDocumento @relation(fields: [tipoDocumentoId], references: [id])
-  obligatorio     Boolean       @default(true)
-
-  @@id([puestoId, tipoDocumentoId])
-  @@map("requisito_por_puesto")
 }
 
 // ---------------------------------------------------------------------
@@ -237,26 +178,6 @@ model DocumentoPersona {
 }
 
 // ---------------------------------------------------------------------
-// SOLICITUD_VISITA (la agenda el administrador, sin flujo de aprobación)
-// ---------------------------------------------------------------------
-model SolicitudVisita {
-  id                  Int                   @id @default(autoincrement())
-  personaId           Int                   @map("persona_id")
-  persona             Persona               @relation(fields: [personaId], references: [id])
-  empresaId           Int                   @map("empresa_id")
-  empresa             Empresa               @relation(fields: [empresaId], references: [id])
-  personaVisitada     String                @map("persona_visitada") @db.VarChar(150)
-  motivo              String                @db.VarChar(300)
-  fechaHoraProgramada DateTime              @map("fecha_hora_programada")
-  estado              EstadoSolicitudVisita @default(programada)
-  creadoEn            DateTime              @default(now()) @map("creado_en")
-
-  @@index([personaId])
-  @@index([fechaHoraProgramada])
-  @@map("solicitud_visita")
-}
-
-// ---------------------------------------------------------------------
 // EVENTO_ACCESO (ingreso / salida por torniquete)
 // Booleanos de denegación en vez de un solo motivo: un evento puede
 // denegarse por alcohol y documentos a la vez, y una baja deniega de
@@ -272,7 +193,7 @@ model EventoAcceso {
   denegadoPorBaja          Boolean         @default(false) @map("denegado_por_baja")
   denegadoPorAlcohol       Boolean         @default(false) @map("denegado_por_alcohol")
   denegadoPorDocumentos    Boolean         @default(false) @map("denegado_por_documentos")
-  denegadoSinPuesto        Boolean         @default(false) @map("denegado_sin_puesto")
+  denegadoSinDocumentos    Boolean         @default(false) @map("denegado_sin_documentos")
   fechaHora                DateTime        @default(now()) @map("fecha_hora")
   torniqueteId             String?         @map("torniquete_id") @db.VarChar(50)
 

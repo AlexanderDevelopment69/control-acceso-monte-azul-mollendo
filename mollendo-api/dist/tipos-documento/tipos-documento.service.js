@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 let TiposDocumentoService = class TiposDocumentoService {
@@ -18,11 +18,14 @@ let TiposDocumentoService = class TiposDocumentoService {
         this.auditoriaService = auditoriaService;
     }
     async create(dto, usuarioId) {
-        const existente = await this.prisma.tipoDocumento.findUnique({ where: { nombre: dto.nombre } });
+        const nombre = dto.nombre.trim();
+        const existente = await this.prisma.tipoDocumento.findFirst({
+            where: { nombre: { equals: nombre, mode: 'insensitive' } },
+        });
         if (existente) {
-            throw new ConflictException('Ya existe un tipo de documento con ese nombre');
+            return existente;
         }
-        const tipoDocumento = await this.prisma.tipoDocumento.create({ data: dto });
+        const tipoDocumento = await this.prisma.tipoDocumento.create({ data: { nombre } });
         await this.auditoriaService.registrar({
             usuarioId,
             tablaAfectada: 'tipo_documento',

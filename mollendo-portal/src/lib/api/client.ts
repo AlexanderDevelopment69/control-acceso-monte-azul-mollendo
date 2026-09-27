@@ -38,6 +38,8 @@ interface RequestOptions {
   isFormData?: boolean;
   /** No adjunta el Authorization header (endpoints públicos de /auth). */
   skipAuth?: boolean;
+  /** "blob" para archivos (p. ej. la foto del trabajador) en vez de JSON. */
+  responseType?: "json" | "blob";
 }
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -57,7 +59,7 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, isFormData = false, skipAuth = false } = options;
+  const { method = "GET", body, isFormData = false, skipAuth = false, responseType = "json" } = options;
 
   const doFetch = async (token: string | null) => {
     // Evita la página de advertencia que ngrok le muestra a un visitante
@@ -97,5 +99,6 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (res.status === 204) return undefined as T;
+  if (responseType === "blob") return (await res.blob()) as T;
   return res.json() as Promise<T>;
 }

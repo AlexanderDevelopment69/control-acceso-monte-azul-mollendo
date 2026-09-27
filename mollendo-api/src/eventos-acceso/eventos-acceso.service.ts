@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { evaluarIngreso, tiposDocumentoVigentes } from './validacion-acceso.engine.js';
+import { documentosActuales, evaluarIngreso } from './validacion-acceso.engine.js';
 import type { IngresoDto } from './dto/ingreso.dto.js';
 import type { SalidaDto } from './dto/salida.dto.js';
 import type { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
@@ -44,18 +44,13 @@ export class EventosAccesoService {
     return respuesta;
   }
 
-  private async getDocumentosRequeridos(puestoId: number) {
-    const requisitos = await this.prisma.requisitoPorPuesto.findMany({
-      where: { puestoId, obligatorio: true },
-      include: { tipoDocumento: true },
+  /** Última versión de cada documento de la persona, con su vigencia a hoy. Sin aprobación (alcance base). */
+  private async getDocumentosActuales(personaId: number) {
+    const documentos = await this.prisma.documentoPersona.findMany({
+      where: { personaId },
+      include: { tipoDocumento: { select: { nombre: true } } },
     });
-    return requisitos.map((r) => ({ tipoDocumentoId: r.tipoDocumentoId, nombre: r.tipoDocumento.nombre }));
-  }
-
-  /** Tipos de documento cuya ÚLTIMA versión está vigente hoy. Sin aprobación (alcance base). */
-  private async getDocumentosVigentes(personaId: number): Promise<Set<number>> {
-    const documentos = await this.prisma.documentoPersona.findMany({ where: { personaId } });
-    return tiposDocumentoVigentes(documentos, new Date());
+    return documentosActuales(documentos, new Date());
   }
 
   async registrarIngreso(dto: IngresoDto) {
@@ -64,17 +59,10 @@ export class EventosAccesoService {
       return this.responderNoRegistrada(dto.numeroDocumento, 'ingreso');
     }
 
-    const [documentosRequeridos, documentosVigentes] = await Promise.all([
-      persona.puestoId ? this.getDocumentosRequeridos(persona.puestoId) : Promise.resolve([]),
-      this.getDocumentosVigentes(persona.id),
-    ]);
-
     const resultado = evaluarIngreso({
       personaActiva: persona.estado === 'activo',
-      tienePuesto: persona.puestoId !== null,
       alcoholConforme: dto.alcoholConforme,
-      documentosRequeridos,
-      documentosVigentes,
+      documentos: await this.getDocumentosActuales(persona.id),
     });
 
     const evento = await this.prisma.eventoAcceso.create({
@@ -83,7 +71,7 @@ export class EventosAccesoService {
         tipoMovimiento: 'ingreso',
         resultado: resultado.autorizado ? 'autorizado' : 'denegado',
         denegadoPorBaja: resultado.denegadoPorBaja,
-        denegadoSinPuesto: resultado.denegadoSinPuesto,
+        denegadoSinDocumentos: resultado.denegadoSinDocumentos,
         denegadoPorAlcohol: resultado.denegadoPorAlcohol,
         denegadoPorDocumentos: resultado.denegadoPorDocumentos,
         torniqueteId: dto.torniqueteId,
@@ -107,10 +95,10 @@ export class EventosAccesoService {
       numeroDocumento: persona.numeroDocumento,
       motivos: {
         dadoDeBaja: resultado.denegadoPorBaja,
-        sinPuesto: resultado.denegadoSinPuesto,
+        sinDocumentos: resultado.denegadoSinDocumentos,
         alcohol: resultado.denegadoPorAlcohol,
         documentos: resultado.denegadoPorDocumentos,
-        documentosFaltantes: resultado.documentosFaltantes,
+        documentosVencidos: resultado.documentosVencidos,
       },
     };
 

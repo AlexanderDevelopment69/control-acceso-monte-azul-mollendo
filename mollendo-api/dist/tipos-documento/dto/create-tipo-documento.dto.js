@@ -7,10 +7,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsIn, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 export class CreateTipoDocumentoDto {
     nombre;
-    tipoValidacion;
 }
 __decorate([
     IsString({ message: 'El nombre debe ser texto' }),
@@ -18,10 +17,4 @@ __decorate([
     MaxLength(100, { message: 'El nombre no puede tener más de 100 caracteres' }),
     __metadata("design:type", String)
 ], CreateTipoDocumentoDto.prototype, "nombre", void 0);
-__decorate([
-    IsIn(['fecha_vencimiento', 'si_no', 'vigente_por_actividad'], {
-        message: 'El tipo de validación debe ser "fecha_vencimiento", "si_no" o "vigente_por_actividad"',
-    }),
-    __metadata("design:type", String)
-], CreateTipoDocumentoDto.prototype, "tipoValidacion", void 0);
 //# sourceMappingURL=create-tipo-documento.dto.js.map

@@ -11,7 +11,6 @@ import { Transform } from 'class-transformer';
 import { IsIn, IsInt, IsOptional } from 'class-validator';
 export class QueryPersonasDto {
     empresaId;
-    puestoId;
     estado;
 }
 __decorate([
@@ -20,12 +19,6 @@ __decorate([
     IsInt({ message: 'El ID de la empresa debe ser un número' }),
     __metadata("design:type", Number)
 ], QueryPersonasDto.prototype, "empresaId", void 0);
-__decorate([
-    IsOptional(),
-    Transform(({ value }) => Number(value)),
-    IsInt({ message: 'El ID del puesto debe ser un número' }),
-    __metadata("design:type", Number)
-], QueryPersonasDto.prototype, "puestoId", void 0);
 __decorate([
     IsOptional(),
     IsIn(['activo', 'inactivo'], { message: 'El estado debe ser "activo" o "inactivo"' }),

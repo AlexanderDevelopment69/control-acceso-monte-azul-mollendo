@@ -25,7 +25,7 @@ export type EventoAccesoMinAggregateOutputType = {
     denegadoPorBaja: boolean | null;
     denegadoPorAlcohol: boolean | null;
     denegadoPorDocumentos: boolean | null;
-    denegadoSinPuesto: boolean | null;
+    denegadoSinDocumentos: boolean | null;
     fechaHora: Date | null;
     torniqueteId: string | null;
 };
@@ -37,7 +37,7 @@ export type EventoAccesoMaxAggregateOutputType = {
     denegadoPorBaja: boolean | null;
     denegadoPorAlcohol: boolean | null;
     denegadoPorDocumentos: boolean | null;
-    denegadoSinPuesto: boolean | null;
+    denegadoSinDocumentos: boolean | null;
     fechaHora: Date | null;
     torniqueteId: string | null;
 };
@@ -49,7 +49,7 @@ export type EventoAccesoCountAggregateOutputType = {
     denegadoPorBaja: number;
     denegadoPorAlcohol: number;
     denegadoPorDocumentos: number;
-    denegadoSinPuesto: number;
+    denegadoSinDocumentos: number;
     fechaHora: number;
     torniqueteId: number;
     _all: number;
@@ -70,7 +70,7 @@ export type EventoAccesoMinAggregateInputType = {
     denegadoPorBaja?: true;
     denegadoPorAlcohol?: true;
     denegadoPorDocumentos?: true;
-    denegadoSinPuesto?: true;
+    denegadoSinDocumentos?: true;
     fechaHora?: true;
     torniqueteId?: true;
 };
@@ -82,7 +82,7 @@ export type EventoAccesoMaxAggregateInputType = {
     denegadoPorBaja?: true;
     denegadoPorAlcohol?: true;
     denegadoPorDocumentos?: true;
-    denegadoSinPuesto?: true;
+    denegadoSinDocumentos?: true;
     fechaHora?: true;
     torniqueteId?: true;
 };
@@ -94,7 +94,7 @@ export type EventoAccesoCountAggregateInputType = {
     denegadoPorBaja?: true;
     denegadoPorAlcohol?: true;
     denegadoPorDocumentos?: true;
-    denegadoSinPuesto?: true;
+    denegadoSinDocumentos?: true;
     fechaHora?: true;
     torniqueteId?: true;
     _all?: true;
@@ -135,7 +135,7 @@ export type EventoAccesoGroupByOutputType = {
     denegadoPorBaja: boolean;
     denegadoPorAlcohol: boolean;
     denegadoPorDocumentos: boolean;
-    denegadoSinPuesto: boolean;
+    denegadoSinDocumentos: boolean;
     fechaHora: Date;
     torniqueteId: string | null;
     _count: EventoAccesoCountAggregateOutputType | null;
@@ -158,7 +158,7 @@ export type EventoAccesoWhereInput = {
     denegadoPorBaja?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     denegadoPorAlcohol?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     denegadoPorDocumentos?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
-    denegadoSinPuesto?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     fechaHora?: Prisma.DateTimeFilter<"EventoAcceso"> | Date | string;
     torniqueteId?: Prisma.StringNullableFilter<"EventoAcceso"> | string | null;
     persona?: Prisma.XOR<Prisma.PersonaScalarRelationFilter, Prisma.PersonaWhereInput>;
@@ -171,7 +171,7 @@ export type EventoAccesoOrderByWithRelationInput = {
     denegadoPorBaja?: Prisma.SortOrder;
     denegadoPorAlcohol?: Prisma.SortOrder;
     denegadoPorDocumentos?: Prisma.SortOrder;
-    denegadoSinPuesto?: Prisma.SortOrder;
+    denegadoSinDocumentos?: Prisma.SortOrder;
     fechaHora?: Prisma.SortOrder;
     torniqueteId?: Prisma.SortOrderInput | Prisma.SortOrder;
     persona?: Prisma.PersonaOrderByWithRelationInput;
@@ -187,7 +187,7 @@ export type EventoAccesoWhereUniqueInput = Prisma.AtLeast<{
     denegadoPorBaja?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     denegadoPorAlcohol?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     denegadoPorDocumentos?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
-    denegadoSinPuesto?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     fechaHora?: Prisma.DateTimeFilter<"EventoAcceso"> | Date | string;
     torniqueteId?: Prisma.StringNullableFilter<"EventoAcceso"> | string | null;
     persona?: Prisma.XOR<Prisma.PersonaScalarRelationFilter, Prisma.PersonaWhereInput>;
@@ -200,7 +200,7 @@ export type EventoAccesoOrderByWithAggregationInput = {
     denegadoPorBaja?: Prisma.SortOrder;
     denegadoPorAlcohol?: Prisma.SortOrder;
     denegadoPorDocumentos?: Prisma.SortOrder;
-    denegadoSinPuesto?: Prisma.SortOrder;
+    denegadoSinDocumentos?: Prisma.SortOrder;
     fechaHora?: Prisma.SortOrder;
     torniqueteId?: Prisma.SortOrderInput | Prisma.SortOrder;
     _count?: Prisma.EventoAccesoCountOrderByAggregateInput;
@@ -220,7 +220,7 @@ export type EventoAccesoScalarWhereWithAggregatesInput = {
     denegadoPorBaja?: Prisma.BoolWithAggregatesFilter<"EventoAcceso"> | boolean;
     denegadoPorAlcohol?: Prisma.BoolWithAggregatesFilter<"EventoAcceso"> | boolean;
     denegadoPorDocumentos?: Prisma.BoolWithAggregatesFilter<"EventoAcceso"> | boolean;
-    denegadoSinPuesto?: Prisma.BoolWithAggregatesFilter<"EventoAcceso"> | boolean;
+    denegadoSinDocumentos?: Prisma.BoolWithAggregatesFilter<"EventoAcceso"> | boolean;
     fechaHora?: Prisma.DateTimeWithAggregatesFilter<"EventoAcceso"> | Date | string;
     torniqueteId?: Prisma.StringNullableWithAggregatesFilter<"EventoAcceso"> | string | null;
 };
@@ -230,7 +230,7 @@ export type EventoAccesoCreateInput = {
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: Date | string;
     torniqueteId?: string | null;
     persona: Prisma.PersonaCreateNestedOneWithoutEventosAccesoInput;
@@ -243,7 +243,7 @@ export type EventoAccesoUncheckedCreateInput = {
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: Date | string;
     torniqueteId?: string | null;
 };
@@ -253,7 +253,7 @@ export type EventoAccesoUpdateInput = {
     denegadoPorBaja?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorAlcohol?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    denegadoSinPuesto?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     fechaHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     torniqueteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
     persona?: Prisma.PersonaUpdateOneRequiredWithoutEventosAccesoNestedInput;
@@ -266,7 +266,7 @@ export type EventoAccesoUncheckedUpdateInput = {
     denegadoPorBaja?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorAlcohol?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    denegadoSinPuesto?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     fechaHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     torniqueteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -278,7 +278,7 @@ export type EventoAccesoCreateManyInput = {
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: Date | string;
     torniqueteId?: string | null;
 };
@@ -288,7 +288,7 @@ export type EventoAccesoUpdateManyMutationInput = {
     denegadoPorBaja?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorAlcohol?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    denegadoSinPuesto?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     fechaHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     torniqueteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -300,7 +300,7 @@ export type EventoAccesoUncheckedUpdateManyInput = {
     denegadoPorBaja?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorAlcohol?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    denegadoSinPuesto?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     fechaHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     torniqueteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -320,7 +320,7 @@ export type EventoAccesoCountOrderByAggregateInput = {
     denegadoPorBaja?: Prisma.SortOrder;
     denegadoPorAlcohol?: Prisma.SortOrder;
     denegadoPorDocumentos?: Prisma.SortOrder;
-    denegadoSinPuesto?: Prisma.SortOrder;
+    denegadoSinDocumentos?: Prisma.SortOrder;
     fechaHora?: Prisma.SortOrder;
     torniqueteId?: Prisma.SortOrder;
 };
@@ -336,7 +336,7 @@ export type EventoAccesoMaxOrderByAggregateInput = {
     denegadoPorBaja?: Prisma.SortOrder;
     denegadoPorAlcohol?: Prisma.SortOrder;
     denegadoPorDocumentos?: Prisma.SortOrder;
-    denegadoSinPuesto?: Prisma.SortOrder;
+    denegadoSinDocumentos?: Prisma.SortOrder;
     fechaHora?: Prisma.SortOrder;
     torniqueteId?: Prisma.SortOrder;
 };
@@ -348,7 +348,7 @@ export type EventoAccesoMinOrderByAggregateInput = {
     denegadoPorBaja?: Prisma.SortOrder;
     denegadoPorAlcohol?: Prisma.SortOrder;
     denegadoPorDocumentos?: Prisma.SortOrder;
-    denegadoSinPuesto?: Prisma.SortOrder;
+    denegadoSinDocumentos?: Prisma.SortOrder;
     fechaHora?: Prisma.SortOrder;
     torniqueteId?: Prisma.SortOrder;
 };
@@ -400,13 +400,16 @@ export type EnumTipoMovimientoFieldUpdateOperationsInput = {
 export type EnumResultadoAccesoFieldUpdateOperationsInput = {
     set?: $Enums.ResultadoAcceso;
 };
+export type BoolFieldUpdateOperationsInput = {
+    set?: boolean;
+};
 export type EventoAccesoCreateWithoutPersonaInput = {
     tipoMovimiento: $Enums.TipoMovimiento;
     resultado: $Enums.ResultadoAcceso;
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: Date | string;
     torniqueteId?: string | null;
 };
@@ -417,7 +420,7 @@ export type EventoAccesoUncheckedCreateWithoutPersonaInput = {
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: Date | string;
     torniqueteId?: string | null;
 };
@@ -453,7 +456,7 @@ export type EventoAccesoScalarWhereInput = {
     denegadoPorBaja?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     denegadoPorAlcohol?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     denegadoPorDocumentos?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
-    denegadoSinPuesto?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFilter<"EventoAcceso"> | boolean;
     fechaHora?: Prisma.DateTimeFilter<"EventoAcceso"> | Date | string;
     torniqueteId?: Prisma.StringNullableFilter<"EventoAcceso"> | string | null;
 };
@@ -464,7 +467,7 @@ export type EventoAccesoCreateManyPersonaInput = {
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: Date | string;
     torniqueteId?: string | null;
 };
@@ -474,7 +477,7 @@ export type EventoAccesoUpdateWithoutPersonaInput = {
     denegadoPorBaja?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorAlcohol?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    denegadoSinPuesto?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     fechaHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     torniqueteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -485,7 +488,7 @@ export type EventoAccesoUncheckedUpdateWithoutPersonaInput = {
     denegadoPorBaja?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorAlcohol?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    denegadoSinPuesto?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     fechaHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     torniqueteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -496,7 +499,7 @@ export type EventoAccesoUncheckedUpdateManyWithoutPersonaInput = {
     denegadoPorBaja?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorAlcohol?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     denegadoPorDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-    denegadoSinPuesto?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    denegadoSinDocumentos?: Prisma.BoolFieldUpdateOperationsInput | boolean;
     fechaHora?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     torniqueteId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
 };
@@ -508,7 +511,7 @@ export type EventoAccesoSelect<ExtArgs extends runtime.Types.Extensions.Internal
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: boolean;
     torniqueteId?: boolean;
     persona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>;
@@ -521,7 +524,7 @@ export type EventoAccesoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: boolean;
     torniqueteId?: boolean;
     persona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>;
@@ -534,7 +537,7 @@ export type EventoAccesoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: boolean;
     torniqueteId?: boolean;
     persona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>;
@@ -547,11 +550,11 @@ export type EventoAccesoSelectScalar = {
     denegadoPorBaja?: boolean;
     denegadoPorAlcohol?: boolean;
     denegadoPorDocumentos?: boolean;
-    denegadoSinPuesto?: boolean;
+    denegadoSinDocumentos?: boolean;
     fechaHora?: boolean;
     torniqueteId?: boolean;
 };
-export type EventoAccesoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "personaId" | "tipoMovimiento" | "resultado" | "denegadoPorBaja" | "denegadoPorAlcohol" | "denegadoPorDocumentos" | "denegadoSinPuesto" | "fechaHora" | "torniqueteId", ExtArgs["result"]["eventoAcceso"]>;
+export type EventoAccesoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "personaId" | "tipoMovimiento" | "resultado" | "denegadoPorBaja" | "denegadoPorAlcohol" | "denegadoPorDocumentos" | "denegadoSinDocumentos" | "fechaHora" | "torniqueteId", ExtArgs["result"]["eventoAcceso"]>;
 export type EventoAccesoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     persona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>;
 };
@@ -574,7 +577,7 @@ export type $EventoAccesoPayload<ExtArgs extends runtime.Types.Extensions.Intern
         denegadoPorBaja: boolean;
         denegadoPorAlcohol: boolean;
         denegadoPorDocumentos: boolean;
-        denegadoSinPuesto: boolean;
+        denegadoSinDocumentos: boolean;
         fechaHora: Date;
         torniqueteId: string | null;
     }, ExtArgs["result"]["eventoAcceso"]>;
@@ -642,7 +645,7 @@ export interface EventoAccesoFieldRefs {
     readonly denegadoPorBaja: Prisma.FieldRef<"EventoAcceso", 'Boolean'>;
     readonly denegadoPorAlcohol: Prisma.FieldRef<"EventoAcceso", 'Boolean'>;
     readonly denegadoPorDocumentos: Prisma.FieldRef<"EventoAcceso", 'Boolean'>;
-    readonly denegadoSinPuesto: Prisma.FieldRef<"EventoAcceso", 'Boolean'>;
+    readonly denegadoSinDocumentos: Prisma.FieldRef<"EventoAcceso", 'Boolean'>;
     readonly fechaHora: Prisma.FieldRef<"EventoAcceso", 'DateTime'>;
     readonly torniqueteId: Prisma.FieldRef<"EventoAcceso", 'String'>;
 }

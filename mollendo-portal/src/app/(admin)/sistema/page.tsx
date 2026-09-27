@@ -71,10 +71,10 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
   "numeroDocumento": "12345678",
   "motivos": {
     "dadoDeBaja": false,
-    "sinPuesto": false,
+    "sinDocumentos": false,
     "alcohol": false,
     "documentos": false,
-    "documentosFaltantes": []
+    "documentosVencidos": []
   }
 }
 
@@ -85,10 +85,10 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
   ...
   "motivos": {
     "dadoDeBaja": false,
-    "sinPuesto": false,
+    "sinDocumentos": false,
     "alcohol": true,
     "documentos": true,
-    "documentosFaltantes": ["SCTR"]
+    "documentosVencidos": ["SCTR"]
   }
 }
 
@@ -103,7 +103,7 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
 
 // 401 — X-API-Key inválida o ausente`,
     notas:
-      "Orden de evaluación: persona dada de baja → se deniega de inmediato sin evaluar nada más. Si no, se revisan juntos puesto asignado, documentos vigentes (última versión de cada uno) y alcohol, y se informan todos los motivos.",
+      "Orden de evaluación: persona dada de baja → se deniega de inmediato sin evaluar nada más. Si no, se revisan juntos: que tenga al menos un documento cargado, que ninguno esté vencido (última versión de cada uno) y el alcohol, y se informan todos los motivos.",
   },
   {
     nombre: "Salida",

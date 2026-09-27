@@ -1,4 +1,20 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Express, Response } from 'express';
+import { fotosMulterOptions } from './fotos-storage.util.js';
 import { PersonasService } from './personas.service.js';
 import { CreatePersonaDto } from './dto/create-persona.dto.js';
 import { UpdatePersonaDto } from './dto/update-persona.dto.js';
@@ -48,5 +64,26 @@ export class PersonasController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.personasService.updateEstado(id, dto, user);
+  }
+
+  // Foto para el reconocimiento facial (reemplaza la anterior).
+  @Post(':id/foto')
+  @Roles('administrador')
+  @UseInterceptors(FileInterceptor('foto', fotosMulterOptions))
+  subirFoto(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() foto: Express.Multer.File,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    if (!foto) {
+      throw new BadRequestException('La foto es obligatoria');
+    }
+    return this.personasService.guardarFoto(id, foto.path, user);
+  }
+
+  @Get(':id/foto')
+  @Roles('administrador', 'vigilancia')
+  async verFoto(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+    res.sendFile(await this.personasService.rutaFoto(id));
   }
 }

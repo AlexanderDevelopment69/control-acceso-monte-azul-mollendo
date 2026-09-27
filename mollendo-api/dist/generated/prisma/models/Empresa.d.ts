@@ -159,7 +159,6 @@ export type EmpresaWhereInput = {
     actualizadoEn?: Prisma.DateTimeFilter<"Empresa"> | Date | string;
     usuarios?: Prisma.UsuarioListRelationFilter;
     personas?: Prisma.PersonaListRelationFilter;
-    solicitudesVisita?: Prisma.SolicitudVisitaListRelationFilter;
 };
 export type EmpresaOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -174,7 +173,6 @@ export type EmpresaOrderByWithRelationInput = {
     actualizadoEn?: Prisma.SortOrder;
     usuarios?: Prisma.UsuarioOrderByRelationAggregateInput;
     personas?: Prisma.PersonaOrderByRelationAggregateInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaOrderByRelationAggregateInput;
 };
 export type EmpresaWhereUniqueInput = Prisma.AtLeast<{
     id?: number;
@@ -192,7 +190,6 @@ export type EmpresaWhereUniqueInput = Prisma.AtLeast<{
     actualizadoEn?: Prisma.DateTimeFilter<"Empresa"> | Date | string;
     usuarios?: Prisma.UsuarioListRelationFilter;
     personas?: Prisma.PersonaListRelationFilter;
-    solicitudesVisita?: Prisma.SolicitudVisitaListRelationFilter;
 }, "id" | "ruc">;
 export type EmpresaOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -238,7 +235,6 @@ export type EmpresaCreateInput = {
     actualizadoEn?: Date | string;
     usuarios?: Prisma.UsuarioCreateNestedManyWithoutEmpresaInput;
     personas?: Prisma.PersonaCreateNestedManyWithoutEmpresaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaCreateNestedManyWithoutEmpresaInput;
 };
 export type EmpresaUncheckedCreateInput = {
     id?: number;
@@ -253,7 +249,6 @@ export type EmpresaUncheckedCreateInput = {
     actualizadoEn?: Date | string;
     usuarios?: Prisma.UsuarioUncheckedCreateNestedManyWithoutEmpresaInput;
     personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutEmpresaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedCreateNestedManyWithoutEmpresaInput;
 };
 export type EmpresaUpdateInput = {
     ruc?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -267,7 +262,6 @@ export type EmpresaUpdateInput = {
     actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     usuarios?: Prisma.UsuarioUpdateManyWithoutEmpresaNestedInput;
     personas?: Prisma.PersonaUpdateManyWithoutEmpresaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUpdateManyWithoutEmpresaNestedInput;
 };
 export type EmpresaUncheckedUpdateInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
@@ -282,7 +276,6 @@ export type EmpresaUncheckedUpdateInput = {
     actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     usuarios?: Prisma.UsuarioUncheckedUpdateManyWithoutEmpresaNestedInput;
     personas?: Prisma.PersonaUncheckedUpdateManyWithoutEmpresaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedUpdateManyWithoutEmpresaNestedInput;
 };
 export type EmpresaCreateManyInput = {
     id?: number;
@@ -411,18 +404,6 @@ export type EmpresaUpdateOneRequiredWithoutPersonasNestedInput = {
     connect?: Prisma.EmpresaWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.EmpresaUpdateToOneWithWhereWithoutPersonasInput, Prisma.EmpresaUpdateWithoutPersonasInput>, Prisma.EmpresaUncheckedUpdateWithoutPersonasInput>;
 };
-export type EmpresaCreateNestedOneWithoutSolicitudesVisitaInput = {
-    create?: Prisma.XOR<Prisma.EmpresaCreateWithoutSolicitudesVisitaInput, Prisma.EmpresaUncheckedCreateWithoutSolicitudesVisitaInput>;
-    connectOrCreate?: Prisma.EmpresaCreateOrConnectWithoutSolicitudesVisitaInput;
-    connect?: Prisma.EmpresaWhereUniqueInput;
-};
-export type EmpresaUpdateOneRequiredWithoutSolicitudesVisitaNestedInput = {
-    create?: Prisma.XOR<Prisma.EmpresaCreateWithoutSolicitudesVisitaInput, Prisma.EmpresaUncheckedCreateWithoutSolicitudesVisitaInput>;
-    connectOrCreate?: Prisma.EmpresaCreateOrConnectWithoutSolicitudesVisitaInput;
-    upsert?: Prisma.EmpresaUpsertWithoutSolicitudesVisitaInput;
-    connect?: Prisma.EmpresaWhereUniqueInput;
-    update?: Prisma.XOR<Prisma.XOR<Prisma.EmpresaUpdateToOneWithWhereWithoutSolicitudesVisitaInput, Prisma.EmpresaUpdateWithoutSolicitudesVisitaInput>, Prisma.EmpresaUncheckedUpdateWithoutSolicitudesVisitaInput>;
-};
 export type EmpresaCreateWithoutUsuariosInput = {
     ruc: string;
     razonSocial: string;
@@ -434,7 +415,6 @@ export type EmpresaCreateWithoutUsuariosInput = {
     creadoEn?: Date | string;
     actualizadoEn?: Date | string;
     personas?: Prisma.PersonaCreateNestedManyWithoutEmpresaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaCreateNestedManyWithoutEmpresaInput;
 };
 export type EmpresaUncheckedCreateWithoutUsuariosInput = {
     id?: number;
@@ -448,7 +428,6 @@ export type EmpresaUncheckedCreateWithoutUsuariosInput = {
     creadoEn?: Date | string;
     actualizadoEn?: Date | string;
     personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutEmpresaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedCreateNestedManyWithoutEmpresaInput;
 };
 export type EmpresaCreateOrConnectWithoutUsuariosInput = {
     where: Prisma.EmpresaWhereUniqueInput;
@@ -474,7 +453,6 @@ export type EmpresaUpdateWithoutUsuariosInput = {
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     personas?: Prisma.PersonaUpdateManyWithoutEmpresaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUpdateManyWithoutEmpresaNestedInput;
 };
 export type EmpresaUncheckedUpdateWithoutUsuariosInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
@@ -488,7 +466,6 @@ export type EmpresaUncheckedUpdateWithoutUsuariosInput = {
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     personas?: Prisma.PersonaUncheckedUpdateManyWithoutEmpresaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedUpdateManyWithoutEmpresaNestedInput;
 };
 export type EmpresaCreateWithoutPersonasInput = {
     ruc: string;
@@ -501,7 +478,6 @@ export type EmpresaCreateWithoutPersonasInput = {
     creadoEn?: Date | string;
     actualizadoEn?: Date | string;
     usuarios?: Prisma.UsuarioCreateNestedManyWithoutEmpresaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaCreateNestedManyWithoutEmpresaInput;
 };
 export type EmpresaUncheckedCreateWithoutPersonasInput = {
     id?: number;
@@ -515,7 +491,6 @@ export type EmpresaUncheckedCreateWithoutPersonasInput = {
     creadoEn?: Date | string;
     actualizadoEn?: Date | string;
     usuarios?: Prisma.UsuarioUncheckedCreateNestedManyWithoutEmpresaInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedCreateNestedManyWithoutEmpresaInput;
 };
 export type EmpresaCreateOrConnectWithoutPersonasInput = {
     where: Prisma.EmpresaWhereUniqueInput;
@@ -541,7 +516,6 @@ export type EmpresaUpdateWithoutPersonasInput = {
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     usuarios?: Prisma.UsuarioUpdateManyWithoutEmpresaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUpdateManyWithoutEmpresaNestedInput;
 };
 export type EmpresaUncheckedUpdateWithoutPersonasInput = {
     id?: Prisma.IntFieldUpdateOperationsInput | number;
@@ -555,84 +529,14 @@ export type EmpresaUncheckedUpdateWithoutPersonasInput = {
     creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     usuarios?: Prisma.UsuarioUncheckedUpdateManyWithoutEmpresaNestedInput;
-    solicitudesVisita?: Prisma.SolicitudVisitaUncheckedUpdateManyWithoutEmpresaNestedInput;
-};
-export type EmpresaCreateWithoutSolicitudesVisitaInput = {
-    ruc: string;
-    razonSocial: string;
-    correoContacto: string;
-    telefonoContacto?: string | null;
-    estado?: $Enums.EstadoEmpresa;
-    contratoVigenciaInicio?: Date | string | null;
-    contratoVigenciaFin?: Date | string | null;
-    creadoEn?: Date | string;
-    actualizadoEn?: Date | string;
-    usuarios?: Prisma.UsuarioCreateNestedManyWithoutEmpresaInput;
-    personas?: Prisma.PersonaCreateNestedManyWithoutEmpresaInput;
-};
-export type EmpresaUncheckedCreateWithoutSolicitudesVisitaInput = {
-    id?: number;
-    ruc: string;
-    razonSocial: string;
-    correoContacto: string;
-    telefonoContacto?: string | null;
-    estado?: $Enums.EstadoEmpresa;
-    contratoVigenciaInicio?: Date | string | null;
-    contratoVigenciaFin?: Date | string | null;
-    creadoEn?: Date | string;
-    actualizadoEn?: Date | string;
-    usuarios?: Prisma.UsuarioUncheckedCreateNestedManyWithoutEmpresaInput;
-    personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutEmpresaInput;
-};
-export type EmpresaCreateOrConnectWithoutSolicitudesVisitaInput = {
-    where: Prisma.EmpresaWhereUniqueInput;
-    create: Prisma.XOR<Prisma.EmpresaCreateWithoutSolicitudesVisitaInput, Prisma.EmpresaUncheckedCreateWithoutSolicitudesVisitaInput>;
-};
-export type EmpresaUpsertWithoutSolicitudesVisitaInput = {
-    update: Prisma.XOR<Prisma.EmpresaUpdateWithoutSolicitudesVisitaInput, Prisma.EmpresaUncheckedUpdateWithoutSolicitudesVisitaInput>;
-    create: Prisma.XOR<Prisma.EmpresaCreateWithoutSolicitudesVisitaInput, Prisma.EmpresaUncheckedCreateWithoutSolicitudesVisitaInput>;
-    where?: Prisma.EmpresaWhereInput;
-};
-export type EmpresaUpdateToOneWithWhereWithoutSolicitudesVisitaInput = {
-    where?: Prisma.EmpresaWhereInput;
-    data: Prisma.XOR<Prisma.EmpresaUpdateWithoutSolicitudesVisitaInput, Prisma.EmpresaUncheckedUpdateWithoutSolicitudesVisitaInput>;
-};
-export type EmpresaUpdateWithoutSolicitudesVisitaInput = {
-    ruc?: Prisma.StringFieldUpdateOperationsInput | string;
-    razonSocial?: Prisma.StringFieldUpdateOperationsInput | string;
-    correoContacto?: Prisma.StringFieldUpdateOperationsInput | string;
-    telefonoContacto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    estado?: Prisma.EnumEstadoEmpresaFieldUpdateOperationsInput | $Enums.EstadoEmpresa;
-    contratoVigenciaInicio?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    contratoVigenciaFin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    usuarios?: Prisma.UsuarioUpdateManyWithoutEmpresaNestedInput;
-    personas?: Prisma.PersonaUpdateManyWithoutEmpresaNestedInput;
-};
-export type EmpresaUncheckedUpdateWithoutSolicitudesVisitaInput = {
-    id?: Prisma.IntFieldUpdateOperationsInput | number;
-    ruc?: Prisma.StringFieldUpdateOperationsInput | string;
-    razonSocial?: Prisma.StringFieldUpdateOperationsInput | string;
-    correoContacto?: Prisma.StringFieldUpdateOperationsInput | string;
-    telefonoContacto?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
-    estado?: Prisma.EnumEstadoEmpresaFieldUpdateOperationsInput | $Enums.EstadoEmpresa;
-    contratoVigenciaInicio?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    contratoVigenciaFin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-    creadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    actualizadoEn?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
-    usuarios?: Prisma.UsuarioUncheckedUpdateManyWithoutEmpresaNestedInput;
-    personas?: Prisma.PersonaUncheckedUpdateManyWithoutEmpresaNestedInput;
 };
 export type EmpresaCountOutputType = {
     usuarios: number;
     personas: number;
-    solicitudesVisita: number;
 };
 export type EmpresaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     usuarios?: boolean | EmpresaCountOutputTypeCountUsuariosArgs;
     personas?: boolean | EmpresaCountOutputTypeCountPersonasArgs;
-    solicitudesVisita?: boolean | EmpresaCountOutputTypeCountSolicitudesVisitaArgs;
 };
 export type EmpresaCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.EmpresaCountOutputTypeSelect<ExtArgs> | null;
@@ -642,9 +546,6 @@ export type EmpresaCountOutputTypeCountUsuariosArgs<ExtArgs extends runtime.Type
 };
 export type EmpresaCountOutputTypeCountPersonasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.PersonaWhereInput;
-};
-export type EmpresaCountOutputTypeCountSolicitudesVisitaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    where?: Prisma.SolicitudVisitaWhereInput;
 };
 export type EmpresaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
@@ -659,7 +560,6 @@ export type EmpresaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     actualizadoEn?: boolean;
     usuarios?: boolean | Prisma.Empresa$usuariosArgs<ExtArgs>;
     personas?: boolean | Prisma.Empresa$personasArgs<ExtArgs>;
-    solicitudesVisita?: boolean | Prisma.Empresa$solicitudesVisitaArgs<ExtArgs>;
     _count?: boolean | Prisma.EmpresaCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["empresa"]>;
 export type EmpresaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -702,7 +602,6 @@ export type EmpresaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type EmpresaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     usuarios?: boolean | Prisma.Empresa$usuariosArgs<ExtArgs>;
     personas?: boolean | Prisma.Empresa$personasArgs<ExtArgs>;
-    solicitudesVisita?: boolean | Prisma.Empresa$solicitudesVisitaArgs<ExtArgs>;
     _count?: boolean | Prisma.EmpresaCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type EmpresaIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {};
@@ -712,7 +611,6 @@ export type $EmpresaPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     objects: {
         usuarios: Prisma.$UsuarioPayload<ExtArgs>[];
         personas: Prisma.$PersonaPayload<ExtArgs>[];
-        solicitudesVisita: Prisma.$SolicitudVisitaPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: number;
@@ -779,7 +677,6 @@ export interface Prisma__EmpresaClient<T, Null = never, ExtArgs extends runtime.
     readonly [Symbol.toStringTag]: "PrismaPromise";
     usuarios<T extends Prisma.Empresa$usuariosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Empresa$usuariosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UsuarioPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     personas<T extends Prisma.Empresa$personasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Empresa$personasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PersonaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
-    solicitudesVisita<T extends Prisma.Empresa$solicitudesVisitaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Empresa$solicitudesVisitaArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SolicitudVisitaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): runtime.Types.Utils.JsPromise<TResult1 | TResult2>;
     catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): runtime.Types.Utils.JsPromise<T | TResult>;
     finally(onfinally?: (() => void) | undefined | null): runtime.Types.Utils.JsPromise<T>;
@@ -915,17 +812,6 @@ export type Empresa$personasArgs<ExtArgs extends runtime.Types.Extensions.Intern
     take?: number;
     skip?: number;
     distinct?: Prisma.PersonaScalarFieldEnum | Prisma.PersonaScalarFieldEnum[];
-};
-export type Empresa$solicitudesVisitaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-    select?: Prisma.SolicitudVisitaSelect<ExtArgs> | null;
-    omit?: Prisma.SolicitudVisitaOmit<ExtArgs> | null;
-    include?: Prisma.SolicitudVisitaInclude<ExtArgs> | null;
-    where?: Prisma.SolicitudVisitaWhereInput;
-    orderBy?: Prisma.SolicitudVisitaOrderByWithRelationInput | Prisma.SolicitudVisitaOrderByWithRelationInput[];
-    cursor?: Prisma.SolicitudVisitaWhereUniqueInput;
-    take?: number;
-    skip?: number;
-    distinct?: Prisma.SolicitudVisitaScalarFieldEnum | Prisma.SolicitudVisitaScalarFieldEnum[];
 };
 export type EmpresaDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     select?: Prisma.EmpresaSelect<ExtArgs> | null;

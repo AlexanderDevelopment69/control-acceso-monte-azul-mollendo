@@ -1,28 +1,39 @@
 // Motor de validación de acceso — lógica más crítica del sistema.
 // Función pura, sin I/O, para poder probarla exhaustivamente con tests unitarios.
-// Reglas del alcance base: Especificacion_Desarrollo_Control_Acceso_Mollendo_base.md, sección 7.
+//
+// Alcance base, sin perfiles ni puestos: una persona puede ingresar si no está
+// dada de baja, tiene al menos un documento cargado, ninguno de sus documentos
+// está vencido (se mira la última versión de cada uno) y la prueba de alcohol
+// es conforme.
 
-export interface DocumentoRequerido {
+export interface DocumentoCargado {
+  id: number;
+  tipoDocumentoId: number;
+  version: number;
+  fechaVencimiento: Date | null;
+}
+
+/** Documento en su última versión, con su nombre para informar el motivo. */
+export interface DocumentoActual {
   tipoDocumentoId: number;
   nombre: string;
+  vigente: boolean;
 }
 
 export interface EvaluarIngresoInput {
   personaActiva: boolean;
-  tienePuesto: boolean;
   alcoholConforme: boolean;
-  documentosRequeridos: DocumentoRequerido[];
-  /** IDs de tipo_documento cuya última versión está vigente. */
-  documentosVigentes: Set<number>;
+  /** Última versión de cada tipo de documento cargado (ver documentosActuales). */
+  documentos: DocumentoActual[];
 }
 
 export interface ResultadoValidacionIngreso {
   autorizado: boolean;
   denegadoPorBaja: boolean;
-  denegadoSinPuesto: boolean;
+  denegadoSinDocumentos: boolean;
   denegadoPorAlcohol: boolean;
   denegadoPorDocumentos: boolean;
-  documentosFaltantes: string[];
+  documentosVencidos: string[];
 }
 
 export function evaluarIngreso(input: EvaluarIngresoInput): ResultadoValidacionIngreso {
@@ -31,39 +42,27 @@ export function evaluarIngreso(input: EvaluarIngresoInput): ResultadoValidacionI
     return {
       autorizado: false,
       denegadoPorBaja: true,
-      denegadoSinPuesto: false,
+      denegadoSinDocumentos: false,
       denegadoPorAlcohol: false,
       denegadoPorDocumentos: false,
-      documentosFaltantes: [],
+      documentosVencidos: [],
     };
   }
 
-  // Sin puesto no hay requisitos contra los cuales validar: se deniega. El
-  // alcohol se sigue evaluando para informar todos los motivos a la vez.
-  const denegadoSinPuesto = !input.tienePuesto;
-
-  const documentosFaltantes = input.documentosRequeridos
-    .filter((doc) => !input.documentosVigentes.has(doc.tipoDocumentoId))
-    .map((doc) => doc.nombre);
-
+  const denegadoSinDocumentos = input.documentos.length === 0;
+  const documentosVencidos = input.documentos.filter((d) => !d.vigente).map((d) => d.nombre);
+  const denegadoPorDocumentos = documentosVencidos.length > 0;
   const denegadoPorAlcohol = !input.alcoholConforme;
-  const denegadoPorDocumentos = documentosFaltantes.length > 0;
 
+  // Los motivos se informan todos a la vez.
   return {
-    autorizado: !denegadoSinPuesto && !denegadoPorAlcohol && !denegadoPorDocumentos,
+    autorizado: !denegadoSinDocumentos && !denegadoPorDocumentos && !denegadoPorAlcohol,
     denegadoPorBaja: false,
-    denegadoSinPuesto,
+    denegadoSinDocumentos,
     denegadoPorAlcohol,
     denegadoPorDocumentos,
-    documentosFaltantes,
+    documentosVencidos,
   };
-}
-
-export interface DocumentoCargado {
-  id: number;
-  tipoDocumentoId: number;
-  version: number;
-  fechaVencimiento: Date | null;
 }
 
 /** Última versión de cada tipo de documento (las anteriores quedan solo como historial). */
@@ -78,21 +77,24 @@ export function ultimasVersiones<T extends DocumentoCargado>(documentos: T[]): M
   return ultimas;
 }
 
-/** IDs de tipo de documento cuya última versión está vigente hoy. */
-export function tiposDocumentoVigentes(documentos: DocumentoCargado[], hoy: Date): Set<number> {
-  const vigentes = new Set<number>();
-  for (const [tipoDocumentoId, doc] of ultimasVersiones(documentos)) {
-    if (esDocumentoVigente(doc.fechaVencimiento, hoy)) {
-      vigentes.add(tipoDocumentoId);
-    }
-  }
-  return vigentes;
+/** Documentos actuales de una persona (última versión de cada tipo) con su vigencia a hoy. */
+export function documentosActuales(
+  documentos: (DocumentoCargado & { tipoDocumento: { nombre: string } })[],
+  hoy: Date,
+): DocumentoActual[] {
+  return [...ultimasVersiones(documentos).values()]
+    .map((doc) => ({
+      tipoDocumentoId: doc.tipoDocumentoId,
+      nombre: doc.tipoDocumento.nombre,
+      vigente: esDocumentoVigente(doc.fechaVencimiento, hoy),
+    }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 }
 
 /**
- * Un documento está vigente si no tiene fecha de vencimiento (tipo "si_no")
- * o si vence hoy o después. Se compara por fecha (sin hora): la columna es
- * DATE, así que un documento que vence hoy sigue siendo válido todo el día.
+ * Un documento está vigente si no tiene fecha de vencimiento o si vence hoy o
+ * después. Se compara por fecha (sin hora): la columna es DATE, así que un
+ * documento que vence hoy sigue siendo válido todo el día.
  */
 export function esDocumentoVigente(fechaVencimiento: Date | null, hoy: Date): boolean {
   if (!fechaVencimiento) {

@@ -81,7 +81,7 @@ function AuditoriaContent() {
                     {new Date(entrada.fechaHora).toLocaleString("es-PE")}
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {entrada.usuario?.correo ?? "—"}
+                    {entrada.usuario?.correo ?? "Carga de datos (script)"}
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{entrada.tablaAfectada}</TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">#{entrada.registroId}</TableCell>

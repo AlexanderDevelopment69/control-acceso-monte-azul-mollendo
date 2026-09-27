@@ -34,6 +34,17 @@ export class IntegracionesService {
     await this.enviarComandoTorniquete({ torniqueteId: evento.torniqueteId ?? 'T1', comando: 'abrir' });
   }
 
+  /**
+   * Enrolar (o actualizar) el rostro del trabajador en el terminal ZKTeco vía
+   * ZKBio CVSecurity. Mock: falta su documentación/SDK (spec base, sección 12).
+   */
+  @OnEvent('persona.foto-actualizada')
+  enrolarRostro(evento: { personaId: number; tipoDocumentoIdentidad: string; numeroDocumento: string; rutaFoto: string }): void {
+    this.logger.log(
+      `Enrolar rostro en ZKBio: ${evento.tipoDocumentoIdentidad} ${evento.numeroDocumento} (persona ${evento.personaId}), foto ${evento.rutaFoto} (mock, sin SDK real todavía)`,
+    );
+  }
+
   async enviarComandoTorniquete(dto: TorniqueteComandoDto): Promise<{ enviado: boolean }> {
     this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (mock, sin SDK real todavía)`);
     return { enviado: true };

@@ -13,12 +13,9 @@ export declare const AnyNull: import("@prisma/client-runtime-utils").AnyNullClas
 export declare const ModelName: {
     readonly Empresa: "Empresa";
     readonly Usuario: "Usuario";
-    readonly Puesto: "Puesto";
     readonly Persona: "Persona";
     readonly TipoDocumento: "TipoDocumento";
-    readonly RequisitoPorPuesto: "RequisitoPorPuesto";
     readonly DocumentoPersona: "DocumentoPersona";
-    readonly SolicitudVisita: "SolicitudVisita";
     readonly EventoAcceso: "EventoAcceso";
     readonly Auditoria: "Auditoria";
 };
@@ -53,21 +50,14 @@ export declare const UsuarioScalarFieldEnum: {
     readonly creadoEn: "creadoEn";
 };
 export type UsuarioScalarFieldEnum = (typeof UsuarioScalarFieldEnum)[keyof typeof UsuarioScalarFieldEnum];
-export declare const PuestoScalarFieldEnum: {
-    readonly id: "id";
-    readonly nombre: "nombre";
-    readonly caso: "caso";
-};
-export type PuestoScalarFieldEnum = (typeof PuestoScalarFieldEnum)[keyof typeof PuestoScalarFieldEnum];
 export declare const PersonaScalarFieldEnum: {
     readonly id: "id";
     readonly empresaId: "empresaId";
-    readonly puestoId: "puestoId";
     readonly tipoDocumentoIdentidad: "tipoDocumentoIdentidad";
     readonly numeroDocumento: "numeroDocumento";
     readonly nombres: "nombres";
     readonly apellidos: "apellidos";
-    readonly area: "area";
+    readonly fotoUrl: "fotoUrl";
     readonly estado: "estado";
     readonly creadoEn: "creadoEn";
 };
@@ -75,15 +65,8 @@ export type PersonaScalarFieldEnum = (typeof PersonaScalarFieldEnum)[keyof typeo
 export declare const TipoDocumentoScalarFieldEnum: {
     readonly id: "id";
     readonly nombre: "nombre";
-    readonly tipoValidacion: "tipoValidacion";
 };
 export type TipoDocumentoScalarFieldEnum = (typeof TipoDocumentoScalarFieldEnum)[keyof typeof TipoDocumentoScalarFieldEnum];
-export declare const RequisitoPorPuestoScalarFieldEnum: {
-    readonly puestoId: "puestoId";
-    readonly tipoDocumentoId: "tipoDocumentoId";
-    readonly obligatorio: "obligatorio";
-};
-export type RequisitoPorPuestoScalarFieldEnum = (typeof RequisitoPorPuestoScalarFieldEnum)[keyof typeof RequisitoPorPuestoScalarFieldEnum];
 export declare const DocumentoPersonaScalarFieldEnum: {
     readonly id: "id";
     readonly personaId: "personaId";
@@ -95,17 +78,6 @@ export declare const DocumentoPersonaScalarFieldEnum: {
     readonly creadoEn: "creadoEn";
 };
 export type DocumentoPersonaScalarFieldEnum = (typeof DocumentoPersonaScalarFieldEnum)[keyof typeof DocumentoPersonaScalarFieldEnum];
-export declare const SolicitudVisitaScalarFieldEnum: {
-    readonly id: "id";
-    readonly personaId: "personaId";
-    readonly empresaId: "empresaId";
-    readonly personaVisitada: "personaVisitada";
-    readonly motivo: "motivo";
-    readonly fechaHoraProgramada: "fechaHoraProgramada";
-    readonly estado: "estado";
-    readonly creadoEn: "creadoEn";
-};
-export type SolicitudVisitaScalarFieldEnum = (typeof SolicitudVisitaScalarFieldEnum)[keyof typeof SolicitudVisitaScalarFieldEnum];
 export declare const EventoAccesoScalarFieldEnum: {
     readonly id: "id";
     readonly personaId: "personaId";
@@ -114,7 +86,7 @@ export declare const EventoAccesoScalarFieldEnum: {
     readonly denegadoPorBaja: "denegadoPorBaja";
     readonly denegadoPorAlcohol: "denegadoPorAlcohol";
     readonly denegadoPorDocumentos: "denegadoPorDocumentos";
-    readonly denegadoSinPuesto: "denegadoSinPuesto";
+    readonly denegadoSinDocumentos: "denegadoSinDocumentos";
     readonly fechaHora: "fechaHora";
     readonly torniqueteId: "torniqueteId";
 };

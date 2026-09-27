@@ -78,7 +78,10 @@ export const Modal: React.FC<ModalProps> = ({
     : "relative w-full rounded-3xl bg-white  dark:bg-gray-900";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
+    // "m-auto" en el contenido (en vez de items-center en el contenedor): centra
+    // cuando cabe y, si el contenido es más alto que la pantalla, se puede
+    // desplazar desde arriba en lugar de quedar cortado por encima.
+    <div className="fixed inset-0 flex overflow-y-auto p-4 modal z-99999">
       {!isFullscreen && (
         <div
           className={`fixed inset-0 h-full w-full bg-gray-400/30 transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"}`}
@@ -86,7 +89,7 @@ export const Modal: React.FC<ModalProps> = ({
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses} transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"} ${className}`}
+        className={`${contentClasses} ${isFullscreen ? "" : "m-auto"} transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (

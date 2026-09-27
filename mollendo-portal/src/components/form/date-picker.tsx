@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Label from "./Label";
 import { CalenderIcon, ChevronLeftIcon } from "../../icons";
 
@@ -63,6 +64,27 @@ function construirGrilla(mesVisible: Date): { fecha: Date; delMesActual: boolean
   });
 }
 
+const ANCHO_CALENDARIO = 288; // w-72
+const ALTO_ESTIMADO = 360; // calendario con la vista de días
+const MARGEN = 8;
+
+type Posicion = { left: number; top?: number; bottom?: number };
+
+/**
+ * El calendario se dibuja en un portal (en <body>) con posición fija, para que
+ * ningún contenedor con scroll u overflow (una lista dentro de un modal, por
+ * ejemplo) lo recorte. Se ubica bajo el campo o, si no hay espacio, encima.
+ */
+function calcularPosicion(ancla: HTMLElement): Posicion {
+  const r = ancla.getBoundingClientRect();
+  const left = Math.max(MARGEN, Math.min(r.left, window.innerWidth - ANCHO_CALENDARIO - MARGEN));
+  const espacioAbajo = window.innerHeight - r.bottom;
+  if (espacioAbajo < ALTO_ESTIMADO && r.top > espacioAbajo) {
+    return { left, bottom: window.innerHeight - r.top + MARGEN };
+  }
+  return { left, top: r.bottom + MARGEN };
+}
+
 type PropsType = {
   id: string;
   value: string; // "YYYY-MM-DD" o ""
@@ -73,7 +95,7 @@ type PropsType = {
 
 export default function DatePicker({ id, value, onChange, label, placeholder }: PropsType) {
   const [abierto, setAbierto] = useState(false);
-  const [vista, setVista] = useState<"dias" | "meses">("dias");
+  const [vista, setVista] = useState<"dias" | "meses" | "anios">("dias");
   const [mesVisible, setMesVisible] = useState<Date>(() => parsearFecha(value) ?? new Date());
   const [texto, setTexto] = useState(() => {
     const fecha = parsearFecha(value);
@@ -92,21 +114,36 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
     if (fecha) setMesVisible(fecha);
   }
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [posicion, setPosicion] = useState<Posicion>({ left: 0, top: 0 });
 
   useEffect(() => {
     if (!abierto) return;
     function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      const objetivo = event.target as Node;
+      // El calendario vive en un portal: no está dentro de wrapperRef.
+      if (!wrapperRef.current?.contains(objetivo) && !popupRef.current?.contains(objetivo)) {
         setAbierto(false);
       }
     }
+    // Seguir al campo si se desplaza la página, el modal o una lista con scroll.
+    function reubicar() {
+      if (wrapperRef.current) setPosicion(calcularPosicion(wrapperRef.current));
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", reubicar, true);
+    window.addEventListener("resize", reubicar);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", reubicar, true);
+      window.removeEventListener("resize", reubicar);
+    };
   }, [abierto]);
 
   function abrir() {
     setVista("dias");
     setMesVisible(parsearFecha(value) ?? new Date());
+    if (wrapperRef.current) setPosicion(calcularPosicion(wrapperRef.current));
     setAbierto(true);
   }
 
@@ -122,6 +159,15 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
   function cambiarAnio(delta: number) {
     setMesVisible((actual) => new Date(actual.getFullYear() + delta, actual.getMonth(), 1));
   }
+
+  // Flechas: días → mes a mes; meses → año a año; años → de 12 en 12.
+  function mover(sentido: 1 | -1) {
+    if (vista === "dias") cambiarMes(sentido);
+    else if (vista === "meses") cambiarAnio(sentido);
+    else cambiarAnio(12 * sentido);
+  }
+
+  const inicioBloqueAnios = Math.floor(mesVisible.getFullYear() / 12) * 12;
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const nuevoTexto = e.target.value;
@@ -174,33 +220,80 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
           <CalenderIcon className="size-6" />
         </button>
 
-        {abierto && (
-        <div className="absolute left-0 top-full z-40 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark">
+        {abierto && createPortal(
+        <div
+          ref={popupRef}
+          style={posicion}
+          className="fixed z-999999 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+        >
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => (vista === "dias" ? cambiarMes(-1) : cambiarAnio(-1))}
+              aria-label="Anterior"
+              onClick={() => mover(-1)}
               className="flex size-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
             >
               <ChevronLeftIcon className="size-4" />
             </button>
+            <div className="flex items-center gap-1 text-sm font-semibold text-brand-600 dark:text-brand-400">
+              {vista === "anios" ? (
+                <span className="px-2 py-1">
+                  {inicioBloqueAnios} – {inicioBloqueAnios + 11}
+                </span>
+              ) : (
+                <>
+                  {vista === "dias" && (
+                    <button
+                      type="button"
+                      onClick={() => setVista("meses")}
+                      className="rounded-lg px-2 py-1 hover:bg-brand-50 dark:hover:bg-white/[0.05]"
+                    >
+                      {MESES[mesVisible.getMonth()]}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setVista("anios")}
+                    className="rounded-lg px-2 py-1 hover:bg-brand-50 dark:hover:bg-white/[0.05]"
+                  >
+                    {mesVisible.getFullYear()}
+                  </button>
+                </>
+              )}
+            </div>
             <button
               type="button"
-              onClick={() => setVista(vista === "dias" ? "meses" : "dias")}
-              className="rounded-lg px-3 py-1 text-sm font-semibold text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-white/[0.05]"
-            >
-              {vista === "dias" ? `${MESES[mesVisible.getMonth()]} ${mesVisible.getFullYear()}` : mesVisible.getFullYear()}
-            </button>
-            <button
-              type="button"
-              onClick={() => (vista === "dias" ? cambiarMes(1) : cambiarAnio(1))}
+              aria-label="Siguiente"
+              onClick={() => mover(1)}
               className="flex size-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
             >
               <ChevronLeftIcon className="size-4 rotate-180" />
             </button>
           </div>
 
-          {vista === "meses" ? (
+          {vista === "anios" ? (
+            <div className="grid grid-cols-3 gap-1.5">
+              {Array.from({ length: 12 }, (_, k) => inicioBloqueAnios + k).map((anio) => (
+                <button
+                  key={anio}
+                  type="button"
+                  onClick={() => {
+                    setMesVisible(new Date(anio, mesVisible.getMonth(), 1));
+                    setVista("meses");
+                  }}
+                  className={`rounded-lg px-2 py-2 text-xs font-medium ${
+                    anio === mesVisible.getFullYear()
+                      ? "bg-brand-500 text-white"
+                      : anio === hoy.getFullYear()
+                        ? "text-brand-600 ring-1 ring-brand-500 dark:text-brand-400"
+                        : "text-gray-600 hover:bg-brand-50 dark:text-gray-300 dark:hover:bg-white/[0.05]"
+                  }`}
+                >
+                  {anio}
+                </button>
+              ))}
+            </div>
+          ) : vista === "meses" ? (
             <div className="grid grid-cols-3 gap-1.5">
               {MESES.map((nombreMes, i) => (
                 <button
@@ -269,7 +362,8 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
               </button>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
         )}
       </div>
     </div>

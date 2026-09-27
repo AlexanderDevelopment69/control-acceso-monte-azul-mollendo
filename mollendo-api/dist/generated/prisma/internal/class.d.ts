@@ -36,22 +36,13 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get usuario(): Prisma.UsuarioDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
-    get puesto(): Prisma.PuestoDelegate<ExtArgs, {
-        omit: OmitOpts;
-    }>;
     get persona(): Prisma.PersonaDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
     get tipoDocumento(): Prisma.TipoDocumentoDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
-    get requisitoPorPuesto(): Prisma.RequisitoPorPuestoDelegate<ExtArgs, {
-        omit: OmitOpts;
-    }>;
     get documentoPersona(): Prisma.DocumentoPersonaDelegate<ExtArgs, {
-        omit: OmitOpts;
-    }>;
-    get solicitudVisita(): Prisma.SolicitudVisitaDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
     get eventoAcceso(): Prisma.EventoAccesoDelegate<ExtArgs, {

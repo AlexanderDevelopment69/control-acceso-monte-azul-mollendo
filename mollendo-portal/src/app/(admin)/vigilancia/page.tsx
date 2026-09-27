@@ -27,10 +27,10 @@ interface EventoLive {
   motivos: {
     personaNoRegistrada?: boolean;
     dadoDeBaja?: boolean;
-    sinPuesto?: boolean;
+    sinDocumentos?: boolean;
     alcohol?: boolean;
     documentos?: boolean;
-    documentosFaltantes?: string[];
+    documentosVencidos?: string[];
   };
 }
 
@@ -38,13 +38,13 @@ function motivosEnVivo(motivos: EventoLive["motivos"]): string[] {
   if (motivos.personaNoRegistrada) return ["Persona no registrada"];
   if (motivos.dadoDeBaja) return ["Dado de baja"];
   const lista: string[] = [];
-  if (motivos.sinPuesto) lista.push("Sin puesto asignado");
+  if (motivos.sinDocumentos) lista.push("Sin documentos cargados");
   if (motivos.alcohol) lista.push("Alcohol no conforme");
   if (motivos.documentos) {
     lista.push(
-      motivos.documentosFaltantes?.length
-        ? `Documentos faltantes o vencidos: ${motivos.documentosFaltantes.join(", ")}`
-        : "Documentos faltantes o vencidos",
+      motivos.documentosVencidos?.length
+        ? `Documento vencido: ${motivos.documentosVencidos.join(", ")}`
+        : "Documento vencido",
     );
   }
   return lista;
@@ -59,10 +59,10 @@ function StatCard({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function MotivoDenegacion({ evento }: { evento: Pick<EventoAcceso, "denegadoPorBaja" | "denegadoSinPuesto" | "denegadoPorAlcohol" | "denegadoPorDocumentos"> }) {
+function MotivoDenegacion({ evento }: { evento: Pick<EventoAcceso, "denegadoPorBaja" | "denegadoSinDocumentos" | "denegadoPorAlcohol" | "denegadoPorDocumentos"> }) {
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
   const motivos: string[] = [];
-  if (evento.denegadoSinPuesto) motivos.push("Sin puesto");
+  if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
   if (evento.denegadoPorAlcohol) motivos.push("Alcohol");
   if (evento.denegadoPorDocumentos) motivos.push("Documentos");
   if (motivos.length === 0) return null;

@@ -28,13 +28,19 @@ export declare class IntegracionesService {
         numeroDocumento: string;
         motivos: {
             dadoDeBaja: boolean;
-            sinPuesto: boolean;
+            sinDocumentos: boolean;
             alcohol: boolean;
             documentos: boolean;
-            documentosFaltantes: string[];
+            documentosVencidos: string[];
         };
     }>;
     abrirMolinete(evento: AbrirMolineteEvent): Promise<void>;
+    enrolarRostro(evento: {
+        personaId: number;
+        tipoDocumentoIdentidad: string;
+        numeroDocumento: string;
+        rutaFoto: string;
+    }): void;
     enviarComandoTorniquete(dto: TorniqueteComandoDto): Promise<{
         enviado: boolean;
     }>;

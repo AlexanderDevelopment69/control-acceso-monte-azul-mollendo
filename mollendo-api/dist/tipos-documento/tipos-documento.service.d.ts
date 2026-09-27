@@ -8,11 +8,9 @@ export declare class TiposDocumentoService {
     create(dto: CreateTipoDocumentoDto, usuarioId: number): Promise<{
         id: number;
         nombre: string;
-        tipoValidacion: import("../generated/prisma/enums.js").TipoValidacionDocumento;
     }>;
     findAll(): Promise<{
         id: number;
         nombre: string;
-        tipoValidacion: import("../generated/prisma/enums.js").TipoValidacionDocumento;
     }[]>;
 }

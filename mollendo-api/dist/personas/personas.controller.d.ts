@@ -1,3 +1,4 @@
+import type { Response } from 'express';
 import { PersonasService } from './personas.service.js';
 import { CreatePersonaDto } from './dto/create-persona.dto.js';
 import { UpdatePersonaDto } from './dto/update-persona.dto.js';
@@ -12,24 +13,18 @@ export declare class PersonasController {
         numeroDocumento: string;
         nombres: string;
         apellidos: string;
-        area: string | null;
+        fotoUrl: string | null;
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
         empresaId: number;
-        puestoId: number | null;
     }>;
     findAll(query: QueryPersonasDto): Promise<{
-        puesto: {
-            id: number;
-            nombre: string;
-            caso: import("../generated/prisma/enums.js").CasoPuesto;
-        } | null;
         cumplimiento: {
             habilitado: boolean;
             dadoDeBaja: boolean;
-            sinPuesto: boolean;
-            documentosFaltantes: string[];
+            sinDocumentos: boolean;
+            documentosVencidos: string[];
         };
         empresa: {
             id: number;
@@ -39,35 +34,26 @@ export declare class PersonasController {
         numeroDocumento: string;
         nombres: string;
         apellidos: string;
-        area: string | null;
+        fotoUrl: string | null;
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
         empresaId: number;
-        puestoId: number | null;
     }[]>;
     findOne(id: number): Promise<{
-        puesto: {
-            id: number;
-            nombre: string;
-            caso: import("../generated/prisma/enums.js").CasoPuesto;
-        } | null;
         cumplimiento: {
             habilitado: boolean;
             dadoDeBaja: boolean;
-            sinPuesto: boolean;
-            documentosFaltantes: string[];
+            sinDocumentos: boolean;
+            documentosVencidos: string[];
         };
-        requisitos: {
+        documentosActuales: {
+            id: number;
             tipoDocumentoId: number;
             nombre: string;
-            obligatorio: boolean;
-            documento: {
-                id: number;
-                version: number;
-                fechaVencimiento: Date | null;
-                creadoEn: Date;
-            } | null;
+            version: number;
+            fechaVencimiento: Date | null;
+            creadoEn: Date;
             vigente: boolean;
         }[];
         empresa: {
@@ -78,7 +64,6 @@ export declare class PersonasController {
             tipoDocumento: {
                 id: number;
                 nombre: string;
-                tipoValidacion: import("../generated/prisma/enums.js").TipoValidacionDocumento;
             };
         } & {
             creadoEn: Date;
@@ -94,35 +79,44 @@ export declare class PersonasController {
         numeroDocumento: string;
         nombres: string;
         apellidos: string;
-        area: string | null;
+        fotoUrl: string | null;
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
         empresaId: number;
-        puestoId: number | null;
     }>;
     update(id: number, dto: UpdatePersonaDto, user: AuthenticatedUser): Promise<{
         tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
         apellidos: string;
-        area: string | null;
+        fotoUrl: string | null;
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
         empresaId: number;
-        puestoId: number | null;
     }>;
     updateEstado(id: number, dto: UpdateEstadoPersonaDto, user: AuthenticatedUser): Promise<{
         tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
         apellidos: string;
-        area: string | null;
+        fotoUrl: string | null;
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
         empresaId: number;
-        puestoId: number | null;
     }>;
+    subirFoto(id: number, foto: Express.Multer.File, user: AuthenticatedUser): Promise<{
+        tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
+        numeroDocumento: string;
+        nombres: string;
+        apellidos: string;
+        fotoUrl: string | null;
+        estado: import("../generated/prisma/enums.js").EstadoPersona;
+        creadoEn: Date;
+        id: number;
+        empresaId: number;
+    }>;
+    verFoto(id: number, res: Response): Promise<void>;
 }

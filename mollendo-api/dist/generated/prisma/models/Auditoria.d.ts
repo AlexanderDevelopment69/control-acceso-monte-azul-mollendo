@@ -315,6 +315,13 @@ export type AuditoriaUncheckedUpdateManyWithoutUsuarioNestedInput = {
 export type EnumAccionAuditoriaFieldUpdateOperationsInput = {
     set?: $Enums.AccionAuditoria;
 };
+export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null;
+    increment?: number;
+    decrement?: number;
+    multiply?: number;
+    divide?: number;
+};
 export type AuditoriaCreateWithoutUsuarioInput = {
     tablaAfectada: string;
     registroId: number;

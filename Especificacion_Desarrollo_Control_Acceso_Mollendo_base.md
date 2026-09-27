@@ -2,7 +2,7 @@
 
 > **Versión base.** Este documento parte de `Especificacion_Desarrollo_Control_Acceso_Mollendo_final.md` y lo recorta al **alcance base** definido en `Costo_y_Plazo_por_Alcance_TMAM.docx` (S/ 2,500 · 5 días). Todo lo que no figura aquí **no se desarrolla** en esta etapa (ver §11, "Fuera del alcance base").
 >
-> **Qué es el alcance base:** es lo mínimo para que el sistema funcione en campo. Un **administrador único** carga la empresa, el personal y sus documentos, que quedan **ya válidos** (no hay autoservicio ni aprobación). En el ingreso, el sistema valida **documentos vigentes + prueba de alcohol**, con la integración física conectada (terminal ZKTeco G4 Pro, alcoholímetro y molinete).
+> **Qué es el alcance base:** es lo mínimo para que el sistema funcione en campo. Un **administrador único** carga la empresa, el trabajador y sus documentos, que quedan **ya válidos** (no hay autoservicio ni aprobación). **No hay perfiles ni puestos** (decisión del cliente, 2026-09-27): el administrador registra empresa, trabajador y documentos, nada más. En el ingreso, el sistema valida **documentos vigentes + prueba de alcohol**, con la integración física conectada (terminal ZKTeco G4 Pro, alcoholímetro y molinete).
 
 ---
 
@@ -28,7 +28,7 @@
 
 ## 2. Principios de la solución (alcance base)
 
-- **Carga centralizada:** un único administrador ingresa empresas, personal, documentos y visitas. No hay portal para proveedores.
+- **Carga centralizada:** un único administrador registra al trabajador (y su empresa, si es nueva) y sube sus documentos desde una sola pantalla. No hay portal para proveedores, perfiles ni puestos.
 - **Documento cargado = documento válido:** el administrador sube el documento ya revisado; no existe un paso de aprobación, observación ni rechazo.
 - **Revalidación en garita:** en cada ingreso se revisa de nuevo que los documentos estén vigentes a la fecha; que un documento haya sido válido al cargarlo no basta.
 - **Bloqueo automático:** si falta un documento obligatorio o está vencido, si la prueba de alcohol no es conforme o si la persona está dada de baja, el molinete no abre, sin intervención manual.
@@ -40,27 +40,29 @@
 
 | Rol | Quién lo usa | Permisos |
 |---|---|---|
-| **Administrador** | Una persona designada por OTP (administrador único) | Todo: gestiona empresas, puestos, tipos de documento, requisitos por puesto, personal, documentos y visitas; consulta el historial de accesos y la auditoría básica |
+| **Administrador** | Una persona designada por OTP (administrador único) | Registra trabajadores (y crea su empresa si es nueva), sube y renueva sus documentos y los da de baja o reactiva; consulta el panel de vigilancia, el historial de accesos, la auditoría básica y el estado del sistema |
 | **Vigilancia** | Personal en garita | Solo lectura: ve en pantalla el resultado de cada ingreso/salida y el motivo si se deniega; consulta el historial de accesos |
 
 - **Ambos roles inician sesión** en el mismo login (`/auth/login`) con correo y contraseña. Al entrar, cada uno ve solo su vista: el Administrador, la vista de administración; Vigilancia, la pantalla de garita.
 - El nombre del rol en el sistema es `administrador` (reemplaza al `administracion` del código actual).
 - No existen roles de empresa, SSMA, Operaciones, Atención al Cliente, OPIP, Auditor ni Sistemas.
-- No hay invitación ni activación de cuentas por correo. Las cuentas se crean por seed o las crea el administrador desde **Usuarios**, donde también restablece contraseñas (no hay recuperación por correo).
+- No hay invitación ni activación de cuentas por correo. Las cuentas se crean por seed (`npm run db:seed`). La API `/usuarios` permite crear cuentas, darlas de baja y restablecer contraseñas; la web no tiene pantalla para eso (no hay recuperación por correo).
 
 ---
 
-## 4. Personas y requisitos
+## 4. Personal y documentos
 
-### 4.1. Puesto genérico
+### 4.1. Sin perfiles ni puestos
 
-- Cada persona tiene un **puesto** que se toma de un catálogo fijo (por ejemplo: Personal propio, Contratista, Visita, Conductor, Cliente).
-- El catálogo de puestos, el de tipos de documento y la tabla de **qué documentos exige cada puesto** se cargan **una sola vez** (por seed o desde la vista de administración). No hay matriz configurable por actividad, zona ni nivel de riesgo.
-- Al registrar a una persona, el sistema muestra qué documentos exige su puesto.
+- El trabajador se registra con su empresa, tipo y número de documento, nombres, apellidos y **foto** (obligatoria), todo en un solo formulario junto con sus documentos.
+- La **foto** se usa para el reconocimiento facial del terminal ZKTeco G4 Pro: al subirla (o cambiarla) el backend avisa a la integración con ZKBio CVSecurity para enrolar el rostro. Ese envío está **pendiente de la documentación/SDK de ZKBio**: hoy solo queda registrado en el log. Solo imágenes JPG, PNG o WEBP de hasta 5 MB; se guarda en disco junto a sus documentos.
+- **No hay perfiles, puestos ni matriz de requisitos:** el sistema no sabe qué documentos le corresponden a cada trabajador. Que se suban los correctos depende del administrador.
+- Los **nombres de documento** (SCTR, Inducción, etc.) forman una lista que crece sola: al subir un documento se elige uno de la lista o se escribe uno nuevo.
+- Si un documento vence o no lo define su **fecha de vencimiento**: vacía = no vence.
 
 ### 4.2. Qué no se modela
 
-- Los 13 perfiles de la matriz de casos del cliente, las autoridades, las zonas y los colores de fotocheck.
+- Los 13 perfiles de la especificación final, los puestos, las autoridades, las zonas y los colores de fotocheck.
 - Activos (vehículos, maquinaria, equipos), operadores y checklists. Un conductor se valida solo como persona, no su unidad.
 
 ---
@@ -71,7 +73,7 @@
 
 | Componente | Función | Responsable |
 |---|---|---|
-| **Vista de administración** | Aplicación web (Next.js). Pantalla principal **Personal y documentos**: lista del personal con ✔/✖ de si hoy puede ingresar y, al elegir a alguien, sus documentos exigidos para subirlos o renovarlos (más puesto, baja y visitas). Menú: Personal y documentos, Panel de vigilancia, Configuración (empresas, puestos y requisitos, tipos de documento, usuarios), Auditoría, Sistema y APIs y Manual | Este desarrollo |
+| **Vista de administración** | Aplicación web (Next.js). Pantalla principal **Personal y documentos**: lista del personal con ✔/✖ de si hoy puede ingresar y, al elegir a alguien, sus documentos exigidos para subirlos o renovarlos (más baja/reactivación e historial). "+ Nuevo personal" lo registra y, si su empresa no existe, la crea en el mismo formulario. Menú: Personal y documentos, Panel de vigilancia, Auditoría, Sistema y APIs y Manual | Este desarrollo |
 | **Pantalla de garita** | Vista simple (Next.js) para Vigilancia: último evento en tiempo real con su resultado y motivo, más el historial del día. No incluye ocupación de planta ni modo contingencia | Este desarrollo |
 | **Backend / API** | NestJS: API REST, motor de validación y adaptadores de integración física | Este desarrollo |
 | **Base de datos** | PostgreSQL: empresas, personas, documentos, eventos y auditoría | Este desarrollo |
@@ -108,13 +110,12 @@
 
 ## 6. Flujos funcionales
 
-**6.1. Alta de empresa, personal y documentos (administrador)**
-1. El administrador registra la empresa (RUC, razón social, correo de contacto). No se envía invitación.
-2. Registra a la persona (tipo y número de documento, nombres, apellidos, empresa, puesto). El sistema muestra los documentos que exige su puesto.
-3. Sube cada documento con su fecha de emisión y de vencimiento. El documento queda **válido desde que se carga**.
-4. Para renovar un documento, sube una versión nueva. La versión anterior se conserva en el historial y **solo cuenta la más reciente**.
-5. Puede dar de baja o reactivar a una persona.
-6. Cada alta o modificación queda en la auditoría básica.
+**6.1. Alta de trabajador y documentos (administrador)**
+1. El administrador registra al trabajador (empresa, tipo y número de documento, nombres, apellidos). Si la empresa no existe, la crea en el mismo formulario (RUC, razón social, correo de contacto). No se envía invitación.
+2. Se abre la ficha del trabajador. Ahí sube cada documento: lo elige de la lista (o escribe un nombre nuevo), indica su fecha de vencimiento (vacía si no vence) y adjunta el archivo. El documento queda **válido desde que se carga**.
+3. Para renovar un documento, sube una versión nueva. La anterior se conserva en el historial y **solo cuenta la más reciente**.
+4. Puede dar de baja o reactivar al trabajador.
+5. Cada alta o modificación queda en la auditoría básica.
 
 **6.2. Ingreso (flujo físico diario)**
 1. La persona se identifica en el terminal ZKTeco G4 Pro (rostro) y hace la prueba de alcohol en el mismo punto.
@@ -122,8 +123,7 @@
 3. El motor de validación evalúa, en este orden:
    - **Persona no registrada:** se deniega y se muestra en la pantalla de garita, pero no se guarda un evento (no hay persona a quien vincularlo).
    - **Persona dada de baja:** se deniega de inmediato con un mensaje específico, sin evaluar nada más.
-   - **Puesto:** la persona debe tener un puesto asignado.
-   - **Documentos:** cada documento obligatorio del puesto debe existir y su última versión debe estar vigente a la fecha actual.
+   - **Documentos:** debe tener al menos un documento cargado, y la última versión de cada uno debe estar vigente a la fecha actual.
    - **Alcohol:** el resultado debe ser `conforme`.
 4. Si todo es conforme, el ingreso se **AUTORIZA** y se envía la orden de apertura al molinete.
 5. Si algo falla, el ingreso se **DENIEGA** y se muestran **todos los motivos a la vez** (documentos y/o alcohol).
@@ -135,9 +135,7 @@
 3. **No hay antipassback:** no se exige un ingreso previo ni se bloquea un segundo ingreso sin salida.
 
 **6.4. Visitas**
-1. El administrador registra a la visita como persona (con puesto "Visita" y los documentos que ese puesto exige) y agenda la visita con su motivo, fecha y hora.
-2. La visita no pasa por invitación ni aprobación. Queda registrada como información para Vigilancia.
-3. En garita, la visita se valida igual que cualquier otra persona (§6.2).
+No se agendan visitas (decisión del cliente, 2026-09-26). Una visita se registra como cualquier trabajador, con sus documentos, y en garita se valida igual (§6.2).
 
 ---
 
@@ -149,11 +147,11 @@ Es una función pura, sin I/O, con pruebas unitarias.
 |---|---|---|
 | Persona inexistente | Denegar | `persona_no_registrada` (termina aquí) |
 | `persona.estado = baja` | Denegar con prioridad sobre todo lo demás | `persona_de_baja` (termina aquí) |
-| Documentos obligatorios del puesto | Cada uno debe existir, en su última versión, con `fecha_vencimiento >= hoy` (o sin fecha de vencimiento) | `documentos_faltantes_o_vencidos` (con la lista de documentos) |
-| Persona sin puesto asignado | Denegar (no hay requisitos contra los cuales validarla) | `sin_puesto_asignado` |
+| Sin documentos cargados | Debe tener al menos un documento | `sin_documentos` |
+| Documentos vencidos | La última versión de cada documento debe tener `fecha_vencimiento >= hoy` (o no tener fecha) | `documentos_vencidos` (con la lista) |
 | Resultado de alcohol | Debe ser `conforme` | `alcohol_no_conforme` |
 
-Puesto, documentos y alcohol se evalúan juntos y se informan todos los motivos a la vez. Un documento que vence hoy sigue vigente todo el día.
+Documentos y alcohol se evalúan juntos y se informan todos los motivos a la vez. Un documento que vence hoy sigue vigente todo el día.
 
 ---
 
@@ -165,12 +163,9 @@ Puesto, documentos y alcohol se evalúan juntos y se informan todos los motivos 
 |---|---|
 | `empresa` | Proveedor o cliente (incluye OTP/MAS) |
 | `usuario` | Acceso al sistema, con `rol` (`administrador` \| `vigilancia`); pertenece a la empresa interna OTP/MAS |
-| `puesto` | Catálogo fijo de puestos genéricos |
-| `tipo_documento` | Catálogo de documentos (SCTR, inducción, etc.) |
-| `requisito_por_puesto` | Documentos que exige cada puesto |
+| `tipo_documento` | Nombres de documento (SCTR, Inducción, etc.); la lista crece al subir documentos |
 | `persona` | Trabajador, contratista, visita o conductor |
 | `documento_persona` | Documento cargado, con historial de versiones |
-| `solicitud_visita` | Visita agendada por el administrador |
 | `evento_acceso` | Cada ingreso o salida |
 | `auditoria` | Registro básico de quién cargó o modificó qué |
 
@@ -179,21 +174,16 @@ Puesto, documentos y alcohol se evalúan juntos y se informan todos los motivos 
 ```mermaid
 erDiagram
   EMPRESA ||--o{ PERSONA : emplea
-  PUESTO ||--o{ PERSONA : clasifica
-  PUESTO ||--o{ REQUISITO_POR_PUESTO : define
-  TIPO_DOCUMENTO ||--o{ REQUISITO_POR_PUESTO : exigido_en
   TIPO_DOCUMENTO ||--o{ DOCUMENTO_PERSONA : es_tipo
   PERSONA ||--o{ DOCUMENTO_PERSONA : presenta
-  PERSONA ||--o{ SOLICITUD_VISITA : tiene
   PERSONA ||--o{ EVENTO_ACCESO : genera
   EMPRESA ||--o{ USUARIO : tiene
-  EMPRESA ||--o{ SOLICITUD_VISITA : registra
   USUARIO ||--o{ AUDITORIA : realiza
 ```
 
 ### 8.3. Script SQL (PostgreSQL)
 
-Equivale al esquema Prisma (`mollendo-api/prisma/schema.prisma`) después de la migración `20260926120000_alcance_base`.
+Equivale al esquema Prisma (`mollendo-api/prisma/schema.prisma`) después de las migraciones `20260926120000_alcance_base`, `20260926180000_sin_visitas`, `20260927090000_sin_perfiles` y `20260927120000_foto_persona`.
 
 ```sql
 -- =====================================================================
@@ -203,11 +193,8 @@ Equivale al esquema Prisma (`mollendo-api/prisma/schema.prisma`) después de la 
 CREATE TYPE estado_empresa            AS ENUM ('activa', 'inactiva');
 CREATE TYPE rol_usuario               AS ENUM ('administrador', 'vigilancia');
 CREATE TYPE estado_cuenta             AS ENUM ('activo', 'baja');
-CREATE TYPE caso_puesto               AS ENUM ('visita', 'personal_propio', 'contratista', 'tercero');
 CREATE TYPE tipo_documento_identidad  AS ENUM ('DNI', 'CE', 'PASAPORTE');
 CREATE TYPE estado_persona            AS ENUM ('activo', 'inactivo');   -- inactivo = dado de baja
-CREATE TYPE tipo_validacion_documento AS ENUM ('fecha_vencimiento', 'si_no', 'vigente_por_actividad');
-CREATE TYPE estado_solicitud_visita   AS ENUM ('programada', 'completada', 'cancelada');
 CREATE TYPE tipo_movimiento           AS ENUM ('ingreso', 'salida');
 CREATE TYPE resultado_acceso          AS ENUM ('autorizado', 'denegado');
 CREATE TYPE accion_auditoria          AS ENUM ('crear', 'modificar', 'eliminar');
@@ -237,43 +224,26 @@ CREATE TABLE usuario (
     creado_en       TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE TABLE puesto (
-    id      SERIAL PRIMARY KEY,
-    nombre  VARCHAR(100) NOT NULL,
-    caso    caso_puesto NOT NULL,
-    UNIQUE (nombre, caso)
-);
-
--- 'si_no' y 'vigente_por_actividad' no vencen salvo que se cargue una fecha.
+-- Nombres de documento. Si vence o no lo define la fecha de cada documento.
 CREATE TABLE tipo_documento (
-    id                  SERIAL PRIMARY KEY,
-    nombre              VARCHAR(100) NOT NULL UNIQUE,
-    tipo_validacion     tipo_validacion_documento NOT NULL
-);
-
-CREATE TABLE requisito_por_puesto (
-    puesto_id           INTEGER NOT NULL REFERENCES puesto(id),
-    tipo_documento_id   INTEGER NOT NULL REFERENCES tipo_documento(id),
-    obligatorio         BOOLEAN NOT NULL DEFAULT true,
-    PRIMARY KEY (puesto_id, tipo_documento_id)
+    id      SERIAL PRIMARY KEY,
+    nombre  VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE persona (
     id                          SERIAL PRIMARY KEY,
     empresa_id                  INTEGER NOT NULL REFERENCES empresa(id),
-    puesto_id                   INTEGER REFERENCES puesto(id),  -- NULL = sin puesto: el ingreso se deniega
     tipo_documento_identidad    tipo_documento_identidad NOT NULL,
     numero_documento            VARCHAR(20) NOT NULL,
     nombres                     VARCHAR(150) NOT NULL,
     apellidos                   VARCHAR(150) NOT NULL,
-    area                        VARCHAR(100),
+    foto_url                    VARCHAR(500),                    -- foto para reconocimiento facial
     estado                      estado_persona NOT NULL DEFAULT 'activo',
     creado_en                   TIMESTAMP NOT NULL DEFAULT now(),
     UNIQUE (tipo_documento_identidad, numero_documento)
 );
 
 CREATE INDEX ON persona(empresa_id);
-CREATE INDEX ON persona(puesto_id);
 CREATE INDEX ON persona(numero_documento);
 
 -- Sin estado de aprobación: todo documento cargado es válido. La vigencia se
@@ -293,21 +263,6 @@ CREATE TABLE documento_persona (
 CREATE INDEX ON documento_persona(persona_id);
 CREATE INDEX ON documento_persona(persona_id, tipo_documento_id, version);
 
--- Visita agendada por el administrador, sin flujo de aprobación.
-CREATE TABLE solicitud_visita (
-    id                      SERIAL PRIMARY KEY,
-    persona_id              INTEGER NOT NULL REFERENCES persona(id),
-    empresa_id              INTEGER NOT NULL REFERENCES empresa(id),  -- la de la persona
-    persona_visitada        VARCHAR(150) NOT NULL,
-    motivo                  VARCHAR(300) NOT NULL,
-    fecha_hora_programada   TIMESTAMP NOT NULL,
-    estado                  estado_solicitud_visita NOT NULL DEFAULT 'programada',
-    creado_en               TIMESTAMP NOT NULL DEFAULT now()
-);
-
-CREATE INDEX ON solicitud_visita(persona_id);
-CREATE INDEX ON solicitud_visita(fecha_hora_programada);
-
 -- Ingreso / salida. Sin antipassback: la salida siempre es 'autorizado'.
 -- Un documento no registrado no genera fila (no hay persona a quien
 -- vincularla); solo se informa en la respuesta y en la pantalla de garita.
@@ -317,7 +272,7 @@ CREATE TABLE evento_acceso (
     tipo_movimiento             tipo_movimiento NOT NULL,
     resultado                   resultado_acceso NOT NULL,
     denegado_por_baja           BOOLEAN NOT NULL DEFAULT false,  -- prioridad sobre los demás
-    denegado_sin_puesto         BOOLEAN NOT NULL DEFAULT false,
+    denegado_sin_documentos     BOOLEAN NOT NULL DEFAULT false,
     denegado_por_alcohol        BOOLEAN NOT NULL DEFAULT false,
     denegado_por_documentos     BOOLEAN NOT NULL DEFAULT false,
     fecha_hora                  TIMESTAMP NOT NULL DEFAULT now(),
@@ -362,12 +317,11 @@ Todas bajo `/api/v1`. Swagger interno (solo fuera de producción) en `/api/docs`
 | POST | `/auth/refresh-token` | Público | Renueva el JWT |
 | GET/POST/PATCH | `/usuarios`, `/usuarios/:id` | Admin | Crear cuentas, darlas de baja o reactivarlas, restablecer la contraseña |
 | GET/POST/PATCH | `/empresas`, `/empresas/:id` | Admin | Alta, listado, detalle, edición y activar/desactivar |
-| GET/POST | `/puestos`, `/puestos/:id/requisitos` | Admin (lectura: todos) | Catálogo de puestos y documentos que exige cada uno |
-| GET/POST | `/tipos-documento` | Admin (lectura: todos) | Catálogo de documentos |
-| GET/POST/PATCH | `/personas`, `/personas/:id` | Admin (Vigilancia: lectura) | Alta (con `empresaId`), listado, detalle y edición (incluye cambio de puesto) |
+| GET/POST | `/tipos-documento` | Admin (lectura: todos) | Nombres de documento; crear uno que ya existe devuelve el existente |
+| GET/POST/PATCH | `/personas`, `/personas/:id` | Admin (Vigilancia: lectura) | Alta (con `empresaId`), listado y detalle con cumplimiento (✔/✖) y documentos actuales |
+| POST/GET | `/personas/:id/foto` | Admin (Vigilancia: ver) | Subir o reemplazar la foto (JPG/PNG/WEBP, 5 MB) y verla; al subirla se avisa a ZKBio para enrolar el rostro (pendiente del SDK) |
 | PATCH | `/personas/:id/estado` | Admin | Dar de baja (`inactivo`) o reactivar (`activo`) |
 | POST/GET | `/personas/:id/documentos` | Admin (Vigilancia: lectura) | Subir o renovar documento (nueva versión, ya válido) e historial |
-| GET/POST/PATCH | `/solicitudes-visita`, `/solicitudes-visita/:id` | Admin (Vigilancia: lectura) | Agendar, listar, reprogramar y cancelar visitas |
 | POST | `/integraciones/zkbio/webhook` | Dispositivo (API key) | Recibe identificación + resultado de alcohol de ZKBio CVSecurity y ejecuta el ingreso (contrato provisional) |
 | POST | `/eventos-acceso/ingreso` | Dispositivo (API key) | Ingreso: aplica el motor de validación y ordena la apertura del molinete si es autorizado |
 | POST | `/eventos-acceso/salida` | Dispositivo (API key) | Registro básico de salida y apertura del molinete |
@@ -395,7 +349,8 @@ No se desarrolla nada de lo siguiente. Se cubre pasando al alcance menor (S/ 3,5
 - Sanciones y restricciones con niveles.
 - Credencial digital con QR.
 - Panel de garita avanzado, identificación conjunta y modo contingencia sin conexión.
-- Invitaciones de visita, control de equipos electrónicos personales y de materiales (pase y guía de remisión).
+- **Agenda de visitas** (a quién visita y cuándo): el documento de costos la incluía en el alcance base, pero el cliente decidió quitarla el 2026-09-26. También quedan fuera las invitaciones de visita y el control de equipos electrónicos personales y de materiales (pase y guía de remisión).
+- **Perfiles y puestos** con documentos exigidos (decisión del cliente, 2026-09-27). **Pantalla de usuarios:** las cuentas se crean por seed (§3).
 - Alertas y notificaciones, y reportes exportables a Excel/PDF.
 - API pública documentada, MFA, respaldos con prueba de restauración.
 - Dossier de entregables, manuales, capacitación y verificación de los criterios de aceptación de OTP.
@@ -407,6 +362,5 @@ No se desarrolla nada de lo siguiente. Se cubre pasando al alcance menor (S/ 3,5
 
 - **Marca y modelo del molinete**, y su API o SDK.
 - **Documentación o SDK de ZKBio CVSecurity:** si ofrece webhook o hay que hacer polling, y el formato del evento (identificación + alcohol).
-- **Catálogo inicial** de puestos, tipos de documento y requisitos por puesto, para cargar el seed.
 
 Mientras estos puntos no se definan, el plazo (5 días) y el costo podrían variar.

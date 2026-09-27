@@ -14,8 +14,7 @@ export declare class EventosAccesoService {
     constructor(prisma: PrismaService, eventEmitter: EventEmitter2);
     private findPersonaPorDocumento;
     private responderNoRegistrada;
-    private getDocumentosRequeridos;
-    private getDocumentosVigentes;
+    private getDocumentosActuales;
     registrarIngreso(dto: IngresoDto): Promise<{
         eventoId: null;
         tipoMovimiento: "ingreso" | "salida";
@@ -39,10 +38,10 @@ export declare class EventosAccesoService {
         numeroDocumento: string;
         motivos: {
             dadoDeBaja: boolean;
-            sinPuesto: boolean;
+            sinDocumentos: boolean;
             alcohol: boolean;
             documentos: boolean;
-            documentosFaltantes: string[];
+            documentosVencidos: string[];
         };
     }>;
     registrarSalida(dto: SalidaDto): Promise<{
@@ -76,15 +75,15 @@ export declare class EventosAccesoService {
             apellidos: string;
         };
     } & {
+        id: number;
+        personaId: number;
         tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
         resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
         denegadoPorBaja: boolean;
         denegadoPorAlcohol: boolean;
         denegadoPorDocumentos: boolean;
-        denegadoSinPuesto: boolean;
+        denegadoSinDocumentos: boolean;
         fechaHora: Date;
         torniqueteId: string | null;
-        id: number;
-        personaId: number;
     })[]>;
 }

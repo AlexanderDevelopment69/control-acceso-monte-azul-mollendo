@@ -3,25 +3,23 @@ export function evaluarIngreso(input) {
         return {
             autorizado: false,
             denegadoPorBaja: true,
-            denegadoSinPuesto: false,
+            denegadoSinDocumentos: false,
             denegadoPorAlcohol: false,
             denegadoPorDocumentos: false,
-            documentosFaltantes: [],
+            documentosVencidos: [],
         };
     }
-    const denegadoSinPuesto = !input.tienePuesto;
-    const documentosFaltantes = input.documentosRequeridos
-        .filter((doc) => !input.documentosVigentes.has(doc.tipoDocumentoId))
-        .map((doc) => doc.nombre);
+    const denegadoSinDocumentos = input.documentos.length === 0;
+    const documentosVencidos = input.documentos.filter((d) => !d.vigente).map((d) => d.nombre);
+    const denegadoPorDocumentos = documentosVencidos.length > 0;
     const denegadoPorAlcohol = !input.alcoholConforme;
-    const denegadoPorDocumentos = documentosFaltantes.length > 0;
     return {
-        autorizado: !denegadoSinPuesto && !denegadoPorAlcohol && !denegadoPorDocumentos,
+        autorizado: !denegadoSinDocumentos && !denegadoPorDocumentos && !denegadoPorAlcohol,
         denegadoPorBaja: false,
-        denegadoSinPuesto,
+        denegadoSinDocumentos,
         denegadoPorAlcohol,
         denegadoPorDocumentos,
-        documentosFaltantes,
+        documentosVencidos,
     };
 }
 export function ultimasVersiones(documentos) {
@@ -34,14 +32,14 @@ export function ultimasVersiones(documentos) {
     }
     return ultimas;
 }
-export function tiposDocumentoVigentes(documentos, hoy) {
-    const vigentes = new Set();
-    for (const [tipoDocumentoId, doc] of ultimasVersiones(documentos)) {
-        if (esDocumentoVigente(doc.fechaVencimiento, hoy)) {
-            vigentes.add(tipoDocumentoId);
-        }
-    }
-    return vigentes;
+export function documentosActuales(documentos, hoy) {
+    return [...ultimasVersiones(documentos).values()]
+        .map((doc) => ({
+        tipoDocumentoId: doc.tipoDocumentoId,
+        nombre: doc.tipoDocumento.nombre,
+        vigente: esDocumentoVigente(doc.fechaVencimiento, hoy),
+    }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre));
 }
 export function esDocumentoVigente(fechaVencimiento, hoy) {
     if (!fechaVencimiento) {

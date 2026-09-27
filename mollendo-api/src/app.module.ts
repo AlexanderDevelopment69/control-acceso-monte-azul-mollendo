@@ -11,10 +11,8 @@ import { UsuariosModule } from './usuarios/usuarios.module.js';
 import { EmpresasModule } from './empresas/empresas.module.js';
 import { AuditoriaModule } from './auditoria/auditoria.module.js';
 import { TiposDocumentoModule } from './tipos-documento/tipos-documento.module.js';
-import { PuestosModule } from './puestos/puestos.module.js';
 import { PersonasModule } from './personas/personas.module.js';
 import { DocumentosModule } from './documentos/documentos.module.js';
-import { SolicitudesVisitaModule } from './solicitudes-visita/solicitudes-visita.module.js';
 import { EventosAccesoModule } from './eventos-acceso/eventos-acceso.module.js';
 import { IntegracionesModule } from './integraciones/integraciones.module.js';
 import { PanelModule } from './panel/panel.module.js';
@@ -32,10 +30,8 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     UsuariosModule,
     EmpresasModule,
     TiposDocumentoModule,
-    PuestosModule,
     PersonasModule,
     DocumentosModule,
-    SolicitudesVisitaModule,
     EventosAccesoModule,
     IntegracionesModule,
     PanelModule,

@@ -27,10 +27,10 @@ export declare class IntegracionesController {
         numeroDocumento: string;
         motivos: {
             dadoDeBaja: boolean;
-            sinPuesto: boolean;
+            sinDocumentos: boolean;
             alcohol: boolean;
             documentos: boolean;
-            documentosFaltantes: string[];
+            documentosVencidos: string[];
         };
     }>;
     enviarComandoTorniquete(dto: TorniqueteComandoDto): Promise<{

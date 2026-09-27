@@ -29,6 +29,9 @@ let IntegracionesService = IntegracionesService_1 = class IntegracionesService {
     async abrirMolinete(evento) {
         await this.enviarComandoTorniquete({ torniqueteId: evento.torniqueteId ?? 'T1', comando: 'abrir' });
     }
+    enrolarRostro(evento) {
+        this.logger.log(`Enrolar rostro en ZKBio: ${evento.tipoDocumentoIdentidad} ${evento.numeroDocumento} (persona ${evento.personaId}), foto ${evento.rutaFoto} (mock, sin SDK real todavía)`);
+    }
     async enviarComandoTorniquete(dto) {
         this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (mock, sin SDK real todavía)`);
         return { enviado: true };
@@ -40,6 +43,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], IntegracionesService.prototype, "abrirMolinete", null);
+__decorate([
+    OnEvent('persona.foto-actualizada'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], IntegracionesService.prototype, "enrolarRostro", null);
 IntegracionesService = IntegracionesService_1 = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [EventosAccesoService])

@@ -1,4 +1,7 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { existsSync, unlinkSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
@@ -7,53 +10,46 @@ import type { UpdatePersonaDto } from './dto/update-persona.dto.js';
 import type { UpdateEstadoPersonaDto } from './dto/update-estado-persona.dto.js';
 import type { QueryPersonasDto } from './dto/query-personas.dto.js';
 import {
+  documentosActuales,
   esDocumentoVigente,
   evaluarIngreso,
-  tiposDocumentoVigentes,
   ultimasVersiones,
   type DocumentoCargado,
 } from '../eventos-acceso/validacion-acceso.engine.js';
 
 const EMPRESA_SELECT = { select: { id: true, razonSocial: true } } as const;
-const PUESTO_CON_REQUISITOS = { include: { requisitos: { include: { tipoDocumento: true } } } } as const;
-
-interface PersonaParaCumplimiento {
-  estado: 'activo' | 'inactivo';
-  puestoId: number | null;
-  puesto: { requisitos: { tipoDocumentoId: number; obligatorio: boolean; tipoDocumento: { nombre: string } }[] } | null;
-}
 
 /**
  * ¿Podría ingresar hoy, suponiendo alcohol conforme? Usa el mismo motor que el
  * molinete, para que el ✔/✖ de la pantalla del administrador nunca difiera de
  * lo que pasa en garita.
  */
-function evaluarCumplimiento(persona: PersonaParaCumplimiento, documentos: DocumentoCargado[]) {
-  const documentosRequeridos = (persona.puesto?.requisitos ?? [])
-    .filter((r) => r.obligatorio)
-    .map((r) => ({ tipoDocumentoId: r.tipoDocumentoId, nombre: r.tipoDocumento.nombre }));
-
+function evaluarCumplimiento(
+  estado: 'activo' | 'inactivo',
+  documentos: (DocumentoCargado & { tipoDocumento: { nombre: string } })[],
+) {
   const resultado = evaluarIngreso({
-    personaActiva: persona.estado === 'activo',
-    tienePuesto: persona.puestoId !== null,
+    personaActiva: estado === 'activo',
     alcoholConforme: true,
-    documentosRequeridos,
-    documentosVigentes: tiposDocumentoVigentes(documentos, new Date()),
+    documentos: documentosActuales(documentos, new Date()),
   });
 
   return {
     habilitado: resultado.autorizado,
     dadoDeBaja: resultado.denegadoPorBaja,
-    sinPuesto: resultado.denegadoSinPuesto,
-    documentosFaltantes: resultado.documentosFaltantes,
+    sinDocumentos: resultado.denegadoSinDocumentos,
+    documentosVencidos: resultado.documentosVencidos,
   };
 }
 
 @Injectable()
 export class PersonasService {
+  private readonly logger = new Logger(PersonasService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoriaService: AuditoriaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private async assertEmpresaExiste(empresaId: number): Promise<void> {
@@ -94,32 +90,37 @@ export class PersonasService {
   /** Listado con el cumplimiento de cada persona (para el ✔/✖ de la pantalla principal). */
   async findAll(query: QueryPersonasDto) {
     const personas = await this.prisma.persona.findMany({
-      where: { empresaId: query.empresaId, puestoId: query.puestoId, estado: query.estado },
+      where: { empresaId: query.empresaId, estado: query.estado },
       include: {
         empresa: EMPRESA_SELECT,
-        puesto: PUESTO_CON_REQUISITOS,
-        documentos: { select: { id: true, tipoDocumentoId: true, version: true, fechaVencimiento: true } },
+        documentos: {
+          select: {
+            id: true,
+            tipoDocumentoId: true,
+            version: true,
+            fechaVencimiento: true,
+            tipoDocumento: { select: { nombre: true } },
+          },
+        },
       },
       orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
     });
 
-    return personas.map(({ documentos, puesto, ...persona }) => ({
+    return personas.map(({ documentos, ...persona }) => ({
       ...persona,
-      puesto: puesto && { id: puesto.id, nombre: puesto.nombre, caso: puesto.caso },
-      cumplimiento: evaluarCumplimiento({ ...persona, puesto }, documentos),
+      cumplimiento: evaluarCumplimiento(persona.estado, documentos),
     }));
   }
 
   /**
-   * Ficha completa: cumplimiento, los documentos que exige su puesto con el
-   * estado de la última versión de cada uno, y el historial completo.
+   * Ficha completa: cumplimiento, la última versión de cada documento con su
+   * vigencia (lo que cuenta en garita) y el historial completo.
    */
   async findOne(id: number) {
     const persona = await this.prisma.persona.findUnique({
       where: { id },
       include: {
         empresa: EMPRESA_SELECT,
-        puesto: PUESTO_CON_REQUISITOS,
         documentos: { include: { tipoDocumento: true }, orderBy: [{ tipoDocumentoId: 'asc' }, { version: 'desc' }] },
       },
     });
@@ -128,31 +129,22 @@ export class PersonasService {
     }
 
     const hoy = new Date();
-    const ultimas = ultimasVersiones(persona.documentos);
-    const requisitos = (persona.puesto?.requisitos ?? [])
-      .map((r) => {
-        const documento = ultimas.get(r.tipoDocumentoId) ?? null;
-        return {
-          tipoDocumentoId: r.tipoDocumentoId,
-          nombre: r.tipoDocumento.nombre,
-          obligatorio: r.obligatorio,
-          documento: documento && {
-            id: documento.id,
-            version: documento.version,
-            fechaVencimiento: documento.fechaVencimiento,
-            creadoEn: documento.creadoEn,
-          },
-          vigente: documento ? esDocumentoVigente(documento.fechaVencimiento, hoy) : false,
-        };
-      })
+    const documentosVigentes = [...ultimasVersiones(persona.documentos).values()]
+      .map((doc) => ({
+        id: doc.id,
+        tipoDocumentoId: doc.tipoDocumentoId,
+        nombre: doc.tipoDocumento.nombre,
+        version: doc.version,
+        fechaVencimiento: doc.fechaVencimiento,
+        creadoEn: doc.creadoEn,
+        vigente: esDocumentoVigente(doc.fechaVencimiento, hoy),
+      }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-    const { puesto, ...resto } = persona;
     return {
-      ...resto,
-      puesto: puesto && { id: puesto.id, nombre: puesto.nombre, caso: puesto.caso },
-      cumplimiento: evaluarCumplimiento(persona, persona.documentos),
-      requisitos,
+      ...persona,
+      cumplimiento: evaluarCumplimiento(persona.estado, persona.documentos),
+      documentosActuales: documentosVigentes,
     };
   }
 
@@ -192,5 +184,46 @@ export class PersonasService {
       accion: 'modificar',
     });
     return actualizada;
+  }
+
+  /**
+   * Guarda la foto para el reconocimiento facial y borra la anterior del
+   * disco. Avisa a la integración con ZKBio CVSecurity para enrolar el rostro
+   * en el terminal (pendiente de su documentación/SDK: hoy solo queda en el log).
+   */
+  async guardarFoto(id: number, rutaArchivo: string, user: AuthenticatedUser) {
+    const persona = await this.findPersona(id);
+    const actualizada = await this.prisma.persona.update({ where: { id }, data: { fotoUrl: rutaArchivo } });
+
+    if (persona.fotoUrl && persona.fotoUrl !== rutaArchivo && existsSync(persona.fotoUrl)) {
+      try {
+        unlinkSync(persona.fotoUrl);
+      } catch (error) {
+        this.logger.warn(`No se pudo borrar la foto anterior ${persona.fotoUrl}: ${String(error)}`);
+      }
+    }
+
+    await this.auditoriaService.registrar({
+      usuarioId: user.id,
+      tablaAfectada: 'persona',
+      registroId: id,
+      accion: 'modificar',
+    });
+    this.eventEmitter.emit('persona.foto-actualizada', {
+      personaId: id,
+      tipoDocumentoIdentidad: actualizada.tipoDocumentoIdentidad,
+      numeroDocumento: actualizada.numeroDocumento,
+      rutaFoto: rutaArchivo,
+    });
+    return actualizada;
+  }
+
+  /** Ruta absoluta de la foto en disco, para enviarla al portal. */
+  async rutaFoto(id: number): Promise<string> {
+    const persona = await this.findPersona(id);
+    if (!persona.fotoUrl || !existsSync(persona.fotoUrl)) {
+      throw new NotFoundException('El trabajador no tiene foto');
+    }
+    return resolve(persona.fotoUrl);
   }
 }

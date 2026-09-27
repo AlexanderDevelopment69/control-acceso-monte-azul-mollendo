@@ -11,6 +11,8 @@ interface SelectProps {
   onChange: (value: string) => void;
   className?: string;
   defaultValue?: string;
+  /** false = sin la opción de ayuda deshabilitada (cuando una opción real ya hace de "todos"). */
+  mostrarPlaceholder?: boolean;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -19,6 +21,7 @@ const Select: React.FC<SelectProps> = ({
   onChange,
   className = "",
   defaultValue = "",
+  mostrarPlaceholder = true,
 }) => {
   // Manage the selected value
   const [selectedValue, setSelectedValue] = useState<string>(defaultValue);
@@ -40,13 +43,15 @@ const Select: React.FC<SelectProps> = ({
       onChange={handleChange}
     >
       {/* Placeholder option */}
-      <option
-        value=""
-        disabled
-        className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
-      >
-        {placeholder}
-      </option>
+      {mostrarPlaceholder && (
+        <option
+          value=""
+          disabled
+          className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
+        >
+          {placeholder}
+        </option>
+      )}
       {/* Map over options */}
       {options.map((option) => (
         <option

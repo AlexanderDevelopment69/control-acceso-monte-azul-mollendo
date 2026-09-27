@@ -7,27 +7,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-const vacioComoIndefinido = ({ value }) => (value === '' ? undefined : value);
+import { IsIn, IsInt, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 export class CreatePersonaDto {
     empresaId;
-    puestoId;
     tipoDocumentoIdentidad;
     numeroDocumento;
     nombres;
     apellidos;
-    area;
 }
 __decorate([
     IsInt({ message: 'La empresa es obligatoria' }),
     __metadata("design:type", Number)
 ], CreatePersonaDto.prototype, "empresaId", void 0);
-__decorate([
-    IsOptional(),
-    IsInt({ message: 'El puesto debe ser válido' }),
-    __metadata("design:type", Number)
-], CreatePersonaDto.prototype, "puestoId", void 0);
 __decorate([
     IsIn(['DNI', 'CE', 'PASAPORTE'], { message: 'El tipo de documento debe ser DNI, CE o PASAPORTE' }),
     __metadata("design:type", String)
@@ -50,11 +41,4 @@ __decorate([
     MaxLength(150, { message: 'Los apellidos no pueden tener más de 150 caracteres' }),
     __metadata("design:type", String)
 ], CreatePersonaDto.prototype, "apellidos", void 0);
-__decorate([
-    Transform(vacioComoIndefinido),
-    IsOptional(),
-    IsString({ message: 'El área debe ser texto' }),
-    MaxLength(100, { message: 'El área no puede tener más de 100 caracteres' }),
-    __metadata("design:type", String)
-], CreatePersonaDto.prototype, "area", void 0);
 //# sourceMappingURL=create-persona.dto.js.map

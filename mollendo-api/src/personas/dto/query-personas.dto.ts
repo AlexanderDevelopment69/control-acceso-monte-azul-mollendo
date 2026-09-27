@@ -8,11 +8,6 @@ export class QueryPersonasDto {
   empresaId?: number;
 
   @IsOptional()
-  @Transform(({ value }) => Number(value))
-  @IsInt({ message: 'El ID del puesto debe ser un número' })
-  puestoId?: number;
-
-  @IsOptional()
   @IsIn(['activo', 'inactivo'], { message: 'El estado debe ser "activo" o "inactivo"' })
   estado?: 'activo' | 'inactivo';
 }

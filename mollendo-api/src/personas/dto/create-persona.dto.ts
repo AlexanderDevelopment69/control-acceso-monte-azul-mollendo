@@ -1,17 +1,8 @@
-import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-
-// "" se trata como "no indicado" — evita guardar un área vacía en vez de
-// simplemente ausente, sin depender de que el frontend siempre lo limpie antes.
-const vacioComoIndefinido = ({ value }: { value: unknown }) => (value === '' ? undefined : value);
+import { IsIn, IsInt, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreatePersonaDto {
   @IsInt({ message: 'La empresa es obligatoria' })
   empresaId!: number;
-
-  @IsOptional()
-  @IsInt({ message: 'El puesto debe ser válido' })
-  puestoId?: number;
 
   @IsIn(['DNI', 'CE', 'PASAPORTE'], { message: 'El tipo de documento debe ser DNI, CE o PASAPORTE' })
   tipoDocumentoIdentidad!: 'DNI' | 'CE' | 'PASAPORTE';
@@ -30,10 +21,4 @@ export class CreatePersonaDto {
   @IsNotEmpty({ message: 'Los apellidos son obligatorios' })
   @MaxLength(150, { message: 'Los apellidos no pueden tener más de 150 caracteres' })
   apellidos!: string;
-
-  @Transform(vacioComoIndefinido)
-  @IsOptional()
-  @IsString({ message: 'El área debe ser texto' })
-  @MaxLength(100, { message: 'El área no puede tener más de 100 caracteres' })
-  area?: string;
 }

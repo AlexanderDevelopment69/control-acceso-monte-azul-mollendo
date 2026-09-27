@@ -28,10 +28,10 @@ export declare class EventosAccesoController {
         numeroDocumento: string;
         motivos: {
             dadoDeBaja: boolean;
-            sinPuesto: boolean;
+            sinDocumentos: boolean;
             alcohol: boolean;
             documentos: boolean;
-            documentosFaltantes: string[];
+            documentosVencidos: string[];
         };
     }>;
     registrarSalida(dto: SalidaDto): Promise<{
@@ -65,15 +65,15 @@ export declare class EventosAccesoController {
             apellidos: string;
         };
     } & {
+        id: number;
+        personaId: number;
         tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
         resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
         denegadoPorBaja: boolean;
         denegadoPorAlcohol: boolean;
         denegadoPorDocumentos: boolean;
-        denegadoSinPuesto: boolean;
+        denegadoSinDocumentos: boolean;
         fechaHora: Date;
         torniqueteId: string | null;
-        id: number;
-        personaId: number;
     })[]>;
 }

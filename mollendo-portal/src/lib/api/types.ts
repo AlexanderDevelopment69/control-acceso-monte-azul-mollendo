@@ -1,13 +1,5 @@
 export type RolUsuario = "administrador" | "vigilancia";
 
-export interface Usuario {
-  id: number;
-  correo: string;
-  rol: RolUsuario;
-  estadoCuenta: "activo" | "baja";
-  creadoEn: string;
-}
-
 export interface Empresa {
   id: number;
   ruc: string;
@@ -21,57 +13,44 @@ export interface Empresa {
   actualizadoEn: string;
 }
 
-export interface Puesto {
-  id: number;
-  nombre: string;
-  caso: "visita" | "personal_propio" | "contratista" | "tercero";
-}
-
 export interface TipoDocumento {
   id: number;
   nombre: string;
-  tipoValidacion: "fecha_vencimiento" | "si_no" | "vigente_por_actividad";
-}
-
-export interface RequisitoPorPuesto {
-  puestoId: number;
-  tipoDocumentoId: number;
-  obligatorio: boolean;
-  tipoDocumento: TipoDocumento;
 }
 
 export interface Persona {
   id: number;
   empresaId: number;
-  puestoId: number | null;
   tipoDocumentoIdentidad: "DNI" | "CE" | "PASAPORTE";
   numeroDocumento: string;
   nombres: string;
   apellidos: string;
-  area: string | null;
+  /** Ruta de la foto para reconocimiento facial; null = sin foto. */
+  fotoUrl: string | null;
   estado: "activo" | "inactivo";
   creadoEn: string;
   empresa?: { id: number; razonSocial: string };
-  puesto?: Puesto | null;
   documentos?: DocumentoPersona[];
   /** ¿Podría ingresar hoy (suponiendo alcohol conforme)? Mismo motor que el molinete. */
   cumplimiento?: Cumplimiento;
-  /** Solo en el detalle: documentos que exige su puesto y el estado de la última versión. */
-  requisitos?: RequisitoPersona[];
+  /** Solo en el detalle: última versión de cada documento (lo que cuenta en garita). */
+  documentosActuales?: DocumentoActual[];
 }
 
 export interface Cumplimiento {
   habilitado: boolean;
   dadoDeBaja: boolean;
-  sinPuesto: boolean;
-  documentosFaltantes: string[];
+  sinDocumentos: boolean;
+  documentosVencidos: string[];
 }
 
-export interface RequisitoPersona {
+export interface DocumentoActual {
+  id: number;
   tipoDocumentoId: number;
   nombre: string;
-  obligatorio: boolean;
-  documento: { id: number; version: number; fechaVencimiento: string | null; creadoEn: string } | null;
+  version: number;
+  fechaVencimiento: string | null;
+  creadoEn: string;
   vigente: boolean;
 }
 
@@ -87,25 +66,13 @@ export interface DocumentoPersona {
   tipoDocumento?: TipoDocumento;
 }
 
-export interface SolicitudVisita {
-  id: number;
-  personaId: number;
-  empresaId: number;
-  personaVisitada: string;
-  motivo: string;
-  fechaHoraProgramada: string;
-  estado: "programada" | "completada" | "cancelada";
-  creadoEn: string;
-  persona?: { id: number; nombres: string; apellidos: string };
-}
-
 export interface EventoAcceso {
   id: number;
   personaId: number;
   tipoMovimiento: "ingreso" | "salida";
   resultado: "autorizado" | "denegado";
   denegadoPorBaja: boolean;
-  denegadoSinPuesto: boolean;
+  denegadoSinDocumentos: boolean;
   denegadoPorAlcohol: boolean;
   denegadoPorDocumentos: boolean;
   fechaHora: string;

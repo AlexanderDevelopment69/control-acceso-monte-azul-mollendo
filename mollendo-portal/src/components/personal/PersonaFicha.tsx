@@ -1,17 +1,15 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { personasApi, solicitudesVisitaApi } from "@/lib/api/endpoints";
+import { personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { Cumplimiento, DocumentoPersona, Persona, Puesto, SolicitudVisita, TipoDocumento } from "@/lib/api/types";
+import type { Cumplimiento, DocumentoPersona, Persona } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
-import Label from "@/components/form/Label";
-import Input from "@/components/form/input/InputField";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
-import { CambiarPuesto } from "./CambiarPuesto";
 import { SubirDocumentoForm } from "./SubirDocumentoForm";
+import { FotoGuardada, validarFoto } from "./FotoPersonal";
 
 /** Las columnas DATE llegan como medianoche UTC: se muestran en UTC para no correrse un día. */
 export function formatearFecha(fecha: string): string {
@@ -21,8 +19,8 @@ export function formatearFecha(fecha: string): string {
 export function motivosCumplimiento(c: Cumplimiento): string[] {
   if (c.dadoDeBaja) return ["Dado de baja"];
   const motivos: string[] = [];
-  if (c.sinPuesto) motivos.push("Sin puesto asignado");
-  if (c.documentosFaltantes.length > 0) motivos.push(`Falta o venció: ${c.documentosFaltantes.join(", ")}`);
+  if (c.sinDocumentos) motivos.push("Sin documentos cargados");
+  if (c.documentosVencidos.length > 0) motivos.push(`Vencido: ${c.documentosVencidos.join(", ")}`);
   return motivos;
 }
 
@@ -36,106 +34,37 @@ function Seccion({ titulo, descripcion, children }: { titulo: string; descripcio
   );
 }
 
-function AgendarVisitaForm({ personaId, onAgendada }: { personaId: number; onAgendada: () => void }) {
-  const [personaVisitada, setPersonaVisitada] = useState("");
-  const [motivo, setMotivo] = useState("");
-  const [fechaHora, setFechaHora] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [formKey, setFormKey] = useState(0);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!fechaHora) {
-      setError("Indica la fecha y hora de la visita");
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      await solicitudesVisitaApi.create({
-        personaId,
-        personaVisitada,
-        motivo,
-        fechaHoraProgramada: new Date(fechaHora).toISOString(),
-      });
-      setPersonaVisitada("");
-      setMotivo("");
-      setFechaHora("");
-      setFormKey((k) => k + 1);
-      onAgendada();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo agendar la visita");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <form key={formKey} onSubmit={handleSubmit} className="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-end">
-      {error && <ErrorBanner className="w-full">{error}</ErrorBanner>}
-      <div className="flex-1">
-        <Label>A quién visita</Label>
-        <Input defaultValue={personaVisitada} onChange={(e) => setPersonaVisitada(e.target.value)} />
-      </div>
-      <div className="flex-1">
-        <Label>Motivo</Label>
-        <Input defaultValue={motivo} onChange={(e) => setMotivo(e.target.value)} />
-      </div>
-      <div className="flex-1">
-        <Label>Fecha y hora</Label>
-        <Input type="datetime-local" defaultValue={fechaHora} onChange={(e) => setFechaHora(e.target.value)} />
-      </div>
-      <Button disabled={loading} className="min-w-[152px] shrink-0">
-        {loading ? "Agendando…" : "Agendar visita"}
-      </Button>
-    </form>
-  );
-}
-
-const VISITA_COLOR: Record<string, "success" | "warning" | "light"> = {
-  programada: "success",
-  completada: "light",
-  cancelada: "warning",
-};
-
 /**
- * Ficha de una persona en la pantalla principal del administrador: si puede
- * ingresar hoy, los documentos que exige su puesto (con botón para subir cada
- * uno), cambio de puesto, baja, historial de documentos y visitas.
+ * Ficha de un trabajador en la pantalla principal del administrador: si puede
+ * ingresar hoy, sus documentos (última versión de cada uno, con botón para
+ * renovar), subir un documento nuevo, dar de baja e historial.
  */
 export function PersonaFicha({
   personaId,
-  puestos,
-  tiposDocumento,
   onCambio,
 }: {
   personaId: number;
-  puestos: Puesto[];
-  tiposDocumento: TipoDocumento[];
-  /** Avisa a la lista que el cumplimiento o los datos de la persona cambiaron. */
+  /** Avisa a la pantalla que cambió el cumplimiento del trabajador. */
   onCambio: () => void;
 }) {
   const [persona, setPersona] = useState<Persona | null>(null);
-  const [visitas, setVisitas] = useState<SolicitudVisita[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [tipoASubir, setTipoASubir] = useState<number | undefined>(undefined);
+  const [nombreASubir, setNombreASubir] = useState("");
   const [subirKey, setSubirKey] = useState(0);
   const subirRef = useRef<HTMLDivElement>(null);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [errorFoto, setErrorFoto] = useState<string | null>(null);
 
-  const obtener = useCallback(
-    () => Promise.all([personasApi.get(personaId), solicitudesVisitaApi.list({ personaId })]),
-    [personaId],
-  );
+  const obtener = useCallback(() => personasApi.get(personaId), [personaId]);
 
-  const aplicar = useCallback(([p, v]: [Persona, SolicitudVisita[]]) => {
+  const aplicar = useCallback((p: Persona) => {
     setPersona(p);
-    setVisitas(v);
     setError(null);
   }, []);
 
   const fallar = useCallback((err: unknown) => {
-    setError(err instanceof ApiError ? err.message : "No se pudo cargar la persona");
+    setError(err instanceof ApiError ? err.message : "No se pudo cargar al personal");
   }, []);
 
   const cargar = useCallback(() => obtener().then(aplicar).catch(fallar), [obtener, aplicar, fallar]);
@@ -156,10 +85,34 @@ export function PersonaFicha({
     onCambio();
   }
 
-  function elegirDocumentoASubir(tipoDocumentoId: number) {
-    setTipoASubir(tipoDocumentoId);
+  function documentoSubido() {
+    setNombreASubir("");
+    setSubirKey((k) => k + 1); // formulario limpio para el siguiente documento
+    recargarTodo();
+  }
+
+  function renovar(nombre: string) {
+    setNombreASubir(nombre);
     setSubirKey((k) => k + 1);
     subirRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  async function cambiarFoto(archivo: File) {
+    const problema = validarFoto(archivo);
+    if (problema) {
+      setErrorFoto(problema);
+      return;
+    }
+    setErrorFoto(null);
+    setSubiendoFoto(true);
+    try {
+      await personasApi.subirFoto(personaId, archivo);
+      cargar();
+    } catch (err) {
+      setErrorFoto(err instanceof ApiError ? err.message : "No se pudo subir la foto");
+    } finally {
+      setSubiendoFoto(false);
+    }
   }
 
   async function toggleEstado() {
@@ -168,38 +121,62 @@ export function PersonaFicha({
     recargarTodo();
   }
 
-  async function cancelarVisita(id: number) {
-    await solicitudesVisitaApi.update(id, { estado: "cancelada" });
-    cargar();
-  }
-
   if (error) return <ErrorBanner>{error}</ErrorBanner>;
   if (!persona) return <div className="p-6 text-sm text-gray-400">Cargando…</div>;
 
   const cumplimiento = persona.cumplimiento;
-  const requisitos = persona.requisitos ?? [];
+  const actuales = persona.documentosActuales ?? [];
   const historial: DocumentoPersona[] = persona.documentos ?? [];
-  const ultimaVersionIds = new Set(requisitos.map((r) => r.documento?.id).filter(Boolean));
+  const idsActuales = new Set(actuales.map((d) => d.id));
 
   return (
     <div className="space-y-5">
       {/* Encabezado + ¿puede ingresar? */}
       <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              {persona.nombres} {persona.apellidos}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {persona.tipoDocumentoIdentidad} {persona.numeroDocumento}
-              {persona.empresa && ` · ${persona.empresa.razonSocial}`}
-              {` · ${persona.puesto?.nombre ?? "Sin puesto"}`}
-            </p>
+          <div className="flex items-start gap-4">
+            <div className="space-y-2 text-center">
+              <FotoGuardada personaId={persona.id} tieneFoto={!!persona.fotoUrl} version={persona.fotoUrl} tamano="size-24" />
+              <button
+                type="button"
+                disabled={subiendoFoto}
+                onClick={() => fotoInputRef.current?.click()}
+                className="text-xs font-medium text-brand-500 hover:text-brand-600 disabled:opacity-50 dark:text-brand-400"
+              >
+                {subiendoFoto ? "Subiendo…" : persona.fotoUrl ? "Cambiar foto" : "Subir foto"}
+              </button>
+              <input
+                ref={fotoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const archivo = e.target.files?.[0];
+                  e.target.value = "";
+                  if (archivo) cambiarFoto(archivo);
+                }}
+              />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                {persona.nombres} {persona.apellidos}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {persona.tipoDocumentoIdentidad} {persona.numeroDocumento}
+                {persona.empresa && ` · ${persona.empresa.razonSocial}`}
+              </p>
+            </div>
           </div>
           <Button size="sm" variant="outline" onClick={toggleEstado}>
             {persona.estado === "activo" ? "Dar de baja" : "Reactivar"}
           </Button>
         </div>
+        {errorFoto && <ErrorBanner className="mt-4">{errorFoto}</ErrorBanner>}
+        {!persona.fotoUrl && (
+          <div className="mt-4 rounded-lg bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
+            Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Usa “Subir foto”.
+          </div>
+        )}
         {cumplimiento && (
           <div
             className={`mt-4 rounded-lg px-4 py-3 text-sm ${
@@ -217,15 +194,25 @@ export function PersonaFicha({
         )}
       </section>
 
-      {/* Documentos exigidos */}
+      <div ref={subirRef}>
+        <Seccion titulo="Subir documento" descripcion="Queda válido desde que se carga; no hay aprobación.">
+          <SubirDocumentoForm
+            key={`${personaId}-${subirKey}`}
+            personaId={persona.id}
+            nombreInicial={nombreASubir}
+            onSubido={documentoSubido}
+          />
+        </Seccion>
+      </div>
+
       <Seccion
-        titulo="Documentos exigidos por su puesto"
-        descripcion="Solo cuenta la última versión de cada documento. Un documento que vence hoy sigue válido todo el día."
+        titulo="Documentos"
+        descripcion="Cuenta la última versión de cada documento. Uno que vence hoy sigue válido todo el día."
       >
-        {!persona.puesto ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Asígnale un puesto para ver qué documentos necesita.</p>
-        ) : requisitos.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Este puesto no exige documentos.</p>
+        {actuales.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Todavía no tiene documentos. Sin documentos no puede ingresar.
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <Table>
@@ -238,27 +225,18 @@ export function PersonaFicha({
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {requisitos.map((r) => (
-                  <TableRow key={r.tipoDocumentoId}>
+                {actuales.map((d) => (
+                  <TableRow key={d.tipoDocumentoId}>
+                    <TableCell className="py-3 pr-4 text-sm text-gray-700 dark:text-gray-300">{d.nombre}</TableCell>
                     <TableCell className="py-3 pr-4 text-sm text-gray-700 dark:text-gray-300">
-                      {r.nombre}
-                      {!r.obligatorio && <span className="ml-2 text-xs text-gray-400">(opcional)</span>}
-                    </TableCell>
-                    <TableCell className="py-3 pr-4 text-sm text-gray-700 dark:text-gray-300">
-                      {r.documento?.fechaVencimiento ? formatearFecha(r.documento.fechaVencimiento) : r.documento ? "No vence" : "—"}
+                      {d.fechaVencimiento ? formatearFecha(d.fechaVencimiento) : "No vence"}
                     </TableCell>
                     <TableCell className="py-3 pr-4 text-sm">
-                      {!r.documento ? (
-                        <Badge color="error">Falta</Badge>
-                      ) : r.vigente ? (
-                        <Badge color="success">Vigente</Badge>
-                      ) : (
-                        <Badge color="error">Vencido</Badge>
-                      )}
+                      {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
                     </TableCell>
                     <TableCell className="py-3 text-sm">
-                      <Button size="sm" variant="outline" onClick={() => elegirDocumentoASubir(r.tipoDocumentoId)}>
-                        {r.documento ? "Renovar" : "Subir"}
+                      <Button size="sm" variant="outline" onClick={() => renovar(d.nombre)}>
+                        Renovar
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -269,48 +247,8 @@ export function PersonaFicha({
         )}
       </Seccion>
 
-      <div ref={subirRef}>
-        <Seccion titulo="Subir documento" descripcion="Queda válido desde que se carga; no hay aprobación.">
-          <SubirDocumentoForm
-            key={`${personaId}-${subirKey}`}
-            personaId={persona.id}
-            tiposDocumento={tiposDocumento}
-            tipoDocumentoIdInicial={tipoASubir}
-            onSubido={recargarTodo}
-          />
-        </Seccion>
-      </div>
-
-      <Seccion titulo="Puesto">
-        <CambiarPuesto key={`${persona.id}-${persona.puestoId ?? "sin-puesto"}`} persona={persona} puestos={puestos} onGuardado={recargarTodo} />
-      </Seccion>
-
-      <Seccion titulo="Visitas" descripcion="Solo informativas: en garita la persona se valida igual que cualquier otra.">
-        <AgendarVisitaForm personaId={persona.id} onAgendada={cargar} />
-        {visitas.length > 0 && (
-          <ul className="mt-4 divide-y divide-gray-100 dark:divide-gray-800">
-            {visitas.map((v) => (
-              <li key={v.id} className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm">
-                <span className="text-gray-700 dark:text-gray-300">
-                  {new Date(v.fechaHoraProgramada).toLocaleString("es-PE")} · {v.personaVisitada}
-                  <span className="text-gray-400"> — {v.motivo}</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <Badge color={VISITA_COLOR[v.estado] ?? "light"}>{v.estado}</Badge>
-                  {v.estado === "programada" && (
-                    <Button size="sm" variant="outline" onClick={() => cancelarVisita(v.id)}>
-                      Cancelar
-                    </Button>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Seccion>
-
-      {historial.length > 0 && (
-        <details className="group rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+      {historial.length > actuales.length && (
+        <details className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
           <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
             Historial de documentos ({historial.length})
           </summary>
@@ -325,9 +263,7 @@ export function PersonaFicha({
                     {d.fechaVencimiento && ` · vence ${formatearFecha(d.fechaVencimiento)}`}
                   </span>
                 </span>
-                {!ultimaVersionIds.has(d.id) && requisitos.some((r) => r.tipoDocumentoId === d.tipoDocumentoId) && (
-                  <Badge color="light">Reemplazado</Badge>
-                )}
+                {!idsActuales.has(d.id) && <Badge color="light">Reemplazado</Badge>}
               </li>
             ))}
           </ul>

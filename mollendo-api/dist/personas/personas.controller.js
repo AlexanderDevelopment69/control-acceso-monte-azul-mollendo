@@ -10,7 +10,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, Res, UploadedFile, UseInterceptors, } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { fotosMulterOptions } from './fotos-storage.util.js';
 import { PersonasService } from './personas.service.js';
 import { CreatePersonaDto } from './dto/create-persona.dto.js';
 import { UpdatePersonaDto } from './dto/update-persona.dto.js';
@@ -37,6 +39,15 @@ let PersonasController = class PersonasController {
     }
     updateEstado(id, dto, user) {
         return this.personasService.updateEstado(id, dto, user);
+    }
+    subirFoto(id, foto, user) {
+        if (!foto) {
+            throw new BadRequestException('La foto es obligatoria');
+        }
+        return this.personasService.guardarFoto(id, foto.path, user);
+    }
+    async verFoto(id, res) {
+        res.sendFile(await this.personasService.rutaFoto(id));
     }
 };
 __decorate([
@@ -84,6 +95,26 @@ __decorate([
     __metadata("design:paramtypes", [Number, UpdateEstadoPersonaDto, Object]),
     __metadata("design:returntype", void 0)
 ], PersonasController.prototype, "updateEstado", null);
+__decorate([
+    Post(':id/foto'),
+    Roles('administrador'),
+    UseInterceptors(FileInterceptor('foto', fotosMulterOptions)),
+    __param(0, Param('id', ParseIntPipe)),
+    __param(1, UploadedFile()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object, Object]),
+    __metadata("design:returntype", void 0)
+], PersonasController.prototype, "subirFoto", null);
+__decorate([
+    Get(':id/foto'),
+    Roles('administrador', 'vigilancia'),
+    __param(0, Param('id', ParseIntPipe)),
+    __param(1, Res()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", Promise)
+], PersonasController.prototype, "verFoto", null);
 PersonasController = __decorate([
     Controller('personas'),
     __metadata("design:paramtypes", [PersonasService])

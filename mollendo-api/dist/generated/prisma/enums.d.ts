@@ -13,13 +13,6 @@ export declare const RolUsuario: {
     readonly vigilancia: "vigilancia";
 };
 export type RolUsuario = (typeof RolUsuario)[keyof typeof RolUsuario];
-export declare const CasoPuesto: {
-    readonly visita: "visita";
-    readonly personal_propio: "personal_propio";
-    readonly contratista: "contratista";
-    readonly tercero: "tercero";
-};
-export type CasoPuesto = (typeof CasoPuesto)[keyof typeof CasoPuesto];
 export declare const TipoDocumentoIdentidad: {
     readonly DNI: "DNI";
     readonly CE: "CE";
@@ -31,18 +24,6 @@ export declare const EstadoPersona: {
     readonly inactivo: "inactivo";
 };
 export type EstadoPersona = (typeof EstadoPersona)[keyof typeof EstadoPersona];
-export declare const TipoValidacionDocumento: {
-    readonly fecha_vencimiento: "fecha_vencimiento";
-    readonly si_no: "si_no";
-    readonly vigente_por_actividad: "vigente_por_actividad";
-};
-export type TipoValidacionDocumento = (typeof TipoValidacionDocumento)[keyof typeof TipoValidacionDocumento];
-export declare const EstadoSolicitudVisita: {
-    readonly programada: "programada";
-    readonly completada: "completada";
-    readonly cancelada: "cancelada";
-};
-export type EstadoSolicitudVisita = (typeof EstadoSolicitudVisita)[keyof typeof EstadoSolicitudVisita];
 export declare const TipoMovimiento: {
     readonly ingreso: "ingreso";
     readonly salida: "salida";

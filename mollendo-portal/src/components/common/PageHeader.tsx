@@ -20,23 +20,3 @@ export function PageHeader({
   );
 }
 
-/** Encabezado de una sección dentro de una página (p. ej. cada pestaña de Configuración). */
-export function SectionHeader({
-  title,
-  description,
-  actions,
-}: {
-  title: string;
-  description?: string;
-  actions?: React.ReactNode;
-}) {
-  return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h2 className="text-base font-semibold text-gray-800 dark:text-white/90">{title}</h2>
-        {description && <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{description}</p>}
-      </div>
-      {actions}
-    </div>
-  );
-}

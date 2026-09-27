@@ -11,12 +11,9 @@ export const AnyNull = runtime.AnyNull;
 export const ModelName = {
     Empresa: 'Empresa',
     Usuario: 'Usuario',
-    Puesto: 'Puesto',
     Persona: 'Persona',
     TipoDocumento: 'TipoDocumento',
-    RequisitoPorPuesto: 'RequisitoPorPuesto',
     DocumentoPersona: 'DocumentoPersona',
-    SolicitudVisita: 'SolicitudVisita',
     EventoAcceso: 'EventoAcceso',
     Auditoria: 'Auditoria'
 };
@@ -47,32 +44,20 @@ export const UsuarioScalarFieldEnum = {
     estadoCuenta: 'estadoCuenta',
     creadoEn: 'creadoEn'
 };
-export const PuestoScalarFieldEnum = {
-    id: 'id',
-    nombre: 'nombre',
-    caso: 'caso'
-};
 export const PersonaScalarFieldEnum = {
     id: 'id',
     empresaId: 'empresaId',
-    puestoId: 'puestoId',
     tipoDocumentoIdentidad: 'tipoDocumentoIdentidad',
     numeroDocumento: 'numeroDocumento',
     nombres: 'nombres',
     apellidos: 'apellidos',
-    area: 'area',
+    fotoUrl: 'fotoUrl',
     estado: 'estado',
     creadoEn: 'creadoEn'
 };
 export const TipoDocumentoScalarFieldEnum = {
     id: 'id',
-    nombre: 'nombre',
-    tipoValidacion: 'tipoValidacion'
-};
-export const RequisitoPorPuestoScalarFieldEnum = {
-    puestoId: 'puestoId',
-    tipoDocumentoId: 'tipoDocumentoId',
-    obligatorio: 'obligatorio'
+    nombre: 'nombre'
 };
 export const DocumentoPersonaScalarFieldEnum = {
     id: 'id',
@@ -84,16 +69,6 @@ export const DocumentoPersonaScalarFieldEnum = {
     version: 'version',
     creadoEn: 'creadoEn'
 };
-export const SolicitudVisitaScalarFieldEnum = {
-    id: 'id',
-    personaId: 'personaId',
-    empresaId: 'empresaId',
-    personaVisitada: 'personaVisitada',
-    motivo: 'motivo',
-    fechaHoraProgramada: 'fechaHoraProgramada',
-    estado: 'estado',
-    creadoEn: 'creadoEn'
-};
 export const EventoAccesoScalarFieldEnum = {
     id: 'id',
     personaId: 'personaId',
@@ -102,7 +77,7 @@ export const EventoAccesoScalarFieldEnum = {
     denegadoPorBaja: 'denegadoPorBaja',
     denegadoPorAlcohol: 'denegadoPorAlcohol',
     denegadoPorDocumentos: 'denegadoPorDocumentos',
-    denegadoSinPuesto: 'denegadoSinPuesto',
+    denegadoSinDocumentos: 'denegadoSinDocumentos',
     fechaHora: 'fechaHora',
     torniqueteId: 'torniqueteId'
 };

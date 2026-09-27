@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { empresasApi, personasApi, puestosApi, tiposDocumentoApi } from "@/lib/api/endpoints";
-import type { Empresa, Persona, Puesto, TipoDocumento } from "@/lib/api/types";
+import { empresasApi, personasApi } from "@/lib/api/endpoints";
+import type { Empresa, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -20,8 +20,6 @@ type Filtro = "todos" | "habilitados" | "no-habilitados";
 export function PersonalDocumentos() {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
-  const [puestos, setPuestos] = useState<Puesto[]>([]);
-  const [tiposDocumento, setTiposDocumento] = useState<TipoDocumento[]>([]);
   const [loading, setLoading] = useState(true);
   const [seleccionada, setSeleccionada] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,17 +27,16 @@ export function PersonalDocumentos() {
   const [empresaFiltro, setEmpresaFiltro] = useState("todas");
   const [filtro, setFiltro] = useState<Filtro>("todos");
 
-  const cargarPersonas = useCallback(async () => {
+  // Tras registrar o subir un documento cambia el ✔/✖.
+  const recargar = useCallback(async () => {
     setPersonas(await personasApi.list());
   }, []);
 
   useEffect(() => {
-    Promise.all([personasApi.list(), empresasApi.list(), puestosApi.list(), tiposDocumentoApi.list()])
-      .then(([p, e, pu, t]) => {
+    Promise.all([personasApi.list(), empresasApi.list()])
+      .then(([p, e]) => {
         setPersonas(p);
         setEmpresas(e);
-        setPuestos(pu);
-        setTiposDocumento(t);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -64,8 +61,8 @@ export function PersonalDocumentos() {
         title="Personal y documentos"
         description="Registra al personal, sube sus documentos y revisa quién puede ingresar hoy."
         actions={
-          <Button size="sm" onClick={() => setModalOpen(true)}>
-            + Nueva persona
+          <Button size="sm" onClick={() => setModalOpen(true)} disabled={loading}>
+            + Nuevo personal
           </Button>
         }
       />
@@ -79,8 +76,13 @@ export function PersonalDocumentos() {
               key={`empresas-${empresas.length}`}
               defaultValue={empresaFiltro}
               onChange={setEmpresaFiltro}
-              placeholder="Todas las empresas"
-              options={[{ value: "todas", label: "Todas las empresas" }, ...empresas.map((e) => ({ value: String(e.id), label: e.razonSocial }))]}
+              mostrarPlaceholder={false}
+              options={[
+                { value: "todas", label: "Todas las empresas" },
+                ...[...empresas]
+                  .sort((a, b) => a.razonSocial.localeCompare(b.razonSocial))
+                  .map((e) => ({ value: String(e.id), label: e.razonSocial })),
+              ]}
             />
             <div className="flex gap-1 rounded-lg bg-gray-100 p-1 text-xs dark:bg-gray-900">
               {(
@@ -109,7 +111,7 @@ export function PersonalDocumentos() {
             {loading && <li className="p-4 text-sm text-gray-400">Cargando…</li>}
             {!loading && filtradas.length === 0 && (
               <li className="p-4 text-sm text-gray-400">
-                {personas.length === 0 ? "Todavía no hay personal registrado." : "Sin resultados."}
+                {personas.length === 0 ? "Todavía no hay personal registrado. Usa “+ Nuevo personal”." : "Sin resultados."}
               </li>
             )}
             {filtradas.map((p) => {
@@ -156,26 +158,26 @@ export function PersonalDocumentos() {
             <PersonaFicha
               key={seleccionada}
               personaId={seleccionada}
-              puestos={puestos}
-              tiposDocumento={tiposDocumento}
-              onCambio={cargarPersonas}
+              onCambio={recargar}
             />
           ) : (
             <div className="flex h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400 dark:border-gray-700">
-              Elige una persona de la lista para ver y subir sus documentos.
+              Elige a una persona de la lista para ver y subir sus documentos.
             </div>
           )}
         </div>
       </div>
 
+
       <NuevaPersonaModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={(persona) => {
-          cargarPersonas();
+          // Puede haber una empresa nueva, y cambia el ✔/✖.
+          recargar();
+          empresasApi.list().then(setEmpresas);
           setSeleccionada(persona.id);
         }}
-        puestos={puestos}
         empresas={empresas}
       />
     </div>

@@ -7,8 +7,8 @@ export declare class DocumentosController {
     subirDocumento(personaId: number, dto: CreateDocumentoDto, archivo: Express.Multer.File, user: AuthenticatedUser): Promise<{
         id: number;
         creadoEn: Date;
-        tipoDocumentoId: number;
         personaId: number;
+        tipoDocumentoId: number;
         fechaEmision: Date | null;
         fechaVencimiento: Date | null;
         archivoUrl: string | null;
@@ -18,13 +18,12 @@ export declare class DocumentosController {
         tipoDocumento: {
             id: number;
             nombre: string;
-            tipoValidacion: import("../generated/prisma/enums.js").TipoValidacionDocumento;
         };
     } & {
         id: number;
         creadoEn: Date;
-        tipoDocumentoId: number;
         personaId: number;
+        tipoDocumentoId: number;
         fechaEmision: Date | null;
         fechaVencimiento: Date | null;
         archivoUrl: string | null;
