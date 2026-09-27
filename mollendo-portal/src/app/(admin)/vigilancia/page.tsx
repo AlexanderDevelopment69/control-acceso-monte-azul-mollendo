@@ -77,11 +77,11 @@ function MotivoDenegacion({
     <div className="flex flex-wrap gap-1">
       {motivos.map((m) =>
         m === "Alcohol" ? (
-          <Badge key={m} color="error" size="sm">{m}</Badge>
+          <Badge key={m} color="error">{m}</Badge>
         ) : (
           // Documentos: clic para ver qué debe regularizar.
           <button key={m} type="button" onClick={onVerDocumentos} title="Ver documentos" className="underline-offset-2 hover:underline">
-            <Badge color="error" size="sm">{m} ›</Badge>
+            <Badge color="error">{m} ›</Badge>
           </button>
         ),
       )}
