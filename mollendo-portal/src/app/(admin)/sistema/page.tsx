@@ -149,6 +149,27 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
     notas:
       "Contrato provisional: hoy solo registra el comando en el log del servidor. Falta la marca/modelo del molinete y su SDK para conectarlo al equipo real.",
   },
+  {
+    nombre: "Enrolamiento de rostro en ZKBio (saliente)",
+    endpoint: "/personas/:id/foto",
+    metodo: "POST",
+    descripcion:
+      "Cuando el administrador sube o cambia la foto del personal, el backend la guarda y debe enviarla a ZKBio CVSecurity para registrar (enrolar) el rostro en el terminal ZKTeco G4 Pro. Sin este paso, el terminal no puede reconocer a la persona.",
+    autenticacion: "JWT (Administrador) para subir la foto",
+    tipo: "mock",
+    headers: ["Content-Type: multipart/form-data", "Authorization: Bearer <token>"],
+    ejemploRequest: `// multipart/form-data
+foto: <archivo JPG, PNG o WEBP, máximo 5 MB>`,
+    ejemploRespuesta: `// 201 Created — persona con la ruta de su foto
+{ "id": 12, "numeroDocumento": "12345678", "fotoUrl": "storage/documentos/persona-12/foto-….jpg", ... }
+
+// 400 — no es una imagen JPG/PNG/WEBP o pesa más de 5 MB
+
+// Envío a ZKBio (hoy simulado, queda en el log del servidor):
+Enrolar rostro en ZKBio: DNI 12345678 (persona 12), foto storage/… (mock, sin SDK real todavía)`,
+    notas:
+      "La foto se guarda y se ve en el portal, pero el envío a ZKBio es simulado: falta la documentación/SDK de ZKBio CVSecurity para enrolar el rostro de verdad. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
+  },
 ];
 
 function EstadoBadge({ ok }: { ok: boolean }) {
