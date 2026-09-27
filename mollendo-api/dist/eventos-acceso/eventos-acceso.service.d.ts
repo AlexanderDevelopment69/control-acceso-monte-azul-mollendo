@@ -71,12 +71,12 @@ export declare class EventosAccesoService {
         persona: {
             id: number;
             empresaId: number;
+            tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
+            numeroDocumento: string;
             nombres: string;
             apellidos: string;
         };
     } & {
-        id: number;
-        personaId: number;
         tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
         resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
         denegadoPorBaja: boolean;
@@ -85,5 +85,7 @@ export declare class EventosAccesoService {
         denegadoSinDocumentos: boolean;
         fechaHora: Date;
         torniqueteId: string | null;
+        id: number;
+        personaId: number;
     })[]>;
 }

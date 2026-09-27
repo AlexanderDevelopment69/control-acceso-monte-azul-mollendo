@@ -130,7 +130,18 @@ let EventosAccesoService = class EventosAccesoService {
                     lte: query.hasta ? new Date(query.hasta) : undefined,
                 },
             },
-            include: { persona: { select: { id: true, nombres: true, apellidos: true, empresaId: true } } },
+            include: {
+                persona: {
+                    select: {
+                        id: true,
+                        nombres: true,
+                        apellidos: true,
+                        empresaId: true,
+                        tipoDocumentoIdentidad: true,
+                        numeroDocumento: true,
+                    },
+                },
+            },
             orderBy: { fechaHora: 'desc' },
             take: 500,
         });

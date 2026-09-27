@@ -128,7 +128,7 @@ function VigilanciaContent() {
     const q = busqueda.trim().toLowerCase();
     if (!q) return true;
     const nombre = ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : "";
-    return nombre.toLowerCase().includes(q);
+    return nombre.toLowerCase().includes(q) || (ev.persona?.numeroDocumento.includes(q) ?? false);
   });
   const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtrados, 10);
 
@@ -160,7 +160,8 @@ function VigilanciaContent() {
                 <li key={`${ev.eventoId ?? "sin-registro"}-${i}`} className="flex items-start justify-between gap-4 py-2 text-sm">
                   <div>
                     <p className="text-gray-700 dark:text-gray-300">
-                      {ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : `Documento ${ev.numeroDocumento}`}
+                      {ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : "No registrado"}
+                      <span className="ml-2 text-gray-500 dark:text-gray-400">DNI {ev.numeroDocumento}</span>
                       <span className="ml-2 text-xs text-gray-400">
                         {ev.tipoMovimiento} · {new Date(ev.fechaHora).toLocaleTimeString("es-PE")}
                       </span>
@@ -178,7 +179,7 @@ function VigilanciaContent() {
       )}
 
       <div className="mb-4">
-        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre…" />
+        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre o DNI…" />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -187,6 +188,7 @@ function VigilanciaContent() {
             <TableHeader className="border-b border-gray-100 dark:border-gray-800">
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Hora</TableCell>
+                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">DNI</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Persona</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Movimiento</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Resultado</TableCell>
@@ -196,23 +198,28 @@ function VigilanciaContent() {
             <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
               {loading && (
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Cargando…</TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Cargando…</TableCell>
                 </TableRow>
               )}
               {!loading && eventos.length === 0 && (
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin eventos registrados todavía.</TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Sin eventos registrados todavía.</TableCell>
                 </TableRow>
               )}
               {!loading && eventos.length > 0 && filtrados.length === 0 && (
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin resultados para esa búsqueda.</TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Sin resultados para esa búsqueda.</TableCell>
                 </TableRow>
               )}
               {paginated.map((ev) => (
                 <TableRow key={ev.id}>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {new Date(ev.fechaHora).toLocaleString("es-PE")}
+                  </TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    {ev.persona
+                      ? `${ev.persona.tipoDocumentoIdentidad === "DNI" ? "" : `${ev.persona.tipoDocumentoIdentidad} `}${ev.persona.numeroDocumento}`
+                      : "—"}
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : `#${ev.personaId}`}

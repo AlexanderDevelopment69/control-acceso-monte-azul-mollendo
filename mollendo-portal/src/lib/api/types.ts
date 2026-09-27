@@ -77,7 +77,14 @@ export interface EventoAcceso {
   denegadoPorDocumentos: boolean;
   fechaHora: string;
   torniqueteId: string | null;
-  persona?: { id: number; nombres: string; apellidos: string; empresaId: number };
+  persona?: {
+    id: number;
+    nombres: string;
+    apellidos: string;
+    empresaId: number;
+    tipoDocumentoIdentidad: "DNI" | "CE" | "PASAPORTE";
+    numeroDocumento: string;
+  };
 }
 
 export interface ResumenPanel {
