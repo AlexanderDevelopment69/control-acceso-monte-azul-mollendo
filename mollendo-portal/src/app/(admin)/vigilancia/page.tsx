@@ -4,10 +4,11 @@ import React, { useEffect, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { connectEventosSocket } from "@/lib/ws";
-import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
-import type { EventoAcceso, ResumenPanel } from "@/lib/api/types";
+import { eventosAccesoApi, panelApi, personasApi } from "@/lib/api/endpoints";
+import type { EventoAcceso, Persona, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
+import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
@@ -59,7 +60,13 @@ function StatCard({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function MotivoDenegacion({ evento }: { evento: Pick<EventoAcceso, "denegadoPorBaja" | "denegadoSinDocumentos" | "denegadoPorAlcohol" | "denegadoPorDocumentos"> }) {
+function MotivoDenegacion({
+  evento,
+  onVerDocumentos,
+}: {
+  evento: Pick<EventoAcceso, "denegadoPorBaja" | "denegadoSinDocumentos" | "denegadoPorAlcohol" | "denegadoPorDocumentos">;
+  onVerDocumentos: () => void;
+}) {
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
   const motivos: string[] = [];
   if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
@@ -68,10 +75,78 @@ function MotivoDenegacion({ evento }: { evento: Pick<EventoAcceso, "denegadoPorB
   if (motivos.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1">
-      {motivos.map((m) => (
-        <Badge key={m} color="error" size="sm">{m}</Badge>
-      ))}
+      {motivos.map((m) =>
+        m === "Alcohol" ? (
+          <Badge key={m} color="error" size="sm">{m}</Badge>
+        ) : (
+          // Documentos: clic para ver qué debe regularizar.
+          <button key={m} type="button" onClick={onVerDocumentos} title="Ver documentos" className="underline-offset-2 hover:underline">
+            <Badge color="error" size="sm">{m} ›</Badge>
+          </button>
+        ),
+      )}
     </div>
+  );
+}
+
+function formatearFecha(fecha: string): string {
+  return new Date(fecha).toLocaleDateString("es-PE", { timeZone: "UTC" });
+}
+
+/** Modal de solo lectura: documentos actuales de la persona y cuáles debe regularizar. */
+function DocumentosModal({ personaId, onClose }: { personaId: number | null; onClose: () => void }) {
+  const [persona, setPersona] = useState<Persona | null>(null);
+
+  useEffect(() => {
+    if (personaId === null) return;
+    let activo = true;
+    personasApi.get(personaId).then((p) => activo && setPersona(p));
+    return () => {
+      activo = false;
+      setPersona(null);
+    };
+  }, [personaId]);
+
+  const actuales = persona?.documentosActuales ?? [];
+
+  return (
+    <Modal isOpen={personaId !== null} onClose={onClose} className="max-w-lg p-6 sm:p-8">
+      <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">Documentos</h2>
+      {!persona ? (
+        <p className="text-sm text-gray-400">Cargando…</p>
+      ) : (
+        <>
+          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+            {persona.nombres} {persona.apellidos} · DNI {persona.numeroDocumento}
+            {persona.empresa && ` · ${persona.empresa.razonSocial}`}
+          </p>
+          {actuales.length === 0 ? (
+            <p className="rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
+              No tiene ningún documento cargado.
+            </p>
+          ) : (
+            <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+              {actuales.map((d) => (
+                <li key={d.tipoDocumentoId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                  <span>
+                    <span className="font-medium text-gray-800 dark:text-white/90">{d.nombre}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">
+                      {d.fechaVencimiento
+                        ? `${d.vigente ? "Vence" : "Venció"} el ${formatearFecha(d.fechaVencimiento)}`
+                        : "No vence"}
+                    </span>
+                  </span>
+                  {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-4 text-xs text-gray-400">
+            Estado de hoy. Para regularizar, debe entregar el documento actualizado al administrador.
+          </p>
+        </>
+      )}
+    </Modal>
   );
 }
 
@@ -124,6 +199,7 @@ function VigilanciaContent() {
   }, []);
 
   const [busqueda, setBusqueda] = useState("");
+  const [personaDocumentos, setPersonaDocumentos] = useState<number | null>(null);
   const filtrados = eventos.filter((ev) => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return true;
@@ -229,7 +305,7 @@ function VigilanciaContent() {
                     <Badge color={ev.resultado === "autorizado" ? "success" : "error"}>{ev.resultado}</Badge>
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm">
-                    <MotivoDenegacion evento={ev} />
+                    <MotivoDenegacion evento={ev} onVerDocumentos={() => setPersonaDocumentos(ev.personaId)} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -238,6 +314,8 @@ function VigilanciaContent() {
         </div>
         {!loading && <TableFooter from={from} to={to} total={total} page={page} totalPages={totalPages} onPageChange={setPage} />}
       </div>
+
+      <DocumentosModal personaId={personaDocumentos} onClose={() => setPersonaDocumentos(null)} />
     </div>
   );
 }
