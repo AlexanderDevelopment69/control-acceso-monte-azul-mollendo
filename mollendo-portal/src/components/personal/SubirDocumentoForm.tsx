@@ -19,15 +19,15 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
  */
 export function SubirDocumentoForm({
   personaId,
-  nombreInicial = "",
+  nombreFijo,
   onSubido,
 }: {
   personaId: number;
-  /** Lo completa "Renovar" con el nombre del documento a renovar. */
-  nombreInicial?: string;
+  /** Renovar: el documento ya existe y su nombre no se puede cambiar. */
+  nombreFijo?: string;
   onSubido: () => void;
 }) {
-  const [nombre, setNombre] = useState(nombreInicial);
+  const [nombre, setNombre] = useState(nombreFijo ?? "");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +67,13 @@ export function SubirDocumentoForm({
       {error && <ErrorBanner className="sm:col-span-2">{error}</ErrorBanner>}
       <div>
         <Label>Nombre del documento</Label>
-        <Input placeholder="p. ej. SCTR" defaultValue={nombre} onChange={(e) => setNombre(e.target.value)} />
+        {nombreFijo ? (
+          <p className="flex h-11 items-center rounded-lg bg-gray-50 px-4 text-sm font-medium text-gray-800 dark:bg-white/[0.03] dark:text-white/90">
+            {nombreFijo}
+          </p>
+        ) : (
+          <Input placeholder="p. ej. SCTR" defaultValue={nombre} onChange={(e) => setNombre(e.target.value)} />
+        )}
       </div>
       <div>
         <Label>Vence el</Label>
@@ -85,7 +91,7 @@ export function SubirDocumentoForm({
       </div>
       <div className="sm:pt-[26px]">
         <Button disabled={loading} className="w-full">
-          {loading ? "Subiendo…" : "Subir documento"}
+          {loading ? "Subiendo…" : nombreFijo ? "Guardar renovación" : "Subir documento"}
         </Button>
       </div>
     </form>

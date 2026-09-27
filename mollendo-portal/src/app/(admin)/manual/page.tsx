@@ -82,13 +82,11 @@ const SECCIONES: SeccionManual[] = [
             al subirse, el personal ya queda registrado: corrige ese documento y vuelve a guardar.
           </li>
           <li>
-            Para agregar más documentos después, elige a la persona en la lista y usa{" "}
-            <strong>“Subir documento”</strong> en su ficha.
-          </li>
-          <li>
-            La tabla <strong>Documentos</strong> muestra cada documento con su vencimiento y si está vigente o vencido.
-            Para renovarlo, usa <strong>“Renovar”</strong> y sube la versión nueva: solo cuenta la más reciente; las
-            anteriores quedan en el historial como “Reemplazado”.
+            En la ficha, la tabla <strong>Documentos</strong> muestra cada documento con su vencimiento y si está
+            vigente o vencido. Los documentos se agregan al registrar a la persona; después solo se{" "}
+            <strong>renuevan</strong>: “Renovar” abre una ventana con el nombre del documento, donde eliges el nuevo
+            vencimiento y el archivo. Solo cuenta la versión más reciente; las anteriores quedan en el historial como
+            “Reemplazado”. (Si alguien no tiene ningún documento, su ficha muestra el formulario para subir el primero.)
           </li>
           <li>
             Si alguien deja de trabajar en el Terminal, usa <strong>“Dar de baja”</strong>. Desde ese momento se le

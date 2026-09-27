@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { Modal } from "@/components/ui/modal";
 import { SubirDocumentoForm } from "./SubirDocumentoForm";
 import { FotoGuardada, validarFoto } from "./FotoPersonal";
 
@@ -37,7 +38,9 @@ function Seccion({ titulo, descripcion, children }: { titulo: string; descripcio
 /**
  * Ficha de un trabajador en la pantalla principal del administrador: si puede
  * ingresar hoy, sus documentos (última versión de cada uno, con botón para
- * renovar), subir un documento nuevo, dar de baja e historial.
+ * renovar), foto, dar de baja e historial. Los documentos solo se renuevan
+ * (se agregan al registrar a la persona); si no tiene ninguno, se muestra el
+ * formulario para subir el primero.
  */
 export function PersonaFicha({
   personaId,
@@ -49,9 +52,8 @@ export function PersonaFicha({
 }) {
   const [persona, setPersona] = useState<Persona | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [nombreASubir, setNombreASubir] = useState("");
-  const [subirKey, setSubirKey] = useState(0);
-  const subirRef = useRef<HTMLDivElement>(null);
+  /** Documento que se está renovando (abre la ventana de renovación). */
+  const [aRenovar, setARenovar] = useState<string | null>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
@@ -86,15 +88,8 @@ export function PersonaFicha({
   }
 
   function documentoSubido() {
-    setNombreASubir("");
-    setSubirKey((k) => k + 1); // formulario limpio para el siguiente documento
+    setARenovar(null);
     recargarTodo();
-  }
-
-  function renovar(nombre: string) {
-    setNombreASubir(nombre);
-    setSubirKey((k) => k + 1);
-    subirRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   async function cambiarFoto(archivo: File) {
@@ -194,16 +189,24 @@ export function PersonaFicha({
         )}
       </section>
 
-      <div ref={subirRef}>
-        <Seccion titulo="Subir documento" descripcion="Queda válido desde que se carga; no hay aprobación.">
-          <SubirDocumentoForm
-            key={`${personaId}-${subirKey}`}
-            personaId={persona.id}
-            nombreInicial={nombreASubir}
-            onSubido={documentoSubido}
-          />
+      {actuales.length === 0 && (
+        <Seccion
+          titulo="Subir documento"
+          descripcion="No tiene documentos: sin ellos no puede ingresar. Queda válido desde que se carga."
+        >
+          <SubirDocumentoForm personaId={persona.id} onSubido={documentoSubido} />
         </Seccion>
-      </div>
+      )}
+
+      <Modal isOpen={aRenovar !== null} onClose={() => setARenovar(null)} className="max-w-2xl p-6 sm:p-8">
+        <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">Renovar documento</h2>
+        <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+          Se guarda como versión nueva; la anterior queda en el historial.
+        </p>
+        {aRenovar !== null && (
+          <SubirDocumentoForm key={aRenovar} personaId={persona.id} nombreFijo={aRenovar} onSubido={documentoSubido} />
+        )}
+      </Modal>
 
       <Seccion
         titulo="Documentos"
@@ -211,7 +214,7 @@ export function PersonaFicha({
       >
         {actuales.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Todavía no tiene documentos. Sin documentos no puede ingresar.
+            Todavía no tiene documentos. Súbelo arriba: sin documentos no puede ingresar.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -235,7 +238,7 @@ export function PersonaFicha({
                       {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
                     </TableCell>
                     <TableCell className="py-3 text-sm">
-                      <Button size="sm" variant="outline" onClick={() => renovar(d.nombre)}>
+                      <Button size="sm" variant="outline" onClick={() => setARenovar(d.nombre)}>
                         Renovar
                       </Button>
                     </TableCell>
