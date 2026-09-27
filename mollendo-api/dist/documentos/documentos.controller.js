@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Body, Controller, Get, Param, ParseIntPipe, Post, UploadedFile, UseInterceptors, BadRequestException, } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, UploadedFile, UseInterceptors, BadRequestException, } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentosService } from './documentos.service.js';
 import { CreateDocumentoDto } from './dto/create-documento.dto.js';
@@ -30,6 +30,9 @@ let DocumentosController = class DocumentosController {
     }
     findHistorial(personaId) {
         return this.documentosService.findHistorial(personaId);
+    }
+    eliminarDocumento(personaId, tipoDocumentoId, user) {
+        return this.documentosService.eliminarDocumento(personaId, tipoDocumentoId, user);
     }
 };
 __decorate([
@@ -52,6 +55,16 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], DocumentosController.prototype, "findHistorial", null);
+__decorate([
+    Delete('personas/:personaId/documentos/:tipoDocumentoId'),
+    Roles('administrador'),
+    __param(0, Param('personaId', ParseIntPipe)),
+    __param(1, Param('tipoDocumentoId', ParseIntPipe)),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, Object]),
+    __metadata("design:returntype", void 0)
+], DocumentosController.prototype, "eliminarDocumento", null);
 DocumentosController = __decorate([
     Controller(),
     __metadata("design:paramtypes", [DocumentosService])

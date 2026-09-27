@@ -319,6 +319,7 @@ Todas bajo `/api/v1`. Swagger interno (solo fuera de producción) en `/api/docs`
 | GET/POST/PATCH | `/empresas`, `/empresas/:id` | Admin | Alta, listado, detalle, edición y activar/desactivar |
 | GET/POST | `/tipos-documento` | Admin (lectura: todos) | Nombres de documento; crear uno que ya existe devuelve el existente |
 | GET/POST/PATCH | `/personas`, `/personas/:id` | Admin (Vigilancia: lectura) | Alta (con `empresaId`), listado y detalle con cumplimiento (✔/✖) y documentos actuales |
+| DELETE | `/personas/:id/documentos/:tipoDocumentoId` | Admin | Elimina un documento de la persona con todas sus versiones y archivos (queda en la auditoría como "eliminar") |
 | POST/GET | `/personas/:id/foto` | Admin (Vigilancia: ver) | Subir o reemplazar la foto (JPG/PNG/WEBP, 5 MB) y verla; al subirla se avisa a ZKBio para enrolar el rostro (pendiente del SDK) |
 | PATCH | `/personas/:id/estado` | Admin | Dar de baja (`inactivo`) o reactivar (`activo`) |
 | POST/GET | `/personas/:id/documentos` | Admin (Vigilancia: lectura) | Subir o renovar documento (nueva versión, ya válido) e historial |

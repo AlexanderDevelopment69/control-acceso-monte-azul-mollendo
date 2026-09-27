@@ -5,14 +5,14 @@ export declare class DocumentosController {
     private readonly documentosService;
     constructor(documentosService: DocumentosService);
     subirDocumento(personaId: number, dto: CreateDocumentoDto, archivo: Express.Multer.File, user: AuthenticatedUser): Promise<{
-        id: number;
-        creadoEn: Date;
-        personaId: number;
-        tipoDocumentoId: number;
         fechaEmision: Date | null;
         fechaVencimiento: Date | null;
         archivoUrl: string | null;
         version: number;
+        creadoEn: Date;
+        id: number;
+        personaId: number;
+        tipoDocumentoId: number;
     }>;
     findHistorial(personaId: number): Promise<({
         tipoDocumento: {
@@ -20,13 +20,16 @@ export declare class DocumentosController {
             nombre: string;
         };
     } & {
-        id: number;
-        creadoEn: Date;
-        personaId: number;
-        tipoDocumentoId: number;
         fechaEmision: Date | null;
         fechaVencimiento: Date | null;
         archivoUrl: string | null;
         version: number;
+        creadoEn: Date;
+        id: number;
+        personaId: number;
+        tipoDocumentoId: number;
     })[]>;
+    eliminarDocumento(personaId: number, tipoDocumentoId: number, user: AuthenticatedUser): Promise<{
+        eliminados: number;
+    }>;
 }

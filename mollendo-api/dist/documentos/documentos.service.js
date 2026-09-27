@@ -7,12 +7,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, NotFoundException } from '@nestjs/common';
+var DocumentosService_1;
+import { existsSync, unlinkSync } from 'node:fs';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
-let DocumentosService = class DocumentosService {
+let DocumentosService = DocumentosService_1 = class DocumentosService {
     prisma;
     auditoriaService;
+    logger = new Logger(DocumentosService_1.name);
     constructor(prisma, auditoriaService) {
         this.prisma = prisma;
         this.auditoriaService = auditoriaService;
@@ -56,8 +59,33 @@ let DocumentosService = class DocumentosService {
             orderBy: [{ tipoDocumentoId: 'asc' }, { version: 'desc' }],
         });
     }
+    async eliminarDocumento(personaId, tipoDocumentoId, user) {
+        await this.findPersona(personaId);
+        const versiones = await this.prisma.documentoPersona.findMany({ where: { personaId, tipoDocumentoId } });
+        if (versiones.length === 0) {
+            throw new NotFoundException('La persona no tiene ese documento');
+        }
+        await this.prisma.documentoPersona.deleteMany({ where: { personaId, tipoDocumentoId } });
+        for (const doc of versiones) {
+            if (doc.archivoUrl && existsSync(doc.archivoUrl)) {
+                try {
+                    unlinkSync(doc.archivoUrl);
+                }
+                catch (error) {
+                    this.logger.warn(`No se pudo borrar el archivo ${doc.archivoUrl}: ${String(error)}`);
+                }
+            }
+            await this.auditoriaService.registrar({
+                usuarioId: user.id,
+                tablaAfectada: 'documento_persona',
+                registroId: doc.id,
+                accion: 'eliminar',
+            });
+        }
+        return { eliminados: versiones.length };
+    }
 };
-DocumentosService = __decorate([
+DocumentosService = DocumentosService_1 = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
         AuditoriaService])

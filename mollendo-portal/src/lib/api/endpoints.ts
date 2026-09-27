@@ -75,6 +75,9 @@ export const documentosApi = {
       body: formData,
       isFormData: true,
     }),
+  /** Elimina el documento completo (todas sus versiones) de la persona. */
+  eliminar: (personaId: number, tipoDocumentoId: number) =>
+    apiRequest<{ eliminados: number }>(`/personas/${personaId}/documentos/${tipoDocumentoId}`, { method: "DELETE" }),
 };
 
 // ---- eventos-acceso ----

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { personasApi } from "@/lib/api/endpoints";
+import { documentosApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { Cumplimiento, DocumentoPersona, Persona } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
@@ -38,9 +38,7 @@ function Seccion({ titulo, descripcion, children }: { titulo: string; descripcio
 /**
  * Ficha de un trabajador en la pantalla principal del administrador: si puede
  * ingresar hoy, sus documentos (última versión de cada uno, con botón para
- * renovar), foto, dar de baja e historial. Los documentos solo se renuevan
- * (se agregan al registrar a la persona); si no tiene ninguno, se muestra el
- * formulario para subir el primero.
+ * renovar o eliminar), agregar documentos, foto, dar de baja e historial.
  */
 export function PersonaFicha({
   personaId,
@@ -52,8 +50,12 @@ export function PersonaFicha({
 }) {
   const [persona, setPersona] = useState<Persona | null>(null);
   const [error, setError] = useState<string | null>(null);
-  /** Documento que se está renovando (abre la ventana de renovación). */
-  const [aRenovar, setARenovar] = useState<string | null>(null);
+  /** Ventana abierta: agregar un documento nuevo o renovar uno existente (por su nombre). */
+  const [ventana, setVentana] = useState<{ modo: "agregar" } | { modo: "renovar"; nombre: string } | null>(null);
+  /** Documento a eliminar (pide confirmación). */
+  const [aEliminar, setAEliminar] = useState<{ tipoDocumentoId: number; nombre: string } | null>(null);
+  const [eliminando, setEliminando] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
@@ -88,8 +90,23 @@ export function PersonaFicha({
   }
 
   function documentoSubido() {
-    setARenovar(null);
+    setVentana(null);
     recargarTodo();
+  }
+
+  async function confirmarEliminar() {
+    if (!aEliminar) return;
+    setEliminando(true);
+    setErrorEliminar(null);
+    try {
+      await documentosApi.eliminar(personaId, aEliminar.tipoDocumentoId);
+      setAEliminar(null);
+      recargarTodo();
+    } catch (err) {
+      setErrorEliminar(err instanceof ApiError ? err.message : "No se pudo eliminar el documento");
+    } finally {
+      setEliminando(false);
+    }
   }
 
   async function cambiarFoto(archivo: File) {
@@ -189,23 +206,37 @@ export function PersonaFicha({
         )}
       </section>
 
-      {actuales.length === 0 && (
-        <Seccion
-          titulo="Subir documento"
-          descripcion="No tiene documentos: sin ellos no puede ingresar. Queda válido desde que se carga."
-        >
-          <SubirDocumentoForm personaId={persona.id} onSubido={documentoSubido} />
-        </Seccion>
-      )}
-
-      <Modal isOpen={aRenovar !== null} onClose={() => setARenovar(null)} className="max-w-2xl p-6 sm:p-8">
-        <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">Renovar documento</h2>
+      <Modal isOpen={ventana !== null} onClose={() => setVentana(null)} className="max-w-2xl p-6 sm:p-8">
+        <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">
+          {ventana?.modo === "renovar" ? "Renovar documento" : "Agregar documento"}
+        </h2>
         <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-          Se guarda como versión nueva; la anterior queda en el historial.
+          {ventana?.modo === "renovar"
+            ? "Se guarda como versión nueva; la anterior queda en el historial."
+            : "Queda válido desde que se carga. Si ya tiene un documento con ese nombre, se guarda como versión nueva."}
         </p>
-        {aRenovar !== null && (
-          <SubirDocumentoForm key={aRenovar} personaId={persona.id} nombreFijo={aRenovar} onSubido={documentoSubido} />
+        {ventana?.modo === "renovar" && (
+          <SubirDocumentoForm key={ventana.nombre} personaId={persona.id} nombreFijo={ventana.nombre} onSubido={documentoSubido} />
         )}
+        {ventana?.modo === "agregar" && <SubirDocumentoForm personaId={persona.id} onSubido={documentoSubido} />}
+      </Modal>
+
+      <Modal isOpen={aEliminar !== null} onClose={() => setAEliminar(null)} className="max-w-md p-6 sm:p-8">
+        <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Eliminar documento</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Se eliminará <strong>{aEliminar?.nombre}</strong> de {persona.nombres} {persona.apellidos}, con todas sus
+          versiones y archivos. Esta acción no se puede deshacer.
+          {actuales.length === 1 && " Es su único documento: después no podrá ingresar hasta que se le agregue otro."}
+        </p>
+        {errorEliminar && <ErrorBanner className="mt-4">{errorEliminar}</ErrorBanner>}
+        <div className="mt-6 flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={() => setAEliminar(null)}>
+            Cancelar
+          </Button>
+          <Button type="button" variant="danger" disabled={eliminando} onClick={confirmarEliminar}>
+            {eliminando ? "Eliminando…" : "Eliminar"}
+          </Button>
+        </div>
       </Modal>
 
       <Seccion
@@ -214,7 +245,7 @@ export function PersonaFicha({
       >
         {actuales.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Todavía no tiene documentos. Súbelo arriba: sin documentos no puede ingresar.
+            Todavía no tiene documentos: sin documentos no puede ingresar. Usa “+ Agregar documento”.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -238,9 +269,21 @@ export function PersonaFicha({
                       {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
                     </TableCell>
                     <TableCell className="py-3 text-sm">
-                      <Button size="sm" variant="outline" onClick={() => setARenovar(d.nombre)}>
-                        Renovar
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setVentana({ modo: "renovar", nombre: d.nombre })}>
+                          Renovar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline-danger"
+                          onClick={() => {
+                            setErrorEliminar(null);
+                            setAEliminar({ tipoDocumentoId: d.tipoDocumentoId, nombre: d.nombre });
+                          }}
+                        >
+                          Eliminar
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -248,6 +291,11 @@ export function PersonaFicha({
             </Table>
           </div>
         )}
+        <div className="mt-4">
+          <Button size="sm" variant="outline" onClick={() => setVentana({ modo: "agregar" })}>
+            + Agregar documento
+          </Button>
+        </div>
       </Seccion>
 
       {historial.length > actuales.length && (

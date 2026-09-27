@@ -83,10 +83,20 @@ const SECCIONES: SeccionManual[] = [
           </li>
           <li>
             En la ficha, la tabla <strong>Documentos</strong> muestra cada documento con su vencimiento y si está
-            vigente o vencido. Los documentos se agregan al registrar a la persona; después solo se{" "}
-            <strong>renuevan</strong>: “Renovar” abre una ventana con el nombre del documento, donde eliges el nuevo
-            vencimiento y el archivo. Solo cuenta la versión más reciente; las anteriores quedan en el historial como
-            “Reemplazado”. (Si alguien no tiene ningún documento, su ficha muestra el formulario para subir el primero.)
+            vigente o vencido. Desde ahí puedes:
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              <li>
+                <strong>“Renovar”</strong>: sube la versión nueva de ese documento (nuevo vencimiento y archivo). Solo
+                cuenta la más reciente; las anteriores quedan en el historial como “Reemplazado”.
+              </li>
+              <li>
+                <strong>“Eliminar”</strong>: borra el documento con todas sus versiones y archivos (pide confirmación y
+                queda en la auditoría). Si era el único, la persona no podrá ingresar hasta que se le agregue otro.
+              </li>
+              <li>
+                <strong>“+ Agregar documento”</strong>: agrega un documento que no tenía (nombre, vencimiento y archivo).
+              </li>
+            </ul>
           </li>
           <li>
             Si alguien deja de trabajar en el Terminal, usa <strong>“Dar de baja”</strong>. Desde ese momento se le

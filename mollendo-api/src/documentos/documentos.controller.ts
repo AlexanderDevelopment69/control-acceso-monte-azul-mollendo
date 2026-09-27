@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -41,5 +42,16 @@ export class DocumentosController {
   @Roles('administrador', 'vigilancia')
   findHistorial(@Param('personaId', ParseIntPipe) personaId: number) {
     return this.documentosService.findHistorial(personaId);
+  }
+
+  // Elimina el documento completo (todas sus versiones y archivos) de la persona.
+  @Delete('personas/:personaId/documentos/:tipoDocumentoId')
+  @Roles('administrador')
+  eliminarDocumento(
+    @Param('personaId', ParseIntPipe) personaId: number,
+    @Param('tipoDocumentoId', ParseIntPipe) tipoDocumentoId: number,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.documentosService.eliminarDocumento(personaId, tipoDocumentoId, user);
   }
 }

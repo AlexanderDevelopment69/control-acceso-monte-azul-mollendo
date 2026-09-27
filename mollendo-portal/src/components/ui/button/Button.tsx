@@ -3,7 +3,7 @@ import React, { ReactNode } from "react";
 interface ButtonProps {
   children: ReactNode; // Button text or content
   size?: "sm" | "md"; // Button size
-  variant?: "primary" | "outline"; // Button variant
+  variant?: "primary" | "outline" | "danger" | "outline-danger"; // Button variant
   // "submit" por defecto — igual al comportamiento nativo que ya tenían todos
   // los botones existentes al no declarar `type` dentro de un <form>. Pasar
   // "button" para una acción secundaria dentro de un form que no debe
@@ -39,6 +39,10 @@ const Button: React.FC<ButtonProps> = ({
       "bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300",
     outline:
       "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03] dark:hover:text-gray-300",
+    // Acciones destructivas (eliminar).
+    danger: "bg-error-500 text-white shadow-theme-xs hover:bg-error-600 disabled:bg-error-300",
+    "outline-danger":
+      "bg-white text-error-600 ring-1 ring-inset ring-error-300 hover:bg-error-50 dark:bg-gray-800 dark:text-error-500 dark:ring-error-500/40 dark:hover:bg-error-500/15",
   };
 
   return (
