@@ -4,8 +4,3 @@ node_modules
 
 /src/generated/prisma
 storage/
-
-# Accesos locales (uniones/enlaces) a .agents/skills para Claude Code y Windsurf.
-# El contenido real ya está versionado en .agents/skills.
-.claude/skills/
-.windsurf/skills/
