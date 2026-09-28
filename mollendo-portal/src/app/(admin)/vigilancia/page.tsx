@@ -305,6 +305,7 @@ function VigilanciaContent() {
             <DatePicker
               id="dia-vigilancia"
               placeholder="Todos los días"
+              max={hoy()}
               value={dia}
               onChange={(v) => {
                 setDia(v);

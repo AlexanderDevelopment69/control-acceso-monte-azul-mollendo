@@ -13,7 +13,7 @@ import Button from "@/components/ui/button/Button";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
-import { pieDePagina } from "@/lib/paginaServidor";
+import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import DatePicker from "@/components/form/date-picker";
 
 // Nombres de las tablas de la base de datos, como los entiende quien usa el sistema.
@@ -108,6 +108,7 @@ function AuditoriaContent() {
             <DatePicker
               id="auditoria-desde"
               placeholder="Desde"
+              max={hasta || hoy()}
               value={desde}
               onChange={(v) => {
                 setDesde(v);
@@ -119,6 +120,8 @@ function AuditoriaContent() {
             <DatePicker
               id="auditoria-hasta"
               placeholder="Hasta"
+              min={desde || undefined}
+              max={hoy()}
               value={hasta}
               onChange={(v) => {
                 setHasta(v);

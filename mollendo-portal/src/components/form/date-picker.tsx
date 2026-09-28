@@ -9,7 +9,8 @@ const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
-const DIAS_SEMANA = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"];
+// La semana empieza el lunes (uso habitual en Perú).
+const DIAS_SEMANA = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"];
 
 // El valor interno (lo que se manda por `onChange` y se recibe por `value`)
 // siempre es "YYYY-MM-DD" — es lo que espera el backend. Lo que ve y escribe
@@ -48,6 +49,17 @@ function parsearVisible(texto: string): Date | null {
   return fecha;
 }
 
+/**
+ * Formatea lo que se va escribiendo como DD-MM-AAAA: toma solo los dígitos
+ * (así "28/09/2026", "28.09.2026" o "28092026" funcionan) y pone los guiones.
+ */
+function formatearMientrasEscribe(texto: string): string {
+  const digitos = texto.replace(/\D/g, "").slice(0, 8);
+  if (digitos.length > 4) return `${digitos.slice(0, 2)}-${digitos.slice(2, 4)}-${digitos.slice(4)}`;
+  if (digitos.length > 2) return `${digitos.slice(0, 2)}-${digitos.slice(2)}`;
+  return digitos;
+}
+
 function mismodia(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -55,7 +67,7 @@ function mismodia(a: Date, b: Date): boolean {
 function construirGrilla(mesVisible: Date): { fecha: Date; delMesActual: boolean }[] {
   const primerDiaMes = new Date(mesVisible.getFullYear(), mesVisible.getMonth(), 1);
   const inicio = new Date(primerDiaMes);
-  inicio.setDate(inicio.getDate() - primerDiaMes.getDay());
+  inicio.setDate(inicio.getDate() - ((primerDiaMes.getDay() + 6) % 7)); // retrocede hasta el lunes
 
   return Array.from({ length: 42 }, (_, i) => {
     const fecha = new Date(inicio);
@@ -91,9 +103,18 @@ type PropsType = {
   onChange: (value: string) => void;
   label?: string;
   placeholder?: string;
+  /** Fecha mínima elegible ("YYYY-MM-DD"); las anteriores quedan desactivadas. */
+  min?: string;
+  /** Fecha máxima elegible ("YYYY-MM-DD"), p. ej. hoy en un filtro de registros. */
+  max?: string;
 };
 
-export default function DatePicker({ id, value, onChange, label, placeholder }: PropsType) {
+export default function DatePicker({ id, value, onChange, label, placeholder, min, max }: PropsType) {
+  const fechaMin = min ? parsearFecha(min) : null;
+  const fechaMax = max ? parsearFecha(max) : null;
+  const fueraDeRango = (fecha: Date) =>
+    (!!fechaMin && fecha < fechaMin && !mismodia(fecha, fechaMin)) ||
+    (!!fechaMax && fecha > fechaMax && !mismodia(fecha, fechaMax));
   const [abierto, setAbierto] = useState(false);
   const [vista, setVista] = useState<"dias" | "meses" | "anios">("dias");
   const [mesVisible, setMesVisible] = useState<Date>(() => parsearFecha(value) ?? new Date());
@@ -130,11 +151,16 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
     function reubicar() {
       if (wrapperRef.current) setPosicion(calcularPosicion(wrapperRef.current));
     }
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setAbierto(false);
+    }
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
     window.addEventListener("scroll", reubicar, true);
     window.addEventListener("resize", reubicar);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
       window.removeEventListener("scroll", reubicar, true);
       window.removeEventListener("resize", reubicar);
     };
@@ -148,6 +174,7 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
   }
 
   function elegirDia(fecha: Date) {
+    if (fueraDeRango(fecha)) return;
     onChange(formatearFecha(fecha));
     setAbierto(false);
   }
@@ -170,14 +197,19 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
   const inicioBloqueAnios = Math.floor(mesVisible.getFullYear() / 12) * 12;
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const nuevoTexto = e.target.value;
+    let nuevoTexto = formatearMientrasEscribe(e.target.value);
+    // Si se borró un guion, los dígitos no cambian y el guion volvería a
+    // aparecer: en ese caso se borra también el dígito anterior.
+    if (e.target.value.length < texto.length && nuevoTexto === texto) {
+      nuevoTexto = formatearMientrasEscribe(nuevoTexto.replace(/\D/g, "").slice(0, -1));
+    }
     setTexto(nuevoTexto);
     if (nuevoTexto === "") {
       onChange("");
       return;
     }
     const fecha = parsearVisible(nuevoTexto);
-    if (fecha) {
+    if (fecha && !fueraDeRango(fecha)) {
       onChange(formatearFecha(fecha));
       setMesVisible(fecha);
     }
@@ -187,9 +219,10 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
     // Si lo que quedó escrito no es una fecha válida, se descarta y vuelve
     // a mostrar el último valor válido — no se deja texto suelto sin sentido.
     if (texto === "") return;
-    if (!parsearVisible(texto)) {
-      const fecha = parsearFecha(value);
-      setTexto(fecha ? formatearVisible(fecha) : "");
+    const fecha = parsearVisible(texto);
+    if (!fecha || fueraDeRango(fecha)) {
+      const actual = parsearFecha(value);
+      setTexto(actual ? formatearVisible(actual) : "");
     }
   }
 
@@ -210,11 +243,14 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           placeholder={placeholder}
           autoComplete="off"
+          inputMode="numeric"
+          maxLength={10}
           className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:focus:border-brand-800"
         />
         <button
           type="button"
           onClick={abrir}
+          aria-label="Abrir calendario"
           className="absolute text-gray-500 -translate-y-1/2 right-3 top-1/2 dark:text-gray-400"
         >
           <CalenderIcon className="size-6" />
@@ -324,14 +360,30 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
                 {construirGrilla(mesVisible).map(({ fecha, delMesActual }) => {
                   const esSeleccionada = !!seleccionada && mismodia(fecha, seleccionada);
                   const esHoy = mismodia(fecha, hoy);
+                  const desactivado = fueraDeRango(fecha);
                   return (
                     <button
                       key={fecha.toISOString()}
                       type="button"
+                      disabled={desactivado}
+                      aria-label={`${fecha.getDate()} de ${MESES[fecha.getMonth()].toLowerCase()} de ${fecha.getFullYear()}`}
+                      aria-pressed={esSeleccionada}
                       onClick={() => elegirDia(fecha)}
                       className={`mx-auto flex size-8 items-center justify-center rounded-full ${
-                        !delMesActual ? "text-gray-300 dark:text-gray-700" : "text-gray-700 dark:text-gray-300"
-                      } ${esSeleccionada ? "bg-brand-500 text-white" : esHoy ? "ring-1 ring-brand-500 text-brand-600 dark:text-brand-400" : "hover:bg-brand-50 dark:hover:bg-white/[0.05]"}`}
+                        desactivado
+                          ? "cursor-not-allowed text-gray-300 line-through decoration-gray-300 dark:text-gray-700 dark:decoration-gray-700"
+                          : !delMesActual
+                            ? "text-gray-300 dark:text-gray-700"
+                            : "text-gray-700 dark:text-gray-300"
+                      } ${
+                        esSeleccionada
+                          ? "bg-brand-500 text-white"
+                          : esHoy
+                            ? "ring-1 ring-brand-500 text-brand-600 dark:text-brand-400"
+                            : desactivado
+                              ? ""
+                              : "hover:bg-brand-50 dark:hover:bg-white/[0.05]"
+                      }`}
                     >
                       {fecha.getDate()}
                     </button>
@@ -345,7 +397,8 @@ export default function DatePicker({ id, value, onChange, label, placeholder }: 
             <button
               type="button"
               onClick={() => elegirDia(new Date())}
-              className="rounded-lg px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-white/[0.05]"
+              disabled={fueraDeRango(new Date())}
+              className="rounded-lg px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40 dark:text-brand-400 dark:hover:bg-white/[0.05]"
             >
               Hoy
             </button>
