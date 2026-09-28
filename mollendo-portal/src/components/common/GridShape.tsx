@@ -1,6 +1,7 @@
 import Image from "next/image";
 import React from "react";
 
+/** Cuadrícula decorativa del fondo (inicio de sesión y página 404). Se carga de inmediato: es lo más grande que se ve al abrir. */
 export default function GridShape() {
   return (
     <>
@@ -9,7 +10,10 @@ export default function GridShape() {
           width={540}
           height={254}
           src="/images/shape/grid-01.svg"
-          alt="grid"
+          alt=""
+          aria-hidden
+          loading="eager"
+          style={{ width: "100%", height: "auto" }}
         />
       </div>
       <div className="absolute bottom-0 left-0 -z-1 w-full max-w-[250px] rotate-180 xl:max-w-[450px]">
@@ -17,7 +21,10 @@ export default function GridShape() {
           width={540}
           height={254}
           src="/images/shape/grid-01.svg"
-          alt="grid"
+          alt=""
+          aria-hidden
+          loading="eager"
+          style={{ width: "100%", height: "auto" }}
         />
       </div>
     </>
