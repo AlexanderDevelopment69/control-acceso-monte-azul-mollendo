@@ -121,7 +121,7 @@ const SECCIONES: SeccionManual[] = [
         <p>
           El <Link href="/vigilancia" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Panel de vigilancia</Link> muestra
           en vivo cada ingreso y salida por el molinete apenas ocurre, autorizado o denegado: la fila nueva aparece
-          arriba de la tabla, resaltada unos segundos, y los contadores se actualizan solos. Los intentos con un documento
+          arriba de la tabla (el último evento queda resaltado unos segundos), y los contadores se actualizan solos. Los intentos con un documento
           no registrado también quedan en la tabla, como “No registrado”.
         </p>
         <p>Cuando la persona se identifica en el terminal y hace la prueba de alcohol, el sistema revisa en este orden:</p>

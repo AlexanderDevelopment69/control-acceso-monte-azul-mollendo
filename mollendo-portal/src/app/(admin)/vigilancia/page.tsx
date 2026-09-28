@@ -25,7 +25,7 @@ interface EventoLive {
   eventoId: number;
 }
 
-// Cuánto tiempo queda resaltada una fila nueva.
+// Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
 const RESALTE_MS = 8000;
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -142,8 +142,8 @@ function DocumentosModal({ personaId, onClose }: { personaId: number | null; onC
 function VigilanciaContent() {
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
   const [eventos, setEventos] = useState<EventoAcceso[]>([]);
-  // Eventos recién llegados en vivo: su fila se resalta unos segundos.
-  const [nuevos, setNuevos] = useState<Set<number>>(new Set());
+  // Último evento llegado en vivo: solo su fila se resalta, unos segundos.
+  const [ultimo, setUltimo] = useState<number | null>(null);
   const [servidorCaido, setServidorCaido] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
@@ -168,35 +168,27 @@ function VigilanciaContent() {
   }, [cargar]);
 
   // Cada evento en vivo recarga la tabla y los contadores (si llegan varios
-  // seguidos, una sola recarga medio segundo después) y resalta su fila.
+  // seguidos, una sola recarga medio segundo después) y pasa a ser el resaltado.
   const recargaPendiente = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resaltes = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const finResalte = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     let socket: Socket | undefined;
     try {
       socket = connectEventosSocket();
       socket.on("evento-acceso", (payload: EventoLive) => {
-        setNuevos((prev) => new Set(prev).add(payload.eventoId));
-        resaltes.current.push(
-          setTimeout(() => {
-            setNuevos((prev) => {
-              const siguiente = new Set(prev);
-              siguiente.delete(payload.eventoId);
-              return siguiente;
-            });
-          }, RESALTE_MS),
-        );
+        setUltimo(payload.eventoId);
+        if (finResalte.current) clearTimeout(finResalte.current);
+        finResalte.current = setTimeout(() => setUltimo(null), RESALTE_MS);
         if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
         recargaPendiente.current = setTimeout(() => void cargar(), 500);
       });
     } catch {
       // el panel sigue funcionando sin tiempo real si el socket falla
     }
-    const pendientes = resaltes.current;
     return () => {
       socket?.disconnect();
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
-      pendientes.forEach(clearTimeout);
+      if (finResalte.current) clearTimeout(finResalte.current);
     };
   }, [cargar]);
 
@@ -300,7 +292,7 @@ function VigilanciaContent() {
               {paginated.map((ev) => (
                 <TableRow
                   key={ev.id}
-                  className={`transition-colors duration-700 ${nuevos.has(ev.id) ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
+                  className={`transition-colors duration-700 ${ev.id === ultimo ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
                 >
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {new Date(ev.fechaHora).toLocaleString("es-PE")}
