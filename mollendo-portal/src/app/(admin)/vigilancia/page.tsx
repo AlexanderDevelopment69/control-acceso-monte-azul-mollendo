@@ -33,9 +33,10 @@ const RESALTE_MS = 8000;
 /** `value` null = todavía no se cargó (se muestra "—" en vez de un 0 que luego salta). */
 function StatCard({ label, value, color }: { label: string; value: number | null; color: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
+    // Número abajo: queda alineado entre tarjetas aunque un título ocupe más líneas.
+    <div className="flex flex-col rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
       <p className="text-xs leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">{label}</p>
-      <p className={`mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>
+      <p className={`mt-auto pt-1 text-xl font-semibold sm:pt-2 sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>
         {value ?? "—"}
       </p>
     </div>

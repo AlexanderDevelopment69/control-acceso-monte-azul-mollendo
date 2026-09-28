@@ -401,3 +401,4 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
 
 - **2026-09-28 (13)** — **Despliegue en la mini PC** del commit `3fcda48` (sección 5 de la guía): respaldo previo `backups/antes-de-actualizar-20260928-1723.sql.gz`, código reemplazado, imágenes reconstruidas, migración `20260928180000_indices_fecha` aplicada al arrancar. Verificado por Tailscale: páginas 200, páginas de la plantilla 404, `lang="es"`, login, listas paginadas y búsqueda, resumen del panel, tiempo real, Swagger y el enlace público `muestra`. Datos de demostración conservados.
 - Menú en el celular: se ocultó el bloque de marca del menú (se repetía con la cabecera, que ya muestra logo y nombre); en computadora sigue igual.
+- Contadores del Panel: el número va abajo de cada tarjeta, alineado aunque un título ocupe dos líneas.
