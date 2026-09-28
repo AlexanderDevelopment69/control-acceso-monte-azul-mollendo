@@ -31,12 +31,17 @@ const navItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, toggleMobileSidebar } = useSidebar();
   const pathname = usePathname();
   const { user } = useAuth();
 
   const visibleItems = navItems.filter((item) => (user ? item.roles.includes(user.rol) : false));
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+
+  // En el celular el menú tapa la página: se cierra al elegir una opción.
+  const cerrarEnCelular = () => {
+    if (isMobileOpen) toggleMobileSidebar();
+  };
 
   const renderMenuItems = (items: NavItem[]) => (
     <ul className="flex flex-col gap-4">
@@ -45,7 +50,8 @@ const AppSidebar: React.FC = () => {
           {nav.path && (
             <Link
               href={nav.path}
-              className={`menu-item group ${
+              onClick={cerrarEnCelular}
+              className={`menu-item group overflow-hidden ${
                 isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
               }`}
             >
@@ -57,7 +63,9 @@ const AppSidebar: React.FC = () => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className={`menu-item-text`}>{nav.name}</span>
+                // Sin saltos de línea: mientras el menú se ensancha, el nombre no se
+                // parte en dos líneas ni mueve las filas de abajo.
+                <span className="menu-item-text whitespace-nowrap">{nav.name}</span>
               )}
             </Link>
           )}
@@ -88,7 +96,7 @@ const AppSidebar: React.FC = () => {
       >
         {/* Altura fija y texto sin saltos de línea: mientras el menú se ensancha,
             el texto no se parte en varias líneas ni empuja lo de abajo. */}
-        <Link href="/" className="flex h-11 items-center overflow-hidden">
+        <Link href="/" onClick={cerrarEnCelular} className="flex h-11 items-center overflow-hidden">
           {isExpanded || isHovered || isMobileOpen ? (
             <span className="flex items-center gap-3 whitespace-nowrap">
               <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={81} height={28} priority />
