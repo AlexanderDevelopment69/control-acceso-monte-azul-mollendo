@@ -19,6 +19,7 @@ Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend
 6. [Operación del día a día](#6-operación-del-día-a-día)
 7. [Respaldos](#7-respaldos)
 8. [Solución de problemas](#8-solución-de-problemas)
+8b. [Datos de demostración](#8b-datos-de-demostración)
 9. [Seguridad y recomendaciones](#9-seguridad-y-recomendaciones)
 - [Anexo A. Registro del primer despliegue (28/09/2026)](#anexo-a-registro-del-primer-despliegue-28092026)
 - [Anexo B. Variables del archivo .env](#anexo-b-variables-del-archivo-env)
@@ -477,6 +478,52 @@ Primero mira siempre el estado y el log: `dc ps` y `dc logs --tail 100 api`.
 | Un comando `dc run ...` dentro de un script "se come" las líneas siguientes | `docker compose run` lee la entrada estándar | Usa `run -T` (como en esta guía) o agrega `</dev/null`. |
 | El disco se llena | Imágenes viejas de actualizaciones anteriores | `sudo docker image prune -f` (borra solo imágenes sin uso; no toca datos). |
 | Nadie puede entrar al portal | Contraseña olvidada | [Restablecer una contraseña](#restablecer-una-contraseña-olvidada). |
+
+---
+
+## 8b. Datos de demostración
+
+Para mostrar el sistema funcionando sin datos reales, se puede cargar un conjunto de demostración: **4 empresas, 20 personas** (con foto y documentos; algunas con documentos vencidos o por vencer, 2 de baja y 1 sin documentos) y **unos 30 ingresos y salidas**. Todo es identificable y se borra sin tocar datos reales:
+
+- empresas con RUC `2099999990x` y razón social que empieza con "DEMO";
+- personas con número de documento que empieza con `99`;
+- eventos con el molinete "DEMO".
+
+**Cargar** (desde la PC, en `mollendo-api`, con el servidor accesible):
+
+```bash
+API_URL=http://100.78.153.33:3000/api/v1 \
+ADMIN_PASSWORD='<contraseña del administrador>' \
+DEVICE_API_KEY='<DEVICE_API_KEY del .env del servidor>' \
+npx tsx prisma/datos-demo.ts
+```
+
+Sin `DEVICE_API_KEY` carga empresas y personas, pero no los ingresos y salidas. Si ya hay datos DEMO, no hace nada.
+
+**Borrar** (en el servidor, dentro de `~/mollendo`): borra las empresas, personas, documentos, fotos, eventos y auditoría DEMO, y los tipos de documento que queden sin uso.
+
+```bash
+sudo sh mollendo-api/prisma/limpiar-demo.sh
+```
+
+> Antes de empezar a usar el sistema con datos reales, **borra los datos de demostración**.
+
+### Enlace público temporal (para una muestra)
+
+Para que cualquiera pueda ver el portal desde internet, sin Tailscale ni estar en la red local, hay un contenedor opcional `muestra` (túnel rápido de Cloudflare, sin cuenta). Está **apagado por defecto** y no afecta a los demás contenedores. En el servidor, dentro de `~/mollendo`:
+
+```bash
+# Encender
+sudo docker compose -f docker-compose.prod.yml --profile muestra up -d muestra
+# Ver el enlace (https://….trycloudflare.com)
+sudo docker compose -f docker-compose.prod.yml logs muestra | grep trycloudflare
+# Apagar (el enlace deja de funcionar)
+sudo docker compose -f docker-compose.prod.yml --profile muestra rm -sf muestra
+```
+
+- El enlace **cambia cada vez** que se enciende.
+- Cualquiera con el enlace llega a la pantalla de inicio de sesión (y a Swagger en `/api/docs`). Para entrar necesita usuario y contraseña: **no compartas las contraseñas reales**; para una muestra, usa datos de demostración y cambia las contraseñas después.
+- Apágalo cuando termine la muestra.
 
 ---
 

@@ -75,6 +75,20 @@ services:
         sleep 86400;
       done'
 
+  # Enlace público TEMPORAL para mostrar el portal a cualquiera (túnel rápido
+  # de Cloudflare, sin cuenta). Apagado por defecto: solo se levanta con el
+  # perfil "muestra". Cada vez que arranca, el enlace cambia.
+  #   Encender: docker compose -f docker-compose.prod.yml --profile muestra up -d muestra
+  #   Ver enlace: docker compose -f docker-compose.prod.yml logs muestra | grep trycloudflare
+  #   Apagar:   docker compose -f docker-compose.prod.yml --profile muestra rm -sf muestra
+  muestra:
+    image: cloudflare/cloudflared:latest
+    profiles: ["muestra"]
+    restart: "no"
+    depends_on:
+      - portal
+    command: tunnel --no-autoupdate --url http://portal:3000
+
 volumes:
   db_data:
   documentos:
