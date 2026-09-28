@@ -61,7 +61,7 @@ export function PersonalDocumentos() {
         title="Personal y documentos"
         description="Registra al personal, sube sus documentos y revisa quién puede ingresar hoy."
         actions={
-          <Button size="sm" onClick={() => setModalOpen(true)} disabled={loading}>
+          <Button size="sm" onClick={() => setModalOpen(true)}>
             + Nuevo personal
           </Button>
         }
@@ -87,9 +87,9 @@ export function PersonalDocumentos() {
             <div className="flex gap-1 rounded-lg bg-gray-100 p-1 text-xs dark:bg-gray-900">
               {(
                 [
-                  ["todos", `Todos (${personas.length})`],
-                  ["no-habilitados", `✖ No pueden (${noHabilitados})`],
-                  ["habilitados", `✔ Pueden (${personas.length - noHabilitados})`],
+                  ["todos", loading ? "Todos" : `Todos (${personas.length})`],
+                  ["no-habilitados", loading ? "✖ No pueden" : `✖ No pueden (${noHabilitados})`],
+                  ["habilitados", loading ? "✔ Pueden" : `✔ Pueden (${personas.length - noHabilitados})`],
                 ] as [Filtro, string][]
               ).map(([id, label]) => (
                 <button

@@ -28,11 +28,14 @@ interface EventoLive {
 // Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
 const RESALTE_MS = 8000;
 
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+/** `value` null = todavía no se cargó (se muestra "—" en vez de un 0 que luego salta). */
+function StatCard({ label, value, color }: { label: string; value: number | null; color: string }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
       <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-      <p className={`mt-2 text-2xl font-semibold ${color}`}>{value}</p>
+      <p className={`mt-2 text-2xl font-semibold ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>
+        {value ?? "—"}
+      </p>
     </div>
   );
 }
@@ -246,9 +249,9 @@ function VigilanciaContent() {
       )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Denegaciones hoy" value={resumen?.denegacionesHoy ?? 0} color="text-error-500" />
-        <StatCard label="Alcohol no conforme hoy" value={resumen?.alcoholNoConformeHoy ?? 0} color="text-warning-500" />
-        <StatCard label="Documentos vencidos" value={resumen?.documentosVencidos ?? 0} color="text-gray-700 dark:text-gray-300" />
+        <StatCard label="Denegaciones hoy" value={resumen?.denegacionesHoy ?? null} color="text-error-500" />
+        <StatCard label="Alcohol no conforme hoy" value={resumen?.alcoholNoConformeHoy ?? null} color="text-warning-500" />
+        <StatCard label="Documentos vencidos" value={resumen?.documentosVencidos ?? null} color="text-gray-700 dark:text-gray-300" />
       </div>
 
       <div className="mb-4">

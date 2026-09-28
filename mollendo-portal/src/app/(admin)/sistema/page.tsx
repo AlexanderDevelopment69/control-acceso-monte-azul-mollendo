@@ -182,6 +182,11 @@ Registrar rostro en el G4 Pro: DNI 12345678 (persona 12), foto storage/… (simu
   },
 ];
 
+/** Mientras llega la primera respuesta del backend no se sabe el estado. */
+function ComprobandoBadge() {
+  return <Badge color="light">Comprobando…</Badge>;
+}
+
 function EstadoBadge({ ok }: { ok: boolean }) {
   return <Badge color={ok ? "success" : "error"}>{ok ? "En línea" : "Sin conexión"}</Badge>;
 }
@@ -201,12 +206,25 @@ function StatusCard({ icon, children }: { icon: React.ReactNode; children: React
   );
 }
 
-function EstadoIntegracionBadge({ api, backendUp, claveConfigurada }: { api: ApiIntegracion; backendUp: boolean; claveConfigurada: boolean }) {
+function EstadoIntegracionBadge({
+  api,
+  backendUp,
+  claveConfigurada,
+  comprobando,
+}: {
+  api: ApiIntegracion;
+  backendUp: boolean;
+  claveConfigurada: boolean;
+  comprobando: boolean;
+}) {
   if (api.tipo === "pendiente") {
     return <Badge color="light">Por programar</Badge>;
   }
   if (api.tipo === "mock") {
     return <Badge color="warning">Simulado (mock)</Badge>;
+  }
+  if (comprobando) {
+    return <ComprobandoBadge />;
   }
   if (!backendUp) {
     return <Badge color="error">Sin conexión</Badge>;
@@ -232,10 +250,12 @@ function FilaApiIntegracion({
   api,
   backendUp,
   claveConfigurada,
+  comprobando,
 }: {
   api: ApiIntegracion;
   backendUp: boolean;
   claveConfigurada: boolean;
+  comprobando: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
 
@@ -257,7 +277,7 @@ function FilaApiIntegracion({
         </TableCell>
         <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{api.autenticacion}</TableCell>
         <TableCell className="px-5 py-4 text-sm">
-          <EstadoIntegracionBadge api={api} backendUp={backendUp} claveConfigurada={claveConfigurada} />
+          <EstadoIntegracionBadge api={api} backendUp={backendUp} claveConfigurada={claveConfigurada} comprobando={comprobando} />
         </TableCell>
       </TableRow>
       <TableRow>
@@ -307,6 +327,7 @@ function SistemaContent() {
   const [estado, setEstado] = useState<EstadoSistema | null>(null);
   const [error, setError] = useState(false);
   const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null);
+  const comprobando = !estado && !error;
 
   useEffect(() => {
     let activo = true;
@@ -350,7 +371,7 @@ function SistemaContent() {
         <StatusCard icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
-            <EstadoBadge ok={!error && !!estado} />
+            {comprobando ? <ComprobandoBadge /> : <EstadoBadge ok={!error && !!estado} />}
           </div>
           {estado && (
             <p className="mt-2 text-xs text-gray-400">
@@ -362,7 +383,7 @@ function SistemaContent() {
         <StatusCard icon={<BoxCubeIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Base de datos</p>
           <div className="mt-2">
-            <EstadoBadge ok={estado?.baseDeDatos.estado === "up"} />
+            {comprobando ? <ComprobandoBadge /> : <EstadoBadge ok={estado?.baseDeDatos.estado === "up"} />}
           </div>
           {estado && <p className="mt-2 text-xs text-gray-400">Latencia: {estado.baseDeDatos.latenciaMs} ms</p>}
         </StatusCard>
@@ -371,7 +392,11 @@ function SistemaContent() {
         <StatusCard icon={<LockIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Clave de equipos físicos</p>
           <div className="mt-2">
-            <ConfiguradoBadge ok={!!estado?.integraciones.claveEquiposConfigurada} />
+            {comprobando ? (
+              <ComprobandoBadge />
+            ) : (
+              <ConfiguradoBadge ok={!!estado?.integraciones.claveEquiposConfigurada} />
+            )}
           </div>
           <p className="mt-2 text-xs text-gray-400">Para las rutas de ingreso y salida (X-API-Key)</p>
         </StatusCard>
@@ -420,6 +445,7 @@ function SistemaContent() {
                   api={api}
                   backendUp={!error && !!estado}
                   claveConfigurada={!!estado?.integraciones.claveEquiposConfigurada}
+                  comprobando={comprobando}
                 />
               ))}
             </TableBody>
