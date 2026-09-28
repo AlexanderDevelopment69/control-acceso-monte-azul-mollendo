@@ -7,13 +7,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var PersonasService_1;
-import { existsSync, unlinkSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { borrarArchivo, guardarArchivo } from '../common/archivos-persona.util.js';
 import { documentosActuales, esDocumentoVigente, evaluarIngreso, ultimasVersiones, } from '../eventos-acceso/validacion-acceso.engine.js';
 const EMPRESA_SELECT = { select: { id: true, razonSocial: true } };
 function evaluarCumplimiento(estado, documentos) {
@@ -29,11 +29,15 @@ function evaluarCumplimiento(estado, documentos) {
         documentosVencidos: resultado.documentosVencidos,
     };
 }
-let PersonasService = PersonasService_1 = class PersonasService {
+function validarNumeroDocumento(tipo, numero) {
+    if (tipo === 'DNI' && !/^\d{8}$/.test(numero)) {
+        throw new BadRequestException('El DNI debe tener 8 dígitos');
+    }
+}
+let PersonasService = class PersonasService {
     prisma;
     auditoriaService;
     eventEmitter;
-    logger = new Logger(PersonasService_1.name);
     constructor(prisma, auditoriaService, eventEmitter) {
         this.prisma = prisma;
         this.auditoriaService = auditoriaService;
@@ -46,6 +50,7 @@ let PersonasService = PersonasService_1 = class PersonasService {
         }
     }
     async create(dto, user) {
+        validarNumeroDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
         await this.assertEmpresaExiste(dto.empresaId);
         const existente = await this.prisma.persona.findUnique({
             where: {
@@ -132,6 +137,17 @@ let PersonasService = PersonasService_1 = class PersonasService {
         if (dto.empresaId !== undefined && dto.empresaId !== persona.empresaId) {
             await this.assertEmpresaExiste(dto.empresaId);
         }
+        const tipo = dto.tipoDocumentoIdentidad ?? persona.tipoDocumentoIdentidad;
+        const numero = dto.numeroDocumento ?? persona.numeroDocumento;
+        if (tipo !== persona.tipoDocumentoIdentidad || numero !== persona.numeroDocumento) {
+            validarNumeroDocumento(tipo, numero);
+            const otra = await this.prisma.persona.findUnique({
+                where: { tipoDocumentoIdentidad_numeroDocumento: { tipoDocumentoIdentidad: tipo, numeroDocumento: numero } },
+            });
+            if (otra) {
+                throw new ConflictException('Ya existe una persona registrada con ese documento');
+            }
+        }
         const actualizada = await this.prisma.persona.update({ where: { id: persona.id }, data: dto });
         await this.auditoriaService.registrar({
             usuarioId: user.id,
@@ -155,17 +171,18 @@ let PersonasService = PersonasService_1 = class PersonasService {
         });
         return actualizada;
     }
-    async guardarFoto(id, rutaArchivo, user) {
+    async guardarFoto(id, foto, user) {
         const persona = await this.findPersona(id);
-        const actualizada = await this.prisma.persona.update({ where: { id }, data: { fotoUrl: rutaArchivo } });
-        if (persona.fotoUrl && persona.fotoUrl !== rutaArchivo && existsSync(persona.fotoUrl)) {
-            try {
-                unlinkSync(persona.fotoUrl);
-            }
-            catch (error) {
-                this.logger.warn(`No se pudo borrar la foto anterior ${persona.fotoUrl}: ${String(error)}`);
-            }
+        const rutaArchivo = guardarArchivo(id, foto, 'foto-');
+        let actualizada;
+        try {
+            actualizada = await this.prisma.persona.update({ where: { id }, data: { fotoUrl: rutaArchivo } });
         }
+        catch (error) {
+            borrarArchivo(rutaArchivo);
+            throw error;
+        }
+        borrarArchivo(persona.fotoUrl);
         await this.auditoriaService.registrar({
             usuarioId: user.id,
             tablaAfectada: 'persona',
@@ -188,7 +205,7 @@ let PersonasService = PersonasService_1 = class PersonasService {
         return resolve(persona.fotoUrl);
     }
 };
-PersonasService = PersonasService_1 = __decorate([
+PersonasService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
         AuditoriaService,

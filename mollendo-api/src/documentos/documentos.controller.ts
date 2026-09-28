@@ -14,7 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { Express } from 'express';
 import { DocumentosService } from './documentos.service.js';
 import { CreateDocumentoDto } from './dto/create-documento.dto.js';
-import { documentosMulterStorage } from './documentos-storage.util.js';
+import { documentosMulterOptions } from './documentos-storage.util.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
@@ -25,7 +25,7 @@ export class DocumentosController {
 
   @Post('personas/:personaId/documentos')
   @Roles('administrador')
-  @UseInterceptors(FileInterceptor('archivo', { storage: documentosMulterStorage }))
+  @UseInterceptors(FileInterceptor('archivo', documentosMulterOptions))
   subirDocumento(
     @Param('personaId', ParseIntPipe) personaId: number,
     @Body() dto: CreateDocumentoDto,
@@ -35,7 +35,7 @@ export class DocumentosController {
     if (!archivo) {
       throw new BadRequestException('El archivo del documento es obligatorio');
     }
-    return this.documentosService.subirDocumento(personaId, dto, archivo.path, user);
+    return this.documentosService.subirDocumento(personaId, dto, archivo, user);
   }
 
   @Get('personas/:personaId/documentos')

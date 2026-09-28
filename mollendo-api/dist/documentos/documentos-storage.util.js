@@ -1,19 +1,12 @@
-import { randomUUID } from 'node:crypto';
-import { extname } from 'node:path';
-import { existsSync, mkdirSync } from 'node:fs';
-import { diskStorage } from 'multer';
-const storageRoot = process.env.DOCUMENTOS_STORAGE_PATH ?? './storage/documentos';
-export const documentosMulterStorage = diskStorage({
-    destination: (req, _file, callback) => {
-        const personaId = req.params['personaId'];
-        const dir = `${storageRoot}/persona-${personaId}`;
-        if (!existsSync(dir)) {
-            mkdirSync(dir, { recursive: true });
-        }
-        callback(null, dir);
-    },
-    filename: (_req, file, callback) => {
-        callback(null, `${randomUUID()}${extname(file.originalname)}`);
-    },
-});
+import { opcionesArchivo } from '../common/archivos-persona.util.js';
+const TIPOS_PERMITIDOS = [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+export const DOCUMENTO_TAMANO_MAXIMO = 20 * 1024 * 1024;
+export const documentosMulterOptions = opcionesArchivo(TIPOS_PERMITIDOS, DOCUMENTO_TAMANO_MAXIMO, 'El documento debe ser PDF, imagen (JPG, PNG o WEBP) o Word');
 //# sourceMappingURL=documentos-storage.util.js.map

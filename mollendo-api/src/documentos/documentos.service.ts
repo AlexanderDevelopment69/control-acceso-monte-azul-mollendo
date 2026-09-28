@@ -1,14 +1,13 @@
-import { existsSync, unlinkSync } from 'node:fs';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Express } from 'express';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 import type { CreateDocumentoDto } from './dto/create-documento.dto.js';
+import { borrarArchivo, guardarArchivo } from '../common/archivos-persona.util.js';
 
 @Injectable()
 export class DocumentosService {
-  private readonly logger = new Logger(DocumentosService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoriaService: AuditoriaService,
@@ -26,26 +25,38 @@ export class DocumentosService {
   async subirDocumento(
     personaId: number,
     dto: CreateDocumentoDto,
-    archivoPath: string,
+    archivo: Express.Multer.File,
     user: AuthenticatedUser,
   ) {
     await this.findPersona(personaId);
+    const tipoDocumento = await this.prisma.tipoDocumento.findUnique({ where: { id: dto.tipoDocumentoId } });
+    if (!tipoDocumento) {
+      throw new NotFoundException('Tipo de documento no encontrado');
+    }
 
     const ultimaVersion = await this.prisma.documentoPersona.findFirst({
       where: { personaId, tipoDocumentoId: dto.tipoDocumentoId },
       orderBy: { version: 'desc' },
     });
 
-    const documento = await this.prisma.documentoPersona.create({
-      data: {
-        personaId,
-        tipoDocumentoId: dto.tipoDocumentoId,
-        fechaEmision: dto.fechaEmision ? new Date(dto.fechaEmision) : null,
-        fechaVencimiento: dto.fechaVencimiento ? new Date(dto.fechaVencimiento) : null,
-        archivoUrl: archivoPath,
-        version: (ultimaVersion?.version ?? 0) + 1,
-      },
-    });
+    // El archivo se escribe en disco recién ahora, con la petición ya validada.
+    const archivoPath = guardarArchivo(personaId, archivo);
+    let documento;
+    try {
+      documento = await this.prisma.documentoPersona.create({
+        data: {
+          personaId,
+          tipoDocumentoId: dto.tipoDocumentoId,
+          fechaEmision: dto.fechaEmision ? new Date(dto.fechaEmision) : null,
+          fechaVencimiento: dto.fechaVencimiento ? new Date(dto.fechaVencimiento) : null,
+          archivoUrl: archivoPath,
+          version: (ultimaVersion?.version ?? 0) + 1,
+        },
+      });
+    } catch (error) {
+      borrarArchivo(archivoPath);
+      throw error;
+    }
 
     await this.auditoriaService.registrar({
       usuarioId: user.id,
@@ -81,13 +92,7 @@ export class DocumentosService {
     await this.prisma.documentoPersona.deleteMany({ where: { personaId, tipoDocumentoId } });
 
     for (const doc of versiones) {
-      if (doc.archivoUrl && existsSync(doc.archivoUrl)) {
-        try {
-          unlinkSync(doc.archivoUrl);
-        } catch (error) {
-          this.logger.warn(`No se pudo borrar el archivo ${doc.archivoUrl}: ${String(error)}`);
-        }
-      }
+      borrarArchivo(doc.archivoUrl);
       await this.auditoriaService.registrar({
         usuarioId: user.id,
         tablaAfectada: 'documento_persona',

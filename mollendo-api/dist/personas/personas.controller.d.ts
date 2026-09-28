@@ -9,6 +9,7 @@ export declare class PersonasController {
     private readonly personasService;
     constructor(personasService: PersonasService);
     create(dto: CreatePersonaDto, user: AuthenticatedUser): Promise<{
+        empresaId: number;
         tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
@@ -17,7 +18,6 @@ export declare class PersonasController {
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
-        empresaId: number;
     }>;
     findAll(query: QueryPersonasDto): Promise<{
         cumplimiento: {
@@ -30,6 +30,7 @@ export declare class PersonasController {
             id: number;
             razonSocial: string;
         };
+        empresaId: number;
         tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
@@ -38,7 +39,6 @@ export declare class PersonasController {
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
-        empresaId: number;
     }[]>;
     findOne(id: number): Promise<{
         cumplimiento: {
@@ -75,6 +75,7 @@ export declare class PersonasController {
             archivoUrl: string | null;
             version: number;
         })[];
+        empresaId: number;
         tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
@@ -83,9 +84,9 @@ export declare class PersonasController {
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
-        empresaId: number;
     }>;
     update(id: number, dto: UpdatePersonaDto, user: AuthenticatedUser): Promise<{
+        empresaId: number;
         tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
@@ -94,9 +95,9 @@ export declare class PersonasController {
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
-        empresaId: number;
     }>;
     updateEstado(id: number, dto: UpdateEstadoPersonaDto, user: AuthenticatedUser): Promise<{
+        empresaId: number;
         tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
@@ -105,9 +106,9 @@ export declare class PersonasController {
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
-        empresaId: number;
     }>;
     subirFoto(id: number, foto: Express.Multer.File, user: AuthenticatedUser): Promise<{
+        empresaId: number;
         tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
         numeroDocumento: string;
         nombres: string;
@@ -116,7 +117,6 @@ export declare class PersonasController {
         estado: import("../generated/prisma/enums.js").EstadoPersona;
         creadoEn: Date;
         id: number;
-        empresaId: number;
     }>;
     verFoto(id: number, res: Response): Promise<void>;
 }

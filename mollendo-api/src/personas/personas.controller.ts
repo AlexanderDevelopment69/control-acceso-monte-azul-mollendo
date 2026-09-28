@@ -78,7 +78,7 @@ export class PersonasController {
     if (!foto) {
       throw new BadRequestException('La foto es obligatoria');
     }
-    return this.personasService.guardarFoto(id, foto.path, user);
+    return this.personasService.guardarFoto(id, foto, user);
   }
 
   @Get(':id/foto')

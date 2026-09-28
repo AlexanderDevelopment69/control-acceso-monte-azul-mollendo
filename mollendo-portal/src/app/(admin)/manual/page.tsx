@@ -64,8 +64,8 @@ const SECCIONES: SeccionManual[] = [
                 social y correo ahí mismo.
               </li>
               <li>
-                <strong>Tipo y número de documento, nombres y apellidos.</strong> El número debe coincidir con el que el
-                terminal de reconocimiento facial tiene enrolado para esa persona.
+                <strong>Tipo y número de documento, nombres y apellidos.</strong> El DNI va con sus 8 dígitos, sin
+                espacios ni guiones: es el número con el que la persona se identifica en el lector de DNI del molinete.
               </li>
               <li>
                 <strong>Foto del personal</strong> (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5
@@ -74,7 +74,8 @@ const SECCIONES: SeccionManual[] = [
               </li>
               <li>
                 <strong>Documentos</strong> (al menos uno): escribe el nombre del documento (p. ej. SCTR), elige su fecha
-                de vencimiento en el calendario (vacía si no vence) y adjunta el archivo. Con{" "}
+                de vencimiento en el calendario (vacía si no vence) y adjunta el archivo (PDF, imagen JPG, PNG o WEBP, o
+                Word, hasta 20 MB). Con{" "}
                 <strong>“+ Agregar otro documento”</strong> subes varios a la vez.
               </li>
             </ul>

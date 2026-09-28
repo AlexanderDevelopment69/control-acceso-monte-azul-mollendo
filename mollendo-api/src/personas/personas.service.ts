@@ -1,10 +1,12 @@
-import { existsSync, unlinkSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import type { Express } from 'express';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
+import { borrarArchivo, guardarArchivo } from '../common/archivos-persona.util.js';
 import type { CreatePersonaDto } from './dto/create-persona.dto.js';
 import type { UpdatePersonaDto } from './dto/update-persona.dto.js';
 import type { UpdateEstadoPersonaDto } from './dto/update-estado-persona.dto.js';
@@ -42,10 +44,15 @@ function evaluarCumplimiento(
   };
 }
 
+/** El DNI peruano tiene 8 dígitos; CE y pasaporte solo se limpian en el DTO. */
+function validarNumeroDocumento(tipo: 'DNI' | 'CE' | 'PASAPORTE', numero: string): void {
+  if (tipo === 'DNI' && !/^\d{8}$/.test(numero)) {
+    throw new BadRequestException('El DNI debe tener 8 dígitos');
+  }
+}
+
 @Injectable()
 export class PersonasService {
-  private readonly logger = new Logger(PersonasService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoriaService: AuditoriaService,
@@ -61,6 +68,7 @@ export class PersonasService {
 
   // Alcance base: el administrador registra al personal de cualquier empresa.
   async create(dto: CreatePersonaDto, user: AuthenticatedUser) {
+    validarNumeroDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
     await this.assertEmpresaExiste(dto.empresaId);
 
     const existente = await this.prisma.persona.findUnique({
@@ -161,6 +169,17 @@ export class PersonasService {
     if (dto.empresaId !== undefined && dto.empresaId !== persona.empresaId) {
       await this.assertEmpresaExiste(dto.empresaId);
     }
+    const tipo = dto.tipoDocumentoIdentidad ?? persona.tipoDocumentoIdentidad;
+    const numero = dto.numeroDocumento ?? persona.numeroDocumento;
+    if (tipo !== persona.tipoDocumentoIdentidad || numero !== persona.numeroDocumento) {
+      validarNumeroDocumento(tipo, numero);
+      const otra = await this.prisma.persona.findUnique({
+        where: { tipoDocumentoIdentidad_numeroDocumento: { tipoDocumentoIdentidad: tipo, numeroDocumento: numero } },
+      });
+      if (otra) {
+        throw new ConflictException('Ya existe una persona registrada con ese documento');
+      }
+    }
     const actualizada = await this.prisma.persona.update({ where: { id: persona.id }, data: dto });
     await this.auditoriaService.registrar({
       usuarioId: user.id,
@@ -191,17 +210,18 @@ export class PersonasService {
    * disco. Avisa a la integración con ZKBio CVSecurity para enrolar el rostro
    * en el terminal (pendiente de su documentación/SDK: hoy solo queda en el log).
    */
-  async guardarFoto(id: number, rutaArchivo: string, user: AuthenticatedUser) {
+  async guardarFoto(id: number, foto: Express.Multer.File, user: AuthenticatedUser) {
     const persona = await this.findPersona(id);
-    const actualizada = await this.prisma.persona.update({ where: { id }, data: { fotoUrl: rutaArchivo } });
-
-    if (persona.fotoUrl && persona.fotoUrl !== rutaArchivo && existsSync(persona.fotoUrl)) {
-      try {
-        unlinkSync(persona.fotoUrl);
-      } catch (error) {
-        this.logger.warn(`No se pudo borrar la foto anterior ${persona.fotoUrl}: ${String(error)}`);
-      }
+    // Se escribe en disco recién ahora, con la persona ya validada.
+    const rutaArchivo = guardarArchivo(id, foto, 'foto-');
+    let actualizada;
+    try {
+      actualizada = await this.prisma.persona.update({ where: { id }, data: { fotoUrl: rutaArchivo } });
+    } catch (error) {
+      borrarArchivo(rutaArchivo);
+      throw error;
     }
+    borrarArchivo(persona.fotoUrl);
 
     await this.auditoriaService.registrar({
       usuarioId: user.id,

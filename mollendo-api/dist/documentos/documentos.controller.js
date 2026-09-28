@@ -14,7 +14,7 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, UploadedFile,
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentosService } from './documentos.service.js';
 import { CreateDocumentoDto } from './dto/create-documento.dto.js';
-import { documentosMulterStorage } from './documentos-storage.util.js';
+import { documentosMulterOptions } from './documentos-storage.util.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 let DocumentosController = class DocumentosController {
@@ -26,7 +26,7 @@ let DocumentosController = class DocumentosController {
         if (!archivo) {
             throw new BadRequestException('El archivo del documento es obligatorio');
         }
-        return this.documentosService.subirDocumento(personaId, dto, archivo.path, user);
+        return this.documentosService.subirDocumento(personaId, dto, archivo, user);
     }
     findHistorial(personaId) {
         return this.documentosService.findHistorial(personaId);
@@ -38,7 +38,7 @@ let DocumentosController = class DocumentosController {
 __decorate([
     Post('personas/:personaId/documentos'),
     Roles('administrador'),
-    UseInterceptors(FileInterceptor('archivo', { storage: documentosMulterStorage })),
+    UseInterceptors(FileInterceptor('archivo', documentosMulterOptions)),
     __param(0, Param('personaId', ParseIntPipe)),
     __param(1, Body()),
     __param(2, UploadedFile()),

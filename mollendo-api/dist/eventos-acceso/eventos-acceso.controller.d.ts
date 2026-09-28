@@ -59,14 +59,17 @@ export declare class EventosAccesoController {
     }>;
     findAll(query: QueryEventosAccesoDto): Promise<({
         persona: {
-            id: number;
             empresaId: number;
             tipoDocumentoIdentidad: import("../generated/prisma/enums.js").TipoDocumentoIdentidad;
             numeroDocumento: string;
             nombres: string;
             apellidos: string;
+            id: number;
         };
     } & {
+        id: number;
+        personaId: number;
+        torniqueteId: string | null;
         tipoMovimiento: import("../generated/prisma/enums.js").TipoMovimiento;
         resultado: import("../generated/prisma/enums.js").ResultadoAcceso;
         denegadoPorBaja: boolean;
@@ -74,8 +77,5 @@ export declare class EventosAccesoController {
         denegadoPorDocumentos: boolean;
         denegadoSinDocumentos: boolean;
         fechaHora: Date;
-        torniqueteId: string | null;
-        id: number;
-        personaId: number;
     })[]>;
 }

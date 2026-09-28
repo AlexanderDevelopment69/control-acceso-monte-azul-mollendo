@@ -12,9 +12,19 @@ import type { JwtPayload } from '../auth/types/authenticated-user.type.js';
 
 // Canal en tiempo real para el panel de vigilancia (spec, sección 9.9) —
 // evita que el panel tenga que refrescar para ver ingresos/denegaciones.
+// Va bajo /api/v1 (path de socket.io) para que el portal lo pueda reenviar con
+// la misma regla que la API cuando usa NEXT_PUBLIC_API_URL=/api/v1.
 @WebSocketGateway({
+  path: '/api/v1/socket.io',
+  // Acepta la ruta sin barra final (el portal no la agrega; ver lib/ws.ts).
+  addTrailingSlash: false,
   namespace: '/ws/eventos',
-  cors: { origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' },
+  cors: {
+    origin: (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
+      .split(',')
+      .map((origen) => origen.trim())
+      .filter(Boolean),
+  },
 })
 export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()

@@ -1,9 +1,12 @@
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { normalizarNumeroDocumento } from '../../common/transformaciones.js';
 
 export class IngresoDto {
   @IsIn(['DNI', 'CE', 'PASAPORTE'], { message: 'El tipo de documento debe ser DNI, CE o PASAPORTE' })
   tipoDocumentoIdentidad!: 'DNI' | 'CE' | 'PASAPORTE';
 
+  @Transform(normalizarNumeroDocumento)
   @IsString({ message: 'El número de documento debe ser texto' })
   @IsNotEmpty({ message: 'El número de documento es obligatorio' })
   numeroDocumento!: string;

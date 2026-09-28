@@ -9,6 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { esDocumentoVigente, ultimasVersiones } from '../eventos-acceso/validacion-acceso.engine.js';
 function inicioDeHoy() {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -19,12 +20,30 @@ let PanelService = class PanelService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async contarDocumentosVencidos(hoy) {
+        const documentos = await this.prisma.documentoPersona.findMany({
+            where: { persona: { estado: 'activo' } },
+            select: { id: true, personaId: true, tipoDocumentoId: true, version: true, fechaVencimiento: true },
+        });
+        const porPersona = new Map();
+        for (const doc of documentos) {
+            porPersona.set(doc.personaId, [...(porPersona.get(doc.personaId) ?? []), doc]);
+        }
+        let vencidos = 0;
+        for (const docs of porPersona.values()) {
+            for (const doc of ultimasVersiones(docs).values()) {
+                if (!esDocumentoVigente(doc.fechaVencimiento, hoy))
+                    vencidos++;
+            }
+        }
+        return vencidos;
+    }
     async resumen() {
         const desde = inicioDeHoy();
         const [denegacionesHoy, alcoholNoConformeHoy, documentosVencidos] = await Promise.all([
             this.prisma.eventoAcceso.count({ where: { resultado: 'denegado', fechaHora: { gte: desde } } }),
             this.prisma.eventoAcceso.count({ where: { denegadoPorAlcohol: true, fechaHora: { gte: desde } } }),
-            this.prisma.documentoPersona.count({ where: { fechaVencimiento: { lt: desde } } }),
+            this.contarDocumentosVencidos(new Date()),
         ]);
         return { denegacionesHoy, alcoholNoConformeHoy, documentosVencidos };
     }

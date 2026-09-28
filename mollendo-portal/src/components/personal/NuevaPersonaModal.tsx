@@ -10,6 +10,12 @@ import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import Select from "@/components/form/Select";
 import FileInput from "@/components/form/input/FileInput";
+import {
+  ACEPTA_DOCUMENTO,
+  AYUDA_ARCHIVO_DOCUMENTO,
+  validarArchivoDocumento,
+  validarNumeroDocumento,
+} from "./archivoDocumento";
 import DatePicker from "@/components/form/date-picker";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { CloseLineIcon } from "@/icons";
@@ -116,7 +122,11 @@ function Formulario({
       if (esNuevaEmpresa && !empresaCreada && (!ruc || !razonSocial || !correoContacto)) {
         return "Completa RUC, razón social y correo de la empresa nueva";
       }
-      if (!numeroDocumento || !nombres || !apellidos) return "Completa número de documento, nombres y apellidos";
+      if (!numeroDocumento || !nombres.trim() || !apellidos.trim()) {
+        return "Completa número de documento, nombres y apellidos";
+      }
+      const problemaNumero = validarNumeroDocumento(tipoDocumentoIdentidad, numeroDocumento);
+      if (problemaNumero) return problemaNumero;
     }
     if (!fotoSubida) {
       if (!foto) return "Elige la foto del personal (se usa para el reconocimiento facial)";
@@ -128,6 +138,8 @@ function Formulario({
       const n = filas.length > 1 ? ` ${i + 1}` : "";
       if (!f.nombre.trim()) return `Documento${n}: escribe su nombre`;
       if (!f.archivo) return `Documento${n}: adjunta el archivo`;
+      const problemaArchivo = validarArchivoDocumento(f.archivo);
+      if (problemaArchivo) return `Documento${n}: ${problemaArchivo}`;
     }
     return null;
   }
@@ -324,7 +336,11 @@ function Formulario({
                       </div>
                       <div>
                         <Label>Archivo</Label>
-                        <FileInput onChange={(e) => actualizarFila(f.clave, { archivo: e.target.files?.[0] ?? null })} />
+                        <FileInput
+                          accept={ACEPTA_DOCUMENTO}
+                          onChange={(e) => actualizarFila(f.clave, { archivo: e.target.files?.[0] ?? null })}
+                        />
+                        <p className="mt-1 text-xs text-gray-400">{AYUDA_ARCHIVO_DOCUMENTO}</p>
                       </div>
                     </>
                   )}

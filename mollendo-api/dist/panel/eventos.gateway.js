@@ -52,8 +52,15 @@ __decorate([
 ], EventosGateway.prototype, "handleEventoAcceso", null);
 EventosGateway = EventosGateway_1 = __decorate([
     WebSocketGateway({
+        path: '/api/v1/socket.io',
+        addTrailingSlash: false,
         namespace: '/ws/eventos',
-        cors: { origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' },
+        cors: {
+            origin: (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
+                .split(',')
+                .map((origen) => origen.trim())
+                .filter(Boolean),
+        },
     }),
     __metadata("design:paramtypes", [JwtService])
 ], EventosGateway);

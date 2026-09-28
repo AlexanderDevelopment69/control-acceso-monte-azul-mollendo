@@ -7,15 +7,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var DocumentosService_1;
-import { existsSync, unlinkSync } from 'node:fs';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
-let DocumentosService = DocumentosService_1 = class DocumentosService {
+import { borrarArchivo, guardarArchivo } from '../common/archivos-persona.util.js';
+let DocumentosService = class DocumentosService {
     prisma;
     auditoriaService;
-    logger = new Logger(DocumentosService_1.name);
     constructor(prisma, auditoriaService) {
         this.prisma = prisma;
         this.auditoriaService = auditoriaService;
@@ -27,22 +25,34 @@ let DocumentosService = DocumentosService_1 = class DocumentosService {
         }
         return persona;
     }
-    async subirDocumento(personaId, dto, archivoPath, user) {
+    async subirDocumento(personaId, dto, archivo, user) {
         await this.findPersona(personaId);
+        const tipoDocumento = await this.prisma.tipoDocumento.findUnique({ where: { id: dto.tipoDocumentoId } });
+        if (!tipoDocumento) {
+            throw new NotFoundException('Tipo de documento no encontrado');
+        }
         const ultimaVersion = await this.prisma.documentoPersona.findFirst({
             where: { personaId, tipoDocumentoId: dto.tipoDocumentoId },
             orderBy: { version: 'desc' },
         });
-        const documento = await this.prisma.documentoPersona.create({
-            data: {
-                personaId,
-                tipoDocumentoId: dto.tipoDocumentoId,
-                fechaEmision: dto.fechaEmision ? new Date(dto.fechaEmision) : null,
-                fechaVencimiento: dto.fechaVencimiento ? new Date(dto.fechaVencimiento) : null,
-                archivoUrl: archivoPath,
-                version: (ultimaVersion?.version ?? 0) + 1,
-            },
-        });
+        const archivoPath = guardarArchivo(personaId, archivo);
+        let documento;
+        try {
+            documento = await this.prisma.documentoPersona.create({
+                data: {
+                    personaId,
+                    tipoDocumentoId: dto.tipoDocumentoId,
+                    fechaEmision: dto.fechaEmision ? new Date(dto.fechaEmision) : null,
+                    fechaVencimiento: dto.fechaVencimiento ? new Date(dto.fechaVencimiento) : null,
+                    archivoUrl: archivoPath,
+                    version: (ultimaVersion?.version ?? 0) + 1,
+                },
+            });
+        }
+        catch (error) {
+            borrarArchivo(archivoPath);
+            throw error;
+        }
         await this.auditoriaService.registrar({
             usuarioId: user.id,
             tablaAfectada: 'documento_persona',
@@ -67,14 +77,7 @@ let DocumentosService = DocumentosService_1 = class DocumentosService {
         }
         await this.prisma.documentoPersona.deleteMany({ where: { personaId, tipoDocumentoId } });
         for (const doc of versiones) {
-            if (doc.archivoUrl && existsSync(doc.archivoUrl)) {
-                try {
-                    unlinkSync(doc.archivoUrl);
-                }
-                catch (error) {
-                    this.logger.warn(`No se pudo borrar el archivo ${doc.archivoUrl}: ${String(error)}`);
-                }
-            }
+            borrarArchivo(doc.archivoUrl);
             await this.auditoriaService.registrar({
                 usuarioId: user.id,
                 tablaAfectada: 'documento_persona',
@@ -85,7 +88,7 @@ let DocumentosService = DocumentosService_1 = class DocumentosService {
         return { eliminados: versiones.length };
     }
 };
-DocumentosService = DocumentosService_1 = __decorate([
+DocumentosService = __decorate([
     Injectable(),
     __metadata("design:paramtypes", [PrismaService,
         AuditoriaService])

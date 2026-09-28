@@ -7,7 +7,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { normalizarNumeroDocumento } from '../../common/transformaciones.js';
 export class IngresoDto {
     tipoDocumentoIdentidad;
     numeroDocumento;
@@ -19,6 +21,7 @@ __decorate([
     __metadata("design:type", String)
 ], IngresoDto.prototype, "tipoDocumentoIdentidad", void 0);
 __decorate([
+    Transform(normalizarNumeroDocumento),
     IsString({ message: 'El número de documento debe ser texto' }),
     IsNotEmpty({ message: 'El número de documento es obligatorio' }),
     __metadata("design:type", String)

@@ -9,6 +9,7 @@ import Input from "@/components/form/input/InputField";
 import DatePicker from "@/components/form/date-picker";
 import FileInput from "@/components/form/input/FileInput";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { ACEPTA_DOCUMENTO, AYUDA_ARCHIVO_DOCUMENTO, validarArchivoDocumento } from "./archivoDocumento";
 
 /**
  * Subir (o renovar) un documento de una persona: nombre del documento, fecha
@@ -42,6 +43,11 @@ export function SubirDocumentoForm({
     }
     if (!archivo) {
       setError("Adjunta el archivo del documento");
+      return;
+    }
+    const problemaArchivo = validarArchivoDocumento(archivo);
+    if (problemaArchivo) {
+      setError(problemaArchivo);
       return;
     }
     setLoading(true);
@@ -87,7 +93,8 @@ export function SubirDocumentoForm({
       </div>
       <div>
         <Label>Archivo</Label>
-        <FileInput onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
+        <FileInput accept={ACEPTA_DOCUMENTO} onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
+        <p className="mt-1 text-xs text-gray-400">{AYUDA_ARCHIVO_DOCUMENTO}</p>
       </div>
       <div className="sm:pt-[26px]">
         <Button disabled={loading} className="w-full">
