@@ -33,9 +33,9 @@ const RESALTE_MS = 8000;
 /** `value` null = todavía no se cargó (se muestra "—" en vez de un 0 que luego salta). */
 function StatCard({ label, value, color }: { label: string; value: number | null; color: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-      <p className={`mt-2 text-2xl font-semibold ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>
+    <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
+      <p className="text-xs leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">{label}</p>
+      <p className={`mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>
         {value ?? "—"}
       </p>
     </div>
@@ -281,7 +281,8 @@ function VigilanciaContent() {
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {/* En el celular, los tres contadores en una fila y compactos. */}
+      <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">
         <StatCard label="Denegaciones hoy" value={resumen?.denegacionesHoy ?? null} color="text-error-500" />
         <StatCard label="Alcohol no conforme hoy" value={resumen?.alcoholNoConformeHoy ?? null} color="text-warning-500" />
         <StatCard label="Documentos vencidos" value={resumen?.documentosVencidos ?? null} color="text-gray-700 dark:text-gray-300" />
@@ -299,7 +300,7 @@ function VigilanciaContent() {
           />
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-44">
+          <div className="min-w-0 flex-1 sm:w-44 sm:flex-none">
             <DatePicker
               id="dia-vigilancia"
               placeholder="Todos los días"
