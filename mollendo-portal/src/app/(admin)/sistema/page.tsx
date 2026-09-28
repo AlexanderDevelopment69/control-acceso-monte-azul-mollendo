@@ -61,7 +61,7 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
   "alcoholConforme": true,
   "torniqueteId": "T1"
 }`,
-    ejemploRespuesta: `// 200 OK — autorizado
+    ejemploRespuesta: `// 201 Created — autorizado
 {
   "eventoId": 42,
   "tipoMovimiento": "ingreso",
@@ -78,7 +78,7 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
   }
 }
 
-// 200 OK — denegado (puede combinar varios motivos a la vez)
+// 201 Created — denegado (puede combinar varios motivos a la vez)
 {
   "eventoId": 43,
   "resultado": "denegado",
@@ -92,9 +92,9 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
   }
 }
 
-// 200 OK — documento no registrado (no se guarda evento)
+// 201 Created — documento no registrado (queda en el historial sin persona)
 {
-  "eventoId": null,
+  "eventoId": 45,
   "resultado": "denegado",
   "persona": null,
   "numeroDocumento": "99999999",
@@ -109,7 +109,8 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
     nombre: "Salida",
     endpoint: "/eventos-acceso/salida",
     metodo: "POST",
-    descripcion: "Registro básico de salida: siempre se autoriza y se ordena abrir el molinete.",
+    descripcion:
+      "Registro de salida: con un documento registrado (aunque la persona esté dada de baja) se autoriza y se ordena abrir el molinete.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -118,7 +119,7 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
   "numeroDocumento": "12345678",
   "torniqueteId": "T1"
 }`,
-    ejemploRespuesta: `// 200 OK
+    ejemploRespuesta: `// 201 Created — autorizado
 {
   "eventoId": 44,
   "tipoMovimiento": "salida",
@@ -127,6 +128,15 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
   "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" },
   "numeroDocumento": "12345678",
   "motivos": {}
+}
+
+// 201 Created — documento no registrado: no se abre y queda en el historial
+{
+  "eventoId": 46,
+  "resultado": "denegado",
+  "persona": null,
+  "numeroDocumento": "99999999",
+  "motivos": { "personaNoRegistrada": true }
 }`,
     notas:
       "Sin antipassback (alcance base): no se exige un ingreso previo ni se bloquea un segundo ingreso sin salida. Solo se deniega si el documento no está registrado.",

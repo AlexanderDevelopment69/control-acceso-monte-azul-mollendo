@@ -188,10 +188,15 @@ model DocumentoPersona {
 // ---------------------------------------------------------------------
 model EventoAcceso {
   id                       Int             @id @default(autoincrement())
-  personaId                Int             @map("persona_id")
-  persona                  Persona         @relation(fields: [personaId], references: [id])
+  /// Vacío si el documento no está registrado (intento de una persona desconocida).
+  personaId                Int?            @map("persona_id")
+  persona                  Persona?        @relation(fields: [personaId], references: [id], onDelete: Restrict)
+  /// Documento con el que se identificó (lo que leyó el equipo), registrado o no.
+  tipoDocumentoIdentidad   TipoDocumentoIdentidad? @map("tipo_documento_identidad")
+  numeroDocumento          String?         @map("numero_documento") @db.VarChar(20)
   tipoMovimiento           TipoMovimiento  @map("tipo_movimiento")
   resultado                ResultadoAcceso
+  denegadoNoRegistrado     Boolean         @default(false) @map("denegado_no_registrado")
   denegadoPorBaja          Boolean         @default(false) @map("denegado_por_baja")
   denegadoPorAlcohol       Boolean         @default(false) @map("denegado_por_alcohol")
   denegadoPorDocumentos    Boolean         @default(false) @map("denegado_por_documentos")

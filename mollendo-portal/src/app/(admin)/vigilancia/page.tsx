@@ -19,40 +19,14 @@ import { usePagination } from "@/lib/usePagination";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
-// Payload del WebSocket (ver EventosAccesoService en el backend). Una persona
-// no registrada llega sin eventoId ni persona.
+// Payload del WebSocket (ver EventosAccesoService en el backend): aquí solo
+// se usa el id del evento, para resaltar su fila cuando la tabla se recarga.
 interface EventoLive {
-  eventoId: number | null;
-  tipoMovimiento: "ingreso" | "salida";
-  resultado: "autorizado" | "denegado";
-  fechaHora: string;
-  persona: { id: number; nombres: string; apellidos: string } | null;
-  numeroDocumento: string;
-  motivos: {
-    personaNoRegistrada?: boolean;
-    dadoDeBaja?: boolean;
-    sinDocumentos?: boolean;
-    alcohol?: boolean;
-    documentos?: boolean;
-    documentosVencidos?: string[];
-  };
+  eventoId: number;
 }
 
-function motivosEnVivo(motivos: EventoLive["motivos"]): string[] {
-  if (motivos.personaNoRegistrada) return ["Persona no registrada"];
-  if (motivos.dadoDeBaja) return ["Dado de baja"];
-  const lista: string[] = [];
-  if (motivos.sinDocumentos) lista.push("Sin documentos cargados");
-  if (motivos.alcohol) lista.push("Alcohol no conforme");
-  if (motivos.documentos) {
-    lista.push(
-      motivos.documentosVencidos?.length
-        ? `Documento vencido: ${motivos.documentosVencidos.join(", ")}`
-        : "Documento vencido",
-    );
-  }
-  return lista;
-}
+// Cuánto tiempo queda resaltada una fila nueva.
+const RESALTE_MS = 8000;
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -67,9 +41,13 @@ function MotivoDenegacion({
   evento,
   onVerDocumentos,
 }: {
-  evento: Pick<EventoAcceso, "denegadoPorBaja" | "denegadoSinDocumentos" | "denegadoPorAlcohol" | "denegadoPorDocumentos">;
+  evento: Pick<
+    EventoAcceso,
+    "denegadoNoRegistrado" | "denegadoPorBaja" | "denegadoSinDocumentos" | "denegadoPorAlcohol" | "denegadoPorDocumentos"
+  >;
   onVerDocumentos: () => void;
 }) {
+  if (evento.denegadoNoRegistrado) return <Badge color="error">No registrado</Badge>;
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
   const motivos: string[] = [];
   if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
@@ -90,6 +68,14 @@ function MotivoDenegacion({
       )}
     </div>
   );
+}
+
+/** Documento con el que se identificó (el leído por el equipo; si falta, el de la persona). */
+function documentoDelEvento(ev: EventoAcceso): string {
+  const tipo = ev.tipoDocumentoIdentidad ?? ev.persona?.tipoDocumentoIdentidad;
+  const numero = ev.numeroDocumento ?? ev.persona?.numeroDocumento;
+  if (!numero) return "—";
+  return tipo && tipo !== "DNI" ? `${tipo} ${numero}` : numero;
 }
 
 function formatearFecha(fecha: string): string {
@@ -156,7 +142,8 @@ function DocumentosModal({ personaId, onClose }: { personaId: number | null; onC
 function VigilanciaContent() {
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
   const [eventos, setEventos] = useState<EventoAcceso[]>([]);
-  const [eventosVivos, setEventosVivos] = useState<EventoLive[]>([]);
+  // Eventos recién llegados en vivo: su fila se resalta unos segundos.
+  const [nuevos, setNuevos] = useState<Set<number>>(new Set());
   const [servidorCaido, setServidorCaido] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
@@ -180,23 +167,36 @@ function VigilanciaContent() {
     void cargar();
   }, [cargar]);
 
-  // Si llegan varios eventos seguidos, una sola recarga medio segundo después.
+  // Cada evento en vivo recarga la tabla y los contadores (si llegan varios
+  // seguidos, una sola recarga medio segundo después) y resalta su fila.
   const recargaPendiente = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resaltes = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
     let socket: Socket | undefined;
     try {
       socket = connectEventosSocket();
       socket.on("evento-acceso", (payload: EventoLive) => {
-        setEventosVivos((prev) => [payload, ...prev].slice(0, 20));
+        setNuevos((prev) => new Set(prev).add(payload.eventoId));
+        resaltes.current.push(
+          setTimeout(() => {
+            setNuevos((prev) => {
+              const siguiente = new Set(prev);
+              siguiente.delete(payload.eventoId);
+              return siguiente;
+            });
+          }, RESALTE_MS),
+        );
         if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
         recargaPendiente.current = setTimeout(() => void cargar(), 500);
       });
     } catch {
       // el panel sigue funcionando sin tiempo real si el socket falla
     }
+    const pendientes = resaltes.current;
     return () => {
       socket?.disconnect();
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
+      pendientes.forEach(clearTimeout);
     };
   }, [cargar]);
 
@@ -226,8 +226,9 @@ function VigilanciaContent() {
   const filtrados = eventos.filter((ev) => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return true;
-    const nombre = ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : "";
-    return nombre.toLowerCase().includes(q) || (ev.persona?.numeroDocumento.includes(q) ?? false);
+    const nombre = ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : "no registrado";
+    const numero = ev.numeroDocumento ?? ev.persona?.numeroDocumento ?? "";
+    return nombre.toLowerCase().includes(q) || numero.toLowerCase().includes(q);
   });
   const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtrados, 10);
 
@@ -257,34 +258,6 @@ function VigilanciaContent() {
         <StatCard label="Alcohol no conforme hoy" value={resumen?.alcoholNoConformeHoy ?? 0} color="text-warning-500" />
         <StatCard label="Documentos vencidos" value={resumen?.documentosVencidos ?? 0} color="text-gray-700 dark:text-gray-300" />
       </div>
-
-      {eventosVivos.length > 0 && (
-        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-          <h2 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Eventos en tiempo real</h2>
-          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-            {eventosVivos.map((ev, i) => {
-              const motivos = motivosEnVivo(ev.motivos);
-              return (
-                <li key={`${ev.eventoId ?? "sin-registro"}-${i}`} className="flex items-start justify-between gap-4 py-2 text-sm">
-                  <div>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : "No registrado"}
-                      <span className="ml-2 text-gray-500 dark:text-gray-400">DNI {ev.numeroDocumento}</span>
-                      <span className="ml-2 text-xs text-gray-400">
-                        {ev.tipoMovimiento} · {new Date(ev.fechaHora).toLocaleTimeString("es-PE")}
-                      </span>
-                    </p>
-                    {motivos.length > 0 && (
-                      <p className="mt-0.5 text-xs text-error-600 dark:text-error-400">{motivos.join(" · ")}</p>
-                    )}
-                  </div>
-                  <Badge color={ev.resultado === "autorizado" ? "success" : "error"}>{ev.resultado}</Badge>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
 
       <div className="mb-4">
         <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre o DNI…" />
@@ -325,17 +298,22 @@ function VigilanciaContent() {
                 </TableRow>
               )}
               {paginated.map((ev) => (
-                <TableRow key={ev.id}>
+                <TableRow
+                  key={ev.id}
+                  className={`transition-colors duration-700 ${nuevos.has(ev.id) ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
+                >
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {new Date(ev.fechaHora).toLocaleString("es-PE")}
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {ev.persona
-                      ? `${ev.persona.tipoDocumentoIdentidad === "DNI" ? "" : `${ev.persona.tipoDocumentoIdentidad} `}${ev.persona.numeroDocumento}`
-                      : "—"}
+                    {documentoDelEvento(ev)}
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : `#${ev.personaId}`}
+                    {ev.persona ? (
+                      `${ev.persona.nombres} ${ev.persona.apellidos}`
+                    ) : (
+                      <span className="text-gray-400">No registrado</span>
+                    )}
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300 capitalize">{ev.tipoMovimiento}</TableCell>
                   <TableCell className="px-5 py-4 text-sm">

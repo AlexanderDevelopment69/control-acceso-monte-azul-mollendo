@@ -27,17 +27,27 @@ export class EventosAccesoService {
   }
 
   /**
-   * Una persona no registrada no genera fila en evento_acceso (no hay a quién
-   * vincularla), pero sí se deniega y se muestra en la pantalla de garita.
+   * Documento no registrado: se deniega (en ingreso y en salida) y el intento
+   * queda en el historial sin persona, con el documento que leyó el equipo.
    */
-  private responderNoRegistrada(numeroDocumento: string, tipoMovimiento: 'ingreso' | 'salida') {
+  private async registrarNoRegistrada(dto: IngresoDto | SalidaDto, tipoMovimiento: 'ingreso' | 'salida') {
+    const evento = await this.prisma.eventoAcceso.create({
+      data: {
+        tipoDocumentoIdentidad: dto.tipoDocumentoIdentidad,
+        numeroDocumento: dto.numeroDocumento,
+        tipoMovimiento,
+        resultado: 'denegado',
+        denegadoNoRegistrado: true,
+        torniqueteId: dto.torniqueteId,
+      },
+    });
     const respuesta = {
-      eventoId: null,
+      eventoId: evento.id,
       tipoMovimiento,
-      resultado: 'denegado' as const,
-      fechaHora: new Date().toISOString(),
+      resultado: evento.resultado,
+      fechaHora: evento.fechaHora.toISOString(),
       persona: null,
-      numeroDocumento,
+      numeroDocumento: dto.numeroDocumento,
       motivos: { personaNoRegistrada: true },
     };
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
@@ -56,7 +66,7 @@ export class EventosAccesoService {
   async registrarIngreso(dto: IngresoDto) {
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
     if (!persona) {
-      return this.responderNoRegistrada(dto.numeroDocumento, 'ingreso');
+      return this.registrarNoRegistrada(dto, 'ingreso');
     }
 
     const resultado = evaluarIngreso({
@@ -68,6 +78,8 @@ export class EventosAccesoService {
     const evento = await this.prisma.eventoAcceso.create({
       data: {
         personaId: persona.id,
+        tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
+        numeroDocumento: persona.numeroDocumento,
         tipoMovimiento: 'ingreso',
         resultado: resultado.autorizado ? 'autorizado' : 'denegado',
         denegadoPorBaja: resultado.denegadoPorBaja,
@@ -106,16 +118,18 @@ export class EventosAccesoService {
     return respuesta;
   }
 
-  /** Registro básico de salida: sin antipassback, siempre se autoriza y abre el molinete. */
+  /** Salida: sin antipassback; con un documento registrado (aunque esté de baja) se autoriza y abre el molinete. */
   async registrarSalida(dto: SalidaDto) {
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
     if (!persona) {
-      return this.responderNoRegistrada(dto.numeroDocumento, 'salida');
+      return this.registrarNoRegistrada(dto, 'salida');
     }
 
     const evento = await this.prisma.eventoAcceso.create({
       data: {
         personaId: persona.id,
+        tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
+        numeroDocumento: persona.numeroDocumento,
         tipoMovimiento: 'salida',
         resultado: 'autorizado',
         torniqueteId: dto.torniqueteId,

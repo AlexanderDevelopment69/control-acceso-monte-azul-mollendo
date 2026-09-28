@@ -68,9 +68,14 @@ export interface DocumentoPersona {
 
 export interface EventoAcceso {
   id: number;
-  personaId: number;
+  /** null si el documento no estaba registrado. */
+  personaId: number | null;
+  /** Documento con el que se identificó (lo que leyó el equipo). */
+  tipoDocumentoIdentidad: "DNI" | "CE" | "PASAPORTE" | null;
+  numeroDocumento: string | null;
   tipoMovimiento: "ingreso" | "salida";
   resultado: "autorizado" | "denegado";
+  denegadoNoRegistrado: boolean;
   denegadoPorBaja: boolean;
   denegadoSinDocumentos: boolean;
   denegadoPorAlcohol: boolean;
