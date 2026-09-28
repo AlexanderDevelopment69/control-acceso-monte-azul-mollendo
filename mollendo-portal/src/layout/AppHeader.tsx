@@ -2,6 +2,7 @@
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
+import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 
@@ -65,8 +66,9 @@ const AppHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
 
-          <Link href="/" className="lg:hidden">
-            <span className="text-base font-semibold text-gray-800 dark:text-white/90">
+          <Link href="/" className="flex items-center gap-2.5 lg:hidden">
+            <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={81} height={28} priority />
+            <span className="text-base font-semibold leading-tight text-gray-800 dark:text-white/90">
               Control de Acceso
               <span className="block text-xs font-normal text-gray-400">Terminal de Mollendo</span>
             </span>
