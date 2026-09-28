@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
@@ -85,16 +86,19 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link href="/">
+        {/* Altura fija y texto sin saltos de línea: mientras el menú se ensancha,
+            el texto no se parte en varias líneas ni empuja lo de abajo. */}
+        <Link href="/" className="flex h-11 items-center overflow-hidden">
           {isExpanded || isHovered || isMobileOpen ? (
-            <span className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Control de Acceso
-              <span className="block text-xs font-normal text-gray-400">Terminal de Mollendo</span>
+            <span className="flex items-center gap-3 whitespace-nowrap">
+              <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={81} height={28} priority />
+              <span className="text-lg font-semibold leading-tight text-gray-800 dark:text-white/90">
+                Control de Acceso
+                <span className="block text-xs font-normal text-gray-400">Terminal de Mollendo</span>
+              </span>
             </span>
           ) : (
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-semibold text-white">
-              M
-            </span>
+            <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={46} height={16} priority />
           )}
         </Link>
       </div>
