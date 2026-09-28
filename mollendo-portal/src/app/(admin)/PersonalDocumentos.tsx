@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { empresasApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
@@ -24,6 +24,15 @@ export function PersonalDocumentos() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(true);
   const [seleccionada, setSeleccionada] = useState<number | null>(null);
+  // En el celular la ficha queda debajo de la lista: al elegir a alguien se
+  // baja hasta ella, para que se vea que se abrió.
+  const fichaRef = useRef<HTMLDivElement>(null);
+  function elegir(id: number) {
+    setSeleccionada(id);
+    if (window.innerWidth < 1024) {
+      requestAnimationFrame(() => fichaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+  }
   const [modalOpen, setModalOpen] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [empresaFiltro, setEmpresaFiltro] = useState("todas");
@@ -151,7 +160,7 @@ export function PersonalDocumentos() {
                 <li key={p.id}>
                   <button
                     type="button"
-                    onClick={() => setSeleccionada(p.id)}
+                    onClick={() => elegir(p.id)}
                     className={`flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.03] ${
                       seleccionada === p.id ? "bg-brand-50 dark:bg-brand-500/10" : ""
                     }`}
@@ -183,7 +192,7 @@ export function PersonalDocumentos() {
         </div>
 
         {/* Ficha */}
-        <div className="min-w-0 flex-1">
+        <div ref={fichaRef} className="min-w-0 flex-1 scroll-mt-20">
           {seleccionada ? (
             <PersonaFicha
               key={seleccionada}
@@ -191,7 +200,8 @@ export function PersonalDocumentos() {
               onCambio={recargar}
             />
           ) : (
-            <div className="flex h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400 dark:border-gray-700">
+            // En el celular no se muestra: la lista ya ocupa la pantalla.
+            <div className="hidden h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400 dark:border-gray-700 lg:flex">
               Elige a una persona de la lista para ver y subir sus documentos.
             </div>
           )}
@@ -206,7 +216,7 @@ export function PersonalDocumentos() {
           // Puede haber una empresa nueva, y cambia el ✔/✖.
           recargar();
           empresasApi.list().then(setEmpresas).catch(() => {}); // si falla, queda la lista anterior
-          setSeleccionada(persona.id);
+          elegir(persona.id);
         }}
         empresas={empresas}
       />

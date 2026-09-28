@@ -235,7 +235,7 @@ function Formulario({
                   </p>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <Label>RUC</Label>
                         <Input defaultValue={ruc} onChange={(e) => setRuc(e.target.value.trim())} />
@@ -254,7 +254,7 @@ function Formulario({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label>Tipo de documento</Label>
                 <Select
@@ -272,7 +272,7 @@ function Formulario({
                 <Input defaultValue={numeroDocumento} onChange={(e) => setNumeroDocumento(e.target.value.trim())} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label>Nombres</Label>
                 <Input defaultValue={nombres} onChange={(e) => setNombres(e.target.value)} />
