@@ -88,14 +88,19 @@ function formatearFecha(fecha: string): string {
 /** Modal de solo lectura: documentos actuales de la persona y cuáles debe regularizar. */
 function DocumentosModal({ personaId, onClose }: { personaId: number | null; onClose: () => void }) {
   const [persona, setPersona] = useState<Persona | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (personaId === null) return;
     let activo = true;
-    personasApi.get(personaId).then((p) => activo && setPersona(p));
+    personasApi
+      .get(personaId)
+      .then((p) => activo && setPersona(p))
+      .catch((err) => activo && setError(err instanceof ApiError ? err.message : "No se pudieron cargar los documentos"));
     return () => {
       activo = false;
       setPersona(null);
+      setError(null);
     };
   }, [personaId]);
 
@@ -104,7 +109,9 @@ function DocumentosModal({ personaId, onClose }: { personaId: number | null; onC
   return (
     <Modal isOpen={personaId !== null} onClose={onClose} className="max-w-lg p-6 sm:p-8">
       <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">Documentos</h2>
-      {!persona ? (
+      {error ? (
+        <ErrorBanner>{error}</ErrorBanner>
+      ) : !persona ? (
         <p className="text-sm text-gray-400">Cargando…</p>
       ) : (
         <>

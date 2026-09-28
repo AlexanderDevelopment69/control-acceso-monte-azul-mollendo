@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { empresasApi, personasApi } from "@/lib/api/endpoints";
+import { ApiError } from "@/lib/api/client";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import type { Empresa, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
@@ -32,14 +34,29 @@ export function PersonalDocumentos() {
     setPersonas(await personasApi.list());
   }, []);
 
-  useEffect(() => {
-    Promise.all([personasApi.list(), empresasApi.list()])
-      .then(([p, e]) => {
-        setPersonas(p);
-        setEmpresas(e);
-      })
-      .finally(() => setLoading(false));
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+
+  const cargarTodo = useCallback(async () => {
+    try {
+      const [p, e] = await Promise.all([personasApi.list(), empresasApi.list()]);
+      setPersonas(p);
+      setEmpresas(e);
+      setErrorCarga(null);
+    } catch (err) {
+      setErrorCarga(err instanceof ApiError ? err.message : "No se pudo cargar el personal");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void cargarTodo();
+  }, [cargarTodo]);
+
+  function reintentar() {
+    setLoading(true);
+    void cargarTodo();
+  }
 
   const q = busqueda.trim().toLowerCase();
   const filtradas = personas.filter((p) => {
@@ -66,6 +83,15 @@ export function PersonalDocumentos() {
           </Button>
         }
       />
+
+      {errorCarga && (
+        <div className="mb-5 flex flex-wrap items-center gap-3">
+          <ErrorBanner className="flex-1">{errorCarga}</ErrorBanner>
+          <Button type="button" variant="outline" size="sm" onClick={reintentar} disabled={loading}>
+            {loading ? "Cargando…" : "Reintentar"}
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         {/* Lista */}
@@ -111,7 +137,11 @@ export function PersonalDocumentos() {
             {loading && <li className="p-4 text-sm text-gray-400">Cargando…</li>}
             {!loading && filtradas.length === 0 && (
               <li className="p-4 text-sm text-gray-400">
-                {personas.length === 0 ? "Todavía no hay personal registrado. Usa “+ Nuevo personal”." : "Sin resultados."}
+                {errorCarga && personas.length === 0
+                  ? "No se pudo cargar el personal."
+                  : personas.length === 0
+                    ? "Todavía no hay personal registrado. Usa “+ Nuevo personal”."
+                    : "Sin resultados."}
               </li>
             )}
             {filtradas.map((p) => {
@@ -175,7 +205,7 @@ export function PersonalDocumentos() {
         onCreated={(persona) => {
           // Puede haber una empresa nueva, y cambia el ✔/✖.
           recargar();
-          empresasApi.list().then(setEmpresas);
+          empresasApi.list().then(setEmpresas).catch(() => {}); // si falla, queda la lista anterior
           setSeleccionada(persona.id);
         }}
         empresas={empresas}

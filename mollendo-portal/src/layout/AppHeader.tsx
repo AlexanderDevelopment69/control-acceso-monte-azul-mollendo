@@ -30,7 +30,7 @@ const AppHeader: React.FC = () => {
           <button
             className="items-center justify-center w-10 h-10 text-gray-500 border-gray-200 rounded-lg z-99999 dark:border-gray-800 lg:flex dark:text-gray-400 lg:h-11 lg:w-11 lg:border"
             onClick={handleToggle}
-            aria-label="Toggle Sidebar"
+            aria-label={isMobileOpen ? "Cerrar el menú" : "Abrir o cerrar el menú"}
           >
             {isMobileOpen ? (
               <svg
@@ -76,6 +76,7 @@ const AppHeader: React.FC = () => {
 
           <button
             onClick={toggleApplicationMenu}
+            aria-label="Más opciones"
             className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
           >
             <svg

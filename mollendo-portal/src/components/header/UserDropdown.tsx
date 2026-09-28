@@ -31,6 +31,7 @@ export default function UserDropdown() {
     <div className="relative">
       <button
         onClick={toggleDropdown}
+        aria-label="Menú del usuario"
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
         <span className="mr-3 flex h-11 w-11 items-center justify-center rounded-full bg-brand-500 text-white font-medium">
