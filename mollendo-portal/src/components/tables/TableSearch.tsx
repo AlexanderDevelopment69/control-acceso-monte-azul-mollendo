@@ -11,7 +11,7 @@ export function TableSearch({
   placeholder?: string;
 }) {
   return (
-    <div className="relative w-full max-w-xs">
+    <div className="relative w-full">
       <span className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2">
         <svg
           className="fill-gray-500 dark:fill-gray-400"
