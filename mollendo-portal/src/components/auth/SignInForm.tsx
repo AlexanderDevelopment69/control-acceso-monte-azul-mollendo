@@ -6,6 +6,7 @@ import { EyeCloseIcon, EyeIcon } from "@/icons";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ApiError } from "@/lib/api/client";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -35,6 +36,25 @@ export default function SignInForm() {
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
         <div>
+          {/* En pantallas angostas el panel de la derecha (con el logo) no se ve.
+              En modo oscuro solo la marca: el texto negro del logo no se leería. */}
+          <div className="mb-6 lg:hidden">
+            <Image
+              src="/images/logo/auth-logo-mollendo.png"
+              alt="Monte Azul Sur"
+              width={160}
+              height={79}
+              priority
+              className="dark:hidden"
+            />
+            <Image
+              src="/images/logo/marca-monteazul.png"
+              alt="Monte Azul Sur"
+              width={115}
+              height={40}
+              className="hidden dark:block"
+            />
+          </div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
               Iniciar sesión
