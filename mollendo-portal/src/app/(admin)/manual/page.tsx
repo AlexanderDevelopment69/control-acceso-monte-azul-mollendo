@@ -124,6 +124,11 @@ const SECCIONES: SeccionManual[] = [
           arriba de la tabla (el último evento queda resaltado unos segundos), y los contadores se actualizan solos. Los intentos con un documento
           no registrado también quedan en la tabla, como “No registrado”.
         </p>
+        <p>
+          La tabla muestra por defecto los movimientos de <strong>hoy</strong>. Con el calendario se puede ver otro día
+          (“Hoy” vuelve al día actual) o “Todos los días”. El buscador encuentra por nombre, apellido o número de
+          documento en todo el historial, no solo en la página que se está viendo.
+        </p>
         <p>Cuando la persona se identifica en el terminal y hace la prueba de alcohol, el sistema revisa en este orden:</p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
@@ -171,6 +176,10 @@ const SECCIONES: SeccionManual[] = [
           <Link href="/auditoria" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Auditoría</Link> es
           un registro de solo lectura de quién creó o modificó cada dato del sistema (empresas, personal, documentos,
           usuarios) y cuándo. Sirve para rastrear un cambio o responder “¿quién cargó esto?”.
+        </p>
+        <p>
+          Se puede buscar por el correo del usuario o por el tipo de dato (“personal”, “documento”, “empresa”…) y filtrar
+          por un rango de fechas (“Desde” y “Hasta”). La búsqueda recorre todos los registros, sin importar su antigüedad.
         </p>
       </div>
     ),

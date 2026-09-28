@@ -120,3 +120,20 @@ export interface AuditoriaEntry {
   fechaHora: string;
   usuario?: { id: number; correo: string; rol: RolUsuario } | null;
 }
+
+/** Lista paginada en el servidor (Panel de vigilancia, Auditoría). */
+export interface Paginado<T> {
+  datos: T[];
+  total: number;
+  pagina: number;
+  porPagina: number;
+}
+
+/** Filtros de las listas paginadas: página, tamaño, búsqueda y rango de días (AAAA-MM-DD). */
+export interface FiltrosLista {
+  pagina?: number;
+  porPagina?: number;
+  busqueda?: string;
+  desde?: string;
+  hasta?: string;
+}

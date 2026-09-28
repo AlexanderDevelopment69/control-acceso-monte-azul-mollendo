@@ -5,6 +5,8 @@ import { documentosActuales, evaluarIngreso } from './validacion-acceso.engine.j
 import type { IngresoDto } from './dto/ingreso.dto.js';
 import type { SalidaDto } from './dto/salida.dto.js';
 import type { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
+import type { Prisma } from '../generated/prisma/client.js';
+import { paginacion, palabras, rangoDeDias, type Paginado } from '../common/paginacion.js';
 
 /** Payload del evento interno que ordena abrir el molinete (lo atiende IntegracionesModule). */
 export interface AbrirMolineteEvent {
@@ -156,30 +158,45 @@ export class EventosAccesoService {
     return respuesta;
   }
 
+  /**
+   * Historial paginado, más recientes primero. Cada palabra de la búsqueda debe
+   * coincidir con el número de documento, los nombres o los apellidos.
+   */
   async findAll(query: QueryEventosAccesoDto) {
-    return this.prisma.eventoAcceso.findMany({
-      where: {
-        personaId: query.personaId,
-        resultado: query.resultado,
-        fechaHora: {
-          gte: query.desde ? new Date(query.desde) : undefined,
-          lte: query.hasta ? new Date(query.hasta) : undefined,
-        },
-      },
-      include: {
-        persona: {
-          select: {
-            id: true,
-            nombres: true,
-            apellidos: true,
-            empresaId: true,
-            tipoDocumentoIdentidad: true,
-            numeroDocumento: true,
+    const { pagina, porPagina, skip, take } = paginacion(query);
+    const where: Prisma.EventoAccesoWhereInput = {
+      personaId: query.personaId,
+      resultado: query.resultado,
+      fechaHora: rangoDeDias(query.desde, query.hasta),
+      AND: palabras(query.busqueda).map((palabra) => ({
+        OR: [
+          { numeroDocumento: { contains: palabra, mode: 'insensitive' as const } },
+          { persona: { nombres: { contains: palabra, mode: 'insensitive' as const } } },
+          { persona: { apellidos: { contains: palabra, mode: 'insensitive' as const } } },
+        ],
+      })),
+    };
+    const [datos, total] = await Promise.all([
+      this.prisma.eventoAcceso.findMany({
+        where,
+        include: {
+          persona: {
+            select: {
+              id: true,
+              nombres: true,
+              apellidos: true,
+              empresaId: true,
+              tipoDocumentoIdentidad: true,
+              numeroDocumento: true,
+            },
           },
         },
-      },
-      orderBy: { fechaHora: 'desc' },
-      take: 500,
-    });
+        orderBy: [{ fechaHora: 'desc' }, { id: 'desc' }],
+        skip,
+        take,
+      }),
+      this.prisma.eventoAcceso.count({ where }),
+    ]);
+    return { datos, total, pagina, porPagina } satisfies Paginado<(typeof datos)[number]>;
   }
 }

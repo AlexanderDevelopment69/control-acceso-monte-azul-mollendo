@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { auditoriaApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { AuditoriaEntry } from "@/lib/api/types";
+import type { AuditoriaEntry, Paginado } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -12,7 +12,9 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Button from "@/components/ui/button/Button";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
-import { usePagination } from "@/lib/usePagination";
+import { useDiferido } from "@/lib/useDiferido";
+import { pieDePagina } from "@/lib/paginaServidor";
+import DatePicker from "@/components/form/date-picker";
 
 // Nombres de las tablas de la base de datos, como los entiende quien usa el sistema.
 const TABLA_LABEL: Record<string, string> = {
@@ -30,22 +32,36 @@ const ACCION_COLOR: Record<string, "success" | "warning" | "error" | "info"> = {
   eliminar: "error",
 };
 
+const POR_PAGINA = 15;
+
 function AuditoriaContent() {
-  const [entradas, setEntradas] = useState<AuditoriaEntry[]>([]);
+  const [lista, setLista] = useState<Paginado<AuditoriaEntry> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filtros: se aplican en el servidor, sobre todos los registros.
+  const [pagina, setPagina] = useState(1);
   const [busqueda, setBusqueda] = useState("");
+  const busquedaDiferida = useDiferido(busqueda.trim());
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
 
   const cargar = useCallback(async () => {
     try {
-      setEntradas(await auditoriaApi.list());
+      const datos = await auditoriaApi.list({ pagina, porPagina: POR_PAGINA, busqueda: busquedaDiferida, desde, hasta });
+      // Si la página quedó fuera del total (p. ej. tras filtrar), vuelve a la primera.
+      if (datos.datos.length === 0 && datos.total > 0 && pagina > 1) {
+        setPagina(1);
+        return;
+      }
+      setLista(datos);
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cargar la auditoría");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagina, busquedaDiferida, desde, hasta]);
 
   useEffect(() => {
     void cargar();
@@ -56,12 +72,9 @@ function AuditoriaContent() {
     void cargar();
   }
 
-  const filtradas = entradas.filter((e) => {
-    const q = busqueda.trim().toLowerCase();
-    if (!q) return true;
-    return (e.usuario?.correo ?? "").toLowerCase().includes(q) || tablaLabel(e.tablaAfectada).toLowerCase().includes(q);
-  });
-  const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtradas, 15);
+  const entradas = lista?.datos ?? [];
+  const pie = pieDePagina(lista);
+  const filtrando = !!(busquedaDiferida || desde || hasta);
 
   return (
     <div>
@@ -79,8 +92,55 @@ function AuditoriaContent() {
         </div>
       )}
 
-      <div className="mb-4">
-        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por usuario o dato (personal, documento…)" />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="sm:flex-1">
+          <TableSearch
+            value={busqueda}
+            onChange={(v) => {
+              setBusqueda(v);
+              setPagina(1);
+            }}
+            placeholder="Buscar por usuario o dato (personal, documento…)"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-40">
+            <DatePicker
+              id="auditoria-desde"
+              placeholder="Desde"
+              value={desde}
+              onChange={(v) => {
+                setDesde(v);
+                setPagina(1);
+              }}
+            />
+          </div>
+          <div className="w-40">
+            <DatePicker
+              id="auditoria-hasta"
+              placeholder="Hasta"
+              value={hasta}
+              onChange={(v) => {
+                setHasta(v);
+                setPagina(1);
+              }}
+            />
+          </div>
+          {(desde || hasta) && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDesde("");
+                setHasta("");
+                setPagina(1);
+              }}
+            >
+              Todas las fechas
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -101,22 +161,19 @@ function AuditoriaContent() {
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Cargando…</TableCell>
                 </TableRow>
               )}
-              {!loading && error && entradas.length === 0 && (
+              {!loading && error && !lista && (
                 <TableRow>
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>No se pudo cargar la auditoría.</TableCell>
                 </TableRow>
               )}
-              {!loading && !error && entradas.length === 0 && (
+              {!loading && lista && entradas.length === 0 && (
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin registros de auditoría todavía.</TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>
+                    {filtrando ? "Sin resultados para esa búsqueda o esas fechas." : "Sin registros de auditoría todavía."}
+                  </TableCell>
                 </TableRow>
               )}
-              {!loading && entradas.length > 0 && filtradas.length === 0 && (
-                <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Sin resultados para esa búsqueda.</TableCell>
-                </TableRow>
-              )}
-              {paginated.map((entrada) => (
+              {!loading && entradas.map((entrada) => (
                 <TableRow key={entrada.id}>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {new Date(entrada.fechaHora).toLocaleString("es-PE")}
@@ -134,7 +191,7 @@ function AuditoriaContent() {
             </TableBody>
           </Table>
         </div>
-        {!loading && <TableFooter from={from} to={to} total={total} page={page} totalPages={totalPages} onPageChange={setPage} />}
+        {!loading && <TableFooter {...pie} onPageChange={setPagina} />}
       </div>
     </div>
   );

@@ -205,6 +205,7 @@ model EventoAcceso {
   torniqueteId             String?         @map("torniquete_id") @db.VarChar(50)
 
   @@index([personaId, fechaHora])
+  @@index([fechaHora])
   @@map("evento_acceso")
 }
 
@@ -221,5 +222,6 @@ model Auditoria {
   fechaHora     DateTime        @default(now()) @map("fecha_hora")
 
   @@index([tablaAfectada, registroId])
+  @@index([fechaHora])
   @@map("auditoria")
 }

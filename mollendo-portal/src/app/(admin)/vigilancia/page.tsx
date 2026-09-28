@@ -6,7 +6,7 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { connectEventosSocket } from "@/lib/ws";
 import { eventosAccesoApi, panelApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { EventoAcceso, Persona, ResumenPanel } from "@/lib/api/types";
+import type { EventoAcceso, Paginado, Persona, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { Modal } from "@/components/ui/modal";
@@ -15,7 +15,9 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Button from "@/components/ui/button/Button";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
-import { usePagination } from "@/lib/usePagination";
+import { useDiferido } from "@/lib/useDiferido";
+import { hoy, pieDePagina } from "@/lib/paginaServidor";
+import DatePicker from "@/components/form/date-picker";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
@@ -149,32 +151,55 @@ function DocumentosModal({ personaId, onClose }: { personaId: number | null; onC
   );
 }
 
+const POR_PAGINA = 10;
+
 function VigilanciaContent() {
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
-  const [eventos, setEventos] = useState<EventoAcceso[]>([]);
+  const [lista, setLista] = useState<Paginado<EventoAcceso> | null>(null);
   // Último evento llegado en vivo: solo su fila se resalta, unos segundos.
   const [ultimo, setUltimo] = useState<number | null>(null);
   const [servidorCaido, setServidorCaido] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
+  // Filtros del historial: se aplican en el servidor. El día empieza en hoy;
+  // vacío = todos los días.
+  const [pagina, setPagina] = useState(1);
+  const [busqueda, setBusqueda] = useState("");
+  const busquedaDiferida = useDiferido(busqueda.trim());
+  const [dia, setDia] = useState(hoy);
+
   // Contadores e historial. Se vuelve a pedir con cada evento en vivo, así
   // "Denegaciones hoy" y la tabla quedan al día sin recargar la página.
   const cargar = useCallback(async () => {
     try {
-      const [r, e] = await Promise.all([panelApi.resumen(), eventosAccesoApi.list()]);
+      const [r, e] = await Promise.all([
+        panelApi.resumen(),
+        eventosAccesoApi.list({ pagina, porPagina: POR_PAGINA, busqueda: busquedaDiferida, desde: dia, hasta: dia }),
+      ]);
       setResumen(r);
-      setEventos(e);
+      // Si la página quedó fuera del total (p. ej. tras filtrar), vuelve a la primera.
+      if (e.datos.length === 0 && e.total > 0 && pagina > 1) {
+        setPagina(1);
+        return;
+      }
+      setLista(e);
       setErrorCarga(null);
     } catch (err) {
       setErrorCarga(err instanceof ApiError ? err.message : "No se pudieron cargar los datos del panel");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagina, busquedaDiferida, dia]);
 
   useEffect(() => {
     void cargar();
+  }, [cargar]);
+
+  // El socket se conecta una sola vez; siempre recarga con los filtros vigentes.
+  const cargarActual = useRef(cargar);
+  useEffect(() => {
+    cargarActual.current = cargar;
   }, [cargar]);
 
   // Cada evento en vivo recarga la tabla y los contadores (si llegan varios
@@ -190,7 +215,7 @@ function VigilanciaContent() {
         if (finResalte.current) clearTimeout(finResalte.current);
         finResalte.current = setTimeout(() => setUltimo(null), RESALTE_MS);
         if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
-        recargaPendiente.current = setTimeout(() => void cargar(), 500);
+        recargaPendiente.current = setTimeout(() => void cargarActual.current(), 500);
       });
     } catch {
       // el panel sigue funcionando sin tiempo real si el socket falla
@@ -200,7 +225,7 @@ function VigilanciaContent() {
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
       if (finResalte.current) clearTimeout(finResalte.current);
     };
-  }, [cargar]);
+  }, []);
 
   function reintentar() {
     setLoading(true);
@@ -223,16 +248,17 @@ function VigilanciaContent() {
     return () => clearInterval(interval);
   }, []);
 
-  const [busqueda, setBusqueda] = useState("");
   const [personaDocumentos, setPersonaDocumentos] = useState<number | null>(null);
-  const filtrados = eventos.filter((ev) => {
-    const q = busqueda.trim().toLowerCase();
-    if (!q) return true;
-    const nombre = ev.persona ? `${ev.persona.nombres} ${ev.persona.apellidos}` : "no registrado";
-    const numero = ev.numeroDocumento ?? ev.persona?.numeroDocumento ?? "";
-    return nombre.toLowerCase().includes(q) || numero.toLowerCase().includes(q);
-  });
-  const { page, setPage, totalPages, paginated, total, from, to } = usePagination(filtrados, 10);
+  const eventos = lista?.datos ?? [];
+  const pie = pieDePagina(lista);
+  const esHoy = dia === hoy();
+  const sinEventos = busquedaDiferida
+    ? "Sin resultados para esa búsqueda."
+    : !dia
+      ? "Sin eventos registrados todavía."
+      : esHoy
+        ? "Todavía no hay ingresos ni salidas hoy."
+        : "Sin ingresos ni salidas ese día.";
 
   return (
     <div>
@@ -261,8 +287,56 @@ function VigilanciaContent() {
         <StatCard label="Documentos vencidos" value={resumen?.documentosVencidos ?? null} color="text-gray-700 dark:text-gray-300" />
       </div>
 
-      <div className="mb-4">
-        <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre o DNI…" />
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="sm:flex-1">
+          <TableSearch
+            value={busqueda}
+            onChange={(v) => {
+              setBusqueda(v);
+              setPagina(1);
+            }}
+            placeholder="Buscar por nombre o DNI…"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-44">
+            <DatePicker
+              id="dia-vigilancia"
+              placeholder="Todos los días"
+              value={dia}
+              onChange={(v) => {
+                setDia(v);
+                setPagina(1);
+              }}
+            />
+          </div>
+          {!esHoy && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDia(hoy());
+                setPagina(1);
+              }}
+            >
+              Hoy
+            </Button>
+          )}
+          {dia && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDia("");
+                setPagina(1);
+              }}
+            >
+              Todos los días
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -284,22 +358,17 @@ function VigilanciaContent() {
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Cargando…</TableCell>
                 </TableRow>
               )}
-              {!loading && errorCarga && eventos.length === 0 && (
+              {!loading && errorCarga && !lista && (
                 <TableRow>
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>No se pudo cargar el historial.</TableCell>
                 </TableRow>
               )}
-              {!loading && !errorCarga && eventos.length === 0 && (
+              {!loading && lista && eventos.length === 0 && (
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Sin eventos registrados todavía.</TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>{sinEventos}</TableCell>
                 </TableRow>
               )}
-              {!loading && eventos.length > 0 && filtrados.length === 0 && (
-                <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Sin resultados para esa búsqueda.</TableCell>
-                </TableRow>
-              )}
-              {paginated.map((ev) => (
+              {!loading && eventos.map((ev) => (
                 <TableRow
                   key={ev.id}
                   className={`transition-colors duration-700 ${ev.id === ultimo ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
@@ -329,7 +398,7 @@ function VigilanciaContent() {
             </TableBody>
           </Table>
         </div>
-        {!loading && <TableFooter from={from} to={to} total={total} page={page} totalPages={totalPages} onPageChange={setPage} />}
+        {!loading && <TableFooter {...pie} onPageChange={setPagina} />}
       </div>
 
       <DocumentosModal personaId={personaDocumentos} onClose={() => setPersonaDocumentos(null)} />

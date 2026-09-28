@@ -1,10 +1,13 @@
 import { apiRequest } from "./client";
+import { consulta } from "@/lib/paginaServidor";
 import type {
   AuditoriaEntry,
   DocumentoPersona,
   Empresa,
   EstadoSistema,
   EventoAcceso,
+  FiltrosLista,
+  Paginado,
   Persona,
   ResumenPanel,
   RolUsuario,
@@ -85,12 +88,9 @@ export const documentosApi = {
 
 // ---- eventos-acceso ----
 export const eventosAccesoApi = {
-  list: (params?: { personaId?: number; resultado?: string; desde?: string; hasta?: string }) => {
-    const qs = new URLSearchParams(
-      Object.fromEntries(Object.entries(params ?? {}).map(([k, v]) => [k, String(v)])),
-    ).toString();
-    return apiRequest<EventoAcceso[]>(`/eventos-acceso${qs ? `?${qs}` : ""}`);
-  },
+  /** Historial paginado en el servidor, más recientes primero. */
+  list: (params: FiltrosLista & { personaId?: number; resultado?: string } = {}) =>
+    apiRequest<Paginado<EventoAcceso>>(`/eventos-acceso${consulta({ ...params })}`),
 };
 
 // ---- panel ----
@@ -101,12 +101,9 @@ export const panelApi = {
 
 // ---- auditoria ----
 export const auditoriaApi = {
-  list: (params?: { tablaAfectada?: string; registroId?: number }) => {
-    const qs = new URLSearchParams(
-      Object.fromEntries(Object.entries(params ?? {}).map(([k, v]) => [k, String(v)])),
-    ).toString();
-    return apiRequest<AuditoriaEntry[]>(`/auditoria${qs ? `?${qs}` : ""}`);
-  },
+  /** Paginada en el servidor, más recientes primero. */
+  list: (params: FiltrosLista & { tablaAfectada?: string; registroId?: number } = {}) =>
+    apiRequest<Paginado<AuditoriaEntry>>(`/auditoria${consulta({ ...params })}`),
 };
 
 export type { RolUsuario };
