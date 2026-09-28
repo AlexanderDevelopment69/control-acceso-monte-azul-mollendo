@@ -19,8 +19,14 @@ const svgrSvgoConfig = {
   },
 };
 
+// Dónde está el backend visto desde el servidor del portal: localhost en
+// desarrollo; en los contenedores, el servicio "api" (se fija al compilar la
+// imagen, ver mollendo-portal/Dockerfile).
+const API_INTERNAL_URL = process.env.API_INTERNAL_URL ?? "http://localhost:3001";
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Servidor autónomo (.next/standalone) para la imagen de Docker.
+  output: "standalone",
   // Reenvía las llamadas a la API hacia el backend local. Sirve para poder
   // exponer solo el frontend por un túnel (ej. ngrok en el plan gratis, que
   // solo da un dominio) y que el navegador del cliente llame a la API por
@@ -31,9 +37,9 @@ const nextConfig: NextConfig = {
   // que el enlace de "Sistema y APIs" funcione con NEXT_PUBLIC_API_URL=/api/v1.
   async rewrites() {
     return [
-      { source: "/api/v1/:path*", destination: "http://localhost:3001/api/v1/:path*" },
-      { source: "/api/docs", destination: "http://localhost:3001/api/docs" },
-      { source: "/api/docs/:path*", destination: "http://localhost:3001/api/docs/:path*" },
+      { source: "/api/v1/:path*", destination: `${API_INTERNAL_URL}/api/v1/:path*` },
+      { source: "/api/docs", destination: `${API_INTERNAL_URL}/api/docs` },
+      { source: "/api/docs/:path*", destination: `${API_INTERNAL_URL}/api/docs/:path*` },
     ];
   },
 

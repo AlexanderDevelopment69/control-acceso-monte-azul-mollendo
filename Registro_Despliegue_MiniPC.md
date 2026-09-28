@@ -1,0 +1,556 @@
+# Guía de despliegue en la mini PC
+
+Proyecto: Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM) · Alcance base
+Última actualización: 28/09/2026
+
+Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend y base de datos) en la mini PC, cómo actualizarlo y cómo operarlo. Está pensada para que la siga cualquier persona con acceso al servidor, aunque no haya participado en el desarrollo. Al final (anexo A) está el registro del primer despliegue.
+
+> **Esta guía no incluye contraseñas ni claves, porque se versiona en git.** Están solo en el servidor, en `~/mollendo/.env`; quien tenga acceso SSH puede verlas con `cat ~/mollendo/.env`. Para desplegar o actualizar no hace falta conocerlas.
+
+---
+
+## Contenido
+
+1. [Cómo está armado](#1-cómo-está-armado)
+2. [Requisitos](#2-requisitos)
+3. [Primer despliegue (servidor nuevo)](#3-primer-despliegue-servidor-nuevo)
+4. [Verificar que funciona](#4-verificar-que-funciona)
+5. [Actualizar a una versión nueva](#5-actualizar-a-una-versión-nueva)
+6. [Operación del día a día](#6-operación-del-día-a-día)
+7. [Respaldos](#7-respaldos)
+8. [Solución de problemas](#8-solución-de-problemas)
+9. [Seguridad y recomendaciones](#9-seguridad-y-recomendaciones)
+- [Anexo A. Registro del primer despliegue (28/09/2026)](#anexo-a-registro-del-primer-despliegue-28092026)
+- [Anexo B. Variables del archivo .env](#anexo-b-variables-del-archivo-env)
+
+---
+
+## 1. Cómo está armado
+
+Todo corre en **contenedores de Docker**. En el sistema operativo solo se instala Docker: nada de Node.js, PostgreSQL ni otros programas directo en el servidor.
+
+| Contenedor | Qué hace | Puerto publicado |
+|---|---|---|
+| `db` | Base de datos PostgreSQL 16. Los datos están en el volumen `mollendo_db_data` | ninguno (solo red interna) |
+| `api` | Backend (NestJS). Al arrancar aplica las migraciones pendientes de la base de datos | `3001`: equipos físicos y Swagger |
+| `portal` | Portal web (Next.js). Reenvía al backend las llamadas a la API y el tiempo real | `3000`: el que se abre en el navegador |
+| `backup` | Respaldo diario de la base de datos en `~/mollendo/backups`. Guarda 14 días | ninguno |
+
+```
+                 Navegador (administrador / vigilante)
+                              │  http://<IP de la mini PC>:3000
+                              ▼
+┌──────────────────────── mini PC (Docker) ────────────────────────┐
+│                                                                   │
+│   ┌──────────┐  /api/v1, /api/docs,   ┌──────────┐     ┌──────┐   │
+│   │  portal  │ ─────────────────────► │   api    │ ──► │  db  │   │
+│   │  :3000   │  tiempo real (socket)  │  :3001   │     │:5432 │   │
+│   └──────────┘                        └────┬─────┘     └──┬───┘   │
+│                                            │              │       │
+│                              volumen documentos     ┌─────┴────┐  │
+│                              (archivos y fotos)     │  backup  │  │
+│                                                     └──────────┘  │
+└───────────────────────────────────────────────────────────────────┘
+        ▲ :3001 (con la clave X-API-Key)
+        │
+   Equipos físicos (cuando se integren)
+```
+
+- Los documentos y fotos subidos se guardan en el volumen `mollendo_documentos`.
+- Si un contenedor se cae, se reinicia solo. Al encender la mini PC, todo arranca solo.
+- Los contenedores usan la hora de Lima.
+
+**Archivos del proyecto que intervienen:**
+
+| Archivo | Para qué sirve |
+|---|---|
+| `docker-compose.prod.yml` | Define los 4 contenedores, los volúmenes y los puertos |
+| `deploy.env.example` | Plantilla del archivo `.env` con las claves |
+| `mollendo-api/Dockerfile` | Cómo se construye la imagen del backend |
+| `mollendo-portal/Dockerfile` | Cómo se construye la imagen del portal |
+| `mollendo-api/.dockerignore`, `mollendo-portal/.dockerignore` | Qué no se copia a las imágenes (`node_modules`, `.env`, compilados, archivos subidos) |
+
+---
+
+## 2. Requisitos
+
+### 2.1. El servidor (mini PC)
+
+| Requisito | Valor actual |
+|---|---|
+| Sistema | Ubuntu Server (probado con Ubuntu 26.04 LTS) |
+| Memoria / disco | Mínimo 4 GB de RAM y 20 GB libres (tiene 6,8 GB y 98 GB) |
+| Usuario | Uno con permisos de `sudo` (hoy: `ma-admin`) |
+| Acceso | SSH (puerto 22) |
+| Internet | Necesario al construir las imágenes (descarga Docker, imágenes base y dependencias) |
+| Puertos libres | `3000` y `3001` |
+
+Direcciones actuales:
+- **Tailscale:** `100.78.153.33` (sirve desde cualquier lugar con Tailscale activo)
+- **Red local:** `192.168.0.165` (Wi-Fi; puede cambiar si el router la reasigna, ver sección 9)
+
+### 2.2. La PC desde donde se despliega
+
+- **Git** (para empaquetar el código).
+- **Cliente SSH** (`ssh` y `scp`). Windows 10/11 ya los trae: se usan desde PowerShell o desde Git Bash.
+- Acceso de red al servidor (misma red local o Tailscale conectado).
+- El proyecto clonado, con los cambios a desplegar **ya confirmados con commit** (el paquete se arma desde el último commit).
+
+### 2.3. Datos que necesitas
+
+- Usuario y contraseña SSH del servidor.
+- Para un primer despliegue: nada más (las claves se generan en el servidor).
+- Para una actualización: nada más (las claves ya están en `~/mollendo/.env`).
+
+---
+
+## 3. Primer despliegue (servidor nuevo)
+
+Solo se hace una vez. Si el sistema ya está desplegado, ve a la [sección 5](#5-actualizar-a-una-versión-nueva).
+
+Los comandos que empiezan en **la PC** se ejecutan en tu computadora; los que empiezan en **el servidor**, dentro de la sesión SSH.
+
+### Paso 1. Conectarse al servidor
+
+En la PC (PowerShell o Git Bash):
+
+```bash
+ssh ma-admin@100.78.153.33
+```
+
+La primera vez pregunta si confías en el servidor. Comprueba que la huella sea esta y responde `yes`:
+
+```
+ED25519 key fingerprint is SHA256:7E0UUb8X7/RlEWjbISN3pl3P5GW23mxXKQVhB2GaWDg
+```
+
+Luego escribe la contraseña del usuario (no se ve mientras la escribes).
+
+### Paso 2. Instalar Docker
+
+En el servidor. Es la **única** instalación que se hace en el sistema:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y docker.io docker-compose-v2 docker-buildx
+sudo systemctl enable --now docker
+```
+
+Comprueba:
+
+```bash
+docker --version            # Docker version 29.x
+docker compose version      # Docker Compose version 2.x
+systemctl is-active docker  # active
+```
+
+### Paso 3. Zona horaria del servidor
+
+En el servidor (los contenedores ya usan la hora de Lima; esto es para que los respaldos y los logs del sistema también la usen):
+
+```bash
+sudo timedatectl set-timezone America/Lima
+timedatectl | grep "Time zone"   # Time zone: America/Lima
+```
+
+### Paso 4. Crear la carpeta del sistema
+
+En el servidor:
+
+```bash
+mkdir -p ~/mollendo/backups
+```
+
+### Paso 5. Empaquetar el código
+
+En la PC, en la carpeta raíz del proyecto (donde está `docker-compose.prod.yml`). Asegúrate de que todo lo que quieres desplegar tenga commit:
+
+```bash
+git status          # no debe haber cambios pendientes que quieras desplegar
+git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal docker-compose.prod.yml deploy.env.example
+```
+
+Esto crea `mollendo.tgz` (unos 10 MB) con el código del último commit. No incluye `node_modules`, `.env` ni archivos subidos, porque no están en git.
+
+### Paso 6. Copiar el código al servidor
+
+En la PC:
+
+```bash
+scp mollendo.tgz ma-admin@100.78.153.33:mollendo/
+```
+
+En el servidor:
+
+```bash
+cd ~/mollendo
+tar -xzf mollendo.tgz
+rm mollendo.tgz
+ls        # backups  deploy.env.example  docker-compose.prod.yml  mollendo-api  mollendo-portal
+```
+
+### Paso 7. Crear el archivo de claves (.env)
+
+En el servidor. Este archivo **nunca** se sube a git ni se copia a otro lado.
+
+1. Genera las claves y crea el archivo de una vez (copia y pega el bloque completo):
+
+   ```bash
+   cd ~/mollendo
+   cat > .env <<EOF
+   DB_PASSWORD=$(openssl rand -hex 24)
+   JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
+   JWT_REFRESH_SECRET=$(openssl rand -base64 48 | tr -d '\n')
+   DEVICE_API_KEY=$(openssl rand -hex 32)
+   CORS_ORIGIN=http://100.78.153.33:3000,http://192.168.0.165:3000,http://localhost:3000
+   ADMIN_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
+   VIGILANCIA_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
+   EOF
+   chmod 600 .env
+   ```
+
+2. Revisa el contenido y **anota las dos contraseñas iniciales** (`ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD`), las vas a necesitar para entrar al portal:
+
+   ```bash
+   cat .env
+   ```
+
+3. Si las IPs del servidor son otras, corrige `CORS_ORIGIN` con `nano .env` (guardar: `Ctrl+O`, `Enter`; salir: `Ctrl+X`).
+
+El detalle de cada variable está en el [anexo B](#anexo-b-variables-del-archivo-env).
+
+> **No cambies `DB_PASSWORD` después del primer arranque.** PostgreSQL la guarda al crear la base; si la cambias en `.env`, el backend ya no podrá conectarse (ver [sección 8](#8-solución-de-problemas)).
+
+### Paso 8. Construir las imágenes
+
+En el servidor (tarda varios minutos la primera vez, porque descarga las imágenes base y las dependencias):
+
+```bash
+cd ~/mollendo
+sudo docker compose -f docker-compose.prod.yml build
+```
+
+Al final debe decir `mollendo-api  Built` y `mollendo-portal  Built`.
+
+### Paso 9. Levantar los contenedores
+
+```bash
+sudo docker compose -f docker-compose.prod.yml up -d
+```
+
+Espera unos 30 segundos y revisa que el backend haya aplicado las migraciones:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml logs api | grep -E "migrations|successfully started"
+```
+
+Debe mostrar:
+
+```
+All migrations have been successfully applied.
+Nest application successfully started
+```
+
+### Paso 10. Crear las cuentas iniciales
+
+Solo la primera vez. Crea la empresa interna (OTP/MAS), la cuenta del administrador y la de vigilancia, con las contraseñas del `.env`:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml run --rm -T api npm run db:seed
+```
+
+Debe terminar con:
+
+```
+Cuentas listas:
+  Administrador:  admin@mollendo.local / (definida en .env)
+  Vigilancia:     vigilancia@mollendo.local / (definida en .env)
+```
+
+La base queda **sin personal ni documentos**: el administrador los carga desde el portal.
+
+### Paso 11. Borrar el paquete en la PC
+
+En la PC:
+
+```bash
+rm mollendo.tgz
+```
+
+Sigue con la verificación.
+
+---
+
+## 4. Verificar que funciona
+
+### 4.1. En el servidor
+
+```bash
+cd ~/mollendo
+sudo docker compose -f docker-compose.prod.yml ps
+```
+
+Los cuatro deben estar `Up` y `db` además `(healthy)`:
+
+```
+SERVICE   STATUS                   PORTS
+api       Up ...                   0.0.0.0:3001->3001/tcp
+backup    Up ...
+db        Up ... (healthy)
+portal    Up ...                   0.0.0.0:3000->3000/tcp
+```
+
+```bash
+curl -s http://localhost:3001/api/v1/health
+# {"status":"ok","database":"up",...}
+
+ls backups
+# mollendo-AAAAMMDD-HHMM.sql.gz   (el primer respaldo se hace al arrancar)
+```
+
+### 4.2. En el navegador
+
+| Qué abrir | Qué debe pasar |
+|---|---|
+| `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
+| Entrar con `admin@mollendo.local` y la contraseña inicial | Entra a "Personal y documentos" |
+| Menú **Sistema y APIs** | Backend y base de datos "En línea"; clave de equipos "Configurado" |
+| Botón de Swagger en Sistema y APIs (o `http://100.78.153.33:3000/api/docs`) | Abre la documentación de la API |
+| Menú **Panel de vigilancia** | Carga sin errores; sin el aviso "El servidor no responde" |
+
+### 4.3. Después de verificar
+
+1. **Cambia las dos contraseñas iniciales** desde el portal: clic en el usuario (arriba a la derecha) → "Cambiar contraseña". Haz lo mismo entrando con la cuenta de vigilancia.
+2. Opcional: borra las contraseñas iniciales del `.env` (`ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD`); ya no se usan.
+
+---
+
+## 5. Actualizar a una versión nueva
+
+Para desplegar cambios nuevos del sistema. Los datos (personal, documentos, eventos) **no se pierden**: están en los volúmenes, que no se tocan.
+
+1. **En la PC**, con los cambios ya confirmados con commit, arma el paquete (sin `deploy.env.example`: el `.env` del servidor ya existe):
+
+   ```bash
+   git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal docker-compose.prod.yml
+   scp mollendo.tgz ma-admin@100.78.153.33:mollendo/
+   ```
+
+2. **En el servidor**, saca un respaldo antes de actualizar (por si algo sale mal):
+
+   ```bash
+   cd ~/mollendo
+   sudo docker compose -f docker-compose.prod.yml exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip > backups/antes-de-actualizar-$(date +%Y%m%d-%H%M).sql.gz
+   ```
+
+3. **En el servidor**, reemplaza el código. Se borran las carpetas viejas para que no queden archivos que ya no existen en la versión nueva (`.env`, `backups` y los volúmenes no se tocan):
+
+   ```bash
+   rm -rf mollendo-api mollendo-portal
+   tar -xzf mollendo.tgz && rm mollendo.tgz
+   ```
+
+4. **En el servidor**, reconstruye y levanta:
+
+   ```bash
+   sudo docker compose -f docker-compose.prod.yml up -d --build
+   ```
+
+   Si la versión nueva trae migraciones de base de datos, el backend las aplica solo al arrancar. Revisa:
+
+   ```bash
+   sudo docker compose -f docker-compose.prod.yml logs api | grep -E "migrations|successfully started|Error"
+   ```
+
+5. Verifica como en la [sección 4](#4-verificar-que-funciona). Mientras se reconstruye, el portal deja de responder unos segundos.
+
+6. **En la PC**: `rm mollendo.tgz`.
+
+**Si la actualización falla**, vuelve a la versión anterior repitiendo estos pasos con el commit anterior (`git archive ... <commit-anterior> ...`). Si una migración dañó datos, restaura el respaldo del paso 2 ([sección 7.3](#73-restaurar-un-respaldo)).
+
+---
+
+## 6. Operación del día a día
+
+Todos los comandos se ejecutan en el servidor, dentro de `~/mollendo`. Para no repetir el nombre del archivo, puedes definir un atajo en la sesión:
+
+```bash
+cd ~/mollendo
+alias dc='sudo docker compose -f docker-compose.prod.yml'
+```
+
+| Para… | Comando |
+|---|---|
+| Ver el estado de los contenedores | `dc ps` |
+| Ver el log del backend en vivo (salir con `Ctrl+C`) | `dc logs -f api` |
+| Ver el log del portal | `dc logs --tail 100 portal` |
+| Reiniciar todo | `dc restart` |
+| Reiniciar solo el backend | `dc restart api` |
+| Detener todo (el portal deja de funcionar) | `dc stop` |
+| Volver a arrancar | `dc up -d` |
+| Uso de disco de Docker | `sudo docker system df` |
+| Entrar a la base de datos (consola SQL; salir con `\q`) | `dc exec db psql -U mollendo -d mollendo_control_acceso` |
+
+> **Nunca uses `docker compose down -v`**: la opción `-v` borra los volúmenes, es decir, **toda la base de datos y los documentos subidos**. `dc down` (sin `-v`) sí es seguro: detiene y elimina los contenedores, pero no los datos.
+
+### Restablecer una contraseña olvidada
+
+Si alguien olvidó su contraseña y no puede entrar (no hay recuperación por correo). Reemplaza `NuevaClave2026` y el correo:
+
+```bash
+cd ~/mollendo
+H=$(sudo docker compose -f docker-compose.prod.yml exec -T api node -e "require('bcryptjs').hash(process.argv[1], 10).then(console.log)" 'NuevaClave2026' </dev/null)
+echo "UPDATE usuario SET password_hash = :'h', password_cambiado_en = now() WHERE correo = 'admin@mollendo.local';" \
+  | sudo docker compose -f docker-compose.prod.yml exec -T db psql -U mollendo -d mollendo_control_acceso -v h="$H"
+```
+
+Debe responder `UPDATE 1`. La persona entra con la contraseña nueva y conviene que la cambie desde el portal. Las sesiones que tenía abiertas se cierran.
+
+---
+
+## 7. Respaldos
+
+### 7.1. Respaldo automático
+
+El contenedor `backup` hace un respaldo al arrancar y luego **cada 24 horas**, en `~/mollendo/backups/mollendo-AAAAMMDD-HHMM.sql.gz`. Borra solo los de más de 14 días.
+
+```bash
+ls -lh ~/mollendo/backups
+sudo docker compose -f docker-compose.prod.yml logs backup | tail   # "Respaldo /backups/mollendo-..."
+```
+
+Los respaldos cubren la **base de datos** (personal, empresas, documentos registrados, eventos, auditoría). Los **archivos** de los documentos y fotos están en el volumen `mollendo_documentos`; para respaldarlos:
+
+```bash
+cd ~/mollendo
+sudo docker run --rm -v mollendo_documentos:/datos -v "$PWD/backups":/destino alpine \
+  tar -czf /destino/documentos-$(date +%Y%m%d).tar.gz -C /datos .
+```
+
+### 7.2. Respaldo manual
+
+```bash
+cd ~/mollendo
+sudo docker compose -f docker-compose.prod.yml exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip > backups/manual-$(date +%Y%m%d-%H%M).sql.gz
+```
+
+### 7.3. Restaurar un respaldo
+
+Restaurar **reemplaza** los datos actuales. Hazlo solo si es necesario y, antes, saca un respaldo manual de lo que hay (7.2).
+
+```bash
+cd ~/mollendo
+alias dc='sudo docker compose -f docker-compose.prod.yml'
+dc stop api portal                                                     # nadie escribe mientras se restaura
+dc exec -T db dropdb -U mollendo mollendo_control_acceso
+dc exec -T db createdb -U mollendo mollendo_control_acceso
+gunzip -c backups/mollendo-AAAAMMDD-HHMM.sql.gz | dc exec -T db psql -q -U mollendo -d mollendo_control_acceso
+dc start api portal
+```
+
+Reemplaza `mollendo-AAAAMMDD-HHMM.sql.gz` por el archivo que quieres restaurar. Luego verifica como en la sección 4.
+
+### 7.4. Copiar los respaldos fuera de la mini PC
+
+Los respaldos quedan en el mismo disco que la base de datos: si el disco falla, se pierden los dos. Cópialos con regularidad a otra computadora o a un disco externo. Desde la PC:
+
+```bash
+scp -r ma-admin@100.78.153.33:mollendo/backups ./respaldos-mollendo
+```
+
+---
+
+## 8. Solución de problemas
+
+Primero mira siempre el estado y el log: `dc ps` y `dc logs --tail 100 api`.
+
+| Síntoma | Causa probable | Qué hacer |
+|---|---|---|
+| El navegador no abre `http://<IP>:3000` | El contenedor `portal` no está arriba, o no hay conexión con el servidor | `dc ps`; si no está `Up`, `dc up -d`. Prueba en el servidor `curl -I http://localhost:3000`. Si responde, el problema es de red (Tailscale desconectado, otra red, IP cambiada). |
+| El portal abre pero dice que no puede contactar al backend | `api` detenido o reiniciándose | `dc ps` y `dc logs --tail 100 api`. |
+| `api` se reinicia una y otra vez; el log dice `P1000` o "Authentication failed" | Se cambió `DB_PASSWORD` en `.env` después de crear la base | Vuelve a poner la contraseña original en `.env` y `dc up -d`. |
+| El log de `api` muestra un error de migración | Una migración nueva falló | No borres nada. Restaura el respaldo previo a la actualización (7.3) y vuelve a la versión anterior (sección 5). Revisa la migración en la PC de desarrollo. |
+| `build` falla en `npm ci` con "package.json and package-lock.json are not in sync" | El `package-lock.json` no corresponde al `package.json` | En la PC: `npm install` en `mollendo-api` o `mollendo-portal`, confirma el `package-lock.json` con commit y vuelve a empaquetar. Los Dockerfile usan npm 12.0.2, la misma versión con la que se generó el lockfile. |
+| `build` falla por falta de conexión | El servidor no tiene internet | Construir necesita internet. Revisa la red del servidor (`curl -I https://registry.npmjs.org`). |
+| "port is already allocated" al levantar | Otro programa usa el puerto 3000 o 3001 | `sudo ss -tlnp \| grep -E ':3000\|:3001'` para ver cuál. |
+| El Panel de vigilancia no muestra eventos en vivo | La conexión de tiempo real no llega al backend | Revisa que `api` esté arriba. Recarga la página con `Ctrl+F5`. |
+| Un comando `dc run ...` dentro de un script "se come" las líneas siguientes | `docker compose run` lee la entrada estándar | Usa `run -T` (como en esta guía) o agrega `</dev/null`. |
+| El disco se llena | Imágenes viejas de actualizaciones anteriores | `sudo docker image prune -f` (borra solo imágenes sin uso; no toca datos). |
+| Nadie puede entrar al portal | Contraseña olvidada | [Restablecer una contraseña](#restablecer-una-contraseña-olvidada). |
+
+---
+
+## 9. Seguridad y recomendaciones
+
+1. **Contraseña del servidor**: cámbiala si alguna vez se compartió por chat o correo (`passwd` en el servidor). Lo recomendable es entrar con **llave SSH** y desactivar el acceso por contraseña.
+2. **El archivo `~/mollendo/.env`** tiene todas las claves. Debe tener permisos `600` (`chmod 600 .env`) y no copiarse a git, correos ni chats.
+3. **Contraseñas del portal**: cambiar las iniciales después del primer ingreso.
+4. **IP fija en la red local**: los equipos (G4 Pro, relé) necesitarán una dirección estable. Reservar la IP de la mini PC en el router o conectarla por cable.
+5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `Opciones_Integracion_G4Pro.md`, sección 7).
+6. **Respaldos fuera de la mini PC**, con regularidad (7.4).
+7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
+8. **Integración de equipos (pendiente)**: cuando se programe, el contenedor `api` necesitará acceso a los lectores de DNI por USB (`devices:` en `docker-compose.prod.yml`) y el G4 Pro deberá apuntar a la IP de la mini PC. Esta guía se actualizará entonces.
+
+---
+
+## Anexo A. Registro del primer despliegue (28/09/2026)
+
+Hecho desde la PC de desarrollo (Windows), por SSH sobre Tailscale.
+
+**Servidor**
+
+| Dato | Valor |
+|---|---|
+| Nombre | `monteazul` |
+| Sistema | Ubuntu 26.04.1 LTS, kernel 7.0 |
+| Hardware | 12 núcleos, 6,8 GB de RAM, disco de 98 GB (9 % usado al instalar) |
+| Usuario | `ma-admin` (con sudo) |
+| IPs | Tailscale `100.78.153.33`; red local `192.168.0.165` (Wi-Fi `wlp87s0f0`) |
+| Huella SSH (ED25519) | `SHA256:7E0UUb8X7/RlEWjbISN3pl3P5GW23mxXKQVhB2GaWDg` |
+| Estado inicial | Sin Node, PostgreSQL ni Docker; solo Git y Tailscale |
+
+**Qué se hizo**
+
+1. Instalación de Docker 29.1.3 y Docker Compose 2.40.3 (paquetes de Ubuntu).
+2. **Incidente (resuelto):** antes de decidir usar contenedores se lanzó una instalación de Node.js, npm y PostgreSQL directo en el sistema. El usuario la rechazó, pero ya se había ejecutado: instaló 542 paquetes (PostgreSQL 18 quedó activo en `127.0.0.1:5432`) y cambió la zona horaria a `America/Lima`. Con autorización del usuario se desinstalaron exactamente esos 542 paquetes (lista tomada de `/var/log/apt/history.log`), se borraron los datos vacíos de PostgreSQL y el usuario `postgres` del sistema. Se verificó que no quedó nada instalado y que el puerto 5432 quedó libre. La zona horaria se dejó en Lima por decisión del usuario.
+3. Copia del código con `git ls-files` + `tar` (incluía cambios aún sin commit) y `pscp` de PuTTY. **Desde entonces el método recomendado es `git archive`** (sección 3, paso 5), que parte de un commit y es reproducible.
+4. Claves nuevas de producción generadas con `secrets` de Python (distintas a las de desarrollo), guardadas en `~/mollendo/.env` (permisos `600`).
+5. Primera construcción: falló `npm ci` porque el `package-lock.json` lo generó npm 12 y la imagen trae npm 10. Se fijó npm 12.0.2 en los dos Dockerfile y se reconstruyó sin errores.
+6. `up -d`: el backend aplicó las 9 migraciones sobre la base vacía. Seed: empresa interna, `admin@mollendo.local` y `vigilancia@mollendo.local`. Base sin personal (los datos de prueba de desarrollo no se copiaron).
+
+**Verificación (desde la PC de desarrollo, por Tailscale)**
+
+| Prueba | Resultado |
+|---|---|
+| Portal `/signin`, `/vigilancia`, `/sistema` | 200 |
+| Página inexistente | 404 (en español) |
+| Swagger por el portal | 200 |
+| API directa `:3001/api/v1/health` | 200 |
+| Inicio de sesión del administrador por el portal | Correcto |
+| Sistema y APIs | Entorno `production`, base de datos arriba, clave de equipos configurada |
+| Tiempo real por el portal | Conecta |
+| Respaldo automático | Primer archivo generado |
+| Hora de los contenedores | Lima |
+| Respaldo manual y restauración en una base temporal | Correcto (base temporal borrada después) |
+| Restablecer contraseña (sección 6) | Correcto, probado con la cuenta de vigilancia usando su misma contraseña |
+
+No se probó el acceso desde un navegador en la red local (`192.168.0.165`).
+
+---
+
+## Anexo B. Variables del archivo .env
+
+Archivo `~/mollendo/.env` en el servidor, junto a `docker-compose.prod.yml`. La plantilla es `deploy.env.example`.
+
+| Variable | Obligatoria | Para qué sirve | Cómo generarla |
+|---|---|---|---|
+| `DB_PASSWORD` | Sí | Contraseña del usuario `mollendo` de PostgreSQL. **No cambiarla después del primer arranque.** | `openssl rand -hex 24` |
+| `JWT_SECRET` | Sí | Firma de las sesiones del portal. Si cambia, todos deben volver a iniciar sesión. | `openssl rand -base64 48` |
+| `JWT_REFRESH_SECRET` | Sí | Firma de la renovación de sesiones. Distinta de `JWT_SECRET`. | `openssl rand -base64 48` |
+| `DEVICE_API_KEY` | Sí | Clave de los equipos físicos (cabecera `X-API-Key` en las rutas de ingreso y salida). Si cambia, hay que actualizarla en los equipos. | `openssl rand -hex 32` |
+| `CORS_ORIGIN` | No | Direcciones desde las que se abre el portal, separadas por coma. | Las IPs del servidor con `:3000` |
+| `ADMIN_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `admin@mollendo.local`. Después del seed no se usa. | Cualquier contraseña de 8 o más caracteres |
+| `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@mollendo.local`. | Igual que la anterior |
+| `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@mollendo.local` y `vigilancia@mollendo.local`). | — |
+
+Valores fijos que no van en el `.env` (están en `docker-compose.prod.yml`): la duración de las sesiones (1 hora, renovable 7 días), el puerto del backend (`3001`), la carpeta de documentos y `SWAGGER=true`.

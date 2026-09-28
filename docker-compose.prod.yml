@@ -1,0 +1,80 @@
+# Despliegue en la mini PC: todo en contenedores.
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Las claves van en un archivo .env junto a este (ver deploy.env.example).
+# Guía completa: Registro_Despliegue_MiniPC.md
+name: mollendo
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mollendo
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
+      POSTGRES_DB: mollendo_control_acceso
+      TZ: America/Lima
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mollendo -d mollendo_control_acceso"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./mollendo-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://mollendo:${DB_PASSWORD}@db:5432/mollendo_control_acceso?schema=public
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
+      JWT_EXPIRES_IN: 1h
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Falta JWT_REFRESH_SECRET en .env}
+      JWT_REFRESH_EXPIRES_IN: 7d
+      PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      DOCUMENTOS_STORAGE_PATH: /app/storage/documentos
+      DEVICE_API_KEY: ${DEVICE_API_KEY:?Falta DEVICE_API_KEY en .env}
+      SWAGGER: "true"
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@mollendo.local}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
+      VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@mollendo.local}
+      VIGILANCIA_SEED_PASSWORD: ${VIGILANCIA_SEED_PASSWORD:-}
+    volumes:
+      - documentos:/app/storage
+    ports:
+      - "3001:3001" # equipos (ingreso/salida con X-API-Key) y Swagger
+
+  portal:
+    build: ./mollendo-portal
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+  # Respaldo diario de la base de datos en ./backups (se guardan 14 días).
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+      TZ: America/Lima
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      sh -c 'while true; do
+        f=/backups/mollendo-$$(date +%Y%m%d-%H%M).sql.gz;
+        pg_dump -h db -U mollendo mollendo_control_acceso | gzip > "$$f" && echo "Respaldo $$f";
+        find /backups -name "mollendo-*.sql.gz" -mtime +14 -delete;
+        sleep 86400;
+      done'
+
+volumes:
+  db_data:
+  documentos:
