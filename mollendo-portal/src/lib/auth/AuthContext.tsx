@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useCallback, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api/endpoints";
-import { clearTokens, getAccessToken, setTokens } from "@/lib/api/client";
+import { clearTokens, getAccessToken, setTokens, suscribirTokens } from "@/lib/api/client";
 import { decodeJwt, isTokenExpired } from "./decode-jwt";
 import type { RolUsuario } from "@/lib/api/types";
 
@@ -25,47 +25,37 @@ const ROLES_VALIDOS: RolUsuario[] = ["administrador", "vigilancia"];
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+/** Usuario del token, o null si no hay token o no sirve. */
+function usuarioDelToken(token: string | null): AuthUser | null {
+  if (!token) return null;
+  const payload = decodeJwt(token);
+  // Un token con un rol que ya no existe (p. ej. "administracion" o "empresa",
+  // anteriores al alcance base) se descarta para forzar un nuevo login.
+  if (!payload || isTokenExpired(payload) || !ROLES_VALIDOS.includes(payload.rol)) return null;
+  return { id: payload.sub, empresaId: payload.empresaId, rol: payload.rol, correo: payload.correo };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const loadFromToken = useCallback(() => {
-    const token = getAccessToken();
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-    const payload = decodeJwt(token);
-    // Un token con un rol que ya no existe (p. ej. "administracion" o "empresa",
-    // anteriores al alcance base) se descarta para forzar un nuevo login.
-    if (!payload || isTokenExpired(payload) || !ROLES_VALIDOS.includes(payload.rol)) {
-      clearTokens();
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-    setUser({ id: payload.sub, empresaId: payload.empresaId, rol: payload.rol, correo: payload.correo });
-    setLoading(false);
-  }, []);
+  // El token vive en localStorage: se lee como fuente externa. En el servidor
+  // (y al hidratar) todavía no se conoce, por eso `undefined` = cargando.
+  const token = useSyncExternalStore<string | null | undefined>(suscribirTokens, getAccessToken, () => undefined);
+  const loading = token === undefined;
+  const user = useMemo(() => (token ? usuarioDelToken(token) : null), [token]);
 
+  // Un token guardado que no sirve (vencido, rol antiguo) se borra.
   useEffect(() => {
-    loadFromToken();
-  }, [loadFromToken]);
+    if (token && !user) clearTokens();
+  }, [token, user]);
 
-  const login = useCallback(
-    async (correo: string, password: string) => {
-      const { accessToken, refreshToken } = await authApi.login(correo, password);
-      setTokens(accessToken, refreshToken);
-      loadFromToken();
-    },
-    [loadFromToken],
-  );
+  const login = useCallback(async (correo: string, password: string) => {
+    const { accessToken, refreshToken } = await authApi.login(correo, password);
+    setTokens(accessToken, refreshToken);
+  }, []);
 
   const logout = useCallback(() => {
     clearTokens();
-    setUser(null);
     router.push("/signin");
   }, [router]);
 

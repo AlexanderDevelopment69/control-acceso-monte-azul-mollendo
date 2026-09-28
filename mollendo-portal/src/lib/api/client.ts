@@ -13,14 +13,29 @@ export function getRefreshToken(): string | null {
   return window.localStorage.getItem(REFRESH_TOKEN_KEY);
 }
 
+// Quien muestra la sesión (AuthContext) se entera cuando cambian los tokens:
+// login, renovación, cambio de contraseña o cierre de sesión.
+const oyentesTokens = new Set<() => void>();
+
+export function suscribirTokens(oyente: () => void): () => void {
+  oyentesTokens.add(oyente);
+  return () => oyentesTokens.delete(oyente);
+}
+
+function avisarCambioTokens(): void {
+  oyentesTokens.forEach((oyente) => oyente());
+}
+
 export function setTokens(accessToken: string, refreshToken: string): void {
   window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  avisarCambioTokens();
 }
 
 export function clearTokens(): void {
   window.localStorage.removeItem(ACCESS_TOKEN_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  avisarCambioTokens();
 }
 
 export class ApiError extends Error {
@@ -84,6 +99,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     token = await refreshAccessToken();
     if (token) {
       res = await doFetch(token);
+    } else {
+      // Sesión vencida o cerrada (p. ej. se cambió la contraseña en otro
+      // equipo): se borran los tokens y el portal vuelve al inicio de sesión.
+      clearTokens();
     }
   }
 

@@ -150,7 +150,8 @@ const SECCIONES: SeccionManual[] = [
         <p>
           Para cambiar tu contraseña, haz clic en tu nombre de usuario (arriba a la derecha) y elige{" "}
           <strong>“Cambiar contraseña”</strong>. Escribe tu contraseña actual y dos veces la nueva, de al menos 8
-          caracteres. El cambio vale desde el próximo inicio de sesión y queda registrado en la auditoría.
+          caracteres. Tu sesión sigue abierta; si la tenías abierta en otro equipo, allí tendrás que volver a ingresar. El
+          cambio queda registrado en la auditoría.
         </p>
         <p className="text-xs text-gray-400">
           Si olvidaste tu contraseña, no hay recuperación por correo: pide al soporte técnico del sistema que la restablezca.

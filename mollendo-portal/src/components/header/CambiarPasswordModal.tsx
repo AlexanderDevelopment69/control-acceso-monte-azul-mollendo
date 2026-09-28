@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { authApi } from "@/lib/api/endpoints";
-import { ApiError } from "@/lib/api/client";
+import { ApiError, setTokens } from "@/lib/api/client";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
@@ -65,7 +65,9 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
     }
     setGuardando(true);
     try {
-      await authApi.cambiarPassword(actual, nueva);
+      const { accessToken, refreshToken } = await authApi.cambiarPassword(actual, nueva);
+      // Esta sesión sigue con los tokens nuevos; las de otros equipos se cierran.
+      setTokens(accessToken, refreshToken);
       setListo(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cambiar la contraseña");
@@ -80,7 +82,7 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
       {listo ? (
         <>
           <p className="mt-4 rounded-lg bg-success-50 px-4 py-3 text-sm text-success-700 dark:bg-success-500/15 dark:text-success-500">
-            Contraseña cambiada. Úsala la próxima vez que inicies sesión.
+            Contraseña cambiada. Si tenías la sesión abierta en otro equipo, allí tendrás que volver a ingresar.
           </p>
           <div className="mt-6 flex justify-end">
             <Button type="button" onClick={onClose}>

@@ -107,6 +107,8 @@ model Usuario {
   passwordHash String       @map("password_hash") @db.VarChar(255)
   estadoCuenta EstadoCuenta @default(activo) @map("estado_cuenta")
   creadoEn     DateTime     @default(now()) @map("creado_en")
+  /// Último cambio de contraseña: las sesiones iniciadas antes dejan de valer.
+  passwordCambiadoEn DateTime? @map("password_cambiado_en")
 
   auditorias Auditoria[]
 

@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { connectEventosSocket } from "@/lib/ws";
 import { eventosAccesoApi, panelApi, personasApi } from "@/lib/api/endpoints";
+import { ApiError } from "@/lib/api/client";
 import type { EventoAcceso, Persona, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/common/PageHeader";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
+import Button from "@/components/ui/button/Button";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { usePagination } from "@/lib/usePagination";
@@ -156,31 +159,51 @@ function VigilanciaContent() {
   const [eventosVivos, setEventosVivos] = useState<EventoLive[]>([]);
   const [servidorCaido, setServidorCaido] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function cargar() {
+  // Contadores e historial. Se vuelve a pedir con cada evento en vivo, así
+  // "Denegaciones hoy" y la tabla quedan al día sin recargar la página.
+  const cargar = useCallback(async () => {
+    try {
       const [r, e] = await Promise.all([panelApi.resumen(), eventosAccesoApi.list()]);
       setResumen(r);
       setEventos(e);
+      setErrorCarga(null);
+    } catch (err) {
+      setErrorCarga(err instanceof ApiError ? err.message : "No se pudieron cargar los datos del panel");
+    } finally {
       setLoading(false);
     }
-    cargar();
   }, []);
 
+  useEffect(() => {
+    void cargar();
+  }, [cargar]);
+
+  // Si llegan varios eventos seguidos, una sola recarga medio segundo después.
+  const recargaPendiente = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     let socket: Socket | undefined;
     try {
       socket = connectEventosSocket();
       socket.on("evento-acceso", (payload: EventoLive) => {
         setEventosVivos((prev) => [payload, ...prev].slice(0, 20));
+        if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
+        recargaPendiente.current = setTimeout(() => void cargar(), 500);
       });
     } catch {
       // el panel sigue funcionando sin tiempo real si el socket falla
     }
     return () => {
       socket?.disconnect();
+      if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
     };
-  }, []);
+  }, [cargar]);
+
+  function reintentar() {
+    setLoading(true);
+    void cargar();
+  }
 
   // Aviso si el servidor deja de responder. El alcance base no incluye modo
   // contingencia: sin servidor no se valida ningún ingreso.
@@ -219,6 +242,15 @@ function VigilanciaContent() {
           ) : undefined
         }
       />
+
+      {errorCarga && (
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <ErrorBanner className="flex-1">{errorCarga}</ErrorBanner>
+          <Button type="button" variant="outline" size="sm" onClick={reintentar} disabled={loading}>
+            {loading ? "Cargando…" : "Reintentar"}
+          </Button>
+        </div>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Denegaciones hoy" value={resumen?.denegacionesHoy ?? 0} color="text-error-500" />
@@ -277,7 +309,12 @@ function VigilanciaContent() {
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Cargando…</TableCell>
                 </TableRow>
               )}
-              {!loading && eventos.length === 0 && (
+              {!loading && errorCarga && eventos.length === 0 && (
+                <TableRow>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>No se pudo cargar el historial.</TableCell>
+                </TableRow>
+              )}
+              {!loading && !errorCarga && eventos.length === 0 && (
                 <TableRow>
                   <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Sin eventos registrados todavía.</TableCell>
                 </TableRow>

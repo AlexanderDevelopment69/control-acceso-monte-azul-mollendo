@@ -19,8 +19,9 @@ export interface LoginResponse {
 export const authApi = {
   login: (correo: string, password: string) =>
     apiRequest<LoginResponse>("/auth/login", { method: "POST", body: { correo, password }, skipAuth: true }),
+  /** Devuelve tokens nuevos: los anteriores dejan de valer (se cierran las otras sesiones). */
   cambiarPassword: (passwordActual: string, passwordNueva: string) =>
-    apiRequest<void>("/cuenta/password", { method: "PATCH", body: { passwordActual, passwordNueva } }),
+    apiRequest<LoginResponse>("/cuenta/password", { method: "PATCH", body: { passwordActual, passwordNueva } }),
 };
 
 // ---- empresas ----

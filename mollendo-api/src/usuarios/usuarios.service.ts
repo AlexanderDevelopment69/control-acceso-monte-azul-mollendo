@@ -5,6 +5,7 @@ import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 import type { CreateUsuarioDto } from './dto/create-usuario.dto.js';
 import type { UpdateUsuarioDto } from './dto/update-usuario.dto.js';
+import { momentoCambioPassword } from '../auth/sesion.util.js';
 
 const SALT_ROUNDS = 10;
 
@@ -65,6 +66,8 @@ export class UsuariosService {
       data: {
         estadoCuenta: dto.estadoCuenta,
         passwordHash: dto.password ? await hash(dto.password, SALT_ROUNDS) : undefined,
+        // Al restablecer la contraseña se cierran las sesiones abiertas de esa cuenta.
+        passwordCambiadoEn: dto.password ? momentoCambioPassword() : undefined,
       },
       select: USUARIO_SELECT,
     });

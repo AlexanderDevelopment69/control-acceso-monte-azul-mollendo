@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
 
@@ -12,47 +12,51 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [isInitialized, setIsInitialized] = useState(false);
+// El tema elegido vive en localStorage; se lee como fuente externa para que el
+// servidor renderice "light" y el navegador tome el guardado al hidratar.
+const CLAVE_TEMA = "theme";
+const oyentes = new Set<() => void>();
+
+function leerTema(): Theme {
+  try {
+    return localStorage.getItem(CLAVE_TEMA) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function suscribirTema(oyente: () => void) {
+  oyentes.add(oyente);
+  window.addEventListener("storage", oyente);
+  return () => {
+    oyentes.delete(oyente);
+    window.removeEventListener("storage", oyente);
+  };
+}
+
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const theme = useSyncExternalStore(suscribirTema, leerTema, () => "light" as Theme);
 
   useEffect(() => {
-    // This code will only run on the client side
-    const savedTheme = localStorage.getItem("theme") as Theme | null;
-    const initialTheme = savedTheme || "light"; // Default to light theme
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
-    setTheme(initialTheme);
-    setIsInitialized(true);
+  const toggleTheme = useCallback(() => {
+    try {
+      localStorage.setItem(CLAVE_TEMA, leerTema() === "light" ? "dark" : "light");
+    } catch {
+      // sin localStorage el tema no se puede cambiar
+    }
+    oyentes.forEach((oyente) => oyente());
   }, []);
 
-  useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem("theme", theme);
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
-  }, [theme, isInitialized]);
-
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 };
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    throw new Error("useTheme debe usarse dentro de <ThemeProvider>");
   }
   return context;
 };

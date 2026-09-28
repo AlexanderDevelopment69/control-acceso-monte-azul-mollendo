@@ -12,4 +12,6 @@ export interface JwtPayload {
   empresaId: number;
   rol: RolUsuario;
   correo: string;
+  /** Emitido en (segundos); lo agrega jsonwebtoken al firmar. */
+  iat?: number;
 }

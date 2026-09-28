@@ -4,3 +4,7 @@ node_modules
 
 /src/generated/prisma
 storage/
+
+# Salida de la compilación (se genera con npm run build)
+/dist
+*.tsbuildinfo
