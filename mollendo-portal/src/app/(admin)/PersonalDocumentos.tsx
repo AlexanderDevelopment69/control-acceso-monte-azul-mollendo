@@ -192,7 +192,12 @@ export function PersonalDocumentos() {
         </div>
 
         {/* Ficha */}
-        <div ref={fichaRef} className="min-w-0 flex-1 scroll-mt-20">
+        {/* Con alguien elegido, en el celular ocupa al menos una pantalla: así se
+            puede bajar hasta la ficha aunque todavía esté cargando. */}
+        <div
+          ref={fichaRef}
+          className={`min-w-0 flex-1 scroll-mt-20 ${seleccionada ? "min-h-[calc(100vh-5rem)] lg:min-h-0" : ""}`}
+        >
           {seleccionada ? (
             <PersonaFicha
               key={seleccionada}

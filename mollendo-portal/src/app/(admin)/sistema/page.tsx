@@ -276,7 +276,7 @@ function FilaApiIntegracion({
           <code className="text-xs">{api.endpoint}</code>
         </TableCell>
         <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{api.autenticacion}</TableCell>
-        <TableCell className="px-5 py-4 text-sm">
+        <TableCell className="whitespace-nowrap px-5 py-4 text-sm">
           <EstadoIntegracionBadge api={api} backendUp={backendUp} claveConfigurada={claveConfigurada} comprobando={comprobando} />
         </TableCell>
       </TableRow>
