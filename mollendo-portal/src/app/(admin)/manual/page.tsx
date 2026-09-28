@@ -185,8 +185,9 @@ const SECCIONES: SeccionManual[] = [
           <Link href="/sistema" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Sistema y APIs</Link> muestra
           si el backend y la base de datos responden y si la clave de equipos está configurada. También trae la
           documentación técnica, con ejemplos, de las APIs que usan los equipos físicos: el terminal ZKTeco G4 Pro
-          con su alcoholímetro (a través de ZKBio CVSecurity) y el molinete. Está pensada para quien tenga que
-          conectarlos o dar soporte técnico.
+          con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes. Indica cuáles ya
+          funcionan, cuáles están simulados y cuáles faltan programar. Está pensada para quien tenga que conectarlos o
+          dar soporte técnico.
         </p>
       </div>
     ),

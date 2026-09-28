@@ -207,8 +207,8 @@ export class PersonasService {
 
   /**
    * Guarda la foto para el reconocimiento facial y borra la anterior del
-   * disco. Avisa a la integración con ZKBio CVSecurity para enrolar el rostro
-   * en el terminal (pendiente de su documentación/SDK: hoy solo queda en el log).
+   * disco. Avisa a la integración para registrar el rostro en el terminal
+   * G4 Pro (protocolo PUSH, por programar: hoy solo queda en el log).
    */
   async guardarFoto(id: number, foto: Express.Multer.File, user: AuthenticatedUser) {
     const persona = await this.findPersona(id);

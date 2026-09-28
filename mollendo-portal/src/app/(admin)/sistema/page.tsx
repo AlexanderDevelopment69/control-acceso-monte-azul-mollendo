@@ -19,7 +19,8 @@ interface ApiIntegracion {
   metodo: "POST" | "GET";
   descripcion: string;
   autenticacion: string;
-  tipo: "real" | "mock";
+  /** real: funciona hoy · mock: simulado (solo queda en el log) · pendiente: por programar. */
+  tipo: "real" | "mock" | "pendiente";
   headers: string[];
   ejemploRequest: string;
   ejemploRespuesta: string;
@@ -28,30 +29,29 @@ interface ApiIntegracion {
 
 const APIS_INTEGRACION: ApiIntegracion[] = [
   {
-    nombre: "Webhook ZKBio CVSecurity (terminal ZKTeco G4 Pro + alcoholímetro)",
-    endpoint: "/integraciones/zkbio/webhook",
+    nombre: "Terminal ZKTeco G4 Pro + alcoholímetro (protocolo PUSH)",
+    endpoint: "/iclock/cdata · /iclock/getrequest · /iclock/devicecmd",
     metodo: "POST",
     descripcion:
-      "ZKBio CVSecurity avisa que el terminal identificó a una persona por rostro y el resultado de su prueba de alcohol. El backend ejecuta el ingreso (motor de validación) y, si es autorizado, ordena abrir el molinete.",
-    autenticacion: "Clave de equipo (X-API-Key)",
-    tipo: "mock",
-    headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
-    ejemploRequest: `{
-  "tipoDocumentoIdentidad": "DNI",   // opcional, por defecto DNI
-  "numeroDocumento": "12345678",
-  "resultadoAlcohol": "conforme",    // "conforme" | "no_conforme"
-  "torniqueteId": "T1"               // opcional
-}`,
-    ejemploRespuesta: `// 200 OK — misma respuesta que /eventos-acceso/ingreso`,
+      "El G4 Pro se conecta a la mini PC con el protocolo PUSH del fabricante (sin ZKBio). Por ahí recibe las personas con su foto y quién está habilitado para pasar, y envía cada ingreso (rostro reconocido + prueba de alcohol).",
+    autenticacion: "Número de serie del terminal (protocolo PUSH)",
+    tipo: "pendiente",
+    headers: ["Lo define el protocolo PUSH (no usa X-API-Key)"],
+    ejemploRequest: `// Órdenes que la mini PC le deja al G4 Pro (las recoge al consultar /iclock/getrequest):
+DATA UPDATE USERINFO PIN=12345678  Name=Juan Pérez  StartDatetime=…  EndDatetime=…  Expires=1
+DATA UPDATE BIOPHOTO PIN=12345678  Type=9  Format=0  Size=…  Content=<foto JPG en base64>
+DATA DELETE USERINFO PIN=12345678`,
+    ejemploRespuesta: `// El G4 Pro envía cada ingreso a /iclock/cdata (registro ATTLOG):
+12345678	2026-09-28 07:05:12	0	15	…`,
     notas:
-      "Contrato provisional: el formato real del evento de ZKBio (webhook o polling) se definirá cuando el cliente entregue la documentación/SDK. Hoy acepta este JSON y ya ejecuta el ingreso de verdad.",
+      "Por programar, después de las pruebas con el equipo real (ver Opciones_Integracion_G4Pro.md): el ingreso será en dos pasos — el lector de DNI habilita a la persona en el G4 Pro por unos segundos y el G4 Pro abre el molinete solo si reconoce su rostro y el alcohol es conforme.",
   },
   {
     nombre: "Ingreso",
     endpoint: "/eventos-acceso/ingreso",
     metodo: "POST",
     descripcion:
-      "Recibe el documento de la persona y el resultado del alcohol, corre el motor de validación y responde autorizado/denegado. Si es autorizado, ordena abrir el molinete.",
+      "Recibe el documento de la persona y el resultado del alcohol, corre el motor de validación y responde autorizado/denegado. Si es autorizado, ordena abrir el molinete. Hoy es la entrada para pruebas (la usa el simulador de garita); con la integración, los datos llegarán del lector de DNI y del G4 Pro.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -157,14 +157,14 @@ const APIS_INTEGRACION: ApiIntegracion[] = [
     ejemploRespuesta: `// 200 OK
 { "enviado": true }`,
     notas:
-      "Contrato provisional: hoy solo registra el comando en el log del servidor. Falta la marca/modelo del molinete y su SDK para conectarlo al equipo real.",
+      "Hoy solo registra el comando en el log del servidor. Los molinetes TS2000 Plus se abren con un contacto seco: el de salida lo abrirá la mini PC con un relé de red (por comprar); el de ingreso lo abre el relé del propio G4 Pro.",
   },
   {
-    nombre: "Enrolamiento de rostro en ZKBio (saliente)",
+    nombre: "Registro del rostro en el G4 Pro (saliente)",
     endpoint: "/personas/:id/foto",
     metodo: "POST",
     descripcion:
-      "Cuando el administrador sube o cambia la foto del personal, el backend la guarda y debe enviarla a ZKBio CVSecurity para registrar (enrolar) el rostro en el terminal ZKTeco G4 Pro. Sin este paso, el terminal no puede reconocer a la persona.",
+      "Cuando el administrador sube o cambia la foto del personal, el backend la guarda y debe enviarla al terminal ZKTeco G4 Pro (protocolo PUSH) para registrar el rostro. Sin este paso, el terminal no puede reconocer a la persona.",
     autenticacion: "JWT (Administrador) para subir la foto",
     tipo: "mock",
     headers: ["Content-Type: multipart/form-data", "Authorization: Bearer <token>"],
@@ -175,10 +175,10 @@ foto: <archivo JPG, PNG o WEBP, máximo 5 MB>`,
 
 // 400 — no es una imagen JPG/PNG/WEBP o pesa más de 5 MB
 
-// Envío a ZKBio (hoy simulado, queda en el log del servidor):
-Enrolar rostro en ZKBio: DNI 12345678 (persona 12), foto storage/… (mock, sin SDK real todavía)`,
+// Envío al G4 Pro (hoy simulado, queda en el log del servidor):
+Registrar rostro en el G4 Pro: DNI 12345678 (persona 12), foto storage/… (simulado: falta el protocolo PUSH)`,
     notas:
-      "La foto se guarda y se ve en el portal, pero el envío a ZKBio es simulado: falta la documentación/SDK de ZKBio CVSecurity para enrolar el rostro de verdad. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
+      "La foto se guarda y se ve en el portal, pero el envío al G4 Pro es simulado: falta programar el protocolo PUSH y convertir la foto al formato del terminal (JPG de 20 KB como máximo). Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
   },
 ];
 
@@ -202,6 +202,9 @@ function StatusCard({ icon, children }: { icon: React.ReactNode; children: React
 }
 
 function EstadoIntegracionBadge({ api, backendUp, claveConfigurada }: { api: ApiIntegracion; backendUp: boolean; claveConfigurada: boolean }) {
+  if (api.tipo === "pendiente") {
+    return <Badge color="light">Por programar</Badge>;
+  }
   if (api.tipo === "mock") {
     return <Badge color="warning">Simulado (mock)</Badge>;
   }
@@ -370,7 +373,7 @@ function SistemaContent() {
           <div className="mt-2">
             <ConfiguradoBadge ok={!!estado?.integraciones.claveEquiposConfigurada} />
           </div>
-          <p className="mt-2 text-xs text-gray-400">ZKBio CVSecurity / molinete</p>
+          <p className="mt-2 text-xs text-gray-400">Para las rutas de ingreso y salida (X-API-Key)</p>
         </StatusCard>
       </div>
 

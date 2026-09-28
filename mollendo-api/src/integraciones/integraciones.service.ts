@@ -1,33 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { EventosAccesoService, type AbrirMolineteEvent } from '../eventos-acceso/eventos-acceso.service.js';
+import type { AbrirMolineteEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
-import type { ZkbioWebhookDto } from './dto/zkbio-webhook.dto.js';
 
 /**
- * Adaptadores de los equipos físicos (spec base, sección 5.3):
- * - ZKBio CVSecurity → backend: webhook con identificación + alcohol.
- * - Backend → molinete: orden de apertura.
- *
- * Ambos siguen siendo PROVISIONALES: falta la documentación/SDK de ZKBio y la
- * marca/modelo del molinete (spec base, sección 12). El molinete solo se
- * registra en el log hasta tener su SDK real.
+ * Adaptadores de los equipos físicos. Todavía SIMULADOS (solo quedan en el
+ * log); la integración real está definida en Opciones_Integracion_G4Pro.md:
+ * - Terminal ZKTeco G4 Pro + alcoholímetro: protocolo PUSH del fabricante
+ *   (sin ZKBio) para registrar personas y fotos, habilitarlas y recibir ingresos.
+ * - Molinetes TS2000 Plus: el de salida con un relé de red; el de ingreso con el
+ *   relé del propio G4 Pro.
  */
 @Injectable()
 export class IntegracionesService {
   private readonly logger = new Logger(IntegracionesService.name);
-
-  constructor(private readonly eventosAccesoService: EventosAccesoService) {}
-
-  async recibirWebhookZkbio(dto: ZkbioWebhookDto) {
-    this.logger.log(`Webhook ZKBio recibido: ${JSON.stringify(dto)}`);
-    return this.eventosAccesoService.registrarIngreso({
-      tipoDocumentoIdentidad: dto.tipoDocumentoIdentidad ?? 'DNI',
-      numeroDocumento: dto.numeroDocumento,
-      alcoholConforme: dto.resultadoAlcohol === 'conforme',
-      torniqueteId: dto.torniqueteId,
-    });
-  }
 
   @OnEvent('molinete.abrir')
   async abrirMolinete(evento: AbrirMolineteEvent): Promise<void> {
@@ -35,18 +21,18 @@ export class IntegracionesService {
   }
 
   /**
-   * Enrolar (o actualizar) el rostro del trabajador en el terminal ZKTeco vía
-   * ZKBio CVSecurity. Mock: falta su documentación/SDK (spec base, sección 12).
+   * Registrar (o actualizar) el rostro de la persona en el G4 Pro. Simulado:
+   * falta programar el protocolo PUSH y convertir la foto al formato del terminal.
    */
   @OnEvent('persona.foto-actualizada')
-  enrolarRostro(evento: { personaId: number; tipoDocumentoIdentidad: string; numeroDocumento: string; rutaFoto: string }): void {
+  registrarRostro(evento: { personaId: number; tipoDocumentoIdentidad: string; numeroDocumento: string; rutaFoto: string }): void {
     this.logger.log(
-      `Enrolar rostro en ZKBio: ${evento.tipoDocumentoIdentidad} ${evento.numeroDocumento} (persona ${evento.personaId}), foto ${evento.rutaFoto} (mock, sin SDK real todavía)`,
+      `Registrar rostro en el G4 Pro: ${evento.tipoDocumentoIdentidad} ${evento.numeroDocumento} (persona ${evento.personaId}), foto ${evento.rutaFoto} (simulado: falta el protocolo PUSH)`,
     );
   }
 
   async enviarComandoTorniquete(dto: TorniqueteComandoDto): Promise<{ enviado: boolean }> {
-    this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (mock, sin SDK real todavía)`);
+    this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (simulado, sin relé real todavía)`);
     return { enviado: true };
   }
 }
