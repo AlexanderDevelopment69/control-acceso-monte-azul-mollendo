@@ -89,8 +89,10 @@ const AppSidebar: React.FC = () => {
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Solo en pantallas grandes: en el celular el menú se abre debajo de la
+          cabecera, que ya muestra la marca y el nombre. */}
       <div
-        className={`py-8 flex ${
+        className={`hidden py-8 lg:flex ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
@@ -110,7 +112,7 @@ const AppSidebar: React.FC = () => {
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+      <div className="flex flex-col overflow-y-auto pt-6 duration-300 ease-linear no-scrollbar lg:pt-0">
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
             <div>
