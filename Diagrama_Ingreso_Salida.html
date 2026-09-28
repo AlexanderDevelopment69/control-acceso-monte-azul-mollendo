@@ -1,0 +1,479 @@
+<title>Garita Mollendo: ingreso y salida</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root {
+    --bg: #eef1f3;
+    --surface: #ffffff;
+    --ink: #1c2630;
+    --muted: #5a6875;
+    --line: #c9d1d8;
+    --box: #f7f9fa;
+    --person: #c77700;
+    --data: #1f67a8;
+    --open: #23865a;
+    --deny: #b8392e;
+    --manual: #7b8792;
+    --chip-bg: #e3e8ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #141a20;
+      --surface: #1b232b;
+      --ink: #e4e9ee;
+      --muted: #9aa7b3;
+      --line: #34414d;
+      --box: #222c35;
+      --person: #eaa23a;
+      --data: #5aa6e6;
+      --open: #4cc08b;
+      --deny: #eb6f63;
+      --manual: #8d99a4;
+      --chip-bg: #2a3540;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #141a20;
+    --surface: #1b232b;
+    --ink: #e4e9ee;
+    --muted: #9aa7b3;
+    --line: #34414d;
+    --box: #222c35;
+    --person: #eaa23a;
+    --data: #5aa6e6;
+    --open: #4cc08b;
+    --deny: #eb6f63;
+    --manual: #8d99a4;
+    --chip-bg: #2a3540;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 32px 56px;
+    display: grid;
+    gap: 28px;
+  }
+  header { display: grid; gap: 6px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1, h2 {
+    font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-weight: 700;
+    letter-spacing: .01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.05; }
+  h2 { font-size: 28px; line-height: 1.1; }
+  h3 { font-size: 15px; margin: 0; font-weight: 600; }
+  p { margin: 0; max-width: 68ch; }
+  .lead { color: var(--muted); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .legend svg { flex: none; }
+
+  section.flow {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 20px 24px;
+    display: grid;
+    gap: 18px;
+  }
+  .flow-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+  .tag {
+    font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    background: var(--chip-bg);
+    color: var(--muted);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .diagram { overflow-x: auto; }
+  .diagram svg { display: block; min-width: 860px; width: 100%; height: auto; }
+
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 24px;
+  }
+  @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+
+  ol.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: s; }
+  ol.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+  ol.steps li::before {
+    counter-increment: s;
+    content: counter(s);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 600;
+    color: #fff;
+    background: var(--c, var(--data));
+    font-variant-numeric: tabular-nums;
+  }
+  ol.steps li.p { --c: var(--person); }
+  ol.steps li.d { --c: var(--data); }
+  ol.steps li.o { --c: var(--open); }
+  .who { color: var(--muted); font-size: 13px; }
+
+  .deny {
+    border-left: 3px solid var(--deny);
+    padding: 2px 0 2px 14px;
+    display: grid;
+    gap: 6px;
+    align-content: start;
+  }
+  .deny h3 { color: var(--deny); }
+  .deny ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+  .note { font-size: 13px; color: var(--muted); }
+  code, .mono { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: .92em; }
+
+  /* SVG */
+  .bx { fill: var(--box); stroke: var(--line); stroke-width: 1.5; }
+  .bx-main { fill: var(--surface); stroke: var(--ink); stroke-width: 1.8; }
+  .t1 { font: 600 16px "IBM Plex Sans", system-ui, sans-serif; fill: var(--ink); }
+  .t2 { font: 400 12.5px "IBM Plex Sans", system-ui, sans-serif; fill: var(--muted); }
+  .tm { font: 500 11.5px "IBM Plex Mono", ui-monospace, monospace; fill: var(--muted); }
+  .lp { font: 500 12.5px "IBM Plex Sans", system-ui, sans-serif; fill: var(--person); }
+  .ld { font: 500 12.5px "IBM Plex Sans", system-ui, sans-serif; fill: var(--data); }
+  .lo { font: 600 12.5px "IBM Plex Sans", system-ui, sans-serif; fill: var(--open); }
+  .lm { font: 500 12px "IBM Plex Sans", system-ui, sans-serif; fill: var(--manual); }
+  .ap { stroke: var(--person); stroke-width: 2.4; fill: none; }
+  .ad { stroke: var(--data); stroke-width: 2; fill: none; }
+  .ao { stroke: var(--open); stroke-width: 3.2; fill: none; }
+  .am { stroke: var(--manual); stroke-width: 1.8; fill: none; stroke-dasharray: 6 5; }
+  .usb { stroke: var(--data); stroke-width: 2; fill: none; stroke-dasharray: 2 4; stroke-linecap: round; }
+  .fig { fill: var(--person); }
+  .n circle { stroke: var(--surface); stroke-width: 2; }
+  .n text { font: 700 12px "IBM Plex Sans", system-ui, sans-serif; fill: #fff; text-anchor: middle; dominant-baseline: central; }
+  .np circle { fill: var(--person); }
+  .nd circle { fill: var(--data); }
+  .no circle { fill: var(--open); }
+  .mp { fill: var(--person); }
+  .md { fill: var(--data); }
+  .mo { fill: var(--open); }
+  .mm { fill: var(--manual); }
+  .zone { fill: none; stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 5; }
+  .zl { font: 500 11px "IBM Plex Mono", ui-monospace, monospace; fill: var(--muted); letter-spacing: .06em; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Terminal Monte Azul Mollendo · control de accesos · alcance base</span>
+    <h1>Ingreso y salida por la garita</h1>
+    <p class="lead">Qué hace la persona, qué equipo interviene y qué señal abre cada molinete. Todo el sistema (backend, base de datos y portal) corre en la mini PC junto a los molinetes, sin internet.</p>
+  </header>
+
+  <div class="legend" aria-label="Leyenda">
+    <span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--person)" stroke-width="2.4"/></svg>Lo que hace la persona</span>
+    <span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--data)" stroke-width="2"/></svg>Datos por la red local</span>
+    <span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--data)" stroke-width="2" stroke-dasharray="2 4" stroke-linecap="round"/></svg>Cable USB</span>
+    <span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="var(--open)" stroke-width="3.2"/></svg>Señal eléctrica que abre el molinete</span>
+  </div>
+
+  <!-- ============ INGRESO ============ -->
+  <section class="flow" id="ingreso">
+    <div class="flow-head">
+      <h2>Ingreso</h2>
+      <span class="tag">DNI → rostro → alcohol → abre el G4 Pro</span>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1040 560" role="img" aria-labelledby="ing-t">
+        <title id="ing-t">Diagrama del ingreso: lector de DNI, mini PC, G4 Pro con alcoholímetro y molinete de ingreso</title>
+        <defs>
+          <marker id="hp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mp"/></marker>
+          <marker id="hd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="md"/></marker>
+          <marker id="ho" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mo"/></marker>
+        </defs>
+
+        <!-- zonas -->
+        <rect class="zone" x="170" y="236" width="380" height="306" rx="8"/>
+        <text class="zl" x="182" y="256">PUNTO DE VERIFICACIÓN</text>
+
+        <!-- persona -->
+        <g class="fig" transform="translate(58 250)">
+          <circle cx="22" cy="14" r="13"/>
+          <path d="M2 88 L2 44 Q2 32 14 32 L30 32 Q42 32 42 44 L42 88 Z"/>
+          <rect x="6" y="86" width="12" height="36" rx="3"/>
+          <rect x="26" y="86" width="12" height="36" rx="3"/>
+        </g>
+        <text class="t1" x="80" y="400" text-anchor="middle">Personal</text>
+
+        <!-- lector DNI -->
+        <rect class="bx" x="200" y="60" width="180" height="84" rx="8"/>
+        <text class="t1" x="216" y="92">Lector de DNI</text>
+        <text class="t2" x="216" y="112">Syble XB-7705H</text>
+        <text class="tm" x="216" y="130">ingreso · USB-COM</text>
+
+        <!-- mini PC -->
+        <rect class="bx-main" x="470" y="30" width="250" height="144" rx="8"/>
+        <text class="t1" x="488" y="62">Mini PC</text>
+        <text class="t2" x="488" y="82">Sistema · base de datos · portal</text>
+        <g class="n nd"><circle cx="499" cy="112" r="11"/><text x="499" y="112">3</text></g>
+        <text class="t2" x="518" y="108">Revisa el DNI: registrado,</text>
+        <text class="t2" x="518" y="125">no de baja, documentos al día</text>
+        <text class="tm" x="488" y="158">decide quién queda habilitado</text>
+
+        <!-- panel -->
+        <rect class="bx" x="830" y="60" width="180" height="84" rx="8"/>
+        <text class="t1" x="846" y="92">Panel de vigilancia</text>
+        <text class="t2" x="846" y="112">en la pantalla del</text>
+        <text class="t2" x="846" y="129">vigilante</text>
+
+        <!-- G4 Pro -->
+        <rect class="bx-main" x="330" y="280" width="200" height="104" rx="8"/>
+        <text class="t1" x="348" y="312">G4 Pro</text>
+        <text class="t2" x="348" y="332">terminal facial</text>
+        <text class="t2" x="348" y="350">1.º rostro, 2.º alcohol</text>
+        <text class="tm" x="348" y="370">relé "Lock" · Gate mode</text>
+
+        <!-- DT1700 -->
+        <rect class="bx" x="330" y="444" width="200" height="80" rx="8"/>
+        <text class="t1" x="348" y="476">DT1700</text>
+        <text class="t2" x="348" y="496">alcoholímetro</text>
+        <text class="tm" x="348" y="513">Pass · Drink · Fail</text>
+
+        <!-- molinete -->
+        <rect class="bx-main" x="740" y="286" width="200" height="112" rx="8"/>
+        <text class="t1" x="758" y="318">Molinete de ingreso</text>
+        <text class="t2" x="758" y="338">TS2000 Plus</text>
+        <text class="tm" x="758" y="362">bornera J3</text>
+        <text class="tm" x="758" y="380">K1 + COM</text>
+
+
+        <!-- 1: persona -> lector -->
+        <path class="ap" d="M104 258 C130 190 150 110 196 104" marker-end="url(#hp)"/>
+        <g class="n np"><circle cx="138" cy="170" r="11"/><text x="138" y="170">1</text></g>
+        <text class="lp" x="152" y="196">pasa su DNI</text>
+
+        <!-- 2: lector -> mini PC (USB) -->
+        <path class="usb" d="M380 102 L466 102" marker-end="url(#hd)"/>
+        <g class="n nd"><circle cx="423" cy="102" r="11"/><text x="423" y="102">2</text></g>
+        <text class="ld" x="423" y="84" text-anchor="middle">USB</text>
+
+        <!-- 4: mini PC -> G4 (habilita) -->
+        <path class="ad" d="M520 174 L446 276" marker-end="url(#hd)"/>
+        <g class="n nd"><circle cx="483" cy="225" r="11"/><text x="483" y="225">4</text></g>
+        <text class="ld" x="468" y="210" text-anchor="end">red · habilita</text>
+        <text class="ld" x="468" y="226" text-anchor="end">ese DNI 60 s</text>
+
+        <!-- 8: G4 -> mini PC (registro) -->
+        <path class="ad" d="M500 280 L592 178" marker-end="url(#hd)"/>
+        <g class="n nd"><circle cx="546" cy="229" r="11"/><text x="546" y="229">8</text></g>
+        <text class="ld" x="563" y="226">red · envía el ingreso</text>
+        <text class="ld" x="563" y="242">y se deshabilita</text>
+
+        <!-- 5: persona -> G4 (rostro) -->
+        <path class="ap" d="M104 316 L326 324" marker-end="url(#hp)"/>
+        <g class="n np"><circle cx="216" cy="320" r="11"/><text x="216" y="320">5</text></g>
+        <text class="lp" x="216" y="302" text-anchor="middle">muestra el rostro</text>
+
+        <!-- 6: persona -> DT1700 (sopla) -->
+        <path class="ap" d="M104 360 C180 420 250 480 326 484" marker-end="url(#hp)"/>
+        <g class="n np"><circle cx="220" cy="448" r="11"/><text x="220" y="448">6</text></g>
+        <text class="lp" x="236" y="474">sopla</text>
+
+        <!-- DT1700 -> G4 USB -->
+        <path class="usb" d="M430 444 L430 388" marker-end="url(#hd)"/>
+        <text class="ld" x="440" y="420">USB</text>
+
+        <!-- 7: G4 -> molinete (señal) -->
+        <path class="ao" d="M530 342 L734 342" marker-end="url(#ho)"/>
+        <g class="n no"><circle cx="632" cy="342" r="11"/><text x="632" y="342">7</text></g>
+        <text class="lo" x="632" y="324" text-anchor="middle">rostro y alcohol conformes</text>
+        <text class="tm" x="632" y="366" text-anchor="middle">relé Lock (NO + COM) → J3</text>
+
+        <!-- 9: mini PC -> panel -->
+        <path class="ad" d="M720 102 L826 102" marker-end="url(#hd)"/>
+        <g class="n nd"><circle cx="773" cy="102" r="11"/><text x="773" y="102">9</text></g>
+
+
+        <!-- pasa -->
+        <path class="ap" d="M940 342 L1024 342" marker-end="url(#hp)"/>
+        <text class="lp" x="982" y="330" text-anchor="middle">pasa</text>
+      </svg>
+    </div>
+
+    <div class="cols">
+      <ol class="steps">
+        <li class="p"><div><strong>Pasa su DNI</strong> por el lector de ingreso. <span class="who">Persona</span></div></li>
+        <li class="d"><div>El lector envía el número a la mini PC por <strong>USB</strong>. <span class="who">Lector → mini PC</span></div></li>
+        <li class="d"><div>El sistema revisa que esté <strong>registrado, no dado de baja y con documentos al día</strong>. Si algo falla, se deniega aquí y el Panel muestra el motivo. <span class="who">Mini PC</span></div></li>
+        <li class="d"><div>Si está en regla, la mini PC <strong>habilita a esa persona en el G4 Pro por 60 s</strong>. <span class="who">Mini PC → G4 Pro, por red</span></div></li>
+        <li class="p"><div><strong>Se para frente al G4 Pro</strong>, que reconoce su rostro. <span class="who">Persona</span></div></li>
+        <li class="p"><div>Recién entonces el G4 Pro le permite <strong>soplar en el alcoholímetro</strong>. <span class="who">Persona</span></div></li>
+        <li class="o"><div>Si el rostro es el suyo y el alcohol sale bien, <strong>el G4 Pro abre el molinete</strong> con su relé. <span class="who">G4 Pro → molinete, por cable</span></div></li>
+        <li class="d"><div>El G4 Pro envía el ingreso a la mini PC, que <strong>vuelve a deshabilitar</strong> a la persona. <span class="who">G4 Pro → mini PC</span></div></li>
+        <li class="d"><div>El ingreso aparece en el <strong>Panel de vigilancia</strong>. <span class="who">Mini PC</span></div></li>
+      </ol>
+      <div class="deny">
+        <h3>No se abre si</h3>
+        <ul>
+          <li>solo pasa el DNI y no va al G4 Pro;</li>
+          <li>va al G4 Pro sin haber pasado su DNI;</li>
+          <li>no está registrado, está de baja o tiene un documento vencido;</li>
+          <li>usa el DNI de otra persona (su rostro no está habilitado);</li>
+          <li>no sopla, o el alcoholímetro indica alcohol;</li>
+          <li>pasan más de 60 s entre el DNI y el G4 Pro.</li>
+        </ul>
+        <p class="note">El lector de DNI no se conecta al G4 Pro. El G4 Pro sabe que la persona pasó su DNI porque la mini PC la habilita.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SALIDA ============ -->
+  <section class="flow" id="salida">
+    <div class="flow-head">
+      <h2>Salida</h2>
+      <span class="tag">DNI registrado → abre la mini PC con el relé de red</span>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1040 410" role="img" aria-labelledby="sal-t">
+        <title id="sal-t">Diagrama de la salida: lector de DNI, mini PC, relé de red y molinete de salida</title>
+        <defs>
+          <marker id="sp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mp"/></marker>
+          <marker id="sd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="md"/></marker>
+          <marker id="so" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mo"/></marker>
+        </defs>
+
+        <!-- persona -->
+        <g class="fig" transform="translate(58 210)">
+          <circle cx="22" cy="14" r="13"/>
+          <path d="M2 88 L2 44 Q2 32 14 32 L30 32 Q42 32 42 44 L42 88 Z"/>
+          <rect x="6" y="86" width="12" height="36" rx="3"/>
+          <rect x="26" y="86" width="12" height="36" rx="3"/>
+        </g>
+        <text class="t1" x="80" y="360" text-anchor="middle">Personal</text>
+
+        <!-- lector -->
+        <rect class="bx" x="200" y="60" width="180" height="84" rx="8"/>
+        <text class="t1" x="216" y="92">Lector de DNI</text>
+        <text class="t2" x="216" y="112">Syble XB-7705H</text>
+        <text class="tm" x="216" y="130">salida · USB-COM</text>
+
+        <!-- mini PC -->
+        <rect class="bx-main" x="470" y="30" width="250" height="144" rx="8"/>
+        <text class="t1" x="488" y="62">Mini PC</text>
+        <text class="t2" x="488" y="82">Sistema · base de datos · portal</text>
+        <g class="n nd"><circle cx="499" cy="112" r="11"/><text x="499" y="112">3</text></g>
+        <text class="t2" x="518" y="108">¿El DNI está registrado?</text>
+        <text class="t2" x="518" y="125">(de baja también puede salir)</text>
+        <text class="tm" x="488" y="158">registra la salida</text>
+
+        <!-- panel -->
+        <rect class="bx" x="830" y="60" width="180" height="84" rx="8"/>
+        <text class="t1" x="846" y="92">Panel de vigilancia</text>
+        <text class="t2" x="846" y="112">en la pantalla del</text>
+        <text class="t2" x="846" y="129">vigilante</text>
+
+        <!-- relé -->
+        <rect class="bx-main" x="500" y="270" width="190" height="90" rx="8"/>
+        <text class="t1" x="518" y="302">Relé de red</text>
+        <text class="t2" x="518" y="322">por comprar · 2 canales</text>
+        <text class="tm" x="518" y="342">canal 1 = salida</text>
+
+        <!-- molinete -->
+        <rect class="bx-main" x="760" y="260" width="200" height="112" rx="8"/>
+        <text class="t1" x="778" y="292">Molinete de salida</text>
+        <text class="t2" x="778" y="312">TS2000 Plus</text>
+        <text class="tm" x="778" y="336">bornera J3</text>
+        <text class="tm" x="778" y="354">K1 + COM</text>
+
+
+        <!-- 1 -->
+        <path class="ap" d="M104 218 C130 170 150 110 196 104" marker-end="url(#sp)"/>
+        <g class="n np"><circle cx="136" cy="156" r="11"/><text x="136" y="156">1</text></g>
+        <text class="lp" x="150" y="182">pasa su DNI</text>
+
+        <!-- 2 -->
+        <path class="usb" d="M380 102 L466 102" marker-end="url(#sd)"/>
+        <g class="n nd"><circle cx="423" cy="102" r="11"/><text x="423" y="102">2</text></g>
+        <text class="ld" x="423" y="84" text-anchor="middle">USB</text>
+
+        <!-- 4 mini -> relé -->
+        <path class="ad" d="M595 174 L595 266" marker-end="url(#sd)"/>
+        <g class="n nd"><circle cx="595" cy="220" r="11"/><text x="595" y="220">4</text></g>
+        <text class="ld" x="612" y="216">red · pulso de 1 s</text>
+
+        <!-- 5 relé -> molinete -->
+        <path class="ao" d="M690 316 L754 316" marker-end="url(#so)"/>
+        <g class="n no"><circle cx="722" cy="316" r="11"/><text x="722" y="316">5</text></g>
+        <text class="tm" x="722" y="388" text-anchor="middle">NO + COM → J3</text>
+
+        <!-- 6 mini -> panel -->
+        <path class="ad" d="M720 102 L826 102" marker-end="url(#sd)"/>
+        <g class="n nd"><circle cx="773" cy="102" r="11"/><text x="773" y="102">6</text></g>
+
+
+        <!-- pasa -->
+        <path class="ap" d="M960 316 L1024 316" marker-end="url(#sp)"/>
+        <text class="lp" x="992" y="304" text-anchor="middle">pasa</text>
+
+        <!-- sin G4 -->
+        <text class="t2" x="200" y="300">Sin rostro ni alcohol:</text>
+        <text class="t2" x="200" y="318">en la salida solo se pide el DNI.</text>
+      </svg>
+    </div>
+
+    <div class="cols">
+      <ol class="steps">
+        <li class="p"><div><strong>Pasa su DNI</strong> por el lector de salida. <span class="who">Persona</span></div></li>
+        <li class="d"><div>El lector envía el número a la mini PC por <strong>USB</strong>. <span class="who">Lector → mini PC</span></div></li>
+        <li class="d"><div>El sistema revisa que el DNI <strong>esté registrado</strong> y guarda la salida. No se exige haber marcado ingreso. <span class="who">Mini PC</span></div></li>
+        <li class="d"><div>La mini PC ordena al <strong>relé de red</strong> un pulso de 1 s. <span class="who">Mini PC → relé, por red</span></div></li>
+        <li class="o"><div>El relé cierra su contacto y <strong>el molinete de salida se abre</strong> para un paso. <span class="who">Relé → molinete, por cable</span></div></li>
+        <li class="d"><div>La salida aparece en el <strong>Panel de vigilancia</strong>. <span class="who">Mini PC</span></div></li>
+      </ol>
+      <div class="deny">
+        <h3>No se abre si</h3>
+        <ul>
+          <li>no pasa su DNI;</li>
+          <li>el DNI no está registrado (el Panel lo muestra como «No registrado»).</li>
+        </ul>
+        <p class="note">El Panel muestra el caso para que el vigilante lo atienda. Una persona dada de baja sí puede salir: la baja solo bloquea el ingreso.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="flow" id="fallas">
+    <div class="flow-head"><h2>Si algo falla</h2></div>
+    <div class="cols">
+      <ul class="steps" style="margin:0; padding-left:18px; display:grid; gap:8px;">
+        <li><strong>Se apaga la mini PC:</strong> nadie queda habilitado ni sale con DNI; los dos molinetes quedan cerrados.</li>
+        <li><strong>Se cae el G4 Pro:</strong> no hay rostro ni alcohol y el ingreso queda cerrado; la salida sigue funcionando.</li>
+        <li><strong>Incendio o corte de luz:</strong> el brazo de los molinetes cae solo (señal de incendio en la bornera <span class="mono">J2</span>). Es la única forma de liberar el paso fuera del sistema.</li>
+      </ul>
+      <div class="deny" style="border-left-color: var(--person);">
+        <h3 style="color: var(--person);">Por confirmar con el equipo</h3>
+        <p class="note">Que el G4 Pro respete la habilitación de 60 s al segundo (su manual habla de validez por días) y que el resultado amarillo del alcoholímetro (Drink) también bloquee. Definir con el cliente qué hace el vigilante cuando falla un equipo, porque no hay apertura manual.</p>
+      </div>
+    </div>
+  </section>
+</div>

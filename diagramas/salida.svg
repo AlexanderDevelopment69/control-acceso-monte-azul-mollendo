@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 410" width="1040" height="410">
+<style>/* SVG */
+  .bx { fill: #f7f9fa; stroke: #c9d1d8; stroke-width: 1.5; }
+  .bx-main { fill: #ffffff; stroke: #1c2630; stroke-width: 1.8; }
+  .t1 { font: 600 16px Segoe UI, Arial, sans-serif; fill: #1c2630; }
+  .t2 { font: 400 12.5px Segoe UI, Arial, sans-serif; fill: #5a6875; }
+  .tm { font: 500 11.5px Consolas, Menlo, monospace; fill: #5a6875; }
+  .lp { font: 500 12.5px Segoe UI, Arial, sans-serif; fill: #c77700; }
+  .ld { font: 500 12.5px Segoe UI, Arial, sans-serif; fill: #1f67a8; }
+  .lo { font: 600 12.5px Segoe UI, Arial, sans-serif; fill: #23865a; }
+  .lm { font: 500 12px Segoe UI, Arial, sans-serif; fill: #7b8792; }
+  .ap { stroke: #c77700; stroke-width: 2.4; fill: none; }
+  .ad { stroke: #1f67a8; stroke-width: 2; fill: none; }
+  .ao { stroke: #23865a; stroke-width: 3.2; fill: none; }
+  .am { stroke: #7b8792; stroke-width: 1.8; fill: none; stroke-dasharray: 6 5; }
+  .usb { stroke: #1f67a8; stroke-width: 2; fill: none; stroke-dasharray: 2 4; stroke-linecap: round; }
+  .fig { fill: #c77700; }
+  .n circle { stroke: #ffffff; stroke-width: 2; }
+  .n text { font: 700 12px Segoe UI, Arial, sans-serif; fill: #fff; text-anchor: middle; dominant-baseline: central; }
+  .np circle { fill: #c77700; }
+  .nd circle { fill: #1f67a8; }
+  .no circle { fill: #23865a; }
+  .mp { fill: #c77700; }
+  .md { fill: #1f67a8; }
+  .mo { fill: #23865a; }
+  .mm { fill: #7b8792; }
+  .zone { fill: none; stroke: #c9d1d8; stroke-width: 1; stroke-dasharray: 3 5; }
+  .zl { font: 500 11px Consolas, Menlo, monospace; fill: #5a6875; letter-spacing: .06em; }
+</style>
+<rect width="1040" height="410" fill="#ffffff"/>
+
+        <title id="sal-t">Diagrama de la salida: lector de DNI, mini PC, relé de red y molinete de salida</title>
+        <defs>
+          <marker id="sp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mp"/></marker>
+          <marker id="sd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="md"/></marker>
+          <marker id="so" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mo"/></marker>
+        </defs>
+
+        <!-- persona -->
+        <g class="fig" transform="translate(58 210)">
+          <circle cx="22" cy="14" r="13"/>
+          <path d="M2 88 L2 44 Q2 32 14 32 L30 32 Q42 32 42 44 L42 88 Z"/>
+          <rect x="6" y="86" width="12" height="36" rx="3"/>
+          <rect x="26" y="86" width="12" height="36" rx="3"/>
+        </g>
+        <text class="t1" x="80" y="360" text-anchor="middle">Personal</text>
+
+        <!-- lector -->
+        <rect class="bx" x="200" y="60" width="180" height="84" rx="8"/>
+        <text class="t1" x="216" y="92">Lector de DNI</text>
+        <text class="t2" x="216" y="112">Syble XB-7705H</text>
+        <text class="tm" x="216" y="130">salida · USB-COM</text>
+
+        <!-- mini PC -->
+        <rect class="bx-main" x="470" y="30" width="250" height="144" rx="8"/>
+        <text class="t1" x="488" y="62">Mini PC</text>
+        <text class="t2" x="488" y="82">Sistema · base de datos · portal</text>
+        <g class="n nd"><circle cx="499" cy="112" r="11"/><text x="499" y="112">3</text></g>
+        <text class="t2" x="518" y="108">¿El DNI está registrado?</text>
+        <text class="t2" x="518" y="125">(de baja también puede salir)</text>
+        <text class="tm" x="488" y="158">registra la salida</text>
+
+        <!-- panel -->
+        <rect class="bx" x="830" y="60" width="180" height="84" rx="8"/>
+        <text class="t1" x="846" y="92">Panel de vigilancia</text>
+        <text class="t2" x="846" y="112">en la pantalla del</text>
+        <text class="t2" x="846" y="129">vigilante</text>
+
+        <!-- relé -->
+        <rect class="bx-main" x="500" y="270" width="190" height="90" rx="8"/>
+        <text class="t1" x="518" y="302">Relé de red</text>
+        <text class="t2" x="518" y="322">por comprar · 2 canales</text>
+        <text class="tm" x="518" y="342">canal 1 = salida</text>
+
+        <!-- molinete -->
+        <rect class="bx-main" x="760" y="260" width="200" height="112" rx="8"/>
+        <text class="t1" x="778" y="292">Molinete de salida</text>
+        <text class="t2" x="778" y="312">TS2000 Plus</text>
+        <text class="tm" x="778" y="336">bornera J3</text>
+        <text class="tm" x="778" y="354">K1 + COM</text>
+
+
+        <!-- 1 -->
+        <path class="ap" d="M104 218 C130 170 150 110 196 104" marker-end="url(#sp)"/>
+        <g class="n np"><circle cx="136" cy="156" r="11"/><text x="136" y="156">1</text></g>
+        <text class="lp" x="150" y="182">pasa su DNI</text>
+
+        <!-- 2 -->
+        <path class="usb" d="M380 102 L466 102" marker-end="url(#sd)"/>
+        <g class="n nd"><circle cx="423" cy="102" r="11"/><text x="423" y="102">2</text></g>
+        <text class="ld" x="423" y="84" text-anchor="middle">USB</text>
+
+        <!-- 4 mini -> relé -->
+        <path class="ad" d="M595 174 L595 266" marker-end="url(#sd)"/>
+        <g class="n nd"><circle cx="595" cy="220" r="11"/><text x="595" y="220">4</text></g>
+        <text class="ld" x="612" y="216">red · pulso de 1 s</text>
+
+        <!-- 5 relé -> molinete -->
+        <path class="ao" d="M690 316 L754 316" marker-end="url(#so)"/>
+        <g class="n no"><circle cx="722" cy="316" r="11"/><text x="722" y="316">5</text></g>
+        <text class="tm" x="722" y="388" text-anchor="middle">NO + COM → J3</text>
+
+        <!-- 6 mini -> panel -->
+        <path class="ad" d="M720 102 L826 102" marker-end="url(#sd)"/>
+        <g class="n nd"><circle cx="773" cy="102" r="11"/><text x="773" y="102">6</text></g>
+
+
+        <!-- pasa -->
+        <path class="ap" d="M960 316 L1024 316" marker-end="url(#sp)"/>
+        <text class="lp" x="992" y="304" text-anchor="middle">pasa</text>
+
+        <!-- sin G4 -->
+        <text class="t2" x="200" y="300">Sin rostro ni alcohol:</text>
+        <text class="t2" x="200" y="318">en la salida solo se pide el DNI.</text>
+      </svg>
