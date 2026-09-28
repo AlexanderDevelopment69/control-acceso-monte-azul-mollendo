@@ -403,3 +403,4 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
 - Menú en el celular: se ocultó el bloque de marca del menú (se repetía con la cabecera, que ya muestra logo y nombre); en computadora sigue igual.
 - Contadores del Panel: el número va abajo de cada tarjeta, alineado aunque un título ocupe dos líneas.
 - Selector de fechas: la semana empieza el lunes; al escribir pone los guiones solo y acepta "28092026", "28/09/2026" o "28.09.2026" (borrar un guion borra el dígito anterior); nuevos `min`/`max` (días fuera de rango tachados y desactivados, también al escribir): el Panel no deja elegir días futuros y en Auditoría "Desde" no pasa de "Hasta" ni de hoy; Escape cierra el calendario; teclado numérico en el celular; descripciones para lectores de pantalla. Los "Vence el" de documentos siguen sin límite.
+- Selector de fechas: el calendario solo se abre (y se cierra) con el ícono; tocar el campo ya no lo abre, sirve para escribir.

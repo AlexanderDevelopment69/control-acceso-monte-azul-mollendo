@@ -239,7 +239,6 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
           value={texto}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
-          onFocus={abrir}
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           placeholder={placeholder}
           autoComplete="off"
@@ -247,10 +246,11 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
           maxLength={10}
           className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:focus:border-brand-800"
         />
+        {/* El calendario solo se abre con el ícono; en el campo se escribe la fecha. */}
         <button
           type="button"
-          onClick={abrir}
-          aria-label="Abrir calendario"
+          onClick={() => (abierto ? setAbierto(false) : abrir())}
+          aria-label={abierto ? "Cerrar calendario" : "Abrir calendario"}
           className="absolute text-gray-500 -translate-y-1/2 right-3 top-1/2 dark:text-gray-400"
         >
           <CalenderIcon className="size-6" />
