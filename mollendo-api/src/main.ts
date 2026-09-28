@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
+import { SWAGGER_FAVICON } from './common/swagger-favicon.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,7 +27,10 @@ async function bootstrap() {
       .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'device-api-key')
       .build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    SwaggerModule.setup('api/docs', app, document, {
+      customSiteTitle: 'API · Control de Acceso Mollendo',
+      customfavIcon: SWAGGER_FAVICON,
+    });
   }
 
   await app.listen(process.env.PORT ?? 3001);
