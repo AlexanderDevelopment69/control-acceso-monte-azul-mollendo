@@ -2,7 +2,6 @@
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
-import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 
@@ -67,20 +66,10 @@ const AppHeader: React.FC = () => {
           </button>
 
           <Link href="/" className="lg:hidden">
-            <Image
-              width={154}
-              height={32}
-              className="dark:hidden"
-              src="/images/logo/logo.svg"
-              alt="Logo"
-            />
-            <Image
-              width={154}
-              height={32}
-              className="hidden dark:block"
-              src="/images/logo/logo-dark.svg"
-              alt="Logo"
-            />
+            <span className="text-base font-semibold text-gray-800 dark:text-white/90">
+              Control de Acceso
+              <span className="block text-xs font-normal text-gray-400">Terminal de Mollendo</span>
+            </span>
           </Link>
 
           <button
