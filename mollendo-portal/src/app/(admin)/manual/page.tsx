@@ -141,6 +141,23 @@ const SECCIONES: SeccionManual[] = [
     ),
   },
   {
+    id: "cuenta",
+    titulo: "Tu cuenta y contraseña",
+    roles: ["administrador", "vigilancia"],
+    contenido: (
+      <div className="space-y-3">
+        <p>
+          Para cambiar tu contraseña, haz clic en tu nombre de usuario (arriba a la derecha) y elige{" "}
+          <strong>“Cambiar contraseña”</strong>. Escribe tu contraseña actual y dos veces la nueva, de al menos 8
+          caracteres. El cambio vale desde el próximo inicio de sesión y queda registrado en la auditoría.
+        </p>
+        <p className="text-xs text-gray-400">
+          Si olvidaste tu contraseña, no hay recuperación por correo: pide al soporte técnico del sistema que la restablezca.
+        </p>
+      </div>
+    ),
+  },
+  {
     id: "auditoria",
     titulo: "Auditoría",
     roles: ["administrador"],

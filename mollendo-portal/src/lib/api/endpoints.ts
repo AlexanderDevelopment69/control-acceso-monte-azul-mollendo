@@ -19,6 +19,8 @@ export interface LoginResponse {
 export const authApi = {
   login: (correo: string, password: string) =>
     apiRequest<LoginResponse>("/auth/login", { method: "POST", body: { correo, password }, skipAuth: true }),
+  cambiarPassword: (passwordActual: string, passwordNueva: string) =>
+    apiRequest<void>("/cuenta/password", { method: "PATCH", body: { passwordActual, passwordNueva } }),
 };
 
 // ---- empresas ----

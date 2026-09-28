@@ -2,15 +2,18 @@
 import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { CambiarPasswordModal } from "./CambiarPasswordModal";
 
 const ROL_LABEL: Record<string, string> = {
-  administracion: "Administración",
-  empresa: "Empresa",
+  administrador: "Administrador",
   vigilancia: "Vigilancia",
 };
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  // Contador en vez de booleano: cambia la key del modal para que se abra vacío.
+  const [cambioPassword, setCambioPassword] = useState(0);
+  const [modalPasswordAbierto, setModalPasswordAbierto] = useState(false);
   const { user, logout } = useAuth();
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
@@ -72,9 +75,34 @@ export default function UserDropdown() {
         <button
           onClick={() => {
             closeDropdown();
-            logout();
+            setCambioPassword((n) => n + 1);
+            setModalPasswordAbierto(true);
           }}
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+        >
+          <svg
+            className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M12 3.5C10.067 3.5 8.5 5.067 8.5 7V9.25H15.5V7C15.5 5.067 13.933 3.5 12 3.5ZM17 9.25V7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7V9.25H6.5C5.25736 9.25 4.25 10.2574 4.25 11.5V19.5C4.25 20.7426 5.25736 21.75 6.5 21.75H17.5C18.7426 21.75 19.75 20.7426 19.75 19.5V11.5C19.75 10.2574 18.7426 9.25 17.5 9.25H17ZM6.5 10.75C6.08579 10.75 5.75 11.0858 5.75 11.5V19.5C5.75 19.9142 6.08579 20.25 6.5 20.25H17.5C17.9142 20.25 18.25 19.9142 18.25 19.5V11.5C18.25 11.0858 17.9142 10.75 17.5 10.75H6.5ZM12 13.25C12.4142 13.25 12.75 13.5858 12.75 14V16.5C12.75 16.9142 12.4142 17.25 12 17.25C11.5858 17.25 11.25 16.9142 11.25 16.5V14C11.25 13.5858 11.5858 13.25 12 13.25Z"
+              fill=""
+            />
+          </svg>
+          Cambiar contraseña
+        </button>
+        <button
+          onClick={() => {
+            closeDropdown();
+            logout();
+          }}
+          className="flex items-center gap-3 px-3 py-2 mt-1 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <svg
             className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
@@ -94,6 +122,12 @@ export default function UserDropdown() {
           Cerrar sesión
         </button>
       </Dropdown>
+
+      <CambiarPasswordModal
+        key={cambioPassword}
+        isOpen={modalPasswordAbierto}
+        onClose={() => setModalPasswordAbierto(false)}
+      />
     </div>
   );
 }
