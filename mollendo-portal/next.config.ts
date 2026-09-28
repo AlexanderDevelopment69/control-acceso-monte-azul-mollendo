@@ -27,8 +27,14 @@ const nextConfig: NextConfig = {
   // ese mismo dominio en vez de necesitar un segundo túnel para el backend.
   // No afecta el desarrollo normal (ahí NEXT_PUBLIC_API_URL ya apunta
   // directo a localhost:3001 y esta regla queda sin uso).
+  // Swagger (/api/docs y sus archivos /api/docs/*) se reenvía igual, para
+  // que el enlace de "Sistema y APIs" funcione con NEXT_PUBLIC_API_URL=/api/v1.
   async rewrites() {
-    return [{ source: "/api/v1/:path*", destination: "http://localhost:3001/api/v1/:path*" }];
+    return [
+      { source: "/api/v1/:path*", destination: "http://localhost:3001/api/v1/:path*" },
+      { source: "/api/docs", destination: "http://localhost:3001/api/docs" },
+      { source: "/api/docs/:path*", destination: "http://localhost:3001/api/docs/:path*" },
+    ];
   },
 
   webpack(config) {
