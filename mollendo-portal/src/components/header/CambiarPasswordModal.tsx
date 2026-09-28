@@ -8,6 +8,32 @@ import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { EyeCloseIcon, EyeIcon } from "@/icons";
+
+/** Campo de contraseña con el ojo para mostrarla u ocultarla, como en el inicio de sesión. */
+function CampoPassword({ id, label, onChange }: { id: string; label: string; onChange: (valor: string) => void }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <Input id={id} type={visible ? "text" : "password"} className="pr-12" onChange={(e) => onChange(e.target.value)} />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+          className="absolute right-4 top-1/2 z-30 -translate-y-1/2 cursor-pointer"
+        >
+          {visible ? (
+            <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
+          ) : (
+            <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 /**
  * El usuario que inició sesión (administrador o vigilancia) cambia su propia
@@ -66,18 +92,9 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">La contraseña nueva debe tener al menos 8 caracteres.</p>
           {error && <ErrorBanner>{error}</ErrorBanner>}
-          <div>
-            <Label htmlFor="password-actual">Contraseña actual</Label>
-            <Input id="password-actual" type="password" onChange={(e) => setActual(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="password-nueva">Contraseña nueva</Label>
-            <Input id="password-nueva" type="password" onChange={(e) => setNueva(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="password-confirmacion">Repite la contraseña nueva</Label>
-            <Input id="password-confirmacion" type="password" onChange={(e) => setConfirmacion(e.target.value)} />
-          </div>
+          <CampoPassword id="password-actual" label="Contraseña actual" onChange={setActual} />
+          <CampoPassword id="password-nueva" label="Contraseña nueva" onChange={setNueva} />
+          <CampoPassword id="password-confirmacion" label="Repite la contraseña nueva" onChange={setConfirmacion} />
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
