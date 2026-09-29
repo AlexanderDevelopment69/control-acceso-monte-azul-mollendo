@@ -38,12 +38,15 @@ services:
       DOCUMENTOS_STORAGE_PATH: /app/storage/documentos
       DEVICE_API_KEY: ${DEVICE_API_KEY:?Falta DEVICE_API_KEY en .env}
       SWAGGER: "true"
+      RESPALDOS_PATH: /app/respaldos
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@mollendo.local}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
       VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@mollendo.local}
       VIGILANCIA_SEED_PASSWORD: ${VIGILANCIA_SEED_PASSWORD:-}
     volumes:
       - documentos:/app/storage
+      # Solo lectura: para mostrar el último respaldo en "Sistema y APIs".
+      - ./backups:/app/respaldos:ro
     ports:
       - "3001:3001" # equipos (ingreso/salida con X-API-Key) y Swagger
 
@@ -55,7 +58,9 @@ services:
     ports:
       - "3000:3000"
 
-  # Respaldo diario de la base de datos en ./backups (se guardan 14 días).
+  # Respaldo diario (base de datos + documentos y fotos) en ./backups, a las
+  # HORA_RESPALDO (por defecto 00:00, hora de Lima); se guardan 14 días.
+  # Ver deploy/respaldo.sh.
   backup:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -65,15 +70,12 @@ services:
     environment:
       PGPASSWORD: ${DB_PASSWORD}
       TZ: America/Lima
+      HORA_RESPALDO: ${HORA_RESPALDO:-00:00}
     volumes:
       - ./backups:/backups
-    entrypoint: >
-      sh -c 'while true; do
-        f=/backups/mollendo-$$(date +%Y%m%d-%H%M).sql.gz;
-        pg_dump -h db -U mollendo mollendo_control_acceso | gzip > "$$f" && echo "Respaldo $$f";
-        find /backups -name "mollendo-*.sql.gz" -mtime +14 -delete;
-        sleep 86400;
-      done'
+      - ./deploy/respaldo.sh:/respaldo.sh:ro
+      - documentos:/storage:ro
+    entrypoint: ["sh", "/respaldo.sh"]
 
   # Enlace público TEMPORAL para mostrar el portal a cualquiera (túnel rápido
   # de Cloudflare, sin cuenta). Apagado por defecto: solo se levanta con el

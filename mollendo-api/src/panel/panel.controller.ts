@@ -3,6 +3,7 @@ import { PanelService } from './panel.service.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { estadoRespaldos } from './respaldos.util.js';
 
 @Controller()
 export class PanelController {
@@ -58,6 +59,7 @@ export class PanelController {
       integraciones: {
         claveEquiposConfigurada: !!process.env.DEVICE_API_KEY,
       },
+      respaldos: estadoRespaldos(),
       websocket: { namespace: '/ws/eventos' },
     };
   }

@@ -168,7 +168,7 @@ En la PC, en la carpeta raíz del proyecto (donde está `docker-compose.prod.yml
 
 ```bash
 git status          # no debe haber cambios pendientes que quieras desplegar
-git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal docker-compose.prod.yml deploy.env.example
+git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy docker-compose.prod.yml deploy.env.example
 ```
 
 Esto crea `mollendo.tgz` (unos 10 MB) con el código del último commit. No incluye `node_modules`, `.env` ni archivos subidos, porque no están en git.
@@ -333,7 +333,7 @@ Para desplegar cambios nuevos del sistema. Los datos (personal, documentos, even
 1. **En la PC**, con los cambios ya confirmados con commit, arma el paquete (sin `deploy.env.example`: el `.env` del servidor ya existe):
 
    ```bash
-   git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal docker-compose.prod.yml
+   git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy docker-compose.prod.yml
    scp mollendo.tgz ma-admin@100.78.153.33:mollendo/
    ```
 
@@ -347,7 +347,7 @@ Para desplegar cambios nuevos del sistema. Los datos (personal, documentos, even
 3. **En el servidor**, reemplaza el código. Se borran las carpetas viejas para que no queden archivos que ya no existen en la versión nueva (`.env`, `backups` y los volúmenes no se tocan):
 
    ```bash
-   rm -rf mollendo-api mollendo-portal
+   rm -rf mollendo-api mollendo-portal deploy
    tar -xzf mollendo.tgz && rm mollendo.tgz
    ```
 
@@ -413,43 +413,69 @@ Debe responder `UPDATE 1`. La persona entra con la contraseña nueva y conviene 
 
 ### 7.1. Respaldo automático
 
-El contenedor `backup` hace un respaldo al arrancar y luego **cada 24 horas**, en `~/mollendo/backups/mollendo-AAAAMMDD-HHMM.sql.gz`. Borra solo los de más de 14 días.
+El contenedor `backup` (script `deploy/respaldo.sh`) hace **un respaldo completo por día a las 00:00** (hora de Lima) en `~/mollendo/backups/mollendo-AAAAMMDD-HHMM.tar.gz`. Cada paquete contiene:
+
+| Dentro del paquete | Qué es |
+|---|---|
+| `base-de-datos.sql` | Copia completa de la base de datos: personal, empresas, documentos registrados, eventos, auditoría, usuarios |
+| `archivos/` | Los archivos subidos: documentos (PDF, imágenes, Word) y fotos del personal |
+
+- Al arrancar el contenedor (por ejemplo, después de un corte de luz), si no hay un respaldo de las últimas 24 horas, hace uno en ese momento.
+- Después de cada respaldo, borra los diarios de más de **14 días** y los previos a actualizaciones (`antes-de-actualizar-*`) de más de 14 días, conservando siempre el más reciente.
+- La hora se cambia con `HORA_RESPALDO=HH:MM` en el `.env` (y `dc up -d backup`).
+- **Sistema y APIs** muestra la fecha y el tamaño del último respaldo automático, en rojo ("Atrasado") si tiene más de 26 horas.
 
 ```bash
 ls -lh ~/mollendo/backups
-sudo docker compose -f docker-compose.prod.yml logs backup | tail   # "Respaldo /backups/mollendo-..."
+sudo docker compose -f docker-compose.prod.yml logs backup | tail   # "Respaldo mollendo-... (tamaño)"
 ```
 
-Los respaldos cubren la **base de datos** (personal, empresas, documentos registrados, eventos, auditoría). Los **archivos** de los documentos y fotos están en el volumen `mollendo_documentos`; para respaldarlos:
-
-```bash
-cd ~/mollendo
-sudo docker run --rm -v mollendo_documentos:/datos -v "$PWD/backups":/destino alpine \
-  tar -czf /destino/documentos-$(date +%Y%m%d).tar.gz -C /datos .
-```
+Los respaldos anteriores a este cambio (28/09/2026) son `.sql.gz` y solo tienen la base de datos.
 
 ### 7.2. Respaldo manual
 
+Solo la base de datos (rápido; es el que se saca antes de cada actualización):
+
 ```bash
 cd ~/mollendo
-sudo docker compose -f docker-compose.prod.yml exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip > backups/manual-$(date +%Y%m%d-%H%M).sql.gz
+sudo docker compose -f docker-compose.prod.yml exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip > backups/antes-de-actualizar-$(date +%Y%m%d-%H%M).sql.gz
+```
+
+Completo (base de datos y archivos), igual al automático, en el momento:
+
+```bash
+cd ~/mollendo
+sudo docker compose -f docker-compose.prod.yml run --rm -T backup ahora
 ```
 
 ### 7.3. Restaurar un respaldo
 
-Restaurar **reemplaza** los datos actuales. Hazlo solo si es necesario y, antes, saca un respaldo manual de lo que hay (7.2).
+Restaurar **reemplaza** los datos actuales. Hazlo solo si es necesario y, antes, saca un respaldo manual de lo que hay (7.2). Reemplaza `mollendo-AAAAMMDD-HHMM.tar.gz` por el archivo que quieres restaurar.
 
 ```bash
 cd ~/mollendo
 alias dc='sudo docker compose -f docker-compose.prod.yml'
-dc stop api portal                                                     # nadie escribe mientras se restaura
+R=mollendo-AAAAMMDD-HHMM.tar.gz
+
+# 1. Descomprimir en una carpeta temporal
+mkdir -p /tmp/restaurar && tar -xzf backups/$R -C /tmp/restaurar
+
+# 2. Base de datos (nadie escribe mientras se restaura)
+dc stop api portal
 dc exec -T db dropdb -U mollendo mollendo_control_acceso
 dc exec -T db createdb -U mollendo mollendo_control_acceso
-gunzip -c backups/mollendo-AAAAMMDD-HHMM.sql.gz | dc exec -T db psql -q -U mollendo -d mollendo_control_acceso
+dc exec -T db psql -q -U mollendo -d mollendo_control_acceso < /tmp/restaurar/base-de-datos.sql
+
+# 3. Archivos (documentos y fotos)
+sudo docker run --rm -v mollendo_documentos:/datos -v /tmp/restaurar/archivos:/respaldo:ro alpine \
+  sh -c 'rm -rf /datos/* && cp -a /respaldo/. /datos/'
+
+# 4. Volver a arrancar y limpiar
 dc start api portal
+rm -rf /tmp/restaurar
 ```
 
-Reemplaza `mollendo-AAAAMMDD-HHMM.sql.gz` por el archivo que quieres restaurar. Luego verifica como en la sección 4.
+Para un respaldo `.sql.gz` (solo base de datos), el paso 2 es `gunzip -c backups/ARCHIVO.sql.gz | dc exec -T db psql -q -U mollendo -d mollendo_control_acceso` y no hay paso 3. Luego verifica como en la sección 4.
 
 ### 7.4. Copiar los respaldos fuera de la mini PC
 

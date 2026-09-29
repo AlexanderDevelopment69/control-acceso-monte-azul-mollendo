@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
-import type { EstadoSistema } from "@/lib/api/types";
+import type { EstadoRespaldos, EstadoSistema } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, LockIcon } from "@/icons";
+import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, FolderIcon, LockIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
@@ -195,6 +195,60 @@ function ConfiguradoBadge({ ok }: { ok: boolean }) {
   return <Badge color={ok ? "success" : "warning"}>{ok ? "Configurado" : "No configurado"}</Badge>;
 }
 
+// Más de 26 horas sin respaldo automático: alguno falló (se hace uno por día).
+const RESPALDO_ATRASADO_MS = 26 * 60 * 60 * 1000;
+
+function formatearTamano(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/** Último respaldo automático, con aviso si está atrasado (según la hora del servidor, `ahora`). */
+function RespaldosEstado({
+  comprobando,
+  respaldos,
+  ahora,
+}: {
+  comprobando: boolean;
+  respaldos?: EstadoRespaldos;
+  ahora?: string;
+}) {
+  if (comprobando) {
+    return (
+      <div className="mt-2">
+        <ComprobandoBadge />
+      </div>
+    );
+  }
+  if (!respaldos?.disponible) {
+    return (
+      <>
+        <div className="mt-2">
+          <Badge color="light">Sin información</Badge>
+        </div>
+        <p className="mt-2 text-xs text-gray-400">Solo se ven en el servidor (mini PC).</p>
+      </>
+    );
+  }
+  const ultimo = respaldos.ultimoAutomatico;
+  const atrasado =
+    !ultimo || !ahora || new Date(ahora).getTime() - new Date(ultimo.fecha).getTime() > RESPALDO_ATRASADO_MS;
+  return (
+    <>
+      <div className="mt-2">
+        <Badge color={atrasado ? "error" : "success"}>{atrasado ? "Atrasado" : "Al día"}</Badge>
+      </div>
+      <p className="mt-2 text-xs text-gray-400">
+        {ultimo
+          ? `Último: ${new Date(ultimo.fecha).toLocaleString("es-PE")} · ${formatearTamano(ultimo.tamanoBytes)}`
+          : "Todavía no hay respaldos automáticos."}
+        {" "}· Diario a las 00:00, se guardan 14 días
+      </p>
+    </>
+  );
+}
+
 function StatusCard({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
@@ -367,7 +421,7 @@ function SistemaContent() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatusCard icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
@@ -399,6 +453,11 @@ function SistemaContent() {
             )}
           </div>
           <p className="mt-2 text-xs text-gray-400">Para las rutas de ingreso y salida (X-API-Key)</p>
+        </StatusCard>
+
+        <StatusCard icon={<FolderIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Respaldos</p>
+          <RespaldosEstado comprobando={comprobando} respaldos={estado?.respaldos} ahora={estado?.api.fecha} />
         </StatusCard>
       </div>
 

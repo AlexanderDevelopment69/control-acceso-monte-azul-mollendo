@@ -108,7 +108,22 @@ export interface EstadoSistema {
   };
   baseDeDatos: { estado: "up" | "down"; latenciaMs: number };
   integraciones: { claveEquiposConfigurada: boolean };
+  respaldos: EstadoRespaldos;
   websocket: { namespace: string };
+}
+
+export interface ResumenRespaldo {
+  archivo: string;
+  fecha: string;
+  tamanoBytes: number;
+}
+
+/** Respaldos del servidor; `disponible` es false fuera de la mini PC (p. ej. en desarrollo). */
+export interface EstadoRespaldos {
+  disponible: boolean;
+  ultimoAutomatico: ResumenRespaldo | null;
+  ultimoPrevioActualizacion: ResumenRespaldo | null;
+  cantidad: number;
 }
 
 export interface AuditoriaEntry {
