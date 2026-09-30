@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Button from "@/components/ui/button/Button";
 import { TableFooter } from "@/components/tables/TableFooter";
+import { AltoEstable } from "@/components/tables/AltoEstable";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
@@ -149,51 +150,53 @@ function AuditoriaContent() {
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         {/* Una línea por celda: en el celular la tabla se desliza hacia los lados. */}
         <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
-          <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-              <TableRow>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Fecha</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Usuario</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Dato</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Registro</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Acción</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {loading && (
+          <AltoEstable paginaCompleta={entradas.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
+            <Table>
+              <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Cargando…</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Fecha</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Usuario</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Dato</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Registro</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Acción</TableCell>
                 </TableRow>
-              )}
-              {!loading && error && !lista && (
-                <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>No se pudo cargar la auditoría.</TableCell>
-                </TableRow>
-              )}
-              {!loading && lista && entradas.length === 0 && (
-                <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>
-                    {filtrando ? "Sin resultados para esa búsqueda o esas fechas." : "Sin registros de auditoría todavía."}
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading && entradas.map((entrada) => (
-                <TableRow key={entrada.id}>
-                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {new Date(entrada.fechaHora).toLocaleString("es-PE")}
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {entrada.usuario?.correo ?? "Carga de datos (script)"}
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{tablaLabel(entrada.tablaAfectada)}</TableCell>
-                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">#{entrada.registroId}</TableCell>
-                  <TableCell className="px-5 py-4 text-sm">
-                    <Badge color={ACCION_COLOR[entrada.accion] ?? "light"}>{entrada.accion}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {loading && (
+                  <TableRow>
+                    <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>Cargando…</TableCell>
+                  </TableRow>
+                )}
+                {!loading && error && !lista && (
+                  <TableRow>
+                    <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>No se pudo cargar la auditoría.</TableCell>
+                  </TableRow>
+                )}
+                {!loading && lista && entradas.length === 0 && (
+                  <TableRow>
+                    <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>
+                      {filtrando ? "Sin resultados para esa búsqueda o esas fechas." : "Sin registros de auditoría todavía."}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!loading && entradas.map((entrada) => (
+                  <TableRow key={entrada.id}>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {new Date(entrada.fechaHora).toLocaleString("es-PE")}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {entrada.usuario?.correo ?? "Carga de datos (script)"}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{tablaLabel(entrada.tablaAfectada)}</TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">#{entrada.registroId}</TableCell>
+                    <TableCell className="px-5 py-4 text-sm">
+                      <Badge color={ACCION_COLOR[entrada.accion] ?? "light"}>{entrada.accion}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </AltoEstable>
         </div>
         {!loading && <TableFooter {...pie} onPageChange={setPagina} />}
       </div>

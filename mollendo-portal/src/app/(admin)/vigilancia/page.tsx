@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Button from "@/components/ui/button/Button";
 import { TableFooter } from "@/components/tables/TableFooter";
+import { AltoEstable } from "@/components/tables/AltoEstable";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
@@ -345,62 +346,64 @@ function VigilanciaContent() {
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         {/* Una línea por celda: en el celular la tabla se desliza hacia los lados. */}
         <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
-          <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-              <TableRow>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Hora</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">DNI</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Persona</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Movimiento</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Resultado</TableCell>
-                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Motivo</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {loading && (
+          <AltoEstable paginaCompleta={eventos.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
+            <Table>
+              <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Cargando…</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Hora</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">DNI</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Persona</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Movimiento</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Resultado</TableCell>
+                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Motivo</TableCell>
                 </TableRow>
-              )}
-              {!loading && errorCarga && !lista && (
-                <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>No se pudo cargar el historial.</TableCell>
-                </TableRow>
-              )}
-              {!loading && lista && eventos.length === 0 && (
-                <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>{sinEventos}</TableCell>
-                </TableRow>
-              )}
-              {!loading && eventos.map((ev) => (
-                <TableRow
-                  key={ev.id}
-                  className={`transition-colors duration-700 ${ev.id === ultimo ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
-                >
-                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {new Date(ev.fechaHora).toLocaleString("es-PE")}
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {documentoDelEvento(ev)}
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                    {ev.persona ? (
-                      `${ev.persona.nombres} ${ev.persona.apellidos}`
-                    ) : (
-                      <span className="text-gray-400">No registrado</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300 capitalize">{ev.tipoMovimiento}</TableCell>
-                  <TableCell className="px-5 py-4 text-sm">
-                    <Badge color={ev.resultado === "autorizado" ? "success" : "error"}>{ev.resultado}</Badge>
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm">
-                    <MotivoDenegacion evento={ev} onVerDocumentos={() => setPersonaDocumentos(ev.personaId)} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {loading && (
+                  <TableRow>
+                    <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Cargando…</TableCell>
+                  </TableRow>
+                )}
+                {!loading && errorCarga && !lista && (
+                  <TableRow>
+                    <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>No se pudo cargar el historial.</TableCell>
+                  </TableRow>
+                )}
+                {!loading && lista && eventos.length === 0 && (
+                  <TableRow>
+                    <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>{sinEventos}</TableCell>
+                  </TableRow>
+                )}
+                {!loading && eventos.map((ev) => (
+                  <TableRow
+                    key={ev.id}
+                    className={`transition-colors duration-700 ${ev.id === ultimo ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
+                  >
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {new Date(ev.fechaHora).toLocaleString("es-PE")}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {documentoDelEvento(ev)}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {ev.persona ? (
+                        `${ev.persona.nombres} ${ev.persona.apellidos}`
+                      ) : (
+                        <span className="text-gray-400">No registrado</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300 capitalize">{ev.tipoMovimiento}</TableCell>
+                    <TableCell className="px-5 py-4 text-sm">
+                      <Badge color={ev.resultado === "autorizado" ? "success" : "error"}>{ev.resultado}</Badge>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-sm">
+                      <MotivoDenegacion evento={ev} onVerDocumentos={() => setPersonaDocumentos(ev.personaId)} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </AltoEstable>
         </div>
         {!loading && <TableFooter {...pie} onPageChange={setPagina} />}
       </div>

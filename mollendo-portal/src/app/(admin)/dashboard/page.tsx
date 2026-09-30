@@ -14,6 +14,7 @@ import DatePicker from "@/components/form/date-picker";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { COLORES, Grafico } from "@/components/dashboard/Grafico";
 import { TableFooter } from "@/components/tables/TableFooter";
+import { AltoEstable } from "@/components/tables/AltoEstable";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import { CheckCircleIcon, GroupIcon, TimeIcon, UserIcon } from "@/icons";
 
@@ -225,8 +226,10 @@ function DashboardContent() {
       />
 
       {/* Periodo y tipo */}
-      <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 text-sm dark:bg-gray-900">
+      {/* En pantallas anchas, alto fijo (el de los campos de fecha): al elegir
+          "Personalizado" los botones no se mueven. En las demás, las fechas van debajo. */}
+      <div className="mb-6 flex flex-col items-start gap-3 xl:min-h-11 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex shrink-0 flex-wrap gap-1 rounded-lg bg-gray-100 p-1 text-sm dark:bg-gray-900">
           {PERIODOS.map(([id, texto]) => (
             <button
               key={id}
@@ -460,34 +463,39 @@ function DashboardContent() {
                 <SinDatos texto="Nadie lleva más de 24 horas dentro." />
               ) : (
                 <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
-                  <Table>
-                    <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-                      <TableRow>
-                        {["Persona", "Documento", "Empresa", "Ingreso", "Tiempo dentro"].map((c) => (
-                          <TableCell key={c} isHeader className="px-4 py-3 text-start text-xs font-medium text-gray-500">
-                            {c}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {permanencia.datos.map((p) => (
-                        <TableRow key={p.personaId}>
-                          <TableCell className="px-4 py-3 text-sm text-gray-800 dark:text-white/90">
-                            {p.nombres} {p.apellidos}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.numeroDocumento}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.empresa}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                            {new Date(p.ingreso).toLocaleString("es-PE")}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm font-medium text-warning-600 dark:text-orange-400">
-                            {tiempoDentro(p.ingreso, d.generadoEn)}
-                          </TableCell>
+                  <AltoEstable
+                    paginaCompleta={permanencia.datos.length === POR_PAGINA_PERMANENCIA}
+                    variasPaginas={permanencia.total > POR_PAGINA_PERMANENCIA}
+                  >
+                    <Table>
+                      <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+                        <TableRow>
+                          {["Persona", "Documento", "Empresa", "Ingreso", "Tiempo dentro"].map((c) => (
+                            <TableCell key={c} isHeader className="px-4 py-3 text-start text-xs font-medium text-gray-500">
+                              {c}
+                            </TableCell>
+                          ))}
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {permanencia.datos.map((p) => (
+                          <TableRow key={p.personaId}>
+                            <TableCell className="px-4 py-3 text-sm text-gray-800 dark:text-white/90">
+                              {p.nombres} {p.apellidos}
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.numeroDocumento}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.empresa}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                              {new Date(p.ingreso).toLocaleString("es-PE")}
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-sm font-medium text-warning-600 dark:text-orange-400">
+                              {tiempoDentro(p.ingreso, d.generadoEn)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </AltoEstable>
                 </div>
               )}
               {!!permanencia && permanencia.total > 0 && (

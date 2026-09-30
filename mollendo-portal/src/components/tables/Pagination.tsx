@@ -9,10 +9,10 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
 }) => {
-  const pagesAroundCurrent = Array.from(
-    { length: Math.min(3, totalPages) },
-    (_, i) => i + Math.max(currentPage - 1, 1)
-  );
+  // Hasta 3 páginas alrededor de la actual, sin pasar de la última (en la
+  // última página se muestran las dos anteriores, no una que no existe).
+  const primera = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+  const pagesAroundCurrent = Array.from({ length: Math.min(3, totalPages) }, (_, i) => primera + i);
 
   return (
     <div className="flex items-center ">
@@ -24,7 +24,7 @@ const Pagination: React.FC<PaginationProps> = ({
         Anterior
       </button>
       <div className="flex items-center gap-2">
-        {currentPage > 3 && <span className="px-2">...</span>}
+        {primera > 1 && <span className="px-2">...</span>}
         {pagesAroundCurrent.map((page) => (
           <button
             key={page}
@@ -38,7 +38,7 @@ const Pagination: React.FC<PaginationProps> = ({
             {page}
           </button>
         ))}
-        {currentPage < totalPages - 2 && <span className="px-2">...</span>}
+        {primera + 2 < totalPages && <span className="px-2">...</span>}
       </div>
       <button
         onClick={() => onPageChange(currentPage + 1)}

@@ -204,39 +204,21 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 - Los intentos con un documento **no registrado** también quedan en el historial.
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).
 
-### 4.4. Dashboard (Administrador)
-
-Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salidas registrados. Cada ingreso autorizado de una persona cuenta como una **visita**. Se actualiza en tiempo real con cada ingreso o salida, y cada minuto.
-
-| Indicador | Cálculo |
-|---|---|
-| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 24 horas). |
-| Visitas finalizadas | Visitas del periodo que ya registraron su salida. |
-| Total de visitas | Ingresos autorizados en el periodo. |
-| Permanencia mayor a 24 horas | Personas que ingresaron hace más de 24 horas y no registran salida. |
-
-- **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
-- **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa.
-- **Personal registrado:** total, activos y dados de baja.
-- **Lista de permanencia mayor a 24 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
-
-Los indicadores de presencia dependen de que cada persona registre su salida en el molinete. Si una persona sale sin registrarla (por ejemplo, durante una emergencia con los brazos del molinete liberados), seguirá figurando como presente hasta que registre su salida.
-
-### 4.5. Auditoría (Administrador)
+### 4.4. Auditoría (Administrador)
 
 - Registro de solo lectura que indica qué usuario creó, modificó o eliminó cada dato y en qué fecha: personal, empresas, documentos, tipos de documento y usuarios.
 - Búsqueda por usuario o por tipo de dato ("personal", "documento"…) y filtro por rango de fechas ("Desde" / "Hasta"), paginado de 15 registros por página.
 
-### 4.6. Sistema y APIs (Administrador)
+### 4.5. Sistema y APIs (Administrador)
 
 - **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado") y **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas). Se actualiza cada 15 segundos.
 - **Documentación de las APIs de integración** con ejemplos de uso y su estado ("Disponible", "Simulado" o "Por programar"), y enlace a la documentación interactiva (Swagger).
 
-### 4.7. Manual
+### 4.6. Manual
 
 Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, cuenta y contraseña, auditoría y sistema.
 
-### 4.8. Características generales del portal
+### 4.7. Características generales del portal
 
 - Fechas en formato día-mes-año y hora de Lima.
 - Diseño adaptable a computadora, tablet y celular (menú desplegable, tablas desplazables, tarjetas).
@@ -373,9 +355,30 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 
 ## 12. Desarrollo pendiente de aprobación
 
-Funcionalidades solicitadas que no forman parte del alcance base. Se desarrollarán una vez aprobadas.
+Funcionalidades solicitadas que no forman parte del alcance base y requieren aprobación.
 
-### 12.1. Exportación de datos a Excel o PDF
+### 12.1. Dashboard con indicadores (KPI)
+
+Pantalla del Administrador con indicadores y gráficos, calculados a partir de los ingresos y salidas registrados. Cada ingreso autorizado de una persona cuenta como una **visita**. Se actualiza en tiempo real con cada ingreso o salida, y cada minuto.
+
+| Indicador | Cálculo |
+|---|---|
+| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 24 horas). |
+| Visitas finalizadas | Visitas del periodo que ya registraron su salida. |
+| Total de visitas | Ingresos autorizados en el periodo. |
+| Permanencia mayor a 24 horas | Personas que ingresaron hace más de 24 horas y no registran salida. |
+
+- **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
+- **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa.
+- **Personal registrado:** total de personas, barra con la proporción de activos y dados de baja (con sus porcentajes) y cuántas personas del personal activo están en el terminal en ese momento.
+- **Lista de permanencia mayor a 24 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
+
+- **Acceso:** solo el Administrador, desde la opción "Dashboard" del menú.
+- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 24 horas).
+
+Los indicadores de presencia dependen de que cada persona registre su salida en el molinete. Si una persona sale sin registrarla (por ejemplo, durante una emergencia con los brazos del molinete liberados), seguirá figurando como presente hasta que registre su salida.
+
+### 12.2. Exportación de datos a Excel o PDF
 
 Descarga de la información del sistema en Excel o PDF, por ejemplo:
 
