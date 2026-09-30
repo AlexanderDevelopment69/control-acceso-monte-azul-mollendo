@@ -18,6 +18,24 @@ export interface TipoDocumento {
   nombre: string;
 }
 
+/** Distingue a las visitas del resto del personal. */
+export type TipoPersona = "personal" | "visita";
+
+export const TIPOS_PERSONA: { value: TipoPersona; label: string }[] = [
+  { value: "personal", label: "Personal" },
+  { value: "visita", label: "Visita" },
+];
+
+/** Opciones de los filtros por tipo ("" = sin filtrar). */
+export const FILTRO_TIPO_PERSONA: { value: string; label: string }[] = [
+  { value: "", label: "Personal y visitas" },
+  { value: "personal", label: "Solo personal" },
+  { value: "visita", label: "Solo visitas" },
+];
+
+export const etiquetaTipoPersona = (tipo: TipoPersona) =>
+  TIPOS_PERSONA.find((t) => t.value === tipo)?.label ?? tipo;
+
 export interface Persona {
   id: number;
   empresaId: number;
@@ -25,6 +43,7 @@ export interface Persona {
   numeroDocumento: string;
   nombres: string;
   apellidos: string;
+  tipoPersona: TipoPersona;
   /** Ruta de la foto para reconocimiento facial; null = sin foto. */
   fotoUrl: string | null;
   estado: "activo" | "inactivo";
@@ -86,6 +105,7 @@ export interface EventoAcceso {
     id: number;
     nombres: string;
     apellidos: string;
+    tipoPersona: TipoPersona;
     empresaId: number;
     tipoDocumentoIdentidad: "DNI" | "CE" | "PASAPORTE";
     numeroDocumento: string;

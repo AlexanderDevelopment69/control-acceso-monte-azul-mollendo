@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsIn, IsInt, IsOptional } from 'class-validator';
+import { TIPOS_PERSONA, type TipoPersona } from './create-persona.dto.js';
 
 export class QueryPersonasDto {
   @IsOptional()
@@ -10,4 +11,8 @@ export class QueryPersonasDto {
   @IsOptional()
   @IsIn(['activo', 'inactivo'], { message: 'El estado debe ser "activo" o "inactivo"' })
   estado?: 'activo' | 'inactivo';
+
+  @IsOptional()
+  @IsIn(TIPOS_PERSONA, { message: 'El tipo de persona debe ser "personal" o "visita"' })
+  tipoPersona?: TipoPersona;
 }

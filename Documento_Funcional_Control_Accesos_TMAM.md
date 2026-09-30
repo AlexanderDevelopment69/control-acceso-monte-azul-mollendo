@@ -169,14 +169,15 @@ Pantalla principal del administrador. Muestra a la izquierda la lista del person
 **Lista del personal**
 
 - Cada persona muestra un **✔** si está habilitada para ingresar en la fecha o un **✖** con el motivo (dado de baja, sin documentos, documento vencido).
-- Búsqueda por nombre, número de documento o empresa; filtro por empresa; pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una.
+- Cada persona muestra además su tipo: Personal o Visita.
+- Búsqueda por nombre, número de documento o empresa; filtros por empresa y por tipo de persona; pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una.
 
 **Registrar personal ("+ Nuevo personal")**
 
 Un único formulario permite registrar a la persona y sus documentos:
 
 1. **Empresa:** se elige de la lista o se crea en el mismo formulario ("+ Nueva empresa…": RUC de 11 dígitos, razón social y correo de contacto).
-2. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
+2. **Datos del personal:** tipo de persona (Personal o Visita, obligatorio), tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
 3. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. Es la que se usará para el reconocimiento facial.
 4. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
 
@@ -184,7 +185,7 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 **Ficha de la persona**
 
-- Datos, empresa y foto ("Cambiar foto"). Si no tiene foto, se advierte que no podrá identificarse en el terminal.
+- Datos, tipo de persona (modificable desde la ficha), empresa y foto ("Cambiar foto"). Si no tiene foto, se advierte que no podrá identificarse en el terminal.
 - Recuadro de estado: "Puede ingresar hoy (sujeto a la prueba de alcohol en garita)" o "No puede ingresar" con los motivos.
 - **Documentos actuales:** nombre, vencimiento y estado (Vigente / Vencido), con las acciones:
   - **Renovar:** registra una nueva versión del documento (nuevo vencimiento y archivo); la anterior pasa al historial.
@@ -197,8 +198,8 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 - **Tiempo real:** cada ingreso o salida se muestra en la tabla en el momento en que ocurre, sin recargar la página; la fila del último evento se resalta durante unos segundos.
 - **Contadores:** "Denegaciones hoy", "Alcohol no conforme hoy" y "Documentos vencidos" (documentos del personal activo que ya vencieron). Se actualizan automáticamente.
-- **Historial:** hora, documento, persona, movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
-- **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros) y búsqueda por nombre, apellido o número de documento en todo el historial.
+- **Historial:** hora, documento, persona, tipo de persona, movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
+- **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros), por tipo de persona y búsqueda por nombre, apellido o número de documento en todo el historial.
 - **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar.
 - Los intentos con un documento **no registrado** también quedan en el historial.
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).
@@ -263,7 +264,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | Entidad | Contenido principal |
 |---|---|
 | Empresa | RUC (único), razón social, correo y teléfono de contacto, estado (activa / inactiva). |
-| Persona (personal) | Empresa, tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
+| Persona (personal) | Empresa, tipo de persona (personal o visita), tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
 | Tipo de documento | Nombre (único, sin distinguir mayúsculas), por ejemplo "SCTR Salud". |
 | Documento de la persona | Persona, tipo de documento, fecha de vencimiento (opcional), archivo y número de versión. |
 | Evento de acceso | Persona (vacía si no está registrada), documento leído, ingreso o salida, resultado, motivos de denegación, fecha y hora, molinete. |
@@ -356,13 +357,22 @@ Funcionalidades solicitadas que no forman parte del alcance base. Se desarrollar
 
 ### 12.1. Dashboard con indicadores (KPI)
 
-Pantalla de resumen con indicadores y gráficos del sistema, por ejemplo:
+Pantalla de resumen con indicadores y gráficos, calculados a partir de los ingresos y salidas registrados y del tipo de persona (sección 4.2):
 
-- Total de personal registrado, activo y dado de baja.
-- Personal por empresa.
-- Documentos vigentes, por vencer y vencidos.
-- Ingresos y salidas del día, autorizados y denegados.
-- Tendencias de ingresos y salidas por día, semana o mes, y motivos de denegación más frecuentes.
+| Indicador | Cálculo |
+|---|---|
+| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso. |
+| Visitas finalizadas | Visitas que ingresaron y ya registraron su salida. |
+| Total de visitas | Ingresos autorizados de personas de tipo Visita en el periodo. |
+| Permanencia mayor a 24 horas | Personas que ingresaron hace más de 24 horas y no registran salida. |
+
+Incluye además:
+
+- Gráfico comparativo de visitas presentes y finalizadas, y gráfico de distribución (presentes frente a finalizadas).
+- Filtro por periodo (día, semana o mes) y por tipo de persona.
+- Indicadores complementarios: total de personal registrado, activo y dado de baja; personal por empresa; documentos vigentes, por vencer y vencidos; ingresos y salidas autorizados y denegados, y motivos de denegación más frecuentes.
+
+Los indicadores de presencia dependen de que cada persona registre su salida en el molinete. Si una persona sale sin registrarla (por ejemplo, durante una emergencia con los brazos del molinete liberados), seguirá figurando como presente hasta que registre su salida en el molinete.
 
 ### 12.2. Exportación de datos a Excel o PDF
 
@@ -372,6 +382,7 @@ Descarga de la información del sistema en Excel o PDF, por ejemplo:
 - Estado de documentos por persona.
 - Historial de ingresos y salidas, con los filtros aplicados en pantalla.
 - Registros de auditoría.
+- Reporte de visitas y de personal presente.
 
 ---
 
@@ -383,6 +394,7 @@ Descarga de la información del sistema en Excel o PDF, por ejemplo:
 | Dado de baja | Persona inactiva en el sistema (por ejemplo, porque ya no labora en el terminal); no puede ingresar. |
 | Documento vigente / vencido | Según su fecha de vencimiento respecto de hoy (RN-04). |
 | Evento de acceso | Registro de un intento de ingreso o salida, autorizado o denegado. |
+| Tipo de persona | Clasificación de cada persona como Personal o Visita. Ambos se validan en garita con las mismas reglas. |
 | Mini PC | Servidor local, ubicado junto a los molinetes, donde se ejecuta el sistema. |
 | Molinete | Torniquete de paso (ZKTeco TS2000 Plus). |
 | Protocolo PUSH | Protocolo de comunicación del fabricante ZKTeco entre el terminal facial y el sistema. |

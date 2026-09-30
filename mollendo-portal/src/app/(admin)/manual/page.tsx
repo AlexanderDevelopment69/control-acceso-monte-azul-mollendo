@@ -53,7 +53,7 @@ const SECCIONES: SeccionManual[] = [
           <Link href="/" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Personal y documentos</Link> es
           la pantalla de trabajo. A la izquierda está la lista del personal de todas las empresas; cada persona lleva un{" "}
           <strong>✔</strong> si hoy puede ingresar o un <strong>✖</strong> con el motivo si no puede. Puedes buscar por
-          nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar.
+          nombre, DNI o empresa, y filtrar por empresa, por tipo de persona o por quién puede o no puede ingresar.
         </p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
@@ -62,6 +62,10 @@ const SECCIONES: SeccionManual[] = [
               <li>
                 <strong>Empresa</strong>: elígela de la lista; si no está, “+ Nueva empresa…” y escribe su RUC, razón
                 social y correo ahí mismo.
+              </li>
+              <li>
+                <strong>Tipo de persona</strong>: Personal o Visita. Las visitas se registran y se
+                validan en garita igual que el resto del personal. Se puede cambiar después desde su ficha.
               </li>
               <li>
                 <strong>Tipo y número de documento, nombres y apellidos.</strong> El DNI va con sus 8 dígitos, sin
@@ -127,7 +131,8 @@ const SECCIONES: SeccionManual[] = [
         <p>
           La tabla muestra por defecto los movimientos de <strong>hoy</strong>. Con el calendario se puede ver otro día
           (“Hoy” vuelve al día actual) o “Todos los días”. El buscador encuentra por nombre, apellido o número de
-          documento en todo el historial, no solo en la página que se está viendo.
+          documento en todo el historial, no solo en la página que se está viendo. El filtro de tipo muestra solo al
+          personal o solo a las visitas.
         </p>
         <p>Cuando la persona se identifica en el terminal y hace la prueba de alcohol, el sistema revisa en este orden:</p>
         <ol className="list-decimal space-y-1 pl-5">

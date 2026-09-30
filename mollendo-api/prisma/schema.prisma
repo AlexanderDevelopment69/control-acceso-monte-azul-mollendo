@@ -51,6 +51,14 @@ enum EstadoPersona {
   @@map("estado_persona")
 }
 
+// Distingue a las visitas del resto del personal (filtros e indicadores).
+enum TipoPersona {
+  personal
+  visita
+
+  @@map("tipo_persona")
+}
+
 enum TipoMovimiento {
   ingreso
   salida
@@ -128,6 +136,7 @@ model Persona {
   numeroDocumento        String                 @map("numero_documento") @db.VarChar(20)
   nombres                String                 @db.VarChar(150)
   apellidos              String                 @db.VarChar(150)
+  tipoPersona            TipoPersona            @default(personal) @map("tipo_persona")
   // Foto para el reconocimiento facial del terminal ZKTeco (ruta en disco).
   fotoUrl                String?                @map("foto_url") @db.VarChar(500)
   estado                 EstadoPersona          @default(activo)
@@ -140,6 +149,7 @@ model Persona {
   @@unique([tipoDocumentoIdentidad, numeroDocumento])
   @@index([empresaId])
   @@index([numeroDocumento])
+  @@index([tipoPersona])
   @@map("persona")
 }
 

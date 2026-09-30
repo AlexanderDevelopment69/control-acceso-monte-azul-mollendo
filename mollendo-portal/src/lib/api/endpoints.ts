@@ -39,7 +39,7 @@ export const empresasApi = {
 
 // ---- personas ----
 export const personasApi = {
-  list: (params?: { empresaId?: number; estado?: string }) => {
+  list: (params?: { empresaId?: number; estado?: string; tipoPersona?: string }) => {
     const qs = new URLSearchParams(
       Object.fromEntries(Object.entries(params ?? {}).map(([k, v]) => [k, String(v)])),
     ).toString();
@@ -52,7 +52,10 @@ export const personasApi = {
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
+    tipoPersona: string;
   }) => apiRequest<Persona>("/personas", { method: "POST", body: data }),
+  update: (id: number, data: { tipoPersona?: string }) =>
+    apiRequest<Persona>(`/personas/${id}`, { method: "PATCH", body: data }),
   /** Foto para el reconocimiento facial del terminal (reemplaza la anterior). */
   subirFoto: (id: number, foto: File) => {
     const formData = new FormData();
@@ -89,7 +92,7 @@ export const documentosApi = {
 // ---- eventos-acceso ----
 export const eventosAccesoApi = {
   /** Historial paginado en el servidor, más recientes primero. */
-  list: (params: FiltrosLista & { personaId?: number; resultado?: string } = {}) =>
+  list: (params: FiltrosLista & { personaId?: number; resultado?: string; tipoPersona?: string } = {}) =>
     apiRequest<Paginado<EventoAcceso>>(`/eventos-acceso${consulta({ ...params })}`),
 };
 

@@ -6,7 +6,15 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { connectEventosSocket } from "@/lib/ws";
 import { eventosAccesoApi, panelApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { EventoAcceso, Paginado, Persona, ResumenPanel } from "@/lib/api/types";
+import {
+  FILTRO_TIPO_PERSONA,
+  etiquetaTipoPersona,
+  type EventoAcceso,
+  type Paginado,
+  type Persona,
+  type ResumenPanel,
+} from "@/lib/api/types";
+import Select from "@/components/form/Select";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { Modal } from "@/components/ui/modal";
@@ -169,6 +177,7 @@ function VigilanciaContent() {
   const [busqueda, setBusqueda] = useState("");
   const busquedaDiferida = useDiferido(busqueda.trim());
   const [dia, setDia] = useState(hoy);
+  const [tipoPersona, setTipoPersona] = useState("");
 
   // Contadores e historial. Se vuelve a pedir con cada evento en vivo, así
   // "Denegaciones hoy" y la tabla quedan al día sin recargar la página.
@@ -176,7 +185,14 @@ function VigilanciaContent() {
     try {
       const [r, e] = await Promise.all([
         panelApi.resumen(),
-        eventosAccesoApi.list({ pagina, porPagina: POR_PAGINA, busqueda: busquedaDiferida, desde: dia, hasta: dia }),
+        eventosAccesoApi.list({
+          pagina,
+          porPagina: POR_PAGINA,
+          busqueda: busquedaDiferida,
+          desde: dia,
+          hasta: dia,
+          tipoPersona: tipoPersona || undefined,
+        }),
       ]);
       setResumen(r);
       // Si la página quedó fuera del total (p. ej. tras filtrar), vuelve a la primera.
@@ -191,7 +207,7 @@ function VigilanciaContent() {
     } finally {
       setLoading(false);
     }
-  }, [pagina, busquedaDiferida, dia]);
+  }, [pagina, busquedaDiferida, dia, tipoPersona]);
 
   useEffect(() => {
     void cargar();
@@ -253,8 +269,8 @@ function VigilanciaContent() {
   const eventos = lista?.datos ?? [];
   const pie = pieDePagina(lista);
   const esHoy = dia === hoy();
-  const sinEventos = busquedaDiferida
-    ? "Sin resultados para esa búsqueda."
+  const sinEventos = busquedaDiferida || tipoPersona
+    ? "Sin resultados para esos filtros."
     : !dia
       ? "Sin eventos registrados todavía."
       : esHoy
@@ -298,6 +314,17 @@ function VigilanciaContent() {
               setPagina(1);
             }}
             placeholder="Buscar por nombre o DNI…"
+          />
+        </div>
+        <div className="sm:w-44">
+          <Select
+            defaultValue={tipoPersona}
+            onChange={(v) => {
+              setTipoPersona(v);
+              setPagina(1);
+            }}
+            mostrarPlaceholder={false}
+            options={FILTRO_TIPO_PERSONA}
           />
         </div>
         <div className="flex items-center gap-2">
@@ -351,6 +378,7 @@ function VigilanciaContent() {
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Hora</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">DNI</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Persona</TableCell>
+                <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Tipo</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Movimiento</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Resultado</TableCell>
                 <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Motivo</TableCell>
@@ -359,17 +387,17 @@ function VigilanciaContent() {
             <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
               {loading && (
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>Cargando…</TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={7}>Cargando…</TableCell>
                 </TableRow>
               )}
               {!loading && errorCarga && !lista && (
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>No se pudo cargar el historial.</TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={7}>No se pudo cargar el historial.</TableCell>
                 </TableRow>
               )}
               {!loading && lista && eventos.length === 0 && (
                 <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>{sinEventos}</TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={7}>{sinEventos}</TableCell>
                 </TableRow>
               )}
               {!loading && eventos.map((ev) => (
@@ -389,6 +417,9 @@ function VigilanciaContent() {
                     ) : (
                       <span className="text-gray-400">No registrado</span>
                     )}
+                  </TableCell>
+                  <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    {ev.persona ? etiquetaTipoPersona(ev.persona.tipoPersona) : <span className="text-gray-400">—</span>}
                   </TableCell>
                   <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300 capitalize">{ev.tipoMovimiento}</TableCell>
                   <TableCell className="px-5 py-4 text-sm">

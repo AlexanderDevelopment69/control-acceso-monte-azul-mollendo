@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { documentosApi, empresasApi, personasApi, tiposDocumentoApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { Empresa, Persona } from "@/lib/api/types";
+import { TIPOS_PERSONA, type Empresa, type Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
@@ -83,6 +83,7 @@ function Formulario({
   onCreated: (persona: Persona) => void;
   empresas: Empresa[];
 }) {
+  const [tipoPersona, setTipoPersona] = useState("");
   const [empresaId, setEmpresaId] = useState("");
   const [ruc, setRuc] = useState("");
   const [razonSocial, setRazonSocial] = useState("");
@@ -119,6 +120,7 @@ function Formulario({
   function validar(): string | null {
     if (!personaCreada) {
       if (!empresaId) return "Elige la empresa (o crea una nueva)";
+      if (!tipoPersona) return "Elige el tipo de persona (personal o visita)";
       if (esNuevaEmpresa && !empresaCreada && (!ruc || !razonSocial || !correoContacto)) {
         return "Completa RUC, razón social y correo de la empresa nueva";
       }
@@ -167,6 +169,7 @@ function Formulario({
           numeroDocumento,
           nombres,
           apellidos,
+          tipoPersona,
         });
         setPersonaCreada(persona);
         // Aparece en la lista aunque luego falle algún documento y se cierre el formulario.
@@ -253,6 +256,16 @@ function Formulario({
                 )}
               </div>
             )}
+
+            <div>
+              <Label>Tipo de persona</Label>
+              <Select
+                defaultValue={tipoPersona}
+                onChange={setTipoPersona}
+                placeholder="Selecciona el tipo"
+                options={TIPOS_PERSONA}
+              />
+            </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>

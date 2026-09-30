@@ -105,7 +105,7 @@ export class EventosAccesoService {
       tipoMovimiento: evento.tipoMovimiento,
       resultado: evento.resultado,
       fechaHora: evento.fechaHora.toISOString(),
-      persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+      persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos, tipoPersona: persona.tipoPersona },
       numeroDocumento: persona.numeroDocumento,
       motivos: {
         dadoDeBaja: resultado.denegadoPorBaja,
@@ -149,7 +149,7 @@ export class EventosAccesoService {
       tipoMovimiento: evento.tipoMovimiento,
       resultado: evento.resultado,
       fechaHora: evento.fechaHora.toISOString(),
-      persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+      persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos, tipoPersona: persona.tipoPersona },
       numeroDocumento: persona.numeroDocumento,
       motivos: {},
     };
@@ -167,6 +167,7 @@ export class EventosAccesoService {
     const where: Prisma.EventoAccesoWhereInput = {
       personaId: query.personaId,
       resultado: query.resultado,
+      ...(query.tipoPersona && { persona: { tipoPersona: query.tipoPersona } }),
       fechaHora: rangoDeDias(query.desde, query.hasta),
       AND: palabras(query.busqueda).map((palabra) => ({
         OR: [
@@ -185,6 +186,7 @@ export class EventosAccesoService {
               id: true,
               nombres: true,
               apellidos: true,
+              tipoPersona: true,
               empresaId: true,
               tipoDocumentoIdentidad: true,
               numeroDocumento: true,
