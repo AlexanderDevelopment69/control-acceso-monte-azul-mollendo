@@ -1,5 +1,8 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { PanelService } from './panel.service.js';
+import { DashboardService } from './dashboard.service.js';
+import { QueryDashboardDto } from './dto/query-dashboard.dto.js';
+import { ListaPaginadaDto } from '../common/paginacion.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -9,6 +12,7 @@ import { estadoRespaldos } from './respaldos.util.js';
 export class PanelController {
   constructor(
     private readonly panelService: PanelService,
+    private readonly dashboardService: DashboardService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -16,6 +20,21 @@ export class PanelController {
   @Roles('administrador', 'vigilancia')
   resumen() {
     return this.panelService.resumen();
+  }
+
+  // Indicadores y gráficos del dashboard (solo Administrador): presencia,
+  // visitas, ingresos y salidas del periodo, personal y documentos.
+  @Get('panel/dashboard')
+  @Roles('administrador')
+  dashboard(@Query() query: QueryDashboardDto) {
+    return this.dashboardService.obtener(query);
+  }
+
+  // Lista paginada de la permanencia mayor a 24 horas del dashboard.
+  @Get('panel/dashboard/permanencia')
+  @Roles('administrador')
+  permanencia(@Query() query: ListaPaginadaDto) {
+    return this.dashboardService.permanencia(query);
   }
 
   // Estado del servidor (público). En el alcance base no hay modo contingencia;

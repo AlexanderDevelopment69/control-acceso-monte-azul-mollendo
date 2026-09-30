@@ -18,24 +18,6 @@ export interface TipoDocumento {
   nombre: string;
 }
 
-/** Distingue a las visitas del resto del personal. */
-export type TipoPersona = "personal" | "visita";
-
-export const TIPOS_PERSONA: { value: TipoPersona; label: string }[] = [
-  { value: "personal", label: "Personal" },
-  { value: "visita", label: "Visita" },
-];
-
-/** Opciones de los filtros por tipo ("" = sin filtrar). */
-export const FILTRO_TIPO_PERSONA: { value: string; label: string }[] = [
-  { value: "", label: "Personal y visitas" },
-  { value: "personal", label: "Solo personal" },
-  { value: "visita", label: "Solo visitas" },
-];
-
-export const etiquetaTipoPersona = (tipo: TipoPersona) =>
-  TIPOS_PERSONA.find((t) => t.value === tipo)?.label ?? tipo;
-
 export interface Persona {
   id: number;
   empresaId: number;
@@ -43,7 +25,6 @@ export interface Persona {
   numeroDocumento: string;
   nombres: string;
   apellidos: string;
-  tipoPersona: TipoPersona;
   /** Ruta de la foto para reconocimiento facial; null = sin foto. */
   fotoUrl: string | null;
   estado: "activo" | "inactivo";
@@ -105,7 +86,6 @@ export interface EventoAcceso {
     id: number;
     nombres: string;
     apellidos: string;
-    tipoPersona: TipoPersona;
     empresaId: number;
     tipoDocumentoIdentidad: "DNI" | "CE" | "PASAPORTE";
     numeroDocumento: string;
@@ -116,6 +96,35 @@ export interface ResumenPanel {
   denegacionesHoy: number;
   alcoholNoConformeHoy: number;
   documentosVencidos: number;
+}
+
+/**
+ * Indicadores del dashboard (GET /panel/dashboard). Cada ingreso autorizado de
+ * una persona cuenta como una visita (el cliente llama visitas a todos los accesos).
+ */
+export interface Dashboard {
+  periodo: { desde: string; hasta: string };
+  generadoEn: string;
+  presencia: { presentes: number; masDe24h: number };
+  visitas: { total: number; finalizadas: number; presentes: number };
+  movimientos: {
+    totales: { ingresosAutorizados: number; ingresosDenegados: number; salidasAutorizadas: number; salidasDenegadas: number };
+    motivos: { noRegistrado: number; dadoDeBaja: number; sinDocumentos: number; documentos: number; alcohol: number };
+    tendencia: { dia: string; ingresos: number; denegados: number; salidas: number }[];
+  };
+  personal: { total: number; activos: number; dadosDeBaja: number };
+  porEmpresa: { empresa: string; activos: number }[];
+  documentos: { vigentes: number; porVencer: number; vencidos: number; diasAviso: number };
+}
+
+/** Persona con permanencia mayor a 24 horas (GET /panel/dashboard/permanencia, paginado). */
+export interface PersonaPermanencia {
+  personaId: number;
+  nombres: string;
+  apellidos: string;
+  numeroDocumento: string;
+  empresa: string;
+  ingreso: string;
 }
 
 export interface EstadoSistema {

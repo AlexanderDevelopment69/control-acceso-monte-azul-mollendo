@@ -2,6 +2,8 @@ import { apiRequest } from "./client";
 import { consulta } from "@/lib/paginaServidor";
 import type {
   AuditoriaEntry,
+  Dashboard,
+  PersonaPermanencia,
   DocumentoPersona,
   Empresa,
   EstadoSistema,
@@ -39,7 +41,7 @@ export const empresasApi = {
 
 // ---- personas ----
 export const personasApi = {
-  list: (params?: { empresaId?: number; estado?: string; tipoPersona?: string }) => {
+  list: (params?: { empresaId?: number; estado?: string }) => {
     const qs = new URLSearchParams(
       Object.fromEntries(Object.entries(params ?? {}).map(([k, v]) => [k, String(v)])),
     ).toString();
@@ -52,10 +54,7 @@ export const personasApi = {
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
-    tipoPersona: string;
   }) => apiRequest<Persona>("/personas", { method: "POST", body: data }),
-  update: (id: number, data: { tipoPersona?: string }) =>
-    apiRequest<Persona>(`/personas/${id}`, { method: "PATCH", body: data }),
   /** Foto para el reconocimiento facial del terminal (reemplaza la anterior). */
   subirFoto: (id: number, foto: File) => {
     const formData = new FormData();
@@ -92,13 +91,17 @@ export const documentosApi = {
 // ---- eventos-acceso ----
 export const eventosAccesoApi = {
   /** Historial paginado en el servidor, más recientes primero. */
-  list: (params: FiltrosLista & { personaId?: number; resultado?: string; tipoPersona?: string } = {}) =>
+  list: (params: FiltrosLista & { personaId?: number; resultado?: string } = {}) =>
     apiRequest<Paginado<EventoAcceso>>(`/eventos-acceso${consulta({ ...params })}`),
 };
 
 // ---- panel ----
 export const panelApi = {
   resumen: () => apiRequest<ResumenPanel>("/panel/resumen"),
+  dashboard: (params: { desde?: string; hasta?: string } = {}) =>
+    apiRequest<Dashboard>(`/panel/dashboard${consulta(params)}`),
+  permanencia: (params: { pagina?: number; porPagina?: number } = {}) =>
+    apiRequest<Paginado<PersonaPermanencia>>(`/panel/dashboard/permanencia${consulta(params)}`),
   estadoSistema: () => apiRequest<EstadoSistema>("/panel/estado-sistema"),
 };
 

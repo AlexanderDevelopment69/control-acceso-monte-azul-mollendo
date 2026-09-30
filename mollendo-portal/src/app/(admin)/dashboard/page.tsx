@@ -1,0 +1,577 @@
+"use client";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import type { Socket } from "socket.io-client";
+import { RequireRole } from "@/lib/auth/RequireRole";
+import { connectEventosSocket } from "@/lib/ws";
+import { panelApi } from "@/lib/api/endpoints";
+import { ApiError } from "@/lib/api/client";
+import type { Dashboard, Paginado, PersonaPermanencia } from "@/lib/api/types";
+import { PageHeader } from "@/components/common/PageHeader";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
+import Button from "@/components/ui/button/Button";
+import DatePicker from "@/components/form/date-picker";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { COLORES, Grafico } from "@/components/dashboard/Grafico";
+import { TableFooter } from "@/components/tables/TableFooter";
+import { hoy, pieDePagina } from "@/lib/paginaServidor";
+import { CheckCircleIcon, GroupIcon, TimeIcon, UserIcon } from "@/icons";
+
+type Periodo = "hoy" | "7dias" | "mes" | "rango";
+
+const POR_PAGINA_PERMANENCIA = 10;
+
+const PERIODOS: [Periodo, string][] = [
+  ["hoy", "Hoy"],
+  ["7dias", "Últimos 7 días"],
+  ["mes", "Este mes"],
+  ["rango", "Personalizado"],
+];
+
+/** Fecha AAAA-MM-DD desplazada `dias` días. */
+function sumarDias(fecha: string, dias: number): string {
+  const [a, m, d] = fecha.split("-").map(Number);
+  const f = new Date(a, m - 1, d + dias);
+  return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, "0")}-${String(f.getDate()).padStart(2, "0")}`;
+}
+
+function rangoDelPeriodo(periodo: Periodo, desde: string, hasta: string): { desde: string; hasta: string } {
+  const hoyDia = hoy();
+  if (periodo === "hoy") return { desde: hoyDia, hasta: hoyDia };
+  if (periodo === "7dias") return { desde: sumarDias(hoyDia, -6), hasta: hoyDia };
+  if (periodo === "mes") return { desde: `${hoyDia.slice(0, 8)}01`, hasta: hoyDia };
+  return { desde, hasta };
+}
+
+/** Paso entero y redondo (1, 2, 3, 4, 5, 6, 8, 10, 20, 30…) que cubre `valor`. */
+function pasoRedondo(valor: number): number {
+  const potencia = 10 ** Math.floor(Math.log10(Math.max(1, valor)));
+  const multiplo = [1, 2, 3, 4, 5, 6, 8, 10].find((m) => m * potencia >= valor) ?? 10;
+  return multiplo * potencia;
+}
+
+/**
+ * Eje de cantidades enteras con marcas redondas: una por unidad cuando los
+ * valores son pocos (0 a 6) y, si no, hasta 5 marcas de un paso redondo
+ * (0, 3, 6…; 0, 300, 600…). Con `holgura`, deja espacio sobre la barra más alta para el
+ * número que va encima.
+ */
+function ejeEntero(valores: number[], holgura = false) {
+  const mayor = Math.max(1, ...valores);
+  const tope = holgura ? mayor * 1.15 : mayor;
+  if (tope <= 6) {
+    const maximo = Math.ceil(holgura ? mayor + 1 : mayor);
+    return { min: 0, max: maximo, tickAmount: maximo, labels: { formatter: (v: number | string) => String(Math.round(Number(v))) } };
+  }
+  // Hasta la primera marca redonda que cubre el valor (51 → 0, 20, 40, 60).
+  const paso = pasoRedondo(tope / 5);
+  const marcas = Math.ceil(tope / paso);
+  return {
+    min: 0,
+    max: marcas * paso,
+    tickAmount: marcas,
+    labels: { formatter: (v: number | string) => String(Math.round(Number(v))) },
+  };
+}
+
+/** En las donas, sin porcentaje en las porciones chicas (se ve al pasar el mouse). */
+const porcentajeVisible = (valor: number | string | number[]) =>
+  typeof valor === "number" && valor >= 5 ? `${valor.toFixed(1)}%` : "";
+
+/** "2026-09-30" → "30/09". */
+const diaCorto = (dia: string) => `${dia.slice(8, 10)}/${dia.slice(5, 7)}`;
+
+/** Horas o días transcurridos desde una fecha, para la permanencia. */
+function tiempoDentro(desde: string, ahora: string): string {
+  const horas = Math.floor((new Date(ahora).getTime() - new Date(desde).getTime()) / 3_600_000);
+  if (horas < 48) return `${horas} h`;
+  return `${Math.floor(horas / 24)} días`;
+}
+
+/**
+ * Presentes actualmente = todas las personas dentro, sin importar cuándo
+ * entraron. El gráfico solo cuenta las visitas del periodo; la diferencia son
+ * quienes entraron antes del periodo (p. ej. la permanencia mayor a 24 h).
+ */
+function detallePresentes(d: Dashboard | null): string {
+  if (!d) return "Personas que ingresaron y aún no registran salida";
+  const anteriores = Math.max(0, d.presencia.presentes - d.visitas.presentes);
+  if (anteriores === 0) return "Personas que ingresaron y aún no registran salida";
+  return `${d.visitas.presentes} ingresaron en el periodo · ${anteriores} antes del periodo`;
+}
+
+function Indicador({
+  titulo,
+  valor,
+  detalle,
+  icono,
+  color,
+}: {
+  titulo: string;
+  valor: number | null;
+  detalle?: string;
+  icono: React.ReactNode;
+  color: string;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+      <span className={`flex size-12 shrink-0 items-center justify-center rounded-xl text-white ${color} [&_svg]:size-6`}>
+        {icono}
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm text-gray-500 dark:text-gray-400">{titulo}</p>
+        <p className="text-2xl font-semibold text-gray-800 dark:text-white/90">{valor ?? "—"}</p>
+        {detalle && <p className="text-xs leading-snug text-gray-400">{detalle}</p>}
+      </div>
+    </div>
+  );
+}
+
+function Tarjeta({
+  titulo,
+  descripcion,
+  children,
+  className = "",
+}: {
+  titulo: string;
+  descripcion?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`flex flex-col rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] ${className}`}>
+      <h2 className="text-sm font-semibold text-gray-800 dark:text-white/90">{titulo}</h2>
+      {descripcion && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{descripcion}</p>}
+      <div className="mt-4 flex flex-1 flex-col">{children}</div>
+    </section>
+  );
+}
+
+function DashboardContent() {
+  const [periodo, setPeriodo] = useState<Periodo>("hoy");
+  const [desdeRango, setDesdeRango] = useState(() => sumarDias(hoy(), -6));
+  const [hastaRango, setHastaRango] = useState(hoy);
+  const [datos, setDatos] = useState<Dashboard | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [paginaPermanencia, setPaginaPermanencia] = useState(1);
+  const [permanencia, setPermanencia] = useState<Paginado<PersonaPermanencia> | null>(null);
+
+  const { desde, hasta } = rangoDelPeriodo(periodo, desdeRango, hastaRango);
+  const rangoValido = !!desde && !!hasta && desde <= hasta;
+
+  const cargar = useCallback(async () => {
+    if (!rangoValido) return;
+    try {
+      const [tablero, lista] = await Promise.all([
+        panelApi.dashboard({ desde, hasta }),
+        panelApi.permanencia({ pagina: paginaPermanencia, porPagina: POR_PAGINA_PERMANENCIA }),
+      ]);
+      setDatos(tablero);
+      // Si la página quedó fuera del total (alguien registró su salida), vuelve a la primera.
+      if (lista.datos.length === 0 && lista.total > 0 && paginaPermanencia > 1) setPaginaPermanencia(1);
+      else setPermanencia(lista);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudieron cargar los indicadores");
+    } finally {
+      setCargando(false);
+    }
+  }, [desde, hasta, rangoValido, paginaPermanencia]);
+
+  useEffect(() => {
+    void cargar();
+  }, [cargar]);
+
+  // Se actualiza con cada ingreso o salida (tiempo real) y cada minuto, para
+  // que la permanencia mayor a 24 horas avance aunque no haya movimientos.
+  const cargarActual = useRef(cargar);
+  useEffect(() => {
+    cargarActual.current = cargar;
+  }, [cargar]);
+  useEffect(() => {
+    let socket: Socket | undefined;
+    let pendiente: ReturnType<typeof setTimeout> | null = null;
+    try {
+      socket = connectEventosSocket();
+      socket.on("evento-acceso", () => {
+        if (pendiente) clearTimeout(pendiente);
+        pendiente = setTimeout(() => void cargarActual.current(), 1000);
+      });
+    } catch {
+      // sin tiempo real, se actualiza cada minuto
+    }
+    const intervalo = setInterval(() => void cargarActual.current(), 60_000);
+    return () => {
+      socket?.disconnect();
+      if (pendiente) clearTimeout(pendiente);
+      clearInterval(intervalo);
+    };
+  }, []);
+
+  const d = datos;
+  const tendencia = d?.movimientos.tendencia ?? [];
+  const motivos = d?.movimientos.motivos;
+  const totales = d?.movimientos.totales;
+  const hayVisitas = (d?.visitas.total ?? 0) > 0;
+  const hayDocumentos = !!d && d.documentos.vigentes + d.documentos.porVencer + d.documentos.vencidos > 0;
+  const hayMotivos = !!motivos && Object.values(motivos).some((n) => n > 0);
+
+  return (
+    <div>
+      <PageHeader
+        title="Dashboard"
+        description="Indicadores de presencia, visitas, ingresos y salidas, personal y documentos. Cada ingreso autorizado cuenta como una visita. Se actualiza en tiempo real."
+      />
+
+      {/* Periodo y tipo */}
+      <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 text-sm dark:bg-gray-900">
+          {PERIODOS.map(([id, texto]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setPeriodo(id)}
+              className={`rounded-md px-3 py-1.5 font-medium ${
+                periodo === id
+                  ? "bg-white text-gray-900 shadow-theme-xs dark:bg-gray-800 dark:text-white"
+                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              }`}
+            >
+              {texto}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {periodo === "rango" && (
+            <div className="flex items-center gap-2">
+              <div className="w-full sm:w-40">
+                <DatePicker id="dashboard-desde" placeholder="Desde" max={hastaRango || hoy()} value={desdeRango} onChange={setDesdeRango} />
+              </div>
+              <span className="text-sm text-gray-400">a</span>
+              <div className="w-full sm:w-40">
+                <DatePicker id="dashboard-hasta" placeholder="Hasta" min={desdeRango} max={hoy()} value={hastaRango} onChange={setHastaRango} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <ErrorBanner className="flex-1">{error}</ErrorBanner>
+          <Button type="button" variant="outline" size="sm" onClick={() => void cargar()}>
+            Reintentar
+          </Button>
+        </div>
+      )}
+      {!rangoValido && <ErrorBanner className="mb-6">Elige las fechas &quot;desde&quot; y &quot;hasta&quot; del periodo.</ErrorBanner>}
+
+      {/* Indicadores principales */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Indicador
+          titulo="Presentes actualmente"
+          valor={d?.presencia.presentes ?? null}
+          detalle={detallePresentes(d)}
+          icono={<UserIcon />}
+          color="bg-brand-500"
+        />
+        <Indicador
+          titulo="Visitas finalizadas"
+          valor={d?.visitas.finalizadas ?? null}
+          detalle="Visitas del periodo que ya registraron su salida"
+          icono={<CheckCircleIcon />}
+          color="bg-success-500"
+        />
+        <Indicador
+          titulo="Total de visitas"
+          valor={d?.visitas.total ?? null}
+          detalle="Ingresos autorizados en el periodo"
+          icono={<GroupIcon />}
+          color="bg-[#7a5af8]"
+        />
+        <Indicador
+          titulo="Permanencia mayor a 24 h"
+          valor={d?.presencia.masDe24h ?? null}
+          detalle="Ingresaron hace más de un día y no registran salida"
+          icono={<TimeIcon />}
+          color="bg-warning-500"
+        />
+      </div>
+
+      {cargando && !d ? (
+        <p className="text-sm text-gray-400">Cargando indicadores…</p>
+      ) : (
+        d && (
+          <div className="space-y-6">
+            {/* Visitas */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <Tarjeta titulo="Comparativa de visitas" descripcion={`Total de visitas en el periodo: ${d.visitas.total}`}>
+                {!hayVisitas ? (
+                  <SinDatos texto="No hubo visitas en el periodo." />
+                ) : (
+                  <Grafico
+                    tipo="bar"
+                    series={[{ name: "Visitas", data: [d.visitas.presentes, d.visitas.finalizadas] }]}
+                    opciones={{
+                      colors: [COLORES.marca, COLORES.exito],
+                      plotOptions: { bar: { distributed: true, borderRadius: 6, columnWidth: "45%", dataLabels: { position: "top" } } },
+                      dataLabels: { enabled: true, offsetY: -24, style: { fontSize: "13px", colors: ["#667085"] } },
+                      xaxis: { categories: ["Presentes", "Finalizadas"] },
+                      yaxis: ejeEntero([d.visitas.presentes, d.visitas.finalizadas], true),
+                      legend: { show: false },
+                    }}
+                  />
+                )}
+              </Tarjeta>
+              <Tarjeta titulo="Distribución: presentes frente a finalizadas" descripcion="Visitas del periodo según hayan registrado su salida">
+                {hayVisitas ? (
+                  <Grafico
+                    tipo="donut"
+                    series={[d.visitas.presentes, d.visitas.finalizadas]}
+                    opciones={{
+                      labels: ["Presentes", "Finalizadas"],
+                      colors: [COLORES.marca, COLORES.exito],
+                      dataLabels: { enabled: true, formatter: porcentajeVisible },
+                      plotOptions: {
+                        pie: { donut: { size: "62%", labels: { show: true, total: { show: true, label: "Total" } } } },
+                      },
+                    }}
+                  />
+                ) : (
+                  <SinDatos texto="No hubo visitas en el periodo." />
+                )}
+              </Tarjeta>
+            </div>
+
+            {/* Ingresos y salidas */}
+            <Tarjeta
+              titulo="Ingresos y salidas por día"
+              descripcion={
+                totales
+                  ? `${totales.ingresosAutorizados} ingresos autorizados · ${totales.ingresosDenegados} ingresos denegados · ${totales.salidasAutorizadas} salidas`
+                  : undefined
+              }
+            >
+              <Grafico
+                tipo="bar"
+                alto={300}
+                series={[
+                  { name: "Ingresos autorizados", data: tendencia.map((t) => t.ingresos) },
+                  { name: "Denegados", data: tendencia.map((t) => t.denegados) },
+                  { name: "Salidas", data: tendencia.map((t) => t.salidas) },
+                ]}
+                opciones={{
+                  colors: [COLORES.exito, COLORES.error, COLORES.celeste],
+                  plotOptions: { bar: { borderRadius: 3, columnWidth: tendencia.length > 14 ? "80%" : "50%" } },
+                  xaxis: {
+                    categories: tendencia.map((t) => diaCorto(t.dia)),
+                    tickAmount: Math.min(tendencia.length, 15),
+                    labels: { rotate: 0, hideOverlappingLabels: true },
+                  },
+                  yaxis: ejeEntero(tendencia.flatMap((t) => [t.ingresos, t.denegados, t.salidas])),
+                }}
+              />
+            </Tarjeta>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <Tarjeta titulo="Motivos de denegación" descripcion="Una denegación puede tener varios motivos">
+                {hayMotivos && motivos ? (
+                  <Grafico
+                    tipo="bar"
+                    series={[
+                      {
+                        name: "Denegaciones",
+                        data: [motivos.documentos, motivos.sinDocumentos, motivos.alcohol, motivos.dadoDeBaja, motivos.noRegistrado],
+                      },
+                    ]}
+                    opciones={{
+                      colors: [COLORES.error],
+                      plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: "55%" } },
+                      dataLabels: { enabled: true },
+                      xaxis: {
+                        categories: ["Documentos vencidos", "Sin documentos", "Alcohol", "Dado de baja", "No registrado"],
+                        ...ejeEntero(Object.values(motivos)),
+                      },
+                    }}
+                  />
+                ) : (
+                  <SinDatos texto="No hubo denegaciones en el periodo." />
+                )}
+              </Tarjeta>
+              <Tarjeta
+                titulo="Documentos del personal activo"
+                descripcion={`Por vencer: vencen en los próximos ${d.documentos.diasAviso} días`}
+              >
+                {hayDocumentos ? (
+                  <Grafico
+                    tipo="donut"
+                    series={[d.documentos.vigentes, d.documentos.porVencer, d.documentos.vencidos]}
+                    opciones={{
+                      labels: ["Vigentes", "Por vencer", "Vencidos"],
+                      colors: [COLORES.exito, COLORES.aviso, COLORES.error],
+                      dataLabels: { enabled: true, formatter: porcentajeVisible },
+                      plotOptions: {
+                        pie: { donut: { size: "62%", labels: { show: true, total: { show: true, label: "Documentos" } } } },
+                      },
+                    }}
+                  />
+                ) : (
+                  <SinDatos texto="Todavía no hay documentos cargados." />
+                )}
+              </Tarjeta>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <Tarjeta titulo="Personal registrado">
+                <ResumenPersonal personal={d.personal} presentes={d.presencia.presentes} />
+              </Tarjeta>
+              <Tarjeta titulo="Personal activo por empresa" className="lg:col-span-2">
+                {d.porEmpresa.length ? (
+                  <Grafico
+                    tipo="bar"
+                    alto={Math.max(200, d.porEmpresa.length * 42)}
+                    series={[{ name: "Personas activas", data: d.porEmpresa.map((e) => e.activos) }]}
+                    opciones={{
+                      colors: [COLORES.marca],
+                      plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: "60%" } },
+                      dataLabels: { enabled: true },
+                      xaxis: {
+                        categories: d.porEmpresa.map((e) => e.empresa),
+                        ...ejeEntero(d.porEmpresa.map((e) => e.activos)),
+                      },
+                      yaxis: { labels: { maxWidth: 220 } },
+                      // En el celular, nombres más cortos para que las barras tengan espacio.
+                      responsive: [{ breakpoint: 640, options: { yaxis: { labels: { maxWidth: 110 } } } }],
+                    }}
+                  />
+                ) : (
+                  <SinDatos texto="Todavía no hay personal activo." />
+                )}
+              </Tarjeta>
+            </div>
+
+            {/* Permanencia mayor a 24 horas */}
+            <Tarjeta
+              titulo="Permanencia mayor a 24 horas"
+              descripcion="Personas cuyo último movimiento es un ingreso de hace más de un día. Si salieron sin pasar por el molinete, seguirán figurando aquí hasta que registren su salida."
+            >
+              {!permanencia || permanencia.total === 0 ? (
+                <SinDatos texto="Nadie lleva más de 24 horas dentro." />
+              ) : (
+                <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+                  <Table>
+                    <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+                      <TableRow>
+                        {["Persona", "Documento", "Empresa", "Ingreso", "Tiempo dentro"].map((c) => (
+                          <TableCell key={c} isHeader className="px-4 py-3 text-start text-xs font-medium text-gray-500">
+                            {c}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {permanencia.datos.map((p) => (
+                        <TableRow key={p.personaId}>
+                          <TableCell className="px-4 py-3 text-sm text-gray-800 dark:text-white/90">
+                            {p.nombres} {p.apellidos}
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.numeroDocumento}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.empresa}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                            {new Date(p.ingreso).toLocaleString("es-PE")}
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm font-medium text-warning-600 dark:text-orange-400">
+                            {tiempoDentro(p.ingreso, d.generadoEn)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+              {!!permanencia && permanencia.total > 0 && (
+                // El pie ocupa todo el ancho de la tarjeta, como en las demás tablas.
+                <div className="-mx-5 -mb-5 mt-2">
+                  <TableFooter {...pieDePagina(permanencia)} onPageChange={setPaginaPermanencia} />
+                </div>
+              )}
+            </Tarjeta>
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
+const porcentaje = (parte: number, total: number) => (total > 0 ? Math.round((parte / total) * 100) : 0);
+
+/** Total de personal, proporción de activos y dados de baja, y cuántos están dentro ahora. */
+function ResumenPersonal({ personal, presentes }: { personal: Dashboard["personal"]; presentes: number }) {
+  const pActivos = porcentaje(personal.activos, personal.total);
+  const pDentro = porcentaje(presentes, personal.activos);
+  const filas = [
+    { etiqueta: "Activos", valor: personal.activos, pct: pActivos, color: "bg-success-500" },
+    { etiqueta: "Dados de baja", valor: personal.dadosDeBaja, pct: personal.total ? 100 - pActivos : 0, color: "bg-gray-300 dark:bg-gray-600" },
+  ];
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-4xl font-semibold text-gray-800 dark:text-white/90">{personal.total}</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">personas registradas</p>
+        </div>
+        <span className="flex size-12 items-center justify-center rounded-xl bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400 [&_svg]:size-6">
+          <GroupIcon />
+        </span>
+      </div>
+
+      {/* Proporción de activos y dados de baja */}
+      <div className="mt-5 flex h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+        <div className="bg-success-500 transition-[width] duration-700" style={{ width: `${pActivos}%` }} />
+        <div className="bg-gray-300 dark:bg-gray-600" style={{ width: `${personal.total ? 100 - pActivos : 0}%` }} />
+      </div>
+      <ul className="mt-4 space-y-3">
+        {filas.map((f) => (
+          <li key={f.etiqueta} className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+              <span className={`size-2.5 rounded-full ${f.color}`} />
+              {f.etiqueta}
+            </span>
+            <span className="font-medium text-gray-800 dark:text-white/90">
+              {f.valor} <span className="font-normal text-gray-400">· {f.pct}%</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {/* Cuántos del personal activo están dentro ahora */}
+      <div className="mt-auto pt-5">
+        <div className="rounded-lg bg-gray-50 p-4 dark:bg-white/[0.03]">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600 dark:text-gray-300">En el terminal ahora</span>
+            <span className="font-semibold text-brand-500 dark:text-brand-400">
+              {presentes} <span className="font-normal text-gray-400">de {personal.activos}</span>
+            </span>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+            <div className="h-full rounded-full bg-brand-500 transition-[width] duration-700" style={{ width: `${Math.min(100, pDentro)}%` }} />
+          </div>
+          <p className="mt-2 text-xs text-gray-400">{pDentro}% del personal activo</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SinDatos({ texto }: { texto: string }) {
+  return <p className="flex h-40 items-center justify-center text-sm text-gray-400">{texto}</p>;
+}
+
+export default function DashboardPage() {
+  return (
+    <RequireRole roles={["administrador"]}>
+      <DashboardContent />
+    </RequireRole>
+  );
+}

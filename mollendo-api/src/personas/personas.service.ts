@@ -98,7 +98,7 @@ export class PersonasService {
   /** Listado con el cumplimiento de cada persona (para el ✔/✖ de la pantalla principal). */
   async findAll(query: QueryPersonasDto) {
     const personas = await this.prisma.persona.findMany({
-      where: { empresaId: query.empresaId, estado: query.estado, tipoPersona: query.tipoPersona },
+      where: { empresaId: query.empresaId, estado: query.estado },
       include: {
         empresa: EMPRESA_SELECT,
         documentos: {

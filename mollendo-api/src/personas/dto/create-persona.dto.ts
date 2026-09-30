@@ -1,9 +1,6 @@
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsIn, IsInt, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
 import { normalizarNumeroDocumento, recortar } from '../../common/transformaciones.js';
-
-export const TIPOS_PERSONA = ['personal', 'visita'] as const;
-export type TipoPersona = (typeof TIPOS_PERSONA)[number];
 
 export class CreatePersonaDto {
   @IsInt({ message: 'La empresa es obligatoria' })
@@ -31,9 +28,4 @@ export class CreatePersonaDto {
   @IsNotEmpty({ message: 'Los apellidos son obligatorios' })
   @MaxLength(150, { message: 'Los apellidos no pueden tener más de 150 caracteres' })
   apellidos!: string;
-
-  // Opcional en la API (por defecto "personal"); el portal siempre lo envía.
-  @IsOptional()
-  @IsIn(TIPOS_PERSONA, { message: 'El tipo de persona debe ser "personal" o "visita"' })
-  tipoPersona?: TipoPersona;
 }

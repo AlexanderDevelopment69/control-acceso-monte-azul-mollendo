@@ -509,7 +509,7 @@ Primero mira siempre el estado y el log: `dc ps` y `dc logs --tail 100 api`.
 
 ## 8b. Datos de demostración
 
-Para mostrar el sistema funcionando sin datos reales, se puede cargar un conjunto de demostración: **4 empresas, 20 personas** (con foto y documentos; algunas con documentos vencidos o por vencer, 2 de baja y 1 sin documentos) y **unos 30 ingresos y salidas**. Todo es identificable y se borra sin tocar datos reales:
+Para mostrar el sistema funcionando sin datos reales, se puede cargar un conjunto de demostración: **6 empresas, 56 personas** (con foto y documentos; algunas con documentos vencidos o por vencer, 3 de baja y 1 sin documentos) y **los ingresos y salidas de hoy** (unos 65). Todo es identificable y se borra sin tocar datos reales:
 
 - empresas con RUC `2099999990x` y razón social que empieza con "DEMO";
 - personas con número de documento que empieza con `99`;
@@ -525,6 +525,8 @@ npx tsx prisma/datos-demo.ts
 ```
 
 Sin `DEVICE_API_KEY` carga empresas y personas, pero no los ingresos y salidas. Si ya hay datos DEMO, no hace nada.
+
+**Historial de 30 días (opcional, para el Dashboard):** `prisma/historial-demo.ts` agrega los ingresos y salidas de los últimos 30 días del personal DEMO (unos 2 250 eventos, con las mismas reglas del molinete y doce personas que se quedan dentro más de 24 horas). Como la API registra cada evento con la hora actual, este script escribe directo en la base de datos: necesita `DATABASE_URL` hacia la base, así que se usa en una PC de desarrollo (en `mollendo-api`: `npx tsx prisma/historial-demo.ts`). Sus eventos también llevan el molinete "DEMO" y se borran con el mismo procedimiento.
 
 **Borrar** (en el servidor, dentro de `~/mollendo`): borra las empresas, personas, documentos, fotos, eventos y auditoría DEMO, y los tipos de documento que queden sin uso.
 

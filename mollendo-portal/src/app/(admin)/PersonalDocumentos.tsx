@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { empresasApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
-import { FILTRO_TIPO_PERSONA, etiquetaTipoPersona, type Empresa, type Persona } from "@/lib/api/types";
+import type { Empresa, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
 import Select from "@/components/form/Select";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -36,7 +36,6 @@ export function PersonalDocumentos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [empresaFiltro, setEmpresaFiltro] = useState("todas");
-  const [tipoFiltro, setTipoFiltro] = useState("");
   const [filtro, setFiltro] = useState<Filtro>("todos");
 
   // Tras registrar o subir un documento cambia el ✔/✖.
@@ -71,7 +70,6 @@ export function PersonalDocumentos() {
   const q = busqueda.trim().toLowerCase();
   const filtradas = personas.filter((p) => {
     if (empresaFiltro !== "todas" && p.empresaId !== Number(empresaFiltro)) return false;
-    if (tipoFiltro && p.tipoPersona !== tipoFiltro) return false;
     if (filtro === "habilitados" && !p.cumplimiento?.habilitado) return false;
     if (filtro === "no-habilitados" && p.cumplimiento?.habilitado) return false;
     if (!q) return true;
@@ -109,26 +107,18 @@ export function PersonalDocumentos() {
         <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] lg:sticky lg:top-24 lg:w-96 lg:shrink-0">
           <div className="space-y-3 border-b border-gray-100 p-4 dark:border-gray-800">
             <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre, DNI o empresa…" />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <Select
-                key={`empresas-${empresas.length}`}
-                defaultValue={empresaFiltro}
-                onChange={setEmpresaFiltro}
-                mostrarPlaceholder={false}
-                options={[
-                  { value: "todas", label: "Todas las empresas" },
-                  ...[...empresas]
-                    .sort((a, b) => a.razonSocial.localeCompare(b.razonSocial))
-                    .map((e) => ({ value: String(e.id), label: e.razonSocial })),
-                ]}
-              />
-              <Select
-                defaultValue={tipoFiltro}
-                onChange={setTipoFiltro}
-                mostrarPlaceholder={false}
-                options={FILTRO_TIPO_PERSONA}
-              />
-            </div>
+            <Select
+              key={`empresas-${empresas.length}`}
+              defaultValue={empresaFiltro}
+              onChange={setEmpresaFiltro}
+              mostrarPlaceholder={false}
+              options={[
+                { value: "todas", label: "Todas las empresas" },
+                ...[...empresas]
+                  .sort((a, b) => a.razonSocial.localeCompare(b.razonSocial))
+                  .map((e) => ({ value: String(e.id), label: e.razonSocial })),
+              ]}
+            />
             <div className="flex gap-1 rounded-lg bg-gray-100 p-1 text-xs dark:bg-gray-900">
               {(
                 [
@@ -188,7 +178,7 @@ export function PersonalDocumentos() {
                         {p.apellidos}, {p.nombres}
                       </span>
                       <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
-                        {p.numeroDocumento} · {etiquetaTipoPersona(p.tipoPersona)} · {p.empresa?.razonSocial}
+                        {p.numeroDocumento} · {p.empresa?.razonSocial}
                       </span>
                       {motivos.length > 0 && (
                         <span className="block truncate text-xs text-error-600 dark:text-error-500">{motivos.join(" · ")}</span>

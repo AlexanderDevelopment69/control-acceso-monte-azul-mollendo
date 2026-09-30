@@ -53,7 +53,7 @@ const SECCIONES: SeccionManual[] = [
           <Link href="/" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Personal y documentos</Link> es
           la pantalla de trabajo. A la izquierda está la lista del personal de todas las empresas; cada persona lleva un{" "}
           <strong>✔</strong> si hoy puede ingresar o un <strong>✖</strong> con el motivo si no puede. Puedes buscar por
-          nombre, DNI o empresa, y filtrar por empresa, por tipo de persona o por quién puede o no puede ingresar.
+          nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar.
         </p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
@@ -62,10 +62,6 @@ const SECCIONES: SeccionManual[] = [
               <li>
                 <strong>Empresa</strong>: elígela de la lista; si no está, “+ Nueva empresa…” y escribe su RUC, razón
                 social y correo ahí mismo.
-              </li>
-              <li>
-                <strong>Tipo de persona</strong>: Personal o Visita. Las visitas se registran y se
-                validan en garita igual que el resto del personal. Se puede cambiar después desde su ficha.
               </li>
               <li>
                 <strong>Tipo y número de documento, nombres y apellidos.</strong> El DNI va con sus 8 dígitos, sin
@@ -131,8 +127,7 @@ const SECCIONES: SeccionManual[] = [
         <p>
           La tabla muestra por defecto los movimientos de <strong>hoy</strong>. Con el calendario se puede ver otro día
           (“Hoy” vuelve al día actual) o “Todos los días”. El buscador encuentra por nombre, apellido o número de
-          documento en todo el historial, no solo en la página que se está viendo. El filtro de tipo muestra solo al
-          personal o solo a las visitas.
+          documento en todo el historial, no solo en la página que se está viendo.
         </p>
         <p>Cuando la persona se identifica en el terminal y hace la prueba de alcohol, el sistema revisa en este orden:</p>
         <ol className="list-decimal space-y-1 pl-5">
@@ -149,6 +144,43 @@ const SECCIONES: SeccionManual[] = [
         <p>
           La salida solo se registra y abre el molinete; no se exige un ingreso previo. Si el servidor deja de
           responder, aparece un aviso arriba a la derecha: mientras dure, no se valida ningún ingreso.
+        </p>
+      </div>
+    ),
+  },
+  {
+    id: "dashboard",
+    titulo: "Dashboard",
+    roles: ["administrador"],
+    contenido: (
+      <div className="space-y-3">
+        <p>
+          El <Link href="/dashboard" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Dashboard</Link>{" "}
+          resume en indicadores y gráficos lo que pasa en el terminal. Cada ingreso autorizado de una persona cuenta como
+          una visita. Se actualiza solo con cada ingreso o salida.
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            <strong>Presentes actualmente</strong>: todas las personas que están dentro ahora, sin importar cuándo
+            entraron. Debajo se indica cuántas ingresaron en el periodo (las “presentes” del gráfico) y cuántas antes.
+          </li>
+          <li>
+            <strong>Total de visitas</strong>: ingresos autorizados en el periodo elegido. De ellas, las{" "}
+            <strong>finalizadas</strong> ya registraron su salida y las <strong>presentes</strong> todavía no.
+          </li>
+          <li>
+            <strong>Permanencia mayor a 24 h</strong>: personas que ingresaron hace más de un día y no registran salida. Al
+            final de la página está la lista con su tiempo dentro.
+          </li>
+          <li>
+            Gráficos de visitas, ingresos y salidas por día, motivos de denegación, documentos del personal activo
+            (vigentes, por vencer en 30 días y vencidos) y personal activo por empresa.
+          </li>
+        </ul>
+        <p>
+          Arriba se elige el periodo: hoy, últimos 7 días, este mes o un rango personalizado. Los indicadores de presencia
+          dependen de que cada persona registre su salida en el molinete: si alguien sale sin registrarla, seguirá
+          figurando como presente.
         </p>
       </div>
     ),

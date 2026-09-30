@@ -102,7 +102,7 @@ Los contenedores se reinician automáticamente ante una falla y se inician junto
 | Capa | Tecnología |
 |---|---|
 | Lenguaje | TypeScript (portal y backend) |
-| Portal web | Next.js 16, React 19, Tailwind CSS 4, cliente Socket.IO |
+| Portal web | Next.js 16, React 19, Tailwind CSS 4, cliente Socket.IO, ApexCharts (gráficos del Dashboard) |
 | Backend | NestJS 12 sobre Node.js 22, API REST versionada (`/api/v1`) |
 | Tiempo real | Socket.IO 4 (WebSocket) |
 | Acceso a datos | Prisma 7 (ORM y migraciones versionadas) |
@@ -127,6 +127,7 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 | Módulo | Administrador | Vigilancia |
 |---|---|---|
 | Personal y documentos | Ver y modificar | — |
+| Dashboard | Ver | — |
 | Panel de vigilancia | Ver | Ver |
 | Documentos de una persona (desde el Panel) | Ver | Ver |
 | Auditoría | Ver | — |
@@ -169,15 +170,14 @@ Pantalla principal del administrador. Muestra a la izquierda la lista del person
 **Lista del personal**
 
 - Cada persona muestra un **✔** si está habilitada para ingresar en la fecha o un **✖** con el motivo (dado de baja, sin documentos, documento vencido).
-- Cada persona muestra además su tipo: Personal o Visita.
-- Búsqueda por nombre, número de documento o empresa; filtros por empresa y por tipo de persona; pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una.
+- Búsqueda por nombre, número de documento o empresa; filtro por empresa; pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una.
 
 **Registrar personal ("+ Nuevo personal")**
 
 Un único formulario permite registrar a la persona y sus documentos:
 
 1. **Empresa:** se elige de la lista o se crea en el mismo formulario ("+ Nueva empresa…": RUC de 11 dígitos, razón social y correo de contacto).
-2. **Datos del personal:** tipo de persona (Personal o Visita, obligatorio), tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
+2. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
 3. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. Es la que se usará para el reconocimiento facial.
 4. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
 
@@ -185,7 +185,7 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 **Ficha de la persona**
 
-- Datos, tipo de persona (modificable desde la ficha), empresa y foto ("Cambiar foto"). Si no tiene foto, se advierte que no podrá identificarse en el terminal.
+- Datos, empresa y foto ("Cambiar foto"). Si no tiene foto, se advierte que no podrá identificarse en el terminal.
 - Recuadro de estado: "Puede ingresar hoy (sujeto a la prueba de alcohol en garita)" o "No puede ingresar" con los motivos.
 - **Documentos actuales:** nombre, vencimiento y estado (Vigente / Vencido), con las acciones:
   - **Renovar:** registra una nueva versión del documento (nuevo vencimiento y archivo); la anterior pasa al historial.
@@ -198,27 +198,45 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 - **Tiempo real:** cada ingreso o salida se muestra en la tabla en el momento en que ocurre, sin recargar la página; la fila del último evento se resalta durante unos segundos.
 - **Contadores:** "Denegaciones hoy", "Alcohol no conforme hoy" y "Documentos vencidos" (documentos del personal activo que ya vencieron). Se actualizan automáticamente.
-- **Historial:** hora, documento, persona, tipo de persona, movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
-- **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros), por tipo de persona y búsqueda por nombre, apellido o número de documento en todo el historial.
+- **Historial:** hora, documento, persona, movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
+- **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros) y búsqueda por nombre, apellido o número de documento en todo el historial.
 - **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar.
 - Los intentos con un documento **no registrado** también quedan en el historial.
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).
 
-### 4.4. Auditoría (Administrador)
+### 4.4. Dashboard (Administrador)
+
+Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salidas registrados. Cada ingreso autorizado de una persona cuenta como una **visita**. Se actualiza en tiempo real con cada ingreso o salida, y cada minuto.
+
+| Indicador | Cálculo |
+|---|---|
+| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 24 horas). |
+| Visitas finalizadas | Visitas del periodo que ya registraron su salida. |
+| Total de visitas | Ingresos autorizados en el periodo. |
+| Permanencia mayor a 24 horas | Personas que ingresaron hace más de 24 horas y no registran salida. |
+
+- **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
+- **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa.
+- **Personal registrado:** total, activos y dados de baja.
+- **Lista de permanencia mayor a 24 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
+
+Los indicadores de presencia dependen de que cada persona registre su salida en el molinete. Si una persona sale sin registrarla (por ejemplo, durante una emergencia con los brazos del molinete liberados), seguirá figurando como presente hasta que registre su salida.
+
+### 4.5. Auditoría (Administrador)
 
 - Registro de solo lectura que indica qué usuario creó, modificó o eliminó cada dato y en qué fecha: personal, empresas, documentos, tipos de documento y usuarios.
 - Búsqueda por usuario o por tipo de dato ("personal", "documento"…) y filtro por rango de fechas ("Desde" / "Hasta"), paginado de 15 registros por página.
 
-### 4.5. Sistema y APIs (Administrador)
+### 4.6. Sistema y APIs (Administrador)
 
 - **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado") y **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas). Se actualiza cada 15 segundos.
 - **Documentación de las APIs de integración** con ejemplos de uso y su estado ("Disponible", "Simulado" o "Por programar"), y enlace a la documentación interactiva (Swagger).
 
-### 4.6. Manual
+### 4.7. Manual
 
-Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, cuenta y contraseña, auditoría y sistema.
+Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, cuenta y contraseña, auditoría y sistema.
 
-### 4.7. Características generales del portal
+### 4.8. Características generales del portal
 
 - Fechas en formato día-mes-año y hora de Lima.
 - Diseño adaptable a computadora, tablet y celular (menú desplegable, tablas desplazables, tarjetas).
@@ -264,7 +282,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | Entidad | Contenido principal |
 |---|---|
 | Empresa | RUC (único), razón social, correo y teléfono de contacto, estado (activa / inactiva). |
-| Persona (personal) | Empresa, tipo de persona (personal o visita), tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
+| Persona (personal) | Empresa, tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
 | Tipo de documento | Nombre (único, sin distinguir mayúsculas), por ejemplo "SCTR Salud". |
 | Documento de la persona | Persona, tipo de documento, fecha de vencimiento (opcional), archivo y número de versión. |
 | Evento de acceso | Persona (vacía si no está registrada), documento leído, ingreso o salida, resultado, motivos de denegación, fecha y hora, molinete. |
@@ -291,6 +309,8 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `POST /eventos-acceso/ingreso` · `/salida` | Registrar un ingreso o una salida | Equipos (`X-API-Key`) |
 | `GET /eventos-acceso` | Historial paginado, con búsqueda y fechas | Administrador y Vigilancia |
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
+| `GET /panel/dashboard` | Indicadores y gráficos del Dashboard, por periodo | Administrador |
+| `GET /panel/dashboard/permanencia` | Personas con permanencia mayor a 24 horas, paginado | Administrador |
 | `GET /panel/estado-sistema` · `/health` | Estado del sistema y de los respaldos | Administrador · público |
 | `GET /auditoria` | Auditoría paginada, con búsqueda y fechas | Administrador |
 | `GET` · `POST` · `PATCH /usuarios` | Cuentas de usuario (sin pantalla en el alcance base) | Administrador |
@@ -355,26 +375,7 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 
 Funcionalidades solicitadas que no forman parte del alcance base. Se desarrollarán una vez aprobadas.
 
-### 12.1. Dashboard con indicadores (KPI)
-
-Pantalla de resumen con indicadores y gráficos, calculados a partir de los ingresos y salidas registrados y del tipo de persona (sección 4.2):
-
-| Indicador | Cálculo |
-|---|---|
-| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso. |
-| Visitas finalizadas | Visitas que ingresaron y ya registraron su salida. |
-| Total de visitas | Ingresos autorizados de personas de tipo Visita en el periodo. |
-| Permanencia mayor a 24 horas | Personas que ingresaron hace más de 24 horas y no registran salida. |
-
-Incluye además:
-
-- Gráfico comparativo de visitas presentes y finalizadas, y gráfico de distribución (presentes frente a finalizadas).
-- Filtro por periodo (día, semana o mes) y por tipo de persona.
-- Indicadores complementarios: total de personal registrado, activo y dado de baja; personal por empresa; documentos vigentes, por vencer y vencidos; ingresos y salidas autorizados y denegados, y motivos de denegación más frecuentes.
-
-Los indicadores de presencia dependen de que cada persona registre su salida en el molinete. Si una persona sale sin registrarla (por ejemplo, durante una emergencia con los brazos del molinete liberados), seguirá figurando como presente hasta que registre su salida en el molinete.
-
-### 12.2. Exportación de datos a Excel o PDF
+### 12.1. Exportación de datos a Excel o PDF
 
 Descarga de la información del sistema en Excel o PDF, por ejemplo:
 
@@ -394,10 +395,10 @@ Descarga de la información del sistema en Excel o PDF, por ejemplo:
 | Dado de baja | Persona inactiva en el sistema (por ejemplo, porque ya no labora en el terminal); no puede ingresar. |
 | Documento vigente / vencido | Según su fecha de vencimiento respecto de hoy (RN-04). |
 | Evento de acceso | Registro de un intento de ingreso o salida, autorizado o denegado. |
-| Tipo de persona | Clasificación de cada persona como Personal o Visita. Ambos se validan en garita con las mismas reglas. |
 | Mini PC | Servidor local, ubicado junto a los molinetes, donde se ejecuta el sistema. |
 | Molinete | Torniquete de paso (ZKTeco TS2000 Plus). |
 | Protocolo PUSH | Protocolo de comunicación del fabricante ZKTeco entre el terminal facial y el sistema. |
+| Visita | Cada ingreso autorizado de una persona al terminal; se usa en los indicadores del Dashboard. |
 | Respaldo | Copia de la base de datos y de los archivos para recuperar la información. |
 | Tailscale | Red privada virtual (VPN) que permite acceder a la mini PC desde fuera del terminal sin exponerla a internet. |
 | X-API-Key | Clave con la que se identifican los equipos ante el sistema. |

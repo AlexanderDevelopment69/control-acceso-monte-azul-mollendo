@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { documentosApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import { TIPOS_PERSONA, type Cumplimiento, type DocumentoPersona, type Persona, type TipoPersona } from "@/lib/api/types";
+import type { Cumplimiento, DocumentoPersona, Persona } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
@@ -59,7 +59,6 @@ export function PersonaFicha({
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
-  const [errorTipo, setErrorTipo] = useState<string | null>(null);
 
   const obtener = useCallback(() => personasApi.get(personaId), [personaId]);
 
@@ -125,16 +124,6 @@ export function PersonaFicha({
       setErrorFoto(err instanceof ApiError ? err.message : "No se pudo subir la foto");
     } finally {
       setSubiendoFoto(false);
-    }
-  }
-
-  async function cambiarTipo(tipoPersona: TipoPersona) {
-    setErrorTipo(null);
-    try {
-      await personasApi.update(personaId, { tipoPersona });
-      recargarTodo();
-    } catch (err) {
-      setErrorTipo(err instanceof ApiError ? err.message : "No se pudo cambiar el tipo de persona");
     }
   }
 
@@ -210,20 +199,6 @@ export function PersonaFicha({
                 {persona.tipoDocumentoIdentidad} {persona.numeroDocumento}
                 {persona.empresa && ` · ${persona.empresa.razonSocial}`}
               </p>
-              <label className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                Tipo:
-                <select
-                  value={persona.tipoPersona}
-                  onChange={(e) => cambiarTipo(e.target.value as TipoPersona)}
-                  className="h-8 rounded-lg border border-gray-300 bg-transparent px-2 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                >
-                  {TIPOS_PERSONA.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
           </div>
           <Button size="sm" variant="outline" onClick={toggleEstado}>
@@ -231,7 +206,6 @@ export function PersonaFicha({
           </Button>
         </div>
         {errorFoto && <ErrorBanner className="mt-4">{errorFoto}</ErrorBanner>}
-        {errorTipo && <ErrorBanner className="mt-4">{errorTipo}</ErrorBanner>}
         {!persona.fotoUrl && (
           <div className="mt-4 rounded-lg bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
             Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Usa “Subir foto”.

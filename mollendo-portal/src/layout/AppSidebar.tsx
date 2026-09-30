@@ -11,6 +11,7 @@ import {
   HorizontaLDots,
   InfoIcon,
   ListIcon,
+  PieChartIcon,
   PlugInIcon,
 } from "../icons/index";
 import type { RolUsuario } from "@/lib/api/types";
@@ -23,6 +24,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador"] },
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
   { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },

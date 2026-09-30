@@ -1,5 +1,7 @@
 // Carga datos de DEMOSTRACIÓN a través de la API (como lo haría el portal):
-// 4 empresas "DEMO", 20 personas con foto y documentos, y ~30 ingresos/salidas.
+// 6 empresas "DEMO", 56 personas con foto y documentos, y los ingresos y
+// salidas de hoy. Para llenar los gráficos del Dashboard con los últimos 30
+// días, después correr prisma/historial-demo.ts (ver ese archivo).
 // Todo es identificable para poder borrarlo después (ver prisma/limpiar-demo.sh):
 //   - empresas con RUC 2099999990x y razón social que empieza con "DEMO"
 //   - personas con número de documento que empieza con "99"
@@ -103,6 +105,8 @@ const EMPRESAS = [
   { ruc: '20999999902', razonSocial: 'DEMO Servicios Portuarios Islay S.A.', correoContacto: 'rrhh@demo-portuarios.pe' },
   { ruc: '20999999903', razonSocial: 'DEMO Mantenimiento Industrial E.I.R.L.', correoContacto: 'operaciones@demo-mantenimiento.pe' },
   { ruc: '20999999904', razonSocial: 'DEMO Seguridad Integral Mollendo S.A.C.', correoContacto: 'gerencia@demo-seguridad.pe' },
+  { ruc: '20999999905', razonSocial: 'DEMO Estiba y Desestiba Matarani S.A.C.', correoContacto: 'personal@demo-estiba.pe' },
+  { ruc: '20999999906', razonSocial: 'DEMO Limpieza y Servicios Generales Islay E.I.R.L.', correoContacto: 'administracion@demo-limpieza.pe' },
 ];
 
 /** Días desde hoy (negativo = en el pasado), en formato AAAA-MM-DD. */
@@ -152,6 +156,23 @@ const PERSONAS: PersonaDemo[] = [
   { empresa: 3, numero: '99040003', nombres: 'Teodoro', apellidos: 'Quispe Larico', documentos: normal([{ nombre: 'Curso de vigilancia (SUCAMEC)', vence: 400 }]), baja: true },
   { empresa: 3, numero: '99040004', nombres: 'Karina', apellidos: 'Aguilar Paredes', documentos: [{ nombre: 'SCTR Salud', vence: null }, { nombre: 'Inducción SSMA', vence: null }] },
 ];
+
+// 36 personas más, generadas: repartidas en las 6 empresas, con algunos
+// documentos vencidos o por vencer y una de baja.
+const NOMBRES = ['Luis', 'Carmen', 'Julio César', 'Yessica', 'Marco Antonio', 'Pilar', 'Roberto', 'Nancy', 'Fidel', 'Silvia', 'Ángel', 'Maribel'];
+const APELLIDOS = ['Aquino', 'Benavides', 'Cahuana', 'Delgado', 'Escobar', 'Gutiérrez', 'Huarca', 'Illanes', 'Jiménez', 'Lazo', 'Medina', 'Núñez', 'Ortiz', 'Pinto', 'Rivera', 'Salas', 'Torres', 'Valdivia'];
+for (let i = 0; i < 36; i++) {
+  const vencido = i % 11 === 4;
+  const porVencer = i % 7 === 2;
+  PERSONAS.push({
+    empresa: i % 6,
+    numero: `9905${String(i + 1).padStart(4, '0')}`,
+    nombres: NOMBRES[i % NOMBRES.length],
+    apellidos: `${APELLIDOS[i % APELLIDOS.length]} ${APELLIDOS[(i * 5 + 3) % APELLIDOS.length]}`,
+    documentos: normal([{ nombre: 'Examen médico ocupacional', vence: vencido ? -8 : porVencer ? 12 : 200 + i * 3 }]),
+    baja: i === 30,
+  });
+}
 
 const COLORES: [number, number, number][] = [
   [52, 101, 164], [78, 154, 6], [196, 160, 0], [117, 80, 123], [204, 0, 0], [6, 152, 154], [206, 92, 0], [85, 87, 83],
@@ -226,11 +247,13 @@ async function main() {
   };
   const noRegistrado = { empresa: 0, numero: '99999901', nombres: '', apellidos: '', documentos: [] } as PersonaDemo;
 
-  for (const { persona } of creadas) await mover(persona, 'ingreso');
+  // Hoy ingresa 4 de cada 5 personas; un tercio de ellas ya salió.
+  const ingresaron = creadas.filter((_, i) => i % 5 !== 4);
+  for (const { persona } of ingresaron) await mover(persona, 'ingreso');
   await mover(creadas[1].persona, 'ingreso', false); // alcohol
   await mover(creadas[11].persona, 'ingreso', false); // alcohol
   await mover(noRegistrado, 'ingreso');
-  for (const i of [0, 3, 5, 8, 11, 16]) await mover(creadas[i].persona, 'salida');
+  for (const [i, { persona }] of ingresaron.entries()) if (i % 3 === 0) await mover(persona, 'salida');
   await mover(creadas[9].persona, 'salida'); // de baja: puede salir
   await mover({ ...noRegistrado, numero: '99999902' }, 'salida');
   console.log(`\nMovimientos: ${eventos} (molinete "${MOLINETE}")`);
