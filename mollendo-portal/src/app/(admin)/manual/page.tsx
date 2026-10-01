@@ -104,8 +104,10 @@ const SECCIONES: SeccionManual[] = [
             </ul>
           </li>
           <li>
-            Si alguien deja de trabajar en el Terminal, usa <strong>“Dar de baja”</strong>. Desde ese momento se le
-            deniega el ingreso automáticamente, sin importar sus documentos.
+            Si alguien deja de trabajar en el Terminal, usa <strong>“Dar de baja”</strong> y confírmalo en la ventana que
+            aparece. Desde ese momento se le deniega el ingreso automáticamente, sin importar sus documentos (sí puede
+            salir). Sus datos e historial se conservan, y con <strong>“Reactivar”</strong> (también con confirmación) vuelve a
+            quedar habilitado; si tiene documentos vencidos, la ventana avisa que aún debe regularizarlos para ingresar.
           </li>
         </ol>
         <p className="text-xs text-gray-400">

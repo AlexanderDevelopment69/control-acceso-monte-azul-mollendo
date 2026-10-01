@@ -57,6 +57,10 @@ export function PersonaFicha({
   const [aEliminar, setAEliminar] = useState<{ tipoDocumentoId: number; nombre: string } | null>(null);
   const [eliminando, setEliminando] = useState(false);
   const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
+  /** Cambio de estado por confirmar: "inactivo" = dar de baja, "activo" = reactivar. */
+  const [confirmarEstado, setConfirmarEstado] = useState<"activo" | "inactivo" | null>(null);
+  const [cambiandoEstado, setCambiandoEstado] = useState(false);
+  const [errorEstado, setErrorEstado] = useState<string | null>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
@@ -128,10 +132,19 @@ export function PersonaFicha({
     }
   }
 
-  async function toggleEstado() {
+  async function cambiarEstado(estado: "activo" | "inactivo") {
     if (!persona) return;
-    await personasApi.updateEstado(persona.id, persona.estado === "activo" ? "inactivo" : "activo");
-    recargarTodo();
+    setCambiandoEstado(true);
+    setErrorEstado(null);
+    try {
+      await personasApi.updateEstado(persona.id, estado);
+      setConfirmarEstado(null);
+      recargarTodo();
+    } catch (err) {
+      setErrorEstado(err instanceof ApiError ? err.message : "No se pudo cambiar el estado");
+    } finally {
+      setCambiandoEstado(false);
+    }
   }
 
   if (error) return <ErrorBanner>{error}</ErrorBanner>;
@@ -141,6 +154,13 @@ export function PersonaFicha({
   const actuales = persona.documentosActuales ?? [];
   const historial: DocumentoPersona[] = persona.documentos ?? [];
   const idsActuales = new Set(actuales.map((d) => d.id));
+  /** Lo que le impediría ingresar aunque se lo reactive (sin documentos o con alguno vencido). */
+  const pendientesAlReactivar =
+    actuales.length === 0
+      ? ["no tiene documentos cargados"]
+      : actuales.some((d) => !d.vigente)
+        ? [`Vencido: ${actuales.filter((d) => !d.vigente).map((d) => d.nombre).join(", ")}`]
+        : [];
 
   /** Botones "Ver", "Renovar" y "Eliminar" de un documento (tarjeta en el celular, tabla en pantallas anchas). */
   function accionesDocumento(d: (typeof actuales)[number], className = "") {
@@ -203,11 +223,20 @@ export function PersonaFicha({
               </p>
             </div>
           </div>
-          <Button size="sm" variant="outline" onClick={toggleEstado}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={cambiandoEstado}
+            onClick={() => {
+              setErrorEstado(null);
+              setConfirmarEstado(persona.estado === "activo" ? "inactivo" : "activo");
+            }}
+          >
             {persona.estado === "activo" ? "Dar de baja" : "Reactivar"}
           </Button>
         </div>
         {errorFoto && <ErrorBanner className="mt-4">{errorFoto}</ErrorBanner>}
+        {errorEstado && !confirmarEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
         {!persona.fotoUrl && (
           <div className="mt-4 rounded-lg bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
             Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Usa “Subir foto”.
@@ -243,6 +272,50 @@ export function PersonaFicha({
           <SubirDocumentoForm key={ventana.nombre} personaId={persona.id} nombreFijo={ventana.nombre} onSubido={documentoSubido} />
         )}
         {ventana?.modo === "agregar" && <SubirDocumentoForm personaId={persona.id} onSubido={documentoSubido} />}
+      </Modal>
+
+      <Modal isOpen={confirmarEstado !== null} onClose={() => setConfirmarEstado(null)} className="max-w-md p-6 sm:p-8">
+        {confirmarEstado === "inactivo" ? (
+          <>
+            <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Dar de baja</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              ¿Dar de baja a <strong>{persona.nombres} {persona.apellidos}</strong>? Desde ese momento{" "}
+              <strong>no podrá ingresar</strong> por los molinetes, aunque tenga sus documentos al día. Sí podrá salir si
+              está dentro.
+            </p>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Sus datos, documentos e historial se conservan, y se puede reactivar cuando sea necesario.
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Reactivar</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              ¿Reactivar a <strong>{persona.nombres} {persona.apellidos}</strong>? Podrá volver a ingresar por los
+              molinetes si tiene sus documentos al día y pasa la prueba de alcohol.
+            </p>
+            {pendientesAlReactivar.length > 0 && (
+              <p className="mt-3 rounded-lg bg-warning-50 px-3 py-2 text-sm text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
+                Aun reactivado no podrá ingresar hasta regularizar: {pendientesAlReactivar.join(" · ")}.
+              </p>
+            )}
+          </>
+        )}
+        {errorEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
+        <div className="mt-6 flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={() => setConfirmarEstado(null)}>
+            Cancelar
+          </Button>
+          {confirmarEstado === "inactivo" ? (
+            <Button type="button" variant="danger" disabled={cambiandoEstado} onClick={() => void cambiarEstado("inactivo")}>
+              {cambiandoEstado ? "Dando de baja…" : "Dar de baja"}
+            </Button>
+          ) : (
+            <Button type="button" disabled={cambiandoEstado} onClick={() => void cambiarEstado("activo")}>
+              {cambiandoEstado ? "Reactivando…" : "Reactivar"}
+            </Button>
+          )}
+        </div>
       </Modal>
 
       <Modal isOpen={aEliminar !== null} onClose={() => setAEliminar(null)} className="max-w-md p-6 sm:p-8">

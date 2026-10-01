@@ -199,7 +199,7 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
   - **Eliminar:** elimina el documento con todas sus versiones y archivos, previa confirmación.
   - **+ Agregar documento:** agrega un documento que la persona no tenía.
 - **Historial de documentos:** todas las versiones cargadas, con la marca "Reemplazado" en las anteriores; cada versión se puede ver ("Ver").
-- **Dar de baja / Reactivar:** la persona dada de baja no puede ingresar, sin importar sus documentos.
+- **Dar de baja / Reactivar:** la persona dada de baja no puede ingresar, sin importar sus documentos (sí puede salir). Los dos piden confirmación; al reactivar, si tiene documentos vencidos o ninguno cargado, se avisa que aun así no podrá ingresar hasta regularizarlos. Sus datos, documentos e historial se conservan.
 
 ### 4.3. Panel de vigilancia (Administrador y Vigilancia)
 
