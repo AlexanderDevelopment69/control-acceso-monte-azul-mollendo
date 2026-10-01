@@ -6,12 +6,13 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Express } from 'express';
+import type { Express, Response } from 'express';
 import { DocumentosService } from './documentos.service.js';
 import { CreateDocumentoDto } from './dto/create-documento.dto.js';
 import { documentosMulterOptions } from './documentos-storage.util.js';
@@ -42,6 +43,22 @@ export class DocumentosController {
   @Roles('administrador', 'vigilancia')
   findHistorial(@Param('personaId', ParseIntPipe) personaId: number) {
     return this.documentosService.findHistorial(personaId);
+  }
+
+  // Archivo de una versión del documento: PDF e imágenes se abren en el
+  // navegador; Word se descarga.
+  @Get('personas/:personaId/documentos/:documentoId/archivo')
+  @Roles('administrador', 'vigilancia')
+  async verArchivo(
+    @Param('personaId', ParseIntPipe) personaId: number,
+    @Param('documentoId', ParseIntPipe) documentoId: number,
+    @Res() res: Response,
+  ) {
+    const archivo = await this.documentosService.archivo(personaId, documentoId);
+    res.setHeader('Content-Type', archivo.tipo);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', `${archivo.enLinea ? 'inline' : 'attachment'}; filename="${archivo.nombre}"`);
+    res.sendFile(archivo.ruta);
   }
 
   // Elimina el documento completo (todas sus versiones y archivos) de la persona.

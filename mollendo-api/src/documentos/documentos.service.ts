@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Express } from 'express';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -5,6 +7,17 @@ import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 import type { CreateDocumentoDto } from './dto/create-documento.dto.js';
 import { borrarArchivo, guardarArchivo } from '../common/archivos-persona.util.js';
+
+/** Tipo de contenido según la extensión con que se guardó el archivo (ver documentos-storage.util.ts). */
+const TIPO_POR_EXTENSION: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
 
 @Injectable()
 export class DocumentosService {
@@ -66,6 +79,36 @@ export class DocumentosService {
     });
 
     return documento;
+  }
+
+  /**
+   * Archivo de una versión de un documento de la persona, para verlo o
+   * descargarlo. PDF e imágenes se abren en el navegador; Word se descarga.
+   */
+  async archivo(personaId: number, documentoId: number) {
+    const documento = await this.prisma.documentoPersona.findFirst({
+      where: { id: documentoId, personaId },
+      include: { tipoDocumento: { select: { nombre: true } }, persona: { select: { numeroDocumento: true } } },
+    });
+    if (!documento) {
+      throw new NotFoundException('Documento no encontrado');
+    }
+    if (!documento.archivoUrl || !existsSync(documento.archivoUrl)) {
+      throw new NotFoundException('El archivo del documento no está disponible');
+    }
+    const extension = extname(documento.archivoUrl).toLowerCase();
+    const tipo = TIPO_POR_EXTENSION[extension] ?? 'application/octet-stream';
+    // Nombre legible y seguro para la cabecera: "SCTR-Salud_99010001_v2.pdf".
+    const base = `${documento.tipoDocumento.nombre}_${documento.persona.numeroDocumento}_v${documento.version}`
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[^A-Za-z0-9_-]+/g, '-');
+    return {
+      ruta: resolve(documento.archivoUrl),
+      tipo,
+      nombre: `${base}${extension}`,
+      enLinea: tipo === 'application/pdf' || tipo.startsWith('image/'),
+    };
   }
 
   async findHistorial(personaId: number) {

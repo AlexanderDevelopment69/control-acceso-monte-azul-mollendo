@@ -11,6 +11,7 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { Modal } from "@/components/ui/modal";
 import { SubirDocumentoForm } from "./SubirDocumentoForm";
 import { FotoGuardada, validarFoto } from "./FotoPersonal";
+import { VerDocumento } from "./VerDocumento";
 
 /** Las columnas DATE llegan como medianoche UTC: se muestran en UTC para no correrse un día. */
 export function formatearFecha(fecha: string): string {
@@ -141,10 +142,11 @@ export function PersonaFicha({
   const historial: DocumentoPersona[] = persona.documentos ?? [];
   const idsActuales = new Set(actuales.map((d) => d.id));
 
-  /** Botones "Renovar" y "Eliminar" de un documento (tarjeta en el celular, tabla en pantallas anchas). */
+  /** Botones "Ver", "Renovar" y "Eliminar" de un documento (tarjeta en el celular, tabla en pantallas anchas). */
   function accionesDocumento(d: (typeof actuales)[number], className = "") {
     return (
       <>
+        <VerDocumento personaId={persona!.id} documentoId={d.id} className={className} />
         <Button size="sm" variant="outline" className={className} onClick={() => setVentana({ modo: "renovar", nombre: d.nombre })}>
           Renovar
         </Button>
@@ -341,7 +343,10 @@ export function PersonaFicha({
                     {d.fechaVencimiento && ` · vence ${formatearFecha(d.fechaVencimiento)}`}
                   </span>
                 </span>
-                {!idsActuales.has(d.id) && <Badge color="light">Reemplazado</Badge>}
+                <span className="flex items-center gap-3">
+                  {!idsActuales.has(d.id) && <Badge color="light">Reemplazado</Badge>}
+                  <VerDocumento personaId={persona.id} documentoId={d.id} variante="enlace" />
+                </span>
               </li>
             ))}
           </ul>

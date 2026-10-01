@@ -194,10 +194,11 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 - Datos, empresa y foto ("Cambiar foto"). Si no tiene foto, se advierte que no podrá identificarse en el terminal.
 - Recuadro de estado: "Puede ingresar hoy (sujeto a la prueba de alcohol en garita)" o "No puede ingresar" con los motivos.
 - **Documentos actuales:** nombre, vencimiento y estado (Vigente / Vencido), con las acciones:
+  - **Ver:** abre el archivo cargado en una pestaña nueva (PDF o imagen); si es Word, lo descarga.
   - **Renovar:** registra una nueva versión del documento (nuevo vencimiento y archivo); la anterior pasa al historial.
   - **Eliminar:** elimina el documento con todas sus versiones y archivos, previa confirmación.
   - **+ Agregar documento:** agrega un documento que la persona no tenía.
-- **Historial de documentos:** todas las versiones cargadas, con la marca "Reemplazado" en las anteriores.
+- **Historial de documentos:** todas las versiones cargadas, con la marca "Reemplazado" en las anteriores; cada versión se puede ver ("Ver").
 - **Dar de baja / Reactivar:** la persona dada de baja no puede ingresar, sin importar sus documentos.
 
 ### 4.3. Panel de vigilancia (Administrador y Vigilancia)
@@ -206,7 +207,7 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 - **Contadores:** "Denegaciones hoy", "Alcohol no conforme hoy" y "Documentos vencidos" (documentos del personal activo que ya vencieron). Se actualizan automáticamente.
 - **Historial:** hora, documento, persona, movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
 - **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros) y búsqueda por nombre, apellido o número de documento en todo el historial.
-- **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar.
+- **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar; cada uno se puede ver ("Ver").
 - Los intentos con un documento **no registrado** también quedan en el historial.
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).
 
@@ -332,6 +333,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `POST /personas` · `PATCH /personas/:id` · `PATCH /personas/:id/estado` | Registrar, modificar, dar de baja o reactivar | Administrador |
 | `POST` · `GET /personas/:id/foto` | Subir y ver la foto | Subir: Administrador; ver: ambos |
 | `POST` · `GET /personas/:id/documentos` | Subir un documento (o su renovación) y ver el historial | Subir: Administrador; ver: ambos |
+| `GET /personas/:id/documentos/:documentoId/archivo` | Archivo de una versión del documento (PDF e imagen se abren en el navegador; Word se descarga) | Administrador y Vigilancia |
 | `DELETE /personas/:id/documentos/:tipoDocumentoId` | Eliminar un documento con todas sus versiones | Administrador |
 | `GET` · `POST /tipos-documento` | Nombres de documento | Crear: Administrador |
 | `POST /eventos-acceso/ingreso` · `/salida` | Registrar un ingreso o una salida | Equipos (`X-API-Key`) |

@@ -83,6 +83,11 @@ export const documentosApi = {
       body: formData,
       isFormData: true,
     }),
+  /** Archivo de una versión del documento (PDF, imagen o Word), con su nombre. */
+  archivo: (personaId: number, documentoId: number) =>
+    apiRequest<{ blob: Blob; nombre: string }>(`/personas/${personaId}/documentos/${documentoId}/archivo`, {
+      responseType: "archivo",
+    }),
   /** Elimina el documento completo (todas sus versiones) de la persona. */
   eliminar: (personaId: number, tipoDocumentoId: number) =>
     apiRequest<{ eliminados: number }>(`/personas/${personaId}/documentos/${tipoDocumentoId}`, { method: "DELETE" }),

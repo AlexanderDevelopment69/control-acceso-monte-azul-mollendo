@@ -9,6 +9,7 @@ import { ApiError } from "@/lib/api/client";
 import type { EventoAcceso, Paginado, Persona, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
+import { VerDocumento } from "@/components/personal/VerDocumento";
 import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
@@ -139,7 +140,10 @@ function DocumentosModal({ personaId, onClose }: { personaId: number | null; onC
                         : "No vence"}
                     </span>
                   </span>
-                  {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
+                  <span className="flex shrink-0 items-center gap-3">
+                    <VerDocumento personaId={persona.id} documentoId={d.id} variante="enlace" />
+                    {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
+                  </span>
                 </li>
               ))}
             </ul>

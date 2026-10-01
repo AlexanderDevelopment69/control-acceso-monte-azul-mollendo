@@ -87,6 +87,10 @@ const SECCIONES: SeccionManual[] = [
             vigente o vencido. Desde ahí puedes:
             <ul className="mt-1 list-disc space-y-1 pl-5">
               <li>
+                <strong>“Ver”</strong>: abre el archivo cargado en una pestaña nueva (PDF o imagen); si es Word, se
+                descarga. También se puede ver cada versión anterior desde el historial.
+              </li>
+              <li>
                 <strong>“Renovar”</strong>: sube la versión nueva de ese documento (nuevo vencimiento y archivo). Solo
                 cuenta la más reciente; las anteriores quedan en el historial como “Reemplazado”.
               </li>
