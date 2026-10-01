@@ -279,7 +279,7 @@ function ReportesContent() {
                   onChange={(e) => setIncluirAnteriores(e.target.checked)}
                   className="size-4 rounded border-gray-300 accent-brand-500"
                 />
-                Incluir en el ZIP las versiones anteriores (reemplazadas)
+                Incluir también los documentos anteriores que fueron renovados
               </label>
             </div>
           )}
