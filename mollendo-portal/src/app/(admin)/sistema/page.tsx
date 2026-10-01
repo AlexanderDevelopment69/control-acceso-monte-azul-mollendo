@@ -273,24 +273,22 @@ function EquiposEstado({
       </>
     );
   }
-  const hayEnLinea = equipos.enLinea > 0;
-  const detalle = (d: EstadoDispositivo) => {
-    if (d.enLinea) return `${d.serialNumber}: en línea`;
-    if (d.ultimaActividad) {
-      const hora = new Date(d.ultimaActividad).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
-      return `${d.serialNumber}: últ. vez ${hora}`;
-    }
-    return `${d.serialNumber}: nunca conectado`;
-  };
+  const ultimaVez = (d: EstadoDispositivo) =>
+    d.ultimaActividad
+      ? `últ. vez ${new Date(d.ultimaActividad).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}`
+      : "nunca conectado";
   return (
-    <>
-      <div className="mt-2">
-        <Badge color={hayEnLinea ? "success" : "error"}>
-          {equipos.enLinea} de {equipos.total} en línea
-        </Badge>
-      </div>
-      <p className="mt-2 text-xs text-gray-400">{equipos.dispositivos.map(detalle).join(" · ")}</p>
-    </>
+    <div className="mt-2 space-y-3">
+      {equipos.dispositivos.map((d) => (
+        <div key={d.serialNumber}>
+          <Badge color={d.enLinea ? "success" : "error"}>{d.enLinea ? "En línea" : "Desconectado"}</Badge>
+          <p className="mt-1 text-xs text-gray-400">
+            {d.serialNumber}
+            {!d.enLinea && ` · ${ultimaVez(d)}`}
+          </p>
+        </div>
+      ))}
+    </div>
   );
 }
 
