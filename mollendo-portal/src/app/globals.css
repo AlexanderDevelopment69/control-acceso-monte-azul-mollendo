@@ -199,6 +199,51 @@
        contenido no se corra cuando aparece/desaparece (ej. al desplegar
        una fila de una tabla que hace crecer la página). */
     scrollbar-gutter: stable;
+    /* Los controles del navegador (barras de desplazamiento, calendarios) siguen el tema. */
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  /* Barras de desplazamiento delgadas, redondeadas, sin flechas y con el color
+     del tema (en toda la página y en las listas con scroll propio).
+     Chrome, Edge y Safari: con ::-webkit-scrollbar (permite quitar las flechas
+     y cambiar el color al pasar el mouse). Firefox: propiedades estándar. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background: var(--color-gray-300) padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-400) padding-box;
+  }
+  html.dark ::-webkit-scrollbar-thumb {
+    background: var(--color-gray-700) padding-box;
+  }
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-600) padding-box;
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    html,
+    html * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-gray-300) transparent;
+    }
+    html.dark,
+    html.dark * {
+      scrollbar-color: var(--color-gray-700) transparent;
+    }
   }
   body {
     @apply relative font-normal font-outfit z-1 bg-gray-50;
