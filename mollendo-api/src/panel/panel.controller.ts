@@ -88,6 +88,14 @@ export class PanelController {
         enLinea: dispositivos.filter((d) => d.enLinea).length,
         dispositivos,
       },
+      // Lectores de DNI (USB-COM, no son equipos de red como el G4 Pro):
+      // todavía no hay integración real que lea el puerto (pendiente más
+      // grande del proyecto ahora mismo) -- por eso solo reporta si hay un
+      // puerto configurado, no si el lector responde de verdad.
+      lectoresDni: {
+        ingreso: { configurado: !!process.env.LECTOR_DNI_INGRESO_PUERTO },
+        salida: { configurado: !!process.env.LECTOR_DNI_SALIDA_PUERTO },
+      },
       respaldos: estadoRespaldos(),
       websocket: { namespace: '/ws/eventos' },
     };

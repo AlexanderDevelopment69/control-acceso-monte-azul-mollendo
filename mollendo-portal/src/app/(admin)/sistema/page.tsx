@@ -8,7 +8,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
+import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
@@ -292,6 +292,37 @@ function EquiposEstado({
   );
 }
 
+/** Lectores de DNI: por USB-COM, no por red -- hoy solo dice si hay un puerto configurado (todavía no hay integración real, ver Estado_Implementacion_Integracion_G4Pro.md pendiente 3.2). */
+function LectoresDniEstado({
+  comprobando,
+  lectoresDni,
+}: {
+  comprobando: boolean;
+  lectoresDni?: EstadoSistema["lectoresDni"];
+}) {
+  if (comprobando) {
+    return (
+      <div className="mt-2">
+        <ComprobandoBadge />
+      </div>
+    );
+  }
+  const filas: { etiqueta: string; configurado: boolean }[] = [
+    { etiqueta: "Ingreso", configurado: !!lectoresDni?.ingreso.configurado },
+    { etiqueta: "Salida", configurado: !!lectoresDni?.salida.configurado },
+  ];
+  return (
+    <div className="mt-2 space-y-3">
+      {filas.map((fila) => (
+        <div key={fila.etiqueta}>
+          <Badge color={fila.configurado ? "success" : "light"}>{fila.configurado ? "Configurado" : "Sin configurar"}</Badge>
+          <p className="mt-1 text-xs text-gray-400">{fila.etiqueta}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function StatusCard({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
@@ -464,7 +495,7 @@ function SistemaContent() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatusCard icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
@@ -506,6 +537,11 @@ function SistemaContent() {
         <StatusCard icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Equipos (G4 Pro)</p>
           <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} />
+        </StatusCard>
+
+        <StatusCard icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Lectores de DNI</p>
+          <LectoresDniEstado comprobando={comprobando} lectoresDni={estado?.lectoresDni} />
         </StatusCard>
       </div>
 

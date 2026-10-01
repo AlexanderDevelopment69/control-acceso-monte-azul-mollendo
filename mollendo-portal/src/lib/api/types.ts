@@ -145,6 +145,7 @@ export interface EstadoSistema {
   baseDeDatos: { estado: "up" | "down"; latenciaMs: number };
   integraciones: { claveEquiposConfigurada: boolean };
   equipos: { total: number; enLinea: number; dispositivos: EstadoDispositivo[] };
+  lectoresDni: { ingreso: { configurado: boolean }; salida: { configurado: boolean } };
   respaldos: EstadoRespaldos;
   websocket: { namespace: string };
 }
