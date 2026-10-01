@@ -7,7 +7,7 @@ Backend del Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM)
 - Eventos de ingreso y salida en tiempo real (Socket.IO, `/ws/eventos`).
 - Dashboard de indicadores y reportes en Excel o PDF.
 
-Hecho con NestJS 12 sobre Node.js 22, Prisma 7 y PostgreSQL 16. Los reportes se generan con ExcelJS y pdfmake.
+Hecho con NestJS 12 sobre Node.js 22, Prisma 7 y PostgreSQL 16. Los reportes se generan con ExcelJS y pdfmake; el de documentos también como ZIP con sus archivos (archiver).
 
 ## Desarrollo
 

@@ -1,3 +1,5 @@
+import { existsSync, statSync } from 'node:fs';
+import { extname } from 'node:path';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { rangoDeDias } from '../common/paginacion.js';
@@ -20,6 +22,26 @@ const MAX_FILAS = 20_000;
 /** Un documento vigente está "por vencer" si vence dentro de estos días (igual que el Dashboard). */
 const DIAS_AVISO = 30;
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
+/** Peso máximo de los archivos de un ZIP de documentos. */
+const MAX_BYTES_ZIP = 2 * 1024 * 1024 * 1024;
+
+/** Nombre válido para una carpeta o archivo en Windows, macOS y Linux. */
+export function nombreSeguro(texto: string): string {
+  // Sin caracteres prohibidos en nombres de archivo ni saltos de línea o tabulaciones.
+  const limpio = texto.replace(/[<>:"/\\|?*]/g, '-').replace(/\s+/g, ' ').replace(/[. ]+$/, '').trim();
+  return (limpio || 'sin-nombre').slice(0, 80);
+}
+
+/** Ruta dentro del ZIP sin repetir: si ya existe, agrega " (2)", " (3)"… */
+export function rutaUnica(ruta: string, usados: Set<string>): string {
+  let candidata = ruta;
+  for (let n = 2; usados.has(candidata.toLowerCase()); n++) {
+    const punto = ruta.lastIndexOf('.');
+    candidata = punto > ruta.lastIndexOf('/') ? `${ruta.slice(0, punto)} (${n})${ruta.slice(punto)}` : `${ruta} (${n})`;
+  }
+  usados.add(candidata.toLowerCase());
+  return candidata;
+}
 
 const ESTADO_PERSONA = { activo: 'Activo', inactivo: 'Dado de baja' } as const;
 const ACCION = { crear: 'Crear', modificar: 'Modificar', eliminar: 'Eliminar' } as const;
@@ -161,8 +183,31 @@ export class ReportesService {
 
   /** Última versión de cada documento de cada persona, con su vigencia a hoy. */
   private async documentos(query: QueryReporteDto): Promise<Reporte> {
+    return (await this.armarDocumentos(query, false)).reporte;
+  }
+
+  /**
+   * Reporte de documentos con sus archivos, para el ZIP: el Excel lleva en cada
+   * fila un enlace relativo al archivo dentro del ZIP (archivos/empresa/persona/…).
+   */
+  async documentosConArchivos(query: QueryReporteDto) {
+    const { reporte, archivos } = await this.armarDocumentos(query, true);
+    if (reporte.filas.length > MAX_FILAS) {
+      throw new BadRequestException(`El reporte tiene ${reporte.filas.length} filas (máximo ${MAX_FILAS}). Acota los filtros.`);
+    }
+    const peso = archivos.reduce((suma, a) => suma + statSync(a.ruta).size, 0);
+    if (peso > MAX_BYTES_ZIP) {
+      throw new BadRequestException(
+        `Los archivos suman ${Math.round(peso / 1024 / 1024)} MB (máximo ${MAX_BYTES_ZIP / 1024 / 1024} MB). Filtra por empresa o por estado.`,
+      );
+    }
+    return { reporte, archivos };
+  }
+
+  private async armarDocumentos(query: QueryReporteDto, conArchivos: boolean) {
     const hoy = new Date();
     const inicioDeHoy = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    const anteriores = conArchivos && query.incluirAnteriores === 'true';
     const personas = await this.prisma.persona.findMany({
       where: { empresaId: query.empresaId },
       include: {
@@ -172,9 +217,15 @@ export class ReportesService {
     });
     const estados = { vigente: 'Vigente', por_vencer: 'Por vencer', vencido: 'Vencido' } as const;
     const cuenta = { vigente: 0, por_vencer: 0, vencido: 0 };
-    const filas: { orden: number; fila: Celda[] }[] = [];
+    const filas: { orden: number; persona: string; documento: string; version: number; fila: Celda[] }[] = [];
+    const archivos: { ruta: string; enZip: string }[] = [];
+    const usados = new Set<string>();
+    let sinArchivo = 0;
+
     for (const p of personas) {
-      for (const d of ultimasVersiones(p.documentos).values()) {
+      const persona = `${p.apellidos}, ${p.nombres}`;
+      const ultimas = ultimasVersiones(p.documentos);
+      for (const d of ultimas.values()) {
         const dias = d.fechaVencimiento ? Math.round((d.fechaVencimiento.getTime() - inicioDeHoy) / MS_POR_DIA) : null;
         const estado = !esDocumentoVigente(d.fechaVencimiento, hoy)
           ? 'vencido'
@@ -183,32 +234,67 @@ export class ReportesService {
             : 'vigente';
         cuenta[estado]++;
         if (query.estadoDocumento && query.estadoDocumento !== estado) continue;
-        filas.push({
-          // Primero lo más urgente: vencidos, luego por vencer; los que no vencen al final.
-          orden: dias ?? Number.MAX_SAFE_INTEGER,
-          fila: [
-            `${p.apellidos}, ${p.nombres}`,
+
+        // La versión vigente y, si se pidieron, las reemplazadas (de la más nueva a la más vieja).
+        const versiones = anteriores
+          ? p.documentos.filter((v) => v.tipoDocumentoId === d.tipoDocumentoId).sort((a, b) => b.version - a.version)
+          : [d];
+        for (const v of versiones) {
+          const actual = v.id === d.id;
+          const fila: Celda[] = [
+            persona,
             p.numeroDocumento,
             p.empresa.razonSocial,
             ESTADO_PERSONA[p.estado],
             d.tipoDocumento.nombre,
-            d.version,
-            d.creadoEn,
-            d.fechaVencimiento,
-            dias,
-            estados[estado],
-          ],
-        });
+            v.version,
+            v.creadoEn,
+            v.fechaVencimiento,
+            actual ? dias : null,
+            actual ? estados[estado] : 'Reemplazado',
+          ];
+          if (conArchivos) {
+            if (v.archivoUrl && existsSync(v.archivoUrl)) {
+              const enZip = rutaUnica(
+                [
+                  'archivos',
+                  nombreSeguro(p.empresa.razonSocial),
+                  nombreSeguro(`${persona} (${p.numeroDocumento})`),
+                  `${nombreSeguro(`${d.tipoDocumento.nombre} v${v.version}`)}${extname(v.archivoUrl).toLowerCase()}`,
+                ].join('/'),
+                usados,
+              );
+              archivos.push({ ruta: v.archivoUrl, enZip });
+              fila.push({ texto: 'Abrir', enlace: enZip });
+            } else {
+              sinArchivo++;
+              fila.push('No disponible');
+            }
+          }
+          filas.push({ orden: dias ?? Number.MAX_SAFE_INTEGER, persona, documento: d.tipoDocumento.nombre, version: v.version, fila });
+        }
       }
     }
-    filas.sort((a, b) => a.orden - b.orden || String(a.fila[0]).localeCompare(String(b.fila[0])));
-    return {
+    // Primero lo más urgente (vencidos, luego por vencer); las versiones de un mismo documento juntas.
+    filas.sort(
+      (a, b) =>
+        a.orden - b.orden ||
+        a.persona.localeCompare(b.persona) ||
+        a.documento.localeCompare(b.documento) ||
+        b.version - a.version,
+    );
+    const actuales = filas.filter((f) => f.fila[9] !== 'Reemplazado').length;
+
+    const reporte: Reporte = {
       titulo: 'Documentos por persona',
       archivo: `reporte-documentos-${claveDia(hoy)}`,
       filtros: [
         ...(await this.filtroEmpresa(query.empresaId)),
         ...(query.estadoDocumento ? [`Estado del documento: ${estados[query.estadoDocumento]}`] : []),
-        `Última versión de cada documento. Por vencer: vence en los próximos ${DIAS_AVISO} días.`,
+        anteriores
+          ? `Cada documento con todas sus versiones (las anteriores, como "Reemplazado"). Por vencer: vence en los próximos ${DIAS_AVISO} días.`
+          : `Última versión de cada documento. Por vencer: vence en los próximos ${DIAS_AVISO} días.`,
+        ...(conArchivos ? ['Columna "Archivo": abre el archivo, que va en la carpeta "archivos" del mismo ZIP.'] : []),
       ],
       columnas: [
         { titulo: 'Persona', ancho: 30 },
@@ -220,16 +306,21 @@ export class ReportesService {
         { titulo: 'Cargado', tipo: 'fechaHora', ancho: 16 },
         { titulo: 'Vence', tipo: 'fecha', ancho: 12 },
         { titulo: 'Días para vencer', tipo: 'numero', ancho: 11 },
-        { titulo: 'Estado', ancho: 11 },
+        { titulo: 'Estado', ancho: 12 },
+        ...(conArchivos ? [{ titulo: 'Archivo', ancho: 12 }] : []),
       ],
       filas: filas.map((f) => f.fila),
       resumen: [
-        `Total: ${filas.length}`,
+        `Documentos: ${actuales}`,
+        ...(anteriores ? [`Versiones anteriores: ${filas.length - actuales}`] : []),
         ...(query.estadoDocumento
           ? []
           : [`Vigentes: ${cuenta.vigente}`, `Por vencer: ${cuenta.por_vencer}`, `Vencidos: ${cuenta.vencido}`]),
+        ...(conArchivos ? [`Archivos incluidos: ${archivos.length}`] : []),
+        ...(sinArchivo ? [`Sin archivo en el servidor: ${sinArchivo}`] : []),
       ],
     };
+    return { reporte, archivos };
   }
 
   /** Historial de ingresos y salidas del periodo, en orden cronológico. */

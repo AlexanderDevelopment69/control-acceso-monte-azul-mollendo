@@ -42,16 +42,23 @@ export async function generarExcel(reporte: Reporte, generado: Date): Promise<Bu
   cabecera.height = 20;
 
   for (const fila of reporte.filas) {
-    hoja.addRow(
+    const filaExcel = hoja.addRow(
       fila.map((valor, i) => {
         // ExcelJS guarda las fechas en UTC: se pasa la hora de Lima como si fuera UTC
         // para que Excel muestre la misma hora que el sistema.
         if (valor instanceof Date && reporte.columnas[i].tipo === 'fechaHora') {
           return new Date(Date.UTC(valor.getFullYear(), valor.getMonth(), valor.getDate(), valor.getHours(), valor.getMinutes()));
         }
+        // Enlace relativo: Excel lo abre desde la carpeta donde está el archivo.
+        if (valor !== null && typeof valor === 'object' && !(valor instanceof Date)) {
+          return { text: valor.texto, hyperlink: valor.enlace };
+        }
         return valor;
       }),
     );
+    filaExcel.eachCell((celda) => {
+      if (celda.hyperlink) celda.font = { color: { argb: MARCA }, underline: true };
+    });
   }
 
   reporte.columnas.forEach((c, i) => {

@@ -13,7 +13,13 @@ export interface Columna {
   ancho: number;
 }
 
-export type Celda = string | number | Date | null;
+/** Celda con enlace (en el ZIP de documentos, al archivo dentro del mismo ZIP). */
+export interface Enlace {
+  texto: string;
+  enlace: string;
+}
+
+export type Celda = string | number | Date | Enlace | null;
 
 export interface Reporte {
   titulo: string;

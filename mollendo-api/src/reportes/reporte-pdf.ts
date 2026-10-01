@@ -26,6 +26,7 @@ const ANCHO_UTIL = 842 - 2 * 28;
 function texto(valor: Celda, columna: Columna): string {
   if (valor === null || valor === '') return '—';
   if (valor instanceof Date) return columna.tipo === 'fecha' ? textoFecha(valor) : textoFechaHora(valor);
+  if (typeof valor === 'object') return valor.texto;
   return String(valor);
 }
 

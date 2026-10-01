@@ -8,8 +8,14 @@ export type TipoReporte = (typeof TIPOS_REPORTE)[number];
 
 /** Formato y filtros de un reporte. Cada reporte usa solo los que le corresponden. */
 export class QueryReporteDto {
-  @IsIn(['xlsx', 'pdf'], { message: 'El formato debe ser "xlsx" (Excel) o "pdf"' })
-  formato!: 'xlsx' | 'pdf';
+  /** "zip" solo en documentos: el Excel más los archivos de cada documento. */
+  @IsIn(['xlsx', 'pdf', 'zip'], { message: 'El formato debe ser "xlsx" (Excel), "pdf" o "zip"' })
+  formato!: 'xlsx' | 'pdf' | 'zip';
+
+  /** ZIP de documentos: incluir también las versiones reemplazadas. */
+  @IsOptional()
+  @IsIn(['true', 'false'], { message: 'incluirAnteriores debe ser "true" o "false"' })
+  incluirAnteriores?: 'true' | 'false';
 
   /** Periodo (movimientos, visitas y auditoría): días locales, ambos incluidos; por defecto hoy. */
   @IsOptional()

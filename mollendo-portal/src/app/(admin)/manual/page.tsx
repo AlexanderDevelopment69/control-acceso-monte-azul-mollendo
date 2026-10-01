@@ -207,7 +207,10 @@ const SECCIONES: SeccionManual[] = [
           </li>
           <li>
             <strong>Documentos por persona</strong>: la última versión de cada documento, con su vencimiento y estado
-            (vigente, por vencer en 30 días o vencido). Filtros: empresa y estado del documento.
+            (vigente, por vencer en 30 días o vencido). Filtros: empresa y estado del documento. Con{" "}
+            <strong>“Descargar con archivos (ZIP)”</strong> se baja además cada archivo, en carpetas por empresa y
+            persona; al descomprimirlo, el enlace “Abrir” de cada fila del Excel abre su archivo. Se pueden incluir las
+            versiones anteriores.
           </li>
           <li>
             <strong>Ingresos y salidas</strong>: el historial del periodo con resultado y motivo. Filtros: periodo,

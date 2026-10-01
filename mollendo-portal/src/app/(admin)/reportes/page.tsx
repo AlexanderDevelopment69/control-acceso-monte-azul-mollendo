@@ -97,7 +97,8 @@ function ReportesContent() {
   const [movimiento, setMovimiento] = useState("");
   const [resultado, setResultado] = useState("");
   const periodo = usePeriodo();
-  const [descargando, setDescargando] = useState<"xlsx" | "pdf" | null>(null);
+  const [descargando, setDescargando] = useState<"xlsx" | "pdf" | "zip" | null>(null);
+  const [incluirAnteriores, setIncluirAnteriores] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const filtrosRef = useRef<HTMLElement>(null);
 
@@ -111,7 +112,7 @@ function ReportesContent() {
   const opcion = REPORTES.find((r) => r.tipo === tipo)!;
   const faltanFechas = !!opcion.periodo && !periodo.rangoValido;
 
-  async function descargar(formato: "xlsx" | "pdf") {
+  async function descargar(formato: "xlsx" | "pdf" | "zip") {
     setError(null);
     setDescargando(formato);
     try {
@@ -121,6 +122,7 @@ function ReportesContent() {
         ...(opcion.empresa && empresaId && { empresaId }),
         ...(tipo === "personal" && estado && { estado }),
         ...(tipo === "documentos" && estadoDocumento && { estadoDocumento }),
+        ...(formato === "zip" && incluirAnteriores && { incluirAnteriores: "true" }),
         ...(tipo === "movimientos" && movimiento && { movimiento }),
         ...(tipo === "movimientos" && resultado && { resultado }),
       });
@@ -264,6 +266,25 @@ function ReportesContent() {
             </div>
           )}
 
+          {tipo === "documentos" && (
+            <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:bg-white/[0.03] dark:text-gray-300">
+              <p>
+                <strong className="font-medium text-gray-800 dark:text-white/90">Con archivos (ZIP):</strong> el mismo Excel
+                y los archivos de cada documento en carpetas por empresa y persona. Al descomprimirlo, cada fila del Excel
+                tiene un enlace que abre su archivo. Si son muchos, filtra por empresa.
+              </p>
+              <label className="mt-3 flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={incluirAnteriores}
+                  onChange={(e) => setIncluirAnteriores(e.target.checked)}
+                  className="size-4 rounded border-gray-300 accent-brand-500"
+                />
+                Incluir en el ZIP las versiones anteriores (reemplazadas)
+              </label>
+            </div>
+          )}
+
           {tipo === "presentes" && (
             <p className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:bg-white/[0.03] dark:text-gray-300">
               Muestra la situación en el momento de descargarlo; no usa filtros.
@@ -292,6 +313,17 @@ function ReportesContent() {
           >
             {descargando === "pdf" ? "Generando PDF…" : "Descargar PDF"}
           </Button>
+          {tipo === "documentos" && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void descargar("zip")}
+              disabled={descargando !== null}
+              startIcon={<DownloadIcon className="size-5" />}
+            >
+              {descargando === "zip" ? "Preparando ZIP…" : "Descargar con archivos (ZIP)"}
+            </Button>
+          )}
         </div>
       </section>
     </div>

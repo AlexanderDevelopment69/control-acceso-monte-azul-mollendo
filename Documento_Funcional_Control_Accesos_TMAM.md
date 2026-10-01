@@ -107,7 +107,7 @@ Los contenedores se reinician automáticamente ante una falla y se inician junto
 |---|---|
 | Lenguaje | TypeScript (portal y backend) |
 | Portal web | Next.js 16, React 19, Tailwind CSS 4, cliente Socket.IO, ApexCharts (gráficos del Dashboard) |
-| Reportes | ExcelJS (Excel) y pdfmake (PDF), generados en el backend |
+| Reportes | ExcelJS (Excel), pdfmake (PDF) y archiver (ZIP con los archivos de documentos), generados en el backend |
 | Backend | NestJS 12 sobre Node.js 22, API REST versionada (`/api/v1`) |
 | Tiempo real | Socket.IO 4 (WebSocket) |
 | Acceso a datos | Prisma 7 (ORM y migraciones versionadas) |
@@ -248,8 +248,9 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 - **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
 - **Excel:** título, filtros y fecha de generación arriba; cabecera fija con filtros de Excel; fechas como fechas (se pueden ordenar y filtrar); totales al final.
 - **PDF:** A4 horizontal, con la cabecera de la tabla repetida en cada página, número de página y totales al final.
+- **Documentos con archivos (ZIP):** el reporte de documentos también se descarga en un ZIP con el mismo Excel y los archivos de cada documento, en carpetas por empresa y persona (`archivos/<empresa>/<persona (documento)>/<documento> v<versión>`). Cada fila del Excel tiene un enlace "Abrir" que abre su archivo al descomprimir el ZIP, sin conexión ni sesión. Opcionalmente incluye las versiones anteriores (reemplazadas). Respeta los filtros de empresa y estado; hasta 2 GB de archivos por descarga.
 - Hasta 20 000 filas por reporte; si se supera, se pide acotar el periodo o los filtros.
-- **Interfaz:** `GET /reportes/:tipo?formato=xlsx|pdf` con los filtros de cada reporte.
+- **Interfaz:** `GET /reportes/:tipo?formato=xlsx|pdf` con los filtros de cada reporte; `formato=zip` (y `incluirAnteriores=true`) solo en documentos.
 
 ### 4.6. Auditoría (Administrador)
 
@@ -342,7 +343,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
 | `GET /panel/dashboard` | Indicadores y gráficos del Dashboard, por periodo | Administrador |
 | `GET /panel/dashboard/permanencia` | Personas con permanencia mayor a 24 horas, paginado | Administrador |
-| `GET /reportes/:tipo` | Reporte en Excel o PDF (`personal`, `documentos`, `movimientos`, `visitas`, `presentes`, `auditoria`) | Administrador |
+| `GET /reportes/:tipo` | Reporte en Excel o PDF (`personal`, `documentos`, `movimientos`, `visitas`, `presentes`, `auditoria`); documentos también en ZIP con sus archivos | Administrador |
 | `GET /panel/estado-sistema` · `/health` | Estado del sistema y de los respaldos | Administrador · público |
 | `GET /auditoria` | Auditoría paginada, con búsqueda y fechas | Administrador |
 | `GET` · `POST` · `PATCH /usuarios` | Cuentas de usuario (sin pantalla en el alcance base) | Administrador |

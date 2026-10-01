@@ -2,6 +2,7 @@ import ExcelJS from 'exceljs';
 import { generarExcel } from './reporte-excel.js';
 import { generarPdf } from './reporte-pdf.js';
 import { textoDia, textoDuracion, textoFecha, textoFechaHora, type Reporte } from './reporte.types.js';
+import { nombreSeguro, rutaUnica } from './reportes.service.js';
 
 const reporte: Reporte = {
   titulo: 'Prueba de reporte',
@@ -57,5 +58,21 @@ describe('generarPdf', () => {
     const pdf = await generarPdf(reporte, new Date(2026, 8, 30, 18, 0));
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
     expect(pdf.length).toBeGreaterThan(1000);
+  });
+});
+
+describe('nombres dentro del ZIP de documentos', () => {
+  it('quita los caracteres que no admite un nombre de archivo', () => {
+    expect(nombreSeguro('DEMO S.A.C.')).toBe('DEMO S.A.C');
+    expect(nombreSeguro('Ruta: a/b\\c*?"<>|')).toBe('Ruta- a-b-c------');
+    expect(nombreSeguro('  Pérez, José\t(123)  ')).toBe('Pérez, José (123)');
+    expect(nombreSeguro('...')).toBe('sin-nombre');
+  });
+
+  it('no repite rutas: agrega (2), (3)… sin distinguir mayúsculas', () => {
+    const usados = new Set<string>();
+    expect(rutaUnica('archivos/a/SCTR v1.pdf', usados)).toBe('archivos/a/SCTR v1.pdf');
+    expect(rutaUnica('archivos/a/sctr v1.pdf', usados)).toBe('archivos/a/sctr v1 (2).pdf');
+    expect(rutaUnica('archivos/a/SCTR v1.pdf', usados)).toBe('archivos/a/SCTR v1 (3).pdf');
   });
 });
