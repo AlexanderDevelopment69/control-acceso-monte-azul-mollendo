@@ -209,8 +209,9 @@ const SECCIONES: SeccionManual[] = [
             <strong>Documentos por persona</strong>: la última versión de cada documento, con su vencimiento y estado
             (vigente, por vencer en 30 días o vencido). Filtros: empresa y estado del documento. Con{" "}
             <strong>“Descargar con archivos (ZIP)”</strong> se baja además cada archivo, en carpetas por empresa y
-            persona; al descomprimirlo, el enlace “Abrir” de cada fila del Excel abre su archivo. Se pueden incluir las
-            versiones anteriores.
+            persona. Primero descomprime el ZIP (clic derecho → Extraer todo) y abre el Excel desde la carpeta extraída: el
+            enlace “Abrir” de cada fila abre su archivo. Si se abre el Excel desde dentro del ZIP sin extraerlo, los
+            enlaces no encuentran los archivos. Se pueden incluir las versiones anteriores.
           </li>
           <li>
             <strong>Ingresos y salidas</strong>: el historial del periodo con resultado y motivo. Filtros: periodo,

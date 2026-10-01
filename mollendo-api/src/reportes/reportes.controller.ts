@@ -12,6 +12,9 @@ const TIPO_ARCHIVO = {
   zip: 'application/zip',
 } as const;
 
+/** Hora local en 4 cifras: 17:50 → "1750". */
+const horaMinuto = (fecha: Date) => `${String(fecha.getHours()).padStart(2, '0')}${String(fecha.getMinutes()).padStart(2, '0')}`;
+
 @Controller('reportes')
 export class ReportesController {
   private readonly logger = new Logger(ReportesController.name);
@@ -49,7 +52,8 @@ export class ReportesController {
    */
   private async zipDocumentos(query: QueryReporteDto): Promise<StreamableFile> {
     const { reporte, archivos } = await this.reportesService.documentosConArchivos(query);
-    const excel = await generarExcel(reporte, new Date());
+    const generado = new Date();
+    const excel = await generarExcel(reporte, generado);
     // Los PDF e imágenes ya vienen comprimidos: compresión baja para no gastar CPU de más.
     const zip = new ZipArchive({ zlib: { level: 1 } });
     zip.on('warning', (error) => this.logger.warn(`ZIP de documentos: ${error.message}`));
@@ -59,7 +63,9 @@ export class ReportesController {
     void zip.finalize();
     return new StreamableFile(zip, {
       type: TIPO_ARCHIVO.zip,
-      disposition: `attachment; filename="${reporte.archivo.replace('reporte-', '')}.zip"`,
+      // Con la hora (documentos-2026-10-01_1750.zip): si se descarga más de una vez
+      // el mismo día, el navegador no le agrega " (1)" al nombre.
+      disposition: `attachment; filename="${reporte.archivo.replace('reporte-', '')}_${horaMinuto(generado)}.zip"`,
     });
   }
 }

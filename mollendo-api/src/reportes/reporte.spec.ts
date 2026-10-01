@@ -62,17 +62,19 @@ describe('generarPdf', () => {
 });
 
 describe('nombres dentro del ZIP de documentos', () => {
-  it('quita los caracteres que no admite un nombre de archivo', () => {
-    expect(nombreSeguro('DEMO S.A.C.')).toBe('DEMO S.A.C');
-    expect(nombreSeguro('Ruta: a/b\\c*?"<>|')).toBe('Ruta- a-b-c------');
-    expect(nombreSeguro('  Pérez, José\t(123)  ')).toBe('Pérez, José (123)');
-    expect(nombreSeguro('...')).toBe('sin-nombre');
+  it('deja solo letras sin tilde, números, "_", "-" y "."', () => {
+    expect(nombreSeguro('DEMO S.A.C.')).toBe('DEMO_S.A.C');
+    expect(nombreSeguro('Ruta: a/b\\c*?"<>|')).toBe('Ruta_a_b_c');
+    expect(nombreSeguro('  Pérez, José\t(123)  ')).toBe('Perez_Jose_123');
+    expect(nombreSeguro('Muñoz Ñique')).toBe('Munoz_Nique');
+    expect(nombreSeguro('Inducción SSMA v2')).toBe('Induccion_SSMA_v2');
+    expect(nombreSeguro('...')).toBe('sin_nombre');
   });
 
-  it('no repite rutas: agrega (2), (3)… sin distinguir mayúsculas', () => {
+  it('no repite rutas: agrega _2, _3… sin distinguir mayúsculas', () => {
     const usados = new Set<string>();
-    expect(rutaUnica('archivos/a/SCTR v1.pdf', usados)).toBe('archivos/a/SCTR v1.pdf');
-    expect(rutaUnica('archivos/a/sctr v1.pdf', usados)).toBe('archivos/a/sctr v1 (2).pdf');
-    expect(rutaUnica('archivos/a/SCTR v1.pdf', usados)).toBe('archivos/a/SCTR v1 (3).pdf');
+    expect(rutaUnica('archivos/a/SCTR_v1.pdf', usados)).toBe('archivos/a/SCTR_v1.pdf');
+    expect(rutaUnica('archivos/a/sctr_v1.pdf', usados)).toBe('archivos/a/sctr_v1_2.pdf');
+    expect(rutaUnica('archivos/a/SCTR_v1.pdf', usados)).toBe('archivos/a/SCTR_v1_3.pdf');
   });
 });

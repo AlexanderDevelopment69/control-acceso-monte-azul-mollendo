@@ -270,8 +270,7 @@ function ReportesContent() {
             <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:bg-white/[0.03] dark:text-gray-300">
               <p>
                 <strong className="font-medium text-gray-800 dark:text-white/90">Con archivos (ZIP):</strong> el mismo Excel
-                y los archivos de cada documento en carpetas por empresa y persona. Al descomprimirlo, cada fila del Excel
-                tiene un enlace que abre su archivo. Si son muchos, filtra por empresa.
+                y los archivos de cada documento en carpetas por empresa y persona.
               </p>
               <label className="mt-3 flex cursor-pointer items-center gap-2">
                 <input

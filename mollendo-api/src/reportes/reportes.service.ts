@@ -25,19 +25,27 @@ const MS_POR_DIA = 24 * 60 * 60 * 1000;
 /** Peso máximo de los archivos de un ZIP de documentos. */
 const MAX_BYTES_ZIP = 2 * 1024 * 1024 * 1024;
 
-/** Nombre válido para una carpeta o archivo en Windows, macOS y Linux. */
+/**
+ * Nombre de carpeta o archivo solo con letras sin tilde, números, "_", "-" y
+ * ".": los enlaces del Excel no fallan por espacios, tildes o la ñ (Excel los
+ * codifica como %20 y algunos visores no los encuentran). "Pérez, José" → "Perez_Jose".
+ */
 export function nombreSeguro(texto: string): string {
-  // Sin caracteres prohibidos en nombres de archivo ni saltos de línea o tabulaciones.
-  const limpio = texto.replace(/[<>:"/\\|?*]/g, '-').replace(/\s+/g, ' ').replace(/[. ]+$/, '').trim();
-  return (limpio || 'sin-nombre').slice(0, 80);
+  const limpio = texto
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^A-Za-z0-9.-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^[._-]+|[._-]+$/g, '');
+  return (limpio || 'sin_nombre').slice(0, 80);
 }
 
-/** Ruta dentro del ZIP sin repetir: si ya existe, agrega " (2)", " (3)"… */
+/** Ruta dentro del ZIP sin repetir: si ya existe, agrega "_2", "_3"… */
 export function rutaUnica(ruta: string, usados: Set<string>): string {
   let candidata = ruta;
   for (let n = 2; usados.has(candidata.toLowerCase()); n++) {
     const punto = ruta.lastIndexOf('.');
-    candidata = punto > ruta.lastIndexOf('/') ? `${ruta.slice(0, punto)} (${n})${ruta.slice(punto)}` : `${ruta} (${n})`;
+    candidata = punto > ruta.lastIndexOf('/') ? `${ruta.slice(0, punto)}_${n}${ruta.slice(punto)}` : `${ruta}_${n}`;
   }
   usados.add(candidata.toLowerCase());
   return candidata;
@@ -294,7 +302,9 @@ export class ReportesService {
         anteriores
           ? `Cada documento con todas sus versiones (las anteriores, como "Reemplazado"). Por vencer: vence en los próximos ${DIAS_AVISO} días.`
           : `Última versión de cada documento. Por vencer: vence en los próximos ${DIAS_AVISO} días.`,
-        ...(conArchivos ? ['Columna "Archivo": abre el archivo, que va en la carpeta "archivos" del mismo ZIP.'] : []),
+        ...(conArchivos
+          ? ['Columna "Archivo": abre el archivo de la carpeta "archivos". Primero descomprime el ZIP (clic derecho → Extraer todo) y abre este Excel desde esa carpeta.']
+          : []),
       ],
       columnas: [
         { titulo: 'Persona', ancho: 30 },
