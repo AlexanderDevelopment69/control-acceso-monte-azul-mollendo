@@ -68,10 +68,10 @@ export function PersonalDocumentos() {
   }
 
   const q = busqueda.trim().toLowerCase();
-  const filtradas = personas.filter((p) => {
+  // Primero empresa y búsqueda; las pestañas cuentan sobre ese resultado, así
+  // sus números coinciden con lo que se ve en la lista.
+  const visibles = personas.filter((p) => {
     if (empresaFiltro !== "todas" && p.empresaId !== Number(empresaFiltro)) return false;
-    if (filtro === "habilitados" && !p.cumplimiento?.habilitado) return false;
-    if (filtro === "no-habilitados" && p.cumplimiento?.habilitado) return false;
     if (!q) return true;
     return (
       `${p.nombres} ${p.apellidos}`.toLowerCase().includes(q) ||
@@ -79,7 +79,12 @@ export function PersonalDocumentos() {
       (p.empresa?.razonSocial.toLowerCase().includes(q) ?? false)
     );
   });
-  const noHabilitados = personas.filter((p) => p.cumplimiento && !p.cumplimiento.habilitado).length;
+  const noHabilitados = visibles.filter((p) => p.cumplimiento && !p.cumplimiento.habilitado).length;
+  const filtradas = visibles.filter((p) => {
+    if (filtro === "habilitados") return !!p.cumplimiento?.habilitado;
+    if (filtro === "no-habilitados") return !p.cumplimiento?.habilitado;
+    return true;
+  });
 
   return (
     <div>
@@ -122,9 +127,9 @@ export function PersonalDocumentos() {
             <div className="flex gap-1 rounded-lg bg-gray-100 p-1 text-xs dark:bg-gray-900">
               {(
                 [
-                  ["todos", loading ? "Todos" : `Todos (${personas.length})`],
+                  ["todos", loading ? "Todos" : `Todos (${visibles.length})`],
                   ["no-habilitados", loading ? "✖ No pueden" : `✖ No pueden (${noHabilitados})`],
-                  ["habilitados", loading ? "✔ Pueden" : `✔ Pueden (${personas.length - noHabilitados})`],
+                  ["habilitados", loading ? "✔ Pueden" : `✔ Pueden (${visibles.length - noHabilitados})`],
                 ] as [Filtro, string][]
               ).map(([id, label]) => (
                 <button
