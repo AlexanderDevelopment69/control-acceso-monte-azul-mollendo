@@ -26,9 +26,9 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador"] },
-  { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
   { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
+  { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },
   { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador"] },
   { icon: <InfoIcon />, name: "Manual", path: "/manual", roles: ["administrador", "vigilancia"] },

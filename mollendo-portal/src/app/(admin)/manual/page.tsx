@@ -28,8 +28,9 @@ const SECCIONES: SeccionManual[] = [
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <strong>Administrador</strong>: registra al personal (y su empresa, si es nueva) y sube sus
-            documentos desde <strong>Personal y documentos</strong>. También supervisa el sistema (panel de vigilancia, auditoría
-            y estado técnico).
+            documentos desde <strong>Personal y documentos</strong>. También ve el <strong>Dashboard</strong> de
+            indicadores, descarga <strong>Reportes</strong> en Excel o PDF y supervisa el sistema (panel de vigilancia,
+            auditoría y estado técnico).
           </li>
           <li>
             <strong>Vigilancia</strong>: ve en tiempo real cada ingreso y salida por el molinete, y por qué se
@@ -53,7 +54,8 @@ const SECCIONES: SeccionManual[] = [
           <Link href="/" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Personal y documentos</Link> es
           la pantalla de trabajo. A la izquierda está la lista del personal de todas las empresas; cada persona lleva un{" "}
           <strong>✔</strong> si hoy puede ingresar o un <strong>✖</strong> con el motivo si no puede. Puedes buscar por
-          nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar.
+          nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar (los números de cada
+          pestaña cuentan solo lo que queda con la empresa y la búsqueda elegidas).
         </p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
@@ -133,19 +135,25 @@ const SECCIONES: SeccionManual[] = [
         <p>
           La tabla muestra por defecto los movimientos de <strong>hoy</strong>. Con el calendario se puede ver otro día
           (“Hoy” vuelve al día actual) o “Todos los días”. El buscador encuentra por nombre, apellido o número de
-          documento en todo el historial, no solo en la página que se está viendo.
+          documento en todo el historial, no solo en la página que se está viendo. La tabla va de 10 en 10, con
+          páginas.
         </p>
-        <p>Cuando la persona se identifica en el terminal y hace la prueba de alcohol, el sistema revisa en este orden:</p>
+        <p>
+          Cuando un ingreso se deniega por documentos, el motivo <strong>“Documentos ›”</strong> abre una ventana con los
+          documentos de la persona y cuáles debe regularizar; con <strong>“Ver”</strong> se abre cada archivo.
+        </p>
+        <p>El ingreso se valida en dos pasos:</p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
-            Si el documento <strong>no está registrado</strong> o la persona está <strong>dada de baja</strong>, se
-            deniega de inmediato.
+            <strong>Al pasar el DNI por el lector:</strong> si el documento <strong>no está registrado</strong>, la
+            persona está <strong>dada de baja</strong>, <strong>no tiene documentos</strong> cargados o alguno está{" "}
+            <strong>vencido</strong>, se deniega de inmediato y se muestran los motivos.
           </li>
           <li>
-            Si no, se revisan juntos: que tenga <strong>al menos un documento cargado</strong>, que{" "}
-            <strong>ninguno esté vencido</strong> y que la <strong>prueba de alcohol</strong> sea conforme. Si falla algo, se muestran todos los motivos a la vez.
+            <strong>En el terminal facial:</strong> si los documentos están en regla, el terminal verifica el rostro y la{" "}
+            <strong>prueba de alcohol</strong>. Si son conformes, abre el molinete y el ingreso queda autorizado; si el
+            alcohol no es conforme, queda denegado por alcohol.
           </li>
-          <li>Si todo está conforme, el molinete se abre.</li>
         </ol>
         <p>
           La salida solo se registra y abre el molinete; no se exige un ingreso previo. Si el servidor deja de
@@ -281,11 +289,13 @@ const SECCIONES: SeccionManual[] = [
       <div className="space-y-3">
         <p>
           <Link href="/sistema" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Sistema y APIs</Link> muestra
-          si el backend y la base de datos responden y si la clave de equipos está configurada. También trae la
-          documentación técnica, con ejemplos, de las APIs que usan los equipos físicos: el terminal ZKTeco G4 Pro
-          con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes. Indica cuáles ya
-          funcionan, cuáles están simulados y cuáles faltan programar. Está pensada para quien tenga que conectarlos o
-          dar soporte técnico.
+          si el backend y la base de datos responden, si la clave de equipos está configurada, el estado de los{" "}
+          <strong>respaldos</strong> (el último y si está al día), el de los <strong>equipos</strong> (cada terminal G4
+          Pro “En línea” o “Desconectado”, con su última actividad) y si los <strong>lectores de DNI</strong> de ingreso y
+          salida están configurados. También trae el enlace a la documentación interactiva de la API (Swagger) y
+          la documentación técnica, con ejemplos, de las APIs que usan los equipos físicos: el terminal ZKTeco G4 Pro
+          con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes, indicando el estado
+          de cada una. Está pensada para quien tenga que conectarlos o dar soporte técnico.
         </p>
       </div>
     ),

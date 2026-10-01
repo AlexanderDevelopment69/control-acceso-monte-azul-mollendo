@@ -259,7 +259,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 
 ### 4.7. Sistema y APIs (Administrador)
 
-- **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado") y **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas). Se actualiza cada 15 segundos.
+- **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado"), **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas), **equipos** (cada terminal G4 Pro "En línea" o "Desconectado", con su última actividad) y **lectores de DNI** de ingreso y salida ("Configurado" / "Sin configurar"). Se actualiza cada 15 segundos.
 - **Documentación de las APIs de integración** con ejemplos de uso y su estado ("Disponible", "Simulado" o "Por programar"), y enlace a la documentación interactiva (Swagger).
 
 ### 4.8. Manual
@@ -281,7 +281,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 |---|---|
 | RN-01 | **Ingreso autorizado** solo si la persona está registrada, no está dada de baja, tiene al menos un documento cargado, ninguno de sus documentos está vencido y la prueba de alcohol es conforme. |
 | RN-02 | Una persona **dada de baja** se deniega de inmediato, sin evaluar las demás condiciones. |
-| RN-03 | Si la persona está activa, se evalúan en conjunto los documentos y la prueba de alcohol, y se informan **todos los motivos** de la denegación. |
+| RN-03 | El ingreso se valida **en dos pasos**. Al pasar el DNI: si la persona está activa, se revisan sus documentos; sin documentos o con alguno vencido se deniega de inmediato, informando todos los motivos de documentos. Si están en regla, el terminal facial verifica el rostro y la prueba de alcohol: conforme, abre el molinete (autorizado); no conforme, se deniega por alcohol. |
 | RN-04 | Un documento está **vigente** si no tiene fecha de vencimiento o si vence hoy o después: el día de su vencimiento sigue siendo válido todo el día. |
 | RN-05 | De cada documento **cuenta solo la última versión**. Renovar crea una versión nueva y la anterior queda en el historial. |
 | RN-06 | Los documentos **no requieren aprobación**: tienen validez desde su carga. Verificar que correspondan a cada persona es responsabilidad del administrador. |
