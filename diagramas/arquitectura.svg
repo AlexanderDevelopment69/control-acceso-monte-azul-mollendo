@@ -45,16 +45,17 @@
 <text class="t1" x="80" y="188">Portal web (presentación)</text>
 <text class="tm" x="80" y="208">contenedor portal · Next.js 16 · React 19 · Tailwind CSS 4 · ApexCharts</text>
 <g>
-  <rect class="ch" x="80" y="224" width="84" height="30" rx="6"/><text class="tc" x="122" y="239">Dashboard</text>
-  <rect class="ch" x="172" y="224" width="152" height="30" rx="6"/><text class="tc" x="248" y="239">Personal y documentos</text>
-  <rect class="ch" x="332" y="224" width="136" height="30" rx="6"/><text class="tc" x="400" y="239">Panel de vigilancia</text>
-  <rect class="ch" x="476" y="224" width="78" height="30" rx="6"/><text class="tc" x="515" y="239">Auditoría</text>
-  <rect class="ch" x="562" y="224" width="108" height="30" rx="6"/><text class="tc" x="616" y="239">Sistema y APIs</text>
-  <rect class="ch" x="678" y="224" width="66" height="30" rx="6"/><text class="tc" x="711" y="239">Manual</text>
+  <rect class="ch" x="80" y="224" width="80" height="30" rx="6"/><text class="tc" x="120" y="239">Dashboard</text>
+  <rect class="ch" x="166" y="224" width="72" height="30" rx="6"/><text class="tc" x="202" y="239">Reportes</text>
+  <rect class="ch" x="244" y="224" width="146" height="30" rx="6"/><text class="tc" x="317" y="239">Personal y documentos</text>
+  <rect class="ch" x="396" y="224" width="124" height="30" rx="6"/><text class="tc" x="458" y="239">Panel de vigilancia</text>
+  <rect class="ch" x="526" y="224" width="70" height="30" rx="6"/><text class="tc" x="561" y="239">Auditoría</text>
+  <rect class="ch" x="602" y="224" width="102" height="30" rx="6"/><text class="tc" x="653" y="239">Sistema y APIs</text>
+  <rect class="ch" x="710" y="224" width="58" height="30" rx="6"/><text class="tc" x="739" y="239">Manual</text>
 </g>
 
 <!-- aplicación -->
-<rect class="bx-main" x="60" y="320" width="940" height="170" rx="8"/>
+<rect class="bx-main" x="60" y="320" width="940" height="180" rx="8"/>
 <text class="t1" x="80" y="348">Backend (API · reglas de negocio)</text>
 <text class="tm" x="80" y="368">contenedor api · NestJS 12 · Node.js 22 · TypeScript</text>
 <g>
@@ -72,8 +73,9 @@
   <rect class="ch" x="572" y="422" width="126" height="30" rx="6"/><text class="tc" x="635" y="437">Eventos de acceso</text>
   <rect class="ch" x="706" y="422" width="78" height="30" rx="6"/><text class="tc" x="745" y="437">Auditoría</text>
   <rect class="ch" x="792" y="422" width="180" height="30" rx="6"/><text class="tc" x="882" y="437">Panel, dashboard y respaldos</text>
+  <rect class="ch" x="80" y="460" width="150" height="30" rx="6"/><text class="tc" x="155" y="475">Reportes (Excel / PDF)</text>
 </g>
-<text class="tm" x="80" y="476">acceso a datos · Prisma 7 (ORM) · migraciones automáticas al arrancar</text>
+<text class="tm" x="244" y="479">acceso a datos · Prisma 7 (ORM) · migraciones automáticas al arrancar</text>
 
 <!-- datos -->
 <rect class="bx" x="60" y="540" width="280" height="80" rx="8"/>
@@ -105,10 +107,10 @@
 <text class="lm" x="900" y="213">clave de</text>
 <text class="lm" x="900" y="230">equipo</text>
 
-<line class="ad" x1="200" y1="490" x2="200" y2="537" marker-end="url(#hd)"/>
-<text class="ld" x="210" y="518">Prisma (SQL)</text>
-<line class="ad" x1="520" y1="490" x2="520" y2="537" marker-end="url(#hd)"/>
-<text class="ld" x="530" y="518">lectura / escritura</text>
+<line class="ad" x1="200" y1="500" x2="200" y2="537" marker-end="url(#hd)"/>
+<text class="ld" x="210" y="523">Prisma (SQL)</text>
+<line class="ad" x1="520" y1="500" x2="520" y2="537" marker-end="url(#hd)"/>
+<text class="ld" x="530" y="523">lectura / escritura</text>
 
 <line class="am" x1="660" y1="580" x2="717" y2="580" marker-end="url(#hm)"/>
 <path class="am" d="M200 620 V642 H860 V623" marker-end="url(#hm)"/>

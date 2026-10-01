@@ -7,6 +7,7 @@ import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { estadoRespaldos } from './respaldos.util.js';
+import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 
 @Controller()
 export class PanelController {
@@ -14,6 +15,7 @@ export class PanelController {
     private readonly panelService: PanelService,
     private readonly dashboardService: DashboardService,
     private readonly prisma: PrismaService,
+    private readonly pushSdk: PushSdkService,
   ) {}
 
   @Get('panel/resumen')
@@ -52,8 +54,9 @@ export class PanelController {
   }
 
   // Vista ampliada para el panel de Administración: además de la base de
-  // datos, reporta si la clave de equipos está configurada — no si el
-  // hardware real responde, ya que aún no hay SDK definido (spec base, sección 12).
+  // datos, reporta si la clave de equipos está configurada y, ahora que el
+  // protocolo PUSH ya está implementado (ver push-sdk/), si hay algún equipo
+  // conectado de verdad (llamó a /iclock/getrequest en los últimos 2 min).
   @Get('panel/estado-sistema')
   @Roles('administrador')
   async estadoSistema() {
@@ -66,6 +69,8 @@ export class PanelController {
       baseDeDatos = { estado: 'down', latenciaMs: Date.now() - inicio };
     }
 
+    const dispositivos = await this.pushSdk.listarEstadoDispositivos();
+
     return {
       api: {
         estado: 'up' as const,
@@ -77,6 +82,11 @@ export class PanelController {
       baseDeDatos,
       integraciones: {
         claveEquiposConfigurada: !!process.env.DEVICE_API_KEY,
+      },
+      equipos: {
+        total: dispositivos.length,
+        enLinea: dispositivos.filter((d) => d.enLinea).length,
+        dispositivos,
       },
       respaldos: estadoRespaldos(),
       websocket: { namespace: '/ws/eventos' },

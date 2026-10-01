@@ -21,7 +21,6 @@ Versión final · 30 de septiembre de 2026
 9. [Seguridad](#9-seguridad)
 10. [Instalación, operación y respaldos](#10-instalación-operación-y-respaldos)
 11. [Requisitos no funcionales](#11-requisitos-no-funcionales)
-12. [Desarrollo pendiente de aprobación](#12-desarrollo-pendiente-de-aprobación)
 - [Anexo A. Glosario](#anexo-a-glosario)
 
 ---
@@ -45,6 +44,11 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Dos tipos de cuenta: Administrador y Vigilancia.
 - Instalación en un servidor local (mini PC) en la garita, con operación independiente de internet y respaldos diarios.
 
+**Desarrollos adicionales al alcance base, solicitados por el cliente:**
+
+- Dashboard con indicadores (KPI) y gráficos (sección 4.4).
+- Reportes en Excel o PDF (sección 4.5).
+
 **Fuera del alcance base:**
 
 - Autoservicio de empresas contratistas: registro, invitación y activación por correo, y carga de su propio personal y documentos.
@@ -52,7 +56,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Perfiles, puestos, zonas o actividades con requisitos de documentos distintos (matriz configurable de requisitos).
 - Roles de usuario adicionales (por ejemplo, Auditor), pantalla de gestión de usuarios y recuperación de contraseña por correo.
 - Solicitud y agenda de visitas, invitaciones de visita y control de equipos personales y materiales (pase y guía de remisión).
-- Antipassback y control de permanencia u ocupación de la planta.
+- Antipassback: impedir una salida sin ingreso previo o un segundo ingreso sin salida (el Dashboard solo informa quiénes están dentro).
 - Auditoría detallada (valor anterior y nuevo, historial de aprobaciones).
 - Activos (vehículos, maquinaria y equipos), operadores y checklists.
 - Sanciones y restricciones con niveles.
@@ -103,6 +107,7 @@ Los contenedores se reinician automáticamente ante una falla y se inician junto
 |---|---|
 | Lenguaje | TypeScript (portal y backend) |
 | Portal web | Next.js 16, React 19, Tailwind CSS 4, cliente Socket.IO, ApexCharts (gráficos del Dashboard) |
+| Reportes | ExcelJS (Excel) y pdfmake (PDF), generados en el backend |
 | Backend | NestJS 12 sobre Node.js 22, API REST versionada (`/api/v1`) |
 | Tiempo real | Socket.IO 4 (WebSocket) |
 | Acceso a datos | Prisma 7 (ORM y migraciones versionadas) |
@@ -128,6 +133,7 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 |---|---|---|
 | Personal y documentos | Ver y modificar | — |
 | Dashboard | Ver | — |
+| Reportes (Excel y PDF) | Descargar | — |
 | Panel de vigilancia | Ver | Ver |
 | Documentos de una persona (desde el Panel) | Ver | Ver |
 | Auditoría | Ver | — |
@@ -204,21 +210,61 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 - Los intentos con un documento **no registrado** también quedan en el historial.
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).
 
-### 4.4. Auditoría (Administrador)
+### 4.4. Dashboard (Administrador)
+
+Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salidas registrados. Cada ingreso autorizado de una persona cuenta como una **visita**. Se actualiza en tiempo real con cada ingreso o salida, y cada minuto.
+
+| Indicador | Cálculo |
+|---|---|
+| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 24 horas). |
+| Visitas finalizadas | Visitas del periodo que ya registraron su salida. |
+| Total de visitas | Ingresos autorizados en el periodo. |
+| Permanencia mayor a 24 horas | Personas que ingresaron hace más de 24 horas y no registran salida. |
+
+- **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
+- **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa.
+- **Personal registrado:** total de personas, barra con la proporción de activos y dados de baja (con sus porcentajes) y cuántas personas del personal activo están en el terminal en ese momento.
+- **Lista de permanencia mayor a 24 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
+
+- **Acceso:** solo el Administrador, desde la opción "Dashboard" del menú.
+- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 24 horas).
+
+Los indicadores de presencia dependen de que cada persona registre su salida en el molinete. Si una persona sale sin registrarla (por ejemplo, durante una emergencia con los brazos del molinete liberados), seguirá figurando como presente hasta que registre su salida.
+
+### 4.5. Reportes (Administrador)
+
+Descarga de la información del sistema en **Excel** o **PDF**. Se elige el reporte, sus filtros y el formato.
+
+| Reporte | Contenido | Filtros |
+|---|---|---|
+| Personal y empresas | Apellidos, nombres, documento de identidad, empresa y RUC, estado, si puede ingresar (con el motivo si no puede), cantidad de documentos y fecha de registro. | Empresa; activos o dados de baja. |
+| Documentos por persona | Última versión de cada documento: persona, empresa, documento, versión, fecha de carga, vencimiento, días para vencer y estado (vigente, por vencer en 30 días o vencido). Primero los más urgentes. | Empresa; estado del documento. |
+| Ingresos y salidas | Historial en orden cronológico: fecha y hora, movimiento, resultado, documento, persona, empresa, motivo de denegación y molinete. | Periodo; ingresos o salidas; autorizados o denegados. |
+| Visitas del periodo | Cada ingreso autorizado con su salida, duración y estado (finalizada o presente). | Periodo. |
+| Personal presente | Personas dentro del terminal en el momento de la descarga, con hora de ingreso, tiempo dentro y si superan las 24 horas. | — |
+| Auditoría | Fecha y hora, usuario, acción (crear, modificar o eliminar), dato y número de registro. | Periodo. |
+
+- **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
+- **Excel:** título, filtros y fecha de generación arriba; cabecera fija con filtros de Excel; fechas como fechas (se pueden ordenar y filtrar); totales al final.
+- **PDF:** A4 horizontal, con la cabecera de la tabla repetida en cada página, número de página y totales al final.
+- Hasta 20 000 filas por reporte; si se supera, se pide acotar el periodo o los filtros.
+- **Interfaz:** `GET /reportes/:tipo?formato=xlsx|pdf` con los filtros de cada reporte.
+
+### 4.6. Auditoría (Administrador)
 
 - Registro de solo lectura que indica qué usuario creó, modificó o eliminó cada dato y en qué fecha: personal, empresas, documentos, tipos de documento y usuarios.
 - Búsqueda por usuario o por tipo de dato ("personal", "documento"…) y filtro por rango de fechas ("Desde" / "Hasta"), paginado de 15 registros por página.
 
-### 4.5. Sistema y APIs (Administrador)
+### 4.7. Sistema y APIs (Administrador)
 
 - **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado") y **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas). Se actualiza cada 15 segundos.
 - **Documentación de las APIs de integración** con ejemplos de uso y su estado ("Disponible", "Simulado" o "Por programar"), y enlace a la documentación interactiva (Swagger).
 
-### 4.6. Manual
+### 4.8. Manual
 
-Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, cuenta y contraseña, auditoría y sistema.
+Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, reportes, cuenta y contraseña, auditoría y sistema.
 
-### 4.7. Características generales del portal
+### 4.9. Características generales del portal
 
 - Fechas en formato día-mes-año y hora de Lima.
 - Diseño adaptable a computadora, tablet y celular (menú desplegable, tablas desplazables, tarjetas).
@@ -281,7 +327,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 |---|---|---|
 | `POST /auth/login` · `/auth/refresh-token` | Iniciar sesión y renovarla | Público |
 | `PATCH /cuenta/password` | Cambiar la propia contraseña | Con sesión |
-| `GET` · `POST` · `PATCH /empresas` | Empresas | Administrador |
+| `GET` · `POST /empresas` · `GET` · `PATCH /empresas/:id` | Empresas: listar, registrar, ver y modificar | Administrador |
 | `GET /personas` · `/personas/:id` | Personal con su estado de cumplimiento | Administrador y Vigilancia |
 | `POST /personas` · `PATCH /personas/:id` · `PATCH /personas/:id/estado` | Registrar, modificar, dar de baja o reactivar | Administrador |
 | `POST` · `GET /personas/:id/foto` | Subir y ver la foto | Subir: Administrador; ver: ambos |
@@ -289,10 +335,12 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `DELETE /personas/:id/documentos/:tipoDocumentoId` | Eliminar un documento con todas sus versiones | Administrador |
 | `GET` · `POST /tipos-documento` | Nombres de documento | Crear: Administrador |
 | `POST /eventos-acceso/ingreso` · `/salida` | Registrar un ingreso o una salida | Equipos (`X-API-Key`) |
+| `POST /integraciones/torniquete/comando` | Orden manual de apertura o cierre de un molinete (hoy queda registrada en el log del servidor) | Administrador y Vigilancia |
 | `GET /eventos-acceso` | Historial paginado, con búsqueda y fechas | Administrador y Vigilancia |
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
 | `GET /panel/dashboard` | Indicadores y gráficos del Dashboard, por periodo | Administrador |
 | `GET /panel/dashboard/permanencia` | Personas con permanencia mayor a 24 horas, paginado | Administrador |
+| `GET /reportes/:tipo` | Reporte en Excel o PDF (`personal`, `documentos`, `movimientos`, `visitas`, `presentes`, `auditoria`) | Administrador |
 | `GET /panel/estado-sistema` · `/health` | Estado del sistema y de los respaldos | Administrador · público |
 | `GET /auditoria` | Auditoría paginada, con búsqueda y fechas | Administrador |
 | `GET` · `POST` · `PATCH /usuarios` | Cuentas de usuario (sin pantalla en el alcance base) | Administrador |
@@ -350,43 +398,6 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Usabilidad | Interfaz adaptable a celular, modo claro y oscuro, manual integrado. |
 | Operación sin internet | El sistema opera íntegramente dentro de la red local del terminal. |
 | Mantenibilidad | Pruebas automáticas del backend (reglas de ingreso, paginación, respaldos) y guía de despliegue. |
-
----
-
-## 12. Desarrollo pendiente de aprobación
-
-Funcionalidades solicitadas que no forman parte del alcance base y requieren aprobación.
-
-### 12.1. Dashboard con indicadores (KPI)
-
-Pantalla del Administrador con indicadores y gráficos, calculados a partir de los ingresos y salidas registrados. Cada ingreso autorizado de una persona cuenta como una **visita**. Se actualiza en tiempo real con cada ingreso o salida, y cada minuto.
-
-| Indicador | Cálculo |
-|---|---|
-| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 24 horas). |
-| Visitas finalizadas | Visitas del periodo que ya registraron su salida. |
-| Total de visitas | Ingresos autorizados en el periodo. |
-| Permanencia mayor a 24 horas | Personas que ingresaron hace más de 24 horas y no registran salida. |
-
-- **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
-- **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa.
-- **Personal registrado:** total de personas, barra con la proporción de activos y dados de baja (con sus porcentajes) y cuántas personas del personal activo están en el terminal en ese momento.
-- **Lista de permanencia mayor a 24 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
-
-- **Acceso:** solo el Administrador, desde la opción "Dashboard" del menú.
-- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 24 horas).
-
-Los indicadores de presencia dependen de que cada persona registre su salida en el molinete. Si una persona sale sin registrarla (por ejemplo, durante una emergencia con los brazos del molinete liberados), seguirá figurando como presente hasta que registre su salida.
-
-### 12.2. Exportación de datos a Excel o PDF
-
-Descarga de la información del sistema en Excel o PDF, por ejemplo:
-
-- Listado de personal y empresas.
-- Estado de documentos por persona.
-- Historial de ingresos y salidas, con los filtros aplicados en pantalla.
-- Registros de auditoría.
-- Reporte de visitas y de personal presente.
 
 ---
 

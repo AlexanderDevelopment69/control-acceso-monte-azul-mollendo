@@ -15,7 +15,9 @@ import { PersonasModule } from './personas/personas.module.js';
 import { DocumentosModule } from './documentos/documentos.module.js';
 import { EventosAccesoModule } from './eventos-acceso/eventos-acceso.module.js';
 import { IntegracionesModule } from './integraciones/integraciones.module.js';
+import { PushSdkModule } from './push-sdk/push-sdk.module.js';
 import { PanelModule } from './panel/panel.module.js';
+import { ReportesModule } from './reportes/reportes.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { RolesGuard } from './common/guards/roles.guard.js';
 
@@ -34,7 +36,9 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     DocumentosModule,
     EventosAccesoModule,
     IntegracionesModule,
+    PushSdkModule,
     PanelModule,
+    ReportesModule,
   ],
   controllers: [AppController],
   providers: [

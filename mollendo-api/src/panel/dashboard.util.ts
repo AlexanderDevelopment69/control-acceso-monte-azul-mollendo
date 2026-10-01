@@ -45,12 +45,14 @@ export interface UltimoMovimiento {
  * Permanencia mayor a 24 horas = presentes que ingresaron hace más de 24 h.
  */
 export function calcularPresencia(ultimos: UltimoMovimiento[], ahora: Date) {
-  const dentro = ultimos.filter((u) => u.tipoMovimiento === 'ingreso');
+  const dentro = ultimos
+    .filter((u) => u.tipoMovimiento === 'ingreso')
+    .sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
   const limite = ahora.getTime() - MS_POR_DIA;
   const masDe24h = dentro
     .filter((u) => u.fechaHora.getTime() < limite)
     .sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
-  return { presentes: dentro.length, masDe24h };
+  return { presentes: dentro.length, dentro, masDe24h };
 }
 
 // ---------------------------------------------------------------------------

@@ -13,7 +13,7 @@ interface RegistrarAuditoriaParams {
 }
 
 // Cómo se muestra cada tabla en el portal; la búsqueda también encuentra por estos nombres.
-const TABLA_LABEL: Record<string, string> = {
+export const TABLA_LABEL: Record<string, string> = {
   persona: 'Personal',
   empresa: 'Empresa',
   documento_persona: 'Documento',

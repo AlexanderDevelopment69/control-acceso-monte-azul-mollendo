@@ -186,6 +186,48 @@ const SECCIONES: SeccionManual[] = [
     ),
   },
   {
+    id: "reportes",
+    titulo: "Reportes",
+    roles: ["administrador"],
+    contenido: (
+      <div className="space-y-3">
+        <p>
+          En <Link href="/reportes" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Reportes</Link> se
+          descarga la información del sistema en <strong>Excel</strong> o <strong>PDF</strong>: se elige el reporte, sus
+          filtros y el botón de descarga.
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            <strong>Personal y empresas</strong>: el personal con su empresa, estado y si puede ingresar (con el motivo).
+            Filtros: empresa y activos o dados de baja.
+          </li>
+          <li>
+            <strong>Documentos por persona</strong>: la última versión de cada documento, con su vencimiento y estado
+            (vigente, por vencer en 30 días o vencido). Filtros: empresa y estado del documento.
+          </li>
+          <li>
+            <strong>Ingresos y salidas</strong>: el historial del periodo con resultado y motivo. Filtros: periodo,
+            movimiento y resultado.
+          </li>
+          <li>
+            <strong>Visitas del periodo</strong>: cada ingreso autorizado con su salida, duración y si está finalizada o
+            presente.
+          </li>
+          <li>
+            <strong>Personal presente</strong>: quiénes están dentro en el momento de descargarlo, con su tiempo dentro.
+          </li>
+          <li>
+            <strong>Auditoría</strong>: quién creó, modificó o eliminó cada dato, en el periodo elegido.
+          </li>
+        </ul>
+        <p>
+          El Excel trae filtros en la cabecera y las fechas se pueden ordenar; el PDF sale en hoja horizontal con número de
+          página. Un reporte puede tener hasta 20 000 filas: si pide más, acota el periodo o los filtros.
+        </p>
+      </div>
+    ),
+  },
+  {
     id: "cuenta",
     titulo: "Tu cuenta y contraseña",
     roles: ["administrador", "vigilancia"],

@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
-import type { EstadoRespaldos, EstadoSistema } from "@/lib/api/types";
+import type { EstadoDispositivo, EstadoRespaldos, EstadoSistema } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, FolderIcon, LockIcon } from "@/icons";
+import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
@@ -30,63 +30,62 @@ interface ApiIntegracion {
 const APIS_INTEGRACION: ApiIntegracion[] = [
   {
     nombre: "Terminal ZKTeco G4 Pro + alcoholímetro (protocolo PUSH)",
-    endpoint: "/iclock/cdata · /iclock/getrequest · /iclock/devicecmd",
+    endpoint: "/iclock/registry · /iclock/push · /iclock/getrequest · /iclock/devicecmd · /iclock/cdata",
     metodo: "POST",
     descripcion:
-      "El G4 Pro se conecta a la mini PC con el protocolo PUSH del fabricante (sin ZKBio). Por ahí recibe las personas con su foto y quién está habilitado para pasar, y envía cada ingreso (rostro reconocido + prueba de alcohol).",
-    autenticacion: "Número de serie del terminal (protocolo PUSH)",
-    tipo: "pendiente",
-    headers: ["Lo define el protocolo PUSH (no usa X-API-Key)"],
-    ejemploRequest: `// Órdenes que la mini PC le deja al G4 Pro (las recoge al consultar /iclock/getrequest):
-DATA UPDATE USERINFO PIN=12345678  Name=Juan Pérez  StartDatetime=…  EndDatetime=…  Expires=1
-DATA UPDATE BIOPHOTO PIN=12345678  Type=9  Format=0  Size=…  Content=<foto JPG en base64>
-DATA DELETE USERINFO PIN=12345678`,
-    ejemploRespuesta: `// El G4 Pro envía cada ingreso a /iclock/cdata (registro ATTLOG):
-12345678	2026-09-28 07:05:12	0	15	…`,
+      "El G4 Pro se conecta directo a la mini PC con el protocolo PUSH del fabricante (sin ZKBio). Por ahí recibe las personas con su foto (DATA UPDATE USERINFO/BIOPHOTO) y manda cada verificación (rostro + alcohol, table=rtlog) y el estado del sensor/relé de la puerta (table=rtstate). El G4 Pro abre el ingreso con su propio relé; la mini PC solo registra el resultado.",
+    autenticacion: "Ninguna (el equipo no manda ningún token) — las rutas /iclock/* no llevan X-API-Key",
+    tipo: "real",
+    headers: ["El equipo no manda Content-Type reconocible; el servidor siempre lee el cuerpo como texto plano"],
+    ejemploRequest: `// El equipo se registra una vez y abre sesión:
+POST /iclock/registry?SN=HSR3263100192
+POST /iclock/push?SN=HSR3263100192
+
+// Órdenes que la mini PC le deja (las recoge al consultar /iclock/getrequest):
+DATA UPDATE USERINFO PIN=12345678\tName=Juan Pérez\tPri=0
+DATA UPDATE BIOPHOTO PIN=12345678\tType=9\tNo=0\tIndex=0\tSize=…\tContent=<foto JPG en base64>\tFormat=0`,
+    ejemploRespuesta: `// El servidor responde al registro:
+RegistryCode=d6b7cbaab9   // estable, mismo código para el mismo equipo siempre
+
+// El G4 Pro manda cada verificación (table=rtlog, no documentado por el fabricante):
+POST /iclock/cdata?SN=HSR3263100192&table=rtlog
+time=2026-09-30 18:22:37\tpin=0\tevent=0\tverifytype=15\tConcentration=0\t...`,
     notas:
-      "Por programar, después de las pruebas con el equipo real (ver Opciones_Integracion_G4Pro.md): el ingreso será en dos pasos — el lector de DNI habilita a la persona en el G4 Pro por unos segundos y el G4 Pro abre el molinete solo si reconoce su rostro y el alcohol es conforme.",
+      "RegistryCode y /iclock/push no están en ningún manual de ZKTeco: sin responder así, el equipo se queda conectado pero nunca manda datos reales (así se descubrió, probando contra el equipo físico real, ver Analisis_Control_Acceso_Mollendo.md sección 6.1). Ya implementado y probado con curl simulando el equipo (ver Estado_Implementacion_Integracion_G4Pro.md); todavía no se probó contra el G4 Pro físico ni se desplegó en la mini PC. No se manda StartDatetime/EndDatetime/Expires en USERINFO: el equipo real los rechaza (confirmado), así que no hay forma de \"deshabilitar\" a alguien en el equipo — el control de que nadie se salte el DNI queda a cargo del vigilante.",
   },
   {
     nombre: "Ingreso",
     endpoint: "/eventos-acceso/ingreso",
     metodo: "POST",
     descripcion:
-      "Recibe el documento de la persona y el resultado del alcohol, corre el motor de validación y responde autorizado/denegado. Si es autorizado, ordena abrir el molinete. Hoy es la entrada para pruebas (la usa el simulador de garita); con la integración, los datos llegarán del lector de DNI y del G4 Pro.",
+      "Fase 1: solo el DNI. Si los documentos no están en regla (o la persona está de baja, o no registrada), se deniega aquí mismo. Si están en regla, queda \"pendiente\" — el resultado real (rostro + alcohol) llega después, por separado, desde el G4 Pro (table=rtlog) y se correlaciona por cercanía de horario (ver /iclock/cdata arriba). El simulador de garita (`npm run simular`) hace las dos llamadas, una tras otra, para generar datos de demostración.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
     ejemploRequest: `{
   "tipoDocumentoIdentidad": "DNI",
   "numeroDocumento": "12345678",
-  "alcoholConforme": true,
   "torniqueteId": "T1"
 }`,
-    ejemploRespuesta: `// 201 Created — autorizado
+    ejemploRespuesta: `// 201 Created — documentos en regla, esperando el resultado del equipo
 {
-  "eventoId": 42,
-  "tipoMovimiento": "ingreso",
-  "resultado": "autorizado",
-  "fechaHora": "2026-09-26T13:05:00.000Z",
+  "estado": "pendiente_verificacion",
   "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" },
   "numeroDocumento": "12345678",
-  "motivos": {
-    "dadoDeBaja": false,
-    "sinDocumentos": false,
-    "alcohol": false,
-    "documentos": false,
-    "documentosVencidos": []
-  }
+  "mensaje": "Documentos en regla. Esperando el resultado del equipo (rostro + alcoholímetro)."
 }
 
-// 201 Created — denegado (puede combinar varios motivos a la vez)
+// 201 Created — denegado de inmediato (documentos, baja, o no llega al G4 Pro)
 {
   "eventoId": 43,
+  "tipoMovimiento": "ingreso",
   "resultado": "denegado",
-  ...
+  "fechaHora": "2026-09-26T13:05:00.000Z",
+  "persona": { "id": 2, "nombres": "Ana", "apellidos": "Torres" },
+  "numeroDocumento": "87654321",
   "motivos": {
     "dadoDeBaja": false,
     "sinDocumentos": false,
-    "alcohol": true,
     "documentos": true,
     "documentosVencidos": ["SCTR"]
   }
@@ -103,7 +102,7 @@ DATA DELETE USERINFO PIN=12345678`,
 
 // 401 — X-API-Key inválida o ausente`,
     notas:
-      "Orden de evaluación: persona dada de baja → se deniega de inmediato sin evaluar nada más. Si no, se revisan juntos: que tenga al menos un documento cargado, que ninguno esté vencido (última versión de cada uno) y el alcohol, y se informan todos los motivos.",
+      "Orden de evaluación: persona dada de baja → se deniega de inmediato sin evaluar nada más. Si no, se revisa que tenga al menos un documento cargado y que ninguno esté vencido (última versión de cada uno); si todo está en regla, se crea un \"ingreso pendiente\" y recién el rtlog del G4 Pro (evento 'dispositivo.rtlog', correlación en EventosAccesoService) decide y crea el EventoAcceso definitivo — por eso ya no se manda ni se devuelve el motivo de alcohol en esta llamada.",
   },
   {
     nombre: "Salida",
@@ -245,6 +244,52 @@ function RespaldosEstado({
           : "Todavía no hay respaldos automáticos."}
         {" "}· Diario a las 00:00, se guardan 14 días
       </p>
+    </>
+  );
+}
+
+/** Si un equipo se ve conectado o no (ver push-sdk/push-sdk.service.ts: 2 min sin /iclock/getrequest = desconectado). */
+function EquiposEstado({
+  comprobando,
+  equipos,
+}: {
+  comprobando: boolean;
+  equipos?: EstadoSistema["equipos"];
+}) {
+  if (comprobando) {
+    return (
+      <div className="mt-2">
+        <ComprobandoBadge />
+      </div>
+    );
+  }
+  if (!equipos || equipos.total === 0) {
+    return (
+      <>
+        <div className="mt-2">
+          <Badge color="light">Sin equipos</Badge>
+        </div>
+        <p className="mt-2 text-xs text-gray-400">Ningún equipo se ha conectado todavía.</p>
+      </>
+    );
+  }
+  const hayEnLinea = equipos.enLinea > 0;
+  const detalle = (d: EstadoDispositivo) => {
+    if (d.enLinea) return `${d.serialNumber}: en línea`;
+    if (d.ultimaActividad) {
+      const hora = new Date(d.ultimaActividad).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
+      return `${d.serialNumber}: últ. vez ${hora}`;
+    }
+    return `${d.serialNumber}: nunca conectado`;
+  };
+  return (
+    <>
+      <div className="mt-2">
+        <Badge color={hayEnLinea ? "success" : "error"}>
+          {equipos.enLinea} de {equipos.total} en línea
+        </Badge>
+      </div>
+      <p className="mt-2 text-xs text-gray-400">{equipos.dispositivos.map(detalle).join(" · ")}</p>
     </>
   );
 }
@@ -421,7 +466,7 @@ function SistemaContent() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatusCard icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
@@ -458,6 +503,11 @@ function SistemaContent() {
         <StatusCard icon={<FolderIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Respaldos</p>
           <RespaldosEstado comprobando={comprobando} respaldos={estado?.respaldos} ahora={estado?.api.fecha} />
+        </StatusCard>
+
+        <StatusCard icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Equipos (G4 Pro)</p>
+          <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} />
         </StatusCard>
       </div>
 

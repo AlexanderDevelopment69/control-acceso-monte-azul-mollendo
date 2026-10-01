@@ -127,6 +127,13 @@ export interface PersonaPermanencia {
   ingreso: string;
 }
 
+export interface EstadoDispositivo {
+  serialNumber: string;
+  enLinea: boolean;
+  ultimaActividad: string | null;
+  ipAddress: string | null;
+}
+
 export interface EstadoSistema {
   api: {
     estado: "up";
@@ -137,6 +144,7 @@ export interface EstadoSistema {
   };
   baseDeDatos: { estado: "up" | "down"; latenciaMs: number };
   integraciones: { claveEquiposConfigurada: boolean };
+  equipos: { total: number; enLinea: number; dispositivos: EstadoDispositivo[] };
   respaldos: EstadoRespaldos;
   websocket: { namespace: string };
 }

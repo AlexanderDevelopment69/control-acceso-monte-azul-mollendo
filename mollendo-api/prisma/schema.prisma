@@ -135,6 +135,7 @@ model Persona {
 
   documentos        DocumentoPersona[]
   eventosAcceso     EventoAcceso[]
+  ingresosPendientes IngresoPendiente[]
 
   // Global: una persona pertenece a una sola empresa a la vez
   @@unique([tipoDocumentoIdentidad, numeroDocumento])
@@ -207,6 +208,109 @@ model EventoAcceso {
   @@index([personaId, fechaHora])
   @@index([fechaHora])
   @@map("evento_acceso")
+
+  verificacionesDispositivo VerificacionDispositivo[]
+}
+
+// ---------------------------------------------------------------------
+// INGRESO_PENDIENTE (DNI ya validado, esperando el resultado del G4 Pro)
+// El G4 Pro abre el ingreso con su propio relé y no espera permiso de la
+// mini PC (confirmado con el equipo real que no soporta ser "habilitado" por
+// fecha/hora -- ver Analisis_Control_Acceso_Mollendo.md sección 6.0), así
+// que el DNI y el resultado facial+alcohol llegan en dos momentos separados.
+// Esta tabla es el puente: se crea al pasar el DNI y se consume cuando llega
+// el rtlog correspondiente, correlacionado por cercanía de horario (el PIN
+// que manda el rtlog no es confiable, ver VerificacionDispositivo).
+// ---------------------------------------------------------------------
+model IngresoPendiente {
+  id           Int       @id @default(autoincrement())
+  personaId    Int       @map("persona_id")
+  persona      Persona   @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  torniqueteId String?   @map("torniquete_id") @db.VarChar(50)
+  creadoEn     DateTime  @default(now()) @map("creado_en")
+  consumidoEn  DateTime? @map("consumido_en")
+
+  @@index([personaId, consumidoEn])
+  @@map("ingreso_pendiente")
+}
+
+// ---------------------------------------------------------------------
+// DISPOSITIVO_ACCESO (terminal ZKTeco G4 Pro, protocolo PUSH/ADMS)
+// Un RegistryCode estable por equipo: el firmware del G4 Pro solo confía en
+// el servidor y empieza a mandar datos reales si /iclock/registry responde
+// "RegistryCode=<algo>" (nunca "OK"), y el mismo código debe repetirse en
+// cada llamada del mismo equipo — confirmado con el equipo real
+// HSR3263100192 (ver Analisis_Control_Acceso_Mollendo.md sección 6.1).
+// ---------------------------------------------------------------------
+model DispositivoAcceso {
+  id              Int       @id @default(autoincrement())
+  serialNumber    String    @unique @map("serial_number") @db.VarChar(30)
+  registryCode    String    @map("registry_code") @db.VarChar(20)
+  ipAddress       String?   @map("ip_address") @db.VarChar(45)
+  ultimaActividad DateTime? @map("ultima_actividad")
+  creadoEn        DateTime  @default(now()) @map("creado_en")
+
+  comandos        ComandoDispositivo[]
+  verificaciones  VerificacionDispositivo[]
+
+  @@map("dispositivo_acceso")
+}
+
+enum EstadoComando {
+  pendiente
+  entregado
+  confirmado
+
+  @@map("estado_comando")
+}
+
+// ---------------------------------------------------------------------
+// COMANDO_DISPOSITIVO (cola de ordenes al equipo, ej. DATA UPDATE USERINFO)
+// El equipo las recoge al llamar /iclock/getrequest y confirma el resultado
+// por /iclock/devicecmd.
+// ---------------------------------------------------------------------
+model ComandoDispositivo {
+  id            Int               @id @default(autoincrement())
+  dispositivoId Int               @map("dispositivo_id")
+  dispositivo   DispositivoAcceso @relation(fields: [dispositivoId], references: [id], onDelete: Cascade)
+  comando       String            @db.Text
+  estado        EstadoComando     @default(pendiente)
+  returnCode    Int?              @map("return_code")
+  creadoEn      DateTime          @default(now()) @map("creado_en")
+  entregadoEn   DateTime?         @map("entregado_en")
+  confirmadoEn  DateTime?         @map("confirmado_en")
+
+  @@index([dispositivoId, estado])
+  @@map("comando_dispositivo")
+}
+
+// ---------------------------------------------------------------------
+// VERIFICACION_DISPOSITIVO (eventos en tiempo real del G4 Pro: table=rtlog
+// con el resultado facial+alcoholimetro, table=rtstate con el estado de
+// sensor/rele/puerta). Ninguna de las dos tablas esta documentada por el
+// fabricante -- se descubrieron reversando trafico real del equipo
+// HSR3263100192 (ver Analisis_Control_Acceso_Mollendo.md seccion 6.1).
+// El campo "pin" que manda el equipo en rtlog no es confiable (llega en 0
+// incluso con un usuario real enrolado), asi que la correlacion con la
+// persona que paso su DNI se hace por cercania de horario, no por este
+// campo -- de ahi que eventoAccesoId quede opcional.
+// ---------------------------------------------------------------------
+model VerificacionDispositivo {
+  id              Int               @id @default(autoincrement())
+  dispositivoId   Int               @map("dispositivo_id")
+  dispositivo     DispositivoAcceso @relation(fields: [dispositivoId], references: [id], onDelete: Cascade)
+  tabla           String            @db.VarChar(20)
+  horaDispositivo DateTime?         @map("hora_dispositivo")
+  eventCode       String?           @map("event_code") @db.VarChar(10)
+  verifyType      String?           @map("verify_type") @db.VarChar(10)
+  concentracion   String?           @db.VarChar(20)
+  crudo           String            @db.Text
+  eventoAccesoId  Int?              @map("evento_acceso_id")
+  eventoAcceso    EventoAcceso?     @relation(fields: [eventoAccesoId], references: [id], onDelete: SetNull)
+  creadoEn        DateTime          @default(now()) @map("creado_en")
+
+  @@index([dispositivoId, creadoEn])
+  @@map("verificacion_dispositivo")
 }
 
 // ---------------------------------------------------------------------

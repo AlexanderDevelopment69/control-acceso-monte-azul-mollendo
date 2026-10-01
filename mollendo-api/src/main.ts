@@ -1,20 +1,33 @@
 import './common/zona-horaria.js';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { text } from 'express';
 import { AppModule } from './app.module.js';
 import { SWAGGER_FAVICON } from './common/swagger-favicon.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('api/v1');
+
+  // El equipo G4 Pro llama rutas fijas en la raíz (/iclock/cdata, etc.), sin
+  // prefijo y sin poder configurarlo -- se excluyen del prefijo global.
+  app.setGlobalPrefix('api/v1', {
+    exclude: [{ path: 'iclock/(.*)', method: RequestMethod.ALL }],
+  });
+
+  // El equipo manda los cuerpos de /iclock/* como texto plano, tab/salto de
+  // línea separado (table=rtlog, table=rtstate, etc.), casi nunca con un
+  // Content-Type reconocible -- se fuerza a leerlos como texto siempre, antes
+  // de que los parsers por defecto de Nest (json/urlencoded) los ignoren.
+  app.use('/iclock', text({ type: () => true, limit: '2mb' }));
   // CORS_ORIGIN acepta uno o varios orígenes separados por coma (ej. para
   // permitir localhost y un túnel de ngrok al mismo tiempo).
   const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
     .split(',')
     .map((origen) => origen.trim())
     .filter(Boolean);
-  app.enableCors({ origin: corsOrigins });
+  // Content-Disposition: el portal lee el nombre de los reportes que descarga.
+  app.enableCors({ origin: corsOrigins, exposedHeaders: ['Content-Disposition'] });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );

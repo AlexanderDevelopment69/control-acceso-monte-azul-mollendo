@@ -53,8 +53,11 @@ interface RequestOptions {
   isFormData?: boolean;
   /** No adjunta el Authorization header (endpoints públicos de /auth). */
   skipAuth?: boolean;
-  /** "blob" para archivos (p. ej. la foto del trabajador) en vez de JSON. */
-  responseType?: "json" | "blob";
+  /**
+   * "blob" para archivos (p. ej. la foto del trabajador) en vez de JSON;
+   * "archivo" para descargas: el contenido y el nombre que manda el servidor.
+   */
+  responseType?: "json" | "blob" | "archivo";
 }
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -119,5 +122,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (res.status === 204) return undefined as T;
   if (responseType === "blob") return (await res.blob()) as T;
+  if (responseType === "archivo") {
+    const nombre = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "descarga";
+    return { blob: await res.blob(), nombre } as T;
+  }
   return res.json() as Promise<T>;
 }

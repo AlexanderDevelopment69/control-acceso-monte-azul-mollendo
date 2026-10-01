@@ -61,7 +61,8 @@ export class DashboardService {
    * desempata). Se buscan solo los ids en SQL y los datos con Prisma, para que
    * las fechas se lean igual que en el resto del sistema.
    */
-  private async calcularPresenciaActual(ahora: Date) {
+  /** Último movimiento autorizado de cada persona: quiénes están dentro ahora (también lo usan los reportes). */
+  async calcularPresenciaActual(ahora: Date) {
     const ultimos = await this.prisma.$queryRaw<{ id: number }[]>`
       SELECT DISTINCT ON (persona_id) id
       FROM evento_acceso

@@ -1,0 +1,85 @@
+import { Body, Controller, Get, Header, Post, Query, Req } from '@nestjs/common';
+import type { Request } from 'express';
+import { Public } from '../common/decorators/public.decorator.js';
+import { PushSdkService } from './push-sdk.service.js';
+
+/**
+ * Endpoints del protocolo ADMS/PUSH que llama el equipo G4 Pro directamente
+ * (rutas fijas, sin prefijo, no configurables desde el equipo). Sin
+ * autenticación: el equipo no manda ningún token, por eso van marcados
+ * @Public() -- ver main.ts para la exclusión del prefijo global "api/v1".
+ */
+@Controller('iclock')
+@Public()
+export class PushSdkController {
+  constructor(private readonly pushSdk: PushSdkService) {}
+
+  @Post('registry')
+  @Header('Content-Type', 'application/push;charset=UTF-8')
+  async registry(@Query('SN') sn: string, @Req() req: Request) {
+    const dispositivo = await this.pushSdk.obtenerOCrearDispositivo(sn, req.ip);
+    return `RegistryCode=${dispositivo.registryCode}`;
+  }
+
+  @Post('push')
+  @Header('Content-Type', 'application/push;charset=UTF-8')
+  push() {
+    return this.pushSdk.respuestaPush();
+  }
+
+  @Get('getrequest')
+  @Header('Content-Type', 'text/plain')
+  async getrequest(@Query('SN') sn: string, @Req() req: Request) {
+    await this.pushSdk.tocarActividad(sn, req.ip);
+    const comandos = await this.pushSdk.entregarComandosPendientes(sn);
+    return comandos.length > 0 ? comandos.join('\n') : 'OK';
+  }
+
+  @Post('devicecmd')
+  @Header('Content-Type', 'text/plain')
+  async devicecmd(@Query('SN') sn: string, @Body() body: string) {
+    const params = new URLSearchParams(body ?? '');
+    const id = Number(params.get('ID'));
+    const returnCode = Number(params.get('Return'));
+    if (Number.isFinite(id)) {
+      await this.pushSdk.confirmarComando(sn, id, Number.isFinite(returnCode) ? returnCode : 0);
+    }
+    return 'OK';
+  }
+
+  @Get('cdata')
+  @Header('Content-Type', 'text/plain')
+  async getCdata(@Query('SN') sn: string, @Req() req: Request) {
+    await this.pushSdk.tocarActividad(sn, req.ip);
+    return 'OK';
+  }
+
+  @Post('cdata')
+  @Header('Content-Type', 'text/plain')
+  async postCdata(
+    @Query('SN') sn: string,
+    @Query('table') table: string,
+    @Query('type') type: string,
+    @Body() body: string,
+    @Req() req: Request,
+  ) {
+    await this.pushSdk.tocarActividad(sn, req.ip);
+
+    // Background Verification (sección 12.8.3 del protocolo oficial): este
+    // equipo específico no la soporta (confirmado, no existe en su menú),
+    // pero se deja implementada por si algún otro equipo de la familia sí.
+    if (type === 'PostVerifyData') {
+      return 'OK';
+    }
+
+    const tablaNormalizada = (table ?? '').toLowerCase();
+    if (tablaNormalizada === 'rtlog' || tablaNormalizada === 'rtstate') {
+      const lineas = (body ?? '').split('\n').filter((linea) => linea.trim().length > 0);
+      for (const linea of lineas) {
+        await this.pushSdk.guardarVerificacion(sn, tablaNormalizada, linea);
+      }
+    }
+
+    return 'OK';
+  }
+}

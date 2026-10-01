@@ -10,39 +10,15 @@ import type { Dashboard, Paginado, PersonaPermanencia } from "@/lib/api/types";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Button from "@/components/ui/button/Button";
-import DatePicker from "@/components/form/date-picker";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { COLORES, Grafico } from "@/components/dashboard/Grafico";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
-import { hoy, pieDePagina } from "@/lib/paginaServidor";
+import { pieDePagina } from "@/lib/paginaServidor";
+import { SelectorPeriodo, usePeriodo } from "@/components/common/SelectorPeriodo";
 import { CheckCircleIcon, GroupIcon, TimeIcon, UserIcon } from "@/icons";
 
-type Periodo = "hoy" | "7dias" | "mes" | "rango";
-
 const POR_PAGINA_PERMANENCIA = 10;
-
-const PERIODOS: [Periodo, string][] = [
-  ["hoy", "Hoy"],
-  ["7dias", "Últimos 7 días"],
-  ["mes", "Este mes"],
-  ["rango", "Personalizado"],
-];
-
-/** Fecha AAAA-MM-DD desplazada `dias` días. */
-function sumarDias(fecha: string, dias: number): string {
-  const [a, m, d] = fecha.split("-").map(Number);
-  const f = new Date(a, m - 1, d + dias);
-  return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, "0")}-${String(f.getDate()).padStart(2, "0")}`;
-}
-
-function rangoDelPeriodo(periodo: Periodo, desde: string, hasta: string): { desde: string; hasta: string } {
-  const hoyDia = hoy();
-  if (periodo === "hoy") return { desde: hoyDia, hasta: hoyDia };
-  if (periodo === "7dias") return { desde: sumarDias(hoyDia, -6), hasta: hoyDia };
-  if (periodo === "mes") return { desde: `${hoyDia.slice(0, 8)}01`, hasta: hoyDia };
-  return { desde, hasta };
-}
 
 /** Paso entero y redondo (1, 2, 3, 4, 5, 6, 8, 10, 20, 30…) que cubre `valor`. */
 function pasoRedondo(valor: number): number {
@@ -149,17 +125,14 @@ function Tarjeta({
 }
 
 function DashboardContent() {
-  const [periodo, setPeriodo] = useState<Periodo>("hoy");
-  const [desdeRango, setDesdeRango] = useState(() => sumarDias(hoy(), -6));
-  const [hastaRango, setHastaRango] = useState(hoy);
+  const periodoElegido = usePeriodo();
   const [datos, setDatos] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [paginaPermanencia, setPaginaPermanencia] = useState(1);
   const [permanencia, setPermanencia] = useState<Paginado<PersonaPermanencia> | null>(null);
 
-  const { desde, hasta } = rangoDelPeriodo(periodo, desdeRango, hastaRango);
-  const rangoValido = !!desde && !!hasta && desde <= hasta;
+  const { desde, hasta, rangoValido } = periodoElegido;
 
   const cargar = useCallback(async () => {
     if (!rangoValido) return;
@@ -225,40 +198,7 @@ function DashboardContent() {
         description="Indicadores de presencia, visitas, ingresos y salidas, personal y documentos. Cada ingreso autorizado cuenta como una visita. Se actualiza en tiempo real."
       />
 
-      {/* Periodo y tipo */}
-      {/* En pantallas anchas, alto fijo (el de los campos de fecha): al elegir
-          "Personalizado" los botones no se mueven. En las demás, las fechas van debajo. */}
-      <div className="mb-6 flex flex-col items-start gap-3 xl:min-h-11 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex shrink-0 flex-wrap gap-1 rounded-lg bg-gray-100 p-1 text-sm dark:bg-gray-900">
-          {PERIODOS.map(([id, texto]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setPeriodo(id)}
-              className={`rounded-md px-3 py-1.5 font-medium ${
-                periodo === id
-                  ? "bg-white text-gray-900 shadow-theme-xs dark:bg-gray-800 dark:text-white"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
-            >
-              {texto}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {periodo === "rango" && (
-            <div className="flex items-center gap-2">
-              <div className="w-full sm:w-40">
-                <DatePicker id="dashboard-desde" placeholder="Desde" max={hastaRango || hoy()} value={desdeRango} onChange={setDesdeRango} />
-              </div>
-              <span className="text-sm text-gray-400">a</span>
-              <div className="w-full sm:w-40">
-                <DatePicker id="dashboard-hasta" placeholder="Hasta" min={desdeRango} max={hoy()} value={hastaRango} onChange={setHastaRango} />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <SelectorPeriodo estado={periodoElegido} id="dashboard" className="mb-6" />
 
       {error && (
         <div className="mb-6 flex flex-wrap items-center gap-3">

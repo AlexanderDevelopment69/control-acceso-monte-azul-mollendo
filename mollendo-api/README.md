@@ -1,114 +1,73 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# mollendo-api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend del Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM), alcance base.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- Reglas de negocio (motor de validación del ingreso), datos del personal, empresas, documentos y fotos.
+- API REST bajo `/api/v1` para el portal y para los equipos de garita (con la clave de equipo `X-API-Key`).
+- Eventos de ingreso y salida en tiempo real (Socket.IO, `/ws/eventos`).
+- Dashboard de indicadores y reportes en Excel o PDF.
 
-## Description
+Hecho con NestJS 12 sobre Node.js 22, Prisma 7 y PostgreSQL 16. Los reportes se generan con ExcelJS y pdfmake.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Desarrollo
 
-## Project setup
+Requisitos: Node.js 22, npm 12 y una base PostgreSQL 16.
 
 ```bash
-$ npm install
+npm install
+cp .env.example .env      # completar los valores
+npx prisma migrate deploy # crea o actualiza las tablas
+npm run db:seed           # cuentas iniciales (Administrador y Vigilancia)
+npm run start:dev         # http://localhost:3001 (documentación en /api/docs)
 ```
 
-## Compile and run the project
+Variables principales (ver `.env.example`):
 
-```bash
-# development
-$ npm run start
+| Variable | Para qué |
+|---|---|
+| `DATABASE_URL` | Conexión a PostgreSQL |
+| `JWT_SECRET`, `JWT_REFRESH_SECRET` y sus duraciones | Sesiones del portal |
+| `PORT`, `CORS_ORIGIN` | Puerto del servidor y orígenes permitidos |
+| `DOCUMENTOS_STORAGE_PATH` | Carpeta de documentos y fotos |
+| `ADMIN_SEED_*`, `VIGILANCIA_SEED_*` | Cuentas que crea `db:seed` |
+| `DEVICE_API_KEY` | Clave de los equipos de garita |
 
-# watch mode
-$ npm run start:dev
+La zona horaria es la de Lima (`src/common/zona-horaria.ts`); los días de los filtros, la vigencia de los documentos y los reportes se calculan con ella.
 
-# production mode
-$ npm run start:prod
-```
+## Comandos
 
-## Run tests
+| Comando | Qué hace |
+|---|---|
+| `npm run start:dev` | Servidor de desarrollo con recarga |
+| `npm run build` | Compilación de producción (`dist/`) |
+| `npm test` | Pruebas automáticas (Vitest) |
+| `npm run lint` | Revisión del código (oxlint) |
+| `npm run db:seed` | Crea las cuentas iniciales |
+| `npm run simular` | Simulador de garita: envía ingresos y salidas al backend (`-- --limpiar` los borra) |
 
-```bash
-# unit tests
-$ npm run test
+## Datos de demostración
 
-# e2e tests
-$ npm run test:e2e
+Para mostrar el sistema sin datos reales:
 
-# test coverage
-$ npm run test:cov
-```
+- `npx tsx prisma/datos-demo.ts`: 6 empresas DEMO y 56 personas con foto y documentos, por la API, y los ingresos y salidas de hoy.
+- `npx tsx prisma/historial-demo.ts`: 30 días de ingresos y salidas del personal DEMO, directo en la base (para los gráficos del Dashboard).
+- `prisma/limpiar-demo.sh`: borra todo lo DEMO (en el servidor).
 
-## Deployment
+Detalle y variables en la guía de despliegue (sección 8b).
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Estructura
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+| Carpeta | Contenido |
+|---|---|
+| `src/auth`, `src/usuarios` | Inicio de sesión, sesiones, cambio de contraseña y cuentas |
+| `src/empresas`, `src/personas`, `src/documentos`, `src/tipos-documento` | Empresas, personal, fotos y documentos |
+| `src/eventos-acceso` | Ingresos y salidas de los equipos y motor de validación |
+| `src/integraciones` | Integración con los equipos de garita |
+| `src/panel` | Panel de vigilancia, Dashboard, estado del sistema y canal en tiempo real |
+| `src/reportes` | Reportes en Excel y PDF |
+| `src/auditoria` | Registro de cambios |
+| `prisma` | Esquema, migraciones, cuentas iniciales, simulador y datos de demostración |
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## Despliegue
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+En la mini PC corre en un contenedor de Docker (`Dockerfile`) y aplica las migraciones al arrancar. La guía completa está en `../Registro_Despliegue_MiniPC.md`.

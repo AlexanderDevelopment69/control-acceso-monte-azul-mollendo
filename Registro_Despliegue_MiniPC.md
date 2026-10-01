@@ -318,6 +318,8 @@ ls backups
 | Menú **Sistema y APIs** | Backend y base de datos "En línea"; clave de equipos "Configurado" |
 | Botón de Swagger en Sistema y APIs (o `http://100.78.153.33:3000/api/docs`) | Abre la documentación de la API |
 | Menú **Panel de vigilancia** | Carga sin errores; sin el aviso "El servidor no responde" |
+| Menú **Dashboard** | Muestra los indicadores y los gráficos del día (vacíos si todavía no hay ingresos) |
+| Menú **Reportes** → "Personal y empresas" → **Descargar Excel** y **Descargar PDF** | Se descargan los dos archivos con el personal registrado |
 
 ### 4.3. Después de verificar
 

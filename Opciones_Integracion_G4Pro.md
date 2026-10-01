@@ -125,9 +125,13 @@ Sin DNI o con un DNI no registrado **no se abre**. El Panel muestra "No registra
 
 ## 4. Personas en el G4 Pro: registro y habilitación
 
-### 4.1. Registro (al crear o cambiar a la persona en el portal)
+### 4.1. Registro (al crear o cambiar a la persona en el portal) — ✅ FUNCIONA, con una corrección (01/oct/2026)
 
-El G4 Pro necesita tener a cada persona (DNI + foto) para reconocer su rostro. El sistema la envía automáticamente, **con una fecha de validez ya vencida**, para que quede deshabilitada:
+> **Confirmado con el equipo físico real, con el código de producción, desplegado en AWS.** `DATA UPDATE USERINFO` (el nombre) sí está confirmado como rechazado por el equipo, de seis formas distintas probadas — ese hallazgo se mantiene. Pero **la foto sí se registra solo con `DATA UPDATE BIOPHOTO`**, sin necesitar `USERINFO` antes: el equipo crea el usuario él mismo a partir de la foto. La causa de la confusión inicial fue un formato de `BIOPHOTO` equivocado (de más campos de los que este equipo acepta) — una vez corregido al formato simple, funciona (`return=0`), confirmado subiendo una foto real a través del portal. Detalle completo en `Estado_Implementacion_Integracion_G4Pro.md`, sección 2.5.
+>
+> **Lo único pendiente**: el equipo no va a mostrar un nombre en su pantalla para cada usuario (solo el PIN = ID de la persona), porque `USERINFO` nunca funciona. Es cosmético, no afecta el reconocimiento — si hace falta resolverlo, es una pregunta puntual para el proveedor, ya con la certeza de que el resto sí funciona.
+
+El diseño original (no probado todavía cuando se escribió) era que el G4 Pro necesita tener a cada persona (DNI + foto) para reconocer su rostro, y que el sistema la enviaría automáticamente, **con una fecha de validez ya vencida**, para que quede deshabilitada:
 
 ```
 DATA UPDATE USERINFO PIN=45678912  Name=Luis Quispe  StartDatetime=2000-01-01T00:00:00
@@ -185,13 +189,17 @@ Orden confirmado: **primero el rostro, luego el alcoholímetro**. Si la persona 
 
 ### 5.3. Alternativas si la habilitación temporal no funciona bien
 
+> **Actualización (30/set/2026): la habilitación temporal YA SE PROBÓ con el equipo real y falló — ver pendiente #1 actualizado en la sección 9.** De las dos alternativas de abajo, la 1 también quedó descartada (ver recuadro).
+>
+> **Corrección importante**: esto NO significa que haya que pasar a la Alternativa 2. Se decidió que el riesgo que la Alternativa 2 buscaba resolver por software (que alguien se salte el DNI y se pare directo frente al G4 Pro) **ya está cubierto por el vigilante presente en el punto de control** — no hace falta resolverlo con un segundo canal de relé. **El G4 Pro se queda abriendo el ingreso con su propio relé**, como en el diseño original de la sección 2.1/3; el backend solo recibe el resultado (por `table=rtlog`/`table=rtstate`) para registrarlo en el Panel, no para decidir la apertura. La Alternativa 2 se deja documentada abajo por si en algún momento se retira al vigilante de ese punto y hay que volver a resolverlo por software.
+
 Si la prueba muestra que la espera para habilitar es demasiado larga, o que el G4 Pro no respeta la fecha de validez:
 
-| | **Alternativa 1: verificación en el servidor** | **Alternativa 2: relé de red también para el ingreso** |
+| | **Alternativa 1: verificación en el servidor — ❌ DESCARTADA (30/set/2026)** | **Alternativa 2: relé de red también para el ingreso** |
 |---|---|---|
 | Cómo funciona | Al reconocer el rostro, el G4 Pro **pregunta** a la mini PC "¿lo dejo pasar?" (*Background Verification*, `PostVerifyData`, sección 12.8.3 del protocolo). La mini PC responde según el DNI leído. El G4 Pro hace la prueba de alcohol y abre con su relé. | El G4 Pro no abre: reconoce el rostro, hace la prueba de alcohol y envía el resultado. La mini PC comprueba rostro = DNI y alcohol conforme, y abre con un segundo canal del relé de red. |
 | Quién abre | El G4 Pro (se mantiene la regla: rostro + alcohol) | La mini PC |
-| Requisito | Que la función esté disponible y se entienda su formato (poco documentada). | Que **el resultado del alcohol llegue a la mini PC** (el protocolo no lo menciona). Relé de 2 canales. |
+| Requisito | ~~Que la función esté disponible y se entienda su formato (poco documentada).~~ **Descartado**: se implementó el lado del servidor (responde `OK` correctamente al `POST /iclock/cdata?type=PostVerifyData`, confirmado con una llamada simulada), pero el equipo real nunca lo invoca. Se revisó el manual de usuario completo del G4 Pro (`G4PRO_MANUAL.txt`) y la lista oficial de opciones del menú *Access Control* (sección 5.1: Door lock delay, Gate mode, Door sensor delay/type, Verification mode, Door valid time zone, Normally open time zone, Master device, Auxiliary input, Alarm) — **esta función no existe en ningún menú de este equipo**. Es un recurso del protocolo pensado para relojes de asistencia simples (confirmado en el comentario de la librería de referencia: firmware ZAM180-NF), no para esta línea ACC. | Que **el resultado del alcohol llegue a la mini PC** (el protocolo no lo menciona, pero **ya se confirmó por otra vía**: ver Hallazgo de `table=rtlog` en `Analisis_Control_Acceso_Mollendo.md` sección 6.1 — el alcohol SÍ llega a la mini PC). Falta el relé de 2 canales (hardware, por comprar).
 
 ---
 
@@ -254,7 +262,7 @@ La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya e
 
 | Parte | Qué hay que programar |
 |---|---|
-| **Protocolo PUSH** (nuevo) | Endpoints `/iclock/cdata`, `/iclock/getrequest` y `/iclock/devicecmd`. Reemplazan el webhook provisional de ZKBio (`/integraciones/zkbio/webhook`). |
+| **Protocolo PUSH** (nuevo) | Endpoints `/iclock/cdata`, `/iclock/getrequest`, `/iclock/devicecmd`, **más `/iclock/registry` (debe responder `RegistryCode=<algo>`, no `OK`) y `/iclock/push` (sesión con `SessionID`) — confirmado con el equipo real que sin esto nunca manda datos, ver pendiente 5**. Reemplazan el webhook provisional de ZKBio (`/integraciones/zkbio/webhook`). El alcohol llega por `table=rtlog` y el estado de puerta/relé por `table=rtstate` — ninguna de las dos está en el protocolo oficial documentado. |
 | **Cola de órdenes al G4 Pro** (nuevo) | Registrar (deshabilitada), actualizar y eliminar personas y enviar fotos, cada vez que cambia algo en el portal (sección 4.1). Guardar si cada persona quedó sincronizada. |
 | **Habilitación temporal** (nuevo) | Al leer un DNI en regla: habilitar a la persona en el G4 Pro por el tiempo configurado. Al recibir su ingreso o al acabarse el tiempo: deshabilitarla. Las habilitaciones deben tener prioridad en la cola. |
 | **Conversión de la foto** (nuevo) | Llevar la foto al formato que exige el G4 Pro (JPG ≤ 20 KB, 358×441 a 1080×1920). |
@@ -268,10 +276,20 @@ La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya e
 
 ## 9. Temas pendientes
 
-1. **Demora de la habilitación:** cuánto tarda el G4 Pro en recibir la orden de habilitar después de pasar el DNI, y si se puede reducir. Define si la habilitación temporal es viable o hace falta una alternativa (sección 5.3).
-2. **Fecha de validez por usuario:** confirmar que el G4 Pro respeta `StartDatetime` / `EndDatetime` al segundo (no solo por día).
-3. **Alcohol:** ya confirmado que el G4 Pro pide **primero el rostro y luego el alcoholímetro**, y que **no abre** si no se sopla o hay alcohol. Falta: el DT1700 tiene tres resultados (verde **Pass**, amarillo **Drink**, rojo **Fail**); hay que confirmar que **Drink también bloquea** y dónde se configura en el G4 Pro. No hay manual real de esta integración: el manual del G4 Pro de la carpeta (2022) no menciona el alcoholímetro, y la única guía de integración es una de las fabricadas (punto 10).
-4. **Intentos rechazados:** qué envía el G4 Pro a la mini PC cuando el alcohol no es conforme o la persona no está habilitada (para mostrar el motivo en el Panel).
+1. **Demora de la habilitación — RESUELTO, con resultado NEGATIVO (30/set/2026):** se probó con el equipo real, mandando exactamente el comando que documenta el protocolo oficial (`DATA UPDATE USERINFO PIN=1 StartDatetime=... EndDatetime=... Expires=1`, con el PIN real de un usuario enrolado, "Amiel", ID 1). **El equipo lo rechazó explícitamente**, dos veces (al habilitar y al deshabilitar), con el código de error `return=-629`. No fue un problema de red ni de formato del comando. Se intentó también la causa más probable según el propio protocolo (que indica *"the main switch parameter UserValidTimeFun must be set to 1"*): se mandó `SET OPTION UserValidTimeFun=1` + `RELOAD OPTIONS` (comando oficial, sección 12.4.1), el equipo lo aceptó (`return=0`), y **se repitió la prueba — mismo rechazo (`return=-629`) otra vez**. Dos intentos independientes, mismo resultado: **la habilitación temporal, tal como está diseñada en la sección 4.2, no es viable con este equipo**.
+   >
+   > **Esto NO cambia el diseño de apertura**: se decidió que el G4 Pro se queda abriendo el ingreso con su propio relé igual que en el diseño original (sección 2.1/3) — el riesgo que esto dejaba sin resolver (alguien se salta el DNI y se para directo frente al G4 Pro) se cubre con el **vigilante presente en el punto de control**, no con un mecanismo de software. No hace falta la Alternativa 2 de la sección 5.3 por este motivo (queda documentada ahí solo como respaldo si en algún momento no hay vigilante en ese punto).
+2. ~~**Fecha de validez por usuario:** confirmar que el G4 Pro respeta `StartDatetime` / `EndDatetime` al segundo (no solo por día).~~ — **Ya no aplica**: el punto 1 confirma que el comando se rechaza por completo, antes siquiera de poder medir la precisión de la validez.
+3. **Alcohol — RESUELTO EN PARTE (30/set/2026):** se conectó el equipo físico real (G4 Pro + DT1700, SN `HSR3263100192`) a un servidor PUSH de prueba y se confirmó que **el dato de alcohol sí llega por el protocolo ADMS**, en tiempo real, apenas se completa la prueba. No llega en `ATTLOG`/`OPERLOG` (las tablas que documenta el protocolo oficial) sino en una tabla propia del firmware, **no documentada en ningún manual**: `table=rtlog`, con el campo `Concentration`. Evento real capturado:
+   ```
+   time=2026-09-30 18:22:37  pin=0  event=0  verifytype=15  Concentration=0  ...
+   ```
+   `Concentration=0` fue un resultado **Pass** (verde). **Todavía falta**: provocar un resultado **Drink** y **Fail** para ver qué valor manda `Concentration` en esos casos (probablemente > 0, pero no confirmado), y si el nombre del evento o algún otro campo cambia cuando el equipo bloquea el paso.
+4. **Intentos rechazados — parcialmente resuelto:** se descubrió que el evento de apertura física (sensor/relé/puerta) viaja en **una tabla aparte**, también no documentada: `table=rtstate` (campos `sensor=`, `relay=`, `door=`). En la prueba exitosa llegaron ambos: primero `rtlog` (la verificación) y, un segundo después, dos `rtstate` (relé se activa y luego se desactiva). La hipótesis a confirmar con una prueba real de rechazo: si el alcohol no es conforme o la persona no está habilitada, debería llegar el `rtlog` (o no llegar nada) **sin** el `rtstate` de apertura correspondiente — eso sería la forma de detectar un rechazo desde el backend. Falta la prueba real para confirmarlo.
+5. **Hallazgo nuevo, no anticipado — requisito de "confianza" del equipo con el servidor:** se descubrió que el G4 Pro **no manda datos reales a ningún servidor que no responda exactamente de cierta forma**, algo que no aparece en ningún manual de ZKTeco:
+   - `/iclock/registry` tiene que responder **`RegistryCode=<algo>`** (un código estable por equipo, no necesariamente uno específico) — si responde `OK` a secas (la respuesta "obvia" siguiendo el protocolo documentado), el equipo se queda conectado con normalidad (sigue hablando por `/iclock/getrequest`) pero **nunca manda `rtlog`/`rtstate` ni ningún dato real**, sin ningún error.
+   - Además hace falta implementar un endpoint no documentado, **`/iclock/push`**, que responda con una sesión (`SessionID`, etc.).
+   - **Esto es crítico para la sección 8.3** ("Protocolo PUSH (nuevo)"): si el desarrollo dentro de `mollendo-api` no implementa este comportamiento exacto, el síntoma en el sitio va a ser "el equipo se conecta pero nunca manda nada" — indistinguible de un problema de red, y muy difícil de diagnosticar sin saber que existe este requisito.
 5. **Firmware del G4 Pro:** el protocolo revisado es el de **asistencia (ATT)**. El manual de la carpeta de equipos es de la variante de **control de acceso (ACC)**, que puede usar otro protocolo. Hay que confirmar qué firmware tiene y que se conecta al servidor PUSH.
 6. **Texto que entrega el lector de DNI:** el código de barras del DNI peruano puede contener más datos que el número. Hay que leer varios DNI reales (azul y electrónico) para saber cómo extraer el número de 8 dígitos.
 7. **Personas con CE o pasaporte:** su documento puede no tener un código de barras que el lector entienda. Hay que definir cómo se identifican.
@@ -281,6 +299,7 @@ La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya e
 11. **Manual de configuración del lector Syble:** no está en la carpeta; sin él no se puede pasar a modo USB-COM ni activar PDF417. Pedirlo al proveedor.
 12. **Controladora del molinete:** la ficha del TS2000 Plus indica que la controladora de acceso (C3-200 o InBio 260 Pro) es **opcional**. Revisar si los molinetes comprados la traen: si la traen, tiene red y relés propios y podría reemplazar al relé de red en la salida; si no, las señales van directo a J3 como está en este documento.
 13. **Salida "Lock" del G4 Pro:** el manual no trae el diagrama de conexión en texto; confirmar en la etiqueta del equipo que es un contacto seco (NO / COM) y no una salida con voltaje.
+14. ~~**Cómo enrolar caras en el equipo**~~ — ✅ **RESUELTO (01/oct/2026)**: `DATA UPDATE USERINFO` sigue rechazado (seis pruebas, incluido el ejemplo exacto del manual del fabricante), pero no hacía falta — `DATA UPDATE BIOPHOTO` (la foto) funciona solo, con el formato simple de 4 campos (`PIN`, `Type`, `Size`, `Content`; no el de 7 campos del protocolo oficial completo). Confirmado con el código real de `mollendo-api` contra el equipo físico. El registro automático de caras desde el portal **sí funciona**. Detalle en `Estado_Implementacion_Integracion_G4Pro.md` sección 2.5. Queda pendiente, menor: el equipo no mostrará el nombre de la persona en su pantalla (solo el PIN), porque `USERINFO` no funciona — no afecta el reconocimiento.
 
 ---
 
@@ -290,15 +309,15 @@ Con el G4 Pro, el DT1700 y el **PushDemo** del proveedor (servidor PUSH de prueb
 
 | # | Prueba | Cómo | Qué confirma |
 |---|---|---|---|
-| 1 | **Conexión** | En el G4 Pro, *Cloud service settings*: IP y puerto de la PC con el PushDemo. Verificar que el terminal aparece. | Firmware y protocolo PUSH (pendiente 5) |
+| 1 | **Conexión** — ✅ **hecha (30/set/2026), y repetida en producción el 01/oct/2026** | En el G4 Pro, *Cloud service settings*: IP y puerto de la PC con el PushDemo. Verificar que el terminal aparece. | Confirmado: el equipo real (firmware `4.1.109-OCM-4101-3`) sí habla el protocolo PUSH, pero **solo si el servidor responde `RegistryCode=` en `/iclock/registry` y expone `/iclock/push`** (ver pendiente 5) — con una respuesta `OK` simple el equipo se conecta pero nunca manda datos reales. El 01/oct se repitió contra `mollendo-api` real (no el PushDemo), desplegado en AWS: el equipo se conectó solo y mandó un `rtlog`/`rtstate` real — ver `Estado_Implementacion_Integracion_G4Pro.md` sección 2.2. |
 | 2 | **Registro deshabilitado** | Registrar una persona con su foto y con una fecha de validez pasada. Comprobar que el G4 Pro la reconoce pero **no abre**. | Que la persona queda deshabilitada |
-| 3 | **Habilitación temporal** | Enviar la orden de habilitar por 60 s y medir cuánto tarda el G4 Pro en aceptarla. Comprobar que abre dentro del tiempo y **no abre** después. | Pendientes 1 y 2 |
-| 4 | **Alcohol** | Con la persona habilitada: rostro sin soplar, resultado **Drink** (amarillo), resultado **Fail** (rojo) y resultado **Pass** (verde). Revisar cuándo abre y qué llega al PushDemo (`ATTLOG`, `OPERLOG`, fotos). | Pendientes 3 y 4 |
+| 3 | **Habilitación temporal** — ✅ **hecha (30/set/2026), resultado NEGATIVO** | Enviar la orden de habilitar por 60 s y medir cuánto tarda el G4 Pro en aceptarla. Comprobar que abre dentro del tiempo y **no abre** después. | **Rechazada por el equipo** (`return=-629`) — ver pendiente 1 actualizado en la sección 9. Pasar directo a la prueba 9. |
+| 4 | **Alcohol** — ✅ **hecha parcialmente (30/set/2026), solo resultado Pass** | Con la persona habilitada: rostro sin soplar, resultado **Drink** (amarillo), resultado **Fail** (rojo) y resultado **Pass** (verde). Revisar cuándo abre y qué llega al PushDemo (`ATTLOG`, `OPERLOG`, fotos). | Confirmado con un resultado **Pass**: el dato llega por `table=rtlog` (no `ATTLOG`/`OPERLOG`), campo `Concentration=0`. **Falta**: repetir con Drink y Fail para ver esos valores (pendiente 3). |
 | 5 | **Baja** | Enviar `DATA DELETE USERINFO` y comprobar que ya no la reconoce. | Que la baja funciona |
 | 6 | **Foto** | Enviar fotos de distintos tamaños y formatos. | Qué acepta el terminal |
 | 7 | **Lectores de DNI** | Leer varios DNI reales en la mini PC en modo USB-COM y revisar el texto recibido. | Pendiente 6 |
 | 8 | **Relé** | Activar el canal desde su página web y ver si el molinete de salida se abre. | Cableado y duración del pulso |
-| 9 | **Verificación en el servidor** (solo si la prueba 3 falla) | Buscar en el terminal cómo activarla y revisar si llega una consulta `PostVerifyData` antes de abrir, y qué respuesta espera. | Si la alternativa 1 es viable |
+| 9 | **Verificación en el servidor** — ✅ **hecha (30/set/2026), resultado NEGATIVO** | Buscar en el terminal cómo activarla y revisar si llega una consulta `PostVerifyData` antes de abrir, y qué respuesta espera. | Se implementó el lado del servidor (responde `OK` correctamente, confirmado con una llamada simulada), pero **la función no existe en el menú de este equipo** — se revisó el manual de usuario completo y la lista oficial del menú *Access Control*, sin rastro de ella. **Alternativa 1 descartada. El diseño original se mantiene** (el G4 Pro abre con su propio relé; el vigilante cubre el riesgo de que alguien se salte el DNI) — ver nota de la sección 5.3. |
 
 Con el sistema ya integrado:
 

@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { documentosActuales, evaluarIngreso } from './validacion-acceso.engine.js';
+import { documentosActuales } from './validacion-acceso.engine.js';
 import type { IngresoDto } from './dto/ingreso.dto.js';
 import type { SalidaDto } from './dto/salida.dto.js';
 import type { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
-import type { Prisma } from '../generated/prisma/client.js';
+import type { Persona, Prisma } from '../generated/prisma/client.js';
 import { paginacion, palabras, rangoDeDias, type Paginado } from '../common/paginacion.js';
+import type { RtlogRecibidoEvent } from '../push-sdk/push-sdk.service.js';
 
 /** Payload del evento interno que ordena abrir el molinete (lo atiende IntegracionesModule). */
 export interface AbrirMolineteEvent {
@@ -15,8 +16,20 @@ export interface AbrirMolineteEvent {
   tipoMovimiento: 'ingreso' | 'salida';
 }
 
+/**
+ * Cuánto se espera, desde que se pasa el DNI, a que llegue el resultado del
+ * G4 Pro antes de dejar de intentar correlacionarlos. No se ha medido todavía
+ * con el equipo real cuánto tarda una persona en caminar hasta el equipo y
+ * completar rostro+alcohol (ver Opciones_Integracion_G4Pro.md, pendiente #1
+ * de la sección 9) -- 2 minutos es un valor conservador de partida, a ajustar
+ * con la prueba real.
+ */
+const VENTANA_INGRESO_PENDIENTE_MS = 2 * 60 * 1000;
+
 @Injectable()
 export class EventosAccesoService {
+  private readonly logger = new Logger(EventosAccesoService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
@@ -65,40 +78,72 @@ export class EventosAccesoService {
     return documentosActuales(documentos, new Date());
   }
 
+  /**
+   * Fase 1 del ingreso: solo el DNI. El G4 Pro abre el ingreso con su propio
+   * relé y manda su resultado (rostro + alcohol) por separado, después (ver
+   * correlacionarVerificacionDispositivo) -- esta llamada ya no conoce el
+   * resultado del alcoholímetro, así que si los documentos están en regla no
+   * hay un EventoAcceso definitivo todavía, solo un "en espera".
+   */
   async registrarIngreso(dto: IngresoDto) {
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
     if (!persona) {
       return this.registrarNoRegistrada(dto, 'ingreso');
     }
 
-    const resultado = evaluarIngreso({
-      personaActiva: persona.estado === 'activo',
-      alcoholConforme: dto.alcoholConforme,
-      documentos: await this.getDocumentosActuales(persona.id),
+    if (persona.estado !== 'activo') {
+      return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoPorBaja: true });
+    }
+
+    const documentos = await this.getDocumentosActuales(persona.id);
+    const documentosVencidos = documentos.filter((d) => !d.vigente).map((d) => d.nombre);
+    const denegadoSinDocumentos = documentos.length === 0;
+    const denegadoPorDocumentos = documentosVencidos.length > 0;
+
+    if (denegadoSinDocumentos || denegadoPorDocumentos) {
+      return this.registrarIngresoDenegadoInmediato(persona, dto, {
+        denegadoSinDocumentos,
+        denegadoPorDocumentos,
+        documentosVencidos,
+      });
+    }
+
+    await this.prisma.ingresoPendiente.create({
+      data: { personaId: persona.id, torniqueteId: dto.torniqueteId },
     });
 
+    return {
+      estado: 'pendiente_verificacion' as const,
+      persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+      numeroDocumento: persona.numeroDocumento,
+      mensaje: 'Documentos en regla. Esperando el resultado del equipo (rostro + alcoholímetro).',
+    };
+  }
+
+  /** Documento no registrado, dado de baja, sin documentos o con alguno vencido: se deniega aquí mismo, sin llegar al G4 Pro. */
+  private async registrarIngresoDenegadoInmediato(
+    persona: Persona,
+    dto: IngresoDto,
+    motivos: {
+      denegadoPorBaja?: boolean;
+      denegadoSinDocumentos?: boolean;
+      denegadoPorDocumentos?: boolean;
+      documentosVencidos?: string[];
+    },
+  ) {
     const evento = await this.prisma.eventoAcceso.create({
       data: {
         personaId: persona.id,
         tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
         numeroDocumento: persona.numeroDocumento,
         tipoMovimiento: 'ingreso',
-        resultado: resultado.autorizado ? 'autorizado' : 'denegado',
-        denegadoPorBaja: resultado.denegadoPorBaja,
-        denegadoSinDocumentos: resultado.denegadoSinDocumentos,
-        denegadoPorAlcohol: resultado.denegadoPorAlcohol,
-        denegadoPorDocumentos: resultado.denegadoPorDocumentos,
+        resultado: 'denegado',
+        denegadoPorBaja: motivos.denegadoPorBaja ?? false,
+        denegadoSinDocumentos: motivos.denegadoSinDocumentos ?? false,
+        denegadoPorDocumentos: motivos.denegadoPorDocumentos ?? false,
         torniqueteId: dto.torniqueteId,
       },
     });
-
-    if (resultado.autorizado) {
-      this.eventEmitter.emit('molinete.abrir', {
-        torniqueteId: dto.torniqueteId,
-        eventoId: evento.id,
-        tipoMovimiento: 'ingreso',
-      } satisfies AbrirMolineteEvent);
-    }
 
     const respuesta = {
       eventoId: evento.id,
@@ -108,16 +153,79 @@ export class EventosAccesoService {
       persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
       numeroDocumento: persona.numeroDocumento,
       motivos: {
-        dadoDeBaja: resultado.denegadoPorBaja,
-        sinDocumentos: resultado.denegadoSinDocumentos,
-        alcohol: resultado.denegadoPorAlcohol,
-        documentos: resultado.denegadoPorDocumentos,
-        documentosVencidos: resultado.documentosVencidos,
+        dadoDeBaja: motivos.denegadoPorBaja ?? false,
+        sinDocumentos: motivos.denegadoSinDocumentos ?? false,
+        documentos: motivos.denegadoPorDocumentos ?? false,
+        documentosVencidos: motivos.documentosVencidos ?? [],
       },
     };
-
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
     return respuesta;
+  }
+
+  /**
+   * Fase 2 del ingreso: llegó un table=rtlog real del G4 Pro (ver
+   * PushSdkService.guardarVerificacion). Se correlaciona con el DNI pendiente
+   * más antiguo dentro de la ventana (FIFO: si hay varias personas en fila,
+   * la primera que pasó su DNI se empareja con el primer resultado que
+   * llega) -- el "pin" que manda el rtlog no sirve para esto, llega en 0
+   * incluso con un usuario real enrolado (confirmado con el equipo real).
+   *
+   * `eventCode === '0'` es la única verificación exitosa que se ha probado
+   * hasta ahora (Concentration=0, "Pass"); todavía no se ha confirmado qué
+   * manda el equipo cuando el DT1700 da Drink o Fail (ver
+   * Opciones_Integracion_G4Pro.md pendiente #3) -- por ahora, cualquier otro
+   * código se trata como denegado por alcohol, pero esa interpretación no
+   * está verificada con un rechazo real todavía.
+   */
+  @OnEvent('dispositivo.rtlog')
+  async correlacionarVerificacionDispositivo(evento: RtlogRecibidoEvent): Promise<void> {
+    const desde = new Date(Date.now() - VENTANA_INGRESO_PENDIENTE_MS);
+    const pendiente = await this.prisma.ingresoPendiente.findFirst({
+      where: { consumidoEn: null, creadoEn: { gte: desde } },
+      orderBy: { creadoEn: 'asc' },
+      include: { persona: true },
+    });
+
+    if (!pendiente) {
+      this.logger.warn(
+        `Llegó un rtlog (sn=${evento.serialNumber}, event=${evento.eventCode ?? ''}) sin ningún DNI pendiente en los últimos ${VENTANA_INGRESO_PENDIENTE_MS / 1000}s`,
+      );
+      return;
+    }
+
+    const autorizado = evento.eventCode === '0';
+    const eventoAcceso = await this.prisma.eventoAcceso.create({
+      data: {
+        personaId: pendiente.personaId,
+        tipoDocumentoIdentidad: pendiente.persona.tipoDocumentoIdentidad,
+        numeroDocumento: pendiente.persona.numeroDocumento,
+        tipoMovimiento: 'ingreso',
+        resultado: autorizado ? 'autorizado' : 'denegado',
+        denegadoPorAlcohol: !autorizado,
+        torniqueteId: pendiente.torniqueteId ?? undefined,
+        ...(evento.horaDispositivo ? { fechaHora: evento.horaDispositivo } : {}),
+      },
+    });
+
+    await this.prisma.$transaction([
+      this.prisma.ingresoPendiente.update({ where: { id: pendiente.id }, data: { consumidoEn: new Date() } }),
+      this.prisma.verificacionDispositivo.update({
+        where: { id: evento.verificacionId },
+        data: { eventoAccesoId: eventoAcceso.id },
+      }),
+    ]);
+
+    const respuesta = {
+      eventoId: eventoAcceso.id,
+      tipoMovimiento: eventoAcceso.tipoMovimiento,
+      resultado: eventoAcceso.resultado,
+      fechaHora: eventoAcceso.fechaHora.toISOString(),
+      persona: { id: pendiente.persona.id, nombres: pendiente.persona.nombres, apellidos: pendiente.persona.apellidos },
+      numeroDocumento: pendiente.persona.numeroDocumento,
+      motivos: { alcohol: !autorizado },
+    };
+    this.eventEmitter.emit('evento-acceso.registrado', respuesta);
   }
 
   /** Salida: sin antipassback; con un documento registrado (aunque esté de baja) se autoriza y abre el molinete. */

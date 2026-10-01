@@ -16,7 +16,12 @@ import { documentosActuales, evaluarIngreso } from '../src/eventos-acceso/valida
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 const MOLINETE = 'SIMULACION';
-const API_URL = process.env.API_URL ?? `http://localhost:${process.env.PORT ?? 3001}/api/v1`;
+// SN de un equipo falso: el ingreso ya no decide todo en una sola llamada
+// (ver push-sdk/) -- después del DNI hay que simular también el rtlog que
+// mandaría el G4 Pro, como si este fuera el equipo real.
+const SIM_SN = 'SIMULADOR';
+const HOST = process.env.API_URL?.replace(/\/api\/v1$/, '') ?? `http://localhost:${process.env.PORT ?? 3001}`;
+const API_URL = `${HOST}/api/v1`;
 
 function argumento(nombre: string, porDefecto: number): number {
   const arg = process.argv.find((a) => a.startsWith(`--${nombre}=`));
@@ -25,7 +30,7 @@ function argumento(nombre: string, porDefecto: number): number {
 }
 
 type Persona = { tipoDocumentoIdentidad: 'DNI' | 'CE' | 'PASAPORTE'; numeroDocumento: string; nombre: string };
-type Paso = { movimiento: 'ingreso' | 'salida'; persona: Persona; alcoholConforme?: boolean; caso: string };
+type Paso = { movimiento: 'ingreso' | 'salida'; persona: Persona; caso: string };
 
 const elegir = <T>(lista: T[]): T => lista[Math.floor(Math.random() * lista.length)];
 
@@ -76,15 +81,15 @@ async function armarPasos(cantidad: number): Promise<Paso[]> {
   while (pasos.length < cantidad) {
     const dado = Math.random();
     if (dado < 0.12 && conProblemas.length > 0) {
-      pasos.push({ movimiento: 'ingreso', persona: elegir(conProblemas), alcoholConforme: true, caso: 'documentos' });
+      pasos.push({ movimiento: 'ingreso', persona: elegir(conProblemas), caso: 'documentos' });
     } else if (dado < 0.2 && habilitados.some((p) => !adentro.has(p))) {
       // Solo a quien está afuera: quien ya ingresó no vuelve a pasar por la prueba.
       const afuera = habilitados.filter((p) => !adentro.has(p));
-      pasos.push({ movimiento: 'ingreso', persona: elegir(afuera), alcoholConforme: false, caso: 'alcohol' });
+      pasos.push({ movimiento: 'ingreso', persona: elegir(afuera), caso: 'alcohol' });
     } else if (dado < 0.26 && deBaja.length > 0) {
-      pasos.push({ movimiento: 'ingreso', persona: elegir(deBaja), alcoholConforme: true, caso: 'de baja' });
+      pasos.push({ movimiento: 'ingreso', persona: elegir(deBaja), caso: 'de baja' });
     } else if (dado < 0.32) {
-      pasos.push({ movimiento: 'ingreso', persona: await dniNoRegistrado(), alcoholConforme: true, caso: 'no registrado' });
+      pasos.push({ movimiento: 'ingreso', persona: await dniNoRegistrado(), caso: 'no registrado' });
     } else if (adentro.size > 0 && (dado > 0.7 || habilitados.every((p) => adentro.has(p)))) {
       const persona = elegir([...adentro]);
       adentro.delete(persona);
@@ -93,10 +98,49 @@ async function armarPasos(cantidad: number): Promise<Paso[]> {
       const afuera = habilitados.filter((p) => !adentro.has(p));
       const persona = elegir(afuera.length > 0 ? afuera : habilitados);
       adentro.add(persona);
-      pasos.push({ movimiento: 'ingreso', persona, alcoholConforme: true, caso: 'normal' });
+      pasos.push({ movimiento: 'ingreso', persona, caso: 'normal' });
     }
   }
   return pasos;
+}
+
+function formatoFechaDispositivo(fecha: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())} ${pad(fecha.getHours())}:${pad(fecha.getMinutes())}:${pad(fecha.getSeconds())}`;
+}
+
+/**
+ * Simula el table=rtlog que mandaría el G4 Pro tras el DNI (ver
+ * push-sdk/push-sdk.controller.ts). `event=0` es la única verificación
+ * exitosa confirmada con el equipo real; cualquier otro código se usa acá
+ * solo para simular un rechazo, su significado real todavía no está
+ * confirmado (ver Opciones_Integracion_G4Pro.md, pendiente #3).
+ */
+async function simularResultadoG4Pro(autorizado: boolean) {
+  const linea = [
+    `time=${formatoFechaDispositivo(new Date())}`,
+    'pin=0',
+    'cardno=0',
+    'eventaddr=1',
+    `event=${autorizado ? '0' : '1'}`,
+    'inoutstatus=0',
+    'verifytype=15',
+    'index=0',
+    'sitecode=0',
+    'linkid=0',
+    'maskflag=255',
+    'temperature=0',
+    'convtemperature=0',
+    'Concentration=0',
+    'SleepTime=0',
+    'HealthStatus=0',
+    'PlateNumber=0',
+  ].join('\t');
+  await fetch(`${HOST}/iclock/cdata?SN=${SIM_SN}&table=rtlog`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: linea,
+  });
 }
 
 async function enviar(paso: Paso) {
@@ -104,16 +148,43 @@ async function enviar(paso: Paso) {
     tipoDocumentoIdentidad: paso.persona.tipoDocumentoIdentidad,
     numeroDocumento: paso.persona.numeroDocumento,
     torniqueteId: MOLINETE,
-    ...(paso.movimiento === 'ingreso' && { alcoholConforme: paso.alcoholConforme }),
   };
   const res = await fetch(`${API_URL}/eventos-acceso/${paso.movimiento}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.DEVICE_API_KEY ?? '' },
     body: JSON.stringify(cuerpo),
   });
-  const datos = (await res.json()) as { resultado?: string; message?: string };
+  const datos = (await res.json()) as {
+    resultado?: string;
+    estado?: string;
+    message?: string;
+    persona?: { id: number } | null;
+  };
   if (!res.ok) throw new Error(`El backend respondió ${res.status}: ${datos.message ?? ''}`);
-  return datos.resultado ?? '?';
+
+  // Documentos no en regla (o de baja, o no registrado): el backend ya deniega
+  // ahí mismo, sin llegar al G4 Pro -- resultado inmediato, igual que antes.
+  if (datos.estado !== 'pendiente_verificacion') {
+    return datos.resultado ?? '?';
+  }
+
+  // Documentos en regla: falta el resultado del G4 Pro (rostro + alcohol),
+  // que en la vida real llega solo, segundos después. Acá se simula de una.
+  await simularResultadoG4Pro(paso.caso !== 'alcohol');
+
+  // La correlación (EventosAccesoService, evento 'dispositivo.rtlog') corre
+  // async respecto al "OK" que responde /iclock/cdata -- a propósito, para no
+  // acoplar los módulos -- así que puede no estar lista todavía. Reintenta
+  // unas pocas veces en vez de asumir que ya pasó.
+  for (let intento = 0; intento < 10; intento++) {
+    const eventoFinal = await prisma.eventoAcceso.findFirst({
+      where: { personaId: datos.persona!.id, torniqueteId: MOLINETE },
+      orderBy: { id: 'desc' },
+    });
+    if (eventoFinal) return eventoFinal.resultado;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return '?';
 }
 
 async function limpiar() {
