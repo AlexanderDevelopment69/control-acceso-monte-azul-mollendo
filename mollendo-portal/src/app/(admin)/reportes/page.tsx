@@ -11,7 +11,7 @@ import { SelectorPeriodo, usePeriodo } from "@/components/common/SelectorPeriodo
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
-import { DocsIcon, DownloadIcon, GroupIcon, ListIcon, PageIcon, TimeIcon, UserIcon } from "@/icons";
+import { CheckLineIcon, DocsIcon, DownloadIcon, GroupIcon, ListIcon, PageIcon, TimeIcon, UserIcon } from "@/icons";
 
 interface OpcionReporte {
   tipo: TipoReporte;
@@ -272,14 +272,38 @@ function ReportesContent() {
                 <strong className="font-medium text-gray-800 dark:text-white/90">Con archivos (ZIP):</strong> el mismo Excel
                 y los archivos de cada documento en carpetas por empresa y persona.
               </p>
-              <label className="mt-3 flex cursor-pointer items-center gap-2">
+              {/* Opción en tarjeta: toda la tarjeta se puede pulsar; el casillero real queda oculto pero accesible. */}
+              <label
+                className={`mt-3 flex cursor-pointer items-start gap-3 rounded-lg border bg-white p-3.5 transition-colors has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-brand-500/20 dark:bg-gray-900 ${
+                  incluirAnteriores
+                    ? "border-brand-500 dark:border-brand-400"
+                    : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={incluirAnteriores}
                   onChange={(e) => setIncluirAnteriores(e.target.checked)}
-                  className="size-4 rounded border-gray-300 accent-brand-500"
+                  className="sr-only"
                 />
-                Incluir también los documentos anteriores que fueron renovados
+                <span
+                  aria-hidden
+                  className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+                    incluirAnteriores
+                      ? "border-brand-500 bg-brand-500 text-white"
+                      : "border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
+                  }`}
+                >
+                  {incluirAnteriores && <CheckLineIcon className="size-3.5" />}
+                </span>
+                <span>
+                  <span className="block font-medium text-gray-800 dark:text-white/90">
+                    Incluir también los documentos anteriores
+                  </span>
+                  <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
+                    Los que fueron renovados, con su archivo. En el Excel figuran como “Reemplazado”.
+                  </span>
+                </span>
               </label>
             </div>
           )}
