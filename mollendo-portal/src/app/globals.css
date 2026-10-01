@@ -187,6 +187,13 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /* Mientras cambia el tema claro/oscuro (ver ThemeContext): todo cambia a la vez. */
+  .cambiando-tema,
+  .cambiando-tema *,
+  .cambiando-tema *::before,
+  .cambiando-tema *::after {
+    transition: none !important;
+  }
   html {
     /* Reserva el espacio de la barra de scroll siempre, para que el
        contenido no se corra cuando aparece/desaparece (ej. al desplegar
@@ -296,4 +303,13 @@
     display: none;
     -webkit-appearance: none;
   }
+}
+
+/* Cambio de tema con transición de vista (ver ThemeContext): el círculo lo anima
+   el script; sin el fundido por defecto del navegador. Fuera de @layer para que
+   gane a los estilos del navegador. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
