@@ -281,7 +281,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 |---|---|
 | RN-01 | **Ingreso autorizado** solo si la persona está registrada, no está dada de baja, tiene al menos un documento cargado, ninguno de sus documentos está vencido y la prueba de alcohol es conforme. |
 | RN-02 | Una persona **dada de baja** se deniega de inmediato, sin evaluar las demás condiciones. |
-| RN-03 | El ingreso se valida **en dos pasos**. Al pasar el DNI: si la persona está activa, se revisan sus documentos; sin documentos o con alguno vencido se deniega de inmediato, informando todos los motivos de documentos. Si están en regla, el terminal facial verifica el rostro y la prueba de alcohol: conforme, abre el molinete (autorizado); no conforme, se deniega por alcohol. |
+| RN-03 | El ingreso se valida **en dos pasos**. Al pasar el DNI: si la persona está activa, se revisan sus documentos; sin documentos o con alguno vencido se deniega de inmediato, informando todos los motivos de documentos. Si están en regla, el terminal facial reconoce el rostro y toma la prueba de alcohol; el sistema abre el molinete solo si el rostro corresponde a la persona del DNI y el alcohol es conforme (autorizado); si el alcohol no es conforme, se deniega por alcohol. |
 | RN-04 | Un documento está **vigente** si no tiene fecha de vencimiento o si vence hoy o después: el día de su vencimiento sigue siendo válido todo el día. |
 | RN-05 | De cada documento **cuenta solo la última versión**. Renovar crea una versión nueva y la anterior queda en el historial. |
 | RN-06 | Los documentos **no requieren aprobación**: tienen validez desde su carga. Verificar que correspondan a cada persona es responsabilidad del administrador. |

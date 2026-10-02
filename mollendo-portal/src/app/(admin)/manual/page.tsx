@@ -151,8 +151,8 @@ const SECCIONES: SeccionManual[] = [
           </li>
           <li>
             <strong>En el terminal facial:</strong> si los documentos están en regla, el terminal verifica el rostro y la{" "}
-            <strong>prueba de alcohol</strong>. Si son conformes, abre el molinete y el ingreso queda autorizado; si el
-            alcohol no es conforme, queda denegado por alcohol.
+            <strong>prueba de alcohol</strong>. El sistema abre el molinete solo si el rostro es el de la persona del DNI y el
+            alcohol es conforme, y el ingreso queda autorizado; si el alcohol no es conforme, queda denegado por alcohol.
           </li>
         </ol>
         <p>

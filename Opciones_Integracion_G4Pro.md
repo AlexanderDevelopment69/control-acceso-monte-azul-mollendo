@@ -14,10 +14,10 @@ Este documento explica cómo se conectan los equipos físicos (lectores de DNI, 
 | Equipo | Modelo | Función |
 |---|---|---|
 | Lectores de DNI (2) | Syble **XB-7705H** | Uno en el molinete de **ingreso** y otro en el de **salida**. Leen el código de barras del DNI y lo envían por USB a la mini PC. |
-| Terminal facial | ZKTeco **G4 Pro** | En el ingreso. Reconoce el rostro, luego habilita la prueba de alcohol con el DT1700, y **abre el molinete de ingreso con su propio relé** (salida "Lock"). Se alimenta con 12 V DC 3 A o por PoE (802.3af/at). |
+| Terminal facial | ZKTeco **G4 Pro** | En el ingreso. Reconoce el rostro, luego habilita la prueba de alcohol con el DT1700, y envía el resultado a la mini PC (ya no abre el molinete él mismo — ver actualización 02/oct/2026 abajo). Se alimenta con 12 V DC 3 A o por PoE (802.3af/at). |
 | Alcoholímetro | ZKTeco **DT1700** | Prueba de aliento. Se conecta **por USB Type-A al G4 Pro** (no a la red). Da tres resultados: verde **Pass**, amarillo **Drink** y rojo **Fail**. |
 | Molinetes (2) | ZKTeco **TS2000 Plus** | Uno de **ingreso** y otro de **salida**. Se abren al recibir un contacto seco (sin voltaje) en la bornera **J3** de su placa de control: **K1** o **K2** con **COM** ("Right Open" / "Left Open"). Tienen entrada de alarma contra incendios (**J2**), salida de 12 V (**J11**) y contadores de paso (**J17**/**J18**). |
-| Relé de red | Por comprar | Lo activa la mini PC por la red para abrir el molinete de **salida**. |
+| Relés de red (2) | Por comprar | Uno para cada molinete (ingreso y salida). La mini PC los activa por la red para abrirlos. |
 | Mini PC | Ya existe | Junto a los molinetes. Tiene **todo el sistema**: backend, base de datos y portal web. |
 
 ### 1.2. Decisiones tomadas
@@ -25,8 +25,8 @@ Este documento explica cómo se conectan los equipos físicos (lectores de DNI, 
 - **Todo es local, sin internet.** El sistema completo corre en la **mini PC** junto a los molinetes. En este documento, "servidor" es esa mini PC.
 - **No se usa ZKBio CVSecurity**, sino el **SDK del proveedor**: el protocolo **PUSH / ADMS** de ZKTeco (documento oficial: *Attendance PUSH Communication Protocol 20260422*).
 - **En el ingreso y en la salida, la persona primero se identifica con su DNI.**
-- **Ingreso:** el DNI **habilita** a la persona (si está en regla), pero **el molinete solo se abre cuando el G4 Pro reconoce su rostro y la prueba de alcohol es conforme**. Lo abre el G4 Pro con su relé.
-- **Salida:** solo DNI. Si no se identifica con un DNI registrado, **no se abre**. Una persona dada de baja **sí puede salir**. Lo abre la mini PC con el relé de red.
+- **Ingreso:** el DNI **habilita** a la persona (si está en regla), pero **el molinete solo se abre cuando el G4 Pro reconoce su rostro y la prueba de alcohol es conforme**. Lo abre la mini PC, con el relé de ingreso, una vez que recibe y confirma el resultado del G4 Pro (actualizado 02/oct/2026 — antes lo abría el G4 Pro directo con su propio relé, ver sección 5).
+- **Salida:** solo DNI. Si no se identifica con un DNI registrado, **no se abre**. Una persona dada de baja **sí puede salir**. Lo abre la mini PC con el relé de salida.
 - Los lectores de DNI los lee **el backend directamente** (modo USB-COM). No se usa el portal para leerlos, porque dependería de una ventana del navegador abierta y con el foco.
 
 ### 1.3. Cómo se comunican
@@ -36,8 +36,8 @@ Este documento explica cómo se conectan los equipos físicos (lectores de DNI, 
 | Lector de DNI → mini PC | USB (puerto serie virtual) | Enviar el texto leído del DNI. Cada lector aparece como un puerto distinto (por ejemplo COM3 = ingreso, COM4 = salida). |
 | G4 Pro ↔ mini PC | Red local, protocolo PUSH (HTTP) | La mini PC le envía las personas, sus fotos y quién está habilitado; el G4 Pro le envía cada ingreso. |
 | DT1700 → G4 Pro | USB | Resultado de la prueba de alcohol. |
-| G4 Pro → molinete de ingreso | 2 cables: relé "Lock" del G4 Pro (NO + COM) → J3 K1 (o K2) + COM | Señal de apertura del molinete de ingreso. |
-| Mini PC → relé de red → molinete de salida | Red local + 2 cables: relé (NO + COM) → J3 K1 (o K2) + COM | Señal de apertura del molinete de salida. |
+| Mini PC → relé de ingreso → molinete de ingreso | Red local + 2 cables: relé (NO + COM) → J3 K1 (o K2) + COM | Señal de apertura del molinete de ingreso (actualizado 02/oct/2026 — antes iba directo del G4 Pro). |
+| Mini PC → relé de salida → molinete de salida | Red local + 2 cables: relé (NO + COM) → J3 K1 (o K2) + COM | Señal de apertura del molinete de salida. |
 
 En el protocolo PUSH **es el G4 Pro el que se conecta a la mini PC**, en tres direcciones:
 
@@ -69,9 +69,10 @@ En el G4 Pro el menú se llama *"Cloud service settings"*, pero ahí solo se esc
 | 4 | Si está conforme, el sistema **habilita a esa persona en el G4 Pro** por un tiempo corto (por ejemplo 60 s). | Mini PC → G4 Pro (red) |
 | 5 | La persona se para frente al G4 Pro, que **reconoce su rostro**. | Persona → G4 Pro |
 | 6 | **Recién entonces** el G4 Pro le permite **soplar en el alcoholímetro**. | Persona → DT1700 → G4 Pro (USB) |
-| 7 | **Solo si el rostro es reconocido y el alcohol es conforme**, el G4 Pro activa su relé y el molinete de ingreso se abre para un paso. **Si no sopla o el resultado indica alcohol, no se abre.** | G4 Pro → molinete (cable a J3) |
-| 8 | El G4 Pro envía el registro a la mini PC, que **vuelve a deshabilitar** a la persona. | G4 Pro → mini PC (red) |
-| 9 | El ingreso aparece en el **Panel de vigilancia**. | Mini PC → Panel |
+| 7 | El G4 Pro envía el resultado (rostro reconocido + resultado del alcohol) a la mini PC. | G4 Pro → mini PC (red) |
+| 8 | La mini PC comprueba que el rostro reconocido corresponda al mismo DNI que pasó por el lector, y que el alcohol haya salido conforme. **Solo si ambas cosas se cumplen**, activa el **relé de ingreso** y el molinete se abre para un paso. **Si no sopla, el resultado indica alcohol, o el rostro no corresponde al DNI, no se abre.** (Actualizado 02/oct/2026 — antes abría el G4 Pro directo con su propio relé.) | Mini PC → relé (red) → molinete (cable a J3) |
+| 9 | La mini PC **vuelve a deshabilitar** a la persona. | Mini PC |
+| 10 | El ingreso aparece en el **Panel de vigilancia**. | Mini PC → Panel |
 
 **No se abre si:**
 - solo pasa el DNI (falta el rostro y el alcohol);
@@ -101,21 +102,23 @@ Sin DNI o con un DNI no registrado **no se abre**. El Panel muestra "No registra
 ## 3. Esquema de conexión
 
 ```
-                                    RED LOCAL (switch)
-        ┌───────────────────────────────┬───────────────────────────────┐
-        │                               │                               │
-┌───────┴────────┐              ┌───────┴────────┐              ┌───────┴────────┐
-│    MINI PC     │              │  RELÉ DE RED   │              │     G4 PRO     │──── USB ──── DT1700
-│ - Sistema      │              │  (salida)      │              │  (en ingreso)  │             (alcohol)
-│ - Base de datos│              └───────┬────────┘              └───────┬────────┘
-│ - Portal web   │                      │ 2 cables                      │ relé "Lock"
-└──┬──────────┬──┘                      │                               │ (2 cables)
-   │ USB      │ USB              ┌──────┴──────┐                 ┌──────┴──────┐
-┌──┴───────┐ ┌┴─────────┐        │  MOLINETE   │                 │  MOLINETE   │
-│LECTOR DNI│ │LECTOR DNI│        │  DE SALIDA  │                 │ DE INGRESO  │
-│ INGRESO  │ │ SALIDA   │        │ bornera J3  │                 │ bornera J3  │
-└──────────┘ └──────────┘        └─────────────┘                 └─────────────┘
+                                         RED LOCAL (switch)
+        ┌───────────────────────────────┬───────────────────────────────┬───────────────────────────────┐
+        │                               │                               │                               │
+┌───────┴────────┐              ┌───────┴────────┐              ┌───────┴────────┐              ┌───────┴────────┐
+│    MINI PC     │              │ RELÉ DE SALIDA │              │ RELÉ DE INGRESO│              │     G4 PRO     │──── USB ──── DT1700
+│ - Sistema      │              └───────┬────────┘              └───────┬────────┘              │  (en ingreso)  │             (alcohol)
+│ - Base de datos│                      │ 2 cables                      │ 2 cables              └────────────────┘
+│ - Portal web   │                      │                               │
+└──┬──────────┬──┘              ┌───────┴─────┐                 ┌───────┴─────┐
+   │ USB      │ USB              │  MOLINETE   │                 │  MOLINETE   │
+┌──┴───────┐ ┌┴─────────┐        │  DE SALIDA  │                 │ DE INGRESO  │
+│LECTOR DNI│ │LECTOR DNI│        │ bornera J3  │                 │ bornera J3  │
+│ INGRESO  │ │ SALIDA   │        └─────────────┘                 └─────────────┘
+└──────────┘ └──────────┘
 ```
+
+*(Actualizado 02/oct/2026: ahora hay un relé de red por cada molinete; el G4 Pro ya no tiene cable de señal al molinete, solo manda el resultado por red a la mini PC, que es quien ordena abrir al relé de ingreso.)*
 
 - El lector de DNI del ingreso **no está conectado al G4 Pro**, sino a la mini PC: el G4 Pro se entera de que la persona pasó su DNI porque la mini PC la habilita.
 - En cada molinete, la señal de apertura entra por la bornera **J3**: **K1 + COM** o **K2 + COM**, según el sentido de paso ("Right Open" / "Left Open").
@@ -125,11 +128,13 @@ Sin DNI o con un DNI no registrado **no se abre**. El Panel muestra "No registra
 
 ## 4. Personas en el G4 Pro: registro y habilitación
 
-### 4.1. Registro (al crear o cambiar a la persona en el portal) — ✅ FUNCIONA, con una corrección (01/oct/2026)
+### 4.1. Registro (al crear o cambiar a la persona en el portal) — ❌ NO FUNCIONA, confirmado con una persona real (02/oct/2026)
 
-> **Confirmado con el equipo físico real, con el código de producción, desplegado en AWS.** `DATA UPDATE USERINFO` (el nombre) sí está confirmado como rechazado por el equipo, de seis formas distintas probadas — ese hallazgo se mantiene. Pero **la foto sí se registra solo con `DATA UPDATE BIOPHOTO`**, sin necesitar `USERINFO` antes: el equipo crea el usuario él mismo a partir de la foto. La causa de la confusión inicial fue un formato de `BIOPHOTO` equivocado (de más campos de los que este equipo acepta) — una vez corregido al formato simple, funciona (`return=0`), confirmado subiendo una foto real a través del portal. Detalle completo en `Estado_Implementacion_Integracion_G4Pro.md`, sección 2.5.
+> **Conclusión final, corrige una celebración prematura del 01/oct.** Se probó `DATA UPDATE BIOPHOTO` (con el formato simple de 4 campos) y el equipo respondía `return=0` — se había concluido que eso bastaba. **No es así**: se registró a una persona real (Amiel, con su foto real) por el portal, el comando se confirmó (`return=0`), pero **el equipo no lo reconoce frente a la cámara y tampoco aparece en "Administración de usuarios"** — ni siquiera agregando `RELOAD OPTIONS` después. `USERINFO` (el nombre) sigue confirmado como rechazado, de seis formas distintas. En conjunto: **ninguna de las dos formas logra que el equipo registre a alguien de verdad por control remoto**. El `return=0` de `BIOPHOTO` solo confirma que el equipo recibió los bytes, no que haya quedado un usuario funcional. Detalle completo en `Estado_Implementacion_Integracion_G4Pro.md`, sección 2.6.
 >
-> **Lo único pendiente**: el equipo no va a mostrar un nombre en su pantalla para cada usuario (solo el PIN = ID de la persona), porque `USERINFO` nunca funciona. Es cosmético, no afecta el reconocimiento — si hace falta resolverlo, es una pregunta puntual para el proveedor, ya con la certeza de que el resto sí funciona.
+> **Por ahora, el registro de personas se tiene que hacer físicamente, desde la pantalla del equipo** — no automáticamente desde el portal. Falta preguntarle al proveedor si existe alguna otra forma, ya con evidencia concreta de qué se probó.
+>
+> **Evidencia final (02/oct/2026), directo del equipo**: se le pidió al equipo su propio estado interno (comando `INFO`, capturado por tráfico de red). Confirma que `BioPhotoFun`, `VisilightFun` y el tipo de biometría usado (`Type=9`, rostro de luz visible) están todos correctamente habilitados — no es un problema de configuración ni de formato. Aun así, **`UserCount=0`, `FaceCount=0` y `UserPhotoCount=0`**, incluso después de varios `DATA UPDATE BIOPHOTO` y un `DATA UPDATE USERPIC` con `return=0`: nada se guarda nunca, porque no hay un usuario (`USERINFO`, bloqueado) al cual adjuntarlo. Detalle completo en `Estado_Implementacion_Integracion_G4Pro.md` sección 2.8.
 
 El diseño original (no probado todavía cuando se escribió) era que el G4 Pro necesita tener a cada persona (DNI + foto) para reconocer su rostro, y que el sistema la enviaría automáticamente, **con una fecha de validez ya vencida**, para que quede deshabilitada:
 
@@ -191,15 +196,17 @@ Orden confirmado: **primero el rostro, luego el alcoholímetro**. Si la persona 
 
 > **Actualización (30/set/2026): la habilitación temporal YA SE PROBÓ con el equipo real y falló — ver pendiente #1 actualizado en la sección 9.** De las dos alternativas de abajo, la 1 también quedó descartada (ver recuadro).
 >
-> **Corrección importante**: esto NO significa que haya que pasar a la Alternativa 2. Se decidió que el riesgo que la Alternativa 2 buscaba resolver por software (que alguien se salte el DNI y se pare directo frente al G4 Pro) **ya está cubierto por el vigilante presente en el punto de control** — no hace falta resolverlo con un segundo canal de relé. **El G4 Pro se queda abriendo el ingreso con su propio relé**, como en el diseño original de la sección 2.1/3; el backend solo recibe el resultado (por `table=rtlog`/`table=rtstate`) para registrarlo en el Panel, no para decidir la apertura. La Alternativa 2 se deja documentada abajo por si en algún momento se retira al vigilante de ese punto y hay que volver a resolverlo por software.
+> ~~**Corrección importante**: esto NO significa que haya que pasar a la Alternativa 2... El G4 Pro se queda abriendo el ingreso con su propio relé...~~ **Superado, ver la actualización de abajo.** En su momento se decidió no hacía falta la Alternativa 2 porque el vigilante presente cubría el riesgo que esta buscaba resolver — pero el cliente luego decidió igual ir con la Alternativa 2 (ver actualización 02/oct/2026), por una razón distinta a la original (no quedó registrado cuál).
+>
+> **Actualización (02/oct/2026): el cliente confirmó que sí va con la Alternativa 2.** El ingreso queda igual que el diseño de abajo: el G4 Pro ya no abre nada, solo manda el resultado; la mini PC comprueba rostro = DNI y alcohol conforme, y abre con el **relé de ingreso**. Con una diferencia: son **dos relés de red separados** (uno de 1 canal para cada molinete), no uno solo de 2 canales como decía originalmente la sección 5 (ya actualizada). Las secciones 1 a 3 de este documento ya reflejan este cambio. Queda pendiente el modelo exacto de cada relé y, cuando se tenga, actualizar el código de `molinete.abrir` para el ingreso (hoy asume que abre el G4 Pro solo, con su propio relé).
 
 Si la prueba muestra que la espera para habilitar es demasiado larga, o que el G4 Pro no respeta la fecha de validez:
 
 | | **Alternativa 1: verificación en el servidor — ❌ DESCARTADA (30/set/2026)** | **Alternativa 2: relé de red también para el ingreso** |
 |---|---|---|
-| Cómo funciona | Al reconocer el rostro, el G4 Pro **pregunta** a la mini PC "¿lo dejo pasar?" (*Background Verification*, `PostVerifyData`, sección 12.8.3 del protocolo). La mini PC responde según el DNI leído. El G4 Pro hace la prueba de alcohol y abre con su relé. | El G4 Pro no abre: reconoce el rostro, hace la prueba de alcohol y envía el resultado. La mini PC comprueba rostro = DNI y alcohol conforme, y abre con un segundo canal del relé de red. |
+| Cómo funciona | Al reconocer el rostro, el G4 Pro **pregunta** a la mini PC "¿lo dejo pasar?" (*Background Verification*, `PostVerifyData`, sección 12.8.3 del protocolo). La mini PC responde según el DNI leído. El G4 Pro hace la prueba de alcohol y abre con su relé. | El G4 Pro no abre: reconoce el rostro, hace la prueba de alcohol y envía el resultado. La mini PC comprueba rostro = DNI y alcohol conforme, y abre con el **relé de ingreso**. |
 | Quién abre | El G4 Pro (se mantiene la regla: rostro + alcohol) | La mini PC |
-| Requisito | ~~Que la función esté disponible y se entienda su formato (poco documentada).~~ **Descartado**: se implementó el lado del servidor (responde `OK` correctamente al `POST /iclock/cdata?type=PostVerifyData`, confirmado con una llamada simulada), pero el equipo real nunca lo invoca. Se revisó el manual de usuario completo del G4 Pro (`G4PRO_MANUAL.txt`) y la lista oficial de opciones del menú *Access Control* (sección 5.1: Door lock delay, Gate mode, Door sensor delay/type, Verification mode, Door valid time zone, Normally open time zone, Master device, Auxiliary input, Alarm) — **esta función no existe en ningún menú de este equipo**. Es un recurso del protocolo pensado para relojes de asistencia simples (confirmado en el comentario de la librería de referencia: firmware ZAM180-NF), no para esta línea ACC. | Que **el resultado del alcohol llegue a la mini PC** (el protocolo no lo menciona, pero **ya se confirmó por otra vía**: ver Hallazgo de `table=rtlog` en `Analisis_Control_Acceso_Mollendo.md` sección 6.1 — el alcohol SÍ llega a la mini PC). Falta el relé de 2 canales (hardware, por comprar).
+| Requisito | ~~Que la función esté disponible y se entienda su formato (poco documentada).~~ **Descartado**: se implementó el lado del servidor (responde `OK` correctamente al `POST /iclock/cdata?type=PostVerifyData`, confirmado con una llamada simulada), pero el equipo real nunca lo invoca. Se revisó el manual de usuario completo del G4 Pro (`G4PRO_MANUAL.txt`) y la lista oficial de opciones del menú *Access Control* (sección 5.1: Door lock delay, Gate mode, Door sensor delay/type, Verification mode, Door valid time zone, Normally open time zone, Master device, Auxiliary input, Alarm) — **esta función no existe en ningún menú de este equipo**. Es un recurso del protocolo pensado para relojes de asistencia simples (confirmado en el comentario de la librería de referencia: firmware ZAM180-NF), no para esta línea ACC. | Que **el resultado del alcohol llegue a la mini PC** (el protocolo no lo menciona, pero **ya se confirmó por otra vía**: ver Hallazgo de `table=rtlog` en `Analisis_Control_Acceso_Mollendo.md` sección 6.1 — el alcohol SÍ llega a la mini PC). Falta el relé de ingreso (hardware, por comprar — ver actualización 02/oct/2026 arriba). |
 
 ---
 
@@ -238,11 +245,11 @@ Recomendaciones:
 
 | Equipo | Cantidad | Características mínimas |
 |---|---|---|
-| **Módulo de relé de red** (Ethernet) | 1, de **2 canales** (uno para la salida y otro de reserva, por si el ingreso tuviera que usar la alternativa 2) | Puerto Ethernet RJ45 · control por **HTTP** (preferible) o Modbus TCP · relés con salida **NO y COM** (contacto seco) · al menos 1 A a 30 V DC · alimentación 12 V DC o PoE · IP fija configurable · de preferencia con **usuario y contraseña** |
-| **UPS** | 1 | Para la mini PC, el switch, el relé y el G4 Pro |
+| **Módulo de relé de red** (Ethernet) | **2** (uno para la salida, otro para el ingreso — confirmado 02/oct/2026, dos cajitas separadas de 1 canal, no una de 2) | Puerto Ethernet RJ45 · control por **HTTP** (preferible) o Modbus TCP · relés con salida **NO y COM** (contacto seco) · al menos 1 A a 30 V DC · alimentación 12 V DC o PoE · IP fija configurable · de preferencia con **usuario y contraseña** |
+| **UPS** | 1 | Para la mini PC, el switch, los relés y el G4 Pro |
 | **Alimentación del G4 Pro** | 1 | Un puerto **PoE** (802.3af/at) en el switch, o un adaptador de **12 V DC 3 A** (confirmar si vino con el equipo) |
-| Cable de red (Cat 5e o 6) | 1 | Del relé al switch |
-| Cable de señal (2 hilos) | 2 tramos | G4 Pro → molinete de ingreso y relé → molinete de salida |
+| Cable de red (Cat 5e o 6) | 2 | De cada relé al switch |
+| Cable de señal (2 hilos) | 2 tramos | Relé de ingreso → molinete de ingreso, y relé de salida → molinete de salida |
 | Puntos de red libres en el switch | 2 | Relé y G4 Pro |
 
 La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya están**.
@@ -278,7 +285,7 @@ La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya e
 
 1. **Demora de la habilitación — RESUELTO, con resultado NEGATIVO (30/set/2026):** se probó con el equipo real, mandando exactamente el comando que documenta el protocolo oficial (`DATA UPDATE USERINFO PIN=1 StartDatetime=... EndDatetime=... Expires=1`, con el PIN real de un usuario enrolado, "Amiel", ID 1). **El equipo lo rechazó explícitamente**, dos veces (al habilitar y al deshabilitar), con el código de error `return=-629`. No fue un problema de red ni de formato del comando. Se intentó también la causa más probable según el propio protocolo (que indica *"the main switch parameter UserValidTimeFun must be set to 1"*): se mandó `SET OPTION UserValidTimeFun=1` + `RELOAD OPTIONS` (comando oficial, sección 12.4.1), el equipo lo aceptó (`return=0`), y **se repitió la prueba — mismo rechazo (`return=-629`) otra vez**. Dos intentos independientes, mismo resultado: **la habilitación temporal, tal como está diseñada en la sección 4.2, no es viable con este equipo**.
    >
-   > **Esto NO cambia el diseño de apertura**: se decidió que el G4 Pro se queda abriendo el ingreso con su propio relé igual que en el diseño original (sección 2.1/3) — el riesgo que esto dejaba sin resolver (alguien se salta el DNI y se para directo frente al G4 Pro) se cubre con el **vigilante presente en el punto de control**, no con un mecanismo de software. No hace falta la Alternativa 2 de la sección 5.3 por este motivo (queda documentada ahí solo como respaldo si en algún momento no hay vigilante en ese punto).
+   > ~~**Esto NO cambia el diseño de apertura**: se decidió que el G4 Pro se queda abriendo el ingreso con su propio relé...~~ **Superado (02/oct/2026):** el cliente decidió la Alternativa 2 de la sección 5.3. El G4 Pro ya no abre el molinete: la mini PC lo abre con el relé de ingreso, tal como muestra el diagrama de la sección 2.1.
 2. ~~**Fecha de validez por usuario:** confirmar que el G4 Pro respeta `StartDatetime` / `EndDatetime` al segundo (no solo por día).~~ — **Ya no aplica**: el punto 1 confirma que el comando se rechaza por completo, antes siquiera de poder medir la precisión de la validez.
 3. **Alcohol — RESUELTO EN PARTE (30/set/2026):** se conectó el equipo físico real (G4 Pro + DT1700, SN `HSR3263100192`) a un servidor PUSH de prueba y se confirmó que **el dato de alcohol sí llega por el protocolo ADMS**, en tiempo real, apenas se completa la prueba. No llega en `ATTLOG`/`OPERLOG` (las tablas que documenta el protocolo oficial) sino en una tabla propia del firmware, **no documentada en ningún manual**: `table=rtlog`, con el campo `Concentration`. Evento real capturado:
    ```
@@ -299,7 +306,7 @@ La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya e
 11. **Manual de configuración del lector Syble:** no está en la carpeta; sin él no se puede pasar a modo USB-COM ni activar PDF417. Pedirlo al proveedor.
 12. **Controladora del molinete:** la ficha del TS2000 Plus indica que la controladora de acceso (C3-200 o InBio 260 Pro) es **opcional**. Revisar si los molinetes comprados la traen: si la traen, tiene red y relés propios y podría reemplazar al relé de red en la salida; si no, las señales van directo a J3 como está en este documento.
 13. **Salida "Lock" del G4 Pro:** el manual no trae el diagrama de conexión en texto; confirmar en la etiqueta del equipo que es un contacto seco (NO / COM) y no una salida con voltaje.
-14. ~~**Cómo enrolar caras en el equipo**~~ — ✅ **RESUELTO (01/oct/2026)**: `DATA UPDATE USERINFO` sigue rechazado (seis pruebas, incluido el ejemplo exacto del manual del fabricante), pero no hacía falta — `DATA UPDATE BIOPHOTO` (la foto) funciona solo, con el formato simple de 4 campos (`PIN`, `Type`, `Size`, `Content`; no el de 7 campos del protocolo oficial completo). Confirmado con el código real de `mollendo-api` contra el equipo físico. El registro automático de caras desde el portal **sí funciona**. Detalle en `Estado_Implementacion_Integracion_G4Pro.md` sección 2.5. Queda pendiente, menor: el equipo no mostrará el nombre de la persona en su pantalla (solo el PIN), porque `USERINFO` no funciona — no afecta el reconocimiento.
+14. **Cómo enrolar caras en el equipo — CONFIRMADO SIN SOLUCIÓN REMOTA (02/oct/2026):** `DATA UPDATE USERINFO` rechazado (seis pruebas, incluido el ejemplo exacto del manual del fabricante). `DATA UPDATE BIOPHOTO` solo (formato de 4 campos) responde `return=0`, pero **probado con una persona real (foto real, PIN real) el equipo no la reconoce y no aparece en "Administración de usuarios"** — tampoco cambia agregando `RELOAD OPTIONS` después. El `return=0` no significa que haya quedado un usuario funcional. Detalle en `Estado_Implementacion_Integracion_G4Pro.md` sección 2.6. **El enrolamiento de caras, por ahora, solo se puede hacer físicamente desde la pantalla del equipo** — no hay forma remota confirmada. Falta: preguntarle al proveedor si existe otro mecanismo, con esta evidencia concreta.
 
 ---
 
@@ -317,7 +324,7 @@ Con el G4 Pro, el DT1700 y el **PushDemo** del proveedor (servidor PUSH de prueb
 | 6 | **Foto** | Enviar fotos de distintos tamaños y formatos. | Qué acepta el terminal |
 | 7 | **Lectores de DNI** | Leer varios DNI reales en la mini PC en modo USB-COM y revisar el texto recibido. | Pendiente 6 |
 | 8 | **Relé** | Activar el canal desde su página web y ver si el molinete de salida se abre. | Cableado y duración del pulso |
-| 9 | **Verificación en el servidor** — ✅ **hecha (30/set/2026), resultado NEGATIVO** | Buscar en el terminal cómo activarla y revisar si llega una consulta `PostVerifyData` antes de abrir, y qué respuesta espera. | Se implementó el lado del servidor (responde `OK` correctamente, confirmado con una llamada simulada), pero **la función no existe en el menú de este equipo** — se revisó el manual de usuario completo y la lista oficial del menú *Access Control*, sin rastro de ella. **Alternativa 1 descartada. El diseño original se mantiene** (el G4 Pro abre con su propio relé; el vigilante cubre el riesgo de que alguien se salte el DNI) — ver nota de la sección 5.3. |
+| 9 | **Verificación en el servidor** — ✅ **hecha (30/set/2026), resultado NEGATIVO** | Buscar en el terminal cómo activarla y revisar si llega una consulta `PostVerifyData` antes de abrir, y qué respuesta espera. | Se implementó el lado del servidor (responde `OK` correctamente, confirmado con una llamada simulada), pero **la función no existe en el menú de este equipo** — se revisó el manual de usuario completo y la lista oficial del menú *Access Control*, sin rastro de ella. **Alternativa 1 descartada.** Se adoptó la Alternativa 2 (02/oct/2026): el G4 Pro ya no abre; la mini PC abre con el relé de ingreso — ver sección 5.3. |
 
 Con el sistema ya integrado:
 
@@ -340,9 +347,9 @@ Con el sistema ya integrado:
 ## 11. Resumen de la propuesta
 
 1. **Identificación con DNI en los dos molinetes**, leída por el backend en la mini PC.
-2. **Ingreso:** DNI en regla → la mini PC habilita a la persona en el G4 Pro → **el G4 Pro abre solo si reconoce su rostro y el alcohol es conforme**.
-3. **Salida:** DNI registrado → la mini PC abre con el relé de red.
-4. **El G4 Pro abre el ingreso con su propio relé**; el relé de red se usa para la salida (con un canal de reserva).
+2. **Ingreso:** DNI en regla → la mini PC habilita a la persona en el G4 Pro → el G4 Pro reconoce el rostro y toma la prueba de alcohol → **la mini PC abre con el relé de ingreso solo si el rostro es el del DNI y el alcohol es conforme**.
+3. **Salida:** DNI registrado → la mini PC abre con el relé de salida.
+4. **El G4 Pro no abre ningún molinete**: los dos se abren desde la mini PC, cada uno con su propio relé de red de 1 canal.
 5. **Respaldo ante fallas:** UPS, reinicio automático del sistema y respaldos de la base de datos. No hay apertura manual: el procedimiento ante una falla se define con el cliente (sección 7).
 
 La primera tarea es la **prueba 3 (habilitación temporal)**, junto con la **4 (alcohol)**, porque confirman que el ingreso puede funcionar así.

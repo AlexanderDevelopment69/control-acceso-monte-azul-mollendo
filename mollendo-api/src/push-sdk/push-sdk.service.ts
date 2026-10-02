@@ -115,30 +115,26 @@ export class PushSdkService {
   }
 
   /**
-   * Registra a una persona en todos los equipos conocidos, mandando su rostro
-   * (DATA UPDATE BIOPHOTO). Se usa el ID de la persona como PIN del equipo.
-   * El equipo crea el usuario solo, a partir de este comando -- no hace falta
-   * mandar el nombre por separado (ver nota de DATA UPDATE USERINFO abajo).
+   * Intenta registrar a una persona en todos los equipos conocidos, mandando
+   * su rostro (DATA UPDATE BIOPHOTO, formato simple de 4 campos: PIN, Type,
+   * Size, Content -- el mismo que usa el SDK Java del proveedor en
+   * `pushdemo`, `Constants.DEV_CMD_DATA_UPDATE_BIOPHOTO`).
    *
-   * El formato es el "simple" de 4 campos (PIN, Type, Size, Content), no el
-   * de 7 campos que trae el protocolo oficial (que además incluye No, Index,
-   * Format): se confirmó con el equipo real, dos veces, que la variante de 7
-   * campos se queda colgada sin ninguna confirmación, mientras que esta de 4
-   * campos sí funciona (`return=0`) -- es el mismo formato que usa el SDK
-   * Java del propio proveedor (`Constants.DEV_CMD_DATA_UPDATE_BIOPHOTO` en
-   * `pushdemo`). `Type=9` (rostro de luz visible) funciona igual que `Type=2`
-   * (infrarrojo, el que usa el SDK del proveedor por defecto) -- se deja 9
-   * porque es el que corresponde a este equipo según el protocolo oficial.
+   * CONFIRMADO QUE NO FUNCIONA (02/oct/2026, probado con una persona real:
+   * ver Estado_Implementacion_Integracion_G4Pro.md sección 2.6): el equipo
+   * responde `return=0` a este comando, pero eso **no crea un usuario real**
+   * -- probado con el equipo físico, la persona no queda reconocible (no
+   * aparece en "Administración de usuarios" y el equipo no la reconoce frente
+   * a la cámara), ni agregando `RELOAD OPTIONS` después. `DATA UPDATE
+   * USERINFO` (el nombre) también está confirmado como rechazado, de seis
+   * formas distintas (`return=-629`, código que no existe en la tabla
+   * oficial de errores del protocolo).
    *
-   * No se manda `DATA UPDATE USERINFO` (el nombre): confirmado con el equipo
-   * real, en seis pruebas independientes (incluido el ejemplo textual exacto
-   * del manual del fabricante), que este comando siempre se rechaza
-   * (`return=-629`, un código que no existe en la tabla oficial de errores) —
-   * incluso después de que el usuario ya existe por haberle mandado la foto.
-   * No es necesario para el reconocimiento facial, solo para que el equipo
-   * muestre un nombre en su propia pantalla. Ver
-   * Estado_Implementacion_Integracion_G4Pro.md sección 2.4/2.5 para el
-   * detalle completo de las pruebas.
+   * Esta función se deja tal cual (sigue siendo lo más cercano a "correcto"
+   * que se encontró) porque no hay hoy una alternativa mejor confirmada,
+   * pero **no hay que asumir que el registro remoto funciona** solo porque
+   * el equipo confirme el comando -- por ahora, el enrolamiento de caras solo
+   * se logra físicamente, desde la pantalla del equipo.
    */
   async sincronizarPersona(personaId: number, rutaFoto: string | null) {
     const dispositivos = await this.prisma.dispositivoAcceso.findMany();

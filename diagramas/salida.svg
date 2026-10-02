@@ -1,115 +1,109 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 410" width="1040" height="410">
-<style>/* SVG */
-  .bx { fill: #f7f9fa; stroke: #c9d1d8; stroke-width: 1.5; }
-  .bx-main { fill: #ffffff; stroke: #1c2630; stroke-width: 1.8; }
-  .t1 { font: 600 16px Segoe UI, Arial, sans-serif; fill: #1c2630; }
-  .t2 { font: 400 12.5px Segoe UI, Arial, sans-serif; fill: #5a6875; }
-  .tm { font: 500 11.5px Consolas, Menlo, monospace; fill: #5a6875; }
-  .lp { font: 500 12.5px Segoe UI, Arial, sans-serif; fill: #c77700; }
-  .ld { font: 500 12.5px Segoe UI, Arial, sans-serif; fill: #1f67a8; }
-  .lo { font: 600 12.5px Segoe UI, Arial, sans-serif; fill: #23865a; }
-  .lm { font: 500 12px Segoe UI, Arial, sans-serif; fill: #7b8792; }
-  .ap { stroke: #c77700; stroke-width: 2.4; fill: none; }
-  .ad { stroke: #1f67a8; stroke-width: 2; fill: none; }
-  .ao { stroke: #23865a; stroke-width: 3.2; fill: none; }
-  .am { stroke: #7b8792; stroke-width: 1.8; fill: none; stroke-dasharray: 6 5; }
-  .usb { stroke: #1f67a8; stroke-width: 2; fill: none; stroke-dasharray: 2 4; stroke-linecap: round; }
-  .fig { fill: #c77700; }
-  .n circle { stroke: #ffffff; stroke-width: 2; }
-  .n text { font: 700 12px Segoe UI, Arial, sans-serif; fill: #fff; text-anchor: middle; dominant-baseline: central; }
-  .np circle { fill: #c77700; }
-  .nd circle { fill: #1f67a8; }
-  .no circle { fill: #23865a; }
-  .mp { fill: #c77700; }
-  .md { fill: #1f67a8; }
-  .mo { fill: #23865a; }
-  .mm { fill: #7b8792; }
-  .zone { fill: none; stroke: #c9d1d8; stroke-width: 1; stroke-dasharray: 3 5; }
-  .zl { font: 500 11px Consolas, Menlo, monospace; fill: #5a6875; letter-spacing: .06em; }
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 750" width="1400" height="750" role="img" aria-labelledby="sal-t">
+<title id="sal-t">Salida: el lector envía el DNI a la mini PC, que verifica que esté registrado, guarda la salida y ordena al relé un pulso que abre el molinete de salida</title>
+<style>
+  text { font-family: Segoe UI, Arial, sans-serif; }
+  .bx { fill: #ffffff; stroke: #c3ccd4; stroke-width: 1.5; }
+  .bxm { fill: #ffffff; stroke: #1c2630; stroke-width: 2; }
+  .ti { font-size: 16px; font-weight: 600; fill: #1c2630; }
+  .su { font-size: 12.5px; fill: #5a6875; }
+  .tg { font: 600 10.5px Consolas, Menlo, monospace; fill: #7b8792; letter-spacing: .03em; }
+  .dl { font-size: 12.5px; fill: #3d4852; }
+  .dlb { font-size: 12.5px; font-weight: 600; fill: #1c2630; }
+  .zone { fill: #f6f8fa; stroke: #d5dce2; stroke-width: 1; stroke-dasharray: 4 5; }
+  .zl { font: 600 11px Consolas, Menlo, monospace; fill: #7b8792; letter-spacing: .08em; }
+  .lp { font-size: 12.5px; font-weight: 600; fill: #c77700; }
+  .lb { font-size: 12.5px; font-weight: 600; fill: #1f67a8; }
+  .lg { font-size: 12.5px; font-weight: 600; fill: #23865a; }
+  .num { font-size: 12px; font-weight: 700; fill: #fff; text-anchor: middle; dominant-baseline: central; }
+  .h2 { font-size: 15px; font-weight: 700; fill: #1c2630; }
+  .st { font-size: 13px; fill: #3d4852; }
+  .xt { font-size: 13px; font-weight: 700; fill: #c0392b; }
+  .xl { font-size: 12.5px; fill: #3d4852; }
 </style>
-<rect width="1040" height="410" fill="#ffffff"/>
-
-        <title id="sal-t">Diagrama de la salida: lector de DNI, mini PC, relé de red y molinete de salida</title>
-        <defs>
-          <marker id="sp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mp"/></marker>
-          <marker id="sd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="md"/></marker>
-          <marker id="so" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mo"/></marker>
-        </defs>
-
-        <!-- persona -->
-        <g class="fig" transform="translate(58 210)">
-          <circle cx="22" cy="14" r="13"/>
-          <path d="M2 88 L2 44 Q2 32 14 32 L30 32 Q42 32 42 44 L42 88 Z"/>
-          <rect x="6" y="86" width="12" height="36" rx="3"/>
-          <rect x="26" y="86" width="12" height="36" rx="3"/>
-        </g>
-        <text class="t1" x="80" y="360" text-anchor="middle">Personal</text>
-
-        <!-- lector -->
-        <rect class="bx" x="200" y="60" width="180" height="84" rx="8"/>
-        <text class="t1" x="216" y="92">Lector de DNI</text>
-        <text class="t2" x="216" y="112">Syble XB-7705H</text>
-        <text class="tm" x="216" y="130">salida · USB-COM</text>
-
-        <!-- mini PC -->
-        <rect class="bx-main" x="470" y="30" width="250" height="144" rx="8"/>
-        <text class="t1" x="488" y="62">Mini PC</text>
-        <text class="t2" x="488" y="82">Sistema · base de datos · portal</text>
-        <g class="n nd"><circle cx="499" cy="112" r="11"/><text x="499" y="112">3</text></g>
-        <text class="t2" x="518" y="108">¿El DNI está registrado?</text>
-        <text class="t2" x="518" y="125">(de baja también puede salir)</text>
-        <text class="tm" x="488" y="158">registra la salida</text>
-
-        <!-- panel -->
-        <rect class="bx" x="830" y="60" width="180" height="84" rx="8"/>
-        <text class="t1" x="846" y="92">Panel de vigilancia</text>
-        <text class="t2" x="846" y="112">en la pantalla del</text>
-        <text class="t2" x="846" y="129">vigilante</text>
-
-        <!-- relé -->
-        <rect class="bx-main" x="500" y="270" width="190" height="90" rx="8"/>
-        <text class="t1" x="518" y="302">Relé de red</text>
-        <text class="t2" x="518" y="322">por comprar · 2 canales</text>
-        <text class="tm" x="518" y="342">canal 1 = salida</text>
-
-        <!-- molinete -->
-        <rect class="bx-main" x="760" y="260" width="200" height="112" rx="8"/>
-        <text class="t1" x="778" y="292">Molinete de salida</text>
-        <text class="t2" x="778" y="312">TS2000 Plus</text>
-        <text class="tm" x="778" y="336">bornera J3</text>
-        <text class="tm" x="778" y="354">K1 + COM</text>
-
-
-        <!-- 1 -->
-        <path class="ap" d="M104 218 C130 170 150 110 196 104" marker-end="url(#sp)"/>
-        <g class="n np"><circle cx="136" cy="156" r="11"/><text x="136" y="156">1</text></g>
-        <text class="lp" x="150" y="182">pasa su DNI</text>
-
-        <!-- 2 -->
-        <path class="usb" d="M380 102 L466 102" marker-end="url(#sd)"/>
-        <g class="n nd"><circle cx="423" cy="102" r="11"/><text x="423" y="102">2</text></g>
-        <text class="ld" x="423" y="84" text-anchor="middle">USB</text>
-
-        <!-- 4 mini -> relé -->
-        <path class="ad" d="M595 174 L595 266" marker-end="url(#sd)"/>
-        <g class="n nd"><circle cx="595" cy="220" r="11"/><text x="595" y="220">4</text></g>
-        <text class="ld" x="612" y="216">red · pulso de 1 s</text>
-
-        <!-- 5 relé -> molinete -->
-        <path class="ao" d="M690 316 L754 316" marker-end="url(#so)"/>
-        <g class="n no"><circle cx="722" cy="316" r="11"/><text x="722" y="316">5</text></g>
-        <text class="tm" x="722" y="388" text-anchor="middle">NO + COM → J3</text>
-
-        <!-- 6 mini -> panel -->
-        <path class="ad" d="M720 102 L826 102" marker-end="url(#sd)"/>
-        <g class="n nd"><circle cx="773" cy="102" r="11"/><text x="773" y="102">6</text></g>
-
-
-        <!-- pasa -->
-        <path class="ap" d="M960 316 L1024 316" marker-end="url(#sp)"/>
-        <text class="lp" x="992" y="304" text-anchor="middle">pasa</text>
-
-        <!-- sin G4 -->
-        <text class="t2" x="200" y="300">Sin rostro ni alcohol:</text>
-        <text class="t2" x="200" y="318">en la salida solo se pide el DNI.</text>
-      </svg>
+<defs>
+  <marker id="mp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#c77700"/></marker>
+  <marker id="mb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#1f67a8"/></marker>
+  <marker id="mg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#23865a"/></marker>
+</defs>
+<rect width="1400" height="750" fill="#ffffff"/>
+<rect class="zone" x="150" y="318" width="1190" height="230" rx="12"/>
+<text class="zl" x="1322" y="342" text-anchor="end">PUNTO DE SALIDA · GARITA</text>
+<rect class="bxm" x="520" y="30" width="380" height="196" rx="10"/>
+<text class="ti" x="536" y="60">Mini PC</text>
+<text class="su" x="536" y="80">Sistema · base de datos · portal</text>
+<line x1="536" y1="92" x2="884" y2="92" stroke="#e3e8ec"/>
+<circle cx="548" cy="118" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="548" y="118">3</text>
+<text class="dl" x="568" y="122"><tspan class="dlb">Verifica el DNI:</tspan> que esté registrado</text>
+<circle cx="548" cy="152" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="548" y="152">3</text>
+<text class="dl" x="568" y="156"><tspan class="dlb">Guarda</tspan> la salida (también si está de baja)</text>
+<circle cx="548" cy="186" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="548" y="186">4</text>
+<text class="dl" x="568" y="190"><tspan class="dlb">Ordena</tspan> al relé un pulso de 1 s</text>
+<text class="tg" x="536" y="214">DECIDE SI SE ABRE · SOLO ELLA ABRE EL MOLINETE</text>
+<rect class="bx" x="1020" y="70" width="220" height="92" rx="10"/>
+<text class="ti" x="1036" y="100">Panel de vigilancia</text>
+<text class="su" x="1036" y="120">en la pantalla del vigilante</text>
+<text class="tg" x="1036" y="148">PORTAL WEB</text>
+<path d="M900 116 L1014 116" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<circle cx="957" cy="116" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="957" y="116">6</text>
+<text class="lb" x="957" y="98" text-anchor="middle">registra la salida</text>
+<rect x="1020" y="186" width="320" height="94" rx="10" fill="#fdf1f0" stroke="#c0392b" stroke-width="1.5"/>
+<text class="xt" x="1036" y="209">✕ No se abre si…</text>
+<text class="xl" x="1036" y="231">• no pasa su DNI</text>
+<text class="xl" x="1036" y="249">• el DNI no está registrado</text>
+<text class="xl" x="1036" y="267">   (el Panel muestra “No registrado”)</text>
+<g fill="#c77700" transform="translate(52 370)"><circle cx="22" cy="14" r="13"/><path d="M2 88 L2 44 Q2 32 14 32 L30 32 Q42 32 42 44 L42 88 Z"/><rect x="6" y="86" width="12" height="36" rx="3"/><rect x="26" y="86" width="12" height="36" rx="3"/></g>
+<text class="ti" x="74" y="520" text-anchor="middle">Personal</text>
+<rect class="bx" x="190" y="370" width="190" height="96" rx="10"/>
+<text class="ti" x="206" y="400">Lector de DNI</text>
+<text class="su" x="206" y="420">Syble XB-7705H · salida</text>
+<text class="tg" x="206" y="452">USB-COM · LEE EL REVERSO</text>
+<rect x="470" y="376" width="240" height="84" rx="10" fill="#ffffff" stroke="#d5dce2" stroke-dasharray="4 4"/>
+<text class="dlb" x="488" y="404">Sin rostro ni alcohol</text>
+<text class="su" x="488" y="424">en la salida solo se pide el DNI;</text>
+<text class="su" x="488" y="441">no se exige un ingreso previo</text>
+<rect class="bx" x="800" y="370" width="190" height="96" rx="10"/>
+<text class="ti" x="816" y="400">Relé de salida</text>
+<text class="su" x="816" y="420">1 canal · por comprar</text>
+<text class="tg" x="816" y="452">CIERRA SU CONTACTO 1 S</text>
+<rect class="bx" x="1110" y="362" width="200" height="112" rx="10"/>
+<text class="ti" x="1126" y="392">Molinete de salida</text>
+<text class="su" x="1126" y="412">TS2000 Plus</text>
+<text class="tg" x="1126" y="460">BORNERA J3 · K1 + COM</text>
+<path d="M104 418 L184 418" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
+<circle cx="144" cy="418" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="144" y="418">1</text>
+<text class="lp" x="144" y="398" text-anchor="middle">pasa su DNI</text>
+<path d="M285 366 L285 140 L514 140" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
+<circle cx="285" cy="250" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="285" y="250">2</text>
+<text class="lb" x="400" y="130" text-anchor="middle">número de DNI</text>
+<text class="tg" x="400" y="158" text-anchor="middle" fill="#1f67a8">USB</text>
+<path d="M880 226 L880 364" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<circle cx="880" cy="288" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="880" y="288">4</text>
+<text class="lb" x="898" y="282">orden de apertura</text><text class="lb" x="898" y="299">pulso de 1 s</text>
+<path d="M990 418 L1104 418" stroke="#23865a" stroke-width="4" fill="none" marker-end="url(#mg)"/>
+<circle cx="1047" cy="418" r="12" fill="#23865a" stroke="#fff" stroke-width="2"/><text class="num" x="1047" y="418">5</text>
+<text class="lg" x="1047" y="398" text-anchor="middle">señal</text>
+<text class="tg" x="1047" y="446" text-anchor="middle" fill="#23865a">NO+COM → J3</text>
+<path d="M1310 418 L1388 418" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
+<text class="lp" x="1349" y="404" text-anchor="middle">sale</text>
+<text class="h2" x="40" y="594">Paso a paso</text>
+<circle cx="52" cy="624" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="624">1</text>
+<text class="st" x="72" y="628">La persona pasa su DNI (reverso) por el lector de salida.</text>
+<circle cx="52" cy="654" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="654">2</text>
+<text class="st" x="72" y="658">El lector envía el número de DNI a la mini PC (USB).</text>
+<circle cx="52" cy="684" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="684">3</text>
+<text class="st" x="72" y="688">La mini PC verifica que esté registrado y guarda la salida.</text>
+<circle cx="732" cy="624" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="624">4</text>
+<text class="st" x="752" y="628">La mini PC ordena al relé de salida un pulso de 1 s (red).</text>
+<circle cx="732" cy="654" r="12" fill="#23865a" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="654">5</text>
+<text class="st" x="752" y="658">El relé cierra su contacto y el molinete de salida se abre.</text>
+<circle cx="732" cy="684" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="684">6</text>
+<text class="st" x="752" y="688">La salida aparece en el Panel de vigilancia.</text>
+<path d="M40 726 L84 726" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
+<text class="dl" x="96" y="730">acción de la persona</text>
+<path d="M286 726 L330 726" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<text class="dl" x="342" y="730">datos por la red local</text>
+<path d="M546 726 L590 726" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
+<text class="dl" x="602" y="730">cable USB</text>
+<path d="M715 726 L759 726" stroke="#23865a" stroke-width="4" fill="none" marker-end="url(#mg)"/>
+<text class="dl" x="771" y="730">señal eléctrica que abre el molinete</text>
+</svg>

@@ -15,6 +15,7 @@ const API_URL = process.env.API_URL ?? 'http://localhost:3001/api/v1';
 const ADMIN_CORREO = process.env.ADMIN_CORREO ?? 'admin@mollendo.local';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? '';
 const DEVICE_API_KEY = process.env.DEVICE_API_KEY ?? '';
+const SIN_FOTOS = process.env.SIN_FOTOS === '1';
 const MOLINETE = 'DEMO';
 
 let token = '';
@@ -205,9 +206,12 @@ async function main() {
     });
     const nombre = `${p.nombres} ${p.apellidos}`;
 
-    const foto = new FormData();
-    foto.append('foto', new Blob([new Uint8Array(fotoPng(COLORES[i % COLORES.length]))], { type: 'image/png' }), `foto-${p.numero}.png`);
-    await api(`/personas/${id}/foto`, { method: 'POST', form: foto });
+    // SIN_FOTOS=1 en un servidor con un G4 Pro real: cada foto se registra en el equipo.
+    if (!SIN_FOTOS) {
+      const foto = new FormData();
+      foto.append('foto', new Blob([new Uint8Array(fotoPng(COLORES[i % COLORES.length]))], { type: 'image/png' }), `foto-${p.numero}.png`);
+      await api(`/personas/${id}/foto`, { method: 'POST', form: foto });
+    }
 
     for (const d of p.documentos) {
       if (!tipos.has(d.nombre)) {

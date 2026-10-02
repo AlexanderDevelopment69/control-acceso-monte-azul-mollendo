@@ -530,6 +530,11 @@ Sin `DEVICE_API_KEY` carga empresas y personas, pero no los ingresos y salidas. 
 
 **Historial de 30 días (opcional, para el Dashboard):** `prisma/historial-demo.ts` agrega los ingresos y salidas de los últimos 30 días del personal DEMO (unos 2 250 eventos, con las mismas reglas del molinete y doce personas que se quedan dentro más de 24 horas). Como la API registra cada evento con la hora actual, este script escribe directo en la base de datos: necesita `DATABASE_URL` hacia la base, así que se usa en una PC de desarrollo (en `mollendo-api`: `npx tsx prisma/historial-demo.ts`). Sus eventos también llevan el molinete "DEMO" y se borran con el mismo procedimiento.
 
+**En un servidor con un G4 Pro real (por ejemplo AWS):** no cargues fotos ni ingresos por la API. Cada foto se registra en el equipo y cada ingreso por DNI queda pendiente de verificación, así que el siguiente rostro real se le asignaría a una persona DEMO. Para cargar los datos de prueba sin tocar el equipo:
+
+1. Personas y documentos sin fotos ni eventos: `SIN_FOTOS=1` y sin `DEVICE_API_KEY`.
+2. Historial con el día de hoy hasta la hora actual, escrito directo en la base: `INCLUIR_HOY=1`. Con un túnel SSH (`ssh -L 13001:localhost:3001 -L 15432:<IP del contenedor db>:5432 …`) se usa `API_URL=http://localhost:13001/api/v1` y `DATABASE_URL=postgresql://mollendo:<DB_PASSWORD>@localhost:15432/mollendo_control_acceso`.
+
 **Borrar** (en el servidor, dentro de `~/mollendo`): borra las empresas, personas, documentos, fotos, eventos y auditoría DEMO, y los tipos de documento que queden sin uso.
 
 ```bash

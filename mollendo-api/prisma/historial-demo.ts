@@ -10,6 +10,10 @@
 // resto de los datos DEMO (prisma/limpiar-demo.sh). Doce personas quedan con un
 // ingreso de hace 2 a 4 días sin salida (y sin movimientos hoy), para la
 // permanencia mayor a 24 horas.
+//
+// INCLUIR_HOY=1 genera también los movimientos de hoy hasta la hora actual (en
+// lugar de los de datos-demo.ts por la API, que en un servidor con un G4 Pro
+// real quedarían como ingresos pendientes de verificación en el equipo).
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, type Prisma } from '../src/generated/prisma/client.js';
@@ -21,6 +25,7 @@ const MOLINETE = 'DEMO';
 const DIAS = 30;
 /** Personas que se quedan dentro (permanencia mayor a 24 horas). */
 const SE_QUEDAN = 12;
+const INCLUIR_HOY = process.env.INCLUIR_HOY === '1';
 
 // Números pseudoaleatorios con semilla fija: la misma carga da los mismos datos.
 let semilla = 20260930;
@@ -73,7 +78,8 @@ async function main() {
     torniqueteId: MOLINETE,
   });
 
-  for (let dia = DIAS; dia >= 1; dia--) {
+  const ahora = new Date();
+  for (let dia = DIAS; dia >= (INCLUIR_HOY ? 0 : 1); dia--) {
     const domingo = momento(dia, 12).getDay() === 0;
     for (const p of personas) {
       const entradaFinal = diaDeEntrada.get(p.id);
@@ -83,6 +89,7 @@ async function main() {
       if (!seQueda && azar() > (domingo ? 0.2 : 0.78)) continue;
       const activo = p.estado === 'activo' || dia > 15;
       const entrada = momento(dia, entre(6.5, 9));
+      if (entrada > ahora) continue; // hoy, todavía no llega
       const resultado = evaluarIngreso({
         personaActiva: activo,
         alcoholConforme: seQueda || azar() > 0.03,
@@ -100,10 +107,12 @@ async function main() {
       });
       if (!resultado.autorizado) continue;
       if (seQueda) continue; // se queda dentro
-      eventos.push({ ...base(p), tipoMovimiento: 'salida', resultado: 'autorizado', fechaHora: momento(dia, entre(15.5, 19)) });
+      const salida = momento(dia, entre(15.5, 19));
+      if (salida > ahora) continue; // hoy, todavía está dentro
+      eventos.push({ ...base(p), tipoMovimiento: 'salida', resultado: 'autorizado', fechaHora: salida });
     }
     // Algún intento con un documento no registrado.
-    if (azar() < 0.35) {
+    if (azar() < 0.35 && momento(dia, 7) < ahora) {
       eventos.push({
         personaId: null,
         tipoDocumentoIdentidad: 'DNI',
