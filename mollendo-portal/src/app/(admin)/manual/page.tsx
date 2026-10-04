@@ -291,8 +291,8 @@ const SECCIONES: SeccionManual[] = [
           <Link href="/sistema" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Sistema y APIs</Link> muestra
           si el backend y la base de datos responden, si la clave de equipos está configurada, el estado de los{" "}
           <strong>respaldos</strong> (el último y si está al día), el de los <strong>equipos</strong> (cada terminal G4
-          Pro “En línea” o “Desconectado”, con su última actividad) y si los <strong>lectores de DNI</strong> de ingreso y
-          salida están configurados. También trae el enlace a la documentación interactiva de la API (Swagger) y
+          Pro “En línea” o “Desconectado”, con su última actividad) y el de los <strong>lectores de DNI</strong> de ingreso y
+          salida (“Conectado”, “Desconectado” o “Sin configurar”, con la hora de su última lectura). También trae el enlace a la documentación interactiva de la API (Swagger) y
           la documentación técnica, con ejemplos, de las APIs que usan los equipos físicos: el terminal ZKTeco G4 Pro
           con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes, indicando el estado
           de cada una. Está pensada para quien tenga que conectarlos o dar soporte técnico.

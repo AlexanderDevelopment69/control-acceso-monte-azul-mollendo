@@ -20,6 +20,7 @@ Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend
 7. [Respaldos](#7-respaldos)
 8. [Solución de problemas](#8-solución-de-problemas)
 8b. [Datos de demostración](#8b-datos-de-demostración)
+8c. [Lectores de DNI](#8c-lectores-de-dni)
 9. [Seguridad y recomendaciones](#9-seguridad-y-recomendaciones)
 - [Anexo A. Registro del primer despliegue (28/09/2026)](#anexo-a-registro-del-primer-despliegue-28092026)
 - [Anexo B. Variables del archivo .env](#anexo-b-variables-del-archivo-env)
@@ -562,6 +563,41 @@ sudo docker compose -f docker-compose.prod.yml --profile muestra rm -sf muestra
 
 ---
 
+## 8c. Lectores de DNI
+
+Los lectores **Syble XB-7705H** leen el **código de barras del reverso del DNI** y envían el número seguido de un salto de línea (`48058719` + CR LF). Se conectan a la mini PC por **RS232**: el cable del lector tiene un conector DB9, que va a un **adaptador USB-serial** (ATEN), y una punta USB que solo da energía.
+
+### Configurar el lector (una vez)
+
+El lector viene de fábrica en modo USB (teclado): así pita al leer, pero no envía nada por RS232. Se configura mostrándole los códigos del **folleto que viene en la caja** ("2D Barcode Scanner User Manual"), tapando los de al lado:
+
+1. **Factory Default** (columna "Basic Configuration").
+2. **RS232** (sección "Interface").
+3. **115200** (sección "Baud Rate"). Es la velocidad que espera el sistema.
+4. Desenchufar la punta USB de energía, esperar 5 s y volver a enchufarla.
+
+### Configurar el servidor
+
+En `~/mollendo/.env`, la ruta fija del adaptador (no cambia aunque se conecten otros USB). Se ve con `ls /dev/serial/by-id/`:
+
+```bash
+LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_FQCLb114J19-if00-port0
+# LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/...   (el segundo lector, con su propio adaptador)
+# LECTOR_DNI_BAUDIOS=115200                              (por defecto)
+```
+
+Después: `sudo docker compose -f docker-compose.prod.yml up -d` (recrea el contenedor `api` con acceso al puerto). Sin estas variables, el sistema no abre ningún puerto (así funciona en un servidor sin lectores, como AWS).
+
+### Comprobar
+
+- En el registro del backend: `Lector de DNI de ingreso conectado en /dev/lector-dni-ingreso (115200 baudios)`, y por cada lectura `DNI leído en ingreso: …`.
+- En **Sistema y APIs**: el lector "Conectado" con la hora de su última lectura.
+- En el **Panel de vigilancia**: cada DNI aparece al instante (un DNI no registrado, como "No registrado").
+
+Si se desconecta el adaptador, el sistema reintenta cada 5 s. Si al volver a conectarlo no se recupera, reiniciar el backend: `sudo docker compose -f docker-compose.prod.yml restart api`.
+
+---
+
 ## 9. Seguridad y recomendaciones
 
 1. **Contraseña del servidor**: cámbiala si alguna vez se compartió por chat o correo (`passwd` en el servidor). Lo recomendable es entrar con **llave SSH** y desactivar el acceso por contraseña.
@@ -571,7 +607,7 @@ sudo docker compose -f docker-compose.prod.yml --profile muestra rm -sf muestra
 5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `Opciones_Integracion_G4Pro.md`, sección 7).
 6. **Respaldos fuera de la mini PC**, con regularidad (7.4).
 7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
-8. **Integración de equipos (pendiente)**: cuando se programe, el contenedor `api` necesitará acceso a los lectores de DNI por USB (`devices:` en `docker-compose.prod.yml`) y el G4 Pro deberá apuntar a la IP de la mini PC. Esta guía se actualizará entonces.
+8. **Integración de equipos**: los lectores de DNI ya se leen desde el contenedor `api` (sección 8c). Falta que el G4 Pro apunte a la IP de la mini PC y el relé de ingreso.
 
 ---
 
