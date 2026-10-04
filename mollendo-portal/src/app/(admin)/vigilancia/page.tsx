@@ -10,6 +10,7 @@ import type { EventoAcceso, IngresoEnEspera, Paginado, Persona, ResumenPanel } f
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { VerDocumento } from "@/components/personal/VerDocumento";
+import { FotoGuardada } from "@/components/personal/FotoPersonal";
 import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
@@ -59,8 +60,14 @@ function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]; ahora
             {new Date(i.desde).toLocaleString("es-PE")}
           </TableCell>
           <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{i.numeroDocumento}</TableCell>
-          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-            {i.nombres} {i.apellidos}
+          <TableCell className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
+            {/* Foto para comparar con quien está frente al terminal facial. */}
+            <div className="flex items-center gap-3">
+              <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} tamano="size-12" />
+              <span>
+                {i.nombres} {i.apellidos}
+              </span>
+            </div>
           </TableCell>
           <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">Ingreso</TableCell>
           <TableCell className="px-5 py-4 text-sm">

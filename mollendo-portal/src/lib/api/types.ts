@@ -77,6 +77,8 @@ export interface IngresoEnEspera {
   apellidos: string;
   numeroDocumento: string;
   empresa: string | null;
+  /** Si tiene foto: se muestra para que el vigilante la compare con quien está frente al terminal. */
+  tieneFoto: boolean;
   torniqueteId: string | null;
   desde: string;
   hasta: string | null;

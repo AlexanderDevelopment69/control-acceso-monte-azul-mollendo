@@ -184,7 +184,7 @@ Un único formulario permite registrar a la persona y sus documentos:
 
 1. **Empresa:** se elige de la lista o se crea en el mismo formulario ("+ Nueva empresa…": RUC de 11 dígitos, razón social y correo de contacto).
 2. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
-3. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. Es la que se usará para el reconocimiento facial.
+3. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona; no es necesario registrar el rostro en el equipo.
 4. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
 
 Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la información ya guardada no se duplica al corregir y volver a guardar.
@@ -207,9 +207,9 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 - **Contadores:** "Denegaciones hoy", "Alcohol no conforme hoy" y "Documentos vencidos" (documentos del personal activo que ya vencieron). Se actualizan automáticamente.
 - **Historial:** hora, documento, persona, movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
 - **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros) y búsqueda por nombre, apellido o número de documento en todo el historial.
-- **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar; cada uno se puede ver ("Ver").
+- **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol, No completó rostro y alcohol (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar; cada uno se puede ver ("Ver").
 - Los intentos con un documento **no registrado** también quedan en el historial.
-- **En espera en el terminal facial:** cuando una persona pasa un DNI en regla, aparece al instante en la primera fila del historial con resultado **"en espera"** y motivo "Esperando rostro y alcohol", junto con el tiempo que le queda para completar el ingreso (1 minuto) y una barra que se va vaciando. Al llegar el resultado del terminal facial, la fila pasa a ser el ingreso autorizado o denegado; si vence el tiempo, se quita.
+- **En espera en el terminal facial:** cuando una persona pasa un DNI en regla, aparece al instante en la primera fila del historial con resultado **"en espera"**, su **foto** (para compararla con quien está frente al terminal), el motivo "Esperando rostro y alcohol", el tiempo que le queda para completar el ingreso (1 minuto) y una barra que se va vaciando. Si otra persona está en su turno, figura **"en cola"** ("Esperando su turno en el terminal facial"). Al llegar el resultado del terminal facial, la fila pasa a ser el ingreso autorizado o denegado; si vence el tiempo, queda denegado con "No completó rostro y alcohol".
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).
 
 ### 4.4. Dashboard (Administrador)
@@ -282,7 +282,9 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 |---|---|
 | RN-01 | **Ingreso autorizado** solo si la persona está registrada, no está dada de baja, tiene al menos un documento cargado, ninguno de sus documentos está vencido y la prueba de alcohol es conforme. |
 | RN-02 | Una persona **dada de baja** se deniega de inmediato, sin evaluar las demás condiciones. |
-| RN-03 | El ingreso se valida **en dos pasos**. Al pasar el DNI: si la persona está activa, se revisan sus documentos; sin documentos o con alguno vencido se deniega de inmediato, informando todos los motivos de documentos. Si están en regla, el terminal facial reconoce el rostro y toma la prueba de alcohol; el sistema abre el molinete solo si el rostro corresponde a la persona del DNI y el alcohol es conforme (autorizado); si el alcohol no es conforme, se deniega por alcohol. |
+| RN-03 | El ingreso se valida **en dos pasos**. Al pasar el DNI: si la persona está activa, se revisan sus documentos; sin documentos o con alguno vencido se deniega de inmediato, informando todos los motivos de documentos. Si están en regla, el sistema **habilita en el terminal facial solo a esa persona**, por 1 minuto: el terminal reconoce su rostro y toma la prueba de alcohol, y rechaza el rostro de cualquier otra persona. Si ambos son conformes, el sistema abre el molinete (autorizado); si el alcohol no es conforme, se deniega por alcohol. Al terminar, se le retira la habilitación. |
+| RN-03a | Se habilita **a una sola persona a la vez** en el terminal facial. Si otra persona pasa un DNI en regla mientras tanto, queda **en cola** y su minuto empieza cuando termina la anterior (puede esperar en cola hasta 3 minutos). Si la misma persona vuelve a pasar su DNI mientras espera, conserva su lugar. |
+| RN-03b | Si la persona habilitada **no completa rostro y alcohol en el minuto** (o espera en cola más de 3 minutos), el ingreso se deniega con el motivo **"No completó rostro y alcohol"** y queda en el historial. |
 | RN-04 | Un documento está **vigente** si no tiene fecha de vencimiento o si vence hoy o después: el día de su vencimiento sigue siendo válido todo el día. |
 | RN-05 | De cada documento **cuenta solo la última versión**. Renovar crea una versión nueva y la anterior queda en el historial. |
 | RN-06 | Los documentos **no requieren aprobación**: tienen validez desde su carga. Verificar que correspondan a cada persona es responsabilidad del administrador. |
@@ -304,7 +306,9 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 |---|---|
 | API de ingreso y salida (con clave de equipo) | Aplica las reglas, guarda el evento y lo muestra en tiempo real. |
 | Apertura de los molinetes | Un módulo de relés USB por molinete, conectado al servidor: al autorizar una salida, o un ingreso aprobado por el terminal facial, el sistema activa el relé del molinete durante 1 segundo. |
-| Registro del rostro en el terminal facial | Al cargar o actualizar la foto, la operación se registra en el log del servidor. |
+| Lectores de DNI | Dos lectores de código de barras (ingreso y salida) conectados al servidor por RS232. Leen el código de barras del reverso del DNI; el sistema registra el ingreso o la salida según el lector. |
+| Registro del personal en el terminal facial | Al registrar o editar a una persona, el sistema la carga en el terminal con su número de documento y su nombre; al cargar o cambiar su foto, se la envía y el terminal la usa para reconocerla. Solo se registran documentos numéricos (DNI). |
+| Habilitación en el terminal facial | Durante su minuto de espera, solo la persona del DNI tiene permiso de paso en el terminal; se le retira al terminar. |
 
 ---
 
@@ -316,7 +320,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | Persona (personal) | Empresa, tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
 | Tipo de documento | Nombre (único, sin distinguir mayúsculas), por ejemplo "SCTR Salud". |
 | Documento de la persona | Persona, tipo de documento, fecha de vencimiento (opcional), archivo y número de versión. |
-| Evento de acceso | Persona (vacía si no está registrada), documento leído, ingreso o salida, resultado, motivos de denegación, fecha y hora, molinete. |
+| Evento de acceso | Persona (vacía si no está registrada), documento leído, ingreso o salida, resultado, motivos de denegación (incluido "No completó rostro y alcohol"), fecha y hora, molinete. |
 | Usuario | Correo (único), rol, estado de la cuenta, contraseña cifrada y fecha del último cambio de contraseña. |
 | Auditoría | Usuario, dato afectado, identificador del registro, acción (crear / modificar / eliminar), fecha y hora. |
 
@@ -340,6 +344,9 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `GET` · `POST /tipos-documento` | Nombres de documento | Crear: Administrador |
 | `POST /eventos-acceso/ingreso` · `/salida` | Registrar un ingreso o una salida | Equipos (`X-API-Key`) |
 | `POST /integraciones/torniquete/comando` | Orden manual de apertura de un molinete (`ingreso` o `salida`): activa su relé durante 1 segundo | Administrador y Vigilancia |
+| `POST /integraciones/g4pro/sincronizar` | Registra a todo el personal, con su foto, en el terminal facial (por ejemplo, al instalar un equipo nuevo) | Administrador |
+| `GET /eventos-acceso/en-espera` | Personas en espera del terminal facial (en su turno o en cola), para el Panel | Administrador y Vigilancia |
+| `/iclock/*` | Protocolo PUSH del terminal facial: registro, órdenes, resultados y consultas | Terminal facial |
 | `GET /eventos-acceso` | Historial paginado, con búsqueda y fechas | Administrador y Vigilancia |
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
 | `GET /panel/dashboard` | Indicadores y gráficos del Dashboard, por periodo | Administrador |
@@ -416,6 +423,8 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Mini PC | Servidor local, ubicado junto a los molinetes, donde se ejecuta el sistema. |
 | Molinete | Torniquete de paso (ZKTeco TS2000 Plus). |
 | Protocolo PUSH | Protocolo de comunicación del fabricante ZKTeco entre el terminal facial y el sistema. |
+| Habilitación | Permiso de paso que el sistema da en el terminal facial solo a la persona que pasó su DNI en regla, durante su minuto de espera (RN-03). |
+| En cola | Persona con DNI en regla que espera su turno porque otra está habilitada en el terminal facial (RN-03a). |
 | Visita | Cada ingreso autorizado de una persona al terminal; se usa en los indicadores del Dashboard. |
 | Respaldo | Copia de la base de datos y de los archivos para recuperar la información. |
 | Tailscale | Red privada virtual (VPN) que permite acceder a la mini PC desde fuera del terminal sin exponerla a internet. |

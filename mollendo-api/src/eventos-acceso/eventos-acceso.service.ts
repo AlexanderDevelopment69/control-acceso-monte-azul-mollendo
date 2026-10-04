@@ -43,6 +43,8 @@ export interface IngresoEnEspera {
   apellidos: string;
   numeroDocumento: string;
   empresa: string | null;
+  /** Para mostrar su foto en el Panel (el vigilante la compara con quien está frente al terminal). */
+  tieneFoto: boolean;
   torniqueteId: string | null;
   desde: string;
   hasta: string | null;
@@ -61,6 +63,7 @@ function aEnEspera(pendiente: PendienteConPersona): IngresoEnEspera {
     apellidos: pendiente.persona.apellidos,
     numeroDocumento: pendiente.persona.numeroDocumento,
     empresa: pendiente.persona.empresa?.razonSocial ?? null,
+    tieneFoto: !!pendiente.persona.fotoUrl,
     torniqueteId: pendiente.torniqueteId,
     desde: (pendiente.habilitadoEn ?? pendiente.creadoEn).toISOString(),
     hasta: pendiente.habilitadoEn

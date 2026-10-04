@@ -3,6 +3,8 @@
 Proyecto: Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM) · Alcance base
 Fecha: 27/09/2026
 
+> **Actualización 04/oct/2026 — integración del G4 Pro resuelta y programada.** El G4 Pro usa el protocolo PUSH de **control de acceso** (no el de asistencia que se probó antes): con sus comandos (`user`, `extuser`, `biophoto`, `userauthorize`) **sí** se registran personas y rostros desde el portal y se habilita solo al dueño del DNI. El ingreso completo del diagrama (sección 2.1) quedó programado y probado con el equipo real. Ver sección 4 y `Estado_Implementacion_Integracion_G4Pro.md` sección 0.
+
 Este documento explica cómo se conectan los equipos físicos (lectores de DNI, terminal facial ZKTeco G4 Pro, alcoholímetro DT1700, molinetes y relé de red) con el sistema, cómo funcionan el ingreso y la salida paso a paso, qué se necesita comprar, configurar y programar, y qué pruebas hay que hacer con el equipo real.
 
 ---
@@ -128,50 +130,44 @@ Sin DNI o con un DNI no registrado **no se abre**. El Panel muestra "No registra
 
 ## 4. Personas en el G4 Pro: registro y habilitación
 
-### 4.1. Registro (al crear o cambiar a la persona en el portal) — ❌ NO FUNCIONA, confirmado con una persona real (02/oct/2026)
+> **Confirmado con el equipo real (04/oct/2026) y programado.** Este G4 Pro (firmware ACC) habla el protocolo PUSH de **control de acceso**. Los comandos del protocolo de **asistencia** (`USERINFO`, con `StartDatetime`/`EndDatetime`), que se probaron entre el 30/set y el 02/oct, el equipo los rechaza (`-629`). Por eso entonces se concluyó, erróneamente, que el registro remoto y la habilitación temporal no eran posibles. El detalle de esas pruebas queda en `Estado_Implementacion_Integracion_G4Pro.md` (secciones 2.3 a 2.8).
 
-> **Conclusión final, corrige una celebración prematura del 01/oct.** Se probó `DATA UPDATE BIOPHOTO` (con el formato simple de 4 campos) y el equipo respondía `return=0` — se había concluido que eso bastaba. **No es así**: se registró a una persona real (Amiel, con su foto real) por el portal, el comando se confirmó (`return=0`), pero **el equipo no lo reconoce frente a la cámara y tampoco aparece en "Administración de usuarios"** — ni siquiera agregando `RELOAD OPTIONS` después. `USERINFO` (el nombre) sigue confirmado como rechazado, de seis formas distintas. En conjunto: **ninguna de las dos formas logra que el equipo registre a alguien de verdad por control remoto**. El `return=0` de `BIOPHOTO` solo confirma que el equipo recibió los bytes, no que haya quedado un usuario funcional. Detalle completo en `Estado_Implementacion_Integracion_G4Pro.md`, sección 2.6.
->
-> **Por ahora, el registro de personas se tiene que hacer físicamente, desde la pantalla del equipo** — no automáticamente desde el portal. Falta preguntarle al proveedor si existe alguna otra forma, ya con evidencia concreta de qué se probó.
->
-> **Evidencia final (02/oct/2026), directo del equipo**: se le pidió al equipo su propio estado interno (comando `INFO`, capturado por tráfico de red). Confirma que `BioPhotoFun`, `VisilightFun` y el tipo de biometría usado (`Type=9`, rostro de luz visible) están todos correctamente habilitados — no es un problema de configuración ni de formato. Aun así, **`UserCount=0`, `FaceCount=0` y `UserPhotoCount=0`**, incluso después de varios `DATA UPDATE BIOPHOTO` y un `DATA UPDATE USERPIC` con `return=0`: nada se guarda nunca, porque no hay un usuario (`USERINFO`, bloqueado) al cual adjuntarlo. Detalle completo en `Estado_Implementacion_Integracion_G4Pro.md` sección 2.8.
+### 4.1. Registro (al crear o cambiar a la persona en el portal)
 
-El diseño original (no probado todavía cuando se escribió) era que el G4 Pro necesita tener a cada persona (DNI + foto) para reconocer su rostro, y que el sistema la enviaría automáticamente, **con una fecha de validez ya vencida**, para que quede deshabilitada:
+El número de **DNI es el número de usuario** (`Pin`) en el equipo. Campos separados por tabulador:
 
 ```
-DATA UPDATE USERINFO PIN=45678912  Name=Luis Quispe  StartDatetime=2000-01-01T00:00:00
-                     EndDatetime=2000-01-01T00:00:01  Expires=1
-DATA UPDATE BIOPHOTO PIN=45678912  Type=9  Format=0  Size=...  Content=<foto JPG en base64>
+DATA UPDATE user      CardNo=  Pin=45678912  Password=  Group=0  StartTime=0  EndTime=0  Name=Luis Quispe  Privilege=0
+DATA UPDATE extuser   Pin=45678912  FunSwitch=0  FirstName=Luis  LastName=Quispe  PersonalVs=0
+DATA UPDATE biophoto  PIN=45678912  Type=9  Size=<largo>  Content=<foto JPG ≤ 20 KB en base64>  Format=0  Url=  PostBackTmpFlag=0
 ```
 
-- `PIN` = número de DNI.
-- `StartDatetime` / `EndDatetime` + `Expires=1` = periodo en que la persona puede pasar. Requiere activar `UserValidTimeFun=1` en el terminal.
-- `Type=9` = rostro de luz visible (el tipo del G4 Pro).
+- `user`: la persona. **Sin permiso de paso**: el equipo la reconoce pero la rechaza (`event=23`) hasta que se la habilita.
+- `extuser`: el nombre y el apellido que **muestra la pantalla** del equipo (el campo `Name` de `user` no se ve).
+- `biophoto`: la foto. El equipo la convierte en la **plantilla de rostro** (`biodata`, tipo 9) con la que reconoce. No hace falta registrar rostros a mano en el equipo.
 
 | Qué pasa en el portal | Orden al G4 Pro |
 |---|---|
-| Se registra una persona | `DATA UPDATE USERINFO` (deshabilitada) + `DATA UPDATE BIOPHOTO` |
-| Se cambia la foto | `DATA UPDATE BIOPHOTO` |
-| Se da de baja | `DATA DELETE USERINFO` |
-| Se reactiva | `DATA UPDATE USERINFO` (deshabilitada) + `DATA UPDATE BIOPHOTO` |
+| Se registra o edita una persona | `user` + `extuser` |
+| Se sube o cambia la foto | `user` + `extuser` + `biophoto` |
+| Se cambia el número de documento | `DATA DELETE user` (el anterior) + `user` + `extuser` + `biophoto` |
+| Se da de baja o se reactiva | Ninguna: sin habilitación no pasa, y la baja la evalúa la mini PC al leer el DNI |
 | Se renueva, agrega o elimina un documento | Ninguna: lo evalúa la mini PC cuando la persona pasa su DNI |
+| Equipo nuevo | `POST /integraciones/g4pro/sincronizar`: registra a todo el personal con su foto |
 
-### 4.2. Habilitación temporal (cada vez que la persona pasa su DNI)
+Solo se registran documentos **numéricos** (DNI); el carné de extranjería y el pasaporte, no.
+
+### 4.2. Habilitación (cada vez que la persona pasa su DNI)
 
 ```
-Al pasar el DNI y estar en regla:
-DATA UPDATE USERINFO PIN=45678912  StartDatetime=<ahora>  EndDatetime=<ahora + 60 s>  Expires=1
-
-Al recibir su ingreso, o al acabarse el tiempo:
-DATA UPDATE USERINFO PIN=45678912  StartDatetime=2000-01-01T00:00:00  EndDatetime=2000-01-01T00:00:01  Expires=1
+Al pasar el DNI y estar en regla:      DATA UPDATE userauthorize Pin=45678912  AuthorizeTimezoneId=1  AuthorizeDoorId=1
+Al recibir su resultado o al minuto:   DATA DELETE userauthorize Pin=45678912  AuthorizeDoorId=1
 ```
 
-- Así **solo el dueño del DNI** puede abrir: aunque otra persona se pare frente al G4 Pro, está deshabilitada.
-- Si dos personas pasan su DNI seguidas, las dos quedan habilitadas a la vez; cada una solo con su propio rostro.
-- Estas órdenes están **bien documentadas** en el protocolo (son las mismas del registro).
-- **Riesgo 1 — demora:** el G4 Pro recoge las órdenes preguntando cada cierto tiempo (parámetro `Delay` del protocolo; el fabricante recomienda de 2 a 60 s y permite bajarlo cuando se necesita respuesta rápida). Con `Delay=2`, la persona quedaría habilitada unos 2 s después de pasar el DNI, lo que alcanza a cubrir el tiempo que tarda en caminar al G4 Pro. Hay que medirlo.
-- **Riesgo 2 — precisión de la fecha de validez:** el protocolo PUSH (versión 2026) acepta fecha **y hora** (`YYYY-MM-DDTHH:MM:SS`), pero el manual del G4 Pro (versión ACC 2022) dice que la validez en pantalla es **por días** (de 00:00 a 23:59). Si el firmware solo respeta días, la habilitación de 60 s no sirve y hay que usar una alternativa (sección 5.3). Es la prueba más importante.
-- **El reloj del G4 Pro debe estar sincronizado con el de la mini PC**, porque la habilitación se basa en fecha y hora.
+- Así **solo el dueño del DNI** puede pasar: a cualquier otra persona el equipo la rechaza (`rtlog event=23`, con su DNI).
+- **Una persona a la vez.** En los ingresos exitosos (`event=0`) el equipo envía `pin=0`, es decir, no dice quién fue. Como solo hay una persona habilitada, solo puede ser ella. Si otra persona pasa su DNI mientras tanto, queda **en cola** y se la habilita cuando termina la anterior.
+- **Tiempo:** 1 minuto desde que se la habilita. Si no completa rostro y alcohol, queda denegada con **"No completó rostro y alcohol"**.
+- **Demora:** el equipo recoge las órdenes cada ~2 segundos (`RequestDelay=2`). En la prueba, el DNI se pasó a las 04:02:19 y el equipo aprobó el rostro a las 04:02:41.
 
 ---
 
@@ -188,9 +184,11 @@ Orden confirmado: **primero el rostro, luego el alcoholímetro**. Si la persona 
 | Caso | Quién lo detecta | Motivo en el Panel |
 |---|---|---|
 | DNI no registrado, de baja, sin documentos o con documento vencido | Mini PC al leer el DNI | El motivo exacto (p. ej. "SCTR vencido") |
-| Ingreso completo | G4 Pro (envía el registro) | Autorizado |
+| DNI en regla, esperando | Mini PC | Fila "en espera" con la foto, la cuenta regresiva de 1 minuto y la barra; "en cola" si otra persona está en su turno |
+| Ingreso completo | G4 Pro (`event=0`) | Autorizado (y relé de ingreso) |
+| No completó rostro y alcohol en el minuto | Mini PC | "No completó rostro y alcohol" |
 | Rostro o alcohol no conforme | G4 Pro (si envía el intento rechazado; a confirmar) o la mini PC al acabarse el tiempo | "Alcohol no conforme" si llega el dato; si no, "No completó el ingreso en el terminal" |
-| El rostro de otra persona | G4 Pro no abre (no está habilitada) | Según lo que envíe el G4 Pro |
+| El rostro de otra persona | G4 Pro la rechaza (`event=23`, no está habilitada) | No cierra la espera; queda en el registro del sistema con su DNI |
 
 ### 5.3. Alternativas si la habilitación temporal no funciona bien
 
@@ -283,7 +281,7 @@ La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya e
 
 ## 9. Temas pendientes
 
-1. **Demora de la habilitación — RESUELTO, con resultado NEGATIVO (30/set/2026):** se probó con el equipo real, mandando exactamente el comando que documenta el protocolo oficial (`DATA UPDATE USERINFO PIN=1 StartDatetime=... EndDatetime=... Expires=1`, con el PIN real de un usuario enrolado, "Amiel", ID 1). **El equipo lo rechazó explícitamente**, dos veces (al habilitar y al deshabilitar), con el código de error `return=-629`. No fue un problema de red ni de formato del comando. Se intentó también la causa más probable según el propio protocolo (que indica *"the main switch parameter UserValidTimeFun must be set to 1"*): se mandó `SET OPTION UserValidTimeFun=1` + `RELOAD OPTIONS` (comando oficial, sección 12.4.1), el equipo lo aceptó (`return=0`), y **se repitió la prueba — mismo rechazo (`return=-629`) otra vez**. Dos intentos independientes, mismo resultado: **la habilitación temporal, tal como está diseñada en la sección 4.2, no es viable con este equipo**.
+1. **Demora de la habilitación — RESUELTO (04/oct/2026): funciona con `userauthorize` (sección 4.2), ~2 s de demora.** Lo que sigue es la prueba del 30/set con el protocolo de asistencia, que dio resultado negativo: **Demora de la habilitación — RESUELTO, con resultado NEGATIVO (30/set/2026):** se probó con el equipo real, mandando exactamente el comando que documenta el protocolo oficial (`DATA UPDATE USERINFO PIN=1 StartDatetime=... EndDatetime=... Expires=1`, con el PIN real de un usuario enrolado, "Amiel", ID 1). **El equipo lo rechazó explícitamente**, dos veces (al habilitar y al deshabilitar), con el código de error `return=-629`. No fue un problema de red ni de formato del comando. Se intentó también la causa más probable según el propio protocolo (que indica *"the main switch parameter UserValidTimeFun must be set to 1"*): se mandó `SET OPTION UserValidTimeFun=1` + `RELOAD OPTIONS` (comando oficial, sección 12.4.1), el equipo lo aceptó (`return=0`), y **se repitió la prueba — mismo rechazo (`return=-629`) otra vez**. Dos intentos independientes, mismo resultado: **la habilitación temporal, tal como está diseñada en la sección 4.2, no es viable con este equipo**.
    >
    > ~~**Esto NO cambia el diseño de apertura**: se decidió que el G4 Pro se queda abriendo el ingreso con su propio relé...~~ **Superado (02/oct/2026):** el cliente decidió la Alternativa 2 de la sección 5.3. El G4 Pro ya no abre el molinete: la mini PC lo abre con el relé de ingreso, tal como muestra el diagrama de la sección 2.1.
 2. ~~**Fecha de validez por usuario:** confirmar que el G4 Pro respeta `StartDatetime` / `EndDatetime` al segundo (no solo por día).~~ — **Ya no aplica**: el punto 1 confirma que el comando se rechaza por completo, antes siquiera de poder medir la precisión de la validez.
@@ -297,7 +295,7 @@ La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya e
    - `/iclock/registry` tiene que responder **`RegistryCode=<algo>`** (un código estable por equipo, no necesariamente uno específico) — si responde `OK` a secas (la respuesta "obvia" siguiendo el protocolo documentado), el equipo se queda conectado con normalidad (sigue hablando por `/iclock/getrequest`) pero **nunca manda `rtlog`/`rtstate` ni ningún dato real**, sin ningún error.
    - Además hace falta implementar un endpoint no documentado, **`/iclock/push`**, que responda con una sesión (`SessionID`, etc.).
    - **Esto es crítico para la sección 8.3** ("Protocolo PUSH (nuevo)"): si el desarrollo dentro de `mollendo-api` no implementa este comportamiento exacto, el síntoma en el sitio va a ser "el equipo se conecta pero nunca manda nada" — indistinguible de un problema de red, y muy difícil de diagnosticar sin saber que existe este requisito.
-5. **Firmware del G4 Pro:** el protocolo revisado es el de **asistencia (ATT)**. El manual de la carpeta de equipos es de la variante de **control de acceso (ACC)**, que puede usar otro protocolo. Hay que confirmar qué firmware tiene y que se conecta al servidor PUSH.
+5. **Firmware del G4 Pro — RESUELTO (04/oct/2026):** es la variante de **control de acceso (ACC)** y responde a su protocolo (`DATA COUNT user`, `DATA QUERY`, respuestas por `/iclock/querydata`). Texto original: el protocolo revisado es el de **asistencia (ATT)**. El manual de la carpeta de equipos es de la variante de **control de acceso (ACC)**, que puede usar otro protocolo. Hay que confirmar qué firmware tiene y que se conecta al servidor PUSH.
 6. **Texto que entrega el lector de DNI:** el código de barras del DNI peruano puede contener más datos que el número. Hay que leer varios DNI reales (azul y electrónico) para saber cómo extraer el número de 8 dígitos.
 7. **Personas con CE o pasaporte:** su documento puede no tener un código de barras que el lector entienda. Hay que definir cómo se identifican.
 8. **Formato de la foto:** el G4 Pro exige JPG de 20 KB como máximo, entre 358×441 y 1080×1920 píxeles, fondo blanco, rostro de frente y sin mascarilla. El formulario debería mostrar estas indicaciones.
@@ -352,7 +350,7 @@ Con el sistema ya integrado:
 4. **El G4 Pro no abre ningún molinete**: los dos se abren desde la mini PC, cada uno con su propio relé de red de 1 canal.
 5. **Respaldo ante fallas:** UPS, reinicio automático del sistema y respaldos de la base de datos. No hay apertura manual: el procedimiento ante una falla se define con el cliente (sección 7).
 
-La primera tarea es la **prueba 3 (habilitación temporal)**, junto con la **4 (alcohol)**, porque confirman que el ingreso puede funcionar así.
+**Estado (04/oct/2026):** los puntos 1 a 4 están programados y probados con los equipos reales en la mini PC. Los molinetes se abren con **módulos de relés USB** (uno por molinete) en lugar de relés de red; se recomienda pasar a relés industriales de red para la operación continua (`Registro_Despliegue_MiniPC.md`, 8d). **Falta:** confirmar el código que envía el G4 Pro con un rechazo real de alcohol (prueba 4) y cablear los relés a las borneras J3 de los molinetes.
 
 ---
 

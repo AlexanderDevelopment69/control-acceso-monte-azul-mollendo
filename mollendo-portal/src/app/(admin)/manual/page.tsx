@@ -71,8 +71,9 @@ const SECCIONES: SeccionManual[] = [
               </li>
               <li>
                 <strong>Foto del personal</strong> (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5
-                MB. Es la que se usa para el reconocimiento facial en el terminal. Se puede cambiar después desde su
-                ficha (“Cambiar foto”).
+                MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona: no hace falta
+                registrar su rostro en el equipo. Se puede cambiar después desde su ficha (“Cambiar foto”); el
+                terminal se actualiza solo.
               </li>
               <li>
                 <strong>Documentos</strong> (al menos uno): escribe el nombre del documento (p. ej. SCTR), elige su fecha
@@ -150,16 +151,24 @@ const SECCIONES: SeccionManual[] = [
             <strong>vencido</strong>, se deniega de inmediato y se muestran los motivos.
           </li>
           <li>
-            <strong>En el terminal facial:</strong> si los documentos están en regla, el terminal verifica el rostro y la{" "}
-            <strong>prueba de alcohol</strong>. El sistema abre el molinete solo si el rostro es el de la persona del DNI y el
-            alcohol es conforme, y el ingreso queda autorizado; si el alcohol no es conforme, queda denegado por alcohol.
-            Mientras tanto, la persona aparece en la primera fila del historial como <strong>“en espera”</strong>
-            (“Esperando rostro y alcohol”), con el tiempo que le queda para completar el ingreso (1 minuto) y una barra
-            que se va vaciando. Al llegar el resultado del terminal, esa fila pasa a ser el ingreso autorizado o denegado.
+            <strong>En el terminal facial:</strong> si los documentos están en regla, el sistema habilita en el terminal{" "}
+            <strong>solo a esa persona</strong>, por 1 minuto: el terminal no acepta el rostro de nadie más. La persona
+            muestra el rostro y hace la <strong>prueba de alcohol</strong>; si ambos son conformes, el sistema abre el
+            molinete y el ingreso queda autorizado. Si el alcohol no es conforme, queda denegado por alcohol; si no se
+            completa en el minuto, queda denegado con <strong>“No completó rostro y alcohol”</strong>. Al terminar, se le
+            quita el permiso en el terminal.
           </li>
         </ol>
         <p>
-          La salida solo se registra y abre el molinete; no se exige un ingreso previo. Si el servidor deja de
+          Mientras espera, la persona aparece en la primera fila del historial como <strong>“en espera”</strong>, con su{" "}
+          <strong>foto</strong> (para compararla con quien está frente al terminal), el tiempo que le queda y una barra que
+          se va vaciando. Se habilita a una persona a la vez: si otra pasa su DNI mientras tanto, figura{" "}
+          <strong>“en cola”</strong> (“Esperando su turno en el terminal facial”) y su minuto empieza cuando termina la
+          anterior. Al llegar el resultado, la fila pasa a ser el ingreso autorizado o denegado.
+        </p>
+        <p>
+          La salida solo exige un DNI registrado (aunque la persona esté dada de baja o tenga documentos vencidos) y
+          abre el molinete; no se exige un ingreso previo. Si el servidor deja de
           responder, aparece un aviso arriba a la derecha: mientras dure, no se valida ningún ingreso.
         </p>
       </div>

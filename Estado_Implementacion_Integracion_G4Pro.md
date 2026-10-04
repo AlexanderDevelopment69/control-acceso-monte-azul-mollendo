@@ -2,7 +2,9 @@
 
 Este documento registra el avance real de código (no solo el análisis técnico) de la integración del equipo ZKTeco G4 Pro dentro del backend `mollendo-api`. Complementa a `Analisis_Control_Acceso_Mollendo.md` (evidencia técnica del protocolo, con el equipo físico) y `Opciones_Integracion_G4Pro.md` (diseño completo del sistema) — este documento es el "qué hay programado hasta ahora y qué falta" dentro del repositorio real.
 
-Última actualización: 02/oct/2026.
+Última actualización: 04/oct/2026.
+
+> **04/oct/2026 — SUPERA LAS CONCLUSIONES DEL 02/OCT: el registro remoto de personas, de rostros y la habilitación por DNI SÍ funcionan**, con el protocolo PUSH de **control de acceso** (tablas `user`, `extuser`, `biophoto`, `userauthorize`). Las pruebas del 30/set al 02/oct usaban el protocolo de **asistencia** (`USERINFO`), que este firmware (ACC) rechaza con `-629`; por eso se concluyó que no era posible. Ver **sección 0** para el estado actual. Las secciones 1.3, 2.3 a 2.8 y 3 quedan como historial.
 
 > **01/oct/2026 — Confirmado con el equipo físico real, en producción (AWS):** ver sección 2.2. Ya no es solo una prueba simulada contra la instancia local; el equipo real mandó un `rtlog`/`rtstate` de verdad al código de `mollendo-api` desplegado.
 >
@@ -10,7 +12,48 @@ Este documento registra el avance real de código (no solo el análisis técnico
 
 > **Nota sobre dos "bugs" que resultaron ser falsas alarmas** (encontradas al probar esta integración, pero no eran reales): (1) el servidor "no arrancaba" — era por probarlo con `tsx src/main.ts` en vez del comando real del proyecto, `npm run start`; con el comando correcto arranca sin problema. (2) una hora "corrida 5 horas" en una verificación por SQL crudo — era solo cómo `psql` muestra una columna `TIMESTAMP` sin zona horaria; leído por la aplicación (vía Prisma) la hora es la correcta. Ninguno de los dos requirió ningún cambio de código. Se dejan documentados acá para no repetir la confusión.
 
-## 0. Revisión del proyecto completo (30/set/2026)
+## 0. Estado actual (04/oct/2026): ingreso completo según el diagrama, probado con el equipo real
+
+### 0.1. Hallazgo
+
+El G4 Pro (`HSR3263100192`, firmware `4.1.109-OCM-4101-3`, variante ACC) responde al protocolo PUSH de **control de acceso**:
+
+| Prueba (04/oct, mini PC, persona de prueba Amiel, DNI 48058719) | Resultado |
+|---|---|
+| `DATA COUNT user` / `userauthorize` / `biophoto` | Aceptados; responde por `POST /iclock/querydata?type=count&tablename=…` (`user=0` al inicio) |
+| `DATA UPDATE user Pin=48058719 … Name=…` | `return=0`; aparece en "Administración de usuarios" |
+| Nombre en pantalla | Sale de `extuser` (`FirstName`/`LastName`), no de `user.Name` |
+| Rostro registrado a mano, sin permiso | `rtlog event=23` **con `pin=48058719`** |
+| `DATA UPDATE userauthorize Pin=… AuthorizeTimezoneId=1 AuthorizeDoorId=1` | `event=0` (permitido; el G4 Pro activa su propio relé, `rtstate relay=01`), **con `pin=0`** |
+| `DATA DELETE userauthorize Pin=… AuthorizeDoorId=1` | Otra vez `event=23` con el DNI |
+| Usuario borrado (con su rostro manual) y recreado solo con `biophoto` | El equipo generó la plantilla (`DATA QUERY tablename=biodata` → `type=9 valid=1`) y lo reconoció (`event=23` con el DNI). Los `DATA COUNT biodata/biophoto` devuelven 0 aunque el registro existe (inconsistencia del firmware) |
+
+Capturas de tráfico hechas con un contenedor temporal (`nicolaka/netshoot`, tcpdump), luego borrado.
+
+### 0.2. Qué se programó
+
+- **`push-sdk/comandos-acceso.util.ts`** (con tests): comandos `user`, `extuser`, `biophoto`, `DATA DELETE user`, `userauthorize` (habilitar/deshabilitar); Pin = DNI (solo documentos numéricos).
+- **`PushSdkService.sincronizarPersona`**: reemplaza la versión de asistencia. Al crear/editar una persona (`persona.guardada`) envía `user` + `extuser`; al subir la foto (`persona.foto-actualizada`), además `biophoto`; si cambia el número de documento, borra el usuario anterior. `POST /integraciones/g4pro/sincronizar` (Administrador) registra a todo el personal.
+- **`POST /iclock/querydata`**: recibe las respuestas a `DATA COUNT/QUERY` (se anotan en el registro). **`POST /iclock/devicecmd`** ahora registra todas las confirmaciones de un mismo mensaje (antes solo la primera).
+- **Habilitación por DNI, una persona a la vez** (`EventosAccesoService`, migración `20261004120000_habilitacion_g4pro`, columna `ingreso_pendiente.habilitado_en`): DNI en regla → si nadie está habilitado se emite `g4pro.habilitar` (la integración envía `userauthorize`) y corre 1 minuto; si no, queda en cola (máx. 3 min). Al cerrar la espera se deshabilita y se habilita al siguiente.
+- **Resultado (`rtlog`)**: `event=0` → ingreso autorizado (solo puede ser la persona habilitada), `molinete.abrir` → relé de ingreso; `event=23/27` → no cierra la espera, se anota quién era; otro código → denegado por alcohol (sin confirmar con un rechazo real). Esperas vencidas (revisión cada 5 s) → denegado **"No completó rostro y alcohol"** (`evento_acceso.denegado_sin_verificacion`).
+- **Panel**: fila "en espera" con foto y cuenta regresiva, "en cola" si otra persona está en su turno; motivo nuevo también en reportes y Dashboard.
+
+### 0.3. Prueba del flujo completo (04/oct/2026, mini PC)
+
+- 04:02:19 DNI por el lector de ingreso → habilitado en el G4 Pro.
+- 04:02:41 G4 Pro `event=0`, `Concentration=0` → ingreso autorizado (evento 113).
+- 04:02:47 deshabilitado; 04:02:48 relé de ingreso `ING01`, pulso de 1 s.
+- Con un documento vencido: el DNI se denegó al instante y el G4 Pro rechazó a la persona (`event=23`) porque no estaba habilitada.
+- Vencimiento: DNI 04:08:20 → habilitado → sin ir al equipo, 04:09:21 → denegado "No completó rostro y alcohol", deshabilitado, sin relé.
+
+### 0.4. Pendiente
+
+- **Rechazo real de alcohol** (Drink/Fail del DT1700): confirmar qué `event` envía el equipo (hoy, cualquier código distinto de 0/23/27 se toma como alcohol).
+- **Fotos de calidad**: el equipo necesita fotos de frente, con buena luz y el rostro centrado.
+- **Varios G4 Pro**: hoy todos los comandos van a todos los equipos conocidos (sección 3.6).
+
+## 0b. Revisión del proyecto completo (30/set/2026)
 
 Para evitar seguir generando falsas alarmas, se revisó el proyecto `Proyecto Mollendo` completo (no solo lo tocado en esta integración): arquitectura de despliegue (`docker-compose.prod.yml`, `Registro_Despliegue_MiniPC.md`), historial reciente (`PROGRESO.md`), y el portal (`mollendo-portal`). De ahí salieron dos correcciones reales, consecuencia directa de los cambios de esta integración:
 
@@ -228,11 +271,11 @@ Para confirmar esto de la forma más autoritativa posible (no inferencia nuestra
 
 Al probar con `npx tsx src/main.ts` aparecía `UnknownDependenciesException` sobre `JwtAuthGuard`/`AuthModuleOptions`. **No es un bug real**: `tsx` (basado en esbuild) no genera correctamente los metadatos de decoradores que necesita Nest para resolver una clase que extiende `AuthGuard('jwt')` — por eso parecía que faltaba un provider. El comando real del proyecto es `npm run start` (usa `nest start`, con el compilador de TypeScript completo), y con ese arranca sin ningún error, mapea todas las rutas y conecta a Postgres. Confirmado en vivo contra la instancia ya corriendo (`/api/v1/health` y `/iclock/registry` responden bien). No hay ninguna acción pendiente acá.
 
-### 3.2. Integración de los lectores de DNI
+### 3.2. ~~Integración de los lectores de DNI~~ — hecho (03/oct/2026, módulo `lectores-dni/`, ver `PROGRESO.md`)
 
 Todavía no existe el código que lee los puertos USB-COM de los lectores Syble y llama a `POST /eventos-acceso/ingreso` — es lo que dispararía la Fase 1 del flujo. Sin esto, no hay forma de probar el flujo completo en la práctica (se puede simular con `curl` mientras tanto). **Confirmado en vivo el 01/oct/2026** (sección 2.2): una prueba real en el equipo físico desplegado en AWS llegó correctamente como `rtlog`/`rtstate`, pero quedó sin `EventoAcceso` por esta misma razón — es ahora mismo lo único que falta para que el flujo funcione de punta a punta con hardware real.
 
-### 3.3. Ventana de correlación sin validar
+### 3.3. ~~Ventana de correlación sin validar~~ — resuelto: 1 minuto desde la habilitación, una persona a la vez (sección 0)
 
 `VENTANA_INGRESO_PENDIENTE_MS` (2 minutos, en `eventos-acceso.service.ts`) es un valor de partida, no medido. Falta la prueba real de cuánto tarda una persona en pasar su DNI, caminar al G4 Pro y completar rostro+alcohol (pendiente #1 de `Opciones_Integracion_G4Pro.md`).
 
@@ -240,7 +283,7 @@ Todavía no existe el código que lee los puertos USB-COM de los lectores Syble 
 
 `correlacionarVerificacionDispositivo` trata cualquier `event` distinto de `'0'` como `denegadoPorAlcohol`. Solo se ha probado el caso exitoso (`event=0`, `Concentration=0`, "Pass") — falta repetir la prueba real con resultados **Drink** y **Fail** del DT1700 para confirmar qué manda el equipo en esos casos (pendiente #3 de `Opciones_Integracion_G4Pro.md`).
 
-### 3.5. "No completó el ingreso en el terminal" — sin implementar
+### 3.5. ~~"No completó el ingreso en el terminal" — sin implementar~~ — hecho (04/oct/2026): motivo "No completó rostro y alcohol" (sección 0)
 
 Si alguien pasa su DNI y nunca completa la prueba en el G4 Pro (se arrepiente, se va, etc.), el `IngresoPendiente` queda abierto para siempre — no hay un barrido periódico que lo cierre ni un motivo "no completó el ingreso" en el Panel. Haría falta una tarea programada (cron) que expire los pendientes viejos.
 
@@ -248,7 +291,7 @@ Si alguien pasa su DNI y nunca completa la prueba en el G4 Pro (se arrepiente, s
 
 `sincronizarPersona` manda el registro a **todos** los equipos conocidos en `dispositivo_acceso`, sin distinguir "equipo de ingreso" de un futuro "equipo de salida" u otro punto de control. Para un solo G4 Pro (el caso actual) no es un problema; si se agregan más equipos con roles distintos, hay que agregar esa distinción.
 
-### 3.7. Molinete de salida (preexistente, no es de esta sesión)
+### 3.7. ~~Molinete de salida~~ — hecho (04/oct/2026): relés USB para ingreso y salida (`integraciones/rele-usb.service.ts`)
 
 `IntegracionesService.enviarComandoTorniquete` sigue simulado (solo log) — el relé de red real para la salida todavía no se compró ni se programó. Esto no cambió en esta sesión.
 

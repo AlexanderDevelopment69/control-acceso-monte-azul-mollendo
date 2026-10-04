@@ -22,6 +22,7 @@ Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend
 8b. [Datos de demostración](#8b-datos-de-demostración)
 8c. [Lectores de DNI](#8c-lectores-de-dni)
 8d. [Relés de los molinetes](#8d-relés-de-los-molinetes)
+8e. [Terminal facial G4 Pro](#8e-terminal-facial-g4-pro)
 9. [Seguridad y recomendaciones](#9-seguridad-y-recomendaciones)
 - [Anexo A. Registro del primer despliegue (28/09/2026)](#anexo-a-registro-del-primer-despliegue-28092026)
 - [Anexo B. Variables del archivo .env](#anexo-b-variables-del-archivo-env)
@@ -725,7 +726,39 @@ Antes de comprar, revisar el modelo (nombre o manual) para confirmar si funciona
 
 ### Relé de ingreso
 
-Instalado (`ING01`, 04/10/2026) y probado con la orden manual. Se activa cuando el **G4 Pro aprueba el rostro y el alcohol** de un DNI en regla. Para probar el ingreso completo en la mini PC, el G4 Pro tiene que apuntar a la IP de la mini PC (hoy apunta a AWS).
+Instalado (`ING01`, 04/10/2026). Se activa cuando el **G4 Pro aprueba el rostro y el alcohol** de un DNI en regla (sección 8e). Probado con el ingreso completo el 04/10/2026.
+
+---
+
+## 8e. Terminal facial G4 Pro
+
+El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por la red local, con el protocolo PUSH de ZKTeco en su variante de **control de acceso**. No usa ningún software del fabricante.
+
+### Apuntar el G4 Pro a la mini PC
+
+1. La mini PC necesita una **IP fija** en la red local (reservarla en el router; hoy es `192.168.0.165`, por Wi-Fi: conviene pasarla a cable). Se ve con `ip -4 addr`.
+2. En el G4 Pro: **Menú → COMM. → Cloud Server Setting**: dirección `192.168.0.165` (la IP de la mini PC), puerto **`3001`**, sin dominio, sin HTTPS y sin proxy. En **Ethernet**, una IP de la misma red (DHCP sirve).
+3. A los pocos segundos el equipo se registra solo. En el registro del backend: `Nuevo equipo registrado: HSR3263100192`. En **Sistema y APIs**, "Equipos (G4 Pro)": **En línea**.
+
+### Personas y rostros
+
+- **No se registran a mano en el equipo.** Al dar de alta o editar a una persona en el portal, el sistema la carga en el G4 Pro con su **DNI como número de usuario** y su nombre; al subir su foto, se la envía y el equipo la convierte en el rostro que reconoce.
+- **Equipo nuevo o reinstalado:** registrar a todo el personal con `POST /api/v1/integraciones/g4pro/sincronizar` (Administrador; desde Swagger en `/api/docs`).
+- La **foto** debe ser de frente, con buena luz y el rostro centrado. Solo se registran documentos numéricos (DNI).
+- Ninguna persona tiene **permiso de paso** en el equipo, salvo la que está en su minuto de espera: el sistema se lo da al pasar su DNI en regla y se lo quita al terminar (una persona a la vez; las demás quedan "en cola").
+
+### Comprobar
+
+- En el registro del backend (`sudo docker compose -f docker-compose.prod.yml logs -f api`), al pasar un DNI en regla y completar rostro y alcohol:
+  ```
+  DNI leído en ingreso: pendiente_verificacion
+  G4 Pro: habilitar DNI 48058719
+  G4 Pro: deshabilitar DNI 48058719
+  Molinete de ingreso abierto: pulso de 1000 ms en el relé 1 del módulo ING01
+  ```
+- `G4 Pro rechazó a DNI … (event=23)`: el equipo reconoció a una persona que no estaba habilitada (no pasó su DNI, tenía un documento vencido, o es otra persona).
+- `rostro no registrado (event=27)`: el equipo no tiene ese rostro (falta la foto, o la foto no sirvió).
+- En el **Panel**, una persona habilitada aparece "en espera" con su foto; si no completa rostro y alcohol en 1 minuto, queda **"No completó rostro y alcohol"**.
 
 ---
 
@@ -738,7 +771,7 @@ Instalado (`ING01`, 04/10/2026) y probado con la orden manual. Se activa cuando 
 5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `Opciones_Integracion_G4Pro.md`, sección 7).
 6. **Respaldos fuera de la mini PC**, con regularidad (7.4).
 7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
-8. **Integración de equipos**: los lectores de DNI (8c) y los relés de los molinetes (8d) ya funcionan desde el contenedor `api`. Falta que el G4 Pro apunte a la IP de la mini PC.
+8. **Integración de equipos**: los lectores de DNI (8c), los relés de los molinetes (8d) y el G4 Pro (8e) funcionan con la mini PC. Falta confirmar el código que envía el G4 Pro con un rechazo real de alcohol.
 
 ---
 

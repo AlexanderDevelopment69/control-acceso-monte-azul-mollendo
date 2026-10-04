@@ -61,8 +61,11 @@ Detalle y variables en la guía de despliegue (sección 8b).
 |---|---|
 | `src/auth`, `src/usuarios` | Inicio de sesión, sesiones, cambio de contraseña y cuentas |
 | `src/empresas`, `src/personas`, `src/documentos`, `src/tipos-documento` | Empresas, personal, fotos y documentos |
-| `src/eventos-acceso` | Ingresos y salidas de los equipos y motor de validación |
-| `src/integraciones` | Integración con los equipos de garita |
+| `src/eventos-acceso` | Ingresos y salidas, motor de validación y espera del terminal facial (habilitación por DNI, una persona a la vez) |
+| `src/integraciones` | Equipos de garita: relés USB de los molinetes (`rele-usb.service.ts`) y registro y habilitación de personas en el G4 Pro |
+| `src/push-sdk` | Protocolo PUSH del G4 Pro (variante de control de acceso): rutas `/iclock/*`, cola de comandos y resultados |
+| `src/lectores-dni` | Lectores de DNI por RS232 (Syble XB-7705H) |
+| `tools/rele-usb.c` | Programa que envía los comandos HID al módulo de relés (se compila en la imagen Docker) |
 | `src/panel` | Panel de vigilancia, Dashboard, estado del sistema y canal en tiempo real |
 | `src/reportes` | Reportes en Excel y PDF |
 | `src/auditoria` | Registro de cambios |
