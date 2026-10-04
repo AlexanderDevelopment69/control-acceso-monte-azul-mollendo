@@ -608,6 +608,14 @@ El sistema reconoce cada lector por el **número de serie de su adaptador USB-se
 | `FQCLb114J19` | **Ingreso** |
 | `A_BCb14C705` | **Salida** |
 
+**En simple:** el sistema no reconoce al lector, reconoce **el cable blanco** (adaptador) al que está conectado. Cada cable blanco trae de fábrica un número único, como la placa de un auto, y en `.env` quedó anotado qué número es ingreso y cuál salida. Cuando alguien pasa el DNI:
+
+1. el lector envía el número por su cable blanco;
+2. la mini PC ve **por cuál cable llegó**;
+3. según el cable, lo registra como **ingreso** o como **salida**.
+
+A diferencia de los relés (que venían todos con la misma serie y hubo que cambiársela), los cables blancos ya vienen con números distintos: no hay que configurar nada para distinguirlos.
+
 - Los adaptadores se pueden conectar **en cualquier puerto USB** de la mini PC: el sistema los encuentra igual (también si Linux les cambia el número, `ttyUSB0`, `ttyUSB1`…).
 - Lo que importa es que **cada lector siga conectado a su propio adaptador**. Si se intercambian los adaptadores entre los lectores, el de ingreso pasaría a registrar salidas y al revés.
 - **Etiquetar cada adaptador** ("INGRESO" / "SALIDA") para que no se crucen al reinstalar.
