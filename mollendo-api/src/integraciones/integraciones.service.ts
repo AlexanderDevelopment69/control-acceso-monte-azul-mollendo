@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import type { AbrirMolineteEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
+import { ReleUsbService } from './rele-usb.service.js';
 
 interface PersonaFotoActualizadaEvent {
   personaId: number;
@@ -21,19 +22,23 @@ interface PersonaFotoActualizadaEvent {
  *   Analisis_Control_Acceso_Mollendo.md sección 6.0), así que esta
  *   integración ya no necesita "habilitar" a nadie, solo mantener
  *   sincronizados nombre y rostro.
- * - Molinetes TS2000 Plus: el de salida con un relé de red (todavía
- *   simulado, pendiente el relé real); el de ingreso con el relé del propio
- *   G4 Pro (no pasa por aquí).
+ * - Molinetes TS2000 Plus: los abre la mini PC con un módulo de relés USB
+ *   para cada uno (ver rele-usb.service.ts), con cada
+ *   salida autorizada y con cada ingreso autorizado por el G4 Pro (rostro =
+ *   DNI y alcohol conforme), según diagramas/ingreso.svg y salida.svg.
  */
 @Injectable()
 export class IntegracionesService {
   private readonly logger = new Logger(IntegracionesService.name);
 
-  constructor(private readonly pushSdk: PushSdkService) {}
+  constructor(
+    private readonly pushSdk: PushSdkService,
+    private readonly releUsb: ReleUsbService,
+  ) {}
 
   @OnEvent('molinete.abrir')
   async abrirMolinete(evento: AbrirMolineteEvent): Promise<void> {
-    await this.enviarComandoTorniquete({ torniqueteId: evento.torniqueteId ?? 'T1', comando: 'abrir' });
+    await this.releUsb.pulso(evento.tipoMovimiento);
   }
 
   /**
@@ -53,8 +58,17 @@ export class IntegracionesService {
     }
   }
 
+  /**
+   * Orden manual: "abrir" da un pulso en el relé del molinete ("ingreso" o
+   * "salida"; también "Ingreso"/"Salida", como los nombra el lector). El
+   * molinete se cierra solo después del paso, así que "cerrar" no hace nada.
+   */
   async enviarComandoTorniquete(dto: TorniqueteComandoDto): Promise<{ enviado: boolean }> {
-    this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (simulado, sin relé real todavía)`);
-    return { enviado: true };
+    const molinete = dto.torniqueteId.trim().toLowerCase();
+    if (dto.comando !== 'abrir' || (molinete !== 'ingreso' && molinete !== 'salida')) {
+      this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (sin acción)`);
+      return { enviado: false };
+    }
+    return { enviado: await this.releUsb.pulso(molinete) };
   }
 }

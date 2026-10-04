@@ -7,6 +7,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-fund --no-audit
 COPY . .
 RUN npx prisma generate && npm run build
+# rele-usb: envía los comandos HID al módulo de relés USB de los molinetes (ver tools/rele-usb.c).
+RUN apk add --no-cache gcc musl-dev linux-headers && gcc -O2 -Wall -o /app/rele-usb tools/rele-usb.c
 
 FROM node:22-alpine
 RUN apk add --no-cache tzdata

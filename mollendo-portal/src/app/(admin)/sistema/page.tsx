@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
-import type { EstadoDispositivo, EstadoLectorDni, EstadoRespaldos, EstadoSistema } from "@/lib/api/types";
+import type { EstadoDispositivo, EstadoLectorDni, EstadoReleUsb, EstadoRespaldos, EstadoSistema } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
+import { BoltIcon, BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
@@ -336,9 +336,39 @@ function LectoresDniEstado({
   );
 }
 
-function StatusCard({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+/** Relés USB de los molinetes (un módulo por molinete): conectado o no y la última apertura. */
+function ReleEstado({ comprobando, rele }: { comprobando: boolean; rele?: EstadoReleUsb }) {
+  if (comprobando) {
+    return (
+      <div className="mt-2">
+        <ComprobandoBadge />
+      </div>
+    );
+  }
+  const filas = [
+    { etiqueta: "Ingreso", r: rele?.ingreso },
+    { etiqueta: "Salida", r: rele?.salida },
+  ];
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+    <div className="mt-2 space-y-3">
+      {filas.map(({ etiqueta, r }) => (
+        <div key={etiqueta}>
+          <Badge color={r?.conectado ? "success" : "error"}>{r?.conectado ? "Conectado" : "No conectado"}</Badge>
+          <p className="mt-1 text-xs text-gray-400">
+            {etiqueta}
+            {r?.serie && ` · módulo ${r.serie}`}
+            {r?.conectado &&
+              ` · ${r.ultimoPulso ? `últ. apertura ${new Date(r.ultimoPulso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}` : "sin aperturas"}`}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StatusCard({ icon, children, className = "" }: { icon: React.ReactNode; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 ${className}`}>
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
         {icon}
       </div>
@@ -508,8 +538,9 @@ function SistemaContent() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <StatusCard icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+      {/* Arriba el sistema (4 tarjetas), abajo los equipos de garita (3). */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
+        <StatusCard className="lg:col-span-3" icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
             {comprobando ? <ComprobandoBadge /> : <EstadoBadge ok={!error && !!estado} />}
@@ -521,7 +552,7 @@ function SistemaContent() {
           )}
         </StatusCard>
 
-        <StatusCard icon={<BoxCubeIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard className="lg:col-span-3" icon={<BoxCubeIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Base de datos</p>
           <div className="mt-2">
             {comprobando ? <ComprobandoBadge /> : <EstadoBadge ok={estado?.baseDeDatos.estado === "up"} />}
@@ -530,7 +561,7 @@ function SistemaContent() {
         </StatusCard>
 
 
-        <StatusCard icon={<LockIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard className="lg:col-span-3" icon={<LockIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Clave de equipos físicos</p>
           <div className="mt-2">
             {comprobando ? (
@@ -542,19 +573,24 @@ function SistemaContent() {
           <p className="mt-2 text-xs text-gray-400">Para las rutas de ingreso y salida (X-API-Key)</p>
         </StatusCard>
 
-        <StatusCard icon={<FolderIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard className="lg:col-span-3" icon={<FolderIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Respaldos</p>
           <RespaldosEstado comprobando={comprobando} respaldos={estado?.respaldos} ahora={estado?.api.fecha} />
         </StatusCard>
 
-        <StatusCard icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard className="lg:col-span-4" icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Equipos (G4 Pro)</p>
           <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} />
         </StatusCard>
 
-        <StatusCard icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard className="lg:col-span-4" icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Lectores de DNI</p>
           <LectoresDniEstado comprobando={comprobando} lectoresDni={estado?.lectoresDni} />
+        </StatusCard>
+
+        <StatusCard className="lg:col-span-4" icon={<BoltIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Relés de molinetes</p>
+          <ReleEstado comprobando={comprobando} rele={estado?.releMolinetes} />
         </StatusCard>
       </div>
 

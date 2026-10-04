@@ -260,7 +260,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 
 ### 4.7. Sistema y APIs (Administrador)
 
-- **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado"), **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas), **equipos** (cada terminal G4 Pro "En línea" o "Desconectado", con su última actividad) y **lectores de DNI** de ingreso y salida ("Cable conectado", "Cable desconectado" o "Sin configurar", con la hora de su última lectura; el estado corresponde al cable de datos, ya que el lector solo envía información al leer un DNI). Se actualiza cada 15 segundos.
+- **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado"), **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas), **equipos** (cada terminal G4 Pro "En línea" o "Desconectado", con su última actividad) y **lectores de DNI** de ingreso y salida ("Cable conectado", "Cable desconectado" o "Sin configurar", con la hora de su última lectura; el estado corresponde al cable de datos, ya que el lector solo envía información al leer un DNI) y **relés de los molinetes** ("Conectado" o "No conectado" para ingreso y salida, con la última apertura). Se actualiza cada 15 segundos.
 - **Documentación de las APIs de integración** con ejemplos de uso y su estado ("Disponible", "Simulado" o "Por programar"), y enlace a la documentación interactiva (Swagger).
 
 ### 4.8. Manual
@@ -303,7 +303,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | Parte | Descripción |
 |---|---|
 | API de ingreso y salida (con clave de equipo) | Aplica las reglas, guarda el evento y lo muestra en tiempo real. |
-| Apertura de los molinetes | La orden de apertura se registra en el log del servidor. |
+| Apertura de los molinetes | Un módulo de relés USB por molinete, conectado al servidor: al autorizar una salida, o un ingreso aprobado por el terminal facial, el sistema activa el relé del molinete durante 1 segundo. |
 | Registro del rostro en el terminal facial | Al cargar o actualizar la foto, la operación se registra en el log del servidor. |
 
 ---
@@ -339,7 +339,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `DELETE /personas/:id/documentos/:tipoDocumentoId` | Eliminar un documento con todas sus versiones | Administrador |
 | `GET` · `POST /tipos-documento` | Nombres de documento | Crear: Administrador |
 | `POST /eventos-acceso/ingreso` · `/salida` | Registrar un ingreso o una salida | Equipos (`X-API-Key`) |
-| `POST /integraciones/torniquete/comando` | Orden manual de apertura o cierre de un molinete (hoy queda registrada en el log del servidor) | Administrador y Vigilancia |
+| `POST /integraciones/torniquete/comando` | Orden manual de apertura de un molinete (`ingreso` o `salida`): activa su relé durante 1 segundo | Administrador y Vigilancia |
 | `GET /eventos-acceso` | Historial paginado, con búsqueda y fechas | Administrador y Vigilancia |
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
 | `GET /panel/dashboard` | Indicadores y gráficos del Dashboard, por periodo | Administrador |

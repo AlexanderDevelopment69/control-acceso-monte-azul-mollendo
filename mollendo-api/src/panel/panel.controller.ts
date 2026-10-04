@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { estadoRespaldos } from './respaldos.util.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
+import { ReleUsbService } from '../integraciones/rele-usb.service.js';
 
 @Controller()
 export class PanelController {
@@ -18,6 +19,7 @@ export class PanelController {
     private readonly prisma: PrismaService,
     private readonly pushSdk: PushSdkService,
     private readonly lectoresDni: LectoresDniService,
+    private readonly releUsb: ReleUsbService,
   ) {}
 
   @Get('panel/resumen')
@@ -93,6 +95,8 @@ export class PanelController {
       // Lectores de DNI (RS232 en la mini PC, ver lectores-dni/): si están
       // configurados, si el puerto está abierto y la hora de la última lectura.
       lectoresDni: this.lectoresDni.estado(),
+      // Módulos de relés USB que abren los molinetes (uno por molinete).
+      releMolinetes: await this.releUsb.estado(),
       respaldos: estadoRespaldos(),
       websocket: { namespace: '/ws/eventos' },
     };

@@ -21,6 +21,7 @@ Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend
 8. [Solución de problemas](#8-solución-de-problemas)
 8b. [Datos de demostración](#8b-datos-de-demostración)
 8c. [Lectores de DNI](#8c-lectores-de-dni)
+8d. [Relés de los molinetes](#8d-relés-de-los-molinetes)
 9. [Seguridad y recomendaciones](#9-seguridad-y-recomendaciones)
 - [Anexo A. Registro del primer despliegue (28/09/2026)](#anexo-a-registro-del-primer-despliegue-28092026)
 - [Anexo B. Variables del archivo .env](#anexo-b-variables-del-archivo-env)
@@ -598,6 +599,21 @@ Cómo accede el contenedor: ve el `/dev` del servidor en solo lectura (`/dev-ser
 
 Si se desconecta el adaptador, el sistema reintenta cada 5 s y se reconecta solo al volver a conectarlo (probado: 30 s después de reconectarlo, con el adaptador pasando de `ttyUSB1` a `ttyUSB0`).
 
+### Qué identifica a cada lector
+
+El sistema reconoce cada lector por el **número de serie de su adaptador USB-serial** (el blanco), no por el puerto USB de la mini PC donde se enchufe:
+
+| Adaptador (número de serie) | Lector |
+|---|---|
+| `FQCLb114J19` | **Ingreso** |
+| `A_BCb14C705` | **Salida** |
+
+- Los adaptadores se pueden conectar **en cualquier puerto USB** de la mini PC: el sistema los encuentra igual (también si Linux les cambia el número, `ttyUSB0`, `ttyUSB1`…).
+- Lo que importa es que **cada lector siga conectado a su propio adaptador**. Si se intercambian los adaptadores entre los lectores, el de ingreso pasaría a registrar salidas y al revés.
+- **Etiquetar cada adaptador** ("INGRESO" / "SALIDA") para que no se crucen al reinstalar.
+- Si se **reemplaza un adaptador** por uno nuevo, hay que poner su ruta en `.env` (`LECTOR_DNI_INGRESO_DISPOSITIVO` o `LECTOR_DNI_SALIDA_DISPOSITIVO`, ver `ls /dev/serial/by-id/`) y ejecutar `sudo docker compose -f docker-compose.prod.yml up -d`.
+- La punta **negra** (energía) puede ir en cualquier USB: solo alimenta al lector.
+
 ### Lector de salida (o para cambiar un lector)
 
 Instalados en la mini PC (04/10/2026): **ingreso** con el adaptador `...Serial_Controller_FQCLb114J19...` y **salida** con `...Serial_Controller_A_BCb14C705...`. Para instalar el de salida (o reemplazar un lector o su adaptador):
@@ -609,7 +625,56 @@ Instalados en la mini PC (04/10/2026): **ingreso** con el adaptador `...Serial_C
 5. **Aplicar:** `sudo docker compose -f docker-compose.prod.yml up -d`.
 6. **Comprobar:** en el registro del backend, `Lector de DNI de salida conectado`. En **Sistema y APIs**, salida "Cable conectado". Al pasar un DNI registrado, el Panel muestra una **salida autorizada**.
 
-Probado con el lector real: un DNI registrado queda como **salida autorizada** y uno no registrado como **salida denegada "No registrado"**, al instante. El relé de salida (el que abre el molinete) sigue pendiente: hoy la orden de apertura solo queda en el registro del servidor (`Comando molinete Salida: abrir (simulado…)`).
+Probado con el lector real: un DNI registrado queda como **salida autorizada** y uno no registrado como **salida denegada "No registrado"**, al instante. La salida autorizada activa el relé de salida (sección 8d).
+
+---
+
+## 8d. Relés de los molinetes
+
+Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", placa verde con un relé azul HONG WEI y bornera de 3 tornillos), conectado a un USB de la mini PC. Se controla sin drivers. Al autorizar una **salida** (o un **ingreso** que el G4 Pro aprobó), el sistema activa el relé **1 segundo**: suena un clic y se prende un LED rojo; su contacto (NO + COM) va a la bornera J3 del molinete (K1 + COM).
+
+| Molinete | Módulo (número de serie) | Relé |
+|---|---|---|
+| **Salida** | `S2OD2` | 1 |
+| **Ingreso** | pendiente: el segundo módulo todavía no está conectado | 1 |
+
+> El módulo se identifica como "USBRelay2", pero la placa tiene **un solo relé** (el 1). Por eso se usa un módulo por molinete.
+
+### Configurar el servidor
+
+En `~/mollendo/.env`, el número de serie del módulo de cada molinete:
+
+```bash
+RELE_SALIDA_SERIE=S2OD2
+# RELE_INGRESO_SERIE=<serie del módulo de ingreso>
+# RELE_INGRESO_CANAL=1 / RELE_SALIDA_CANAL=1   (relé del módulo, 1 por defecto)
+# RELE_PULSO_MS=1000                           (duración del pulso)
+# RELE_USB_HIDRAW_MAJOR=234                    (ver `grep hidraw /proc/devices`)
+```
+
+Después: `sudo docker compose -f docker-compose.prod.yml up -d`.
+
+- **Número de serie de un módulo:** con el módulo conectado, `sudo docker compose -f docker-compose.prod.yml exec api sh -c 'for h in /sys/class/hidraw/*; do /app/rele-usb /dev-servidor/$(basename $h) estado; done'` muestra la serie y el estado de cada uno (por ejemplo `S2OD2 0`).
+- Los módulos se pueden conectar **en cualquier USB**: el sistema los busca por su número de serie en cada apertura (también si se desconectan y se vuelven a conectar).
+- Sin número de serie, un molinete usa el único módulo conectado que no esté asignado al otro.
+- **Etiquetar cada módulo** ("INGRESO" / "SALIDA").
+
+### Cómo funciona
+
+El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila al construir la imagen), que envía los comandos HID al módulo, y tiene permiso solo para dispositivos HID en bruto (`hidraw`) además de los puertos serie (`device_cgroup_rules` en `docker-compose.prod.yml`).
+
+### Comprobar
+
+- **Sistema y APIs**, tarjeta **Relés de molinetes**: cada molinete "Conectado" o "No conectado", con su módulo y la última apertura.
+- Al pasar un **DNI registrado por el lector de salida**: clic del relé y LED rojo durante 1 s. En el registro del backend: `Molinete de salida abierto: pulso de 1000 ms en el relé 1 del módulo S2OD2`.
+- Un DNI **no registrado** se deniega y **no** activa el relé.
+
+### Pendiente: relé de ingreso
+
+1. Conectar el segundo módulo a un USB de la mini PC.
+2. Leer su número de serie (ver arriba) y agregar en `.env`: `RELE_INGRESO_SERIE=<serie>`.
+3. `sudo docker compose -f docker-compose.prod.yml up -d` y comprobar en Sistema y APIs que el ingreso dice "Conectado".
+4. El relé de ingreso se activa cuando el **G4 Pro aprueba el rostro y el alcohol** de un DNI en regla. Para probarlo en la mini PC, el G4 Pro tiene que apuntar a la IP de la mini PC (hoy apunta a AWS).
 
 ---
 
@@ -622,7 +687,7 @@ Probado con el lector real: un DNI registrado queda como **salida autorizada** y
 5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `Opciones_Integracion_G4Pro.md`, sección 7).
 6. **Respaldos fuera de la mini PC**, con regularidad (7.4).
 7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
-8. **Integración de equipos**: los lectores de DNI ya se leen desde el contenedor `api` (sección 8c). Falta que el G4 Pro apunte a la IP de la mini PC y el relé de ingreso.
+8. **Integración de equipos**: los lectores de DNI (8c) y el relé de salida (8d) ya funcionan desde el contenedor `api`. Falta conectar el relé de ingreso y que el G4 Pro apunte a la IP de la mini PC.
 
 ---
 

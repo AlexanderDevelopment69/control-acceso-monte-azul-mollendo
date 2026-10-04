@@ -159,9 +159,21 @@ export interface EstadoSistema {
   integraciones: { claveEquiposConfigurada: boolean };
   equipos: { total: number; enLinea: number; dispositivos: EstadoDispositivo[] };
   lectoresDni: { ingreso: EstadoLectorDni; salida: EstadoLectorDni };
+  releMolinetes: EstadoReleUsb;
   respaldos: EstadoRespaldos;
   websocket: { namespace: string };
 }
+
+/** Relé USB que abre un molinete: si su módulo está conectado, cuál es y la última apertura. */
+export interface EstadoReleMolinete {
+  conectado: boolean;
+  serie: string | null;
+  canal: number;
+  ultimoPulso: string | null;
+  error: string | null;
+}
+
+export type EstadoReleUsb = { ingreso: EstadoReleMolinete; salida: EstadoReleMolinete };
 
 /** Lector de DNI por RS232: si está configurado en el servidor, si el puerto está abierto y su última lectura. */
 export interface EstadoLectorDni {

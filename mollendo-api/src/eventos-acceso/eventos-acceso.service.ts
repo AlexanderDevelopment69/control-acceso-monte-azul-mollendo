@@ -258,6 +258,13 @@ export class EventosAccesoService {
       numeroDocumento: pendiente.persona.numeroDocumento,
       motivos: { alcohol: !autorizado },
     };
+    if (autorizado) {
+      this.eventEmitter.emit('molinete.abrir', {
+        torniqueteId: pendiente.torniqueteId ?? undefined,
+        eventoId: eventoAcceso.id,
+        tipoMovimiento: 'ingreso',
+      } satisfies AbrirMolineteEvent);
+    }
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
     this.eventEmitter.emit('ingreso.espera-terminada', { id: pendiente.id });
   }

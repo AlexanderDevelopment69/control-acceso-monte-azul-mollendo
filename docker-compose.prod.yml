@@ -54,10 +54,21 @@ services:
       # cada vez que se reintenta, así se recupera aunque al desconectar y volver a
       # conectar el adaptador Linux le dé otro número (ttyUSB0 -> ttyUSB1).
       LECTOR_DNI_DEV_SERVIDOR: /dev-servidor
-    # Solo puertos serie USB (ttyUSB = 188, ttyACM = 166); ningún otro dispositivo.
+      # Módulos de relés USB (DCTTECH USBRelay) que abren los molinetes: cada
+      # molinete con el número de serie de su módulo y el relé de ese módulo
+      # (1 por defecto). Sin número de serie se usa el único módulo conectado.
+      RELE_INGRESO_SERIE: ${RELE_INGRESO_SERIE:-}
+      RELE_INGRESO_CANAL: ${RELE_INGRESO_CANAL:-1}
+      RELE_SALIDA_SERIE: ${RELE_SALIDA_SERIE:-}
+      RELE_SALIDA_CANAL: ${RELE_SALIDA_CANAL:-1}
+      RELE_PULSO_MS: ${RELE_PULSO_MS:-1000}
+    # Solo puertos serie USB (ttyUSB = 188, ttyACM = 166, los lectores de DNI) y
+    # dispositivos HID en bruto (hidraw, el módulo de relés USB de los molinetes;
+    # su número lo asigna el kernel: ver `grep hidraw /proc/devices`).
     device_cgroup_rules:
       - "c 188:* rmw"
       - "c 166:* rmw"
+      - "c ${RELE_USB_HIDRAW_MAJOR:-234}:* rmw"
     volumes:
       - /dev:/dev-servidor:ro
       - documentos:/app/storage
