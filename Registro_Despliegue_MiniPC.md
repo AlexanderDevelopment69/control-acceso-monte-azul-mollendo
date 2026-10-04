@@ -598,9 +598,9 @@ Cómo accede el contenedor: ve el `/dev` del servidor en solo lectura (`/dev-ser
 
 Si se desconecta el adaptador, el sistema reintenta cada 5 s y se reconecta solo al volver a conectarlo (probado: 30 s después de reconectarlo, con el adaptador pasando de `ttyUSB1` a `ttyUSB0`).
 
-### Pendiente: lector de salida
+### Lector de salida (o para cambiar un lector)
 
-Hoy está instalado solo el **lector de ingreso**. Para el de salida:
+Instalados en la mini PC (04/10/2026): **ingreso** con el adaptador `...Serial_Controller_FQCLb114J19...` y **salida** con `...Serial_Controller_A_BCb14C705...`. Para instalar el de salida (o reemplazar un lector o su adaptador):
 
 1. **Hardware:** un **segundo adaptador USB-serial** (como el ATEN) para el cable DB9 del lector de salida. Su punta USB de energía va a otro puerto USB de la mini PC.
 2. **Configurar el lector** con el folleto, igual que el de ingreso: Factory Default → RS232 → 115200 → desenchufar y volver a enchufar la energía.
@@ -609,7 +609,7 @@ Hoy está instalado solo el **lector de ingreso**. Para el de salida:
 5. **Aplicar:** `sudo docker compose -f docker-compose.prod.yml up -d`.
 6. **Comprobar:** en el registro del backend, `Lector de DNI de salida conectado`. En **Sistema y APIs**, salida "Cable conectado". Al pasar un DNI registrado, el Panel muestra una **salida autorizada**.
 
-El relé de salida (el que abre el molinete) es otro pendiente: hoy la orden de apertura solo queda en el registro del servidor.
+Probado con el lector real: un DNI registrado queda como **salida autorizada** y uno no registrado como **salida denegada "No registrado"**, al instante. El relé de salida (el que abre el molinete) sigue pendiente: hoy la orden de apertura solo queda en el registro del servidor (`Comando molinete Salida: abrir (simulado…)`).
 
 ---
 
