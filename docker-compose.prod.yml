@@ -43,6 +43,17 @@ services:
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
       VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@mollendo.local}
       VIGILANCIA_SEED_PASSWORD: ${VIGILANCIA_SEED_PASSWORD:-}
+      # Lectores de DNI por RS232 (solo en el servidor que los tiene conectados):
+      # en .env, LECTOR_DNI_INGRESO_DISPOSITIVO / LECTOR_DNI_SALIDA_DISPOSITIVO con
+      # la ruta fija del adaptador (/dev/serial/by-id/...). Sin esas variables no
+      # se abre ningún puerto.
+      LECTOR_DNI_INGRESO_PUERTO: ${LECTOR_DNI_INGRESO_DISPOSITIVO:+/dev/lector-dni-ingreso}
+      LECTOR_DNI_SALIDA_PUERTO: ${LECTOR_DNI_SALIDA_DISPOSITIVO:+/dev/lector-dni-salida}
+      LECTOR_DNI_BAUDIOS: ${LECTOR_DNI_BAUDIOS:-115200}
+    devices:
+      # Sin lector configurado se pasa /dev/null, que no hace nada.
+      - ${LECTOR_DNI_INGRESO_DISPOSITIVO:-/dev/null}:/dev/lector-dni-ingreso
+      - ${LECTOR_DNI_SALIDA_DISPOSITIVO:-/dev/null}:/dev/lector-dni-salida
     volumes:
       - documentos:/app/storage
       # Solo lectura: para mostrar el último respaldo en "Sistema y APIs".

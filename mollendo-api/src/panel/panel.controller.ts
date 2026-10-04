@@ -8,6 +8,7 @@ import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { estadoRespaldos } from './respaldos.util.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
+import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
 
 @Controller()
 export class PanelController {
@@ -16,6 +17,7 @@ export class PanelController {
     private readonly dashboardService: DashboardService,
     private readonly prisma: PrismaService,
     private readonly pushSdk: PushSdkService,
+    private readonly lectoresDni: LectoresDniService,
   ) {}
 
   @Get('panel/resumen')
@@ -88,14 +90,9 @@ export class PanelController {
         enLinea: dispositivos.filter((d) => d.enLinea).length,
         dispositivos,
       },
-      // Lectores de DNI (USB-COM, no son equipos de red como el G4 Pro):
-      // todavía no hay integración real que lea el puerto (pendiente más
-      // grande del proyecto ahora mismo) -- por eso solo reporta si hay un
-      // puerto configurado, no si el lector responde de verdad.
-      lectoresDni: {
-        ingreso: { configurado: !!process.env.LECTOR_DNI_INGRESO_PUERTO },
-        salida: { configurado: !!process.env.LECTOR_DNI_SALIDA_PUERTO },
-      },
+      // Lectores de DNI (RS232 en la mini PC, ver lectores-dni/): si están
+      // configurados, si el puerto está abierto y la hora de la última lectura.
+      lectoresDni: this.lectoresDni.estado(),
       respaldos: estadoRespaldos(),
       websocket: { namespace: '/ws/eventos' },
     };

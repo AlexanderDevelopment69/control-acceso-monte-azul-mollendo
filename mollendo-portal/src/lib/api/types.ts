@@ -145,9 +145,17 @@ export interface EstadoSistema {
   baseDeDatos: { estado: "up" | "down"; latenciaMs: number };
   integraciones: { claveEquiposConfigurada: boolean };
   equipos: { total: number; enLinea: number; dispositivos: EstadoDispositivo[] };
-  lectoresDni: { ingreso: { configurado: boolean }; salida: { configurado: boolean } };
+  lectoresDni: { ingreso: EstadoLectorDni; salida: EstadoLectorDni };
   respaldos: EstadoRespaldos;
   websocket: { namespace: string };
+}
+
+/** Lector de DNI por RS232: si está configurado en el servidor, si el puerto está abierto y su última lectura. */
+export interface EstadoLectorDni {
+  configurado: boolean;
+  conectado: boolean;
+  ultimaLectura: string | null;
+  error: string | null;
 }
 
 export interface ResumenRespaldo {

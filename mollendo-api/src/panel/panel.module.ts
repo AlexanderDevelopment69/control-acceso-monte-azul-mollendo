@@ -5,9 +5,10 @@ import { PanelService } from './panel.service.js';
 import { DashboardService } from './dashboard.service.js';
 import { EventosGateway } from './eventos.gateway.js';
 import { PushSdkModule } from '../push-sdk/push-sdk.module.js';
+import { LectoresDniModule } from '../lectores-dni/lectores-dni.module.js';
 
 @Module({
-  imports: [JwtModule.register({}), PushSdkModule],
+  imports: [JwtModule.register({}), PushSdkModule, LectoresDniModule],
   controllers: [PanelController],
   providers: [PanelService, DashboardService, EventosGateway],
   exports: [DashboardService],

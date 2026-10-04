@@ -1,0 +1,33 @@
+******  Ver: 1.0.0 2020-06-08(Released)
+           1.Added Device Commands Top menu option for Person operation, Transaction operation, Template Operation through Command.
+           2.Newly added changes, Mask and temperature enabled configuration shown in Device Management Page.
+           3.Newly added changes, Mask and temperature detection shown in Real–Time Monitoring.
+           4. Resolved issue of showing Face template count on device and server.
+           5.Newly added changes, support 12.0 palm algorithm and it should show on server.
+           6.Newly added changes,support 12.0 finger algorithm
+
+******  Ver: 1.0.1 2020-09-25 (Released)
+           1.Syncing time zone to  device.
+           2.Enable Function to send and get File to Device.
+           3. Fixed issue of synchronize server data to device
+           4. Fixed issue of Transfer data to new device
+           5. Fixed issue of Transfer biometric data, where devices will support tabale BIODATA.
+
+******  Ver: 1.0.2 2020-12-01 (Released)
+          1.developed to maintain multiple version of palm and biometrics data.
+		  
+******  Ver: 1.0.3 2020-12-02 (Released)
+          1.fixed issue while transfaring face template to profesX[ti] device
+
+******  Ver. 2.0.0 2021-01-11(Released)
+         1.Added Https/Http option in installer while installing application
+         2.Fixed issue to transfer template to device.
+         3.added bioData_Stamp, idCard_Stamp, errorLog_Stamp and passing value while adding device
+
+
+******  Ver. 2.0.1 2021-04-15(Released)
+1.Support old att devices just like k12pro, k45pro
+
+****** Ver.2.0.2 2022-04-04(Released)
+1.Fixed issue to transfer face and palm template to new device.
+2.Fixed Face count issue in Keypad devices like MB360,MB20…etc.

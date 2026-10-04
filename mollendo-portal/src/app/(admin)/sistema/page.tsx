@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
-import type { EstadoDispositivo, EstadoRespaldos, EstadoSistema } from "@/lib/api/types";
+import type { EstadoDispositivo, EstadoLectorDni, EstadoRespaldos, EstadoSistema } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -292,7 +292,7 @@ function EquiposEstado({
   );
 }
 
-/** Lectores de DNI: por USB-COM, no por red -- hoy solo dice si hay un puerto configurado (todavía no hay integración real, ver Estado_Implementacion_Integracion_G4Pro.md pendiente 3.2). */
+/** Lectores de DNI: por RS232 en la mini PC, no por red. Configurado, conectado (puerto abierto) y la hora de la última lectura. */
 function LectoresDniEstado({
   comprobando,
   lectoresDni,
@@ -307,16 +307,29 @@ function LectoresDniEstado({
       </div>
     );
   }
-  const filas: { etiqueta: string; configurado: boolean }[] = [
-    { etiqueta: "Ingreso", configurado: !!lectoresDni?.ingreso.configurado },
-    { etiqueta: "Salida", configurado: !!lectoresDni?.salida.configurado },
+  const filas = [
+    { etiqueta: "Ingreso", lector: lectoresDni?.ingreso },
+    { etiqueta: "Salida", lector: lectoresDni?.salida },
   ];
+  const ultimaLectura = (lector?: EstadoLectorDni) =>
+    lector?.ultimaLectura
+      ? `últ. lectura ${new Date(lector.ultimaLectura).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}`
+      : "sin lecturas";
   return (
     <div className="mt-2 space-y-3">
-      {filas.map((fila) => (
-        <div key={fila.etiqueta}>
-          <Badge color={fila.configurado ? "success" : "light"}>{fila.configurado ? "Configurado" : "Sin configurar"}</Badge>
-          <p className="mt-1 text-xs text-gray-400">{fila.etiqueta}</p>
+      {filas.map(({ etiqueta, lector }) => (
+        <div key={etiqueta}>
+          {!lector?.configurado ? (
+            <Badge color="light">Sin configurar</Badge>
+          ) : lector.conectado ? (
+            <Badge color="success">Conectado</Badge>
+          ) : (
+            <Badge color="error">Desconectado</Badge>
+          )}
+          <p className="mt-1 text-xs text-gray-400">
+            {etiqueta}
+            {lector?.configurado && ` · ${ultimaLectura(lector)}`}
+          </p>
         </div>
       ))}
     </div>
