@@ -38,11 +38,16 @@ export class PushSdkController {
   @Post('devicecmd')
   @Header('Content-Type', 'text/plain')
   async devicecmd(@Query('SN') sn: string, @Body() body: string) {
-    const params = new URLSearchParams(body ?? '');
-    const id = Number(params.get('ID'));
-    const returnCode = Number(params.get('Return'));
-    if (Number.isFinite(id)) {
-      await this.pushSdk.confirmarComando(sn, id, Number.isFinite(returnCode) ? returnCode : 0);
+    // Si el equipo recibió varios comandos juntos, confirma todos en el mismo
+    // mensaje: una línea "ID=..&Return=..&CMD=.." por comando.
+    for (const linea of (body ?? '').split(/\r?\n/)) {
+      if (!linea.trim()) continue;
+      const params = new URLSearchParams(linea);
+      const id = Number(params.get('ID'));
+      const returnCode = Number(params.get('Return'));
+      if (params.has('ID') && Number.isFinite(id)) {
+        await this.pushSdk.confirmarComando(sn, id, Number.isFinite(returnCode) ? returnCode : 0);
+      }
     }
     return 'OK';
   }

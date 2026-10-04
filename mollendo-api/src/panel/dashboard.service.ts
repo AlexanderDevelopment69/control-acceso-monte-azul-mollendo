@@ -160,6 +160,7 @@ export class DashboardService {
         denegadoSinDocumentos: true,
         denegadoPorDocumentos: true,
         denegadoPorAlcohol: true,
+        denegadoSinVerificacion: true,
       },
     });
     return resumirMovimientos(eventos, dias);

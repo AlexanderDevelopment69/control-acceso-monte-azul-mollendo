@@ -12,4 +12,11 @@ export class IntegracionesController {
   enviarComandoTorniquete(@Body() dto: TorniqueteComandoDto) {
     return this.integracionesService.enviarComandoTorniquete(dto);
   }
+
+  /** Registra a todo el personal (con foto) en los G4 Pro; por ejemplo, al instalar un equipo nuevo. */
+  @Post('g4pro/sincronizar')
+  @Roles('administrador')
+  sincronizarG4Pro() {
+    return this.integracionesService.sincronizarTodas();
+  }
 }

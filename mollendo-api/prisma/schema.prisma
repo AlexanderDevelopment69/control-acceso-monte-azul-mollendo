@@ -88,8 +88,8 @@ model Empresa {
   creadoEn               DateTime      @default(now()) @map("creado_en")
   actualizadoEn          DateTime      @default(now()) @updatedAt @map("actualizado_en")
 
-  usuarios          Usuario[]
-  personas          Persona[]
+  usuarios Usuario[]
+  personas Persona[]
 
   @@map("empresa")
 }
@@ -99,16 +99,16 @@ model Empresa {
 // Sin invitación por correo: las cuentas las crea el administrador.
 // ---------------------------------------------------------------------
 model Usuario {
-  id           Int          @id @default(autoincrement())
-  empresaId    Int          @map("empresa_id")
-  empresa      Empresa      @relation(fields: [empresaId], references: [id])
-  rol          RolUsuario
-  correo       String       @unique @db.VarChar(150)
-  passwordHash String       @map("password_hash") @db.VarChar(255)
-  estadoCuenta EstadoCuenta @default(activo) @map("estado_cuenta")
-  creadoEn     DateTime     @default(now()) @map("creado_en")
+  id                 Int          @id @default(autoincrement())
+  empresaId          Int          @map("empresa_id")
+  empresa            Empresa      @relation(fields: [empresaId], references: [id])
+  rol                RolUsuario
+  correo             String       @unique @db.VarChar(150)
+  passwordHash       String       @map("password_hash") @db.VarChar(255)
+  estadoCuenta       EstadoCuenta @default(activo) @map("estado_cuenta")
+  creadoEn           DateTime     @default(now()) @map("creado_en")
   /// Último cambio de contraseña: las sesiones iniciadas antes dejan de valer.
-  passwordCambiadoEn DateTime? @map("password_cambiado_en")
+  passwordCambiadoEn DateTime?    @map("password_cambiado_en")
 
   auditorias Auditoria[]
 
@@ -133,8 +133,8 @@ model Persona {
   estado                 EstadoPersona          @default(activo)
   creadoEn               DateTime               @default(now()) @map("creado_en")
 
-  documentos        DocumentoPersona[]
-  eventosAcceso     EventoAcceso[]
+  documentos         DocumentoPersona[]
+  eventosAcceso      EventoAcceso[]
   ingresosPendientes IngresoPendiente[]
 
   // Global: una persona pertenece a una sola empresa a la vez
@@ -188,28 +188,30 @@ model DocumentoPersona {
 // salida siempre se registra como autorizada.
 // ---------------------------------------------------------------------
 model EventoAcceso {
-  id                       Int             @id @default(autoincrement())
+  id                      Int                     @id @default(autoincrement())
   /// Vacío si el documento no está registrado (intento de una persona desconocida).
-  personaId                Int?            @map("persona_id")
-  persona                  Persona?        @relation(fields: [personaId], references: [id], onDelete: Restrict)
+  personaId               Int?                    @map("persona_id")
+  persona                 Persona?                @relation(fields: [personaId], references: [id], onDelete: Restrict)
   /// Documento con el que se identificó (lo que leyó el equipo), registrado o no.
-  tipoDocumentoIdentidad   TipoDocumentoIdentidad? @map("tipo_documento_identidad")
-  numeroDocumento          String?         @map("numero_documento") @db.VarChar(20)
-  tipoMovimiento           TipoMovimiento  @map("tipo_movimiento")
-  resultado                ResultadoAcceso
-  denegadoNoRegistrado     Boolean         @default(false) @map("denegado_no_registrado")
-  denegadoPorBaja          Boolean         @default(false) @map("denegado_por_baja")
-  denegadoPorAlcohol       Boolean         @default(false) @map("denegado_por_alcohol")
-  denegadoPorDocumentos    Boolean         @default(false) @map("denegado_por_documentos")
-  denegadoSinDocumentos    Boolean         @default(false) @map("denegado_sin_documentos")
-  fechaHora                DateTime        @default(now()) @map("fecha_hora")
-  torniqueteId             String?         @map("torniquete_id") @db.VarChar(50)
+  tipoDocumentoIdentidad  TipoDocumentoIdentidad? @map("tipo_documento_identidad")
+  numeroDocumento         String?                 @map("numero_documento") @db.VarChar(20)
+  tipoMovimiento          TipoMovimiento          @map("tipo_movimiento")
+  resultado               ResultadoAcceso
+  denegadoNoRegistrado    Boolean                 @default(false) @map("denegado_no_registrado")
+  denegadoPorBaja         Boolean                 @default(false) @map("denegado_por_baja")
+  denegadoPorAlcohol      Boolean                 @default(false) @map("denegado_por_alcohol")
+  denegadoPorDocumentos   Boolean                 @default(false) @map("denegado_por_documentos")
+  denegadoSinDocumentos   Boolean                 @default(false) @map("denegado_sin_documentos")
+  /// Pasó su DNI en regla pero no completó rostro y alcohol en el G4 Pro a tiempo.
+  denegadoSinVerificacion Boolean                 @default(false) @map("denegado_sin_verificacion")
+  fechaHora               DateTime                @default(now()) @map("fecha_hora")
+  torniqueteId            String?                 @map("torniquete_id") @db.VarChar(50)
+
+  verificacionesDispositivo VerificacionDispositivo[]
 
   @@index([personaId, fechaHora])
   @@index([fechaHora])
   @@map("evento_acceso")
-
-  verificacionesDispositivo VerificacionDispositivo[]
 }
 
 // ---------------------------------------------------------------------
@@ -229,6 +231,8 @@ model IngresoPendiente {
   torniqueteId String?   @map("torniquete_id") @db.VarChar(50)
   creadoEn     DateTime  @default(now()) @map("creado_en")
   consumidoEn  DateTime? @map("consumido_en")
+  /// Cuándo se le dio permiso de paso en el G4 Pro (null = en cola, esperando que termine la anterior).
+  habilitadoEn DateTime? @map("habilitado_en")
 
   @@index([personaId, consumidoEn])
   @@map("ingreso_pendiente")
@@ -250,8 +254,8 @@ model DispositivoAcceso {
   ultimaActividad DateTime? @map("ultima_actividad")
   creadoEn        DateTime  @default(now()) @map("creado_en")
 
-  comandos        ComandoDispositivo[]
-  verificaciones  VerificacionDispositivo[]
+  comandos       ComandoDispositivo[]
+  verificaciones VerificacionDispositivo[]
 
   @@map("dispositivo_acceso")
 }

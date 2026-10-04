@@ -64,6 +64,7 @@ describe('resumirMovimientos', () => {
     denegadoSinDocumentos: false,
     denegadoPorDocumentos: false,
     denegadoPorAlcohol: false,
+    denegadoSinVerificacion: false,
     ...e,
   });
 
@@ -79,7 +80,7 @@ describe('resumirMovimientos', () => {
       ['2026-09-29', '2026-09-30'],
     );
     expect(r.totales).toEqual({ ingresosAutorizados: 2, ingresosDenegados: 2, salidasAutorizadas: 1, salidasDenegadas: 0 });
-    expect(r.motivos).toEqual({ noRegistrado: 1, dadoDeBaja: 0, sinDocumentos: 0, documentos: 1, alcohol: 1 });
+    expect(r.motivos).toEqual({ noRegistrado: 1, dadoDeBaja: 0, sinDocumentos: 0, documentos: 1, alcohol: 1, sinVerificacion: 0 });
     expect(r.tendencia).toEqual([
       { dia: '2026-09-29', ingresos: 1, denegados: 0, salidas: 0 },
       { dia: '2026-09-30', ingresos: 1, denegados: 2, salidas: 1 },

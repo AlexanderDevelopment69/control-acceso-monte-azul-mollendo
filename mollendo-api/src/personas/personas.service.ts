@@ -92,6 +92,7 @@ export class PersonasService {
       registroId: persona.id,
       accion: 'crear',
     });
+    this.eventEmitter.emit('persona.guardada', { personaId: persona.id });
     return persona;
   }
 
@@ -187,6 +188,10 @@ export class PersonasService {
       registroId: persona.id,
       accion: 'modificar',
     });
+    this.eventEmitter.emit('persona.guardada', {
+      personaId: persona.id,
+      numeroAnterior: actualizada.numeroDocumento !== persona.numeroDocumento ? persona.numeroDocumento : undefined,
+    });
     return actualizada;
   }
 
@@ -207,8 +212,8 @@ export class PersonasService {
 
   /**
    * Guarda la foto para el reconocimiento facial y borra la anterior del
-   * disco. Avisa a la integración para registrar el rostro en el terminal
-   * G4 Pro (protocolo PUSH, por programar: hoy solo queda en el log).
+   * disco. Avisa a la integración para enviarla al terminal G4 Pro, que la
+   * convierte en el rostro con el que reconoce a la persona.
    */
   async guardarFoto(id: number, foto: Express.Multer.File, user: AuthenticatedUser) {
     const persona = await this.findPersona(id);

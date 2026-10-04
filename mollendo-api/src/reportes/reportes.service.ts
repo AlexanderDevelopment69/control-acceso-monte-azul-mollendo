@@ -61,6 +61,7 @@ function motivosEvento(e: {
   denegadoSinDocumentos: boolean;
   denegadoPorDocumentos: boolean;
   denegadoPorAlcohol: boolean;
+  denegadoSinVerificacion: boolean;
 }): string {
   const motivos: string[] = [];
   if (e.denegadoNoRegistrado) motivos.push('No registrado');
@@ -68,6 +69,7 @@ function motivosEvento(e: {
   if (e.denegadoSinDocumentos) motivos.push('Sin documentos');
   if (e.denegadoPorDocumentos) motivos.push('Documentos');
   if (e.denegadoPorAlcohol) motivos.push('Alcohol');
+  if (e.denegadoSinVerificacion) motivos.push('No completó rostro y alcohol');
   return motivos.join(', ');
 }
 

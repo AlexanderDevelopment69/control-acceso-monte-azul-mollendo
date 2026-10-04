@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { documentosActuales } from './validacion-acceso.engine.js';
@@ -17,17 +17,24 @@ export interface AbrirMolineteEvent {
 }
 
 /**
- * Cuánto se espera, desde que se pasa el DNI, a que llegue el resultado del
- * G4 Pro antes de dejar de intentar correlacionarlos: 1 minuto (decisión del
- * usuario, 03/oct/2026; antes 2). Es también el tiempo que el Panel muestra la
- * persona "en espera".
+ * Cuánto tiene la persona para completar rostro y alcohol en el G4 Pro desde
+ * que se la habilita: 1 minuto (decisión del usuario, 03/oct/2026). Al vencer,
+ * se le quita el permiso y el ingreso queda denegado ("No completó rostro y
+ * alcohol").
  */
 const VENTANA_INGRESO_PENDIENTE_MS = 60 * 1000;
+
+/** Cuánto puede esperar en cola un DNI (otra persona estaba habilitada) antes de cerrarse sin verificar. */
+const ESPERA_MAXIMA_EN_COLA_MS = 3 * VENTANA_INGRESO_PENDIENTE_MS;
+
+/** Cada cuánto se revisan las esperas vencidas. */
+const REVISION_VENCIDOS_MS = 5000;
 
 /**
  * DNI en regla esperando el resultado del G4 Pro (rostro + alcohol). Se
  * muestra en el Panel de vigilancia hasta que llega el resultado o vence la
- * espera (`hasta`).
+ * espera. `enCola`: todavía no se lo habilitó porque otra persona está en su
+ * turno (se habilita a una sola a la vez); entonces `hasta` es null.
  */
 export interface IngresoEnEspera {
   id: number;
@@ -38,12 +45,15 @@ export interface IngresoEnEspera {
   empresa: string | null;
   torniqueteId: string | null;
   desde: string;
-  hasta: string;
+  hasta: string | null;
+  enCola: boolean;
 }
 
 const CON_PERSONA = { persona: { include: { empresa: { select: { razonSocial: true } } } } } as const;
 
-function aEnEspera(pendiente: Prisma.IngresoPendienteGetPayload<{ include: typeof CON_PERSONA }>): IngresoEnEspera {
+type PendienteConPersona = Prisma.IngresoPendienteGetPayload<{ include: typeof CON_PERSONA }>;
+
+function aEnEspera(pendiente: PendienteConPersona): IngresoEnEspera {
   return {
     id: pendiente.id,
     personaId: pendiente.personaId,
@@ -52,19 +62,45 @@ function aEnEspera(pendiente: Prisma.IngresoPendienteGetPayload<{ include: typeo
     numeroDocumento: pendiente.persona.numeroDocumento,
     empresa: pendiente.persona.empresa?.razonSocial ?? null,
     torniqueteId: pendiente.torniqueteId,
-    desde: pendiente.creadoEn.toISOString(),
-    hasta: new Date(pendiente.creadoEn.getTime() + VENTANA_INGRESO_PENDIENTE_MS).toISOString(),
+    desde: (pendiente.habilitadoEn ?? pendiente.creadoEn).toISOString(),
+    hasta: pendiente.habilitadoEn
+      ? new Date(pendiente.habilitadoEn.getTime() + VENTANA_INGRESO_PENDIENTE_MS).toISOString()
+      : null,
+    enCola: !pendiente.habilitadoEn,
   };
 }
 
+/** Pedido a la integración del G4 Pro: dar o quitar el permiso de paso a un DNI (lo atiende IntegracionesModule). */
+export interface HabilitarEnEquipoEvent {
+  numeroDocumento: string;
+  habilitar: boolean;
+}
+
 @Injectable()
-export class EventosAccesoService {
+export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(EventosAccesoService.name);
+  private revision: NodeJS.Timeout | null = null;
+  /** Las operaciones sobre las esperas se hacen de a una, para no habilitar a dos personas a la vez. */
+  private cola: Promise<unknown> = Promise.resolve();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  onModuleInit() {
+    this.revision = setInterval(() => void this.enSerie(() => this.cerrarVencidos()), REVISION_VENCIDOS_MS);
+  }
+
+  onModuleDestroy() {
+    if (this.revision) clearInterval(this.revision);
+  }
+
+  private enSerie<T>(tarea: () => Promise<T>): Promise<T> {
+    const resultado = this.cola.then(tarea, tarea);
+    this.cola = resultado.catch((error: Error) => this.logger.error(`Ingreso en espera: ${error.message}`));
+    return resultado;
+  }
 
   private findPersonaPorDocumento(tipoDocumentoIdentidad: IngresoDto['tipoDocumentoIdentidad'], numeroDocumento: string) {
     return this.prisma.persona.findUnique({
@@ -110,11 +146,10 @@ export class EventosAccesoService {
   }
 
   /**
-   * Fase 1 del ingreso: solo el DNI. El G4 Pro abre el ingreso con su propio
-   * relé y manda su resultado (rostro + alcohol) por separado, después (ver
-   * correlacionarVerificacionDispositivo) -- esta llamada ya no conoce el
-   * resultado del alcoholímetro, así que si los documentos están en regla no
-   * hay un EventoAcceso definitivo todavía, solo un "en espera".
+   * Fase 1 del ingreso: solo el DNI. Si los documentos están en regla, la
+   * persona queda "en espera": se la habilita en el G4 Pro (o queda en cola si
+   * otra está en su turno) y el resultado del rostro y el alcohol llega
+   * después (ver correlacionarVerificacionDispositivo).
    */
   async registrarIngreso(dto: IngresoDto) {
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
@@ -139,11 +174,19 @@ export class EventosAccesoService {
       });
     }
 
-    const pendiente = await this.prisma.ingresoPendiente.create({
-      data: { personaId: persona.id, torniqueteId: dto.torniqueteId },
-      include: CON_PERSONA,
+    await this.enSerie(async () => {
+      // Si ya está esperando (volvió a pasar el DNI), se mantiene su lugar.
+      const abierto = await this.prisma.ingresoPendiente.findFirst({
+        where: { personaId: persona.id, consumidoEn: null, ...this.filtroAbiertos() },
+      });
+      if (abierto) return;
+      const pendiente = await this.prisma.ingresoPendiente.create({
+        data: { personaId: persona.id, torniqueteId: dto.torniqueteId },
+        include: CON_PERSONA,
+      });
+      const habilitado = await this.habilitarSiguiente();
+      if (habilitado !== pendiente.id) this.eventEmitter.emit('ingreso.en-espera', aEnEspera(pendiente));
     });
-    this.eventEmitter.emit('ingreso.en-espera', aEnEspera(pendiente));
 
     return {
       estado: 'pendiente_verificacion' as const,
@@ -196,83 +239,180 @@ export class EventosAccesoService {
     return respuesta;
   }
 
+  /** Esperas abiertas: la habilitada dentro de su minuto, o en cola sin pasarse del máximo. */
+  private filtroAbiertos(ahora = Date.now()): Prisma.IngresoPendienteWhereInput {
+    return {
+      OR: [
+        { habilitadoEn: { gte: new Date(ahora - VENTANA_INGRESO_PENDIENTE_MS) } },
+        { habilitadoEn: null, creadoEn: { gte: new Date(ahora - ESPERA_MAXIMA_EN_COLA_MS) } },
+      ],
+    };
+  }
+
   /**
-   * Fase 2 del ingreso: llegó un table=rtlog real del G4 Pro (ver
-   * PushSdkService.guardarVerificacion). Se correlaciona con el DNI pendiente
-   * más antiguo dentro de la ventana (FIFO: si hay varias personas en fila,
-   * la primera que pasó su DNI se empareja con el primer resultado que
-   * llega) -- el "pin" que manda el rtlog no sirve para esto, llega en 0
-   * incluso con un usuario real enrolado (confirmado con el equipo real).
-   *
-   * `eventCode === '0'` es la única verificación exitosa que se ha probado
-   * hasta ahora (Concentration=0, "Pass"); todavía no se ha confirmado qué
-   * manda el equipo cuando el DT1700 da Drink o Fail (ver
-   * Opciones_Integracion_G4Pro.md pendiente #3) -- por ahora, cualquier otro
-   * código se trata como denegado por alcohol, pero esa interpretación no
-   * está verificada con un rechazo real todavía.
+   * Si nadie está habilitado, habilita en el G4 Pro al DNI más antiguo de la
+   * cola: el equipo solo aceptará su rostro (a cualquier otro le da
+   * `event=23`). Devuelve el id de la espera habilitada, o null.
    */
-  @OnEvent('dispositivo.rtlog')
-  async correlacionarVerificacionDispositivo(evento: RtlogRecibidoEvent): Promise<void> {
-    const desde = new Date(Date.now() - VENTANA_INGRESO_PENDIENTE_MS);
-    const pendiente = await this.prisma.ingresoPendiente.findFirst({
-      where: { consumidoEn: null, creadoEn: { gte: desde } },
-      orderBy: { creadoEn: 'asc' },
-      include: { persona: true },
+  private async habilitarSiguiente(): Promise<number | null> {
+    const ahora = Date.now();
+    const activo = await this.prisma.ingresoPendiente.findFirst({
+      where: { consumidoEn: null, habilitadoEn: { gte: new Date(ahora - VENTANA_INGRESO_PENDIENTE_MS) } },
     });
+    if (activo) return null;
+    const siguiente = await this.prisma.ingresoPendiente.findFirst({
+      where: { consumidoEn: null, habilitadoEn: null, creadoEn: { gte: new Date(ahora - ESPERA_MAXIMA_EN_COLA_MS) } },
+      orderBy: { creadoEn: 'asc' },
+    });
+    if (!siguiente) return null;
+    const habilitado = await this.prisma.ingresoPendiente.update({
+      where: { id: siguiente.id },
+      data: { habilitadoEn: new Date() },
+      include: CON_PERSONA,
+    });
+    this.eventEmitter.emit('g4pro.habilitar', {
+      numeroDocumento: habilitado.persona.numeroDocumento,
+      habilitar: true,
+    } satisfies HabilitarEnEquipoEvent);
+    this.eventEmitter.emit('ingreso.en-espera', aEnEspera(habilitado));
+    return habilitado.id;
+  }
 
-    if (!pendiente) {
-      this.logger.warn(
-        `Llegó un rtlog (sn=${evento.serialNumber}, event=${evento.eventCode ?? ''}) sin ningún DNI pendiente en los últimos ${VENTANA_INGRESO_PENDIENTE_MS / 1000}s`,
-      );
-      return;
-    }
-
-    const autorizado = evento.eventCode === '0';
+  /**
+   * Cierra una espera con su resultado: registra el ingreso, le quita el
+   * permiso en el G4 Pro, avisa al Panel y habilita al siguiente de la cola.
+   */
+  private async cerrarEspera(
+    pendiente: Prisma.IngresoPendienteGetPayload<{ include: { persona: true } }>,
+    resultado: { autorizado: boolean; denegadoPorAlcohol?: boolean; denegadoSinVerificacion?: boolean; fechaHora?: Date },
+    verificacionId?: number,
+  ) {
     const eventoAcceso = await this.prisma.eventoAcceso.create({
       data: {
         personaId: pendiente.personaId,
         tipoDocumentoIdentidad: pendiente.persona.tipoDocumentoIdentidad,
         numeroDocumento: pendiente.persona.numeroDocumento,
         tipoMovimiento: 'ingreso',
-        resultado: autorizado ? 'autorizado' : 'denegado',
-        denegadoPorAlcohol: !autorizado,
+        resultado: resultado.autorizado ? 'autorizado' : 'denegado',
+        denegadoPorAlcohol: resultado.denegadoPorAlcohol ?? false,
+        denegadoSinVerificacion: resultado.denegadoSinVerificacion ?? false,
         torniqueteId: pendiente.torniqueteId ?? undefined,
-        ...(evento.horaDispositivo ? { fechaHora: evento.horaDispositivo } : {}),
+        ...(resultado.fechaHora ? { fechaHora: resultado.fechaHora } : {}),
       },
     });
-
     await this.prisma.$transaction([
       this.prisma.ingresoPendiente.update({ where: { id: pendiente.id }, data: { consumidoEn: new Date() } }),
-      this.prisma.verificacionDispositivo.update({
-        where: { id: evento.verificacionId },
-        data: { eventoAccesoId: eventoAcceso.id },
-      }),
+      ...(verificacionId
+        ? [this.prisma.verificacionDispositivo.update({ where: { id: verificacionId }, data: { eventoAccesoId: eventoAcceso.id } })]
+        : []),
     ]);
-
-    const respuesta = {
-      eventoId: eventoAcceso.id,
-      tipoMovimiento: eventoAcceso.tipoMovimiento,
-      resultado: eventoAcceso.resultado,
-      fechaHora: eventoAcceso.fechaHora.toISOString(),
-      persona: { id: pendiente.persona.id, nombres: pendiente.persona.nombres, apellidos: pendiente.persona.apellidos },
-      numeroDocumento: pendiente.persona.numeroDocumento,
-      motivos: { alcohol: !autorizado },
-    };
-    if (autorizado) {
+    if (pendiente.habilitadoEn) {
+      this.eventEmitter.emit('g4pro.habilitar', {
+        numeroDocumento: pendiente.persona.numeroDocumento,
+        habilitar: false,
+      } satisfies HabilitarEnEquipoEvent);
+    }
+    if (resultado.autorizado) {
       this.eventEmitter.emit('molinete.abrir', {
         torniqueteId: pendiente.torniqueteId ?? undefined,
         eventoId: eventoAcceso.id,
         tipoMovimiento: 'ingreso',
       } satisfies AbrirMolineteEvent);
     }
-    this.eventEmitter.emit('evento-acceso.registrado', respuesta);
+    this.eventEmitter.emit('evento-acceso.registrado', {
+      eventoId: eventoAcceso.id,
+      tipoMovimiento: eventoAcceso.tipoMovimiento,
+      resultado: eventoAcceso.resultado,
+      fechaHora: eventoAcceso.fechaHora.toISOString(),
+      persona: { id: pendiente.persona.id, nombres: pendiente.persona.nombres, apellidos: pendiente.persona.apellidos },
+      numeroDocumento: pendiente.persona.numeroDocumento,
+      motivos: { alcohol: !!resultado.denegadoPorAlcohol, sinVerificacion: !!resultado.denegadoSinVerificacion },
+    });
     this.eventEmitter.emit('ingreso.espera-terminada', { id: pendiente.id });
+    await this.habilitarSiguiente();
   }
 
-  /** DNI en regla que todavía esperan el resultado del G4 Pro, más recientes primero (para el Panel). */
+  /**
+   * Fase 2 del ingreso: llegó un `rtlog` del G4 Pro (ver
+   * PushSdkService.guardarVerificacion). Probado con el equipo real
+   * (04/oct/2026):
+   * - `event=0`: persona habilitada, rostro y alcohol conformes. Llega con
+   *   `pin=0` (el firmware no dice quién en los éxitos), pero como se habilita
+   *   a **una sola persona a la vez**, solo puede ser la que está en su turno.
+   * - `event=23`: rostro reconocido pero sin permiso de paso, con su `pin`
+   *   (DNI): otra persona, o la misma antes de que le llegue el permiso. No
+   *   cierra la espera.
+   * - `event=27`: rostro no registrado. Tampoco cierra la espera.
+   * - Cualquier otro código se trata como alcohol no conforme (falta
+   *   confirmarlo con un rechazo real del DT1700).
+   */
+  @OnEvent('dispositivo.rtlog')
+  async correlacionarVerificacionDispositivo(evento: RtlogRecibidoEvent): Promise<void> {
+    await this.enSerie(async () => {
+      const activo = await this.prisma.ingresoPendiente.findFirst({
+        where: {
+          consumidoEn: null,
+          habilitadoEn: { gte: new Date(Date.now() - VENTANA_INGRESO_PENDIENTE_MS) },
+        },
+        include: { persona: true },
+      });
+      const codigo = evento.eventCode ?? '';
+
+      if (codigo === '23' || codigo === '27') {
+        const quien = evento.pin && evento.pin !== '0' ? `DNI ${evento.pin}` : 'rostro no registrado';
+        if (activo && evento.pin === activo.persona.numeroDocumento) {
+          this.logger.log(`G4 Pro: ${quien} todavía sin permiso (llegando); sigue en espera`);
+        } else {
+          this.logger.warn(
+            `G4 Pro rechazó a ${quien} (event=${codigo})${activo ? `; en su turno está el DNI ${activo.persona.numeroDocumento}` : ''}`,
+          );
+        }
+        return;
+      }
+
+      if (!activo) {
+        this.logger.warn(`Llegó un rtlog (sn=${evento.serialNumber}, event=${codigo}) sin ninguna persona habilitada`);
+        return;
+      }
+
+      const autorizado = codigo === '0';
+      await this.cerrarEspera(
+        activo,
+        { autorizado, denegadoPorAlcohol: !autorizado, fechaHora: evento.horaDispositivo ?? undefined },
+        evento.verificacionId,
+      );
+    });
+  }
+
+  /**
+   * Esperas vencidas: la persona habilitada no completó rostro y alcohol en
+   * su minuto, o un DNI esperó demasiado en cola. Quedan como ingreso
+   * denegado ("No completó rostro y alcohol").
+   */
+  private async cerrarVencidos(): Promise<void> {
+    const ahora = Date.now();
+    const vencidas = await this.prisma.ingresoPendiente.findMany({
+      where: {
+        consumidoEn: null,
+        OR: [
+          { habilitadoEn: { lt: new Date(ahora - VENTANA_INGRESO_PENDIENTE_MS) } },
+          { habilitadoEn: null, creadoEn: { lt: new Date(ahora - ESPERA_MAXIMA_EN_COLA_MS) } },
+        ],
+      },
+      include: { persona: true },
+      orderBy: { creadoEn: 'asc' },
+    });
+    for (const pendiente of vencidas) {
+      this.logger.log(`DNI ${pendiente.persona.numeroDocumento}: no completó rostro y alcohol a tiempo`);
+      await this.cerrarEspera(pendiente, { autorizado: false, denegadoSinVerificacion: true });
+    }
+    if (vencidas.length === 0) await this.habilitarSiguiente();
+  }
+
+  /** DNI en regla que todavía esperan el resultado del G4 Pro (habilitado y en cola), para el Panel. */
   async ingresosEnEspera(): Promise<IngresoEnEspera[]> {
     const pendientes = await this.prisma.ingresoPendiente.findMany({
-      where: { consumidoEn: null, creadoEn: { gte: new Date(Date.now() - VENTANA_INGRESO_PENDIENTE_MS) } },
+      where: { consumidoEn: null, ...this.filtroAbiertos() },
       orderBy: { creadoEn: 'desc' },
       include: CON_PERSONA,
     });

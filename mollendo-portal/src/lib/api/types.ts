@@ -66,7 +66,10 @@ export interface DocumentoPersona {
   tipoDocumento?: TipoDocumento;
 }
 
-/** DNI en regla esperando el rostro y el alcohol del G4 Pro (hasta `hasta`). */
+/**
+ * DNI en regla esperando el rostro y el alcohol del G4 Pro (hasta `hasta`).
+ * `enCola`: otra persona está en su turno (se habilita a una a la vez); entonces `hasta` es null.
+ */
 export interface IngresoEnEspera {
   id: number;
   personaId: number;
@@ -76,7 +79,8 @@ export interface IngresoEnEspera {
   empresa: string | null;
   torniqueteId: string | null;
   desde: string;
-  hasta: string;
+  hasta: string | null;
+  enCola: boolean;
 }
 
 export interface EventoAcceso {
@@ -92,6 +96,8 @@ export interface EventoAcceso {
   denegadoPorBaja: boolean;
   denegadoSinDocumentos: boolean;
   denegadoPorAlcohol: boolean;
+  /** Pasó su DNI en regla pero no completó rostro y alcohol a tiempo. */
+  denegadoSinVerificacion: boolean;
   denegadoPorDocumentos: boolean;
   fechaHora: string;
   torniqueteId: string | null;
@@ -122,7 +128,7 @@ export interface Dashboard {
   visitas: { total: number; finalizadas: number; presentes: number };
   movimientos: {
     totales: { ingresosAutorizados: number; ingresosDenegados: number; salidasAutorizadas: number; salidasDenegadas: number };
-    motivos: { noRegistrado: number; dadoDeBaja: number; sinDocumentos: number; documentos: number; alcohol: number };
+    motivos: { noRegistrado: number; dadoDeBaja: number; sinDocumentos: number; documentos: number; alcohol: number; sinVerificacion: number };
     tendencia: { dia: string; ingresos: number; denegados: number; salidas: number }[];
   };
   personal: { total: number; activos: number; dadosDeBaja: number };

@@ -4,6 +4,14 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { EstadoComando } from '../generated/prisma/enums.js';
 import { convertirFotoParaG4Pro } from './foto-g4pro.util.js';
+import {
+  comandoBorrarPersona,
+  comandoDeshabilitar,
+  comandoFoto,
+  comandoHabilitar,
+  comandosPersona,
+  pinDeDocumento,
+} from './comandos-acceso.util.js';
 
 /** Emitido cuando llega un table=rtlog real del equipo (ver EventosAccesoService). */
 export interface RtlogRecibidoEvent {
@@ -12,6 +20,8 @@ export interface RtlogRecibidoEvent {
   horaDispositivo: Date | null;
   eventCode: string | null;
   concentracion: string | null;
+  /** Número de usuario (DNI) que reconoció el equipo; llega en "0" en los ingresos exitosos. */
+  pin: string | null;
 }
 
 export interface EstadoDispositivo {
@@ -114,50 +124,66 @@ export class PushSdkService {
     });
   }
 
-  /**
-   * Intenta registrar a una persona en todos los equipos conocidos, mandando
-   * su rostro (DATA UPDATE BIOPHOTO, formato simple de 4 campos: PIN, Type,
-   * Size, Content -- el mismo que usa el SDK Java del proveedor en
-   * `pushdemo`, `Constants.DEV_CMD_DATA_UPDATE_BIOPHOTO`).
-   *
-   * CONFIRMADO QUE NO FUNCIONA (02/oct/2026, probado con una persona real:
-   * ver Estado_Implementacion_Integracion_G4Pro.md sección 2.6): el equipo
-   * responde `return=0` a este comando, pero eso **no crea un usuario real**
-   * -- probado con el equipo físico, la persona no queda reconocible (no
-   * aparece en "Administración de usuarios" y el equipo no la reconoce frente
-   * a la cámara), ni agregando `RELOAD OPTIONS` después. `DATA UPDATE
-   * USERINFO` (el nombre) también está confirmado como rechazado, de seis
-   * formas distintas (`return=-629`, código que no existe en la tabla
-   * oficial de errores del protocolo).
-   *
-   * Esta función se deja tal cual (sigue siendo lo más cercano a "correcto"
-   * que se encontró) porque no hay hoy una alternativa mejor confirmada,
-   * pero **no hay que asumir que el registro remoto funciona** solo porque
-   * el equipo confirme el comando -- por ahora, el enrolamiento de caras solo
-   * se logra físicamente, desde la pantalla del equipo.
-   */
-  async sincronizarPersona(personaId: number, rutaFoto: string | null) {
+  /** Encola los mismos comandos para todos los equipos conocidos. */
+  private async encolarEnTodos(comandos: string[]): Promise<number> {
     const dispositivos = await this.prisma.dispositivoAcceso.findMany();
-    if (dispositivos.length === 0) {
-      this.logger.warn(`No hay equipos registrados todavía; no se pudo sincronizar a la persona ${personaId}`);
-      return;
-    }
-    if (!rutaFoto) {
-      this.logger.warn(`Persona ${personaId} sin foto todavía; no hay nada que encolar`);
-      return;
-    }
-
-    const base64 = await convertirFotoParaG4Pro(rutaFoto);
-
-    for (const dispositivo of dispositivos) {
-      await this.prisma.comandoDispositivo.create({
-        data: {
-          dispositivoId: dispositivo.id,
-          comando: `DATA UPDATE BIOPHOTO PIN=${personaId}\tType=9\tSize=${base64.length}\tContent=${base64}`,
-        },
+    if (dispositivos.length > 0 && comandos.length > 0) {
+      await this.prisma.comandoDispositivo.createMany({
+        data: dispositivos.flatMap((d) => comandos.map((comando) => ({ dispositivoId: d.id, comando }))),
       });
     }
-    this.logger.log(`Persona ${personaId} encolada para ${dispositivos.length} equipo(s)`);
+    return dispositivos.length;
+  }
+
+  /**
+   * Registra (o actualiza) a la persona en los G4 Pro con el protocolo de
+   * control de acceso: su número de documento como Pin, su nombre y, si se
+   * indica, su foto (el equipo la convierte en el rostro que reconoce).
+   * **No le da permiso de paso**: eso se hace solo mientras espera su ingreso
+   * (habilitar/deshabilitar). Si cambió su número de documento, se borra el
+   * usuario anterior del equipo. Probado con el equipo real (04/oct/2026).
+   */
+  async sincronizarPersona(
+    persona: { numeroDocumento: string; nombres: string; apellidos: string; fotoUrl: string | null },
+    opciones: { conFoto?: boolean; numeroAnterior?: string } = {},
+  ): Promise<void> {
+    const pin = pinDeDocumento(persona.numeroDocumento);
+    if (!pin) {
+      this.logger.warn(`No se registra en el G4 Pro el documento ${persona.numeroDocumento}: solo se admiten números (DNI)`);
+      return;
+    }
+    const comandos: string[] = [];
+    const pinAnterior = opciones.numeroAnterior ? pinDeDocumento(opciones.numeroAnterior) : null;
+    if (pinAnterior && pinAnterior !== pin) comandos.push(comandoBorrarPersona(pinAnterior));
+    comandos.push(...comandosPersona({ pin, nombres: persona.nombres, apellidos: persona.apellidos }));
+    // Con número nuevo hay que volver a mandar la foto (el usuario anterior se borró con su rostro).
+    const mandarFoto = (opciones.conFoto || (pinAnterior !== null && pinAnterior !== pin)) && !!persona.fotoUrl;
+    if (mandarFoto) {
+      try {
+        comandos.push(comandoFoto(pin, await convertirFotoParaG4Pro(persona.fotoUrl!)));
+      } catch (error) {
+        this.logger.error(`No se pudo preparar la foto de ${pin} para el G4 Pro: ${(error as Error).message}`);
+      }
+    }
+    const equipos = await this.encolarEnTodos(comandos);
+    if (equipos === 0) {
+      this.logger.warn(`No hay equipos G4 Pro registrados todavía; ${pin} se registrará al sincronizar`);
+    } else {
+      this.logger.log(`Persona ${pin} encolada para ${equipos} equipo(s)${mandarFoto ? ', con foto' : ''}`);
+    }
+  }
+
+  /** Borra a la persona de los G4 Pro (con su rostro y sus permisos). */
+  async borrarPersonaDeEquipos(numeroDocumento: string): Promise<void> {
+    const pin = pinDeDocumento(numeroDocumento);
+    if (pin) await this.encolarEnTodos([comandoBorrarPersona(pin)]);
+  }
+
+  /** Permiso de paso en los G4 Pro (habilitar) o su retiro (deshabilitar). */
+  async habilitarEnEquipos(numeroDocumento: string, habilitar: boolean): Promise<boolean> {
+    const pin = pinDeDocumento(numeroDocumento);
+    if (!pin) return false;
+    return (await this.encolarEnTodos([habilitar ? comandoHabilitar(pin) : comandoDeshabilitar(pin)])) > 0;
   }
 
   /** Comandos pendientes para el equipo, marcándolos como entregados. */
@@ -258,6 +284,7 @@ export class PushSdkService {
         horaDispositivo: horaValida ?? null,
         eventCode: campos.event ?? null,
         concentracion: campos.concentration ?? null,
+        pin: campos.pin ?? null,
       } satisfies RtlogRecibidoEvent);
     }
   }

@@ -1,15 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import type { AbrirMolineteEvent } from '../eventos-acceso/eventos-acceso.service.js';
+import type { AbrirMolineteEvent, HabilitarEnEquipoEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { ReleUsbService } from './rele-usb.service.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 
 interface PersonaFotoActualizadaEvent {
   personaId: number;
-  tipoDocumentoIdentidad: string;
-  numeroDocumento: string;
-  rutaFoto: string;
+}
+
+interface PersonaGuardadaEvent {
+  personaId: number;
+  numeroAnterior?: string;
 }
 
 /**
@@ -34,28 +37,56 @@ export class IntegracionesService {
   constructor(
     private readonly pushSdk: PushSdkService,
     private readonly releUsb: ReleUsbService,
+    private readonly prisma: PrismaService,
   ) {}
+
+  /** Permiso de paso en los G4 Pro mientras la persona espera su ingreso (y su retiro al terminar). */
+  @OnEvent('g4pro.habilitar')
+  async habilitarEnEquipo(evento: HabilitarEnEquipoEvent): Promise<void> {
+    try {
+      const enviado = await this.pushSdk.habilitarEnEquipos(evento.numeroDocumento, evento.habilitar);
+      this.logger.log(`G4 Pro: ${evento.habilitar ? 'habilitar' : 'deshabilitar'} DNI ${evento.numeroDocumento}${enviado ? '' : ' (sin equipos)'}`);
+    } catch (error) {
+      this.logger.error(`No se pudo ${evento.habilitar ? 'habilitar' : 'deshabilitar'} el DNI ${evento.numeroDocumento}: ${(error as Error).message}`);
+    }
+  }
 
   @OnEvent('molinete.abrir')
   async abrirMolinete(evento: AbrirMolineteEvent): Promise<void> {
     await this.releUsb.pulso(evento.tipoMovimiento);
   }
 
-  /**
-   * Registra el rostro de la persona en el G4 Pro. Solo la foto: el equipo no
-   * acepta `DATA UPDATE USERINFO` (confirmado, ver push-sdk.service.ts), así
-   * que no se manda el nombre -- el equipo crea el usuario solo, a partir de
-   * la foto.
-   */
+  /** Alta o edición de una persona: se registra (o actualiza) en los G4 Pro, sin permiso de paso. */
+  @OnEvent('persona.guardada')
+  async registrarPersona(evento: PersonaGuardadaEvent): Promise<void> {
+    await this.sincronizar(evento.personaId, { numeroAnterior: evento.numeroAnterior });
+  }
+
+  /** Foto nueva: se envía a los G4 Pro, que la convierten en el rostro que reconocen. */
   @OnEvent('persona.foto-actualizada')
   async registrarRostro(evento: PersonaFotoActualizadaEvent): Promise<void> {
+    await this.sincronizar(evento.personaId, { conFoto: true });
+  }
+
+  private async sincronizar(personaId: number, opciones: { conFoto?: boolean; numeroAnterior?: string }) {
     try {
-      await this.pushSdk.sincronizarPersona(evento.personaId, evento.rutaFoto);
+      const persona = await this.prisma.persona.findUnique({ where: { id: personaId } });
+      if (persona) await this.pushSdk.sincronizarPersona(persona, opciones);
     } catch (error) {
-      this.logger.error(
-        `No se pudo encolar el registro en el G4 Pro para la persona ${evento.personaId}: ${(error as Error).message}`,
-      );
+      this.logger.error(`No se pudo encolar la persona ${personaId} para el G4 Pro: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * Registra en los G4 Pro a todo el personal (con su foto), por ejemplo al
+   * instalar un equipo nuevo. Devuelve cuántas personas se encolaron.
+   */
+  async sincronizarTodas(): Promise<{ personas: number }> {
+    const personas = await this.prisma.persona.findMany({ orderBy: { id: 'asc' } });
+    for (const persona of personas) {
+      await this.pushSdk.sincronizarPersona(persona, { conFoto: true });
+    }
+    return { personas: personas.length };
   }
 
   /**

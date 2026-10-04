@@ -38,8 +38,9 @@ function tiempoRestante(hasta: string, ahora: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-/** Fracción de la espera que queda (1 al pasar el DNI, 0 al vencer). */
+/** Fracción de la espera que queda (1 al habilitarlo, 0 al vencer). */
 function fraccionRestante(i: IngresoEnEspera, ahora: number): number {
+  if (!i.hasta) return 1;
   const total = new Date(i.hasta).getTime() - new Date(i.desde).getTime();
   return total > 0 ? Math.min(1, Math.max(0, (new Date(i.hasta).getTime() - ahora) / total)) : 0;
 }
@@ -63,19 +64,21 @@ function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]; ahora
           </TableCell>
           <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">Ingreso</TableCell>
           <TableCell className="px-5 py-4 text-sm">
-            <Badge color="success">
+            <Badge color={i.enCola ? "light" : "success"}>
               <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden />
-              en espera
+              {i.enCola ? "en cola" : "en espera"}
             </Badge>
           </TableCell>
           <TableCell className="px-5 py-4 text-sm">
             <div className="flex items-center justify-between gap-3 text-gray-700 dark:text-gray-300">
-              <span>Esperando rostro y alcohol</span>
-              <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400" title="Tiempo para completar el ingreso en el terminal facial">
-                {tiempoRestante(i.hasta, ahora)}
-              </span>
+              <span>{i.enCola ? "Esperando su turno en el terminal facial" : "Esperando rostro y alcohol"}</span>
+              {i.hasta && (
+                <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400" title="Tiempo para completar el ingreso en el terminal facial">
+                  {tiempoRestante(i.hasta, ahora)}
+                </span>
+              )}
             </div>
-            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+            <div className={`mt-1.5 h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 ${i.enCola ? "invisible" : ""}`}>
               <div
                 className="h-full rounded-full bg-success-500 transition-[width] duration-1000 ease-linear"
                 style={{ width: `${fraccionRestante(i, ahora) * 100}%` }}
@@ -107,12 +110,18 @@ function MotivoDenegacion({
 }: {
   evento: Pick<
     EventoAcceso,
-    "denegadoNoRegistrado" | "denegadoPorBaja" | "denegadoSinDocumentos" | "denegadoPorAlcohol" | "denegadoPorDocumentos"
+    | "denegadoNoRegistrado"
+    | "denegadoPorBaja"
+    | "denegadoSinDocumentos"
+    | "denegadoPorAlcohol"
+    | "denegadoPorDocumentos"
+    | "denegadoSinVerificacion"
   >;
   onVerDocumentos: () => void;
 }) {
   if (evento.denegadoNoRegistrado) return <Badge color="error">No registrado</Badge>;
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
+  if (evento.denegadoSinVerificacion) return <Badge color="error">No completó rostro y alcohol</Badge>;
   const motivos: string[] = [];
   if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
   if (evento.denegadoPorAlcohol) motivos.push("Alcohol");
@@ -286,7 +295,8 @@ function VigilanciaContent() {
       // DNI en regla: aparece al instante; si la misma persona vuelve a pasar el DNI, queda la última.
       socket.on("ingreso-en-espera", (ingreso: IngresoEnEspera) => {
         setAhora(Date.now());
-        setEnEspera((actuales) => [ingreso, ...actuales.filter((i) => i.personaId !== ingreso.personaId)]);
+        // Llega también cuando una persona en cola pasa a su turno: se reemplaza su fila.
+        setEnEspera((actuales) => [ingreso, ...actuales.filter((i) => i.id !== ingreso.id && i.personaId !== ingreso.personaId)]);
       });
       socket.on("ingreso-espera-terminada", ({ id }: { id: number }) => {
         setEnEspera((actuales) => actuales.filter((i) => i.id !== id));
@@ -309,7 +319,7 @@ function VigilanciaContent() {
       const t = Date.now();
       setAhora(t);
       setEnEspera((actuales) => {
-        const vigentes = actuales.filter((i) => new Date(i.hasta).getTime() > t);
+        const vigentes = actuales.filter((i) => !i.hasta || new Date(i.hasta).getTime() > t);
         return vigentes.length === actuales.length ? actuales : vigentes;
       });
     }, 1000);
