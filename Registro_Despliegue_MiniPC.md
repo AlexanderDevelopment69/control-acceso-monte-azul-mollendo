@@ -635,18 +635,20 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 
 | Molinete | Módulo (número de serie) | Relé |
 |---|---|---|
-| **Salida** | `S2OD2` | 1 |
-| **Ingreso** | pendiente: el segundo módulo todavía no está conectado | 1 |
+| **Ingreso** | `ING01` | 1 |
+| **Salida** | `SAL01` | 1 |
 
 > El módulo se identifica como "USBRelay2", pero la placa tiene **un solo relé** (el 1). Por eso se usa un módulo por molinete.
+>
+> **Los módulos vienen de fábrica con la misma serie (`S2OD2`)**, así que el sistema no los distinguiría. Se les cambió la serie (queda guardada en el módulo): `ING01` al de ingreso y `SAL01` al de salida (04/10/2026). Al instalar un módulo nuevo hay que hacer lo mismo (ver "Cambiar la serie de un módulo").
 
 ### Configurar el servidor
 
 En `~/mollendo/.env`, el número de serie del módulo de cada molinete:
 
 ```bash
-RELE_SALIDA_SERIE=S2OD2
-# RELE_INGRESO_SERIE=<serie del módulo de ingreso>
+RELE_INGRESO_SERIE=ING01
+RELE_SALIDA_SERIE=SAL01
 # RELE_INGRESO_CANAL=1 / RELE_SALIDA_CANAL=1   (relé del módulo, 1 por defecto)
 # RELE_PULSO_MS=1000                           (duración del pulso)
 # RELE_USB_HIDRAW_MAJOR=234                    (ver `grep hidraw /proc/devices`)
@@ -659,6 +661,16 @@ Después: `sudo docker compose -f docker-compose.prod.yml up -d`.
 - Sin número de serie, un molinete usa el único módulo conectado que no esté asignado al otro.
 - **Etiquetar cada módulo** ("INGRESO" / "SALIDA").
 
+### Cambiar la serie de un módulo
+
+Necesario al instalar un módulo nuevo, porque todos vienen con `S2OD2`. Conectar **solo** el módulo nuevo (o identificarlo por la hora en que se conectó: `dmesg -T | grep USBRelay`), ver su `hidrawN` con el comando anterior y ponerle una serie de 5 caracteres:
+
+```bash
+sudo docker compose -f docker-compose.prod.yml exec api /app/rele-usb /dev-servidor/hidraw1 serie ING01
+```
+
+Volver a leer las series para comprobarlo, poner la serie en `.env` y ejecutar `sudo docker compose -f docker-compose.prod.yml up -d`.
+
 ### Cómo funciona
 
 El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila al construir la imagen), que envía los comandos HID al módulo, y tiene permiso solo para dispositivos HID en bruto (`hidraw`) además de los puertos serie (`device_cgroup_rules` en `docker-compose.prod.yml`).
@@ -666,15 +678,13 @@ El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila
 ### Comprobar
 
 - **Sistema y APIs**, tarjeta **Relés de molinetes**: cada molinete "Conectado" o "No conectado", con su módulo y la última apertura.
-- Al pasar un **DNI registrado por el lector de salida**: clic del relé y LED rojo durante 1 s. En el registro del backend: `Molinete de salida abierto: pulso de 1000 ms en el relé 1 del módulo S2OD2`.
+- Al pasar un **DNI registrado por el lector de salida**: clic del relé de salida y LED rojo durante 1 s. En el registro del backend: `Molinete de salida abierto: pulso de 1000 ms en el relé 1 del módulo SAL01`.
+- **Orden manual** (para probar cada relé sin pasar un DNI): `POST /api/v1/integraciones/torniquete/comando` con `{"torniqueteId":"ingreso","comando":"abrir"}` (o `"salida"`), con la sesión de un Administrador o Vigilancia; también desde Swagger.
 - Un DNI **no registrado** se deniega y **no** activa el relé.
 
-### Pendiente: relé de ingreso
+### Relé de ingreso
 
-1. Conectar el segundo módulo a un USB de la mini PC.
-2. Leer su número de serie (ver arriba) y agregar en `.env`: `RELE_INGRESO_SERIE=<serie>`.
-3. `sudo docker compose -f docker-compose.prod.yml up -d` y comprobar en Sistema y APIs que el ingreso dice "Conectado".
-4. El relé de ingreso se activa cuando el **G4 Pro aprueba el rostro y el alcohol** de un DNI en regla. Para probarlo en la mini PC, el G4 Pro tiene que apuntar a la IP de la mini PC (hoy apunta a AWS).
+Instalado (`ING01`, 04/10/2026) y probado con la orden manual. Se activa cuando el **G4 Pro aprueba el rostro y el alcohol** de un DNI en regla. Para probar el ingreso completo en la mini PC, el G4 Pro tiene que apuntar a la IP de la mini PC (hoy apunta a AWS).
 
 ---
 
@@ -687,7 +697,7 @@ El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila
 5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `Opciones_Integracion_G4Pro.md`, sección 7).
 6. **Respaldos fuera de la mini PC**, con regularidad (7.4).
 7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
-8. **Integración de equipos**: los lectores de DNI (8c) y el relé de salida (8d) ya funcionan desde el contenedor `api`. Falta conectar el relé de ingreso y que el G4 Pro apunte a la IP de la mini PC.
+8. **Integración de equipos**: los lectores de DNI (8c) y los relés de los molinetes (8d) ya funcionan desde el contenedor `api`. Falta que el G4 Pro apunte a la IP de la mini PC.
 
 ---
 
