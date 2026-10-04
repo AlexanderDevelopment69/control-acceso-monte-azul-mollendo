@@ -614,6 +614,19 @@ El sistema reconoce cada lector por el **número de serie de su adaptador USB-se
 - Si se **reemplaza un adaptador** por uno nuevo, hay que poner su ruta en `.env` (`LECTOR_DNI_INGRESO_DISPOSITIVO` o `LECTOR_DNI_SALIDA_DISPOSITIVO`, ver `ls /dev/serial/by-id/`) y ejecutar `sudo docker compose -f docker-compose.prod.yml up -d`.
 - La punta **negra** (energía) puede ir en cualquier USB: solo alimenta al lector.
 
+### Cambiar los lectores por otros
+
+A diferencia de los relés, los **adaptadores ya vienen con series distintas de fábrica**, así que no hay que configurar nada para distinguirlos (igual conviene etiquetarlos).
+
+| Cambio | Qué hay que hacer |
+|---|---|
+| **Mismo modelo** (Syble XB-7705H) | Configurarlo con el folleto: Factory Default → RS232 → 115200 → desenchufar y volver a enchufar la energía. Si se mantiene el adaptador, nada más. |
+| **Cambiar el adaptador** (cable blanco) | Poner su ruta nueva en `.env` (`ls /dev/serial/by-id/`) y `sudo docker compose -f docker-compose.prod.yml up -d`. |
+| **Otra marca, con salida serial** (RS232 o USB-COM) | **Normalmente sin cambiar el programa**: la mayoría de los lectores de códigos de barras en modo serial envían el número y un salto de línea, como este. Ajustar `LECTOR_DNI_BAUDIOS` si su velocidad no es 115200. Si envía otro formato (prefijos, más datos), se ajusta una sola función: `extraerDocumento` en `mollendo-api/src/lectores-dni/lector-dni.util.ts`. Un lector USB-COM aparece como `ttyACM` y ya está permitido. |
+| **Otra marca que solo funcione como teclado** (USB-HID, sin modo serial) | **Hay que agregar código** (el sistema lee puertos serie, no teclados). Mejor elegir lectores con modo **RS232 o USB-COM**. |
+
+Cualquier lector nuevo debe **leer el código de barras del reverso del DNI** (probarlo con un DNI real antes de comprar) y tener **salida serial** (RS232 o USB-COM).
+
 ### Lector de salida (o para cambiar un lector)
 
 Instalados en la mini PC (04/10/2026): **ingreso** con el adaptador `...Serial_Controller_FQCLb114J19...` y **salida** con `...Serial_Controller_A_BCb14C705...`. Para instalar el de salida (o reemplazar un lector o su adaptador):
@@ -681,6 +694,26 @@ El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila
 - Al pasar un **DNI registrado por el lector de salida**: clic del relé de salida y LED rojo durante 1 s. En el registro del backend: `Molinete de salida abierto: pulso de 1000 ms en el relé 1 del módulo SAL01`.
 - **Orden manual** (para probar cada relé sin pasar un DNI): `POST /api/v1/integraciones/torniquete/comando` con `{"torniqueteId":"ingreso","comando":"abrir"}` (o `"salida"`), con la sesión de un Administrador o Vigilancia; también desde Swagger.
 - Un DNI **no registrado** se deniega y **no** activa el relé.
+
+### Cómo se distinguen los módulos
+
+- **Para el sistema:** cada módulo lleva guardada su serie (`ING01` / `SAL01`) y el sistema la lee en cada apertura. No importa en qué USB se conecten ni si se desconectan.
+- **Para las personas:** los módulos son físicamente idénticos y la serie no está impresa en la placa. Hay que **etiquetarlos** ("INGRESO" / "SALIDA") al instalarlos. Si se pierde la etiqueta: activar un relé con la orden manual (arriba) y ver cuál suena, o conectarlos de a uno y leer su serie.
+
+### Cambiar los relés por otros
+
+| Relé nuevo | Qué hay que cambiar |
+|---|---|
+| **Del mismo tipo** (USB "USBRelay" / DCTTECH, de 1, 2, 4 u 8 relés) | **Nada en el programa.** Cambiarle la serie (vienen con `S2OD2`) y ponerla en `.env`. Un módulo de **2 relés reales** puede manejar los dos molinetes: la misma serie en `RELE_INGRESO_SERIE` y `RELE_SALIDA_SERIE`, con `RELE_INGRESO_CANAL=1` y `RELE_SALIDA_CANAL=2`. |
+| **De otra marca o tipo** (de red Ethernet, Modbus, USB-serie con otros comandos…) | **Agregar su protocolo al programa.** La comunicación con el relé está aislada en `mollendo-api/src/integraciones/rele-usb.service.ts`; se agrega el "idioma" del relé nuevo y el resto (cuándo abrir, Panel, Sistema y APIs) no cambia. Hacen falta su manual o protocolo y una prueba con el equipo real. |
+
+**Recomendación para operación continua:** los módulos actuales son placas sueltas, pensadas para pruebas o proyectos chicos. Para el terminal conviene un **relé industrial de red (Ethernet)**, uno por molinete, como planteaba el diseño original (`Opciones_Integracion_G4Pro.md`):
+
+- va **junto al molinete**, por cable de red, sin depender de que la mini PC esté cerca ni de un cable USB;
+- viene en **caja para riel DIN**, más resistente al polvo, la vibración y la humedad;
+- si usa **Modbus TCP** (protocolo estándar), el programa queda compatible con varias marcas.
+
+Antes de comprar, revisar el modelo (nombre o manual) para confirmar si funciona con lo que ya existe o cuánto hay que agregar.
 
 ### Relé de ingreso
 
