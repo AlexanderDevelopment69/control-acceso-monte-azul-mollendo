@@ -6,7 +6,7 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { connectEventosSocket } from "@/lib/ws";
 import { eventosAccesoApi, panelApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { EventoAcceso, Paginado, Persona, ResumenPanel } from "@/lib/api/types";
+import type { EventoAcceso, IngresoEnEspera, Paginado, Persona, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { VerDocumento } from "@/components/personal/VerDocumento";
@@ -31,6 +31,62 @@ interface EventoLive {
 
 // Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
 const RESALTE_MS = 8000;
+
+/** Segundos que faltan hasta `hasta`, como "1:42". */
+function tiempoRestante(hasta: string, ahora: number): string {
+  const s = Math.max(0, Math.round((new Date(hasta).getTime() - ahora) / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/** Fracción de la espera que queda (1 al pasar el DNI, 0 al vencer). */
+function fraccionRestante(i: IngresoEnEspera, ahora: number): number {
+  const total = new Date(i.hasta).getTime() - new Date(i.desde).getTime();
+  return total > 0 ? Math.min(1, Math.max(0, (new Date(i.hasta).getTime() - ahora) / total)) : 0;
+}
+
+/**
+ * DNI en regla que esperan el rostro y el alcohol del G4 Pro: filas arriba
+ * del historial, con las mismas columnas. Al llegar el resultado, la fila se
+ * reemplaza por la del evento (que se resalta); al vencer la espera, se quita.
+ */
+function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]; ahora: number }) {
+  return (
+    <>
+      {ingresos.map((i) => (
+        <TableRow key={`espera-${i.id}`}>
+          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+            {new Date(i.desde).toLocaleString("es-PE")}
+          </TableCell>
+          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{i.numeroDocumento}</TableCell>
+          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+            {i.nombres} {i.apellidos}
+          </TableCell>
+          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">Ingreso</TableCell>
+          <TableCell className="px-5 py-4 text-sm">
+            <Badge color="success">
+              <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden />
+              en espera
+            </Badge>
+          </TableCell>
+          <TableCell className="px-5 py-4 text-sm">
+            <div className="flex items-center justify-between gap-3 text-gray-700 dark:text-gray-300">
+              <span>Esperando rostro y alcohol</span>
+              <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400" title="Tiempo para completar el ingreso en el terminal facial">
+                {tiempoRestante(i.hasta, ahora)}
+              </span>
+            </div>
+            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+              <div
+                className="h-full rounded-full bg-success-500 transition-[width] duration-1000 ease-linear"
+                style={{ width: `${fraccionRestante(i, ahora) * 100}%` }}
+              />
+            </div>
+          </TableCell>
+        </TableRow>
+      ))}
+    </>
+  );
+}
 
 /** `value` null = todavía no se cargó (se muestra "—" en vez de un 0 que luego salta). */
 function StatCard({ label, value, color }: { label: string; value: number | null; color: string }) {
@@ -162,6 +218,8 @@ const POR_PAGINA = 10;
 function VigilanciaContent() {
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
   const [lista, setLista] = useState<Paginado<EventoAcceso> | null>(null);
+  const [enEspera, setEnEspera] = useState<IngresoEnEspera[]>([]);
+  const [ahora, setAhora] = useState(() => Date.now());
   // Último evento llegado en vivo: solo su fila se resalta, unos segundos.
   const [ultimo, setUltimo] = useState<number | null>(null);
   const [servidorCaido, setServidorCaido] = useState(false);
@@ -179,11 +237,13 @@ function VigilanciaContent() {
   // "Denegaciones hoy" y la tabla quedan al día sin recargar la página.
   const cargar = useCallback(async () => {
     try {
-      const [r, e] = await Promise.all([
+      const [r, e, espera] = await Promise.all([
         panelApi.resumen(),
         eventosAccesoApi.list({ pagina, porPagina: POR_PAGINA, busqueda: busquedaDiferida, desde: dia, hasta: dia }),
+        eventosAccesoApi.enEspera(),
       ]);
       setResumen(r);
+      setEnEspera(espera);
       // Si la página quedó fuera del total (p. ej. tras filtrar), vuelve a la primera.
       if (e.datos.length === 0 && e.total > 0 && pagina > 1) {
         setPagina(1);
@@ -223,6 +283,14 @@ function VigilanciaContent() {
         if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
         recargaPendiente.current = setTimeout(() => void cargarActual.current(), 500);
       });
+      // DNI en regla: aparece al instante; si la misma persona vuelve a pasar el DNI, queda la última.
+      socket.on("ingreso-en-espera", (ingreso: IngresoEnEspera) => {
+        setAhora(Date.now());
+        setEnEspera((actuales) => [ingreso, ...actuales.filter((i) => i.personaId !== ingreso.personaId)]);
+      });
+      socket.on("ingreso-espera-terminada", ({ id }: { id: number }) => {
+        setEnEspera((actuales) => actuales.filter((i) => i.id !== id));
+      });
     } catch {
       // el panel sigue funcionando sin tiempo real si el socket falla
     }
@@ -232,6 +300,21 @@ function VigilanciaContent() {
       if (finResalte.current) clearTimeout(finResalte.current);
     };
   }, []);
+
+  // Cuenta regresiva de las esperas; las vencidas se quitan solas.
+  const hayEspera = enEspera.length > 0;
+  useEffect(() => {
+    if (!hayEspera) return;
+    const intervalo = setInterval(() => {
+      const t = Date.now();
+      setAhora(t);
+      setEnEspera((actuales) => {
+        const vigentes = actuales.filter((i) => new Date(i.hasta).getTime() > t);
+        return vigentes.length === actuales.length ? actuales : vigentes;
+      });
+    }, 1000);
+    return () => clearInterval(intervalo);
+  }, [hayEspera]);
 
   function reintentar() {
     setLoading(true);
@@ -256,6 +339,17 @@ function VigilanciaContent() {
 
   const [personaDocumentos, setPersonaDocumentos] = useState<number | null>(null);
   const eventos = lista?.datos ?? [];
+  // Las esperas son de ahora: van en la primera página, al ver hoy (o todos los
+  // días), y siguen la búsqueda por nombre o DNI.
+  const textoBuscado = busquedaDiferida.toLowerCase();
+  const esperasVisibles =
+    pagina === 1 && (!dia || dia === hoy())
+      ? enEspera.filter(
+          (i) =>
+            !textoBuscado ||
+            `${i.nombres} ${i.apellidos} ${i.numeroDocumento}`.toLowerCase().includes(textoBuscado),
+        )
+      : [];
   const pie = pieDePagina(lista);
   const esHoy = dia === hoy();
   const sinEventos = busquedaDiferida
@@ -373,7 +467,8 @@ function VigilanciaContent() {
                     <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>No se pudo cargar el historial.</TableCell>
                   </TableRow>
                 )}
-                {!loading && lista && eventos.length === 0 && (
+                {!loading && <FilasEnEspera ingresos={esperasVisibles} ahora={ahora} />}
+                {!loading && lista && eventos.length === 0 && esperasVisibles.length === 0 && (
                   <TableRow>
                     <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>{sinEventos}</TableCell>
                   </TableRow>

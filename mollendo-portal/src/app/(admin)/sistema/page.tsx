@@ -292,7 +292,7 @@ function EquiposEstado({
   );
 }
 
-/** Lectores de DNI: por RS232 en la mini PC, no por red. Configurado, conectado (puerto abierto) y la hora de la última lectura. */
+/** Lectores de DNI: por RS232 en la mini PC, no por red. Configurado, cable de datos conectado (puerto abierto) y la hora de la última lectura: el lector no avisa si está encendido, solo envía cuando lee un DNI. */
 function LectoresDniEstado({
   comprobando,
   lectoresDni,
@@ -322,9 +322,9 @@ function LectoresDniEstado({
           {!lector?.configurado ? (
             <Badge color="light">Sin configurar</Badge>
           ) : lector.conectado ? (
-            <Badge color="success">Conectado</Badge>
+            <Badge color="success">Cable conectado</Badge>
           ) : (
-            <Badge color="error">Desconectado</Badge>
+            <Badge color="error">Cable desconectado</Badge>
           )}
           <p className="mt-1 text-xs text-gray-400">
             {etiqueta}

@@ -153,6 +153,9 @@ const SECCIONES: SeccionManual[] = [
             <strong>En el terminal facial:</strong> si los documentos están en regla, el terminal verifica el rostro y la{" "}
             <strong>prueba de alcohol</strong>. El sistema abre el molinete solo si el rostro es el de la persona del DNI y el
             alcohol es conforme, y el ingreso queda autorizado; si el alcohol no es conforme, queda denegado por alcohol.
+            Mientras tanto, la persona aparece en la primera fila del historial como <strong>“en espera”</strong>
+            (“Esperando rostro y alcohol”), con el tiempo que le queda para completar el ingreso (1 minuto) y una barra
+            que se va vaciando. Al llegar el resultado del terminal, esa fila pasa a ser el ingreso autorizado o denegado.
           </li>
         </ol>
         <p>
@@ -292,7 +295,7 @@ const SECCIONES: SeccionManual[] = [
           si el backend y la base de datos responden, si la clave de equipos está configurada, el estado de los{" "}
           <strong>respaldos</strong> (el último y si está al día), el de los <strong>equipos</strong> (cada terminal G4
           Pro “En línea” o “Desconectado”, con su última actividad) y el de los <strong>lectores de DNI</strong> de ingreso y
-          salida (“Conectado”, “Desconectado” o “Sin configurar”, con la hora de su última lectura). También trae el enlace a la documentación interactiva de la API (Swagger) y
+          salida (“Cable conectado”, “Cable desconectado” o “Sin configurar”, con la hora de su última lectura; el sistema ve el cable de datos, no si el lector tiene energía: si no pita al pasar un DNI, hay que revisar su alimentación). También trae el enlace a la documentación interactiva de la API (Swagger) y
           la documentación técnica, con ejemplos, de las APIs que usan los equipos físicos: el terminal ZKTeco G4 Pro
           con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes, indicando el estado
           de cada una. Está pensada para quien tenga que conectarlos o dar soporte técnico.

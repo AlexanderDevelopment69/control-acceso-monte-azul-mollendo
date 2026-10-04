@@ -3,14 +3,15 @@ import { consulta } from "@/lib/paginaServidor";
 import type {
   AuditoriaEntry,
   Dashboard,
-  PersonaPermanencia,
   DocumentoPersona,
   Empresa,
   EstadoSistema,
   EventoAcceso,
   FiltrosLista,
+  IngresoEnEspera,
   Paginado,
   Persona,
+  PersonaPermanencia,
   ResumenPanel,
   RolUsuario,
   TipoDocumento,
@@ -98,6 +99,8 @@ export const eventosAccesoApi = {
   /** Historial paginado en el servidor, más recientes primero. */
   list: (params: FiltrosLista & { personaId?: number; resultado?: string } = {}) =>
     apiRequest<Paginado<EventoAcceso>>(`/eventos-acceso${consulta({ ...params })}`),
+  /** DNI en regla esperando el rostro y el alcohol del G4 Pro. */
+  enEspera: () => apiRequest<IngresoEnEspera[]>("/eventos-acceso/en-espera"),
 };
 
 // ---- reportes ----

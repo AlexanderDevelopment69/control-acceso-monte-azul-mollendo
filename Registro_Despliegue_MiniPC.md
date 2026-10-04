@@ -586,15 +586,30 @@ LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/usb-Prolific_Technology_Inc._US
 # LECTOR_DNI_BAUDIOS=115200                              (por defecto)
 ```
 
-Después: `sudo docker compose -f docker-compose.prod.yml up -d` (recrea el contenedor `api` con acceso al puerto). Sin estas variables, el sistema no abre ningún puerto (así funciona en un servidor sin lectores, como AWS).
+Después: `sudo docker compose -f docker-compose.prod.yml up -d`. Sin estas variables, el sistema no abre ningún puerto (así funciona en un servidor sin lectores, como AWS).
+
+Cómo accede el contenedor: ve el `/dev` del servidor en solo lectura (`/dev-servidor`) y solo tiene permiso para puertos serie USB (`device_cgroup_rules`: ttyUSB y ttyACM). Busca el lector por su ruta fija cada vez que reintenta, así se recupera solo aunque al desconectar y volver a conectar el adaptador Linux le cambie el número (`ttyUSB0` ↔ `ttyUSB1`).
 
 ### Comprobar
 
 - En el registro del backend: `Lector de DNI de ingreso conectado en /dev/lector-dni-ingreso (115200 baudios)`, y por cada lectura `DNI leído en ingreso: …`.
-- En **Sistema y APIs**: el lector "Conectado" con la hora de su última lectura.
+- En **Sistema y APIs**: el lector "Cable conectado" con la hora de su última lectura. Indica el cable de datos (adaptador blanco), no la energía del lector: con el cable negro desconectado sigue diciendo "Cable conectado", porque el lector no envía nada hasta que lee un DNI. **Si el lector no pita al pasar un DNI, revisar su alimentación (cable negro).**
 - En el **Panel de vigilancia**: cada DNI aparece al instante (un DNI no registrado, como "No registrado").
 
-Si se desconecta el adaptador, el sistema reintenta cada 5 s. Si al volver a conectarlo no se recupera, reiniciar el backend: `sudo docker compose -f docker-compose.prod.yml restart api`.
+Si se desconecta el adaptador, el sistema reintenta cada 5 s y se reconecta solo al volver a conectarlo (probado: 30 s después de reconectarlo, con el adaptador pasando de `ttyUSB1` a `ttyUSB0`).
+
+### Pendiente: lector de salida
+
+Hoy está instalado solo el **lector de ingreso**. Para el de salida:
+
+1. **Hardware:** un **segundo adaptador USB-serial** (como el ATEN) para el cable DB9 del lector de salida. Su punta USB de energía va a otro puerto USB de la mini PC.
+2. **Configurar el lector** con el folleto, igual que el de ingreso: Factory Default → RS232 → 115200 → desenchufar y volver a enchufar la energía.
+3. **Identificar su adaptador** en la mini PC: `ls /dev/serial/by-id/`. Aparece una segunda ruta `usb-...-port0` (cada adaptador tiene su número de serie; la del ingreso es la que termina en `FQCLb114J19-if00-port0`).
+4. **Agregar en `~/mollendo/.env`:** `LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/<la ruta nueva>`.
+5. **Aplicar:** `sudo docker compose -f docker-compose.prod.yml up -d`.
+6. **Comprobar:** en el registro del backend, `Lector de DNI de salida conectado`. En **Sistema y APIs**, salida "Cable conectado". Al pasar un DNI registrado, el Panel muestra una **salida autorizada**.
+
+El relé de salida (el que abre el molinete) es otro pendiente: hoy la orden de apertura solo queda en el registro del servidor.
 
 ---
 

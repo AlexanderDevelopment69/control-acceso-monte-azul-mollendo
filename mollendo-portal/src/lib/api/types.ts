@@ -66,6 +66,19 @@ export interface DocumentoPersona {
   tipoDocumento?: TipoDocumento;
 }
 
+/** DNI en regla esperando el rostro y el alcohol del G4 Pro (hasta `hasta`). */
+export interface IngresoEnEspera {
+  id: number;
+  personaId: number;
+  nombres: string;
+  apellidos: string;
+  numeroDocumento: string;
+  empresa: string | null;
+  torniqueteId: string | null;
+  desde: string;
+  hasta: string;
+}
+
 export interface EventoAcceso {
   id: number;
   /** null si el documento no estaba registrado. */

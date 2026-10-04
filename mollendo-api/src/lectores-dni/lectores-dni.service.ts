@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
+import path from 'node:path';
 import tty from 'node:tty';
 import { promisify } from 'node:util';
 import { EventosAccesoService } from '../eventos-acceso/eventos-acceso.service.js';
@@ -38,7 +39,10 @@ interface Lector {
  * `POST /eventos-acceso/ingreso|salida`.
  *
  * Cada lector se configura con `LECTOR_DNI_INGRESO_PUERTO` /
- * `LECTOR_DNI_SALIDA_PUERTO` (el dispositivo dentro del contenedor) y
+ * `LECTOR_DNI_SALIDA_PUERTO` (la ruta fija del adaptador en el servidor,
+ * `/dev/serial/by-id/...`; en Docker se lee dentro de `LECTOR_DNI_DEV_SERVIDOR`,
+ * el /dev del servidor montado, y se vuelve a resolver en cada reintento, así
+ * se recupera aunque el adaptador cambie de ttyUSB0 a ttyUSB1) y
  * `LECTOR_DNI_BAUDIOS` (115200 por defecto, la velocidad de fábrica del
  * lector en RS232). El puerto se configura con `stty` (viene en la imagen
  * Alpine) y se lee con `tty.ReadStream`, sin dependencias nativas. Si el
@@ -55,8 +59,11 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     for (const movimiento of ['ingreso', 'salida'] as const) {
       const clave = movimiento.toUpperCase();
-      const puerto = process.env[`LECTOR_DNI_${clave}_PUERTO`]?.trim();
-      if (!puerto) continue;
+      const configurado = process.env[`LECTOR_DNI_${clave}_PUERTO`]?.trim();
+      if (!configurado) continue;
+      const devServidor = process.env.LECTOR_DNI_DEV_SERVIDOR?.trim();
+      const puerto =
+        devServidor && configurado.startsWith('/dev/') ? path.posix.join(devServidor, configurado.slice('/dev/'.length)) : configurado;
       const lector: Lector = {
         movimiento,
         puerto,

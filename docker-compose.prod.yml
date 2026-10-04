@@ -47,14 +47,19 @@ services:
       # en .env, LECTOR_DNI_INGRESO_DISPOSITIVO / LECTOR_DNI_SALIDA_DISPOSITIVO con
       # la ruta fija del adaptador (/dev/serial/by-id/...). Sin esas variables no
       # se abre ningún puerto.
-      LECTOR_DNI_INGRESO_PUERTO: ${LECTOR_DNI_INGRESO_DISPOSITIVO:+/dev/lector-dni-ingreso}
-      LECTOR_DNI_SALIDA_PUERTO: ${LECTOR_DNI_SALIDA_DISPOSITIVO:+/dev/lector-dni-salida}
+      LECTOR_DNI_INGRESO_PUERTO: ${LECTOR_DNI_INGRESO_DISPOSITIVO:-}
+      LECTOR_DNI_SALIDA_PUERTO: ${LECTOR_DNI_SALIDA_DISPOSITIVO:-}
       LECTOR_DNI_BAUDIOS: ${LECTOR_DNI_BAUDIOS:-115200}
-    devices:
-      # Sin lector configurado se pasa /dev/null, que no hace nada.
-      - ${LECTOR_DNI_INGRESO_DISPOSITIVO:-/dev/null}:/dev/lector-dni-ingreso
-      - ${LECTOR_DNI_SALIDA_DISPOSITIVO:-/dev/null}:/dev/lector-dni-salida
+      # El /dev del servidor, de solo lectura: el lector se busca por su ruta fija
+      # cada vez que se reintenta, así se recupera aunque al desconectar y volver a
+      # conectar el adaptador Linux le dé otro número (ttyUSB0 -> ttyUSB1).
+      LECTOR_DNI_DEV_SERVIDOR: /dev-servidor
+    # Solo puertos serie USB (ttyUSB = 188, ttyACM = 166); ningún otro dispositivo.
+    device_cgroup_rules:
+      - "c 188:* rmw"
+      - "c 166:* rmw"
     volumes:
+      - /dev:/dev-servidor:ro
       - documentos:/app/storage
       # Solo lectura: para mostrar el último respaldo en "Sistema y APIs".
       - ./backups:/app/respaldos:ro

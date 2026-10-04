@@ -56,4 +56,15 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
   handleEventoAcceso(payload: unknown): void {
     this.server.emit('evento-acceso', payload);
   }
+
+  // DNI en regla esperando el rostro y el alcohol del G4 Pro, y su fin.
+  @OnEvent('ingreso.en-espera')
+  handleIngresoEnEspera(payload: unknown): void {
+    this.server.emit('ingreso-en-espera', payload);
+  }
+
+  @OnEvent('ingreso.espera-terminada')
+  handleEsperaTerminada(payload: unknown): void {
+    this.server.emit('ingreso-espera-terminada', payload);
+  }
 }

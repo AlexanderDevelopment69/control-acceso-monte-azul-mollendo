@@ -18,13 +18,44 @@ export interface AbrirMolineteEvent {
 
 /**
  * Cuánto se espera, desde que se pasa el DNI, a que llegue el resultado del
- * G4 Pro antes de dejar de intentar correlacionarlos. No se ha medido todavía
- * con el equipo real cuánto tarda una persona en caminar hasta el equipo y
- * completar rostro+alcohol (ver Opciones_Integracion_G4Pro.md, pendiente #1
- * de la sección 9) -- 2 minutos es un valor conservador de partida, a ajustar
- * con la prueba real.
+ * G4 Pro antes de dejar de intentar correlacionarlos: 1 minuto (decisión del
+ * usuario, 03/oct/2026; antes 2). Es también el tiempo que el Panel muestra la
+ * persona "en espera".
  */
-const VENTANA_INGRESO_PENDIENTE_MS = 2 * 60 * 1000;
+const VENTANA_INGRESO_PENDIENTE_MS = 60 * 1000;
+
+/**
+ * DNI en regla esperando el resultado del G4 Pro (rostro + alcohol). Se
+ * muestra en el Panel de vigilancia hasta que llega el resultado o vence la
+ * espera (`hasta`).
+ */
+export interface IngresoEnEspera {
+  id: number;
+  personaId: number;
+  nombres: string;
+  apellidos: string;
+  numeroDocumento: string;
+  empresa: string | null;
+  torniqueteId: string | null;
+  desde: string;
+  hasta: string;
+}
+
+const CON_PERSONA = { persona: { include: { empresa: { select: { razonSocial: true } } } } } as const;
+
+function aEnEspera(pendiente: Prisma.IngresoPendienteGetPayload<{ include: typeof CON_PERSONA }>): IngresoEnEspera {
+  return {
+    id: pendiente.id,
+    personaId: pendiente.personaId,
+    nombres: pendiente.persona.nombres,
+    apellidos: pendiente.persona.apellidos,
+    numeroDocumento: pendiente.persona.numeroDocumento,
+    empresa: pendiente.persona.empresa?.razonSocial ?? null,
+    torniqueteId: pendiente.torniqueteId,
+    desde: pendiente.creadoEn.toISOString(),
+    hasta: new Date(pendiente.creadoEn.getTime() + VENTANA_INGRESO_PENDIENTE_MS).toISOString(),
+  };
+}
 
 @Injectable()
 export class EventosAccesoService {
@@ -108,9 +139,11 @@ export class EventosAccesoService {
       });
     }
 
-    await this.prisma.ingresoPendiente.create({
+    const pendiente = await this.prisma.ingresoPendiente.create({
       data: { personaId: persona.id, torniqueteId: dto.torniqueteId },
+      include: CON_PERSONA,
     });
+    this.eventEmitter.emit('ingreso.en-espera', aEnEspera(pendiente));
 
     return {
       estado: 'pendiente_verificacion' as const,
@@ -226,6 +259,17 @@ export class EventosAccesoService {
       motivos: { alcohol: !autorizado },
     };
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
+    this.eventEmitter.emit('ingreso.espera-terminada', { id: pendiente.id });
+  }
+
+  /** DNI en regla que todavía esperan el resultado del G4 Pro, más recientes primero (para el Panel). */
+  async ingresosEnEspera(): Promise<IngresoEnEspera[]> {
+    const pendientes = await this.prisma.ingresoPendiente.findMany({
+      where: { consumidoEn: null, creadoEn: { gte: new Date(Date.now() - VENTANA_INGRESO_PENDIENTE_MS) } },
+      orderBy: { creadoEn: 'desc' },
+      include: CON_PERSONA,
+    });
+    return pendientes.map(aEnEspera);
   }
 
   /** Salida: sin antipassback; con un documento registrado (aunque esté de baja) se autoriza y abre el molinete. */

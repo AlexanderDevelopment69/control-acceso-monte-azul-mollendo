@@ -25,6 +25,13 @@ export class EventosAccesoController {
     return this.eventosAccesoService.registrarSalida(dto);
   }
 
+  /** DNI en regla esperando el rostro y el alcohol del G4 Pro (Panel de vigilancia). */
+  @Get('en-espera')
+  @Roles('administrador', 'vigilancia')
+  enEspera() {
+    return this.eventosAccesoService.ingresosEnEspera();
+  }
+
   @Get()
   @Roles('administrador', 'vigilancia')
   findAll(@Query() query: QueryEventosAccesoDto) {
