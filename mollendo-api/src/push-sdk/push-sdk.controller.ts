@@ -82,4 +82,26 @@ export class PushSdkController {
 
     return 'OK';
   }
+
+  /**
+   * Respuestas a las consultas del protocolo de control de acceso (`DATA COUNT
+   * <tabla>`, `DATA QUERY tablename=<tabla>,...`): el G4 Pro las envía aquí con
+   * `type=count|tabledata`, `cmdid` (el id del comando) y `tablename`; el
+   * cuerpo trae `user=0` (conteo) o una línea por registro. Si no se responde
+   * "OK", el equipo reintenta.
+   */
+  @Post('querydata')
+  @Header('Content-Type', 'text/plain')
+  async querydata(
+    @Query('SN') sn: string,
+    @Query('type') tipo: string,
+    @Query('cmdid') cmdid: string,
+    @Query('tablename') tabla: string,
+    @Body() body: string,
+    @Req() req: Request,
+  ) {
+    await this.pushSdk.tocarActividad(sn, req.ip);
+    this.pushSdk.guardarRespuestaConsulta(sn, Number(cmdid), tipo, tabla, body ?? '');
+    return 'OK';
+  }
 }

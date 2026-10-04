@@ -181,6 +181,23 @@ export class PushSdkService {
   }
 
   /** Resultado de un comando ejecutado, reportado por el equipo vía /iclock/devicecmd. */
+  /** Últimas respuestas a consultas (por id de comando), para revisarlas o usarlas al sincronizar. */
+  private readonly respuestasConsulta = new Map<number, { serialNumber: string; tipo: string; tabla: string; datos: string; recibidoEn: Date }>();
+
+  /** Respuesta a `DATA COUNT` / `DATA QUERY` (protocolo de control de acceso, ver `/iclock/querydata`). */
+  guardarRespuestaConsulta(serialNumber: string, comandoId: number, tipo: string, tabla: string, datos: string) {
+    if (Number.isFinite(comandoId)) {
+      this.respuestasConsulta.set(comandoId, { serialNumber, tipo, tabla, datos, recibidoEn: new Date() });
+      if (this.respuestasConsulta.size > 200) this.respuestasConsulta.delete(this.respuestasConsulta.keys().next().value!);
+    }
+    const resumen = datos.replace(/\t/g, ' | ').replace(/\r?\n/g, ' // ').slice(0, 1000);
+    this.logger.log(`Respuesta de ${serialNumber} al comando ${comandoId} (${tipo} ${tabla}): ${resumen || '(vacía)'}`);
+  }
+
+  respuestaConsulta(comandoId: number) {
+    return this.respuestasConsulta.get(comandoId) ?? null;
+  }
+
   async confirmarComando(serialNumber: string, comandoId: number, returnCode: number) {
     const dispositivo = await this.prisma.dispositivoAcceso.findUnique({ where: { serialNumber } });
     if (!dispositivo) {
