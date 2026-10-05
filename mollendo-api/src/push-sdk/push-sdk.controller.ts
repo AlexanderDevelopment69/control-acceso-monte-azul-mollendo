@@ -102,11 +102,16 @@ export class PushSdkController {
     @Query('type') tipo: string,
     @Query('cmdid') cmdid: string,
     @Query('tablename') tabla: string,
+    @Query('packcnt') packcnt: string,
+    @Query('packidx') packidx: string,
     @Body() body: string,
     @Req() req: Request,
   ) {
     await this.pushSdk.tocarActividad(sn, req.ip);
-    this.pushSdk.guardarRespuestaConsulta(sn, Number(cmdid), tipo, tabla, body ?? '');
+    this.pushSdk.guardarRespuestaConsulta(sn, Number(cmdid), tipo, tabla, body ?? '', {
+      indice: Number(packidx),
+      total: Number(packcnt),
+    });
     return 'OK';
   }
 }

@@ -732,7 +732,7 @@ Instalado (`ING01`, 04/10/2026). Se activa cuando el **G4 Pro aprueba el rostro 
 
 ## 8e. Terminal facial G4 Pro
 
-El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por la red local, con el protocolo PUSH de ZKTeco en su variante de **control de acceso**. No usa ningún software del fabricante.
+El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por la red local, con el protocolo PUSH de ZKTeco en su variante de **control de acceso**. No usa ningún software del fabricante. Referencia técnica completa (rutas, comandos, respuestas, códigos): `Protocolo_G4Pro_Referencia.md`.
 
 ### Apuntar el G4 Pro a la mini PC
 
@@ -753,7 +753,8 @@ El G4 Pro no informa el valor medido al sistema, solo si la persona pasó o no: 
 
 - **Nunca registrar personas a mano en el G4 Pro.** Un usuario creado desde la pantalla del equipo recibe **permiso de paso permanente** (se vio: un usuario manual dejó 50 permisos) y queda fuera del control del sistema: podría verificarse mientras otra persona está habilitada y el sistema se lo atribuiría a esa persona. Tampoco usar personas del sistema como **administradores del equipo**: el sistema les vuelve a poner privilegio normal al editarlas.
 - **No se registran a mano en el equipo.** Al dar de alta o editar a una persona en el portal, el sistema la carga en el G4 Pro con su **DNI como número de usuario** y su nombre; al subir su foto, se la envía y el equipo la convierte en el rostro que reconoce.
-- **Equipo nuevo o reinstalado:** registrar a todo el personal con `POST /api/v1/integraciones/g4pro/sincronizar` (Administrador; desde Swagger en `/api/docs`).
+- **Sincronización:** `POST /api/v1/integraciones/g4pro/sincronizar` (Administrador; desde Swagger en `/api/docs`) deja el equipo igual al sistema: **borra a los usuarios que el sistema no conoce** (por ejemplo, registrados a mano), **quita los permisos de paso sueltos** y **registra con foto al personal activo que falta**. Se hace sola **todos los días a medianoche** (la hora se cambia con `G4PRO_HORA_SINCRONIZACION` en `.env`, de 0 a 23; con `off` se desactiva y queda solo la manual). **Hoy está desactivada en la mini PC (`off`) mientras existan los datos DEMO**: activarla (quitar la línea o poner `0`) después de borrarlos. Con `?simular=true` solo informa qué haría (`usuariosABorrar`, `agregadas`, `permisosQuitados`). Usarla al instalar un equipo nuevo o reinstalado.
+- **Ojo con los datos de demostración:** la sincronización registra en el equipo a todo el personal **activo**, también al DEMO (con fotos que no son rostros). Borrar los datos DEMO antes de operar (8b).
 - La **foto** debe ser de frente, con buena luz y el rostro centrado. Solo se registran documentos numéricos (DNI).
 - Ninguna persona tiene **permiso de paso** en el equipo, salvo la que está en su minuto de espera: el sistema se lo da al pasar su DNI en regla y se lo quita al terminar (una persona a la vez; las demás quedan "en cola").
 

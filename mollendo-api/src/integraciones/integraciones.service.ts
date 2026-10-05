@@ -1,10 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import type { AbrirMolineteEvent, HabilitarEnEquipoEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { ReleUsbService } from './rele-usb.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
 
 interface PersonaFotoActualizadaEvent {
   personaId: number;
@@ -31,8 +32,10 @@ interface PersonaGuardadaEvent {
  *   DNI y alcohol conforme), según diagramas/ingreso.svg y salida.svg.
  */
 @Injectable()
-export class IntegracionesService {
+export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(IntegracionesService.name);
+  private revisionDiaria: NodeJS.Timeout | null = null;
+  private ultimaSincronizacion: string | null = null;
 
   constructor(
     private readonly pushSdk: PushSdkService,
@@ -78,15 +81,68 @@ export class IntegracionesService {
   }
 
   /**
-   * Registra en los G4 Pro a todo el personal (con su foto), por ejemplo al
-   * instalar un equipo nuevo. Devuelve cuántas personas se encolaron.
+   * Sincronización completa con los G4 Pro (manual con
+   * `POST /integraciones/g4pro/sincronizar`, y todos los días a medianoche):
+   * borra del equipo a quien el sistema no conoce, quita permisos de paso
+   * sueltos (salvo a la persona en su turno) y registra, con su foto, al
+   * personal activo que falte. Con `simular`, solo informa qué haría.
    */
-  async sincronizarTodas(): Promise<{ personas: number }> {
+  async sincronizarTodas(simular = false) {
     const personas = await this.prisma.persona.findMany({ orderBy: { id: 'asc' } });
+    const porPin = new Map<string, (typeof personas)[number]>();
     for (const persona of personas) {
-      await this.pushSdk.sincronizarPersona(persona, { conFoto: true });
+      const pin = pinDeDocumento(persona.numeroDocumento);
+      if (pin) porPin.set(pin, persona);
     }
-    return { personas: personas.length };
+    const activos = new Set([...porPin].filter(([, p]) => p.estado === 'activo').map(([pin]) => pin));
+    const enTurno = await this.prisma.ingresoPendiente.findFirst({
+      where: { consumidoEn: null, habilitadoEn: { gte: new Date(Date.now() - 2 * 60 * 1000) } },
+      include: { persona: { select: { numeroDocumento: true } } },
+    });
+    const limpieza = await this.pushSdk.limpiarEquipos(
+      new Set(porPin.keys()),
+      activos,
+      enTurno ? pinDeDocumento(enTurno.persona.numeroDocumento) : null,
+      !simular,
+    );
+    for (const pin of simular ? [] : limpieza.faltantes) {
+      await this.pushSdk.sincronizarPersona(porPin.get(pin)!, { conFoto: true });
+    }
+    const resumen = {
+      simulacion: simular,
+      equipos: limpieza.equipos,
+      equiposSinRespuesta: limpieza.sinRespuesta,
+      agregadas: limpieza.faltantes.size,
+      borradas: limpieza.borrados,
+      permisosQuitados: limpieza.permisosQuitados,
+      usuariosABorrar: [...limpieza.sobrantes],
+    };
+    this.logger.log(`Sincronización con los G4 Pro: ${JSON.stringify(resumen)}`);
+    return resumen;
+  }
+
+  onModuleInit() {
+    // Una vez al día, a la hora G4PRO_HORA_SINCRONIZACION (0 = medianoche, hora de Lima):
+    // revisa cada 10 minutos si ya toca. "off" (o cualquier valor que no sea una hora) la desactiva.
+    const valor = (process.env.G4PRO_HORA_SINCRONIZACION ?? '0').trim();
+    const hora = /^\d{1,2}$/.test(valor) && Number(valor) < 24 ? Number(valor) : null;
+    if (hora === null) {
+      this.logger.warn(`Sincronización diaria con los G4 Pro desactivada (G4PRO_HORA_SINCRONIZACION=${valor}); sigue disponible la manual`);
+      return;
+    }
+    this.logger.log(`Sincronización diaria con los G4 Pro a las ${hora}:00`);
+    this.revisionDiaria = setInterval(() => {
+      const ahora = new Date();
+      const hoy = ahora.toDateString();
+      if (ahora.getHours() === hora && this.ultimaSincronizacion !== hoy) {
+        this.ultimaSincronizacion = hoy;
+        this.sincronizarTodas().catch((error: Error) => this.logger.error(`Sincronización diaria con los G4 Pro: ${error.message}`));
+      }
+    }, 10 * 60 * 1000);
+  }
+
+  onModuleDestroy() {
+    if (this.revisionDiaria) clearInterval(this.revisionDiaria);
   }
 
   /**

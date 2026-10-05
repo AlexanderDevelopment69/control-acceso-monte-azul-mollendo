@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Query } from '@nestjs/common';
 import { IntegracionesService } from './integraciones.service.js';
 import { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
@@ -16,7 +16,7 @@ export class IntegracionesController {
   /** Registra a todo el personal (con foto) en los G4 Pro; por ejemplo, al instalar un equipo nuevo. */
   @Post('g4pro/sincronizar')
   @Roles('administrador')
-  sincronizarG4Pro() {
-    return this.integracionesService.sincronizarTodas();
+  sincronizarG4Pro(@Query('simular') simular?: string) {
+    return this.integracionesService.sincronizarTodas(simular === 'true');
   }
 }

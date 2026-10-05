@@ -3,6 +3,8 @@
 Proyecto: Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM) · Alcance base
 Fecha: 27/09/2026
 
+> **Referencia técnica del protocolo** (rutas, comandos, respuestas y códigos confirmados): `Protocolo_G4Pro_Referencia.md`.
+>
 > **Actualización 04/oct/2026 — integración del G4 Pro resuelta y programada.** El G4 Pro usa el protocolo PUSH de **control de acceso** (no el de asistencia que se probó antes): con sus comandos (`user`, `extuser`, `biophoto`, `userauthorize`) **sí** se registran personas y rostros desde el portal y se habilita solo al dueño del DNI. El ingreso completo del diagrama (sección 2.1) quedó programado y probado con el equipo real. Ver sección 4 y `Estado_Implementacion_Integracion_G4Pro.md` sección 0.
 
 Este documento explica cómo se conectan los equipos físicos (lectores de DNI, terminal facial ZKTeco G4 Pro, alcoholímetro DT1700, molinetes y relé de red) con el sistema, cómo funcionan el ingreso y la salida paso a paso, qué se necesita comprar, configurar y programar, y qué pruebas hay que hacer con el equipo real.
@@ -153,7 +155,7 @@ DATA UPDATE biophoto  PIN=45678912  Type=9  Size=<largo>  Content=<foto JPG ≤ 
 | Se cambia el número de documento | `DATA DELETE user` (el anterior) + `user` + `extuser` + `biophoto` |
 | Se da de baja o se reactiva | Ninguna: sin habilitación no pasa, y la baja la evalúa la mini PC al leer el DNI |
 | Se renueva, agrega o elimina un documento | Ninguna: lo evalúa la mini PC cuando la persona pasa su DNI |
-| Equipo nuevo | `POST /integraciones/g4pro/sincronizar`: registra a todo el personal con su foto |
+| Sincronización (equipo nuevo, y todos los días a medianoche) | `POST /integraciones/g4pro/sincronizar`: borra del equipo a quien el sistema no conoce, quita permisos sueltos y registra con foto al personal activo que falta |
 
 Solo se registran documentos **numéricos** (DNI); el carné de extranjería y el pasaporte, no.
 

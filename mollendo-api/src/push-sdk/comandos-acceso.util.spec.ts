@@ -4,7 +4,10 @@ import {
   comandoFoto,
   comandoHabilitar,
   comandosPersona,
+  conteoDeRespuesta,
   pinDeDocumento,
+  pinsDeRespuestaUsuarios,
+  planDeSincronizacion,
   textoCampo,
 } from './comandos-acceso.util.js';
 
@@ -35,5 +38,27 @@ describe('comandos del protocolo de control de acceso (G4 Pro)', () => {
     expect(comandosBorrarPersona('1')).toEqual(['DATA DELETE userauthorize Pin=1', 'DATA DELETE extuser Pin=1', 'DATA DELETE user Pin=1']);
     expect(comandoHabilitar('1')).toBe('DATA UPDATE userauthorize Pin=1\tAuthorizeTimezoneId=1\tAuthorizeDoorId=1');
     expect(comandoDeshabilitar('1')).toBe('DATA DELETE userauthorize Pin=1\tAuthorizeDoorId=1');
+  });
+});
+
+describe('sincronización con lo que tiene el equipo', () => {
+  it('lee los pins de la lista de usuarios', () => {
+    const datos =
+      'user uid=20\tcardno=\tpin=48058719\tpassword=\tname=Amiel Bautista\tprivilege=0\r\n' +
+      'user uid=22\tcardno=1262852599\tpin=4\tpassword=12345678\tname=\tprivilege=14\n';
+    expect(pinsDeRespuestaUsuarios(datos)).toEqual(['48058719', '4']);
+    expect(pinsDeRespuestaUsuarios('')).toEqual([]);
+  });
+
+  it('lee los conteos', () => {
+    expect(conteoDeRespuesta('userauthorize=50', 'userauthorize')).toBe(50);
+    expect(conteoDeRespuesta('user=0\n', 'user')).toBe(0);
+    expect(conteoDeRespuesta('', 'user')).toBeNull();
+  });
+
+  it('borra los que el sistema no conoce y agrega los activos que faltan', () => {
+    const plan = planDeSincronizacion(['48058719', '4', '11111111'], new Set(['48058719', '11111111', '22222222', '33333333']), new Set(['48058719', '22222222']));
+    expect(plan.sobrantes).toEqual(['4']);
+    expect(plan.faltantes).toEqual(['22222222']);
   });
 });

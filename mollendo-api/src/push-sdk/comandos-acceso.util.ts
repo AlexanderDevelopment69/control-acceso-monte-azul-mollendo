@@ -62,3 +62,37 @@ export function comandoHabilitar(pin: string): string {
 export function comandoDeshabilitar(pin: string): string {
   return `DATA DELETE userauthorize Pin=${pin}${T}AuthorizeDoorId=1`;
 }
+
+/**
+ * Números de usuario (pin) de la respuesta a
+ * `DATA QUERY tablename=user,fielddesc=*,filter=*` (una línea por usuario:
+ * `user uid=20<TAB>cardno=<TAB>pin=48058719<TAB>…`).
+ */
+export function pinsDeRespuestaUsuarios(datos: string): string[] {
+  const pins = new Set<string>();
+  for (const linea of datos.split(/\r?\n/)) {
+    const pin = /(?:^|[\t ])pin=([^\t\r\n ]*)/i.exec(linea)?.[1];
+    if (pin) pins.add(pin);
+  }
+  return [...pins];
+}
+
+/** Valor de la respuesta a `DATA COUNT <tabla>` (`userauthorize=50` → 50), o null si no se entiende. */
+export function conteoDeRespuesta(datos: string, tabla: string): number | null {
+  const valor = new RegExp(`${tabla}=(\\d+)`, 'i').exec(datos)?.[1];
+  return valor === undefined ? null : Number(valor);
+}
+
+/**
+ * Qué hacer para que el equipo tenga exactamente al personal del sistema:
+ * borrar los usuarios que el sistema no conoce (por ejemplo, registrados a
+ * mano en el equipo) y agregar a los activos que faltan. Las personas dadas
+ * de baja pueden quedar en el equipo: nunca se las habilita.
+ */
+export function planDeSincronizacion(pinsEquipo: string[], pinsSistema: Set<string>, pinsActivos: Set<string>) {
+  const enEquipo = new Set(pinsEquipo);
+  return {
+    sobrantes: pinsEquipo.filter((pin) => !pinsSistema.has(pin)),
+    faltantes: [...pinsActivos].filter((pin) => !enEquipo.has(pin)),
+  };
+}

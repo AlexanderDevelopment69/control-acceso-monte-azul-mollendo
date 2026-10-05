@@ -10,7 +10,10 @@ import {
   comandoFoto,
   comandoHabilitar,
   comandosPersona,
+  conteoDeRespuesta,
   pinDeDocumento,
+  pinsDeRespuestaUsuarios,
+  planDeSincronizacion,
 } from './comandos-acceso.util.js';
 
 /** Emitido cuando llega un table=rtlog real del equipo (ver EventosAccesoService). */
@@ -207,21 +210,114 @@ export class PushSdkService {
   }
 
   /** Resultado de un comando ejecutado, reportado por el equipo vía /iclock/devicecmd. */
-  /** Últimas respuestas a consultas (por id de comando), para revisarlas o usarlas al sincronizar. */
-  private readonly respuestasConsulta = new Map<number, { serialNumber: string; tipo: string; tabla: string; datos: string; recibidoEn: Date }>();
+  /**
+   * Respuestas a consultas (por id de comando). Las grandes llegan en varias
+   * partes (`packcnt`/`packidx`): se juntan hasta tenerlas todas.
+   */
+  private readonly respuestasConsulta = new Map<
+    number,
+    { serialNumber: string; tipo: string; tabla: string; partes: Map<number, string>; total: number; recibidoEn: Date }
+  >();
 
   /** Respuesta a `DATA COUNT` / `DATA QUERY` (protocolo de control de acceso, ver `/iclock/querydata`). */
-  guardarRespuestaConsulta(serialNumber: string, comandoId: number, tipo: string, tabla: string, datos: string) {
+  guardarRespuestaConsulta(
+    serialNumber: string,
+    comandoId: number,
+    tipo: string,
+    tabla: string,
+    datos: string,
+    parte: { indice?: number; total?: number } = {},
+  ) {
     if (Number.isFinite(comandoId)) {
-      this.respuestasConsulta.set(comandoId, { serialNumber, tipo, tabla, datos, recibidoEn: new Date() });
+      const total = parte.total && parte.total > 0 ? parte.total : 1;
+      const indice = parte.indice && parte.indice > 0 ? parte.indice : 1;
+      const respuesta = this.respuestasConsulta.get(comandoId) ?? {
+        serialNumber,
+        tipo,
+        tabla,
+        partes: new Map<number, string>(),
+        total,
+        recibidoEn: new Date(),
+      };
+      respuesta.partes.set(indice, datos);
+      this.respuestasConsulta.set(comandoId, respuesta);
       if (this.respuestasConsulta.size > 200) this.respuestasConsulta.delete(this.respuestasConsulta.keys().next().value!);
     }
     const resumen = datos.replace(/\t/g, ' | ').replace(/\r?\n/g, ' // ').slice(0, 1000);
-    this.logger.log(`Respuesta de ${serialNumber} al comando ${comandoId} (${tipo} ${tabla}): ${resumen || '(vacía)'}`);
+    const deParte = parte.total && parte.total > 1 ? ` [parte ${parte.indice}/${parte.total}]` : '';
+    this.logger.log(`Respuesta de ${serialNumber} al comando ${comandoId} (${tipo} ${tabla})${deParte}: ${resumen || '(vacía)'}`);
   }
 
-  respuestaConsulta(comandoId: number) {
-    return this.respuestasConsulta.get(comandoId) ?? null;
+  /** La respuesta completa (todas sus partes, en orden), o null si todavía falta. */
+  respuestaConsulta(comandoId: number): string | null {
+    const r = this.respuestasConsulta.get(comandoId);
+    if (!r || r.partes.size < r.total) return null;
+    return [...r.partes.entries()].sort(([a], [b]) => a - b).map(([, d]) => d).join('\n');
+  }
+
+  /**
+   * Envía una consulta al equipo y espera su respuesta (el equipo recoge los
+   * comandos cada ~2 s y responde por `/iclock/querydata`). null si no
+   * responde a tiempo.
+   */
+  async consultar(dispositivoId: number, comando: string, esperaMs = 60_000): Promise<string | null> {
+    const { id } = await this.prisma.comandoDispositivo.create({ data: { dispositivoId, comando } });
+    const hasta = Date.now() + esperaMs;
+    while (Date.now() < hasta) {
+      const respuesta = this.respuestaConsulta(id);
+      if (respuesta !== null) return respuesta;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    this.logger.warn(`El equipo no respondió a "${comando}" en ${esperaMs / 1000} s`);
+    return null;
+  }
+
+  /**
+   * Deja cada G4 Pro con exactamente el personal del sistema: borra los
+   * usuarios que el sistema no conoce (por ejemplo, registrados a mano en el
+   * equipo, que tienen paso permanente) y, si quedaron permisos de paso
+   * sueltos, se los quita a todos salvo a la persona que está en su turno.
+   * Devuelve los pins que faltan en algún equipo, para registrarlos con foto.
+   */
+  async limpiarEquipos(pinsSistema: Set<string>, pinsActivos: Set<string>, pinEnTurno: string | null, aplicar = true) {
+    const resultado = {
+      equipos: 0,
+      sinRespuesta: 0,
+      borrados: 0,
+      permisosQuitados: 0,
+      faltantes: new Set<string>(),
+      sobrantes: new Set<string>(),
+    };
+    for (const dispositivo of await this.prisma.dispositivoAcceso.findMany()) {
+      const usuarios = await this.consultar(dispositivo.id, 'DATA QUERY tablename=user,fielddesc=*,filter=*');
+      if (usuarios === null) {
+        resultado.sinRespuesta++;
+        continue;
+      }
+      resultado.equipos++;
+      const pinsEquipo = pinsDeRespuestaUsuarios(usuarios);
+      const plan = planDeSincronizacion(pinsEquipo, pinsSistema, pinsActivos);
+      const comandos = plan.sobrantes.flatMap((pin) => comandosBorrarPersona(pin));
+      plan.faltantes.forEach((pin) => resultado.faltantes.add(pin));
+      resultado.borrados += plan.sobrantes.length;
+      plan.sobrantes.forEach((pin) => resultado.sobrantes.add(pin));
+
+      const permisos = conteoDeRespuesta((await this.consultar(dispositivo.id, 'DATA COUNT userauthorize')) ?? '', 'userauthorize');
+      const esperados = pinEnTurno && pinsEquipo.includes(pinEnTurno) ? 1 : 0;
+      if (permisos !== null && permisos > esperados) {
+        const aQuitar = pinsEquipo.filter((pin) => pin !== pinEnTurno && !plan.sobrantes.includes(pin));
+        comandos.push(...aQuitar.map((pin) => comandoDeshabilitar(pin)));
+        resultado.permisosQuitados += aQuitar.length;
+        this.logger.warn(`${dispositivo.serialNumber}: ${permisos} permisos de paso (se esperaba ${esperados}); se quitan`);
+      }
+      if (aplicar && comandos.length > 0) {
+        await this.prisma.comandoDispositivo.createMany({ data: comandos.map((comando) => ({ dispositivoId: dispositivo.id, comando })) });
+      }
+      if (plan.sobrantes.length > 0) {
+        this.logger.warn(`${dispositivo.serialNumber}: se borran usuarios que el sistema no conoce: ${plan.sobrantes.join(', ')}`);
+      }
+    }
+    return resultado;
   }
 
   async confirmarComando(serialNumber: string, comandoId: number, returnCode: number) {

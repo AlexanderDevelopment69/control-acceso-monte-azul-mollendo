@@ -183,7 +183,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/personas · /personas/:id/foto · /integraciones/g4pro/sincronizar",
     metodo: "POST",
     descripcion:
-      "Al registrar o editar a una persona, el backend la carga en el G4 Pro con su DNI y su nombre, sin permiso de paso. Al subir su foto, se la envía convertida (JPG ≤ 20 KB) y el equipo la convierte en el rostro que reconoce: no hace falta registrar rostros a mano en el equipo. POST /integraciones/g4pro/sincronizar (solo Administrador) registra a todo el personal, por ejemplo al instalar un equipo nuevo.",
+      "Al registrar o editar a una persona, el backend la carga en el G4 Pro con su DNI y su nombre, sin permiso de paso. Al subir su foto, se la envía convertida (JPG ≤ 20 KB) y el equipo la convierte en el rostro que reconoce: no hace falta registrar rostros a mano en el equipo. POST /integraciones/g4pro/sincronizar (solo Administrador; también todos los días a medianoche) deja el equipo igual al sistema: borra a quien el sistema no conoce (registrados a mano en el equipo), quita permisos de paso sueltos y registra con foto al personal activo que falta. Con ?simular=true solo informa qué haría.",
     autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: multipart/form-data (para la foto)"],
@@ -196,7 +196,7 @@ POST /integraciones/g4pro/sincronizar`,
 Persona 12345678 encolada para 1 equipo(s), con foto
 
 // POST /integraciones/g4pro/sincronizar → 201
-{ "personas": 64 }`,
+{ "simulacion": false, "equipos": 1, "agregadas": 16, "borradas": 1, "permisosQuitados": 1, "usuariosABorrar": ["777"] }`,
     notas:
       "Solo se registran documentos numéricos (DNI). Si se cambia el número de documento, se borra el usuario anterior del equipo. La foto debe ser de frente, con buena luz y el rostro centrado. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
   },
