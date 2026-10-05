@@ -55,7 +55,7 @@ POST /iclock/cdata?SN=HSR3263100192&table=rtlog
 time=2026-10-04 04:02:41\tpin=0\tevent=0\tverifytype=15\tConcentration=0\t...         // permitido
 time=2026-10-04 04:00:37\tpin=12345678\tevent=23\tverifytype=15\tConcentration=0\t... // sin permiso`,
     notas:
-      "Probado con el equipo real HSR3263100192 (04/oct/2026). Los comandos de asistencia (USERINFO) no sirven en este equipo: los rechaza con -629. event=0: permitido (llega con pin=0, el firmware no dice quién; como se habilita a una sola persona a la vez, solo puede ser la que está en su turno). event=23: rostro reconocido sin permiso, con su DNI. event=27: rostro no registrado. RegistryCode y /iclock/push no están en los manuales de ZKTeco, pero sin ellos el equipo no envía datos.",
+      "Probado con el equipo real HSR3263100192 (04/oct/2026). Los comandos de asistencia (USERINFO) no sirven en este equipo: los rechaza con -629. event=0: permitido (llega con pin=0, el firmware no dice quién; como se habilita a una sola persona a la vez, solo puede ser la que está en su turno). event=1: alcohol sobre el umbral del equipo. event=23: rostro reconocido sin permiso, con su DNI. event=27: rostro, huella o tarjeta no registrados. El valor de alcohol no se envía (Concentration=0): el umbral se configura en el propio G4 Pro. RegistryCode y /iclock/push no están en los manuales de ZKTeco, pero sin ellos el equipo no envía datos.",
   },
   {
     nombre: "Lectores de DNI (Syble XB-7705H)",
@@ -111,7 +111,7 @@ DNI leído en ingreso: pendiente_verificacion`,
 
 // 401 — X-API-Key inválida o ausente`,
     notas:
-      "Si la misma persona vuelve a pasar el DNI mientras espera, mantiene su lugar. En cola puede esperar hasta 3 minutos. Las esperas vencidas se revisan cada 5 segundos. Si el G4 Pro da otro código distinto de 0, 23 o 27 se toma como alcohol no conforme (falta confirmarlo con un rechazo real del DT1700).",
+      "Si la misma persona vuelve a pasar el DNI mientras espera, mantiene su lugar. En cola puede esperar hasta 3 minutos. Las esperas vencidas se revisan cada 5 segundos. event=1 del G4 Pro: denegado por alcohol (confirmado). Cualquier otro código desconocido también se deniega por alcohol: ante la duda, no se abre.",
   },
   {
     nombre: "Salida",

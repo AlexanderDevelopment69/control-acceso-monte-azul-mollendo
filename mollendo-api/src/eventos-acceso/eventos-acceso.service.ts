@@ -345,9 +345,12 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    * - `event=23`: rostro reconocido pero sin permiso de paso, con su `pin`
    *   (DNI): otra persona, o la misma antes de que le llegue el permiso. No
    *   cierra la espera.
-   * - `event=27`: rostro no registrado. Tampoco cierra la espera.
-   * - Cualquier otro código se trata como alcohol no conforme (falta
-   *   confirmarlo con un rechazo real del DT1700).
+   * - `event=27`: rostro (o huella, tarjeta) no registrado. Tampoco cierra la espera.
+   * - `event=1`: alcohol sobre el umbral del G4 Pro (confirmado con el equipo
+   *   real, 04/oct/2026). El valor medido no llega (`Concentration` viene en 0):
+   *   el umbral se configura en el propio equipo ("Umbral de embriaguez").
+   * - Cualquier otro código también se trata como alcohol no conforme: ante la
+   *   duda, no se abre.
    */
   @OnEvent('dispositivo.rtlog')
   async correlacionarVerificacionDispositivo(evento: RtlogRecibidoEvent): Promise<void> {
@@ -379,6 +382,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       }
 
       const autorizado = codigo === '0';
+      if (!autorizado && codigo !== '1') this.logger.warn(`G4 Pro: código desconocido event=${codigo}; se deniega por alcohol`);
       await this.cerrarEspera(
         activo,
         { autorizado, denegadoPorAlcohol: !autorizado, fechaHora: evento.horaDispositivo ?? undefined },

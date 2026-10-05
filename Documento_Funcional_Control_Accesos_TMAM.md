@@ -309,6 +309,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | Lectores de DNI | Dos lectores de código de barras (ingreso y salida) conectados al servidor por RS232. Leen el código de barras del reverso del DNI; el sistema registra el ingreso o la salida según el lector. |
 | Registro del personal en el terminal facial | Al registrar o editar a una persona, el sistema la carga en el terminal con su número de documento y su nombre; al cargar o cambiar su foto, se la envía y el terminal la usa para reconocerla. Solo se registran documentos numéricos (DNI). |
 | Habilitación en el terminal facial | Durante su minuto de espera, solo la persona del DNI tiene permiso de paso en el terminal; se le retira al terminar. |
+| Prueba de alcohol | La realiza el terminal facial con el alcoholímetro, después del rostro. El terminal informa si la persona supera el **umbral de alcohol** configurado en el propio equipo (valor definido por el cliente); en ese caso el ingreso se deniega por alcohol. |
 
 ---
 

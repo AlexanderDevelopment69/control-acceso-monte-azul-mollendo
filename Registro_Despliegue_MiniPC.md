@@ -740,6 +740,15 @@ El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por
 2. En el G4 Pro: **Menú → COMM. → Cloud Server Setting**: dirección `192.168.0.165` (la IP de la mini PC), puerto **`3001`**, sin dominio, sin HTTPS y sin proxy. En **Ethernet**, una IP de la misma red (DHCP sirve).
 3. A los pocos segundos el equipo se registra solo. En el registro del backend: `Nuevo equipo registrado: HSR3263100192`. En **Sistema y APIs**, "Equipos (G4 Pro)": **En línea**.
 
+### Umbral de alcohol (obligatorio)
+
+En el G4 Pro: **Configuración avanzada → Configuración del proceso de prueba de alcohol**:
+
+- **Detección en estado de ebriedad:** activada.
+- **Umbral de embriaguez:** el valor que defina el cliente. **De fábrica venía en 0.0025 g/L (2.5 mg/L)**, tan alto que una lectura positiva (0.000413 g/L, "Supera el valor estándar") **pasó igual**. La guía del DT1700 recomienda 0.02 mg/L (0.00002 g/L).
+
+El G4 Pro no informa el valor medido al sistema, solo si la persona pasó o no: el control de alcohol depende de este umbral.
+
 ### Personas y rostros
 
 - **No se registran a mano en el equipo.** Al dar de alta o editar a una persona en el portal, el sistema la carga en el G4 Pro con su **DNI como número de usuario** y su nombre; al subir su foto, se la envía y el equipo la convierte en el rostro que reconoce.
@@ -757,7 +766,8 @@ El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por
   Molinete de ingreso abierto: pulso de 1000 ms en el relé 1 del módulo ING01
   ```
 - `G4 Pro rechazó a DNI … (event=23)`: el equipo reconoció a una persona que no estaba habilitada (no pasó su DNI, tenía un documento vencido, o es otra persona).
-- `rostro no registrado (event=27)`: el equipo no tiene ese rostro (falta la foto, o la foto no sirvió).
+- `rostro no registrado (event=27)`: el equipo no tiene ese rostro (falta la foto, o la foto no sirvió). También llega con huella o tarjeta de personas no registradas.
+- Alcohol sobre el umbral: el G4 Pro envía `event=1` y en el Panel queda **denegado por alcohol** (sin abrir el molinete).
 - En el **Panel**, una persona habilitada aparece "en espera" con su foto; si no completa rostro y alcohol en 1 minuto, queda **"No completó rostro y alcohol"**.
 
 ---
@@ -771,7 +781,7 @@ El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por
 5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `Opciones_Integracion_G4Pro.md`, sección 7).
 6. **Respaldos fuera de la mini PC**, con regularidad (7.4).
 7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
-8. **Integración de equipos**: los lectores de DNI (8c), los relés de los molinetes (8d) y el G4 Pro (8e) funcionan con la mini PC. Falta confirmar el código que envía el G4 Pro con un rechazo real de alcohol.
+8. **Integración de equipos**: los lectores de DNI (8c), los relés de los molinetes (8d) y el G4 Pro (8e) funcionan con la mini PC. El rechazo por alcohol está confirmado (`event=1`); falta que el cliente defina el umbral de alcohol del G4 Pro (8e).
 
 ---
 

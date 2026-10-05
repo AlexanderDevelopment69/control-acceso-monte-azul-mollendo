@@ -47,9 +47,16 @@ Capturas de tráfico hechas con un contenedor temporal (`nicolaka/netshoot`, tcp
 - Con un documento vencido: el DNI se denegó al instante y el G4 Pro rechazó a la persona (`event=23`) porque no estaba habilitada.
 - Vencimiento: DNI 04:08:20 → habilitado → sin ir al equipo, 04:09:21 → denegado "No completó rostro y alcohol", deshabilitado, sin relé.
 
-### 0.4. Pendiente
+### 0.4. Alcohol (probado el 04/oct/2026)
 
-- **Rechazo real de alcohol** (Drink/Fail del DT1700): confirmar qué `event` envía el equipo (hoy, cualquier código distinto de 0/23/27 se toma como alcohol).
+- El G4 Pro pide soplar después del rostro y muestra el resultado ("Grado de alcohol 0.00 g/L, Sin problemas").
+- **Bloquea según su "Umbral de embriaguez"** (Configuración avanzada → Configuración del proceso de prueba de alcohol), que venía en **0.0025 g/L** (2.5 mg/L): una lectura de 0.000413 g/L mostró "Supera el valor estándar. Por favor, contacte al administrador" pero **lo dejó pasar** (`event=0`) porque estaba bajo el umbral. Con el umbral bajado, la misma prueba (enjuague bucal con alcohol) se rechazó.
+- **Código del rechazo por alcohol: `event=1`** (tres veces: 04:57:55, 05:04:57 y 05:15:36) → el sistema lo registró como **denegado por alcohol** y no activó el relé. Los soplidos limpios siguieron con `event=0` → autorizado y relé.
+- El rtlog **no trae el valor medido**: `Concentration` llega en 0 siempre. El control depende del umbral configurado en el equipo.
+- Otros códigos vistos: `event=27` con `verifytype=1` (huella) y `2` (tarjeta) de personas no registradas → rechazados, sin abrir.
+- **Configuración obligatoria:** el umbral lo fija el cliente según su política (la guía del DT1700 recomienda 0.02 mg/L = 0.00002 g/L).
+
+### 0.5. Pendiente
 - **Fotos de calidad**: el equipo necesita fotos de frente, con buena luz y el rostro centrado.
 - **Varios G4 Pro**: hoy todos los comandos van a todos los equipos conocidos (sección 3.6).
 

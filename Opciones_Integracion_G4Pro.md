@@ -285,7 +285,7 @@ La mini PC, los dos lectores de DNI, el G4 Pro, el DT1700 y los molinetes **ya e
    >
    > ~~**Esto NO cambia el diseño de apertura**: se decidió que el G4 Pro se queda abriendo el ingreso con su propio relé...~~ **Superado (02/oct/2026):** el cliente decidió la Alternativa 2 de la sección 5.3. El G4 Pro ya no abre el molinete: la mini PC lo abre con el relé de ingreso, tal como muestra el diagrama de la sección 2.1.
 2. ~~**Fecha de validez por usuario:** confirmar que el G4 Pro respeta `StartDatetime` / `EndDatetime` al segundo (no solo por día).~~ — **Ya no aplica**: el punto 1 confirma que el comando se rechaza por completo, antes siquiera de poder medir la precisión de la validez.
-3. **Alcohol — RESUELTO EN PARTE (30/set/2026):** se conectó el equipo físico real (G4 Pro + DT1700, SN `HSR3263100192`) a un servidor PUSH de prueba y se confirmó que **el dato de alcohol sí llega por el protocolo ADMS**, en tiempo real, apenas se completa la prueba. No llega en `ATTLOG`/`OPERLOG` (las tablas que documenta el protocolo oficial) sino en una tabla propia del firmware, **no documentada en ningún manual**: `table=rtlog`, con el campo `Concentration`. Evento real capturado:
+3. **Alcohol — RESUELTO (04/oct/2026):** el rechazo por alcohol llega como **`rtlog event=1`** (el sistema deniega por alcohol y no abre). El valor medido no viaja (`Concentration=0` siempre): el G4 Pro decide con su **"Umbral de embriaguez"** (Configuración avanzada), que venía en 0.0025 g/L y dejaba pasar lecturas positivas; hay que fijarlo según la política del cliente. Historial: **Alcohol — RESUELTO EN PARTE (30/set/2026):** se conectó el equipo físico real (G4 Pro + DT1700, SN `HSR3263100192`) a un servidor PUSH de prueba y se confirmó que **el dato de alcohol sí llega por el protocolo ADMS**, en tiempo real, apenas se completa la prueba. No llega en `ATTLOG`/`OPERLOG` (las tablas que documenta el protocolo oficial) sino en una tabla propia del firmware, **no documentada en ningún manual**: `table=rtlog`, con el campo `Concentration`. Evento real capturado:
    ```
    time=2026-09-30 18:22:37  pin=0  event=0  verifytype=15  Concentration=0  ...
    ```
@@ -350,7 +350,7 @@ Con el sistema ya integrado:
 4. **El G4 Pro no abre ningún molinete**: los dos se abren desde la mini PC, cada uno con su propio relé de red de 1 canal.
 5. **Respaldo ante fallas:** UPS, reinicio automático del sistema y respaldos de la base de datos. No hay apertura manual: el procedimiento ante una falla se define con el cliente (sección 7).
 
-**Estado (04/oct/2026):** los puntos 1 a 4 están programados y probados con los equipos reales en la mini PC. Los molinetes se abren con **módulos de relés USB** (uno por molinete) en lugar de relés de red; se recomienda pasar a relés industriales de red para la operación continua (`Registro_Despliegue_MiniPC.md`, 8d). **Falta:** confirmar el código que envía el G4 Pro con un rechazo real de alcohol (prueba 4) y cablear los relés a las borneras J3 de los molinetes.
+**Estado (04/oct/2026):** los puntos 1 a 4 están programados y probados con los equipos reales en la mini PC. Los molinetes se abren con **módulos de relés USB** (uno por molinete) en lugar de relés de red; se recomienda pasar a relés industriales de red para la operación continua (`Registro_Despliegue_MiniPC.md`, 8d). **Falta:** cablear los relés a las borneras J3 de los molinetes y que el cliente defina el umbral de alcohol del G4 Pro (el rechazo por alcohol ya está confirmado: `event=1`).
 
 ---
 
