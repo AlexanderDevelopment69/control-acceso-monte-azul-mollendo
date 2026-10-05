@@ -1,5 +1,5 @@
 import {
-  comandoBorrarPersona,
+  comandosBorrarPersona,
   comandoDeshabilitar,
   comandoFoto,
   comandoHabilitar,
@@ -32,7 +32,7 @@ describe('comandos del protocolo de control de acceso (G4 Pro)', () => {
 
   it('foto, borrado y permisos', () => {
     expect(comandoFoto('1', 'QUJD')).toBe('DATA UPDATE biophoto PIN=1\tType=9\tSize=4\tContent=QUJD\tFormat=0\tUrl=\tPostBackTmpFlag=0');
-    expect(comandoBorrarPersona('1')).toBe('DATA DELETE user Pin=1');
+    expect(comandosBorrarPersona('1')).toEqual(['DATA DELETE userauthorize Pin=1', 'DATA DELETE extuser Pin=1', 'DATA DELETE user Pin=1']);
     expect(comandoHabilitar('1')).toBe('DATA UPDATE userauthorize Pin=1\tAuthorizeTimezoneId=1\tAuthorizeDoorId=1');
     expect(comandoDeshabilitar('1')).toBe('DATA DELETE userauthorize Pin=1\tAuthorizeDoorId=1');
   });

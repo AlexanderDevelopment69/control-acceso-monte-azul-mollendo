@@ -56,9 +56,20 @@ Capturas de tráfico hechas con un contenedor temporal (`nicolaka/netshoot`, tcp
 - Otros códigos vistos: `event=27` con `verifytype=1` (huella) y `2` (tarjeta) de personas no registradas → rechazados, sin abrir.
 - **Configuración obligatoria:** el umbral lo fija el cliente según su política (la guía del DT1700 recomienda 0.02 mg/L = 0.00002 g/L).
 
-### 0.5. Pendiente
-- **Fotos de calidad**: el equipo necesita fotos de frente, con buena luz y el rostro centrado.
-- **Varios G4 Pro**: hoy todos los comandos van a todos los equipos conocidos (sección 3.6).
+### 0.5. Pendiente (al 05/oct/2026)
+
+| # | Pendiente | De quién depende | Dónde está explicado |
+|---|---|---|---|
+| 1 | **Umbral de alcohol** del G4 Pro: hoy está bajado solo para la prueba; el valor definitivo lo fija el cliente (la guía del DT1700 recomienda 0.02 mg/L) | Cliente | Sección 0.4 · `Registro_Despliegue_MiniPC.md` 8e |
+| 2 | **Cablear los relés** a los molinetes: contacto NO + COM de cada módulo → bornera J3 (K1 + COM) de su molinete, y probar que abra | Instalación | `Registro_Despliegue_MiniPC.md` 8d · `diagramas/ingreso.svg` y `salida.svg` |
+| 3 | **Nombre en el aviso del G4 Pro**: el mensaje "¡Verificación Exitosa!" muestra el nombre como "..." (el DNI sí aparece). El nombre está guardado (`extuser` FirstName/LastName) y la lista de usuarios lo muestra a veces sí y a veces no: parece de la pantalla del equipo, falta revisarlo | Desarrollo / proveedor | Sección 0.1 |
+| 4 | **Datos de demostración**: borrar los DEMO de la mini PC (incluida la persona de prueba "Amiel Bautista", DNI 48058719, que está en una empresa DEMO) con `prisma/limpiar-demo.sh`, y borrar ese usuario del G4 Pro | Desarrollo | `Registro_Despliegue_MiniPC.md` 8b |
+| 5 | **Cargar al personal real** en el portal (con foto de frente) y registrarlo en el G4 Pro con `POST /integraciones/g4pro/sincronizar` | Cliente / administrador | `Registro_Despliegue_MiniPC.md` 8e |
+| 6 | **Servidor de AWS**: tiene una versión anterior (sin lectores, relés, habilitación ni motivo nuevo). Actualizar si se va a seguir usando | Desarrollo | `PROGRESO.md` |
+| 7 | **Fotos de calidad**: el equipo necesita fotos de frente, con buena luz y el rostro centrado; si no reconoce a alguien (`event=27`), cambiar su foto | Administrador | Sección 0.2 |
+| 8a | **Usuarios registrados a mano en el equipo**: reciben permiso de paso permanente (un usuario manual dejó `userauthorize=50`) y rompen la regla de "una persona habilitada a la vez". Regla: no registrar a mano (guía 8e). El 05/oct se dejó el equipo limpio (2 usuarios, 2 nombres, 50 permisos, 1 rostro) y se volvió a registrar a Amiel desde el sistema | Operación | `Registro_Despliegue_MiniPC.md` 8e |
+| 8 | **Varios G4 Pro**: hoy todos los comandos van a todos los equipos conocidos | Desarrollo (si se agrega otro equipo) | Sección 3.6 |
+| 9 | **Relés industriales**: los módulos USB actuales sirven, pero para operación continua se recomiendan relés de red en riel DIN | Cliente | `Registro_Despliegue_MiniPC.md` 8d |
 
 ## 0b. Revisión del proyecto completo (30/set/2026)
 

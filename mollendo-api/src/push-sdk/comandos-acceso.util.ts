@@ -45,9 +45,13 @@ export function comandoFoto(pin: string, fotoBase64: string): string {
   return `DATA UPDATE biophoto PIN=${pin}${T}Type=9${T}Size=${fotoBase64.length}${T}Content=${fotoBase64}${T}Format=0${T}Url=${T}PostBackTmpFlag=0`;
 }
 
-/** Borra a la persona del equipo (con su rostro y sus permisos). */
-export function comandoBorrarPersona(pin: string): string {
-  return `DATA DELETE user Pin=${pin}`;
+/**
+ * Borra a la persona del equipo. `DATA DELETE user` borra su rostro, pero no su
+ * nombre (`extuser`) ni sus permisos (`userauthorize`): se borran aparte
+ * (confirmado con el equipo real, 05/oct/2026).
+ */
+export function comandosBorrarPersona(pin: string): string[] {
+  return [`DATA DELETE userauthorize Pin=${pin}`, `DATA DELETE extuser Pin=${pin}`, `DATA DELETE user Pin=${pin}`];
 }
 
 /** Permiso de paso (habilitar) o su retiro (deshabilitar). */

@@ -751,10 +751,22 @@ El G4 Pro no informa el valor medido al sistema, solo si la persona pasó o no: 
 
 ### Personas y rostros
 
+- **Nunca registrar personas a mano en el G4 Pro.** Un usuario creado desde la pantalla del equipo recibe **permiso de paso permanente** (se vio: un usuario manual dejó 50 permisos) y queda fuera del control del sistema: podría verificarse mientras otra persona está habilitada y el sistema se lo atribuiría a esa persona. Tampoco usar personas del sistema como **administradores del equipo**: el sistema les vuelve a poner privilegio normal al editarlas.
 - **No se registran a mano en el equipo.** Al dar de alta o editar a una persona en el portal, el sistema la carga en el G4 Pro con su **DNI como número de usuario** y su nombre; al subir su foto, se la envía y el equipo la convierte en el rostro que reconoce.
 - **Equipo nuevo o reinstalado:** registrar a todo el personal con `POST /api/v1/integraciones/g4pro/sincronizar` (Administrador; desde Swagger en `/api/docs`).
 - La **foto** debe ser de frente, con buena luz y el rostro centrado. Solo se registran documentos numéricos (DNI).
 - Ninguna persona tiene **permiso de paso** en el equipo, salvo la que está en su minuto de espera: el sistema se lo da al pasar su DNI en regla y se lo quita al terminar (una persona a la vez; las demás quedan "en cola").
+
+### Dejar el equipo limpio (si alguien registró personas a mano)
+
+Se hace con comandos encolados para el equipo (desde la base de datos, tabla `comando_dispositivo`), probado el 05/oct/2026:
+
+1. Ver los usuarios: `DATA QUERY tablename=user,fielddesc=*,filter=*` (la respuesta queda en el registro del backend: `Respuesta de … (tabledata user)`).
+2. Por cada número de usuario (`pin`): `DATA DELETE userauthorize Pin=<pin>`, `DATA DELETE extuser Pin=<pin>` y `DATA DELETE user Pin=<pin>`. **Borrar el usuario no borra su nombre ni sus permisos**: hay que borrarlos aparte.
+3. Comprobar con `DATA COUNT user`, `DATA COUNT userauthorize` y `DATA COUNT extuser` (deben dar 0).
+4. Volver a registrar al personal desde el sistema: `POST /api/v1/integraciones/g4pro/sincronizar`.
+
+El sistema ya borra las tres tablas cuando le cambia el documento a una persona.
 
 ### Comprobar
 
@@ -769,6 +781,16 @@ El G4 Pro no informa el valor medido al sistema, solo si la persona pasó o no: 
 - `rostro no registrado (event=27)`: el equipo no tiene ese rostro (falta la foto, o la foto no sirvió). También llega con huella o tarjeta de personas no registradas.
 - Alcohol sobre el umbral: el G4 Pro envía `event=1` y en el Panel queda **denegado por alcohol** (sin abrir el molinete).
 - En el **Panel**, una persona habilitada aparece "en espera" con su foto; si no completa rostro y alcohol en 1 minuto, queda **"No completó rostro y alcohol"**.
+
+### Antes de empezar a operar (lista de verificación)
+
+- [ ] **Umbral de alcohol** del G4 Pro fijado según la política del cliente (8e).
+- [ ] **Relés cableados** a las borneras J3 de los molinetes y probados con la orden manual (8d).
+- [ ] **Datos de demostración borrados** (8b), incluida la persona de prueba "Amiel Bautista" (DNI 48058719), y su usuario borrado del G4 Pro.
+- [ ] **Personal real cargado** en el portal, con foto de frente, y registrado en el G4 Pro (`POST /api/v1/integraciones/g4pro/sincronizar`).
+- [ ] **Adaptadores y módulos etiquetados** ("INGRESO" / "SALIDA").
+- [ ] **IP fija** de la mini PC reservada en el router (el G4 Pro apunta a ella).
+- [ ] Prueba completa con una persona real: DNI → rostro → alcohol → molinete de ingreso; y salida.
 
 ---
 

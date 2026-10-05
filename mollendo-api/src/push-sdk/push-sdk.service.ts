@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import type { EstadoComando } from '../generated/prisma/enums.js';
 import { convertirFotoParaG4Pro } from './foto-g4pro.util.js';
 import {
-  comandoBorrarPersona,
+  comandosBorrarPersona,
   comandoDeshabilitar,
   comandoFoto,
   comandoHabilitar,
@@ -154,7 +154,7 @@ export class PushSdkService {
     }
     const comandos: string[] = [];
     const pinAnterior = opciones.numeroAnterior ? pinDeDocumento(opciones.numeroAnterior) : null;
-    if (pinAnterior && pinAnterior !== pin) comandos.push(comandoBorrarPersona(pinAnterior));
+    if (pinAnterior && pinAnterior !== pin) comandos.push(...comandosBorrarPersona(pinAnterior));
     comandos.push(...comandosPersona({ pin, nombres: persona.nombres, apellidos: persona.apellidos }));
     // Con número nuevo hay que volver a mandar la foto (el usuario anterior se borró con su rostro).
     const mandarFoto = (opciones.conFoto || (pinAnterior !== null && pinAnterior !== pin)) && !!persona.fotoUrl;
@@ -176,7 +176,7 @@ export class PushSdkService {
   /** Borra a la persona de los G4 Pro (con su rostro y sus permisos). */
   async borrarPersonaDeEquipos(numeroDocumento: string): Promise<void> {
     const pin = pinDeDocumento(numeroDocumento);
-    if (pin) await this.encolarEnTodos([comandoBorrarPersona(pin)]);
+    if (pin) await this.encolarEnTodos(comandosBorrarPersona(pin));
   }
 
   /** Permiso de paso en los G4 Pro (habilitar) o su retiro (deshabilitar). */
