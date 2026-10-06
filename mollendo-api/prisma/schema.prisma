@@ -333,3 +333,23 @@ model Auditoria {
   @@index([fechaHora])
   @@map("auditoria")
 }
+
+// ---------------------------------------------------------------------
+// SINCRONIZACION_G4 (cada sincronización con los G4 Pro, manual o diaria)
+// Se guarda para que "Sistema y APIs" muestre la última aunque la API se
+// reinicie. `resultado` lleva el detalle (equipos, agregadas, borradas,
+// permisos quitados, usuarios a borrar y usuarios/rostros por equipo).
+// ---------------------------------------------------------------------
+model SincronizacionG4 {
+  id         Int      @id @default(autoincrement())
+  fecha      DateTime @default(now())
+  /// "manual" (botón o POST /integraciones/g4pro/sincronizar) o "diaria".
+  origen     String   @db.VarChar(10)
+  simulacion Boolean  @default(false)
+  /// Mensaje si falló (null si terminó bien).
+  error      String?
+  resultado  Json
+
+  @@index([fecha])
+  @@map("sincronizacion_g4")
+}

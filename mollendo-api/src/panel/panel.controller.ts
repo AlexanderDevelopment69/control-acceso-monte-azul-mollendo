@@ -100,7 +100,7 @@ export class PanelController {
       // Módulos de relés USB que abren los molinetes (uno por molinete).
       releMolinetes: await this.releUsb.estado(),
       // Sincronización con los G4 Pro: diaria activa o no, en curso y el último resultado.
-      sincronizacionG4: this.integraciones.estadoSincronizacion(),
+      sincronizacionG4: await this.integraciones.estadoSincronizacion(),
       respaldos: estadoRespaldos(),
       websocket: { namespace: '/ws/eventos' },
     };

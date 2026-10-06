@@ -153,7 +153,7 @@ time=2026-10-04 04:02:41  sensor=02  relay=01  alarm=0000000000000000  door=01
 | Cambio del número de documento | Borrar el anterior (`userauthorize`, `extuser`, `user`) + crear el nuevo con foto |
 | Pasa un DNI en regla | `userauthorize` (habilitar) — **una persona a la vez**; las demás quedan en cola |
 | Llega el resultado o vence el minuto | `DATA DELETE userauthorize` (deshabilitar) |
-| **Sincronización** (`POST /api/v1/integraciones/g4pro/sincronizar`, y todos los días a medianoche) | Consulta los usuarios del equipo (`DATA QUERY user`) y: **borra a los que el sistema no conoce** (registrados a mano), **quita los permisos de paso sueltos** (si `DATA COUNT userauthorize` es mayor que lo esperado) y **registra con foto a los activos que faltan**. `?simular=true` solo informa qué haría. En el portal: **Sistema y APIs → Sincronización con el G4 Pro** (Simular / Sincronizar ahora), que además muestra cuántos usuarios y rostros tiene cada equipo |
+| **Sincronización** (`POST /api/v1/integraciones/g4pro/sincronizar`, y todos los días a medianoche) | Consulta los usuarios del equipo (`DATA QUERY user`) y: **borra a los que el sistema no conoce** (registrados a mano), **quita los permisos de paso sueltos** (si `DATA COUNT userauthorize` es mayor que lo esperado) y **registra con foto a los activos que faltan**. `?simular=true` solo informa qué haría. En el portal: **Sistema y APIs → Sincronización con el G4 Pro** (Simular / Sincronizar ahora), que además muestra cuántos usuarios y rostros tiene cada equipo. Cada resultado (también las simulaciones y las fallidas) se guarda en la tabla `sincronizacion_g4`, así la última se sigue viendo después de reiniciar la API |
 | Baja de una persona | Nada: queda en el equipo, pero nunca se la habilita |
 
 ---

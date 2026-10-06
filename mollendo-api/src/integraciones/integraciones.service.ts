@@ -63,7 +63,6 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   private ultimaSincronizacion: string | null = null;
   private horaDiaria: number | null = null;
   private enCurso = false;
-  private ultimoResultado: ResultadoSincronizacion | null = null;
 
   constructor(
     private readonly pushSdk: PushSdkService,
@@ -119,30 +118,52 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
     if (this.enCurso) throw new ConflictException('Ya hay una sincronización con el G4 Pro en curso');
     this.enCurso = true;
     const inicio = new Date();
+    let resultado: ResultadoSincronizacion;
     try {
       const resumen = await this.sincronizarConEquipos(simular);
-      this.ultimoResultado = { ...resumen, origen, fecha: inicio.toISOString(), error: null };
+      resultado = { ...resumen, origen, fecha: inicio.toISOString(), error: null };
     } catch (error) {
-      this.ultimoResultado = {
-        ...RESUMEN_VACIO,
-        simulacion: simular,
-        origen,
-        fecha: inicio.toISOString(),
-        error: (error as Error).message,
-      };
+      resultado = { ...RESUMEN_VACIO, simulacion: simular, origen, fecha: inicio.toISOString(), error: (error as Error).message };
+      await this.guardarResultado(resultado);
       throw error;
     } finally {
       this.enCurso = false;
     }
-    return this.ultimoResultado;
+    await this.guardarResultado(resultado);
+    return resultado;
   }
 
-  /** Estado de la sincronización para "Sistema y APIs". */
-  estadoSincronizacion() {
+  /** Estado de la sincronización para "Sistema y APIs" (la última se lee de la base de datos). */
+  async estadoSincronizacion() {
     return {
       diaria: { activa: this.horaDiaria !== null, hora: this.horaDiaria },
       enCurso: this.enCurso,
-      ultima: this.ultimoResultado,
+      ultima: await this.ultimaGuardada(),
+    };
+  }
+
+  /** Se guarda cada sincronización para conservar la última aunque la API se reinicie. */
+  private async guardarResultado(resultado: ResultadoSincronizacion) {
+    const { fecha, origen, simulacion, error, ...detalle } = resultado;
+    try {
+      await this.prisma.sincronizacionG4.create({
+        data: { fecha: new Date(fecha), origen, simulacion, error, resultado: detalle },
+      });
+    } catch (e) {
+      this.logger.error(`No se pudo guardar el resultado de la sincronización con el G4 Pro: ${(e as Error).message}`);
+    }
+  }
+
+  private async ultimaGuardada(): Promise<ResultadoSincronizacion | null> {
+    const fila = await this.prisma.sincronizacionG4.findFirst({ orderBy: { id: 'desc' } });
+    if (!fila) return null;
+    return {
+      ...RESUMEN_VACIO,
+      ...(fila.resultado as Partial<ResultadoSincronizacion>),
+      simulacion: fila.simulacion,
+      origen: fila.origen === 'diaria' ? 'diaria' : 'manual',
+      fecha: fila.fecha.toISOString(),
+      error: fila.error,
     };
   }
 
