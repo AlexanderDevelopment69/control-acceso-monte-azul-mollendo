@@ -2,8 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
-import { panelApi } from "@/lib/api/endpoints";
-import type { EstadoDispositivo, EstadoLectorDni, EstadoReleUsb, EstadoRespaldos, EstadoSistema } from "@/lib/api/types";
+import { integracionesApi, panelApi } from "@/lib/api/endpoints";
+import { ApiError } from "@/lib/api/client";
+import Button from "@/components/ui/button/Button";
+import { Modal } from "@/components/ui/modal";
+import type {
+  EstadoDispositivo,
+  EstadoLectorDni,
+  EstadoReleUsb,
+  EstadoRespaldos,
+  EstadoSincronizacionG4,
+  EstadoSistema,
+  ResultadoSincronizacionG4,
+} from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -183,7 +194,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/personas · /personas/:id/foto · /integraciones/g4pro/sincronizar",
     metodo: "POST",
     descripcion:
-      "Al registrar o editar a una persona, el backend la carga en el G4 Pro con su DNI y su nombre, sin permiso de paso. Al subir su foto, se la envía convertida (JPG ≤ 20 KB) y el equipo la convierte en el rostro que reconoce: no hace falta registrar rostros a mano en el equipo. POST /integraciones/g4pro/sincronizar (solo Administrador; también todos los días a medianoche) deja el equipo igual al sistema: borra a quien el sistema no conoce (registrados a mano en el equipo), quita permisos de paso sueltos y registra con foto al personal activo que falta. Con ?simular=true solo informa qué haría.",
+      "Al registrar o editar a una persona, el backend la carga en el G4 Pro con su DNI y su nombre, sin permiso de paso. Al subir su foto, se la envía convertida (JPG ≤ 20 KB) y el equipo la convierte en el rostro que reconoce: no hace falta registrar rostros a mano en el equipo. POST /integraciones/g4pro/sincronizar (solo Administrador; también todos los días a medianoche) deja el equipo igual al sistema: borra a quien el sistema no conoce (registrados a mano en el equipo), quita permisos de paso sueltos y registra con foto al personal activo que falta. Con ?simular=true solo informa qué haría. También desde la tarjeta \"Sincronización con el G4 Pro\" de esta página.",
     autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: multipart/form-data (para la foto)"],
@@ -273,9 +284,11 @@ function RespaldosEstado({
 function EquiposEstado({
   comprobando,
   equipos,
+  sincronizacion,
 }: {
   comprobando: boolean;
   equipos?: EstadoSistema["equipos"];
+  sincronizacion?: EstadoSincronizacionG4;
 }) {
   if (comprobando) {
     return (
@@ -307,8 +320,163 @@ function EquiposEstado({
             {d.serialNumber}
             {!d.enLinea && ` · ${ultimaVez(d)}`}
           </p>
+          <ContenidoEquipo
+            datos={sincronizacion?.ultima?.porEquipo.find((e) => e.serialNumber === d.serialNumber)}
+            fecha={sincronizacion?.ultima?.fecha}
+          />
         </div>
       ))}
+    </div>
+  );
+}
+
+/** "1 persona" / "3 personas". */
+const personas = (n: number) => `${n} ${n === 1 ? "persona" : "personas"}`;
+
+/** Usuarios y rostros del equipo según la última sincronización (no se consulta en cada verificación). */
+function ContenidoEquipo({
+  datos,
+  fecha,
+}: {
+  datos?: ResultadoSincronizacionG4["porEquipo"][number];
+  fecha?: string;
+}) {
+  if (!datos || !fecha) {
+    return <p className="mt-1 text-xs text-gray-400">Usuarios: sin datos (sincroniza para verlos)</p>;
+  }
+  return (
+    <>
+      <p className="mt-1 text-xs text-gray-400">
+        {datos.usuarios} {datos.usuarios === 1 ? "persona registrada" : "personas registradas"} en el equipo ·{" "}
+        {datos.conRostro} con rostro · revisado el{" "}
+        {new Date(fecha).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}
+      </p>
+      {datos.sinRostro.length > 0 && (
+        <p className="mt-1 text-xs text-brand-500 dark:text-brand-400">
+          Sin rostro: {personas(datos.sinRostro.length)} (el equipo no puede reconocerlas)
+        </p>
+      )}
+    </>
+  );
+}
+
+/**
+ * Sincronización con los G4 Pro: si la diaria está activa, el último resultado
+ * y los botones para simularla o ejecutarla (la real pide confirmación).
+ */
+function SincronizacionG4({
+  estado,
+  onTerminada,
+}: {
+  estado?: EstadoSincronizacionG4;
+  onTerminada: () => void;
+}) {
+  const [ejecutando, setEjecutando] = useState<"simular" | "sincronizar" | null>(null);
+  const [confirmar, setConfirmar] = useState(false);
+  const [resultado, setResultado] = useState<ResultadoSincronizacionG4 | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const ultima = resultado ?? estado?.ultima ?? null;
+  const ocupado = ejecutando !== null || !!estado?.enCurso;
+
+  async function ejecutar(simular: boolean) {
+    setConfirmar(false);
+    setEjecutando(simular ? "simular" : "sincronizar");
+    setError(null);
+    try {
+      setResultado(await integracionesApi.sincronizarG4(simular));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo sincronizar con el G4 Pro");
+    } finally {
+      setEjecutando(null);
+      onTerminada();
+    }
+  }
+
+  return (
+    <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sincronización con el G4 Pro</h2>
+          <p className="mt-1 text-xs text-gray-400">
+            Deja el terminal igual al sistema: borra a quien no está registrado (por ejemplo, registrado a mano en el
+            equipo), quita permisos de paso sueltos y registra con foto al personal activo que falte.
+          </p>
+          <div className="mt-2">
+            {!estado ? (
+              <ComprobandoBadge />
+            ) : estado.diaria.activa ? (
+              <Badge color="success">Diaria activa · {String(estado.diaria.hora).padStart(2, "0")}:00</Badge>
+            ) : (
+              <Badge color="primary">Diaria desactivada</Badge>
+            )}
+            {estado?.enCurso && !ejecutando && (
+              <span className="ml-2">
+                <Badge color="info">En curso…</Badge>
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Button type="button" variant="outline" size="sm" disabled={ocupado} onClick={() => void ejecutar(true)}>
+            {ejecutando === "simular" ? "Simulando…" : "Simular"}
+          </Button>
+          <Button type="button" size="sm" disabled={ocupado} onClick={() => setConfirmar(true)}>
+            {ejecutando === "sincronizar" ? "Sincronizando…" : "Sincronizar ahora"}
+          </Button>
+        </div>
+      </div>
+
+      {ejecutando && (
+        <p className="mt-3 text-xs text-gray-400">Consultando al equipo; puede tardar hasta un minuto.</p>
+      )}
+      {error && <ErrorBanner className="mt-3">{error}</ErrorBanner>}
+
+      {ultima && (
+        <div className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm dark:bg-white/[0.03]">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Última: {new Date(ultima.fecha).toLocaleString("es-PE")} · {ultima.origen === "diaria" ? "diaria" : "manual"}
+            {ultima.simulacion && " · simulación (no se cambió nada)"}
+          </p>
+          {ultima.error ? (
+            <p className="mt-1 text-error-600 dark:text-error-400">Falló: {ultima.error}</p>
+          ) : (
+            <>
+              <p className="mt-1 text-gray-700 dark:text-gray-300">
+                {ultima.simulacion ? "Agregaría" : "Agregadas"}: <strong>{ultima.agregadas}</strong> ·{" "}
+                {ultima.simulacion ? "Borraría" : "Borrados"}: <strong>{ultima.borradas}</strong> ·{" "}
+                {ultima.simulacion ? "Permisos a quitar" : "Permisos quitados"}: <strong>{ultima.permisosQuitados}</strong>
+              </p>
+              {ultima.usuariosABorrar.length > 0 && (
+                <p className="mt-1 text-xs text-brand-500 dark:text-brand-400">
+                  En el equipo pero no registradas en el sistema: {personas(ultima.usuariosABorrar.length)}{" "}
+                  (probablemente creadas a mano en el equipo)
+                </p>
+              )}
+              {ultima.equiposSinRespuesta > 0 && (
+                <p className="mt-1 text-xs text-error-600 dark:text-error-400">
+                  {ultima.equiposSinRespuesta} equipo(s) no respondieron.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      <Modal isOpen={confirmar} onClose={() => setConfirmar(false)} className="max-w-md p-6 sm:p-8">
+        <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Sincronizar con el G4 Pro</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Se <strong>borrarán del terminal</strong> los usuarios que el sistema no conoce y se registrará con su foto al
+          personal activo que falte. Conviene usar antes <strong>“Simular”</strong> para ver qué cambiará.
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={() => setConfirmar(false)}>
+            Cancelar
+          </Button>
+          <Button type="button" onClick={() => void ejecutar(false)}>
+            Sincronizar
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -520,6 +688,8 @@ function SistemaContent() {
   const [error, setError] = useState(false);
   const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null);
   const comprobando = !estado && !error;
+  // Se incrementa para recargar el estado al terminar una sincronización.
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     let activo = true;
@@ -543,7 +713,7 @@ function SistemaContent() {
       activo = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [version]);
 
   return (
     <div>
@@ -601,7 +771,7 @@ function SistemaContent() {
 
         <StatusCard className="lg:col-span-4" icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Equipos (G4 Pro)</p>
-          <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} />
+          <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} sincronizacion={estado?.sincronizacionG4} />
         </StatusCard>
 
         <StatusCard className="lg:col-span-4" icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>
@@ -621,6 +791,8 @@ function SistemaContent() {
         </ErrorBanner>
       )}
 
+      <SincronizacionG4 estado={estado?.sincronizacionG4} onTerminada={() => setVersion((v) => v + 1)} />
+
       <div className="mb-6 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between px-5 py-4">
           <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Documentación de la API (Swagger)</h2>
@@ -637,7 +809,7 @@ function SistemaContent() {
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
-          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">APIs de integración (terminal ZKTeco, alcoholímetro y molinete)</h2>
+          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">APIs de integración (terminal facial ZKTeco con alcoholímetro, lectores de DNI y relés de los molinetes)</h2>
           <p className="mt-1 text-xs text-gray-400">Haz clic en una fila para ver el detalle de uso.</p>
         </div>
         <div className="overflow-x-auto">

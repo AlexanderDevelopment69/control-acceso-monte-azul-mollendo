@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import type { AbrirMolineteEvent, HabilitarEnEquipoEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
@@ -15,6 +15,31 @@ interface PersonaGuardadaEvent {
   personaId: number;
   numeroAnterior?: string;
 }
+
+/** Resultado de una sincronización con los G4 Pro (se muestra en "Sistema y APIs"). */
+export interface ResultadoSincronizacion {
+  simulacion: boolean;
+  origen: 'manual' | 'diaria';
+  fecha: string;
+  error: string | null;
+  equipos: number;
+  equiposSinRespuesta: number;
+  agregadas: number;
+  borradas: number;
+  permisosQuitados: number;
+  usuariosABorrar: string[];
+  porEquipo: { serialNumber: string; usuarios: number; conRostro: number; sinRostro: string[] }[];
+}
+
+const RESUMEN_VACIO = {
+  equipos: 0,
+  equiposSinRespuesta: 0,
+  agregadas: 0,
+  borradas: 0,
+  permisosQuitados: 0,
+  usuariosABorrar: [],
+  porEquipo: [],
+};
 
 /**
  * Adaptadores de los equipos físicos. La integración real está definida en
@@ -36,6 +61,9 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(IntegracionesService.name);
   private revisionDiaria: NodeJS.Timeout | null = null;
   private ultimaSincronizacion: string | null = null;
+  private horaDiaria: number | null = null;
+  private enCurso = false;
+  private ultimoResultado: ResultadoSincronizacion | null = null;
 
   constructor(
     private readonly pushSdk: PushSdkService,
@@ -87,7 +115,38 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
    * sueltos (salvo a la persona en su turno) y registra, con su foto, al
    * personal activo que falte. Con `simular`, solo informa qué haría.
    */
-  async sincronizarTodas(simular = false) {
+  async sincronizarTodas(simular = false, origen: 'manual' | 'diaria' = 'manual'): Promise<ResultadoSincronizacion> {
+    if (this.enCurso) throw new ConflictException('Ya hay una sincronización con el G4 Pro en curso');
+    this.enCurso = true;
+    const inicio = new Date();
+    try {
+      const resumen = await this.sincronizarConEquipos(simular);
+      this.ultimoResultado = { ...resumen, origen, fecha: inicio.toISOString(), error: null };
+    } catch (error) {
+      this.ultimoResultado = {
+        ...RESUMEN_VACIO,
+        simulacion: simular,
+        origen,
+        fecha: inicio.toISOString(),
+        error: (error as Error).message,
+      };
+      throw error;
+    } finally {
+      this.enCurso = false;
+    }
+    return this.ultimoResultado;
+  }
+
+  /** Estado de la sincronización para "Sistema y APIs". */
+  estadoSincronizacion() {
+    return {
+      diaria: { activa: this.horaDiaria !== null, hora: this.horaDiaria },
+      enCurso: this.enCurso,
+      ultima: this.ultimoResultado,
+    };
+  }
+
+  private async sincronizarConEquipos(simular: boolean) {
     const personas = await this.prisma.persona.findMany({ orderBy: { id: 'asc' } });
     const porPin = new Map<string, (typeof personas)[number]>();
     for (const persona of personas) {
@@ -116,6 +175,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
       borradas: limpieza.borrados,
       permisosQuitados: limpieza.permisosQuitados,
       usuariosABorrar: [...limpieza.sobrantes],
+      porEquipo: limpieza.porEquipo,
     };
     this.logger.log(`Sincronización con los G4 Pro: ${JSON.stringify(resumen)}`);
     return resumen;
@@ -130,13 +190,14 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`Sincronización diaria con los G4 Pro desactivada (G4PRO_HORA_SINCRONIZACION=${valor}); sigue disponible la manual`);
       return;
     }
+    this.horaDiaria = hora;
     this.logger.log(`Sincronización diaria con los G4 Pro a las ${hora}:00`);
     this.revisionDiaria = setInterval(() => {
       const ahora = new Date();
       const hoy = ahora.toDateString();
       if (ahora.getHours() === hora && this.ultimaSincronizacion !== hoy) {
         this.ultimaSincronizacion = hoy;
-        this.sincronizarTodas().catch((error: Error) => this.logger.error(`Sincronización diaria con los G4 Pro: ${error.message}`));
+        this.sincronizarTodas(false, 'diaria').catch((error: Error) => this.logger.error(`Sincronización diaria con los G4 Pro: ${error.message}`));
       }
     }, 10 * 60 * 1000);
   }

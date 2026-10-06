@@ -10,6 +10,7 @@ import { estadoRespaldos } from './respaldos.util.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
 import { ReleUsbService } from '../integraciones/rele-usb.service.js';
+import { IntegracionesService } from '../integraciones/integraciones.service.js';
 
 @Controller()
 export class PanelController {
@@ -20,6 +21,7 @@ export class PanelController {
     private readonly pushSdk: PushSdkService,
     private readonly lectoresDni: LectoresDniService,
     private readonly releUsb: ReleUsbService,
+    private readonly integraciones: IntegracionesService,
   ) {}
 
   @Get('panel/resumen')
@@ -97,6 +99,8 @@ export class PanelController {
       lectoresDni: this.lectoresDni.estado(),
       // Módulos de relés USB que abren los molinetes (uno por molinete).
       releMolinetes: await this.releUsb.estado(),
+      // Sincronización con los G4 Pro: diaria activa o no, en curso y el último resultado.
+      sincronizacionG4: this.integraciones.estadoSincronizacion(),
       respaldos: estadoRespaldos(),
       websocket: { namespace: '/ws/eventos' },
     };

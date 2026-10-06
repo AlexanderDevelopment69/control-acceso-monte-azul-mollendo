@@ -8,6 +8,6 @@ import { ReleUsbService } from './rele-usb.service.js';
   imports: [PushSdkModule],
   controllers: [IntegracionesController],
   providers: [IntegracionesService, ReleUsbService],
-  exports: [ReleUsbService],
+  exports: [ReleUsbService, IntegracionesService],
 })
 export class IntegracionesModule {}

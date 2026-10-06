@@ -168,8 +168,31 @@ export interface EstadoSistema {
   equipos: { total: number; enLinea: number; dispositivos: EstadoDispositivo[] };
   lectoresDni: { ingreso: EstadoLectorDni; salida: EstadoLectorDni };
   releMolinetes: EstadoReleUsb;
+  sincronizacionG4: EstadoSincronizacionG4;
   respaldos: EstadoRespaldos;
   websocket: { namespace: string };
+}
+
+/** Resultado de una sincronización con los G4 Pro (manual o diaria). */
+export interface ResultadoSincronizacionG4 {
+  simulacion: boolean;
+  origen: "manual" | "diaria";
+  fecha: string;
+  error: string | null;
+  equipos: number;
+  equiposSinRespuesta: number;
+  agregadas: number;
+  borradas: number;
+  permisosQuitados: number;
+  usuariosABorrar: string[];
+  /** Usuarios y rostros que tenía cada equipo al consultarlo (antes de los cambios). */
+  porEquipo: { serialNumber: string; usuarios: number; conRostro: number; sinRostro: string[] }[];
+}
+
+export interface EstadoSincronizacionG4 {
+  diaria: { activa: boolean; hora: number | null };
+  enCurso: boolean;
+  ultima: ResultadoSincronizacionG4 | null;
 }
 
 /** Relé USB que abre un molinete: si su módulo está conectado, cuál es y la última apertura. */

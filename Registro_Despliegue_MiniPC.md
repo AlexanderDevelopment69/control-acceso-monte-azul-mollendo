@@ -749,11 +749,23 @@ En el G4 Pro: **Configuración avanzada → Configuración del proceso de prueba
 
 El G4 Pro no informa el valor medido al sistema, solo si la persona pasó o no: el control de alcohol depende de este umbral.
 
+### Permiso de paso
+
+**Qué es el permiso de paso.** Es la autorización que el G4 Pro guarda para **dejar pasar** a una persona. Estar registrada en el equipo (con su rostro) no alcanza:
+
+- **Con rostro, sin permiso:** el G4 Pro la **reconoce pero la rechaza** ("acceso denegado", `event=23`).
+- **Con rostro y con permiso:** la reconoce, le toma la prueba de alcohol y, si sale bien, la **deja pasar** (`event=0`).
+
+**Cómo lo usa el sistema:** registra a todo el personal **sin permiso**; cuando una persona pasa su **DNI en regla**, le da el permiso **solo a ella, por 1 minuto**, y se lo quita al terminar o al vencer el minuto. Así el G4 Pro solo acepta a quien acaba de pasar su DNI (diagrama de ingreso, pasos 4 y 9).
+
+**Por qué no se registra a mano en el equipo:** el G4 Pro le da a quien se registra desde su pantalla un **permiso permanente** (se vio un usuario manual con `userauthorize=50`). Esa persona podría pasar sin DNI y, peor, verificarse mientras otra está habilitada: como el éxito llega sin decir quién fue, el sistema lo atribuiría a la persona del DNI y abriría el molinete. La sincronización borra esos usuarios y quita los permisos sueltos.
+
 ### Personas y rostros
 
 - **Nunca registrar personas a mano en el G4 Pro.** Un usuario creado desde la pantalla del equipo recibe **permiso de paso permanente** (se vio: un usuario manual dejó 50 permisos) y queda fuera del control del sistema: podría verificarse mientras otra persona está habilitada y el sistema se lo atribuiría a esa persona. Tampoco usar personas del sistema como **administradores del equipo**: el sistema les vuelve a poner privilegio normal al editarlas.
 - **No se registran a mano en el equipo.** Al dar de alta o editar a una persona en el portal, el sistema la carga en el G4 Pro con su **DNI como número de usuario** y su nombre; al subir su foto, se la envía y el equipo la convierte en el rostro que reconoce.
-- **Sincronización:** `POST /api/v1/integraciones/g4pro/sincronizar` (Administrador; desde Swagger en `/api/docs`) deja el equipo igual al sistema: **borra a los usuarios que el sistema no conoce** (por ejemplo, registrados a mano), **quita los permisos de paso sueltos** y **registra con foto al personal activo que falta**. Se hace sola **todos los días a medianoche** (la hora se cambia con `G4PRO_HORA_SINCRONIZACION` en `.env`, de 0 a 23; con `off` se desactiva y queda solo la manual). **Hoy está desactivada en la mini PC (`off`) mientras existan los datos DEMO**: activarla (quitar la línea o poner `0`) después de borrarlos. Con `?simular=true` solo informa qué haría (`usuariosABorrar`, `agregadas`, `permisosQuitados`). Usarla al instalar un equipo nuevo o reinstalado.
+- **Sincronización:** desde **Sistema y APIs → "Sincronización con el G4 Pro"** (botones **Simular** y **Sincronizar ahora**, que pide confirmación), o con `POST /api/v1/integraciones/g4pro/sincronizar` (Administrador) deja el equipo igual al sistema: **borra a los usuarios que el sistema no conoce** (por ejemplo, registrados a mano), **quita los permisos de paso sueltos** y **registra con foto al personal activo que falta**. Se hace sola **todos los días a medianoche** (la hora se cambia con `G4PRO_HORA_SINCRONIZACION` en `.env`, de 0 a 23; con `off` se desactiva y queda solo la manual). **Hoy está desactivada en la mini PC (`off`) mientras existan los datos DEMO**: activarla (quitar la línea o poner `0`) después de borrarlos. Con `?simular=true` solo informa qué haría (`usuariosABorrar`, `agregadas`, `permisosQuitados`). Usarla al instalar un equipo nuevo o reinstalado.
+- En **Sistema y APIs**, la tarjeta del G4 Pro muestra cuántos **usuarios** y **rostros** tiene el equipo (y los usuarios **sin rostro**), según la última sincronización o simulación; la tarjeta de sincronización muestra si la diaria está activa y el último resultado, incluidos los **usuarios que el sistema no conoce**.
 - **Ojo con los datos de demostración:** la sincronización registra en el equipo a todo el personal **activo**, también al DEMO (con fotos que no son rostros). Borrar los datos DEMO antes de operar (8b).
 - La **foto** debe ser de frente, con buena luz y el rostro centrado. Solo se registran documentos numéricos (DNI).
 - Ninguna persona tiene **permiso de paso** en el equipo, salvo la que está en su minuto de espera: el sistema se lo da al pasar su DNI en regla y se lo quita al terminar (una persona a la vez; las demás quedan "en cola").

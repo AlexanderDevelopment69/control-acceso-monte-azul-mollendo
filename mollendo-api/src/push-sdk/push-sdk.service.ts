@@ -287,6 +287,8 @@ export class PushSdkService {
       permisosQuitados: 0,
       faltantes: new Set<string>(),
       sobrantes: new Set<string>(),
+      /** Por equipo: usuarios y rostros que tenía al consultarlo (antes de los cambios). */
+      porEquipo: [] as { serialNumber: string; usuarios: number; conRostro: number; sinRostro: string[] }[],
     };
     for (const dispositivo of await this.prisma.dispositivoAcceso.findMany()) {
       const usuarios = await this.consultar(dispositivo.id, 'DATA QUERY tablename=user,fielddesc=*,filter=*');
@@ -296,6 +298,16 @@ export class PushSdkService {
       }
       resultado.equipos++;
       const pinsEquipo = pinsDeRespuestaUsuarios(usuarios);
+      // Rostros: se listan (el DATA COUNT biodata de este firmware da 0 aunque existan).
+      const rostros = new Set(
+        pinsDeRespuestaUsuarios((await this.consultar(dispositivo.id, 'DATA QUERY tablename=biodata,fielddesc=*,filter=*')) ?? ''),
+      );
+      resultado.porEquipo.push({
+        serialNumber: dispositivo.serialNumber,
+        usuarios: pinsEquipo.length,
+        conRostro: pinsEquipo.filter((pin) => rostros.has(pin)).length,
+        sinRostro: pinsEquipo.filter((pin) => !rostros.has(pin)),
+      });
       const plan = planDeSincronizacion(pinsEquipo, pinsSistema, pinsActivos);
       const comandos = plan.sobrantes.flatMap((pin) => comandosBorrarPersona(pin));
       plan.faltantes.forEach((pin) => resultado.faltantes.add(pin));

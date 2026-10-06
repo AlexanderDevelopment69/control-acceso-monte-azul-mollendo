@@ -66,6 +66,16 @@ Se encolan en `comando_dispositivo` y el equipo los recoge en el siguiente `getr
 
 ### 4.2. Permiso de paso (habilitación)
 
+**Qué es el permiso de paso.** Es la autorización que el G4 Pro guarda para **dejar pasar** a una persona. Estar registrada en el equipo (con su rostro) no alcanza:
+
+- **Con rostro, sin permiso:** el G4 Pro la **reconoce pero la rechaza** ("acceso denegado", `event=23`).
+- **Con rostro y con permiso:** la reconoce, le toma la prueba de alcohol y, si sale bien, la **deja pasar** (`event=0`).
+
+**Cómo lo usa el sistema:** registra a todo el personal **sin permiso**; cuando una persona pasa su **DNI en regla**, le da el permiso **solo a ella, por 1 minuto**, y se lo quita al terminar o al vencer el minuto. Así el G4 Pro solo acepta a quien acaba de pasar su DNI (diagrama de ingreso, pasos 4 y 9).
+
+**Por qué no se registra a mano en el equipo:** el G4 Pro le da a quien se registra desde su pantalla un **permiso permanente** (se vio un usuario manual con `userauthorize=50`). Esa persona podría pasar sin DNI y, peor, verificarse mientras otra está habilitada: como el éxito llega sin decir quién fue, el sistema lo atribuiría a la persona del DNI y abriría el molinete. La sincronización borra esos usuarios y quita los permisos sueltos.
+
+
 | Comando | Para qué |
 |---|---|
 | `DATA UPDATE userauthorize Pin=<DNI> AuthorizeTimezoneId=1 AuthorizeDoorId=1` | Habilitar: el equipo acepta su rostro |
@@ -143,7 +153,7 @@ time=2026-10-04 04:02:41  sensor=02  relay=01  alarm=0000000000000000  door=01
 | Cambio del número de documento | Borrar el anterior (`userauthorize`, `extuser`, `user`) + crear el nuevo con foto |
 | Pasa un DNI en regla | `userauthorize` (habilitar) — **una persona a la vez**; las demás quedan en cola |
 | Llega el resultado o vence el minuto | `DATA DELETE userauthorize` (deshabilitar) |
-| **Sincronización** (`POST /api/v1/integraciones/g4pro/sincronizar`, y todos los días a medianoche) | Consulta los usuarios del equipo (`DATA QUERY user`) y: **borra a los que el sistema no conoce** (registrados a mano), **quita los permisos de paso sueltos** (si `DATA COUNT userauthorize` es mayor que lo esperado) y **registra con foto a los activos que faltan**. `?simular=true` solo informa qué haría |
+| **Sincronización** (`POST /api/v1/integraciones/g4pro/sincronizar`, y todos los días a medianoche) | Consulta los usuarios del equipo (`DATA QUERY user`) y: **borra a los que el sistema no conoce** (registrados a mano), **quita los permisos de paso sueltos** (si `DATA COUNT userauthorize` es mayor que lo esperado) y **registra con foto a los activos que faltan**. `?simular=true` solo informa qué haría. En el portal: **Sistema y APIs → Sincronización con el G4 Pro** (Simular / Sincronizar ahora), que además muestra cuántos usuarios y rostros tiene cada equipo |
 | Baja de una persona | Nada: queda en el equipo, pero nunca se la habilita |
 
 ---

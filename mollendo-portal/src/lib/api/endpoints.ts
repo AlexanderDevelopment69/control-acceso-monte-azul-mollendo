@@ -12,6 +12,7 @@ import type {
   Paginado,
   Persona,
   PersonaPermanencia,
+  ResultadoSincronizacionG4,
   ResumenPanel,
   RolUsuario,
   TipoDocumento,
@@ -119,6 +120,15 @@ export const panelApi = {
   permanencia: (params: { pagina?: number; porPagina?: number } = {}) =>
     apiRequest<Paginado<PersonaPermanencia>>(`/panel/dashboard/permanencia${consulta(params)}`),
   estadoSistema: () => apiRequest<EstadoSistema>("/panel/estado-sistema"),
+};
+
+// ---- integraciones ----
+export const integracionesApi = {
+  /** Deja los G4 Pro iguales al sistema; con simular, solo informa qué haría. */
+  sincronizarG4: (simular: boolean) =>
+    apiRequest<ResultadoSincronizacionG4>(`/integraciones/g4pro/sincronizar${simular ? "?simular=true" : ""}`, {
+      method: "POST",
+    }),
 };
 
 // ---- auditoria ----
