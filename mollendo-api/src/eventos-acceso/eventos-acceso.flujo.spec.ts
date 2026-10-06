@@ -115,6 +115,7 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
   let ahora: number;
 
   const ingreso = (dni: string) => servicio.registrarIngreso({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Ingreso' });
+  const salida = (dni: string) => servicio.registrarSalida({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Salida' });
   const rtlog = (eventCode: string, pin = '0') =>
     servicio.correlacionarVerificacionDispositivo({
       verificacionId: 1,
@@ -270,5 +271,49 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
     expect(base.eventos[2]).toMatchObject({ denegadoNoRegistrado: true });
     expect(de('g4pro.habilitar')).toHaveLength(0);
     expect(base.pendientes).toHaveLength(0);
+  });
+
+  describe('Salida (solo DNI, diagrama de salida)', () => {
+    it('persona registrada: salida autorizada y relé de salida, sin pasar por el G4 Pro', async () => {
+      agregarPersona(base, '11111111');
+      const r = await salida('11111111');
+      expect(r).toMatchObject({ tipoMovimiento: 'salida', resultado: 'autorizado', numeroDocumento: '11111111' });
+      expect(base.eventos).toEqual([expect.objectContaining({ tipoMovimiento: 'salida', resultado: 'autorizado', torniqueteId: 'Salida' })]);
+      expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'salida', torniqueteId: 'Salida' })]);
+      expect(de('evento-acceso.registrado')).toHaveLength(1);
+      expect(de('g4pro.habilitar')).toHaveLength(0);
+      expect(base.pendientes).toHaveLength(0);
+    });
+
+    it('dado de baja o con documentos vencidos: igual sale (no se retiene a nadie adentro)', async () => {
+      agregarPersona(base, '44444444', { baja: true });
+      agregarPersona(base, '55555555', { vencido: true });
+      await salida('44444444');
+      await salida('55555555');
+      expect(base.eventos.map((e) => e.resultado)).toEqual(['autorizado', 'autorizado']);
+      expect(de('molinete.abrir')).toHaveLength(2);
+    });
+
+    it('no registrado: salida denegada, sin relé', async () => {
+      const r = await salida('99999999');
+      expect(r).toMatchObject({ tipoMovimiento: 'salida', resultado: 'denegado', motivos: { personaNoRegistrada: true } });
+      expect(base.eventos[0]).toMatchObject({ tipoMovimiento: 'salida', denegadoNoRegistrado: true });
+      expect(de('molinete.abrir')).toHaveLength(0);
+      expect(de('evento-acceso.registrado')).toHaveLength(1);
+    });
+
+    it('una salida no afecta a quien espera en el ingreso', async () => {
+      agregarPersona(base, '11111111');
+      agregarPersona(base, '22222222');
+      await ingreso('11111111');
+      await salida('22222222');
+      expect(base.pendientes[0].consumidoEn).toBeNull();
+      await rtlog('0');
+      expect(base.eventos.map((e) => [e.numeroDocumento, e.tipoMovimiento, e.resultado])).toEqual([
+        ['22222222', 'salida', 'autorizado'],
+        ['11111111', 'ingreso', 'autorizado'],
+      ]);
+      expect(de('molinete.abrir').map((e) => e.tipoMovimiento)).toEqual(['salida', 'ingreso']);
+    });
   });
 });

@@ -778,7 +778,9 @@ function SistemaContent() {
       <TituloSeccion>Equipos de acceso</TituloSeccion>
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
         <StatusCard className="lg:col-span-4" icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Equipos (G4 Pro)</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {(estado?.equipos.total ?? 1) > 1 ? "Equipos" : "Equipo"} (G4 Pro)
+          </p>
           <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} sincronizacion={estado?.sincronizacionG4} />
         </StatusCard>
 
