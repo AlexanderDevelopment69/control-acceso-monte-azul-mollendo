@@ -12,11 +12,13 @@ import {
 } from './comandos-acceso.util.js';
 
 describe('comandos del protocolo de control de acceso (G4 Pro)', () => {
-  it('usa el DNI como Pin; los documentos no numéricos no se registran', () => {
+  it('usa el número de documento como Pin: DNI, carné de extranjería o pasaporte (hasta 24)', () => {
     expect(pinDeDocumento('48058719')).toBe('48058719');
     expect(pinDeDocumento(' 48058719 ')).toBe('48058719');
-    expect(pinDeDocumento('AB123456')).toBeNull();
-    expect(pinDeDocumento('1234567890')).toBeNull();
+    expect(pinDeDocumento('99ce00451')).toBe('99CE00451');
+    expect(pinDeDocumento('ABCDEFGHIJ1234567890KLMN')).toBe('ABCDEFGHIJ1234567890KLMN');
+    expect(pinDeDocumento('ABCDEFGHIJ1234567890KLMNO')).toBeNull();
+    expect(pinDeDocumento('AB-123')).toBeNull();
   });
 
   it('limpia los textos: sin tabuladores, saltos ni "=", y acotados', () => {

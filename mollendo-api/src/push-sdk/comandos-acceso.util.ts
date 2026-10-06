@@ -14,10 +14,15 @@
  */
 const T = '\t';
 
-/** Pin del equipo: el número de documento, si es numérico (DNI). Otros documentos no se pueden registrar. */
+/**
+ * Pin del equipo: el número de documento (DNI, carné de extranjería o
+ * pasaporte). El G4 Pro acepta letras y números de hasta 24 caracteres
+ * (confirmado con el equipo real, 05/oct/2026: "99CE00451" y pins de 12, 18 y
+ * 24 caracteres, también para el permiso de paso).
+ */
 export function pinDeDocumento(numeroDocumento: string): string | null {
-  const limpio = numeroDocumento.trim();
-  return /^\d{1,9}$/.test(limpio) ? limpio : null;
+  const limpio = numeroDocumento.trim().toUpperCase();
+  return /^[A-Z0-9]{1,24}$/.test(limpio) ? limpio : null;
 }
 
 /** Texto apto para un campo del comando: sin tabuladores ni saltos de línea, y acotado. */

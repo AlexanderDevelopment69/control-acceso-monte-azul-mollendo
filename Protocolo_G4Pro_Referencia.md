@@ -58,7 +58,7 @@ Se encolan en `comando_dispositivo` y el equipo los recoge en el siguiente `getr
 
 | Comando | Para qué | Notas (confirmado con el equipo) |
 |---|---|---|
-| `DATA UPDATE user CardNo= Pin=<DNI> Password= Group=0 StartTime=0 EndTime=0 Name=<nombre> Privilege=0` | Alta o actualización de la persona | El DNI es el número de usuario (`Pin`). Solo documentos numéricos. **No le da permiso de paso.** `Privilege=14` = administrador del equipo |
+| `DATA UPDATE user CardNo= Pin=<DNI> Password= Group=0 StartTime=0 EndTime=0 Name=<nombre> Privilege=0` | Alta o actualización de la persona | El número de documento es el número de usuario (`Pin`): **letras y números, hasta 24 caracteres** (probado con `99CE00451` y pins de 12, 18 y 24 caracteres, también en `userauthorize`). **No le da permiso de paso.** `Privilege=14` = administrador del equipo |
 | `DATA UPDATE extuser Pin=<DNI> FunSwitch=0 FirstName=<nombres> LastName=<apellidos> PersonalVs=0` | Nombre y apellido que **muestra la pantalla** | El campo `Name` de `user` no se ve en la lista; un nombre escrito a mano en el equipo se guarda aquí |
 | `DATA UPDATE biophoto PIN=<DNI> Type=9 Size=<largo del base64> Content=<JPG en base64> Format=0 Url= PostBackTmpFlag=0` | Foto de la persona | El equipo la convierte en la **plantilla de rostro** (`biodata`, tipo 9) con la que reconoce. JPG ≤ 20 KB (lo convierte `foto-g4pro.util.ts`). Foto de frente, con buena luz |
 | `DATA DELETE user Pin=<DNI>` | Borrar a la persona y su rostro | **No borra su nombre (`extuser`) ni sus permisos (`userauthorize`)**: hay que borrarlos aparte |

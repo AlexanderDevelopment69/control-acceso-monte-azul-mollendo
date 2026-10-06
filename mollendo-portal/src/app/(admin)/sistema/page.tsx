@@ -209,7 +209,7 @@ Persona 12345678 encolada para 1 equipo(s), con foto
 // POST /integraciones/g4pro/sincronizar → 201
 { "simulacion": false, "equipos": 1, "agregadas": 16, "borradas": 1, "permisosQuitados": 1, "usuariosABorrar": ["777"] }`,
     notas:
-      "Solo se registran documentos numéricos (DNI). Si se cambia el número de documento, se borra el usuario anterior del equipo. La foto debe ser de frente, con buena luz y el rostro centrado. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
+      "Se registran con su número de documento (DNI, carné de extranjería o pasaporte: el equipo acepta letras, hasta 24 caracteres); los lectores, por ahora, solo reconocen el DNI. Si se cambia el número de documento, se borra el usuario anterior del equipo. La foto debe ser de frente, con buena luz y el rostro centrado. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
   },
 ];
 

@@ -157,7 +157,7 @@ DATA UPDATE biophoto  PIN=45678912  Type=9  Size=<largo>  Content=<foto JPG ≤ 
 | Se renueva, agrega o elimina un documento | Ninguna: lo evalúa la mini PC cuando la persona pasa su DNI |
 | Sincronización (equipo nuevo, y todos los días a medianoche) | `POST /integraciones/g4pro/sincronizar`: borra del equipo a quien el sistema no conoce, quita permisos sueltos y registra con foto al personal activo que falta |
 
-Solo se registran documentos **numéricos** (DNI); el carné de extranjería y el pasaporte, no.
+Se registran todos los documentos: el G4 Pro acepta letras y números de hasta 24 caracteres (DNI, carné de extranjería y pasaporte; confirmado el 05/oct/2026).
 
 ### 4.2. Habilitación (cada vez que la persona pasa su DNI)
 
