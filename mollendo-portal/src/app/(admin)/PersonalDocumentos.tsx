@@ -155,7 +155,7 @@ export function PersonalDocumentos() {
               ))}
             </div>
             {filtro === "no-habilitados" && !loading && (
-              <div className="flex flex-wrap gap-1.5 text-xs">
+              <div className="flex gap-1 text-xs">
                 {(
                   [
                     ["todos", `Todos (${noHabilitados})`, "Todos los que no pueden ingresar"],
@@ -172,7 +172,7 @@ export function PersonalDocumentos() {
                     type="button"
                     title={ayuda}
                     onClick={() => setMotivoFiltro(id)}
-                    className={`whitespace-nowrap rounded-full px-3 py-1 font-medium transition-colors ${
+                    className={`flex-1 whitespace-nowrap rounded-full px-2 py-1 font-medium transition-colors ${
                       motivoFiltro === id
                         ? "bg-brand-50 text-brand-600 ring-1 ring-brand-200 dark:bg-brand-500/15 dark:text-brand-400 dark:ring-brand-500/30"
                         : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
