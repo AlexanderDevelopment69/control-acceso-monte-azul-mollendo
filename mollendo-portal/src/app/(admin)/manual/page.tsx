@@ -54,7 +54,9 @@ const SECCIONES: SeccionManual[] = [
           <Link href="/" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Personal y documentos</Link> es
           la pantalla de trabajo. A la izquierda está la lista del personal de todas las empresas; cada persona lleva un{" "}
           <strong>✔</strong> si hoy puede ingresar o un <strong>✖</strong> con el motivo si no puede. Puedes buscar por
-          nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar (los números de cada
+          nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar; en{" "}
+          <strong>No pueden</strong> se puede separar a quienes no pueden <strong>por documentos</strong> (sin cargar o
+          vencidos; podrán ingresar en cuanto se regularicen) de los <strong>dados de baja</strong> (los números de cada
           pestaña cuentan solo lo que queda con la empresa y la búsqueda elegidas).
         </p>
         <ol className="list-decimal space-y-1 pl-5">

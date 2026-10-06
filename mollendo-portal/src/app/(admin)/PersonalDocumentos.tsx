@@ -13,6 +13,8 @@ import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
 import { PersonaFicha, motivosCumplimiento } from "@/components/personal/PersonaFicha";
 
 type Filtro = "todos" | "habilitados" | "no-habilitados";
+/** Dentro de "No pueden": por documentos (sin cargar o vencidos) o dados de baja. */
+type MotivoFiltro = "todos" | "documentos" | "baja";
 
 /**
  * Pantalla principal del administrador (alcance base, "una sola vista"):
@@ -37,6 +39,7 @@ export function PersonalDocumentos() {
   const [busqueda, setBusqueda] = useState("");
   const [empresaFiltro, setEmpresaFiltro] = useState("todas");
   const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [motivoFiltro, setMotivoFiltro] = useState<MotivoFiltro>("todos");
 
   // Tras registrar o subir un documento cambia el ✔/✖.
   const recargar = useCallback(async () => {
@@ -80,9 +83,14 @@ export function PersonalDocumentos() {
     );
   });
   const noHabilitados = visibles.filter((p) => p.cumplimiento && !p.cumplimiento.habilitado).length;
+  const deBaja = visibles.filter((p) => p.cumplimiento?.dadoDeBaja).length;
   const filtradas = visibles.filter((p) => {
     if (filtro === "habilitados") return !!p.cumplimiento?.habilitado;
-    if (filtro === "no-habilitados") return !p.cumplimiento?.habilitado;
+    if (filtro === "no-habilitados") {
+      if (p.cumplimiento?.habilitado) return false;
+      if (motivoFiltro === "documentos") return !p.cumplimiento?.dadoDeBaja;
+      if (motivoFiltro === "baja") return !!p.cumplimiento?.dadoDeBaja;
+    }
     return true;
   });
 
@@ -146,6 +154,35 @@ export function PersonalDocumentos() {
                 </button>
               ))}
             </div>
+            {filtro === "no-habilitados" && !loading && (
+              <div className="flex flex-wrap gap-1.5 text-xs">
+                {(
+                  [
+                    ["todos", `Todos (${noHabilitados})`, "Todos los que no pueden ingresar"],
+                    [
+                      "documentos",
+                      `Documentos (${noHabilitados - deBaja})`,
+                      "Activos con documentos sin cargar o vencidos: podrán ingresar al regularizarlos",
+                    ],
+                    ["baja", `De baja (${deBaja})`, "Dados de baja: no pueden ingresar"],
+                  ] as [MotivoFiltro, string, string][]
+                ).map(([id, label, ayuda]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    title={ayuda}
+                    onClick={() => setMotivoFiltro(id)}
+                    className={`whitespace-nowrap rounded-full px-3 py-1 font-medium transition-colors ${
+                      motivoFiltro === id
+                        ? "bg-brand-50 text-brand-600 ring-1 ring-brand-200 dark:bg-brand-500/15 dark:text-brand-400 dark:ring-brand-500/30"
+                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <ul className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto dark:divide-gray-800 lg:max-h-[calc(100vh-20rem)]">
             {loading && <li className="p-4 text-sm text-gray-400">Cargando…</li>}
