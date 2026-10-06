@@ -566,6 +566,11 @@ function StatusCard({ icon, children, className = "" }: { icon: React.ReactNode;
   );
 }
 
+/** Título de cada grupo de tarjetas. */
+function TituloSeccion({ children }: { children: React.ReactNode }) {
+  return <h2 className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">{children}</h2>;
+}
+
 function EstadoIntegracionBadge({
   api,
   backendUp,
@@ -729,8 +734,9 @@ function SistemaContent() {
         }
       />
 
-      {/* Arriba el sistema (4 tarjetas), abajo los equipos de garita (3). */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
+      {/* Las tarjetas se agrupan: el servidor (4) y los equipos de garita (3), con la sincronización del G4 Pro debajo. */}
+      <TituloSeccion>Servidor</TituloSeccion>
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
         <StatusCard className="lg:col-span-3" icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
@@ -751,7 +757,6 @@ function SistemaContent() {
           {estado && <p className="mt-2 text-xs text-gray-400">Latencia: {estado.baseDeDatos.latenciaMs} ms</p>}
         </StatusCard>
 
-
         <StatusCard className="lg:col-span-3" icon={<LockIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Clave de equipos físicos</p>
           <div className="mt-2">
@@ -768,7 +773,10 @@ function SistemaContent() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Respaldos</p>
           <RespaldosEstado comprobando={comprobando} respaldos={estado?.respaldos} ahora={estado?.api.fecha} />
         </StatusCard>
+      </div>
 
+      <TituloSeccion>Equipos de acceso</TituloSeccion>
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
         <StatusCard className="lg:col-span-4" icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Equipos (G4 Pro)</p>
           <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} sincronizacion={estado?.sincronizacionG4} />
@@ -793,6 +801,7 @@ function SistemaContent() {
 
       <SincronizacionG4 estado={estado?.sincronizacionG4} onTerminada={() => setVersion((v) => v + 1)} />
 
+      <TituloSeccion>APIs</TituloSeccion>
       <div className="mb-6 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between px-5 py-4">
           <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Documentación de la API (Swagger)</h2>
