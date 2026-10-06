@@ -174,7 +174,7 @@ export function PersonalDocumentos() {
                     onClick={() => setMotivoFiltro(id)}
                     className={`flex-1 whitespace-nowrap rounded-full px-2 py-1 font-medium transition-colors ${
                       motivoFiltro === id
-                        ? "bg-brand-50 text-brand-600 ring-1 ring-brand-200 dark:bg-brand-500/15 dark:text-brand-400 dark:ring-brand-500/30"
+                        ? "bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
                         : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
                     }`}
                   >
