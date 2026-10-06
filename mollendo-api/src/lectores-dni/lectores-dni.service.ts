@@ -138,7 +138,10 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
     for (const linea of lector.separador.agregar(pedazo.toString('latin1'))) {
       const documento = extraerDocumento(linea);
       if (!documento) {
-        this.logger.warn(`Lector de DNI de ${lector.movimiento}: se ignoró una lectura que no es un DNI (${linea.length} caracteres)`);
+        // Se anota lo que envió (acotado y sin caracteres de control) para poder adaptar
+        // la lectura a otros documentos, como el carné de extranjería (pendiente de probar).
+        const contenido = linea.replace(/[^\x20-\x7E]/g, '?').slice(0, 120);
+        this.logger.warn(`Lector de DNI de ${lector.movimiento}: se ignoró una lectura que no es un DNI (${linea.length} caracteres): "${contenido}"`);
         continue;
       }
       if (lector.repetidos.esRepetido(documento.numeroDocumento)) continue;

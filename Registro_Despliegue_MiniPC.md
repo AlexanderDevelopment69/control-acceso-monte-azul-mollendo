@@ -623,6 +623,19 @@ A diferencia de los relés (que venían todos con la misma serie y hubo que camb
 - Si se **reemplaza un adaptador** por uno nuevo, hay que poner su ruta en `.env` (`LECTOR_DNI_INGRESO_DISPOSITIVO` o `LECTOR_DNI_SALIDA_DISPOSITIVO`, ver `ls /dev/serial/by-id/`) y ejecutar `sudo docker compose -f docker-compose.prod.yml up -d`.
 - La punta **negra** (energía) puede ir en cualquier USB: solo alimenta al lector.
 
+### Carné de extranjería y pasaporte (pendiente)
+
+Hoy los lectores **solo reconocen el DNI** (código de barras del reverso: 8 dígitos). El resto del sistema ya acepta otros documentos: el portal los registra y el G4 Pro acepta números de usuario con letras (hasta 24 caracteres, probado el 05/oct/2026).
+
+- **Carné de extranjería:** no se pudo probar porque no se tenía uno. Cuando haya uno:
+  1. Pasarlo por el lector de ingreso o de salida.
+  2. Si el lector pita, ver lo que envió en el registro del backend: `sudo docker compose -f docker-compose.prod.yml logs --since 5m api | grep "se ignoró una lectura"`. Aparece el contenido del código de barras, por ejemplo `se ignoró una lectura que no es un DNI (9 caracteres): "000123456"`.
+  3. Con ese formato, adaptar `extraerDocumento` en `mollendo-api/src/lectores-dni/lector-dni.util.ts` (y su test) para que reconozca el carné y lo registre con su tipo (`CE`).
+  4. Si el lector **no pita**, no reconoce ese tipo de código: revisar en su folleto si hay que habilitar la simbología.
+- **Pasaporte:** normalmente **no tiene código de barras**, solo las líneas de la zona de lectura mecánica (MRZ), que este lector no lee. Si habrá personal con pasaporte, definir con el cliente otro medio (por ejemplo, que el vigilante registre el ingreso).
+
+Mientras tanto, una persona registrada con carné de extranjería o pasaporte **no puede ingresar pasando su documento por el lector**.
+
 ### Cambiar los lectores por otros
 
 A diferencia de los relés, los **adaptadores ya vienen con series distintas de fábrica**, así que no hay que configurar nada para distinguirlos (igual conviene etiquetarlos).
