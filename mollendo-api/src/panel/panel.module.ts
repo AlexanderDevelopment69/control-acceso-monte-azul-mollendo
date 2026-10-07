@@ -7,9 +7,10 @@ import { EventosGateway } from './eventos.gateway.js';
 import { PushSdkModule } from '../push-sdk/push-sdk.module.js';
 import { LectoresDniModule } from '../lectores-dni/lectores-dni.module.js';
 import { IntegracionesModule } from '../integraciones/integraciones.module.js';
+import { ControladorRemotoModule } from '../controlador-remoto/controlador-remoto.module.js';
 
 @Module({
-  imports: [JwtModule.register({}), PushSdkModule, LectoresDniModule, IntegracionesModule],
+  imports: [JwtModule.register({}), PushSdkModule, LectoresDniModule, IntegracionesModule, ControladorRemotoModule],
   controllers: [PanelController],
   providers: [PanelService, DashboardService, EventosGateway],
   exports: [DashboardService],

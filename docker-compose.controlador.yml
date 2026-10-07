@@ -1,0 +1,47 @@
+# Mini PC de la garita como CONTROLADOR (el servidor está en la nube):
+# solo lectores de DNI y relés de los molinetes, conectada al servidor.
+# Usa la misma imagen que la API, arrancada en modo controlador
+# (src/controlador/). Sin base de datos ni portal en la mini PC.
+#
+#   docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build
+#
+# controlador.env (ver deploy.env.example, sección "Controlador de garita"):
+#   SERVIDOR_URL=https://...            servidor en la nube (API)
+#   DEVICE_API_KEY=...                  la misma clave de equipos del servidor
+#   LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/...
+#   LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/...
+#   RELE_INGRESO_SERIE=ING01  RELE_SALIDA_SERIE=SAL01
+# En el servidor, MOLINETES_REMOTOS=true para que mande aquí la orden de abrir.
+name: mollendo-controlador
+
+services:
+  controlador:
+    build: ./mollendo-api
+    image: mollendo-controlador
+    restart: unless-stopped
+    command: ["node", "dist/controlador/main.js"]
+    environment:
+      SERVIDOR_URL: ${SERVIDOR_URL:?Falta SERVIDOR_URL (servidor en la nube)}
+      DEVICE_API_KEY: ${DEVICE_API_KEY:?Falta DEVICE_API_KEY (la clave de equipos del servidor)}
+      CONTROLADOR_DATOS: /app/datos-controlador
+      LECTOR_DNI_INGRESO_PUERTO: ${LECTOR_DNI_INGRESO_DISPOSITIVO:-}
+      LECTOR_DNI_SALIDA_PUERTO: ${LECTOR_DNI_SALIDA_DISPOSITIVO:-}
+      LECTOR_DNI_BAUDIOS: ${LECTOR_DNI_BAUDIOS:-115200}
+      LECTOR_DNI_DEV_SERVIDOR: /dev-servidor
+      RELE_INGRESO_SERIE: ${RELE_INGRESO_SERIE:-}
+      RELE_INGRESO_CANAL: ${RELE_INGRESO_CANAL:-1}
+      RELE_SALIDA_SERIE: ${RELE_SALIDA_SERIE:-}
+      RELE_SALIDA_CANAL: ${RELE_SALIDA_CANAL:-1}
+      RELE_PULSO_MS: ${RELE_PULSO_MS:-1000}
+    # Igual que la API de la mini PC: puertos serie USB (lectores) y hidraw (relés).
+    device_cgroup_rules:
+      - "c 188:* rmw"
+      - "c 166:* rmw"
+      - "c ${RELE_USB_HIDRAW_MAJOR:-234}:* rmw"
+    volumes:
+      - /dev:/dev-servidor:ro
+      # Padrón para las salidas sin conexión y salidas pendientes de enviar.
+      - datos-controlador:/app/datos-controlador
+
+volumes:
+  datos-controlador:

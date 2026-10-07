@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsIn, IsISO8601, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { normalizarNumeroDocumento } from '../../common/transformaciones.js';
 
 export class SalidaDto {
@@ -15,4 +15,17 @@ export class SalidaDto {
   @IsString({ message: 'El ID del torniquete debe ser texto' })
   @MaxLength(50, { message: 'El ID del torniquete no puede tener más de 50 caracteres' })
   torniqueteId?: string;
+
+  /**
+   * Salida que el controlador de garita ya dejó pasar sin conexión con el
+   * servidor (opción B: sin internet se puede salir, no entrar): se registra con
+   * la hora en que ocurrió (`fechaHora`) y sin volver a abrir el molinete.
+   */
+  @IsOptional()
+  @IsBoolean({ message: 'sinConexion debe ser verdadero o falso' })
+  sinConexion?: boolean;
+
+  @IsOptional()
+  @IsISO8601({}, { message: 'La fecha y hora deben tener el formato ISO 8601' })
+  fechaHora?: string;
 }

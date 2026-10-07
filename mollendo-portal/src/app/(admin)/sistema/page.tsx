@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api/client";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import type {
+  EstadoControladorGarita,
   EstadoDispositivo,
   EstadoLectorDni,
   EstadoReleUsb,
@@ -19,7 +20,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { BoltIcon, BoxCubeIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
+import { BoltIcon, BoxCubeIcon, BoxIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
@@ -525,6 +526,34 @@ function LectoresDniEstado({
   );
 }
 
+/** Controlador de garita (mini PC en la garita conectada al servidor en la nube). */
+function ControladorGaritaEstado({ comprobando, controlador }: { comprobando: boolean; controlador?: EstadoControladorGarita }) {
+  if (comprobando) {
+    return (
+      <div className="mt-2">
+        <ComprobandoBadge />
+      </div>
+    );
+  }
+  const hora = (iso: string) => new Date(iso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
+  return (
+    <>
+      <div className="mt-2">
+        <Badge color={controlador?.conectado ? "success" : "error"}>{controlador?.conectado ? "Conectado" : "Desconectado"}</Badge>
+      </div>
+      <p className="mt-2 text-xs text-gray-400">
+        {controlador?.conectado && controlador.desde ? `Desde ${hora(controlador.desde)}` : "Sin conexión: nadie puede ingresar; se puede salir con el padrón guardado"}
+      </p>
+      {controlador?.estado && (
+        <p className="mt-1 text-xs text-gray-400">
+          Padrón: {controlador.estado.padron.personas} personas
+          {controlador.estado.salidasPendientes > 0 && ` · ${controlador.estado.salidasPendientes} salidas sin conexión por enviar`}
+        </p>
+      )}
+    </>
+  );
+}
+
 /** Relés USB de los molinetes (un módulo por molinete): conectado o no y la última apertura. */
 function ReleEstado({ comprobando, rele }: { comprobando: boolean; rele?: EstadoReleUsb }) {
   if (comprobando) {
@@ -777,6 +806,12 @@ function SistemaContent() {
 
       <TituloSeccion>Equipos de acceso</TituloSeccion>
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
+        {estado?.controladorGarita?.remoto && (
+          <StatusCard className="lg:col-span-12" icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Controlador de garita (mini PC)</p>
+            <ControladorGaritaEstado comprobando={comprobando} controlador={estado.controladorGarita} />
+          </StatusCard>
+        )}
         <StatusCard className="lg:col-span-4" icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {(estado?.equipos.total ?? 1) > 1 ? "Equipos" : "Equipo"} (G4 Pro)

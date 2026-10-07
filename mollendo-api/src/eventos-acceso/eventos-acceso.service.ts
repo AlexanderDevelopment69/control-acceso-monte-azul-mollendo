@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { documentosActuales } from './validacion-acceso.engine.js';
@@ -77,6 +77,20 @@ function aEnEspera(pendiente: PendienteConPersona): IngresoEnEspera {
 export interface HabilitarEnEquipoEvent {
   numeroDocumento: string;
   habilitar: boolean;
+}
+
+/** Hasta cuántos días después se acepta una salida registrada sin conexión. */
+const DIAS_MAX_SIN_CONEXION = 7;
+
+/** Hora de una salida registrada sin conexión: la indicada, si es razonable (no futura ni de hace más de una semana). */
+export function fechaSinConexion(fechaHora: string | undefined, ahora = new Date()): Date {
+  if (!fechaHora) throw new BadRequestException('Una salida sin conexión debe indicar su fecha y hora');
+  const fecha = new Date(fechaHora);
+  if (fecha.getTime() > ahora.getTime() + 60_000) throw new BadRequestException('La fecha y hora de la salida no puede ser futura');
+  if (ahora.getTime() - fecha.getTime() > DIAS_MAX_SIN_CONEXION * 86_400_000) {
+    throw new BadRequestException(`La salida sin conexión es de hace más de ${DIAS_MAX_SIN_CONEXION} días`);
+  }
+  return fecha;
 }
 
 @Injectable()
@@ -426,8 +440,12 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     return pendientes.map(aEnEspera);
   }
 
-  /** Salida: sin antipassback; con un documento registrado (aunque esté de baja) se autoriza y abre el molinete. */
+  /**
+   * Salida: sin antipassback; con un documento registrado (aunque esté de baja) se autoriza y abre el molinete.
+   * Con `sinConexion`, el controlador de garita ya la dejó pasar sin internet: se registra con su hora y no se abre.
+   */
   async registrarSalida(dto: SalidaDto) {
+    const fechaHora = dto.sinConexion ? fechaSinConexion(dto.fechaHora) : undefined;
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
     if (!persona) {
       return this.registrarNoRegistrada(dto, 'salida');
@@ -441,14 +459,17 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         tipoMovimiento: 'salida',
         resultado: 'autorizado',
         torniqueteId: dto.torniqueteId,
+        ...(fechaHora && { fechaHora }),
       },
     });
 
-    this.eventEmitter.emit('molinete.abrir', {
-      torniqueteId: dto.torniqueteId,
-      eventoId: evento.id,
-      tipoMovimiento: 'salida',
-    } satisfies AbrirMolineteEvent);
+    if (!dto.sinConexion) {
+      this.eventEmitter.emit('molinete.abrir', {
+        torniqueteId: dto.torniqueteId,
+        eventoId: evento.id,
+        tipoMovimiento: 'salida',
+      } satisfies AbrirMolineteEvent);
+    }
 
     const respuesta = {
       eventoId: evento.id,

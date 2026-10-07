@@ -18,6 +18,7 @@ import { IntegracionesModule } from './integraciones/integraciones.module.js';
 import { PushSdkModule } from './push-sdk/push-sdk.module.js';
 import { PanelModule } from './panel/panel.module.js';
 import { ReportesModule } from './reportes/reportes.module.js';
+import { ControladorRemotoModule } from './controlador-remoto/controlador-remoto.module.js';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { RolesGuard } from './common/guards/roles.guard.js';
 
@@ -39,6 +40,7 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     PushSdkModule,
     PanelModule,
     ReportesModule,
+    ControladorRemotoModule,
   ],
   controllers: [AppController],
   providers: [

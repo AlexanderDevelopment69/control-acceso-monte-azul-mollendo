@@ -833,6 +833,38 @@ El sistema ya borra las tres tablas cuando le cambia el documento a una persona.
 
 ---
 
+## 8f. Mini PC como controlador de garita (servidor en la nube)
+
+Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube (AWS hoy, Azure después) y la mini PC en la garita **solo como controlador**: lee los DNI, los manda al servidor por internet y abre los molinetes cuando el servidor lo ordena. El G4 Pro se conecta directo al servidor.
+
+**Cómo funciona**
+
+- Es el **mismo programa** (`mollendo-api`, misma imagen de Docker) arrancado en modo controlador: `node dist/controlador/main.js` (`src/controlador/`). Usa el mismo código de lectores de DNI y relés.
+- Cada DNI leído se manda con la clave de equipos a `POST /api/v1/eventos-acceso/ingreso|salida` del servidor.
+- La mini PC abre un **canal permanente hacia el servidor** (socket.io, `/ws/controlador`, validado con `DEVICE_API_KEY`): por ahí recibe "abrir el molinete de ingreso/salida" e informa cada 15 s el estado de lectores y relés (se ve en "Sistema y APIs" → "Controlador de garita"). Lo abre la garita hacia afuera: **no hay que abrir puertos en la red del terminal**. Si se corta, se reconecta solo.
+- En el servidor, `MOLINETES_REMOTOS=true` en `.env`: la orden de abrir va al controlador (no a un relé local).
+- **Sin internet (opción B):** nadie puede entrar; **sí salir**. El controlador guarda el **padrón** (documentos de todo el personal registrado, `GET /api/v1/controlador/padron`, se renueva cada 10 min y queda en disco) y deja salir a quien está en él. Esas salidas se guardan y, al volver la conexión, se envían con su hora (`sinConexion: true`, `fechaHora`) sin volver a abrir el molinete.
+
+**Instalación en la mini PC** (en `~/mollendo`):
+
+1. `controlador.env` (permisos 600) con `SERVIDOR_URL` (la API en la nube, sin `/api/v1`), `DEVICE_API_KEY` (**la misma** del servidor) y las variables de lectores y relés (`LECTOR_DNI_*_DISPOSITIVO`, `RELE_*_SERIE`; ver `deploy.env.example`).
+2. Que la API local de la mini PC (si sigue corriendo) no use los lectores: comentar `LECTOR_DNI_INGRESO_DISPOSITIVO` y `LECTOR_DNI_SALIDA_DISPOSITIVO` en `.env` y poner `MOLINETES_REMOTOS=true`; `docker compose -f docker-compose.prod.yml up -d api`.
+3. `docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build`
+4. Comprobar: `docker compose -f docker-compose.controlador.yml --env-file controlador.env logs --tail 20 controlador` debe decir "Lector de DNI … conectado", "Conectado al servidor" y "Padrón actualizado: N personas".
+
+**Prueba del 07/10/2026 (AWS como nube):** controlador en la mini PC conectado a `http://54.147.214.38:3001`; AWS lo ve conectado con los dos lectores y los dos relés (ING01, SAL01) y el padrón; una salida registrada en AWS abrió el relé SAL01 de la mini PC; al reiniciar la API de AWS el controlador se reconectó solo. Configuración anterior de la mini PC guardada en `.env.antes-controlador-20261007-0953`.
+
+**Volver a la mini PC como servidor completo:**
+
+```bash
+cd ~/mollendo
+docker compose -f docker-compose.controlador.yml --env-file controlador.env down
+cp .env.antes-controlador-20261007-0953 .env
+docker compose -f docker-compose.prod.yml up -d api
+```
+
+**Pendiente para el ingreso completo:** el G4 Pro sigue apuntando a la mini PC; para probar un ingreso con el servidor en la nube hay que cambiar en el equipo la dirección del servidor (Cloud Server) a la de la nube, y registrar allí al personal con su foto.
+
 ## 9. Seguridad y recomendaciones
 
 1. **Contraseña del servidor**: cámbiala si alguna vez se compartió por chat o correo (`passwd` en el servidor). Lo recomendable es entrar con **llave SSH** y desactivar el acceso por contraseña.

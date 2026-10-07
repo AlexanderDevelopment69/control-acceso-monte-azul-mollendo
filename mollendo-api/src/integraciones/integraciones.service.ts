@@ -83,6 +83,8 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
 
   @OnEvent('molinete.abrir')
   async abrirMolinete(evento: AbrirMolineteEvent): Promise<void> {
+    // Con controlador de garita, la orden la lleva ControladorGateway a la mini PC.
+    if (process.env.MOLINETES_REMOTOS === 'true') return;
     await this.releUsb.pulso(evento.tipoMovimiento);
   }
 

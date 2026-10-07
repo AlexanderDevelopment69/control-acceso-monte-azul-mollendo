@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import tty from 'node:tty';
 import { promisify } from 'node:util';
-import { EventosAccesoService } from '../eventos-acceso/eventos-acceso.service.js';
+import { RegistroLecturas } from './registro-lecturas.js';
 import { extraerDocumento, FiltroRepetidos, SeparadorLineas } from './lector-dni.util.js';
 
 const ejecutar = promisify(execFile);
@@ -36,7 +36,8 @@ interface Lector {
 /**
  * Lee los lectores de DNI (Syble XB-7705H en modo RS232) conectados a la
  * mini PC y registra cada lectura como ingreso o salida, igual que
- * `POST /eventos-acceso/ingreso|salida`.
+ * `POST /eventos-acceso/ingreso|salida` (en el servidor, directo en la base de
+ * datos; en el controlador de garita, mandándola al servidor: ver RegistroLecturas).
  *
  * Cada lector se configura con `LECTOR_DNI_INGRESO_PUERTO` /
  * `LECTOR_DNI_SALIDA_PUERTO` (la ruta fija del adaptador en el servidor,
@@ -54,7 +55,7 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
   private readonly lectores: Lector[] = [];
   private cerrando = false;
 
-  constructor(private readonly eventosAcceso: EventosAccesoService) {}
+  constructor(private readonly registro: RegistroLecturas) {}
 
   onModuleInit() {
     for (const movimiento of ['ingreso', 'salida'] as const) {
@@ -154,8 +155,8 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
     const dto = { ...documento, torniqueteId: lector.molinete };
     try {
       const resultado =
-        lector.movimiento === 'ingreso' ? await this.eventosAcceso.registrarIngreso(dto) : await this.eventosAcceso.registrarSalida(dto);
-      const estado = 'estado' in resultado ? resultado.estado : resultado.resultado;
+        lector.movimiento === 'ingreso' ? await this.registro.registrarIngreso(dto) : await this.registro.registrarSalida(dto);
+      const estado = resultado.estado ?? resultado.resultado;
       this.logger.log(`DNI leído en ${lector.movimiento}: ${estado}`);
     } catch (error) {
       this.logger.error(`No se pudo registrar el DNI leído en ${lector.movimiento}: ${(error as Error).message}`);

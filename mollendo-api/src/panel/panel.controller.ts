@@ -10,7 +10,18 @@ import { estadoRespaldos } from './respaldos.util.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
 import { ReleUsbService } from '../integraciones/rele-usb.service.js';
+import { ControladorGateway } from '../controlador-remoto/controlador.gateway.js';
 import { IntegracionesService } from '../integraciones/integraciones.service.js';
+
+/** Controlador de garita desconectado: lectores y relés figuran sin datos. */
+const sinConfigurarLectores = () => {
+  const lector = { configurado: false, conectado: false, ultimaLectura: null, error: null };
+  return { ingreso: lector, salida: lector };
+};
+const sinConectarReles = () => {
+  const rele = { conectado: false, serie: null, canal: 1, ultimoPulso: null, error: 'Controlador de garita desconectado' };
+  return { ingreso: rele, salida: rele };
+};
 
 @Controller()
 export class PanelController {
@@ -21,6 +32,7 @@ export class PanelController {
     private readonly pushSdk: PushSdkService,
     private readonly lectoresDni: LectoresDniService,
     private readonly releUsb: ReleUsbService,
+    private readonly controlador: ControladorGateway,
     private readonly integraciones: IntegracionesService,
   ) {}
 
@@ -76,6 +88,10 @@ export class PanelController {
     }
 
     const dispositivos = await this.pushSdk.listarEstadoDispositivos();
+    // Con controlador de garita (MOLINETES_REMOTOS=true), los lectores y los relés
+    // están en la mini PC de la garita: se muestra lo que ella informa.
+    const controlador = this.controlador.estado();
+    const remotos = controlador.remoto ? controlador.estado : null;
 
     return {
       api: {
@@ -96,9 +112,11 @@ export class PanelController {
       },
       // Lectores de DNI (RS232 en la mini PC, ver lectores-dni/): si están
       // configurados, si el puerto está abierto y la hora de la última lectura.
-      lectoresDni: this.lectoresDni.estado(),
+      lectoresDni: remotos?.lectoresDni ?? (controlador.remoto ? sinConfigurarLectores() : this.lectoresDni.estado()),
       // Módulos de relés USB que abren los molinetes (uno por molinete).
-      releMolinetes: await this.releUsb.estado(),
+      releMolinetes: remotos?.releMolinetes ?? (controlador.remoto ? sinConectarReles() : await this.releUsb.estado()),
+      // Controlador de garita (mini PC conectada por internet), si los molinetes se abren a distancia.
+      controladorGarita: controlador,
       // Sincronización con los G4 Pro: diaria activa o no, en curso y el último resultado.
       sincronizacionG4: await this.integraciones.estadoSincronizacion(),
       respaldos: estadoRespaldos(),
