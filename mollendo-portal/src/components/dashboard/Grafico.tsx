@@ -1,15 +1,25 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ApexOptions } from "apexcharts";
+import type ApexChartsTipo from "apexcharts";
 import { useTheme } from "@/context/ThemeContext";
 
-// ApexCharts usa `window`: se carga solo en el navegador.
-const Chart = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-  loading: () => <Esqueleto />,
-});
+// ApexCharts usa `window`: se carga solo en el navegador, una sola vez.
+let ApexCharts: typeof ApexChartsTipo | null = null;
+let cargaApex: Promise<void> | null = null;
+
+/**
+ * Carga ApexCharts. El portal la llama apenas queda libre (ver el layout del
+ * administrador), así al entrar al Dashboard el código ya está listo y no se
+ * suma su carga (~40 ms) al momento en que los gráficos empiezan a animarse.
+ */
+export function precargarGraficos(): Promise<void> {
+  cargaApex ??= import("apexcharts/client").then((m) => {
+    ApexCharts = m.default;
+  });
+  return cargaApex;
+}
 
 /** Espacio vacío (con el alto del gráfico) mientras se carga ApexCharts. */
 function Esqueleto() {
@@ -73,12 +83,19 @@ export function Grafico({
   const { theme } = useTheme();
   const contenedor = useRef<HTMLDivElement>(null);
   const ancho = useAnchoEstable(contenedor);
+  // Se monta cuando ApexCharts ya está cargado (normalmente ya lo está: ver precargarGraficos).
+  const [montado, setMontado] = useState(() => ApexCharts !== null);
+  useEffect(() => {
+    if (montado) return;
+    let vigente = true;
+    void precargarGraficos().then(() => {
+      if (vigente) setMontado(true);
+    });
+    return () => {
+      vigente = false;
+    };
+  }, [montado]);
   const oscuro = theme === "dark";
-  // Cantidad de barras o porciones: define si conviene escalonar la animación.
-  const puntos = (series ?? []).reduce<number>(
-    (suma, s) => suma + (typeof s === "number" ? 1 : Array.isArray((s as { data?: unknown[] }).data) ? (s as { data: unknown[] }).data.length : 1),
-    0,
-  );
   const texto = oscuro ? "#98a2b3" : "#667085";
 
   const base: ApexOptions = {
@@ -91,19 +108,7 @@ export function Grafico({
       redrawOnParentResize: false,
       redrawOnWindowResize: false,
       foreColor: texto,
-      // Animación al cargar (las barras suben, la dona gira) y al actualizarse.
-      // Corta y con salida suave; el escalonado entre barras solo con pocas
-      // barras (con muchas, la última empezaría segundos después).
-      // respectReducedMotion: false porque, si el sistema pide reducir el
-      // movimiento, ApexCharts dibuja los gráficos sin animación.
-      animations: {
-        enabled: true,
-        respectReducedMotion: false,
-        easing: "easeout",
-        speed: 550,
-        animateGradually: { enabled: puntos <= 12, delay: 60 },
-        dynamicAnimation: { enabled: true, speed: 350 },
-      },
+      // Animaciones: las de ApexCharts por defecto (a pedido del usuario).
     },
     theme: { mode: oscuro ? "dark" : "light" },
     grid: { borderColor: oscuro ? "#1d2939" : "#e4e7ec", strokeDashArray: 4 },
@@ -134,13 +139,84 @@ export function Grafico({
   // Alto fijo desde el principio: el espacio no cambia de tamaño al aparecer el gráfico.
   return (
     <div ref={contenedor} style={{ height: alto }}>
-      {ancho > 0 ? (
-        <Chart key={ancho} type={tipo} height={alto} width={ancho} series={estable.series} options={estable.opciones} />
+      {ancho > 0 && montado && ApexCharts ? (
+        <Lienzo
+          key={ancho}
+          Clase={ApexCharts}
+          tipo={tipo}
+          alto={alto}
+          ancho={ancho}
+          series={estable.series}
+          opciones={estable.opciones}
+        />
       ) : (
         <Esqueleto />
       )}
     </div>
   );
+}
+
+/**
+ * El gráfico de ApexCharts en sí (en lugar de react-apexcharts): se crea una
+ * vez, con su animación, y solo se actualiza cuando cambian los datos o las
+ * opciones (llegan los mismos objetos si no cambian).
+ */
+function Lienzo({
+  Clase,
+  tipo,
+  alto,
+  ancho,
+  series,
+  opciones,
+}: {
+  Clase: typeof ApexChartsTipo;
+  tipo: "bar" | "donut" | "area" | "line";
+  alto: number;
+  ancho: number;
+  series: ApexOptions["series"];
+  opciones: ApexOptions;
+}) {
+  const el = useRef<HTMLDivElement>(null);
+  const grafico = useRef<ApexChartsTipo | null>(null);
+  // ApexCharts modifica lo que recibe (p. ej. agrega `group` a cada serie): se le
+  // da una copia, si no los datos del gráfico "cambian" solos y se redibuja sin animación.
+  const configuracion = (): ApexOptions =>
+    copiaProfunda({
+      ...opciones,
+      chart: { ...opciones.chart, type: tipo, height: alto, width: ancho },
+      series,
+    });
+  const inicial = useRef(configuracion);
+  // Se crea al montar (el ancho y el alto vienen fijos: si cambian, se monta otro).
+  useEffect(() => {
+    if (!el.current) return;
+    const g = new Clase(el.current, inicial.current());
+    grafico.current = g;
+    void g.render();
+    return () => {
+      grafico.current = null;
+      g.destroy();
+    };
+  }, [Clase]);
+  // Datos u opciones nuevos (tiempo real, otro periodo, tema): se actualiza.
+  const primeraVez = useRef(true);
+  useEffect(() => {
+    if (primeraVez.current) {
+      primeraVez.current = false;
+      return;
+    }
+    void grafico.current?.updateOptions(copiaProfunda({ ...opciones, series }));
+  }, [series, opciones]);
+  return <div ref={el} />;
+}
+
+/** Copia de objetos y listas (las funciones, como los formatos de los ejes, se conservan). */
+function copiaProfunda<T>(valor: T): T {
+  if (Array.isArray(valor)) return valor.map((v) => copiaProfunda(v)) as T;
+  if (valor && typeof valor === "object" && Object.getPrototypeOf(valor) === Object.prototype) {
+    return Object.fromEntries(Object.entries(valor).map(([k, v]) => [k, copiaProfunda(v)])) as T;
+  }
+  return valor;
 }
 
 /** Mezcla profunda de las opciones (las del gráfico ganan sobre la base). */

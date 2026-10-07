@@ -5,7 +5,7 @@
 //
 //   docker compose -f docker-compose.prod.yml cp mollendo-api/prisma/carga-masiva-demo.ts api:/app/prisma/
 //   docker compose -f docker-compose.prod.yml exec -T api npx tsx prisma/carga-masiva-demo.ts
-//   (CANTIDAD=1000 para otra cantidad)
+//   (CANTIDAD=1000 para otra cantidad; PREFIJO=996 para sumar otra tanda)
 //
 // Escribe directo en la base de datos: no pasa por la API, así que NO se
 // registra a nadie en el G4 Pro ni se encolan comandos. Sin fotos y con los
@@ -22,12 +22,14 @@ import { documentosActuales, evaluarIngreso } from '../src/eventos-acceso/valida
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 const CANTIDAD = Number(process.env.CANTIDAD ?? 480);
-const PREFIJO = '995';
+// Otro prefijo (996, 997…) para sumar otra tanda sin borrar la anterior.
+const PREFIJO = process.env.PREFIJO ?? '995';
+if (!/^99[0-9]$/.test(PREFIJO)) throw new Error('PREFIJO debe ser de 3 cifras y empezar con 99 (p. ej. 996).');
 const MOLINETE = 'DEMO';
 const DIAS = 30;
 
 // Números pseudoaleatorios con semilla fija: la misma carga da los mismos datos.
-let semilla = 20261006;
+let semilla = 20261006 + Number(PREFIJO);
 function azar(): number {
   semilla = (semilla * 1103515245 + 12345) % 2147483648;
   return semilla / 2147483648;
@@ -82,7 +84,7 @@ async function main() {
   const datosPersonas: Prisma.PersonaCreateManyInput[] = [];
   const documentosPorNumero = new Map<string, { nombre: string; vence: number | null }[]>();
   for (let i = 1; i <= CANTIDAD; i++) {
-    const numeroDocumento = `${PREFIJO}${String(i).padStart(5, '0')}`;
+    const numeroDocumento = `${PREFIJO}${String(i).padStart(5, '0')}`; // hasta 99 999 por tanda
     const tirada = azar();
     datosPersonas.push({
       empresaId: empresas[i % empresas.length].id,

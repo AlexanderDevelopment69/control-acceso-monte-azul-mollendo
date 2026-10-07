@@ -5,7 +5,8 @@ import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import { RequireRole } from "@/lib/auth/RequireRole";
-import React from "react";
+import React, { useEffect } from "react";
+import { precargarGraficos } from "@/components/dashboard/Grafico";
 
 export default function AdminLayout({
   children,
@@ -13,6 +14,16 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+
+  // ApexCharts se carga apenas el navegador queda libre, para que el Dashboard no espere su carga.
+  useEffect(() => {
+    if (typeof requestIdleCallback !== "function") {
+      const t = setTimeout(() => void precargarGraficos(), 1500);
+      return () => clearTimeout(t);
+    }
+    const id = requestIdleCallback(() => void precargarGraficos(), { timeout: 3000 });
+    return () => cancelIdleCallback(id);
+  }, []);
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen
