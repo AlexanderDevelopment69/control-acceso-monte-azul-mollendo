@@ -442,7 +442,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Salida: sin antipassback; con un documento registrado (aunque esté de baja) se autoriza y abre el molinete.
-   * Con `sinConexion`, el controlador de garita ya la dejó pasar sin internet: se registra con su hora y no se abre.
+   * Con `sinConexion`, el controlador ya la dejó pasar sin internet: se registra con su hora y no se abre.
    */
   async registrarSalida(dto: SalidaDto) {
     const fechaHora = dto.sinConexion ? fechaSinConexion(dto.fechaHora) : undefined;

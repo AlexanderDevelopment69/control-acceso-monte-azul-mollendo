@@ -6,7 +6,7 @@ import { RegistroLecturas } from '../lectores-dni/registro-lecturas.js';
 import { ControladorService } from './controlador.service.js';
 
 /**
- * Modo controlador de garita: solo lectores de DNI, relés de los molinetes y
+ * Modo controlador: solo lectores de DNI, relés de los molinetes y
  * la conexión con el servidor en la nube. Sin base de datos ni API propia.
  */
 @Module({

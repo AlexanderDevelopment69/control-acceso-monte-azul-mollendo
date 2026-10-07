@@ -17,7 +17,7 @@ export class SalidaDto {
   torniqueteId?: string;
 
   /**
-   * Salida que el controlador de garita ya dejó pasar sin conexión con el
+   * Salida que el controlador ya dejó pasar sin conexión con el
    * servidor (opción B: sin internet se puede salir, no entrar): se registra con
    * la hora en que ocurrió (`fechaHora`) y sin volver a abrir el molinete.
    */

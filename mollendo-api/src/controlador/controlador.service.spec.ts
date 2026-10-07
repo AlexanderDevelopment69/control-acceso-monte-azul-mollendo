@@ -5,10 +5,10 @@ import { ControladorService } from './controlador.service.js';
 import { fechaSinConexion } from '../eventos-acceso/eventos-acceso.service.js';
 
 /**
- * Controlador de garita sin conexión (opción B): nadie entra, sale quien está
- * en el padrón, y esas salidas se envían después con su hora.
+ * Controlador sin conexión (opción B): nadie entra, sale quien está
+ * en la lista del personal, y esas salidas se envían después con su hora.
  */
-describe('Controlador de garita', () => {
+describe('Controlador', () => {
   let carpeta: string;
   let pulsos: string[];
   let servicio: ControladorService;
@@ -20,7 +20,7 @@ describe('Controlador de garita', () => {
 
   beforeEach(() => {
     carpeta = fs.mkdtempSync(path.join(os.tmpdir(), 'controlador-'));
-    fs.writeFileSync(path.join(carpeta, 'padron.json'), JSON.stringify({ generado: '2026-10-07T10:00:00Z', documentos: ['11111111'] }));
+    fs.writeFileSync(path.join(carpeta, 'lista-personal.json'), JSON.stringify({ generado: '2026-10-07T10:00:00Z', documentos: ['11111111'] }));
     process.env.SERVIDOR_URL = 'http://servidor.prueba';
     process.env.DEVICE_API_KEY = 'clave';
     process.env.CONTROLADOR_DATOS = carpeta;
@@ -50,7 +50,7 @@ describe('Controlador de garita', () => {
     expect(pulsos).toEqual([]);
   });
 
-  it('sin conexión deja salir a quien está en el padrón y guarda la salida', async () => {
+  it('sin conexión deja salir a quien está en la lista del personal y guarda la salida', async () => {
     const r = await servicio.registrarSalida(dni('11111111'));
     expect(r.resultado).toBe('autorizado (sin conexión)');
     expect(pulsos).toEqual(['salida']);
@@ -59,7 +59,7 @@ describe('Controlador de garita', () => {
     expect(guardadas[0].dto.numeroDocumento).toBe('11111111');
   });
 
-  it('sin conexión no deja salir a quien no está en el padrón', async () => {
+  it('sin conexión no deja salir a quien no está en la lista del personal', async () => {
     const r = await servicio.registrarSalida(dni('99999999'));
     expect(r.resultado).toContain('denegado');
     expect(pulsos).toEqual([]);

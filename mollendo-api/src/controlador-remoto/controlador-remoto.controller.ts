@@ -8,14 +8,14 @@ export class ControladorRemotoController {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Padrón para el controlador de garita: los documentos de todo el personal
+   * Lista del personal para el controlador: los documentos de todo el personal
    * registrado (también los dados de baja: la salida no exige estar activo).
    * Sin internet, el controlador deja salir solo a quienes están aquí.
    */
-  @Get('padron')
+  @Get('lista-personal')
   @Public()
   @UseGuards(ApiKeyGuard)
-  async padron() {
+  async listaPersonal() {
     const personas = await this.prisma.persona.findMany({ select: { numeroDocumento: true } });
     return { generado: new Date().toISOString(), documentos: personas.map((p) => p.numeroDocumento) };
   }

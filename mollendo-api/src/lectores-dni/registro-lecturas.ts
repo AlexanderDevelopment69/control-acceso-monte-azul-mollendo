@@ -10,7 +10,7 @@ export interface ResultadoLectura {
 /**
  * Quién recibe los DNI que leen los lectores. En el servidor es
  * EventosAccesoService (los registra en la base de datos); en la mini PC como
- * controlador de garita es ControladorService (los manda al servidor en la
+ * controlador es ControladorService (los manda al servidor en la
  * nube). Así LectoresDniService es el mismo en los dos.
  */
 export abstract class RegistroLecturas {

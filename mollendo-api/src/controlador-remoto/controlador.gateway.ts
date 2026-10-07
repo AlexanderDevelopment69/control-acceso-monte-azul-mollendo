@@ -15,12 +15,12 @@ import type { EstadoReleUsb } from '../integraciones/rele-usb.service.js';
 import type { AbrirMolineteEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import { Public } from '../common/decorators/public.decorator.js';
 
-/** Lo que el controlador de garita informa cada pocos segundos. */
+/** Lo que el controlador informa cada pocos segundos. */
 export interface EstadoReportado {
   lectoresDni: { ingreso: EstadoLectorDni; salida: EstadoLectorDni };
   releMolinetes: EstadoReleUsb;
   /** Personal guardado para dejar salir sin conexión (opción B). */
-  padron: { personas: number; actualizado: string | null };
+  listaPersonal: { personas: number; actualizado: string | null };
   /** Salidas hechas sin conexión que todavía no llegaron al servidor. */
   salidasPendientes: number;
 }
@@ -32,11 +32,11 @@ interface Conexion {
   estado: EstadoReportado | null;
 }
 
-/** ¿Los molinetes los abre un controlador de garita conectado por internet (y no la API en la misma mini PC)? */
+/** ¿Los molinetes los abre un controlador conectado por internet (y no la API en la misma mini PC)? */
 export const molinetesRemotos = () => process.env.MOLINETES_REMOTOS === 'true';
 
 /**
- * Canal con el controlador de garita (la mini PC en la garita, con
+ * Canal con el controlador (la mini PC en la garita, con
  * `node dist/controlador/main.js`; ver src/controlador/). El controlador se
  * conecta desde la garita hacia el servidor (no hay que abrir puertos en la
  * garita), se identifica con la clave de equipos (DEVICE_API_KEY), recibe aquí
@@ -70,11 +70,11 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
       ultimoReporte: null,
       estado: null,
     });
-    this.logger.log(`Controlador de garita conectado desde ${cliente.handshake.address}`);
+    this.logger.log(`Controlador conectado desde ${cliente.handshake.address}`);
   }
 
   handleDisconnect(cliente: Socket): void {
-    if (this.conexiones.delete(cliente.id)) this.logger.warn('Controlador de garita desconectado');
+    if (this.conexiones.delete(cliente.id)) this.logger.warn('Controlador desconectado');
   }
 
   @SubscribeMessage('estado')
@@ -90,11 +90,11 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
   abrirMolinete(evento: AbrirMolineteEvent): void {
     if (!molinetesRemotos()) return;
     if (this.conexiones.size === 0) {
-      this.logger.warn(`Abrir molinete de ${evento.tipoMovimiento}: no hay controlador de garita conectado (orden perdida)`);
+      this.logger.warn(`Abrir molinete de ${evento.tipoMovimiento}: no hay controlador conectado (orden perdida)`);
       return;
     }
     this.server.emit('abrir', { tipoMovimiento: evento.tipoMovimiento, eventoId: evento.eventoId });
-    this.logger.log(`Orden de abrir el molinete de ${evento.tipoMovimiento} enviada al controlador de garita`);
+    this.logger.log(`Orden de abrir el molinete de ${evento.tipoMovimiento} enviada al controlador`);
   }
 
   /** Para "Sistema y APIs": el controlador conectado (el más reciente) y lo que informó. */

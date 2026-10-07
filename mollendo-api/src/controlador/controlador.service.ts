@@ -11,8 +11,8 @@ import { RegistroLecturas, type ResultadoLectura } from '../lectores-dni/registr
 
 /** Cada cuánto se informa al servidor el estado de los lectores y relés. */
 const ESTADO_CADA_MS = 15_000;
-/** Cada cuánto se renueva el padrón para las salidas sin conexión. */
-const PADRON_CADA_MS = 10 * 60_000;
+/** Cada cuánto se renueva la lista del personal para las salidas sin conexión. */
+const LISTA_PERSONAL_CADA_MS = 10 * 60_000;
 /** Cuánto se espera al servidor antes de considerar que no hay conexión. */
 const ESPERA_SERVIDOR_MS = 5_000;
 
@@ -25,7 +25,7 @@ interface SalidaPendiente {
 class SinConexion extends Error {}
 
 /**
- * Controlador de garita: la mini PC en la garita cuando el servidor está en la
+ * Controlador: la mini PC en la garita cuando el servidor está en la
  * nube. Manda al servidor cada DNI leído (`POST /eventos-acceso/ingreso|salida`
  * con la clave de equipos), recibe por un canal permanente la orden de abrir
  * cada molinete (lo abre el relé USB) e informa el estado de lectores y relés.
@@ -33,13 +33,13 @@ class SinConexion extends Error {}
  * la garita.
  *
  * Sin conexión (opción B): nadie puede entrar, pero sí salir. Se deja salir a
- * quien está en el padrón (todo el personal registrado, que se guarda en disco
+ * quien está en la lista del personal (todo el personal registrado, que se guarda en disco
  * y se renueva cada 10 minutos) y esas salidas se envían al servidor, con su
  * hora, cuando vuelve la conexión.
  *
  * Configuración: SERVIDOR_URL (p. ej. https://accesos.empresa.com),
  * DEVICE_API_KEY (la misma clave de equipos del servidor), CONTROLADOR_DATOS
- * (carpeta del padrón y las salidas pendientes) y las de lectores y relés
+ * (carpeta de la lista del personal y las salidas pendientes) y las de lectores y relés
  * (LECTOR_DNI_*, RELE_*), iguales que en el servidor de la mini PC.
  */
 @Injectable()
@@ -49,8 +49,8 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
   private readonly clave = process.env.DEVICE_API_KEY ?? '';
   private readonly carpeta = process.env.CONTROLADOR_DATOS?.trim() || '/app/datos-controlador';
   private socket: Socket | null = null;
-  private padron = new Set<string>();
-  private padronActualizado: string | null = null;
+  private listaPersonal = new Set<string>();
+  private listaPersonalActualizada: string | null = null;
   private pendientes: SalidaPendiente[] = [];
   private enviandoPendientes = false;
   private temporizadores: NodeJS.Timeout[] = [];
@@ -62,7 +62,7 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
 
   onModuleInit() {
     if (!this.servidor || !this.clave) {
-      throw new Error('El controlador de garita necesita SERVIDOR_URL y DEVICE_API_KEY');
+      throw new Error('El controlador necesita SERVIDOR_URL y DEVICE_API_KEY');
     }
     fs.mkdirSync(this.carpeta, { recursive: true });
     this.cargarDeDisco();
@@ -76,7 +76,7 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     this.socket.on('connect', () => {
       this.logger.log(`Conectado al servidor ${this.servidor}`);
       void this.enviarEstado();
-      void this.actualizarPadron();
+      void this.actualizarListaPersonal();
       void this.enviarPendientes();
     });
     this.socket.on('disconnect', (motivo) => this.logger.warn(`Desconectado del servidor (${motivo}); se reintenta solo`));
@@ -87,8 +87,8 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     });
 
     this.temporizadores.push(setInterval(() => void this.enviarEstado(), ESTADO_CADA_MS));
-    this.temporizadores.push(setInterval(() => void this.actualizarPadron(), PADRON_CADA_MS));
-    this.logger.log(`Controlador de garita iniciado (servidor ${this.servidor}, padrón con ${this.padron.size} personas)`);
+    this.temporizadores.push(setInterval(() => void this.actualizarListaPersonal(), LISTA_PERSONAL_CADA_MS));
+    this.logger.log(`Controlador iniciado (servidor ${this.servidor}, lista del personal con ${this.listaPersonal.size} personas)`);
   }
 
   onModuleDestroy() {
@@ -124,11 +124,11 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     }
   }
 
-  /** Sin conexión: sale quien está en el padrón; la salida se guarda para enviarla después. */
+  /** Sin conexión: sale quien está en la lista del personal; la salida se guarda para enviarla después. */
   private async salidaSinConexion(dto: SalidaDto): Promise<ResultadoLectura> {
-    if (!this.padron.has(dto.numeroDocumento)) {
-      this.logger.warn(`Salida de ${dto.numeroDocumento} sin conexión: no está en el padrón, no se abre`);
-      return { resultado: 'denegado (sin conexión, no está en el padrón)' };
+    if (!this.listaPersonal.has(dto.numeroDocumento)) {
+      this.logger.warn(`Salida de ${dto.numeroDocumento} sin conexión: no está en la lista del personal, no se abre`);
+      return { resultado: 'denegado (sin conexión, no está en la lista del personal)' };
     }
     await this.releUsb.pulso('salida');
     this.pendientes.push({ dto, fechaHora: new Date().toISOString() });
@@ -163,20 +163,20 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     this.socket.emit('estado', {
       lectoresDni: lectores.estado(),
       releMolinetes: await this.releUsb.estado(),
-      padron: { personas: this.padron.size, actualizado: this.padronActualizado },
+      listaPersonal: { personas: this.listaPersonal.size, actualizado: this.listaPersonalActualizada },
       salidasPendientes: this.pendientes.length,
     });
   }
 
-  private async actualizarPadron() {
+  private async actualizarListaPersonal() {
     try {
-      const { documentos, generado } = await this.enviar<{ documentos: string[]; generado: string }>('GET', '/controlador/padron');
-      this.padron = new Set(documentos);
-      this.padronActualizado = generado;
-      fs.writeFileSync(this.archivo('padron.json'), JSON.stringify({ generado, documentos }));
-      this.logger.log(`Padrón actualizado: ${documentos.length} personas`);
+      const { documentos, generado } = await this.enviar<{ documentos: string[]; generado: string }>('GET', '/controlador/lista-personal');
+      this.listaPersonal = new Set(documentos);
+      this.listaPersonalActualizada = generado;
+      fs.writeFileSync(this.archivo('lista-personal.json'), JSON.stringify({ generado, documentos }));
+      this.logger.log(`Lista del personal actualizada: ${documentos.length} personas`);
     } catch (error) {
-      this.logger.warn(`No se pudo actualizar el padrón (se usa el guardado): ${(error as Error).message}`);
+      this.logger.warn(`No se pudo actualizar la lista del personal (se usa la guardada): ${(error as Error).message}`);
     }
   }
 
@@ -211,11 +211,11 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
 
   private cargarDeDisco() {
     try {
-      const { generado, documentos } = JSON.parse(fs.readFileSync(this.archivo('padron.json'), 'utf8')) as { generado: string; documentos: string[] };
-      this.padron = new Set(documentos);
-      this.padronActualizado = generado;
+      const { generado, documentos } = JSON.parse(fs.readFileSync(this.archivo('lista-personal.json'), 'utf8')) as { generado: string; documentos: string[] };
+      this.listaPersonal = new Set(documentos);
+      this.listaPersonalActualizada = generado;
     } catch {
-      // todavía no hay padrón guardado
+      // todavía no hay lista del personal guardada
     }
     try {
       this.pendientes = JSON.parse(fs.readFileSync(this.archivo('salidas-pendientes.json'), 'utf8')) as SalidaPendiente[];

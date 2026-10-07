@@ -172,7 +172,7 @@ export interface EstadoSistema {
   lectoresDni: { ingreso: EstadoLectorDni; salida: EstadoLectorDni };
   releMolinetes: EstadoReleUsb;
   sincronizacionG4: EstadoSincronizacionG4;
-  /** Controlador de garita (mini PC conectada por internet) cuando el servidor está en la nube. */
+  /** Controlador (mini PC conectada por internet) cuando el servidor está en la nube. */
   controladorGarita?: EstadoControladorGarita;
   respaldos: EstadoRespaldos;
   websocket: { namespace: string };
@@ -260,7 +260,7 @@ export interface FiltrosLista {
   hasta?: string;
 }
 
-/** Controlador de garita: si los molinetes se abren a distancia, si está conectado y lo que informa. */
+/** Controlador: si los molinetes se abren a distancia, si está conectado y lo que informa. */
 export interface EstadoControladorGarita {
   remoto: boolean;
   conectado: boolean;
@@ -268,7 +268,7 @@ export interface EstadoControladorGarita {
   direccion: string | null;
   ultimoReporte: string | null;
   estado: {
-    padron: { personas: number; actualizado: string | null };
+    listaPersonal: { personas: number; actualizado: string | null };
     salidasPendientes: number;
   } | null;
 }

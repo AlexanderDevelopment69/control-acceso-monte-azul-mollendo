@@ -526,7 +526,7 @@ function LectoresDniEstado({
   );
 }
 
-/** Controlador de garita (mini PC en la garita conectada al servidor en la nube). */
+/** Controlador (mini PC en la garita conectada al servidor en la nube). */
 function ControladorGaritaEstado({ comprobando, controlador }: { comprobando: boolean; controlador?: EstadoControladorGarita }) {
   if (comprobando) {
     return (
@@ -542,11 +542,11 @@ function ControladorGaritaEstado({ comprobando, controlador }: { comprobando: bo
         <Badge color={controlador?.conectado ? "success" : "error"}>{controlador?.conectado ? "Conectado" : "Desconectado"}</Badge>
       </div>
       <p className="mt-2 text-xs text-gray-400">
-        {controlador?.conectado && controlador.desde ? `Desde ${hora(controlador.desde)}` : "Sin conexión: nadie puede ingresar; se puede salir con el padrón guardado"}
+        {controlador?.conectado && controlador.desde ? `Desde ${hora(controlador.desde)}` : "Sin conexión: nadie puede ingresar; se puede salir con la lista del personal guardada"}
       </p>
       {controlador?.estado && (
         <p className="mt-1 text-xs text-gray-400">
-          Padrón: {controlador.estado.padron.personas} personas
+          Personal guardado para salir sin internet: {controlador.estado.listaPersonal.personas}
           {controlador.estado.salidasPendientes > 0 && ` · ${controlador.estado.salidasPendientes} salidas sin conexión por enviar`}
         </p>
       )}
@@ -808,7 +808,7 @@ function SistemaContent() {
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
         {estado?.controladorGarita?.remoto && (
           <StatusCard className="lg:col-span-12" icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Controlador de garita (mini PC)</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Controlador</p>
             <ControladorGaritaEstado comprobando={comprobando} controlador={estado.controladorGarita} />
           </StatusCard>
         )}

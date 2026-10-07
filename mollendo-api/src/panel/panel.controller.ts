@@ -13,13 +13,13 @@ import { ReleUsbService } from '../integraciones/rele-usb.service.js';
 import { ControladorGateway } from '../controlador-remoto/controlador.gateway.js';
 import { IntegracionesService } from '../integraciones/integraciones.service.js';
 
-/** Controlador de garita desconectado: lectores y relés figuran sin datos. */
+/** Controlador desconectado: lectores y relés figuran sin datos. */
 const sinConfigurarLectores = () => {
   const lector = { configurado: false, conectado: false, ultimaLectura: null, error: null };
   return { ingreso: lector, salida: lector };
 };
 const sinConectarReles = () => {
-  const rele = { conectado: false, serie: null, canal: 1, ultimoPulso: null, error: 'Controlador de garita desconectado' };
+  const rele = { conectado: false, serie: null, canal: 1, ultimoPulso: null, error: 'Controlador desconectado' };
   return { ingreso: rele, salida: rele };
 };
 
@@ -88,7 +88,7 @@ export class PanelController {
     }
 
     const dispositivos = await this.pushSdk.listarEstadoDispositivos();
-    // Con controlador de garita (MOLINETES_REMOTOS=true), los lectores y los relés
+    // Con controlador (MOLINETES_REMOTOS=true), los lectores y los relés
     // están en la mini PC de la garita: se muestra lo que ella informa.
     const controlador = this.controlador.estado();
     const remotos = controlador.remoto ? controlador.estado : null;
@@ -115,7 +115,7 @@ export class PanelController {
       lectoresDni: remotos?.lectoresDni ?? (controlador.remoto ? sinConfigurarLectores() : this.lectoresDni.estado()),
       // Módulos de relés USB que abren los molinetes (uno por molinete).
       releMolinetes: remotos?.releMolinetes ?? (controlador.remoto ? sinConectarReles() : await this.releUsb.estado()),
-      // Controlador de garita (mini PC conectada por internet), si los molinetes se abren a distancia.
+      // Controlador (mini PC conectada por internet), si los molinetes se abren a distancia.
       controladorGarita: controlador,
       // Sincronización con los G4 Pro: diaria activa o no, en curso y el último resultado.
       sincronizacionG4: await this.integraciones.estadoSincronizacion(),

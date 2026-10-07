@@ -62,7 +62,7 @@ services:
       RELE_SALIDA_SERIE: ${RELE_SALIDA_SERIE:-}
       RELE_SALIDA_CANAL: ${RELE_SALIDA_CANAL:-1}
       RELE_PULSO_MS: ${RELE_PULSO_MS:-1000}
-      # true cuando los lectores y relés están en un controlador de garita conectado por
+      # true cuando los lectores y relés están en un controlador conectado por
       # internet (servidor en la nube; ver docker-compose.controlador.yml): la orden de
       # abrir los molinetes se le manda a él.
       MOLINETES_REMOTOS: ${MOLINETES_REMOTOS:-false}
