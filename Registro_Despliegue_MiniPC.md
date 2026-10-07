@@ -540,7 +540,11 @@ docker compose -f docker-compose.prod.yml cp mollendo-api/prisma/carga-masiva-de
 docker compose -f docker-compose.prod.yml exec -T api npx tsx prisma/carga-masiva-demo.ts
 ```
 
-Se borra con el mismo `limpiar-demo.sh` (son personas de las empresas DEMO y eventos del molinete "DEMO"). **No sincronizar el G4 Pro mientras estén cargadas**: registraría a ~480 personas DEMO en el equipo.
+Se borra con el mismo `limpiar-demo.sh` (son personas de las empresas DEMO y eventos del molinete "DEMO").
+
+**Movimientos hasta hoy (opcional):** `prisma/movimientos-demo.ts` completa los ingresos y salidas del personal DEMO desde el último día con movimientos DEMO hasta hoy, a la hora actual (salta los días en que la persona ya tiene movimientos) y registra la salida de hoy de una parte de quienes entraron hace más de una hora (`SALIDAS_HOY=0.35` por defecto), para tener datos del día en el Dashboard y el Panel.
+
+**Archivo de los documentos de la carga masiva (opcional):** esos documentos se crean sin archivo ("Ver" dice "El archivo del documento no está disponible"). `prisma/archivos-demo.ts` les asigna un PDF de una página ("Documento de prueba"): se guarda una vez (`demo-documento-prueba.pdf`, 753 bytes) y cada documento recibe un enlace duro en la carpeta de su persona, así ocupa lo de un archivo y borrar o reemplazar un documento no afecta a los demás. Solo toca documentos de empresas DEMO sin archivo. Se copia y se corre igual que los otros scripts DEMO. Se copia y se corre igual que la carga masiva (`... cp mollendo-api/prisma/movimientos-demo.ts api:/app/prisma/` y `... exec -T api npx tsx prisma/movimientos-demo.ts`); no pasa por la API ni por el G4 Pro. **No sincronizar el G4 Pro mientras estén cargadas**: registraría a ~480 personas DEMO en el equipo.
 
 **En un servidor con un G4 Pro real (por ejemplo AWS):** no cargues fotos ni ingresos por la API. Cada foto se registra en el equipo y cada ingreso por DNI queda pendiente de verificación, así que el siguiente rostro real se le asignaría a una persona DEMO. Para cargar los datos de prueba sin tocar el equipo:
 
