@@ -533,6 +533,15 @@ Sin `DEVICE_API_KEY` carga empresas y personas, pero no los ingresos y salidas. 
 
 **Historial de 30 días (opcional, para el Dashboard):** `prisma/historial-demo.ts` agrega los ingresos y salidas de los últimos 30 días del personal DEMO (unos 2 250 eventos, con las mismas reglas del molinete y doce personas que se quedan dentro más de 24 horas). Como la API registra cada evento con la hora actual, este script escribe directo en la base de datos: necesita `DATABASE_URL` hacia la base, así que se usa en una PC de desarrollo (en `mollendo-api`: `npx tsx prisma/historial-demo.ts`). Sus eventos también llevan el molinete "DEMO" y se borran con el mismo procedimiento.
 
+**Carga masiva (opcional, para probar con volumen):** `prisma/carga-masiva-demo.ts` agrega 480 personas DEMO más (números `995xxxxx`, repartidas en las empresas DEMO; `CANTIDAD=` para otra cantidad) con sus documentos (algunas de baja, sin documentos, con documentos vencidos o por vencer) y sus ingresos y salidas de los últimos 30 días y de hoy. Escribe directo en la base de datos, **sin pasar por la API**: no registra a nadie en el G4 Pro. Sin fotos y con documentos sin archivo. Se corre dentro del contenedor de la API (en `~/mollendo`):
+
+```bash
+docker compose -f docker-compose.prod.yml cp mollendo-api/prisma/carga-masiva-demo.ts api:/app/prisma/
+docker compose -f docker-compose.prod.yml exec -T api npx tsx prisma/carga-masiva-demo.ts
+```
+
+Se borra con el mismo `limpiar-demo.sh` (son personas de las empresas DEMO y eventos del molinete "DEMO"). **No sincronizar el G4 Pro mientras estén cargadas**: registraría a ~480 personas DEMO en el equipo.
+
 **En un servidor con un G4 Pro real (por ejemplo AWS):** no cargues fotos ni ingresos por la API. Cada foto se registra en el equipo y cada ingreso por DNI queda pendiente de verificación, así que el siguiente rostro real se le asignaría a una persona DEMO. Para cargar los datos de prueba sin tocar el equipo:
 
 1. Personas y documentos sin fotos ni eventos: `SIN_FOTOS=1` y sin `DEVICE_API_KEY`.
