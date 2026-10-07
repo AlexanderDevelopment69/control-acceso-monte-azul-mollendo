@@ -186,7 +186,7 @@ const SECCIONES: SeccionManual[] = [
         <p>
           El <Link href="/dashboard" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Dashboard</Link>{" "}
           resume en indicadores y gráficos lo que pasa en el terminal. Cada ingreso autorizado de una persona cuenta como
-          una visita. Se actualiza solo con cada ingreso o salida.
+          una visita. Se actualiza solo con los ingresos y salidas (con mucho movimiento, como máximo cada 10 segundos).
         </p>
         <ul className="list-disc space-y-1 pl-5">
           <li>
@@ -202,7 +202,7 @@ const SECCIONES: SeccionManual[] = [
             final de la página está la lista con su tiempo dentro.
           </li>
           <li>
-            Gráficos de visitas, ingresos y salidas por día, motivos de denegación, documentos del personal activo
+            Gráficos de visitas, ingresos y salidas (por día; por semana si el periodo pasa de 2 meses y por mes si pasa de un año), motivos de denegación, documentos del personal activo
             (vigentes, por vencer en 30 días y vencidos) y personal activo por empresa.
           </li>
         </ul>

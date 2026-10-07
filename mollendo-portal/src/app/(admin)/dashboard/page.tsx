@@ -16,6 +16,7 @@ import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { pieDePagina } from "@/lib/paginaServidor";
 import { SelectorPeriodo, usePeriodo } from "@/components/common/SelectorPeriodo";
+import { agruparTendencia } from "@/components/dashboard/agruparTendencia";
 import { CheckCircleIcon, GroupIcon, TimeIcon, UserIcon } from "@/icons";
 
 const POR_PAGINA_PERMANENCIA = 10;
@@ -55,8 +56,10 @@ function ejeEntero(valores: number[], holgura = false) {
 const porcentajeVisible = (valor: number | string | number[]) =>
   typeof valor === "number" && valor >= 5 ? `${valor.toFixed(1)}%` : "";
 
-/** "2026-09-30" → "30/09". */
-const diaCorto = (dia: string) => `${dia.slice(8, 10)}/${dia.slice(5, 7)}`;
+/** Con movimiento continuo, el Dashboard se recarga como máximo cada tanto. */
+const RECARGA_MINIMA_MS = 10_000;
+
+const TITULO_TENDENCIA = { dia: "por día", semana: "por semana", mes: "por mes" } as const;
 
 /** Horas o días transcurridos desde una fecha, para la permanencia. */
 function tiempoDentro(desde: string, ahora: string): string {
@@ -157,8 +160,10 @@ function DashboardContent() {
     void cargar();
   }, [cargar]);
 
-  // Se actualiza con cada ingreso o salida (tiempo real) y cada minuto, para
-  // que la permanencia mayor a 24 horas avance aunque no haya movimientos.
+  // Se actualiza con los ingresos y salidas (tiempo real) y cada minuto, para
+  // que la permanencia mayor a 24 horas avance aunque no haya movimientos. Con
+  // mucho movimiento (cambio de turno) se recarga como máximo cada 10 s: si se
+  // recargara con cada persona, los gráficos se redibujarían sin parar.
   const cargarActual = useRef(cargar);
   useEffect(() => {
     cargarActual.current = cargar;
@@ -166,16 +171,23 @@ function DashboardContent() {
   useEffect(() => {
     let socket: Socket | undefined;
     let pendiente: ReturnType<typeof setTimeout> | null = null;
+    let ultimaRecarga = Date.now();
+    const recargar = () => {
+      pendiente = null;
+      ultimaRecarga = Date.now();
+      void cargarActual.current();
+    };
     try {
       socket = connectEventosSocket();
       socket.on("evento-acceso", () => {
-        if (pendiente) clearTimeout(pendiente);
-        pendiente = setTimeout(() => void cargarActual.current(), 1000);
+        if (pendiente) return; // ya hay una recarga programada: la incluye
+        const espera = Math.max(1000, ultimaRecarga + RECARGA_MINIMA_MS - Date.now());
+        pendiente = setTimeout(recargar, espera);
       });
     } catch {
       // sin tiempo real, se actualiza cada minuto
     }
-    const intervalo = setInterval(() => void cargarActual.current(), 60_000);
+    const intervalo = setInterval(recargar, 60_000);
     return () => {
       socket?.disconnect();
       if (pendiente) clearTimeout(pendiente);
@@ -184,7 +196,7 @@ function DashboardContent() {
   }, []);
 
   const d = datos;
-  const tendencia = d?.movimientos.tendencia ?? [];
+  const { agrupacion, puntos: tendencia } = agruparTendencia(d?.movimientos.tendencia ?? []);
   const motivos = d?.movimientos.motivos;
   const totales = d?.movimientos.totales;
   const hayVisitas = (d?.visitas.total ?? 0) > 0;
@@ -289,7 +301,7 @@ function DashboardContent() {
 
             {/* Ingresos y salidas */}
             <Tarjeta
-              titulo="Ingresos y salidas por día"
+              titulo={`Ingresos y salidas ${TITULO_TENDENCIA[agrupacion]}`}
               descripcion={
                 totales
                   ? `${totales.ingresosAutorizados} ingresos autorizados · ${totales.ingresosDenegados} ingresos denegados · ${totales.salidasAutorizadas} salidas`
@@ -308,7 +320,7 @@ function DashboardContent() {
                   colors: [COLORES.exito, COLORES.error, COLORES.celeste],
                   plotOptions: { bar: { borderRadius: 3, columnWidth: tendencia.length > 14 ? "80%" : "50%" } },
                   xaxis: {
-                    categories: tendencia.map((t) => diaCorto(t.dia)),
+                    categories: tendencia.map((t) => t.etiqueta),
                     tickAmount: Math.min(tendencia.length, 15),
                     labels: { rotate: 0, hideOverlappingLabels: true },
                   },

@@ -160,6 +160,7 @@ time=2026-10-04 04:02:41  sensor=02  relay=01  alarm=0000000000000000  door=01
 
 ## 8. Advertencias
 
+- **Los registros técnicos se borran a los 90 días.** Una vez al día, la API borra los comandos ya entregados al equipo (`comando_dispositivo` que no estén `pendiente`), las verificaciones (`verificacion_dispositivo`) y las esperas de ingreso cerradas (`ingreso_pendiente`) de más de 90 días. Para investigar algo del equipo, hacerlo dentro de ese plazo.
 - **Nunca registrar personas a mano en el G4 Pro.** Un usuario creado desde la pantalla del equipo recibe **permiso de paso permanente** (un usuario manual dejó `userauthorize=50`). Como los éxitos llegan sin `pin`, podría verificarse mientras otra persona está habilitada y el sistema se lo atribuiría a esa persona. La sincronización diaria los borra.
 - **No usar al personal como administradores del equipo** (`Privilege=14`): al editar a la persona, el sistema vuelve a enviar `Privilege=0`.
 - **Nombre "..."** en el aviso "¡Verificación Exitosa!": el nombre está guardado (`user.Name` y `extuser`), y la lista de usuarios a veces lo muestra y a veces no. Pendiente de investigar.
