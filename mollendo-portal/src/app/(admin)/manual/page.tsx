@@ -57,7 +57,8 @@ const SECCIONES: SeccionManual[] = [
           nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar; en{" "}
           <strong>No pueden</strong> se puede separar a quienes no pueden <strong>por documentos</strong> (sin cargar o
           vencidos; podrán ingresar en cuanto se regularicen) de los <strong>dados de baja</strong> (los números de cada
-          pestaña cuentan solo lo que queda con la empresa y la búsqueda elegidas).
+          pestaña cuentan solo lo que queda con la empresa y la búsqueda elegidas). Con mucho personal, la lista muestra
+          las primeras 100 personas y agrega más a medida que bajas.
         </p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
@@ -254,7 +255,7 @@ const SECCIONES: SeccionManual[] = [
         </ul>
         <p>
           El Excel trae filtros en la cabecera y las fechas se pueden ordenar; el PDF sale en hoja horizontal con número de
-          página. Un reporte puede tener hasta 20 000 filas: si pide más, acota el periodo o los filtros.
+          página. Un reporte puede tener hasta 100 000 filas en Excel y 20 000 en PDF: si pide más, acota el periodo o los filtros.
         </p>
       </div>
     ),

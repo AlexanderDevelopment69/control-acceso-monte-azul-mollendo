@@ -250,7 +250,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 - **Excel:** título, filtros y fecha de generación arriba; cabecera fija con filtros de Excel; fechas como fechas (se pueden ordenar y filtrar); totales al final.
 - **PDF:** A4 horizontal, con la cabecera de la tabla repetida en cada página, número de página y totales al final.
 - **Documentos con archivos (ZIP):** el reporte de documentos también se descarga en un ZIP con el mismo Excel y los archivos de cada documento, en carpetas por empresa y persona (por ejemplo `archivos/DEMO_Transportes_del_Sur_S.A.C/Apaza_Condori_Jorge_Luis_99010001/SCTR_Salud_v1.pdf`; nombres sin espacios, tildes ni ñ para que los enlaces no fallen). Cada fila del Excel tiene un enlace "Abrir" que abre su archivo, sin conexión ni sesión, **después de descomprimir el ZIP** (clic derecho → Extraer todo) y abrir el Excel desde la carpeta extraída. Opcionalmente incluye también los documentos anteriores que fueron renovados (en el Excel figuran como "Reemplazado"). Respeta los filtros de empresa y estado; hasta 2 GB de archivos por descarga.
-- Hasta 20 000 filas por reporte; si se supera, se pide acotar el periodo o los filtros.
+- Hasta 100 000 filas por reporte en Excel (alcanza para un mes de movimientos con miles de personas) y hasta 20 000 en PDF y en el ZIP de documentos; si se supera, se pide acotar el periodo o los filtros.
 - **Interfaz:** `GET /reportes/:tipo?formato=xlsx|pdf` con los filtros de cada reporte; `formato=zip` (y `incluirAnteriores=true`) solo en documentos.
 
 ### 4.6. Auditoría (Administrador)

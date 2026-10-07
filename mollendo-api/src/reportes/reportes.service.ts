@@ -17,8 +17,28 @@ import { textoDia, textoDuracion, type Celda, type Reporte } from './reporte.typ
 
 /** Periodo máximo de los reportes con fechas. */
 const MAX_DIAS = 366;
-/** Filas máximas de un reporte (un PDF más largo deja de ser útil). */
-const MAX_FILAS = 20_000;
+/**
+ * Filas máximas de un reporte. En Excel alcanza para un mes de movimientos con
+ * miles de personas (~75 000 filas con 2 000); en PDF, uno más largo deja de
+ * ser útil (y el ZIP de documentos se arma igual que el PDF: con un tope menor).
+ */
+const MAX_FILAS_EXCEL = 100_000;
+const MAX_FILAS_PDF = 20_000;
+
+/** Tope de filas según el formato pedido. */
+function maxFilas(query: QueryReporteDto): number {
+  return query.formato === 'xlsx' ? MAX_FILAS_EXCEL : MAX_FILAS_PDF;
+}
+
+/** 75556 → "75 556" (sin depender del idioma instalado en el servidor). */
+const miles = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+function demasiadasFilas(filas: number, maximo: number, sugerencia = 'Acota el periodo o los filtros.') {
+  const formato = maximo === MAX_FILAS_EXCEL ? 'Excel' : 'PDF';
+  return new BadRequestException(
+    `El reporte tiene ${miles(filas)} filas (máximo ${miles(maximo)} en ${formato}). ${sugerencia}`,
+  );
+}
 /** Un documento vigente está "por vencer" si vence dentro de estos días (igual que el Dashboard). */
 const DIAS_AVISO = 30;
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
@@ -82,11 +102,7 @@ export class ReportesService {
 
   async generar(tipo: TipoReporte, query: QueryReporteDto): Promise<Reporte> {
     const reporte = await this.armar(tipo, query);
-    if (reporte.filas.length > MAX_FILAS) {
-      throw new BadRequestException(
-        `El reporte tiene ${reporte.filas.length} filas (máximo ${MAX_FILAS}). Acota el periodo o los filtros.`,
-      );
-    }
+    if (reporte.filas.length > maxFilas(query)) throw demasiadasFilas(reporte.filas.length, maxFilas(query));
     return reporte;
   }
 
@@ -202,9 +218,7 @@ export class ReportesService {
    */
   async documentosConArchivos(query: QueryReporteDto) {
     const { reporte, archivos } = await this.armarDocumentos(query, true);
-    if (reporte.filas.length > MAX_FILAS) {
-      throw new BadRequestException(`El reporte tiene ${reporte.filas.length} filas (máximo ${MAX_FILAS}). Acota los filtros.`);
-    }
+    if (reporte.filas.length > MAX_FILAS_PDF) throw demasiadasFilas(reporte.filas.length, MAX_FILAS_PDF, 'Acota los filtros.');
     const peso = archivos.reduce((suma, a) => suma + statSync(a.ruta).size, 0);
     if (peso > MAX_BYTES_ZIP) {
       throw new BadRequestException(
@@ -338,8 +352,12 @@ export class ReportesService {
   /** Historial de ingresos y salidas del periodo, en orden cronológico. */
   private async movimientos(query: QueryReporteDto): Promise<Reporte> {
     const periodo = this.periodo(query);
+    const where = { fechaHora: periodo.rango, tipoMovimiento: query.movimiento, resultado: query.resultado };
+    // Se cuenta antes de cargar: un periodo demasiado grande se rechaza sin traer las filas.
+    const cantidad = await this.prisma.eventoAcceso.count({ where });
+    if (cantidad > maxFilas(query)) throw demasiadasFilas(cantidad, maxFilas(query));
     const eventos = await this.prisma.eventoAcceso.findMany({
-      where: { fechaHora: periodo.rango, tipoMovimiento: query.movimiento, resultado: query.resultado },
+      where,
       include: { persona: { select: { nombres: true, apellidos: true, empresa: { select: { razonSocial: true } } } } },
       orderBy: [{ fechaHora: 'asc' }, { id: 'asc' }],
     });
@@ -390,8 +408,11 @@ export class ReportesService {
    */
   private async visitas(query: QueryReporteDto): Promise<Reporte> {
     const periodo = this.periodo(query);
+    const whereIngresos = { tipoMovimiento: 'ingreso' as const, resultado: 'autorizado' as const, fechaHora: periodo.rango, personaId: { not: null } };
+    const cantidad = await this.prisma.eventoAcceso.count({ where: whereIngresos });
+    if (cantidad > maxFilas(query)) throw demasiadasFilas(cantidad, maxFilas(query));
     const ingresos = await this.prisma.eventoAcceso.findMany({
-      where: { tipoMovimiento: 'ingreso', resultado: 'autorizado', fechaHora: periodo.rango, personaId: { not: null } },
+      where: whereIngresos,
       include: { persona: { select: { nombres: true, apellidos: true, numeroDocumento: true, empresa: { select: { razonSocial: true } } } } },
       orderBy: [{ fechaHora: 'asc' }, { id: 'asc' }],
     });

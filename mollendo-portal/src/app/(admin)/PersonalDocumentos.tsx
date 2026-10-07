@@ -13,6 +13,13 @@ import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
 import { PersonaFicha, motivosCumplimiento } from "@/components/personal/PersonaFicha";
 
 type Filtro = "todos" | "habilitados" | "no-habilitados";
+
+/**
+ * Filas que se dibujan de una vez. Con miles de personas, dibujar toda la lista
+ * congela la página al abrirla (~300 ms con 2 000); se muestran por partes y se
+ * agregan más al acercarse al final de la lista.
+ */
+const FILAS_POR_TANDA = 100;
 /** Dentro de "No pueden": por documentos (sin cargar o vencidos) o dados de baja. */
 type MotivoFiltro = "todos" | "documentos" | "baja";
 
@@ -93,6 +100,28 @@ export function PersonalDocumentos() {
     }
     return true;
   });
+
+  // Cuántas filas se dibujan; vuelve a la primera tanda al cambiar la búsqueda o los filtros.
+  const claveLista = `${q}|${empresaFiltro}|${filtro}|${motivoFiltro}`;
+  const [tanda, setTanda] = useState({ clave: claveLista, cantidad: FILAS_POR_TANDA });
+  const cantidad = tanda.clave === claveLista ? tanda.cantidad : FILAS_POR_TANDA;
+  const mostradas = filtradas.slice(0, cantidad);
+  const hayMas = filtradas.length > cantidad;
+  const listaRef = useRef<HTMLUListElement>(null);
+  const finalRef = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    const final = finalRef.current;
+    if (!hayMas || !final) return;
+    // Al acercarse al final de la lista (600 px antes), se agrega otra tanda.
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) setTanda({ clave: claveLista, cantidad: cantidad + FILAS_POR_TANDA });
+      },
+      { root: listaRef.current, rootMargin: "600px 0px" },
+    );
+    observador.observe(final);
+    return () => observador.disconnect();
+  }, [hayMas, claveLista, cantidad]);
 
   return (
     <div>
@@ -184,7 +213,7 @@ export function PersonalDocumentos() {
               </div>
             )}
           </div>
-          <ul className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto dark:divide-gray-800 lg:max-h-[calc(100vh-20rem)]">
+          <ul ref={listaRef} className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto dark:divide-gray-800 lg:max-h-[calc(100vh-20rem)]">
             {loading && <li className="p-4 text-sm text-gray-400">Cargando…</li>}
             {!loading && filtradas.length === 0 && (
               <li className="p-4 text-sm text-gray-400">
@@ -195,7 +224,7 @@ export function PersonalDocumentos() {
                     : "Sin resultados."}
               </li>
             )}
-            {filtradas.map((p) => {
+            {mostradas.map((p) => {
               const habilitado = p.cumplimiento?.habilitado;
               const motivos = p.cumplimiento ? motivosCumplimiento(p.cumplimiento) : [];
               return (
@@ -230,6 +259,11 @@ export function PersonalDocumentos() {
                 </li>
               );
             })}
+            {hayMas && (
+              <li ref={finalRef} className="p-3 text-center text-xs text-gray-400">
+                Mostrando {cantidad} de {filtradas.length}…
+              </li>
+            )}
           </ul>
         </div>
 
