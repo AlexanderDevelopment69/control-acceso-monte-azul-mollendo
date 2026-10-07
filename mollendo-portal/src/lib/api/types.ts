@@ -28,6 +28,9 @@ export interface Persona {
   /** Ruta de la foto para reconocimiento facial; null = sin foto. */
   fotoUrl: string | null;
   estado: "activo" | "inactivo";
+  /** Por qué se la dio de baja y cuándo (solo si está de baja; las bajas antiguas pueden no tenerlo). */
+  motivoBaja?: string | null;
+  fechaBaja?: string | null;
   creadoEn: string;
   empresa?: { id: number; razonSocial: string };
   documentos?: DocumentoPersona[];

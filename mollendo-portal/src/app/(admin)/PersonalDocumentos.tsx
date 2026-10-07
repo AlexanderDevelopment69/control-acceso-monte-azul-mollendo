@@ -226,7 +226,7 @@ export function PersonalDocumentos() {
             )}
             {mostradas.map((p) => {
               const habilitado = p.cumplimiento?.habilitado;
-              const motivos = p.cumplimiento ? motivosCumplimiento(p.cumplimiento) : [];
+              const motivos = p.cumplimiento ? motivosCumplimiento(p.cumplimiento, p.motivoBaja) : [];
               return (
                 <li key={p.id}>
                   <button

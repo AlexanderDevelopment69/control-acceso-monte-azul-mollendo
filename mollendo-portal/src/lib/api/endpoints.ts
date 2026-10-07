@@ -64,8 +64,9 @@ export const personasApi = {
     return apiRequest<Persona>(`/personas/${id}/foto`, { method: "POST", body: formData, isFormData: true });
   },
   foto: (id: number) => apiRequest<Blob>(`/personas/${id}/foto`, { responseType: "blob" }),
-  updateEstado: (id: number, estado: "activo" | "inactivo") =>
-    apiRequest<Persona>(`/personas/${id}/estado`, { method: "PATCH", body: { estado } }),
+  /** Al dar de baja se puede indicar el motivo (opcional). */
+  updateEstado: (id: number, estado: "activo" | "inactivo", motivo?: string) =>
+    apiRequest<Persona>(`/personas/${id}/estado`, { method: "PATCH", body: { estado, motivo } }),
 };
 
 // ---- tipos-documento ----

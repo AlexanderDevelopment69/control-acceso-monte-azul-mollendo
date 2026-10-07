@@ -160,7 +160,7 @@ export class ReportesService {
       const resultado = evaluarIngreso({ personaActiva: p.estado === 'activo', alcoholConforme: true, documentos: actuales });
       if (resultado.autorizado) pueden++;
       const motivos = resultado.denegadoPorBaja
-        ? 'Dado de baja'
+        ? `Dado de baja${p.fechaBaja ? ` el ${textoDia(claveDia(p.fechaBaja))}` : ''}${p.motivoBaja ? `: ${p.motivoBaja}` : ''}`
         : [
             resultado.denegadoSinDocumentos && 'Sin documentos cargados',
             resultado.documentosVencidos.length > 0 && `Vencido: ${resultado.documentosVencidos.join(', ')}`,

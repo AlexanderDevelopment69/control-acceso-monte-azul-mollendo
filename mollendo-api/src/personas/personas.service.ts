@@ -197,9 +197,14 @@ export class PersonasService {
 
   async updateEstado(id: number, dto: UpdateEstadoPersonaDto, user: AuthenticatedUser) {
     const persona = await this.findPersona(id);
+    // Al dar de baja se guarda la fecha y, si se escribió, el motivo; al reactivar se borran.
+    const motivo = dto.motivo?.replace(/\s+/g, ' ').trim() || null;
     const actualizada = await this.prisma.persona.update({
       where: { id: persona.id },
-      data: { estado: dto.estado },
+      data:
+        dto.estado === 'inactivo'
+          ? { estado: 'inactivo', motivoBaja: motivo, fechaBaja: new Date() }
+          : { estado: 'activo', motivoBaja: null, fechaBaja: null },
     });
     await this.auditoriaService.registrar({
       usuarioId: user.id,

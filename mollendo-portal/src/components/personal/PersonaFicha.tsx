@@ -18,8 +18,9 @@ export function formatearFecha(fecha: string): string {
   return new Date(fecha).toLocaleDateString("es-PE", { timeZone: "UTC" });
 }
 
-export function motivosCumplimiento(c: Cumplimiento): string[] {
-  if (c.dadoDeBaja) return ["Dado de baja"];
+/** Por qué no puede ingresar; si está de baja, con su motivo (si se registró). */
+export function motivosCumplimiento(c: Cumplimiento, motivoBaja?: string | null): string[] {
+  if (c.dadoDeBaja) return [motivoBaja ? `Dado de baja: ${motivoBaja}` : "Dado de baja"];
   const motivos: string[] = [];
   if (c.sinDocumentos) motivos.push("Sin documentos cargados");
   if (c.documentosVencidos.length > 0) motivos.push(`Vencido: ${c.documentosVencidos.join(", ")}`);
@@ -132,12 +133,15 @@ export function PersonaFicha({
     }
   }
 
+  // Motivo que se puede escribir al dar de baja (opcional).
+  const [motivoBaja, setMotivoBaja] = useState("");
+
   async function cambiarEstado(estado: "activo" | "inactivo") {
     if (!persona) return;
     setCambiandoEstado(true);
     setErrorEstado(null);
     try {
-      await personasApi.updateEstado(persona.id, estado);
+      await personasApi.updateEstado(persona.id, estado, estado === "inactivo" ? motivoBaja.trim() || undefined : undefined);
       setConfirmarEstado(null);
       recargarTodo();
     } catch (err) {
@@ -229,6 +233,7 @@ export function PersonaFicha({
             disabled={cambiandoEstado}
             onClick={() => {
               setErrorEstado(null);
+              setMotivoBaja("");
               setConfirmarEstado(persona.estado === "activo" ? "inactivo" : "activo");
             }}
           >
@@ -253,7 +258,13 @@ export function PersonaFicha({
             {cumplimiento.habilitado ? (
               <>✔ Puede ingresar hoy (sujeto a la prueba de alcohol en garita).</>
             ) : (
-              <>✖ No puede ingresar: {motivosCumplimiento(cumplimiento).join(" · ")}.</>
+              <>
+                ✖ No puede ingresar:{" "}
+                {persona.estado === "inactivo"
+                  ? `dado de baja${persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}${persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""}`
+                  : motivosCumplimiento(cumplimiento).join(" · ")}
+                .
+              </>
             )}
           </div>
         )}
@@ -286,6 +297,19 @@ export function PersonaFicha({
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               Sus datos, documentos e historial se conservan, y se puede reactivar cuando sea necesario.
             </p>
+            <label htmlFor="motivo-baja" className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Motivo de la baja <span className="font-normal text-gray-400">(opcional)</span>
+            </label>
+            <textarea
+              id="motivo-baja"
+              rows={3}
+              maxLength={300}
+              value={motivoBaja}
+              onChange={(e) => setMotivoBaja(e.target.value)}
+              placeholder="Por ejemplo: terminó su contrato, cambió de empresa, falta disciplinaria…"
+              className="mt-1.5 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
+            />
+            <p className="mt-1 text-right text-xs text-gray-400">{motivoBaja.length}/300</p>
           </>
         ) : (
           <>
@@ -307,7 +331,12 @@ export function PersonaFicha({
             Cancelar
           </Button>
           {confirmarEstado === "inactivo" ? (
-            <Button type="button" variant="danger" disabled={cambiandoEstado} onClick={() => void cambiarEstado("inactivo")}>
+            <Button
+              type="button"
+              variant="danger"
+              disabled={cambiandoEstado}
+              onClick={() => void cambiarEstado("inactivo")}
+            >
               {cambiandoEstado ? "Dando de baja…" : "Dar de baja"}
             </Button>
           ) : (
