@@ -722,6 +722,7 @@ function SistemaContent() {
   const [error, setError] = useState(false);
   const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null);
   const comprobando = !estado && !error;
+  const anchoEquipo = estado?.controladorGarita?.remoto ? "lg:col-span-3" : "lg:col-span-4";
   // Se incrementa para recargar el estado al terminar una sincronización.
   const [version, setVersion] = useState(0);
 
@@ -804,27 +805,28 @@ function SistemaContent() {
         </StatusCard>
       </div>
 
+      {/* Con controlador, 4 tarjetas por fila (como el servidor); sin él, 3. */}
       <TituloSeccion>Equipos de acceso</TituloSeccion>
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
         {estado?.controladorGarita?.remoto && (
-          <StatusCard className="lg:col-span-12" icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+          <StatusCard className="lg:col-span-3" icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}>
             <p className="text-sm text-gray-500 dark:text-gray-400">Controlador</p>
             <ControladorGaritaEstado comprobando={comprobando} controlador={estado.controladorGarita} />
           </StatusCard>
         )}
-        <StatusCard className="lg:col-span-4" icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard className={anchoEquipo} icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {(estado?.equipos.total ?? 1) > 1 ? "Equipos" : "Equipo"} (G4 Pro)
           </p>
           <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} sincronizacion={estado?.sincronizacionG4} />
         </StatusCard>
 
-        <StatusCard className="lg:col-span-4" icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard className={anchoEquipo} icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Lectores de DNI</p>
           <LectoresDniEstado comprobando={comprobando} lectoresDni={estado?.lectoresDni} />
         </StatusCard>
 
-        <StatusCard className="lg:col-span-4" icon={<BoltIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard className={anchoEquipo} icon={<BoltIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Relés de molinetes</p>
           <ReleEstado comprobando={comprobando} rele={estado?.releMolinetes} />
         </StatusCard>
