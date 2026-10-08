@@ -110,6 +110,7 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
       if (!(error instanceof SinConexion)) throw error;
       // Opción B: sin conexión no se puede entrar (el servidor y el G4 Pro deciden el ingreso).
       this.logger.warn(`Ingreso de ${dto.numeroDocumento} no permitido: sin conexión con el servidor`);
+      await this.releUsb.pulso('avisoIngreso');
       return { estado: 'sin conexión: no se permite el ingreso' };
     }
   }

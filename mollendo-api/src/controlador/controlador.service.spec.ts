@@ -44,10 +44,10 @@ describe('Controlador', () => {
     fs.rmSync(carpeta, { recursive: true, force: true });
   });
 
-  it('sin conexión no deja entrar', async () => {
+  it('sin conexión no deja entrar (y da el aviso de ingreso denegado)', async () => {
     const r = await servicio.registrarIngreso(dni('11111111'));
     expect(r.estado).toContain('sin conexión');
-    expect(pulsos).toEqual([]);
+    expect(pulsos).toEqual(['avisoIngreso']);
   });
 
   it('sin conexión deja salir a quien está en la lista del personal y guarda la salida', async () => {

@@ -703,7 +703,7 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 | Ingreso | Sin documentos o documentos vencidos | `DEN01` | Al instante |
 | Ingreso | Alcohol positivo | `DEN01` | Al recibir el resultado del terminal facial |
 | Ingreso | Rostro no reconocido / no completó rostro y alcohol | `DEN01` | Al vencer el minuto de espera (el terminal facial no avisa cuando no reconoce) |
-| Ingreso | Sin conexión a internet (con controlador) | — | No se activa: el controlador no deja ingresar, pero sin el servidor no se registra la denegación |
+| Ingreso | Sin conexión a internet (con controlador) | `DEN01` | Al instante: el controlador no deja ingresar y activa el aviso (el intento no queda en el historial, porque no llega al servidor) |
 | Salida | DNI no registrado | `DSA01` | Al instante |
 | Salida | DNI no registrado, sin conexión a internet (con controlador) | `DSA01` | Al instante: lo activa el controlador si el DNI no está en la lista del personal guardada |
 | Ingreso o salida | Autorizado | — | No se activa |
@@ -880,6 +880,28 @@ Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube 
 - En el servidor, `MOLINETES_REMOTOS=true` en `.env`: la orden de abrir va al controlador (no a un relé local).
 - **Sin internet (opción B):** nadie puede entrar; **sí salir**. El controlador guarda la **lista del personal** (documentos de todo el personal registrado, `GET /api/v1/controlador/lista-personal`, se renueva cada 10 min y queda en disco) y deja salir a quien está en él. Esas salidas se guardan y, al volver la conexión, se envían con su hora (`sinConexion: true`, `fechaHora`) sin volver a abrir el molinete.
 
+**Sin internet, en detalle**
+
+- **Cómo se da cuenta el controlador:** cada DNI leído se manda al servidor y se espera la respuesta **hasta 5 segundos**. Si no llega (sin internet, servidor caído o demasiado lento), actúa por su cuenta. El canal permanente se reconecta solo cuando vuelve la conexión.
+- **La lista del personal:** se descarga del servidor al conectarse y cada **10 minutos**, y se guarda en el disco de la mini PC (`lista-personal.json`). Así sirve aunque la mini PC se reinicie sin internet.
+
+| Qué pasa sin internet | Molinete | Relé de aviso | ¿Queda en el historial? |
+|---|---|---|---|
+| DNI por el **ingreso** (cualquiera) | No se abre: nadie entra (los documentos, las bajas y el terminal facial dependen del servidor) | `DEN01` | No: el intento no llega al servidor |
+| DNI **registrado** por la **salida** (está en la lista) | Se abre | — | Sí: al volver la conexión se envía con la **hora real** en que ocurrió, sin volver a abrir el molinete (hasta 7 días atrás) |
+| DNI **no registrado** por la **salida** | No se abre | `DSA01` | No |
+
+- **Al volver la conexión:**
+  - el controlador se reconecta solo;
+  - envía las salidas pendientes (`salidas-pendientes.json`);
+  - renueva la lista del personal.
+
+  "Sistema y APIs" muestra cuántas salidas faltan enviar.
+- **Probado:**
+  - **Con AWS apagado** (07/10/2026), el controlador rechazó un ingreso ("sin conexión: no se permite el ingreso") y se reconectó solo al volver.
+  - **Con pruebas automáticas:** la salida con y sin lista, el envío posterior con su hora y los avisos DEN01 y DSA01.
+  - **Pendiente:** la prueba física completa sin internet (DNI en el ingreso → DEN01; DNI de alguien registrado en la salida → se abre y llega después al historial).
+
 **Instalación en la mini PC** (en `~/mollendo`):
 
 1. `controlador.env` (permisos 600) con `SERVIDOR_URL` (la API en la nube, sin `/api/v1`), `DEVICE_API_KEY` (**la misma** del servidor) y las variables de lectores y relés (`LECTOR_DNI_*_DISPOSITIVO`, `RELE_*_SERIE`; ver `deploy.env.example`).
@@ -924,6 +946,7 @@ La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambia
   - Su configuración anterior está guardada en `.env.antes-controlador-20261007-0953`.
 - **AWS:** `MOLINETES_REMOTOS=true` y `G4PRO_HORA_SINCRONIZACION=off` en `.env`. Tiene la persona de prueba **Amiel (48058719)**, con foto y un documento SCTR Salud vigente hasta el 31/12/2027, para probar el ingreso completo.
 - **G4 Pro:** apunta a AWS (`54.147.214.38:3001`), cambiado el 08/10/2026.
+- **Pendiente:** el ingreso completo con AWS no se completó: el G4 **no reconoció el rostro de Amiel** en dos intentos (todo lo demás funcionó). Probar primero el rostro sin DNI (si lo reconoce, el G4 envía `event=23` con su DNI); si no, reiniciar el G4 y repetir.
 
 ### Pasar de B (controlador) a A (servidor completo)
 

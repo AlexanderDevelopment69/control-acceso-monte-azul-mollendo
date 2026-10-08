@@ -101,6 +101,14 @@ La arquitectura es de tres capas: el **portal web** (presentación), el **backen
 
 Los contenedores se reinician automáticamente ante una falla y se inician junto con el servidor. Acceso: por la red local (`http://192.168.0.165:3000`) o por Tailscale (`http://100.78.153.33:3000`).
 
+**Modalidad con servidor en la nube.** El sistema también puede instalarse con el portal, el backend y la base de datos en un servidor en la nube. En esa modalidad, la mini PC de la garita trabaja como **controlador**:
+
+- lee los DNI y los envía al servidor por internet, con la clave de equipos;
+- recibe del servidor la orden de abrir cada molinete y activa su relé;
+- informa al servidor el estado de los lectores y los relés, visible en "Sistema y APIs" (tarjeta "Controlador").
+
+El terminal facial se conecta directamente al servidor en la nube. La conexión entre la garita y el servidor la inicia la garita, por lo que no se abren puertos en la red del terminal. Si la conexión se interrumpe, se restablece sola. El comportamiento sin conexión se describe en la sección 10.4.
+
 ### 2.4. Tecnologías
 
 | Capa | Tecnología |
@@ -400,6 +408,8 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Corte de luz o reinicio | El sistema se inicia automáticamente al encender la mini PC. Los datos guardados se conservan. |
 | Falla del backend | Se reinicia automáticamente. El Panel avisa "El servidor no responde". |
 | Emergencia o corte de luz en los molinetes | Los brazos de los molinetes se liberan automáticamente (función propia del equipo). |
+| Sin conexión a internet (modalidad con servidor en la nube) | La garita detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: la mini PC guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
+| Falla del alcoholímetro o del terminal facial | El ingreso no se completa y la persona es denegada; nadie ingresa sin la prueba de alcohol. Las alternativas de contingencia se describen en un documento aparte. |
 
 ---
 

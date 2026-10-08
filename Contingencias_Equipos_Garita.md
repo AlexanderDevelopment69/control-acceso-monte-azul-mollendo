@@ -2,7 +2,7 @@
 
 Sistema de Control de Accesos — Terminal Portuario de Mollendo
 
-Este documento describe qué ocurre cuando falla el **alcoholímetro** o el **equipo de reconocimiento facial** de la garita, y las alternativas de contingencia para que el terminal siga operando mientras el equipo se repara o se reemplaza. Las alternativas **bajan o reemplazan controles de seguridad**, por lo que su uso debe ser aprobado por el cliente (ver la sección 6).
+Este documento describe qué ocurre cuando falla el **alcoholímetro**, el **equipo de reconocimiento facial** o la **conexión a internet** de la garita, y las alternativas de contingencia para que el terminal siga operando mientras el equipo se repara o se reemplaza. Las alternativas **bajan o reemplazan controles de seguridad**, por lo que su uso debe ser aprobado por el cliente (ver la sección 7).
 
 ---
 
@@ -23,7 +23,7 @@ La **salida** solo pide el DNI: no usa el equipo facial ni el alcoholímetro.
 ### 2.1. Qué ocurre hoy
 
 - **Salidas:** normales.
-- **Ingresos: nadie puede ingresar, pero nadie entra sin control** (comprobado el 07/10/2026, ver la sección 7). Sin el alcoholímetro, el equipo facial reconoce el rostro, muestra *"Verificación de identidad completada. Realice una medición de alcohol."* y **se queda esperando la prueba**: no aprueba y no informa nada al sistema. Después de 1 minuto, el sistema deniega a la persona por "No completó rostro y alcohol".
+- **Ingresos: nadie puede ingresar, pero nadie entra sin control** (comprobado el 07/10/2026, ver la sección 8). Sin el alcoholímetro, el equipo facial reconoce el rostro, muestra *"Verificación de identidad completada. Realice una medición de alcohol."* y **se queda esperando la prueba**: no aprueba y no informa nada al sistema. Después de 1 minuto, el sistema deniega a la persona por "No completó rostro y alcohol".
 - **El equipo no avisa la desconexión:** al desconectar o volver a conectar el alcoholímetro, el equipo facial no envía ninguna señal al sistema. Solo muestra un ícono con un punto rojo en su propia pantalla. El sistema solo puede notarlo de forma indirecta, por ejemplo si varias personas seguidas quedan en "No completó rostro y alcohol".
 
 ---
@@ -90,20 +90,60 @@ En todas las alternativas el sistema **sigue revisando con el DNI** que la perso
 
 ---
 
-## 6. Decisiones pendientes del cliente
+## 6. Corte de internet (modalidad con servidor en la nube)
+
+Cuando el sistema está en un servidor en la nube y la PC de la garita trabaja como controlador, la garita depende de internet para decidir los ingresos.
+
+### 6.1. Qué ocurre hoy
+
+| Situación sin internet | Qué pasa |
+|---|---|
+| Alguien quiere **ingresar** | **No ingresa nadie.** Se activa el aviso de ingreso denegado |
+| Alguien **registrado** quiere **salir** | **Sale.** La PC de la garita guarda la lista del personal (se actualiza cada 10 minutos) y abre el molinete |
+| Alguien **no registrado** quiere salir | No sale. Se activa el aviso de salida denegada |
+| **Vuelve internet** | La PC de la garita se reconecta sola y envía al servidor las salidas que registró, con su hora real |
+
+En resumen: sin internet **nadie entra, pero nadie queda encerrado**.
+
+### 6.2. Por qué no se puede ingresar sin internet
+
+Para ingresar hacen falta dos controles:
+
+1. **Documentos y bajas:** están en el servidor. Se podría resolver guardando en la PC de la garita una lista de quién puede ingresar cada día, como ya se hace con la lista para salir.
+2. **Rostro y alcohol:** el equipo facial está conectado al **servidor en la nube**. Sin internet, el servidor no puede habilitar a la persona en el equipo y el equipo no puede informar el resultado. **Este es el impedimento principal.**
+
+### 6.3. Alternativas para permitir el ingreso sin internet
+
+| Alternativa | Cómo funciona | Ventaja | Desventaja |
+|---|---|---|---|
+| **A. Solo DNI** | Si la persona está en regla según la lista guardada en la garita, ingresa solo con su DNI | Sencilla | **Sin control de rostro ni de alcohol** mientras dure el corte |
+| **B. Verificación manual** | Ingresa con su DNI en regla; el vigilante compara su foto y le toma la prueba con un alcoholímetro portátil (como en la sección 4.2) | Mantiene los controles | Más lenta; depende del vigilante |
+| **C. PC de la garita como respaldo completo** | El equipo facial se conecta a la PC de la garita y esta al servidor. Sin internet, la PC de la garita hace todo localmente | Todo funciona igual, con rostro y alcohol | **Es la más compleja:** duplica el sistema y obliga a mantener sincronizados el personal, los documentos y las fotos |
+| **D. Internet de respaldo** | Una segunda conexión (por ejemplo, un router 4G) que entra sola si se cae la principal | No requiere programación; el sistema sigue completo | Costo del equipo y del plan de datos |
+
+**Recomendación:**
+- **Principal: D (internet de respaldo).** Hace que el corte sea muy poco probable sin bajar ningún control.
+- **Si aun así se corta: B (verificación manual),** la misma contingencia propuesta para la falla del equipo facial.
+- **A** baja la seguridad: se ingresaría sin prueba de alcohol.
+- **C** es mucho trabajo y agrega puntos de falla.
+
+---
+
+## 7. Decisiones pendientes del cliente
 
 1. Con el **alcoholímetro** malogrado: ¿se permite el ingreso **sin prueba de alcohol** (A), **con alcoholímetro portátil** (B) o **no ingresa nadie** hasta repararlo?
 2. Con el **equipo facial** malogrado: ¿se permite el ingreso **solo con DNI** (A), **con verificación manual** (B) o **no ingresa nadie** hasta repararlo?
 3. ¿Quién puede activar la contingencia: **solo administradores** o también **vigilancia**? En la alternativa B, ¿cada apertura manual la puede hacer **cualquier vigilante** o necesita la **autorización de un supervisor**?
-4. ¿Habrá un **alcoholímetro portátil de respaldo** en la garita? (Si falla el equipo facial, el propio alcoholímetro del equipo sirve como portátil; ver la sección 7.1. Si falla el alcoholímetro, haría falta otro.)
+4. ¿Habrá un **alcoholímetro portátil de respaldo** en la garita? (Si falla el equipo facial, el propio alcoholímetro del equipo sirve como portátil; ver la sección 8.1. Si falla el alcoholímetro, haría falta otro.)
 5. ¿Hay un **tiempo máximo** para la contingencia (por ejemplo, 48 horas), tras el cual se debe reautorizar?
 6. Como el equipo no avisa la desconexión del alcoholímetro, ¿se quiere una **alerta en el Panel** cuando varias personas seguidas no completan la verificación ("posible falla del alcoholímetro o del equipo facial")?
+7. Ante un **corte de internet** (modalidad con servidor en la nube): ¿se mantiene que **no ingrese nadie**, o se permite el ingreso **solo con DNI** (A), **con verificación manual** (B) o con la **PC de la garita como respaldo completo** (C)? ¿Se instalará un **internet de respaldo** (D)?
 
-Con estas respuestas se programa un único "Modo de contingencia" que cubre los dos equipos.
+Con estas respuestas se programa un único "Modo de contingencia" que cubre los dos equipos y, si se decide, el ingreso sin internet.
 
 ---
 
-## 7. Prueba realizada (07/10/2026)
+## 8. Prueba realizada (07/10/2026)
 
 Con una persona habilitada en el equipo facial y el sistema registrando todo lo que el equipo envía:
 
@@ -116,7 +156,7 @@ Con una persona habilitada en el equipo facial y el sistema registrando todo lo 
 
 **Conclusión:** sin alcoholímetro **no hay ingresos sin control de alcohol**; el riesgo es solo operativo (nadie puede ingresar). Para usar la alternativa A ("Sin alcoholímetro") habría que desactivar la prueba de alcohol en el menú del equipo facial.
 
-### 7.1. Alcoholímetro conectado a la PC de la garita (07/10/2026)
+### 8.1. Alcoholímetro conectado a la PC de la garita (07/10/2026)
 
 Se probó conectar el alcoholímetro a la PC de la garita en lugar del equipo facial, para que el sistema pudiera saber si está conectado y recibir el valor medido.
 
@@ -133,10 +173,10 @@ Se probó conectar el alcoholímetro a la PC de la garita en lugar del equipo fa
 
 ---
 
-## 8. Otras fallas ya contempladas
+## 9. Otras fallas ya contempladas
 
 | Falla | Qué ocurre |
 |---|---|
-| **Corte de internet** (con el servidor en la nube) | Nadie puede ingresar; **sí se puede salir**: el controlador de la garita guarda la lista del personal y deja salir a quien está registrado. Esas salidas se envían al servidor, con su hora, cuando vuelve la conexión |
+| **Corte de internet** (con el servidor en la nube) | Ver la sección 6. |
 | **Lector de DNI desconectado** | "Sistema y APIs" lo muestra como "Cable desconectado"; el sistema vuelve a intentar abrirlo cada 5 segundos y se recupera solo al reconectarlo |
 | **Relé del molinete desconectado** | "Sistema y APIs" lo muestra como "No conectado"; el sistema registra la orden de abrir y se recupera solo al reconectarlo |
