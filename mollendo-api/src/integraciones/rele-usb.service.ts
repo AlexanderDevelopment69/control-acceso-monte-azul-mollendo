@@ -9,7 +9,20 @@ const ejecutar = promisify(execFile);
 /** Identificación de los módulos DCTTECH "USBRelay" en /sys/class/hidraw/*\/device/uevent. */
 const HID_ID_RELE = '000016C0:000005DF';
 
-type Molinete = 'ingreso' | 'salida';
+/** Molinete de ingreso o de salida, o un relé de aviso (contacto seco) de ingreso o de salida denegados. */
+export type Rele = 'ingreso' | 'salida' | 'avisoIngreso' | 'avisoSalida';
+type Molinete = Rele;
+
+/** Relé de aviso de cada puerta. */
+export const AVISO_DE = { ingreso: 'avisoIngreso', salida: 'avisoSalida' } as const;
+
+const esAviso = (rele: Rele) => rele === 'avisoIngreso' || rele === 'avisoSalida';
+const NOMBRE: Record<Rele, string> = {
+  ingreso: 'molinete de ingreso',
+  salida: 'molinete de salida',
+  avisoIngreso: 'aviso de ingreso denegado',
+  avisoSalida: 'aviso de salida denegada',
+};
 
 interface ModuloEncontrado {
   dispositivo: string;
@@ -26,7 +39,11 @@ export interface EstadoReleMolinete {
   error: string | null;
 }
 
-export type EstadoReleUsb = Record<Molinete, EstadoReleMolinete>;
+export type EstadoReleUsb = Record<'ingreso' | 'salida', EstadoReleMolinete> & {
+  /** Relés de aviso de ingreso y de salida denegados (solo los configurados: RELE_AVISO_*_SERIE). */
+  avisoIngreso?: EstadoReleMolinete;
+  avisoSalida?: EstadoReleMolinete;
+};
 
 /**
  * Módulos de relés USB DCTTECH "USBRelay" conectados a la mini PC, que abren
@@ -41,6 +58,12 @@ export type EstadoReleUsb = Record<Molinete, EstadoReleMolinete>;
  * los envía `rele-usb` (tools/rele-usb.c, compilado en la imagen): Node no
  * puede hacer ese ioctl. Sin módulo (por ejemplo en AWS), la orden solo queda
  * en el registro.
+ *
+ * Dos módulos opcionales de **aviso** dan un contacto seco (para una luz, una
+ * sirena o un tablero de garita): uno cada vez que se deniega un ingreso
+ * (`RELE_AVISO_INGRESO_SERIE`, o `RELE_AVISO_SERIE`) y otro cada vez que se
+ * deniega una salida (`RELE_AVISO_SALIDA_SERIE`), con su `…_CANAL` y la
+ * duración `RELE_AVISO_PULSO_MS`. Sin número de serie no se usan.
  */
 @Injectable()
 export class ReleUsbService {
@@ -51,9 +74,21 @@ export class ReleUsbService {
   private readonly config: Record<Molinete, { serie: string | null; canal: number }> = {
     ingreso: { serie: process.env.RELE_INGRESO_SERIE?.trim() || null, canal: Number(process.env.RELE_INGRESO_CANAL) || 1 },
     salida: { serie: process.env.RELE_SALIDA_SERIE?.trim() || null, canal: Number(process.env.RELE_SALIDA_CANAL) || 1 },
+    avisoIngreso: {
+      serie: (process.env.RELE_AVISO_INGRESO_SERIE || process.env.RELE_AVISO_SERIE)?.trim() || null,
+      canal: Number(process.env.RELE_AVISO_INGRESO_CANAL || process.env.RELE_AVISO_CANAL) || 1,
+    },
+    avisoSalida: { serie: process.env.RELE_AVISO_SALIDA_SERIE?.trim() || null, canal: Number(process.env.RELE_AVISO_SALIDA_CANAL) || 1 },
   };
-  private readonly ultimoPulso: Record<Molinete, string | null> = { ingreso: null, salida: null };
-  private readonly ultimoError: Record<Molinete, string | null> = { ingreso: null, salida: null };
+  /** El aviso puede durar distinto que la apertura del molinete (por ejemplo, una sirena de 2 s). */
+  private readonly pulsoAvisoMs = Number(process.env.RELE_AVISO_PULSO_MS) || this.pulsoMs;
+  private readonly ultimoPulso: Record<Molinete, string | null> = { ingreso: null, salida: null, avisoIngreso: null, avisoSalida: null };
+  private readonly ultimoError: Record<Molinete, string | null> = { ingreso: null, salida: null, avisoIngreso: null, avisoSalida: null };
+
+  /** ¿Está configurado ese relé de aviso? Sin número de serie no se usa (no se adivina cuál es). */
+  avisoConfigurado(aviso: 'avisoIngreso' | 'avisoSalida'): boolean {
+    return !!this.config[aviso].serie;
+  }
 
   /** Todos los módulos conectados, con su número de serie. */
   async modulos(): Promise<ModuloEncontrado[]> {
@@ -83,14 +118,18 @@ export class ReleUsbService {
   }
 
   /**
-   * El módulo asignado al molinete: por número de serie, o el único conectado
-   * que no esté asignado al otro molinete (así el ingreso no usa el módulo de
-   * la salida mientras el suyo no esté conectado).
+   * El módulo asignado: por número de serie, o el único conectado que no esté
+   * asignado a otro relé (así el ingreso no usa el módulo de la salida o del
+   * aviso mientras el suyo no esté conectado). Los avisos exigen número de serie.
    */
   private async moduloDe(molinete: Molinete): Promise<ModuloEncontrado | null> {
     const { serie } = this.config[molinete];
-    const serieDelOtro = this.config[molinete === 'ingreso' ? 'salida' : 'ingreso'].serie;
-    const modulos = (await this.modulos()).filter((m) => !serieDelOtro || m.serie !== serieDelOtro);
+    if (esAviso(molinete) && !serie) return null;
+    const seriesDeOtros = (Object.keys(this.config) as Molinete[])
+      .filter((otro) => otro !== molinete)
+      .map((otro) => this.config[otro].serie)
+      .filter((s): s is string => !!s);
+    const modulos = (await this.modulos()).filter((m) => !seriesDeOtros.includes(m.serie));
     if (serie) return modulos.find((m) => m.serie === serie) ?? null;
     return modulos.length === 1 ? modulos[0] : null;
   }
@@ -99,22 +138,27 @@ export class ReleUsbService {
   async pulso(molinete: Molinete): Promise<boolean> {
     const modulo = await this.moduloDe(molinete);
     const { canal, serie } = this.config[molinete];
+    const que = esAviso(molinete) ? NOMBRE[molinete] : `abrir ${NOMBRE[molinete]}`;
     if (!modulo) {
-      this.logger.warn(
-        `Abrir molinete de ${molinete}: módulo de relés ${serie ? `${serie} ` : ''}no conectado (orden solo registrada)`,
-      );
+      if (esAviso(molinete) && !serie) return false; // sin relé de aviso configurado: no se usa
+      this.logger.warn(`${que}: módulo de relés ${serie ? `${serie} ` : ''}no conectado (orden solo registrada)`);
       return false;
     }
+    const pulsoMs = esAviso(molinete) ? this.pulsoAvisoMs : this.pulsoMs;
     try {
       await ejecutar(this.programa, [modulo.dispositivo, String(canal), 'on']);
-      await new Promise((r) => setTimeout(r, this.pulsoMs));
+      await new Promise((r) => setTimeout(r, pulsoMs));
       this.ultimoPulso[molinete] = new Date().toISOString();
       this.ultimoError[molinete] = null;
-      this.logger.log(`Molinete de ${molinete} abierto: pulso de ${this.pulsoMs} ms en el relé ${canal} del módulo ${modulo.serie}`);
+      this.logger.log(
+        esAviso(molinete)
+          ? `Contacto de ${NOMBRE[molinete]}: pulso de ${pulsoMs} ms en el relé ${canal} del módulo ${modulo.serie}`
+          : `Molinete de ${molinete} abierto: pulso de ${pulsoMs} ms en el relé ${canal} del módulo ${modulo.serie}`,
+      );
       return true;
     } catch (error) {
       this.ultimoError[molinete] = (error as Error).message;
-      this.logger.error(`No se pudo activar el relé ${canal} (molinete de ${molinete}): ${this.ultimoError[molinete]}`);
+      this.logger.error(`No se pudo activar el relé ${canal} (${NOMBRE[molinete]}): ${this.ultimoError[molinete]}`);
       return false;
     } finally {
       // Siempre se intenta apagar, para que el molinete no quede liberado.
@@ -135,6 +179,11 @@ export class ReleUsbService {
         error: this.ultimoError[molinete],
       };
     };
-    return { ingreso: await de('ingreso'), salida: await de('salida') };
+    return {
+      ingreso: await de('ingreso'),
+      salida: await de('salida'),
+      ...(this.avisoConfigurado('avisoIngreso') && { avisoIngreso: await de('avisoIngreso') }),
+      ...(this.avisoConfigurado('avisoSalida') && { avisoSalida: await de('avisoSalida') }),
+    };
   }
 }

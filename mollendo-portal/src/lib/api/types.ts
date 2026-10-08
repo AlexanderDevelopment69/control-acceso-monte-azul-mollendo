@@ -209,7 +209,13 @@ export interface EstadoReleMolinete {
   error: string | null;
 }
 
-export type EstadoReleUsb = { ingreso: EstadoReleMolinete; salida: EstadoReleMolinete };
+export type EstadoReleUsb = {
+  ingreso: EstadoReleMolinete;
+  salida: EstadoReleMolinete;
+  /** Relés de aviso de ingreso y de salida denegados (contacto seco), si están configurados. */
+  avisoIngreso?: EstadoReleMolinete;
+  avisoSalida?: EstadoReleMolinete;
+};
 
 /** Lector de DNI por RS232: si está configurado en el servidor, si el puerto está abierto y su última lectura. */
 export interface EstadoLectorDni {

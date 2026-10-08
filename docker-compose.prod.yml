@@ -62,6 +62,14 @@ services:
       RELE_SALIDA_SERIE: ${RELE_SALIDA_SERIE:-}
       RELE_SALIDA_CANAL: ${RELE_SALIDA_CANAL:-1}
       RELE_PULSO_MS: ${RELE_PULSO_MS:-1000}
+      # Relés de aviso: contacto seco en cada ingreso o salida denegados (luz, sirena…).
+      # Solo con número de serie (RELE_AVISO_SERIE es el nombre anterior del de ingreso).
+      RELE_AVISO_SERIE: ${RELE_AVISO_SERIE:-}
+      RELE_AVISO_INGRESO_SERIE: ${RELE_AVISO_INGRESO_SERIE:-}
+      RELE_AVISO_INGRESO_CANAL: ${RELE_AVISO_INGRESO_CANAL:-}
+      RELE_AVISO_SALIDA_SERIE: ${RELE_AVISO_SALIDA_SERIE:-}
+      RELE_AVISO_SALIDA_CANAL: ${RELE_AVISO_SALIDA_CANAL:-1}
+      RELE_AVISO_PULSO_MS: ${RELE_AVISO_PULSO_MS:-}
       # true cuando los lectores y relés están en un controlador conectado por
       # internet (servidor en la nube; ver docker-compose.controlador.yml): la orden de
       # abrir los molinetes se le manda a él.

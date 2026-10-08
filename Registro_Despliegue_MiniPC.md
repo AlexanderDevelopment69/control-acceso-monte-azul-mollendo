@@ -685,6 +685,41 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 |---|---|---|
 | **Ingreso** | `ING01` | 1 |
 | **Salida** | `SAL01` | 1 |
+| **Aviso de ingreso denegado** (contacto seco) | `DEN01` | 1 |
+| **Aviso de salida denegada** (contacto seco) | `DSA01` | 1 |
+
+**Relés de aviso (desde el 08/10/2026):** dan un contacto seco (NO + COM), un pulso, para conectar una luz, una sirena o un tablero de garita.
+
+- **`DEN01`, ingreso denegado:** por cualquier motivo: no registrado, dado de baja, sin documentos o vencidos, alcohol y "no completó rostro y alcohol". Este último cubre el caso en que el terminal facial **no reconoce el rostro**: el equipo no informa nada, así que el aviso llega al vencer el minuto de espera.
+- **`DSA01`, salida denegada:** cuando se pasa por la salida un DNI **no registrado**. La salida no exige estar activo ni tener documentos. Funciona también **sin internet**: el controlador lo activa si el DNI no está en la lista del personal guardada.
+- No se activan en ingresos o salidas autorizados.
+
+**Cuándo se activa cada aviso**
+
+| Puerta | Motivo de la denegación | Relé | Cuándo |
+|---|---|---|---|
+| Ingreso | DNI no registrado | `DEN01` | Al instante, al pasar el DNI |
+| Ingreso | Dado de baja | `DEN01` | Al instante |
+| Ingreso | Sin documentos o documentos vencidos | `DEN01` | Al instante |
+| Ingreso | Alcohol positivo | `DEN01` | Al recibir el resultado del terminal facial |
+| Ingreso | Rostro no reconocido / no completó rostro y alcohol | `DEN01` | Al vencer el minuto de espera (el terminal facial no avisa cuando no reconoce) |
+| Ingreso | Sin conexión a internet (con controlador) | — | No se activa: el controlador no deja ingresar, pero sin el servidor no se registra la denegación |
+| Salida | DNI no registrado | `DSA01` | Al instante |
+| Salida | DNI no registrado, sin conexión a internet (con controlador) | `DSA01` | Al instante: lo activa el controlador si el DNI no está en la lista del personal guardada |
+| Ingreso o salida | Autorizado | — | No se activa |
+
+**Configuración** (sin número de serie, el aviso no se usa). Va en el `.env` de la mini PC como servidor y en `controlador.env` como controlador:
+
+| Variable | Valor | Para qué |
+|---|---|---|
+| `RELE_AVISO_INGRESO_SERIE` | `DEN01` | Aviso de ingreso denegado (antes `RELE_AVISO_SERIE`, que sigue funcionando) |
+| `RELE_AVISO_SALIDA_SERIE` | `DSA01` | Aviso de salida denegada |
+| `RELE_AVISO_*_CANAL` | 1 por defecto | Relé del módulo que se usa |
+| `RELE_AVISO_PULSO_MS` | por defecto la de los molinetes, 1 s | Duración del pulso de los dos avisos |
+
+- **Con controlador:** el servidor en la nube le manda el aviso al controlador por el mismo canal de las aperturas, indicando la puerta.
+- **En "Sistema y APIs":** aparecen en la tarjeta de relés como **"Aviso ingreso denegado"** y **"Aviso salida denegada"**, con la hora del último aviso.
+- **Prueba (08/10/2026, con AWS):** los dos módulos llegaron con la serie de fábrica `S2OD2` y se cambiaron a `DEN01` y `DSA01`. Un ingreso y una salida de DNI no registrados en AWS activaron, cada uno, el pulso de su relé en la mini PC.
 
 > El módulo se identifica como "USBRelay2", pero la placa tiene **un solo relé** (el 1). Por eso se usa un módulo por molinete.
 >

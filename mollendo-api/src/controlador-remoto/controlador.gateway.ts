@@ -97,6 +97,15 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
     this.logger.log(`Orden de abrir el molinete de ${evento.tipoMovimiento} enviada al controlador`);
   }
 
+  /** Ingreso o salida denegados: el controlador activa el relé de aviso de esa puerta (contacto seco), si lo tiene. */
+  @OnEvent('evento-acceso.registrado')
+  avisarDenegado(evento: { tipoMovimiento?: string; resultado?: string; numeroDocumento?: string }): void {
+    if (!molinetesRemotos() || evento.resultado !== 'denegado') return;
+    if (evento.tipoMovimiento !== 'ingreso' && evento.tipoMovimiento !== 'salida') return;
+    if (this.conexiones.size === 0) return;
+    this.server.emit('aviso-denegado', { tipoMovimiento: evento.tipoMovimiento, numeroDocumento: evento.numeroDocumento ?? null });
+  }
+
   /** Para "Sistema y APIs": el controlador conectado (el más reciente) y lo que informó. */
   estado() {
     const conexion = [...this.conexiones.values()].sort((a, b) => b.desde.localeCompare(a.desde))[0] ?? null;

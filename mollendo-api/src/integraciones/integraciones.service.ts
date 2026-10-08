@@ -3,7 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import type { AbrirMolineteEvent, HabilitarEnEquipoEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
-import { ReleUsbService } from './rele-usb.service.js';
+import { AVISO_DE, ReleUsbService } from './rele-usb.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
 
@@ -79,6 +79,18 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error(`No se pudo ${evento.habilitar ? 'habilitar' : 'deshabilitar'} el DNI ${evento.numeroDocumento}: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * Ingreso denegado (documentos, baja, no registrado, alcohol o sin verificación) o salida denegada
+   * (DNI no registrado): contacto seco del relé de aviso de esa puerta, si está configurado.
+   */
+  @OnEvent('evento-acceso.registrado')
+  async avisarDenegado(evento: { tipoMovimiento?: string; resultado?: string }): Promise<void> {
+    if (evento.resultado !== 'denegado' || (evento.tipoMovimiento !== 'ingreso' && evento.tipoMovimiento !== 'salida')) return;
+    // Con controlador, el aviso lo lleva ControladorGateway a la mini PC.
+    if (process.env.MOLINETES_REMOTOS === 'true') return;
+    await this.releUsb.pulso(AVISO_DE[evento.tipoMovimiento]);
   }
 
   @OnEvent('molinete.abrir')

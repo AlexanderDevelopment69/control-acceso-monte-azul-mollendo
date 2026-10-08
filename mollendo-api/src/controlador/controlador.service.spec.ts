@@ -59,10 +59,10 @@ describe('Controlador', () => {
     expect(guardadas[0].dto.numeroDocumento).toBe('11111111');
   });
 
-  it('sin conexión no deja salir a quien no está en la lista del personal', async () => {
+  it('sin conexión no deja salir a quien no está en la lista del personal (y da el aviso de salida denegada)', async () => {
     const r = await servicio.registrarSalida(dni('99999999'));
     expect(r.resultado).toContain('denegado');
-    expect(pulsos).toEqual([]);
+    expect(pulsos).toEqual(['avisoSalida']);
   });
 
   it('al volver la conexión envía las salidas pendientes con su hora y sin volver a abrir', async () => {

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { io, type Socket } from 'socket.io-client';
 import type { IngresoDto } from '../eventos-acceso/dto/ingreso.dto.js';
 import type { SalidaDto } from '../eventos-acceso/dto/salida.dto.js';
-import { ReleUsbService } from '../integraciones/rele-usb.service.js';
+import { AVISO_DE, ReleUsbService } from '../integraciones/rele-usb.service.js';
 import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
 import { RegistroLecturas, type ResultadoLectura } from '../lectores-dni/registro-lecturas.js';
 
@@ -81,6 +81,11 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     });
     this.socket.on('disconnect', (motivo) => this.logger.warn(`Desconectado del servidor (${motivo}); se reintenta solo`));
     this.socket.on('connect_error', (error) => this.logger.warn(`Sin conexión con el servidor: ${error.message}`));
+    this.socket.on('aviso-denegado', (aviso: { tipoMovimiento?: 'ingreso' | 'salida'; numeroDocumento: string | null }) => {
+      const movimiento = aviso.tipoMovimiento ?? 'ingreso';
+      this.logger.log(`${movimiento === 'ingreso' ? 'Ingreso denegado' : 'Salida denegada'}${aviso.numeroDocumento ? ` (${aviso.numeroDocumento})` : ''}: relé de aviso`);
+      void this.releUsb.pulso(AVISO_DE[movimiento]);
+    });
     this.socket.on('abrir', (orden: { tipoMovimiento: 'ingreso' | 'salida' }) => {
       this.logger.log(`Orden del servidor: abrir el molinete de ${orden.tipoMovimiento}`);
       void this.releUsb.pulso(orden.tipoMovimiento);
@@ -128,6 +133,7 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
   private async salidaSinConexion(dto: SalidaDto): Promise<ResultadoLectura> {
     if (!this.listaPersonal.has(dto.numeroDocumento)) {
       this.logger.warn(`Salida de ${dto.numeroDocumento} sin conexión: no está en la lista del personal, no se abre`);
+      await this.releUsb.pulso('avisoSalida');
       return { resultado: 'denegado (sin conexión, no está en la lista del personal)' };
     }
     await this.releUsb.pulso('salida');

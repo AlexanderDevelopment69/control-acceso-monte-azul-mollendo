@@ -566,6 +566,9 @@ function ReleEstado({ comprobando, rele }: { comprobando: boolean; rele?: Estado
   const filas = [
     { etiqueta: "Ingreso", r: rele?.ingreso },
     { etiqueta: "Salida", r: rele?.salida },
+    // Contacto seco en cada ingreso o salida denegados (solo los configurados).
+    ...(rele?.avisoIngreso ? [{ etiqueta: "Aviso ingreso denegado", r: rele.avisoIngreso }] : []),
+    ...(rele?.avisoSalida ? [{ etiqueta: "Aviso salida denegada", r: rele.avisoSalida }] : []),
   ];
   return (
     <div className="mt-2 space-y-3">
@@ -576,7 +579,7 @@ function ReleEstado({ comprobando, rele }: { comprobando: boolean; rele?: Estado
             {etiqueta}
             {r?.serie && ` · módulo ${r.serie}`}
             {r?.conectado &&
-              ` · ${r.ultimoPulso ? `últ. apertura ${new Date(r.ultimoPulso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}` : "sin aperturas"}`}
+              ` · ${r.ultimoPulso ? `${etiqueta.startsWith("Aviso") ? "últ. aviso" : "últ. apertura"} ${new Date(r.ultimoPulso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}` : etiqueta.startsWith("Aviso") ? "sin avisos" : "sin aperturas"}`}
           </p>
         </div>
       ))}
