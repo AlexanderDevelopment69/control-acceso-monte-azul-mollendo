@@ -66,6 +66,8 @@ services:
       # internet (servidor en la nube; ver docker-compose.controlador.yml): la orden de
       # abrir los molinetes se le manda a él.
       MOLINETES_REMOTOS: ${MOLINETES_REMOTOS:-false}
+      # true: anota en el registro todo lo que envía el G4 Pro (para estudiar el equipo).
+      PUSH_SDK_DEPURAR: ${PUSH_SDK_DEPURAR:-false}
       # Hora de la sincronización diaria con los G4 Pro (0 = medianoche, hora de Lima).
       G4PRO_HORA_SINCRONIZACION: ${G4PRO_HORA_SINCRONIZACION:-0}
     # Solo puertos serie USB (ttyUSB = 188, ttyACM = 166, los lectores de DNI) y

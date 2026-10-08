@@ -865,6 +865,67 @@ docker compose -f docker-compose.prod.yml up -d api
 
 **Pendiente para el ingreso completo:** el G4 Pro sigue apuntando a la mini PC; para probar un ingreso con el servidor en la nube hay que cambiar en el equipo la dirección del servidor (Cloud Server) a la de la nube, y registrar allí al personal con su foto.
 
+## 8g. Configuraciones de la mini PC y del G4 Pro (para pruebas)
+
+La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambiar **dos cosas**: cómo arranca la mini PC y a qué servidor apunta el G4 Pro.
+
+### Las dos configuraciones
+
+| | **A. Mini PC como servidor completo** | **B. Mini PC como controlador (servidor en la nube)** |
+|---|---|---|
+| Portal, API, base de datos | En la mini PC (`docker-compose.prod.yml`) | En la nube (hoy AWS `54.147.214.38`; después Azure) |
+| Lectores de DNI y relés | Los maneja la API de la mini PC | Los maneja el **controlador** de la mini PC (`docker-compose.controlador.yml`) |
+| G4 Pro apunta a (Cloud Server) | `192.168.0.165`, puerto `3001` | `54.147.214.38`, puerto `3001` (o el dominio de Azure) |
+| Desde dónde llega el G4 al servidor | Red local de la garita | Internet, desde la IP pública de la garita (`38.25.53.235` el 07/10/2026) |
+| Personal y fotos en el G4 | Los de la base de la mini PC | Los de la base de la nube |
+
+**El G4 Pro habla con un solo servidor**: el que tenga configurado. El otro lo ve "Desconectado" (solo guarda la última vez que lo vio). Al cambiar de servidor, el nuevo le envía los comandos que tenía pendientes; revisarlos antes (`select … from comando_dispositivo where estado = 'pendiente'`).
+
+### Estado actual (08/10/2026): configuración B con AWS
+
+- **Mini PC:**
+  - `controlador` corriendo con `controlador.env`: `SERVIDOR_URL=http://54.147.214.38:3001`, la clave de equipos de AWS, lectores y relés.
+  - La API local sigue corriendo, pero sin lectores (comentados en `.env`) y con `MOLINETES_REMOTOS=true`.
+  - Su configuración anterior está guardada en `.env.antes-controlador-20261007-0953`.
+- **AWS:** `MOLINETES_REMOTOS=true` y `G4PRO_HORA_SINCRONIZACION=off` en `.env`. Tiene la persona de prueba **Amiel (48058719)**, con foto y un documento SCTR Salud vigente hasta el 31/12/2027, para probar el ingreso completo.
+- **G4 Pro:** apunta a AWS (`54.147.214.38:3001`), cambiado el 08/10/2026.
+
+### Pasar de B (controlador) a A (servidor completo)
+
+1. **En el G4 Pro** (menú de comunicación → servidor en la nube): dirección `192.168.0.165`, puerto `3001`.
+2. **En la mini PC** (`~/mollendo`):
+
+```bash
+docker compose -f docker-compose.controlador.yml --env-file controlador.env down
+cp .env.antes-controlador-20261007-0953 .env     # lectores activos, sin MOLINETES_REMOTOS
+docker compose -f docker-compose.prod.yml up -d api
+```
+
+3. **Comprobar** en "Sistema y APIs" de la mini PC:
+   - el G4 "En línea";
+   - los lectores con "Cable conectado";
+   - los relés "Conectado";
+   - **sin** la tarjeta "Controlador".
+
+### Pasar de A (servidor completo) a B (controlador)
+
+1. **En la mini PC:**
+   - en `.env`, comentar `LECTOR_DNI_INGRESO_DISPOSITIVO` y `LECTOR_DNI_SALIDA_DISPOSITIVO` y poner `MOLINETES_REMOTOS=true`;
+   - `docker compose -f docker-compose.prod.yml up -d api`;
+   - `docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build`.
+
+   Los lectores no pueden estar abiertos por la API y el controlador a la vez.
+2. **En el servidor en la nube:** `MOLINETES_REMOTOS=true` en `.env` y reiniciar la API.
+3. **En el G4 Pro:** dirección y puerto del servidor en la nube.
+4. **Comprobar** en "Sistema y APIs" de la nube:
+   - "Controlador: Conectado", con los lectores y relés que informa;
+   - "Equipo (G4 Pro): En línea".
+
+### Otras opciones útiles para pruebas
+
+- `PUSH_SDK_DEPURAR=true` en el `.env` del servidor que recibe al G4: anota cada mensaje del equipo en el registro de la API (ver `Protocolo_G4Pro_Referencia.md`). Volver a `false` al terminar.
+- Para que una persona pueda pasar por el G4 sin el flujo del DNI (pruebas del equipo), se le da permiso a mano con un comando `DATA UPDATE userauthorize …` y se le quita al terminar con `DATA DELETE userauthorize …` (ver `Protocolo_G4Pro_Referencia.md`, sección 9).
+
 ## 9. Seguridad y recomendaciones
 
 1. **Contraseña del servidor**: cámbiala si alguna vez se compartió por chat o correo (`passwd` en el servidor). Lo recomendable es entrar con **llave SSH** y desactivar el acceso por contraseña.

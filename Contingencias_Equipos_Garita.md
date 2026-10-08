@@ -23,12 +23,8 @@ La **salida** solo pide el DNI: no usa el equipo facial ni el alcoholímetro.
 ### 2.1. Qué ocurre hoy
 
 - **Salidas:** normales.
-- **Ingresos:** dependen de cómo reaccione el equipo facial sin el alcoholímetro. **Está pendiente de probar** (ver la sección 7). Hay dos posibilidades:
-
-| Reacción del equipo facial | Efecto en el ingreso | Riesgo |
-|---|---|---|
-| No deja terminar la verificación (espera el soplido o muestra un error) | Nadie puede ingresar: después de 1 minuto cada persona queda denegada por "No completó rostro y alcohol" | Seguro, pero detiene la operación |
-| Omite la prueba y aprueba solo con el rostro | Se ingresaría **sin control de alcohol**, sin que el sistema lo note | **Riesgo de seguridad.** El sistema puede bloquearlo una vez conocido qué informa el equipo en ese caso |
+- **Ingresos: nadie puede ingresar, pero nadie entra sin control** (comprobado el 07/10/2026, ver la sección 7). Sin el alcoholímetro, el equipo facial reconoce el rostro, muestra *"Verificación de identidad completada. Realice una medición de alcohol."* y **se queda esperando la prueba**: no aprueba y no informa nada al sistema. Después de 1 minuto, el sistema deniega a la persona por "No completó rostro y alcohol".
+- **El equipo no avisa la desconexión:** al desconectar o volver a conectar el alcoholímetro, el equipo facial no envía ninguna señal al sistema. Solo muestra un ícono con un punto rojo en su propia pantalla. El sistema solo puede notarlo de forma indirecta, por ejemplo si varias personas seguidas quedan en "No completó rostro y alcohol".
 
 ---
 
@@ -99,23 +95,41 @@ En todas las alternativas el sistema **sigue revisando con el DNI** que la perso
 1. Con el **alcoholímetro** malogrado: ¿se permite el ingreso **sin prueba de alcohol** (A), **con alcoholímetro portátil** (B) o **no ingresa nadie** hasta repararlo?
 2. Con el **equipo facial** malogrado: ¿se permite el ingreso **solo con DNI** (A), **con verificación manual** (B) o **no ingresa nadie** hasta repararlo?
 3. ¿Quién puede activar la contingencia: **solo administradores** o también **vigilancia**? En la alternativa B, ¿cada apertura manual la puede hacer **cualquier vigilante** o necesita la **autorización de un supervisor**?
-4. ¿Habrá un **alcoholímetro portátil de respaldo** en la garita?
+4. ¿Habrá un **alcoholímetro portátil de respaldo** en la garita? (Si falla el equipo facial, el propio alcoholímetro del equipo sirve como portátil; ver la sección 7.1. Si falla el alcoholímetro, haría falta otro.)
 5. ¿Hay un **tiempo máximo** para la contingencia (por ejemplo, 48 horas), tras el cual se debe reautorizar?
+6. Como el equipo no avisa la desconexión del alcoholímetro, ¿se quiere una **alerta en el Panel** cuando varias personas seguidas no completan la verificación ("posible falla del alcoholímetro o del equipo facial")?
 
 Con estas respuestas se programa un único "Modo de contingencia" que cubre los dos equipos.
 
 ---
 
-## 7. Prueba pendiente
+## 7. Prueba realizada (07/10/2026)
 
-Antes de definir la contingencia del alcoholímetro hay que comprobar **cómo reacciona el equipo facial sin él**:
+Con una persona habilitada en el equipo facial y el sistema registrando todo lo que el equipo envía:
 
-1. Desconectar el cable USB del alcoholímetro del equipo facial.
-2. Hacer una verificación de rostro con una persona habilitada.
-3. Anotar qué muestra el equipo y revisar en el registro del sistema qué resultado informó.
-4. Volver a conectar el alcoholímetro.
+| Paso | Resultado |
+|---|---|
+| Verificaciones con el alcoholímetro conectado | Aprobadas: el equipo informa "apto" (rostro con alcohol) |
+| Desconectar el alcoholímetro | El equipo **no envía nada** al sistema (solo muestra un ícono con punto rojo en su pantalla) |
+| Verificación sin el alcoholímetro | Reconoce el rostro, muestra *"Verificación de identidad completada. Realice una medición de alcohol."* y **queda esperando**: no aprueba ni informa nada |
+| Volver a conectar el alcoholímetro | El equipo **no envía nada** al sistema |
 
-Si el equipo **aprueba sin la prueba de alcohol**, el sistema se ajustará para **denegar** esos ingresos (mientras no esté activo el modo "Sin alcoholímetro"), porque el equipo marca de forma distinta las verificaciones con alcohol.
+**Conclusión:** sin alcoholímetro **no hay ingresos sin control de alcohol**; el riesgo es solo operativo (nadie puede ingresar). Para usar la alternativa A ("Sin alcoholímetro") habría que desactivar la prueba de alcohol en el menú del equipo facial.
+
+### 7.1. Alcoholímetro conectado a la PC de la garita (07/10/2026)
+
+Se probó conectar el alcoholímetro a la PC de la garita en lugar del equipo facial, para que el sistema pudiera saber si está conectado y recibir el valor medido.
+
+| Prueba | Resultado |
+|---|---|
+| ¿La PC lo reconoce? | Sí, como puerto serie USB |
+| ¿Mide sin el equipo facial? | **Sí.** Funciona solo: botón "Test", sopla, muestra el resultado en su pantalla y guarda las pruebas ("Data") |
+| ¿Envía el resultado a la PC? | **No.** Nada en reposo ni al hacer una prueba (escuchado a 4 800 – 115 200 baudios) |
+
+- **El alcoholímetro trabaja a pedido:** solo entrega el resultado cuando el equipo que lo controla (el equipo facial) le envía una orden. Esa orden no está documentada. Para usarlo desde la PC habría que pedir a **ZKTeco o al proveedor el protocolo de comunicación** del alcoholímetro. Probar órdenes al azar podría desconfigurarlo o descalibrarlo.
+- **En operación normal debe ir conectado al equipo facial**, como está diseñado; esa integración funciona y es segura.
+- **Sirve como alcoholímetro portátil:** como mide solo, con pantalla y batería propias, **si falla el equipo facial** se puede usar desconectado para la verificación manual del vigilante (alternativa B), sin comprar otro equipo.
+- **Escala que trae de fábrica:** apto ("Pass") por debajo de **0,090 mg/L**; "Drink" de 0,090 a 0,363 mg/L; "Drunk" sobre 0,363 mg/L. Es una referencia para el umbral del equipo facial, que fija el cliente.
 
 ---
 

@@ -1,6 +1,6 @@
 import './common/zona-horaria.js';
 import { NestFactory } from '@nestjs/core';
-import { RequestMethod, ValidationPipe } from '@nestjs/common';
+import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { text } from 'express';
 import { AppModule } from './app.module.js';
@@ -20,6 +20,17 @@ async function bootstrap() {
   // Content-Type reconocible -- se fuerza a leerlos como texto siempre, antes
   // de que los parsers por defecto de Nest (json/urlencoded) los ignoren.
   app.use('/iclock', text({ type: () => true, limit: '2mb' }));
+  // Depuración del equipo (PUSH_SDK_DEPURAR=true): anota cada pedido del G4 Pro
+  // con su contenido, para estudiar qué informa (p. ej. el estado del alcoholímetro).
+  if (process.env.PUSH_SDK_DEPURAR === 'true') {
+    const registro = new Logger('G4ProDepurar');
+    app.use('/iclock', (req: { method: string; originalUrl: string; body?: unknown }, _res: unknown, next: () => void) => {
+      const cuerpo = typeof req.body === 'string' ? req.body.replace(/	/g, ' | ').slice(0, 3000) : '';
+      if (!req.originalUrl.startsWith('/iclock/getrequest')) registro.log(`${req.method} ${req.originalUrl}${cuerpo ? `
+${cuerpo}` : ''}`);
+      next();
+    });
+  }
   // CORS_ORIGIN acepta uno o varios orígenes separados por coma (ej. para
   // permitir localhost y un túnel de ngrok al mismo tiempo).
   const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
