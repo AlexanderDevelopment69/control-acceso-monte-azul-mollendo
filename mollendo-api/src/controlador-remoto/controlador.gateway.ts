@@ -1,4 +1,6 @@
 import { Logger } from '@nestjs/common';
+import fs from 'node:fs';
+import path from 'node:path';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   ConnectedSocket,
@@ -56,6 +58,12 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
 
   private readonly logger = new Logger(ControladorGateway.name);
   private readonly conexiones = new Map<string, Conexion>();
+  /**
+   * Lo último que informó el controlador, para seguir mostrando sus lectores y
+   * relés (como desconectados) cuando se corta la conexión. Se guarda en disco
+   * (junto a los documentos) para recordarlo aunque se reinicie el servidor.
+   */
+  private ultimoConocido: { estado: EstadoReportado; cuando: string } | null = leerUltimoConocido();
 
   handleConnection(cliente: Socket): void {
     const clave = cliente.handshake.auth?.['clave'];
@@ -83,6 +91,8 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
     if (!conexion) return;
     conexion.estado = estado;
     conexion.ultimoReporte = new Date().toISOString();
+    this.ultimoConocido = { estado, cuando: conexion.ultimoReporte };
+    guardarUltimoConocido(this.ultimoConocido);
   }
 
   /** Orden de abrir un molinete (DNI de salida, o ingreso verificado por el G4 Pro). */
@@ -114,8 +124,46 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
       conectado: !!conexion,
       desde: conexion?.desde ?? null,
       direccion: conexion?.direccion ?? null,
-      ultimoReporte: conexion?.ultimoReporte ?? null,
-      estado: conexion?.estado ?? null,
+      ultimoReporte: conexion?.ultimoReporte ?? this.ultimoConocido?.cuando ?? null,
+      // Desconectado: lo último que informó, con lectores y relés como no conectados.
+      estado: conexion?.estado ?? (this.ultimoConocido ? comoDesconectado(this.ultimoConocido.estado) : null),
     };
   }
+}
+
+/** Archivo con el último estado informado por el controlador (en el volumen de documentos). */
+const ARCHIVO_ULTIMO = path.join(path.dirname(process.env.DOCUMENTOS_STORAGE_PATH ?? './storage/documentos'), 'controlador-ultimo-estado.json');
+
+function leerUltimoConocido(): { estado: EstadoReportado; cuando: string } | null {
+  try {
+    return JSON.parse(fs.readFileSync(ARCHIVO_ULTIMO, 'utf8')) as { estado: EstadoReportado; cuando: string };
+  } catch {
+    return null;
+  }
+}
+
+function guardarUltimoConocido(ultimo: { estado: EstadoReportado; cuando: string }) {
+  try {
+    fs.mkdirSync(path.dirname(ARCHIVO_ULTIMO), { recursive: true });
+    fs.writeFileSync(ARCHIVO_ULTIMO, JSON.stringify(ultimo));
+  } catch {
+    // sin disco: queda solo en memoria
+  }
+}
+
+/** El último estado informado, con todos los lectores y relés desconectados (el controlador no responde). */
+function comoDesconectado(estado: EstadoReportado): EstadoReportado {
+  const lector = (l: EstadoReportado['lectoresDni']['ingreso']) => ({ ...l, conectado: false, error: 'Controlador desconectado' });
+  const rele = <T extends { conectado: boolean; error: string | null }>(r: T): T => ({ ...r, conectado: false, error: 'Controlador desconectado' });
+  const reles = estado.releMolinetes;
+  return {
+    ...estado,
+    lectoresDni: { ingreso: lector(estado.lectoresDni.ingreso), salida: lector(estado.lectoresDni.salida) },
+    releMolinetes: {
+      ingreso: rele(reles.ingreso),
+      salida: rele(reles.salida),
+      ...(reles.avisoIngreso && { avisoIngreso: rele(reles.avisoIngreso) }),
+      ...(reles.avisoSalida && { avisoSalida: rele(reles.avisoSalida) }),
+    },
+  };
 }

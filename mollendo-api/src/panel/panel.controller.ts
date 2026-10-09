@@ -13,14 +13,14 @@ import { ReleUsbService } from '../integraciones/rele-usb.service.js';
 import { ControladorGateway } from '../controlador-remoto/controlador.gateway.js';
 import { IntegracionesService } from '../integraciones/integraciones.service.js';
 
-/** Controlador desconectado: lectores y relés figuran sin datos. */
+/** Controlador sin datos todavía (nunca informó): lectores y relés, incluidos los de aviso, figuran sin conexión. */
 const sinConfigurarLectores = () => {
-  const lector = { configurado: false, conectado: false, ultimaLectura: null, error: null };
+  const lector = { configurado: true, conectado: false, ultimaLectura: null, error: 'Controlador desconectado' };
   return { ingreso: lector, salida: lector };
 };
 const sinConectarReles = () => {
   const rele = { conectado: false, serie: null, canal: 1, ultimoPulso: null, error: 'Controlador desconectado' };
-  return { ingreso: rele, salida: rele };
+  return { ingreso: rele, salida: rele, avisoIngreso: rele, avisoSalida: rele };
 };
 
 @Controller()

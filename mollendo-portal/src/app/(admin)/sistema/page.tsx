@@ -20,7 +20,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import { BoltIcon, BoxCubeIcon, BoxIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
+import { BellIcon, BoltIcon, BoxCubeIcon, BoxIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
@@ -511,6 +511,8 @@ function LectoresDniEstado({
         <div key={etiqueta}>
           {!lector?.configurado ? (
             <Badge color="light">Sin configurar</Badge>
+          ) : lector.error === "Controlador desconectado" ? (
+            <Badge color="error">Desconectado</Badge>
           ) : lector.conectado ? (
             <Badge color="success">Cable conectado</Badge>
           ) : (
@@ -555,7 +557,7 @@ function ControladorGaritaEstado({ comprobando, controlador }: { comprobando: bo
 }
 
 /** Relés USB de los molinetes (un módulo por molinete): conectado o no y la última apertura. */
-function ReleEstado({ comprobando, rele }: { comprobando: boolean; rele?: EstadoReleUsb }) {
+function ReleEstado({ comprobando, rele, avisos = false }: { comprobando: boolean; rele?: EstadoReleUsb; avisos?: boolean }) {
   if (comprobando) {
     return (
       <div className="mt-2">
@@ -563,23 +565,33 @@ function ReleEstado({ comprobando, rele }: { comprobando: boolean; rele?: Estado
       </div>
     );
   }
-  const filas = [
-    { etiqueta: "Ingreso", r: rele?.ingreso },
-    { etiqueta: "Salida", r: rele?.salida },
-    // Contacto seco en cada ingreso o salida denegados (solo los configurados).
-    ...(rele?.avisoIngreso ? [{ etiqueta: "Aviso ingreso denegado", r: rele.avisoIngreso }] : []),
-    ...(rele?.avisoSalida ? [{ etiqueta: "Aviso salida denegada", r: rele.avisoSalida }] : []),
-  ];
+  // Molinetes, o los relés de aviso (contacto seco en cada ingreso o salida denegados; solo los configurados).
+  const filas = avisos
+    ? [
+        ...(rele?.avisoIngreso ? [{ etiqueta: "Ingreso denegado", r: rele.avisoIngreso }] : []),
+        ...(rele?.avisoSalida ? [{ etiqueta: "Salida denegada", r: rele.avisoSalida }] : []),
+      ]
+    : [
+        { etiqueta: "Ingreso", r: rele?.ingreso },
+        { etiqueta: "Salida", r: rele?.salida },
+      ];
+  if (filas.length === 0) {
+    return <p className="mt-2 text-xs text-gray-400">Sin relés de aviso configurados en el controlador.</p>;
+  }
   return (
     <div className="mt-2 space-y-3">
       {filas.map(({ etiqueta, r }) => (
         <div key={etiqueta}>
-          <Badge color={r?.conectado ? "success" : "error"}>{r?.conectado ? "Conectado" : "No conectado"}</Badge>
+          {r?.error === "Controlador desconectado" ? (
+            <Badge color="error">Desconectado</Badge>
+          ) : (
+            <Badge color={r?.conectado ? "success" : "error"}>{r?.conectado ? "Conectado" : "No conectado"}</Badge>
+          )}
           <p className="mt-1 text-xs text-gray-400">
             {etiqueta}
             {r?.serie && ` · módulo ${r.serie}`}
             {r?.conectado &&
-              ` · ${r.ultimoPulso ? `${etiqueta.startsWith("Aviso") ? "últ. aviso" : "últ. apertura"} ${new Date(r.ultimoPulso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}` : etiqueta.startsWith("Aviso") ? "sin avisos" : "sin aperturas"}`}
+              ` · ${r.ultimoPulso ? `${avisos ? "últ. aviso" : "últ. apertura"} ${new Date(r.ultimoPulso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })}` : avisos ? "sin avisos" : "sin aperturas"}`}
           </p>
         </div>
       ))}
@@ -725,7 +737,11 @@ function SistemaContent() {
   const [error, setError] = useState(false);
   const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null);
   const comprobando = !estado && !error;
-  const anchoEquipo = estado?.controladorGarita?.remoto ? "lg:col-span-3" : "lg:col-span-4";
+  // Equipos de acceso: tarjetas del mismo ancho, tantas por fila como haya (controlador y relés de aviso son opcionales).
+  // Con controlador, la tarjeta de avisos se muestra siempre (aunque esté desconectado).
+  const hayAvisos = !!(estado?.controladorGarita?.remoto || estado?.releMolinetes?.avisoIngreso || estado?.releMolinetes?.avisoSalida);
+  const tarjetasEquipos = 3 + (estado?.controladorGarita?.remoto ? 1 : 0) + (hayAvisos ? 1 : 0);
+  const columnasEquipos = { 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "lg:grid-cols-5" }[tarjetasEquipos] ?? "lg:grid-cols-3";
   // Se incrementa para recargar el estado al terminar una sincronización.
   const [version, setVersion] = useState(0);
 
@@ -808,31 +824,37 @@ function SistemaContent() {
         </StatusCard>
       </div>
 
-      {/* Con controlador, 4 tarjetas por fila (como el servidor); sin él, 3. */}
       <TituloSeccion>Equipos de acceso</TituloSeccion>
-      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
+      <div className={`mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 ${columnasEquipos}`}>
         {estado?.controladorGarita?.remoto && (
-          <StatusCard className="lg:col-span-3" icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+          <StatusCard icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}>
             <p className="text-sm text-gray-500 dark:text-gray-400">Controlador</p>
             <ControladorGaritaEstado comprobando={comprobando} controlador={estado.controladorGarita} />
           </StatusCard>
         )}
-        <StatusCard className={anchoEquipo} icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard icon={<PlugInIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {(estado?.equipos.total ?? 1) > 1 ? "Equipos" : "Equipo"} (G4 Pro)
           </p>
           <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} sincronizacion={estado?.sincronizacionG4} />
         </StatusCard>
 
-        <StatusCard className={anchoEquipo} icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Lectores de DNI</p>
           <LectoresDniEstado comprobando={comprobando} lectoresDni={estado?.lectoresDni} />
         </StatusCard>
 
-        <StatusCard className={anchoEquipo} icon={<BoltIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard icon={<BoltIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Relés de molinetes</p>
           <ReleEstado comprobando={comprobando} rele={estado?.releMolinetes} />
         </StatusCard>
+
+        {hayAvisos && (
+          <StatusCard icon={<BellIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Relés de aviso</p>
+            <ReleEstado comprobando={comprobando} rele={estado?.releMolinetes} avisos />
+          </StatusCard>
+        )}
       </div>
 
       {error && (

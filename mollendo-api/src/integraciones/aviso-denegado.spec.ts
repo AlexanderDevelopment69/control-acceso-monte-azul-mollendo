@@ -42,4 +42,23 @@ describe('Aviso de ingreso y salida denegados', () => {
       { evento: 'aviso-denegado', datos: { tipoMovimiento: 'salida', numeroDocumento: '10000001' } },
     ]);
   });
+
+  it('controlador desconectado: se siguen mostrando sus lectores y relés (como no conectados)', () => {
+    process.env.MOLINETES_REMOTOS = 'true';
+    const gateway = new ControladorGateway();
+    gateway.handleConnection({ id: 'c1', handshake: { auth: { clave: (process.env.DEVICE_API_KEY = 'k') }, address: 'x' }, disconnect: () => undefined } as never);
+    const rele = { conectado: true, serie: 'DEN01', canal: 1, ultimoPulso: null, error: null };
+    const lector = { configurado: true, conectado: true, ultimaLectura: null, error: null };
+    gateway.recibirEstado({ id: 'c1' } as never, {
+      lectoresDni: { ingreso: lector, salida: lector },
+      releMolinetes: { ingreso: { ...rele, serie: 'ING01' }, salida: { ...rele, serie: 'SAL01' }, avisoIngreso: rele },
+      listaPersonal: { personas: 10, actualizado: null },
+      salidasPendientes: 0,
+    });
+    gateway.handleDisconnect({ id: 'c1' } as never);
+    const estado = gateway.estado();
+    expect(estado.conectado).toBe(false);
+    expect(estado.estado?.releMolinetes.avisoIngreso).toMatchObject({ serie: 'DEN01', conectado: false, error: 'Controlador desconectado' });
+    expect(estado.estado?.lectoresDni.ingreso).toMatchObject({ configurado: true, conectado: false });
+  });
 });
