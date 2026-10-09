@@ -116,17 +116,15 @@ function StatCard({
   fondoIcono: string;
 }) {
   return (
-    // Ícono de color a la izquierda (como el Dashboard); en el celular se oculta para que entren las tres.
+    // Igual que las tarjetas del Dashboard: ícono de color y, a su lado, el título y el número centrados con él.
+    // En el celular el ícono se oculta para que entren las tres.
     <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
       <span className={`hidden size-12 shrink-0 items-center justify-center rounded-xl text-white sm:flex [&_svg]:size-6 ${fondoIcono}`}>
         {icono}
       </span>
-      {/* Número abajo: queda alineado entre tarjetas aunque un título ocupe más líneas. */}
-      <div className="flex min-w-0 flex-1 flex-col self-stretch">
+      <div className="min-w-0">
         <p className="text-xs leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">{label}</p>
-        <p className={`mt-auto pt-1 text-xl font-semibold sm:pt-2 sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>
-          {value ?? "—"}
-        </p>
+        <p className={`text-xl font-semibold sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>{value ?? "—"}</p>
       </div>
     </div>
   );
