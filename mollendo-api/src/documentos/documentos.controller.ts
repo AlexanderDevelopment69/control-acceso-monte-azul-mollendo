@@ -46,9 +46,10 @@ export class DocumentosController {
   }
 
   // Archivo de una versión del documento: PDF e imágenes se abren en el
-  // navegador; Word se descarga.
+  // navegador; Word se descarga. Solo el administrador: el vigilante ve si
+  // está vigente o vencido, no el documento.
   @Get('personas/:personaId/documentos/:documentoId/archivo')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador')
   async verArchivo(
     @Param('personaId', ParseIntPipe) personaId: number,
     @Param('documentoId', ParseIntPipe) documentoId: number,

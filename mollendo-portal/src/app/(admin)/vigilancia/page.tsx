@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { RequireRole } from "@/lib/auth/RequireRole";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { connectEventosSocket } from "@/lib/ws";
 import { eventosAccesoApi, panelApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
@@ -108,16 +109,18 @@ function StatCard({
   color,
   icono,
   fondoIcono,
+  detalle,
 }: {
   label: string;
   value: number | null;
   color: string;
   icono: React.ReactNode;
   fondoIcono: string;
+  detalle: string;
 }) {
   return (
-    // Igual que las tarjetas del Dashboard: ícono de color y, a su lado, el título y el número centrados con él.
-    // En el celular el ícono se oculta para que entren las tres.
+    // Igual que las tarjetas del Dashboard: ícono de color y, a su lado, título, número y descripción.
+    // En el celular el ícono y la descripción se ocultan para que entren las tres.
     <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
       <span className={`hidden size-12 shrink-0 items-center justify-center rounded-xl text-white sm:flex [&_svg]:size-6 ${fondoIcono}`}>
         {icono}
@@ -125,6 +128,7 @@ function StatCard({
       <div className="min-w-0">
         <p className="text-xs leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">{label}</p>
         <p className={`text-xl font-semibold sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>{value ?? "—"}</p>
+        <p className="hidden text-xs leading-snug text-gray-400 sm:block">{detalle}</p>
       </div>
     </div>
   );
@@ -198,6 +202,8 @@ function formatearFecha(fecha: string): string {
 function DocumentosModal({ personaId, onClose }: { personaId: number | null; onClose: () => void }) {
   const [persona, setPersona] = useState<Persona | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // El vigilante solo ve si está vigente o vencido; abrir el archivo es del administrador.
+  const puedeVerArchivo = useAuth().user?.rol === "administrador";
 
   useEffect(() => {
     if (personaId === null) return;
@@ -245,7 +251,7 @@ function DocumentosModal({ personaId, onClose }: { personaId: number | null; onC
                     </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-3">
-                    <VerDocumento personaId={persona.id} documentoId={d.id} variante="enlace" />
+                    {puedeVerArchivo && <VerDocumento personaId={persona.id} documentoId={d.id} variante="enlace" />}
                     {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
                   </span>
                 </li>
@@ -438,6 +444,7 @@ function VigilanciaContent() {
           color="text-error-500"
           icono={<CloseLineIcon />}
           fondoIcono="bg-error-500"
+          detalle="Ingresos y salidas rechazados en el día"
         />
         <StatCard
           label="Alcohol no conforme hoy"
@@ -445,6 +452,7 @@ function VigilanciaContent() {
           color="text-warning-500"
           icono={<AlertIcon />}
           fondoIcono="bg-warning-500"
+          detalle="Ingresos denegados por la prueba de alcohol"
         />
         <StatCard
           label="Documentos vencidos"
@@ -452,6 +460,7 @@ function VigilanciaContent() {
           color="text-gray-700 dark:text-gray-300"
           icono={<DocsIcon />}
           fondoIcono="bg-gray-500"
+          detalle="Del personal activo; impiden su ingreso"
         />
       </div>
 
