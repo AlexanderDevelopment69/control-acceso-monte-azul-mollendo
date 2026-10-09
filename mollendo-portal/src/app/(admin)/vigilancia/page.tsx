@@ -21,6 +21,7 @@ import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import DatePicker from "@/components/form/date-picker";
+import { AlertIcon, ArrowRightIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
@@ -57,7 +58,7 @@ function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]; ahora
       {ingresos.map((i) => (
         <TableRow key={`espera-${i.id}`}>
           <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-            {new Date(i.desde).toLocaleString("es-PE")}
+            {new Date(i.desde).toLocaleTimeString("es-PE")}
           </TableCell>
           <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{i.numeroDocumento}</TableCell>
           <TableCell className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
@@ -69,7 +70,9 @@ function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]; ahora
               </span>
             </div>
           </TableCell>
-          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">Ingreso</TableCell>
+          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+            <Movimiento tipo="ingreso" />
+          </TableCell>
           <TableCell className="px-5 py-4 text-sm">
             <Badge color={i.enCola ? "light" : "success"}>
               <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden />
@@ -99,15 +102,46 @@ function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]; ahora
 }
 
 /** `value` null = todavía no se cargó (se muestra "—" en vez de un 0 que luego salta). */
-function StatCard({ label, value, color }: { label: string; value: number | null; color: string }) {
+function StatCard({
+  label,
+  value,
+  color,
+  icono,
+  fondoIcono,
+}: {
+  label: string;
+  value: number | null;
+  color: string;
+  icono: React.ReactNode;
+  fondoIcono: string;
+}) {
   return (
-    // Número abajo: queda alineado entre tarjetas aunque un título ocupe más líneas.
-    <div className="flex flex-col rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
-      <p className="text-xs leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">{label}</p>
-      <p className={`mt-auto pt-1 text-xl font-semibold sm:pt-2 sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>
-        {value ?? "—"}
-      </p>
+    // Ícono de color a la izquierda (como el Dashboard); en el celular se oculta para que entren las tres.
+    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
+      <span className={`hidden size-12 shrink-0 items-center justify-center rounded-xl text-white sm:flex [&_svg]:size-6 ${fondoIcono}`}>
+        {icono}
+      </span>
+      {/* Número abajo: queda alineado entre tarjetas aunque un título ocupe más líneas. */}
+      <div className="flex min-w-0 flex-1 flex-col self-stretch">
+        <p className="text-xs leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">{label}</p>
+        <p className={`mt-auto pt-1 text-xl font-semibold sm:pt-2 sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>
+          {value ?? "—"}
+        </p>
+      </div>
     </div>
+  );
+}
+
+/** Ingreso (flecha hacia adentro, azul) o salida (hacia afuera, gris), para distinguirlos sin leer. */
+function Movimiento({ tipo }: { tipo: string }) {
+  const ingreso = tipo === "ingreso";
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={ingreso ? "text-brand-500 dark:text-brand-400" : "rotate-180 text-gray-400"}>
+        <ArrowRightIcon className="size-4" />
+      </span>
+      {ingreso ? "Ingreso" : "Salida"}
+    </span>
   );
 }
 
@@ -400,9 +434,27 @@ function VigilanciaContent() {
 
       {/* En el celular, los tres contadores en una fila y compactos. */}
       <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">
-        <StatCard label="Denegaciones hoy" value={resumen?.denegacionesHoy ?? null} color="text-error-500" />
-        <StatCard label="Alcohol no conforme hoy" value={resumen?.alcoholNoConformeHoy ?? null} color="text-warning-500" />
-        <StatCard label="Documentos vencidos" value={resumen?.documentosVencidos ?? null} color="text-gray-700 dark:text-gray-300" />
+        <StatCard
+          label="Denegaciones hoy"
+          value={resumen?.denegacionesHoy ?? null}
+          color="text-error-500"
+          icono={<CloseLineIcon />}
+          fondoIcono="bg-error-500"
+        />
+        <StatCard
+          label="Alcohol no conforme hoy"
+          value={resumen?.alcoholNoConformeHoy ?? null}
+          color="text-warning-500"
+          icono={<AlertIcon />}
+          fondoIcono="bg-warning-500"
+        />
+        <StatCard
+          label="Documentos vencidos"
+          value={resumen?.documentosVencidos ?? null}
+          color="text-gray-700 dark:text-gray-300"
+          icono={<DocsIcon />}
+          fondoIcono="bg-gray-500"
+        />
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -496,7 +548,7 @@ function VigilanciaContent() {
                     className={`transition-colors duration-700 ${ev.id === ultimo ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
                   >
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {new Date(ev.fechaHora).toLocaleString("es-PE")}
+                      {dia ? new Date(ev.fechaHora).toLocaleTimeString("es-PE") : new Date(ev.fechaHora).toLocaleString("es-PE")}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {documentoDelEvento(ev)}
@@ -508,9 +560,19 @@ function VigilanciaContent() {
                         <span className="text-gray-400">No registrado</span>
                       )}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300 capitalize">{ev.tipoMovimiento}</TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      <Movimiento tipo={ev.tipoMovimiento} />
+                    </TableCell>
                     <TableCell className="px-5 py-4 text-sm">
-                      <Badge color={ev.resultado === "autorizado" ? "success" : "error"}>{ev.resultado}</Badge>
+                      {ev.resultado === "autorizado" ? (
+                        <Badge color="success" startIcon={<CheckLineIcon className="size-3.5" />}>
+                          Autorizado
+                        </Badge>
+                      ) : (
+                        <Badge color="error" startIcon={<CloseLineIcon className="size-3.5" />}>
+                          Denegado
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm">
                       <MotivoDenegacion evento={ev} onVerDocumentos={() => setPersonaDocumentos(ev.personaId)} />
