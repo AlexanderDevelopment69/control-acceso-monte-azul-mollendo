@@ -116,6 +116,15 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
     (!!fechaMin && fecha < fechaMin && !mismodia(fecha, fechaMin)) ||
     (!!fechaMax && fecha > fechaMax && !mismodia(fecha, fechaMax));
   const [abierto, setAbierto] = useState(false);
+  // Al cerrar, el calendario se desvanece un instante antes de desmontarse.
+  const [cerrando, setCerrando] = useState(false);
+  const cerrar = () => {
+    setCerrando(true);
+    setTimeout(() => {
+      setAbierto(false);
+      setCerrando(false);
+    }, 120);
+  };
   const [vista, setVista] = useState<"dias" | "meses" | "anios">("dias");
   const [mesVisible, setMesVisible] = useState<Date>(() => parsearFecha(value) ?? new Date());
   const [texto, setTexto] = useState(() => {
@@ -144,7 +153,7 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
       const objetivo = event.target as Node;
       // El calendario vive en un portal: no está dentro de wrapperRef.
       if (!wrapperRef.current?.contains(objetivo) && !popupRef.current?.contains(objetivo)) {
-        setAbierto(false);
+        cerrar();
       }
     }
     // Seguir al campo si se desplaza la página, el modal o una lista con scroll.
@@ -152,7 +161,7 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
       if (wrapperRef.current) setPosicion(calcularPosicion(wrapperRef.current));
     }
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setAbierto(false);
+      if (event.key === "Escape") cerrar();
     }
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
@@ -176,7 +185,7 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
   function elegirDia(fecha: Date) {
     if (fueraDeRango(fecha)) return;
     onChange(formatearFecha(fecha));
-    setAbierto(false);
+    cerrar();
   }
 
   function cambiarMes(delta: number) {
@@ -249,7 +258,7 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
         {/* El calendario solo se abre con el ícono; en el campo se escribe la fecha. */}
         <button
           type="button"
-          onClick={() => (abierto ? setAbierto(false) : abrir())}
+          onClick={() => (abierto ? cerrar() : abrir())}
           aria-label={abierto ? "Cerrar calendario" : "Abrir calendario"}
           className="absolute text-gray-500 -translate-y-1/2 right-3 top-1/2 dark:text-gray-400"
         >
@@ -260,7 +269,9 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
         <div
           ref={popupRef}
           style={posicion}
-          className="fixed z-999999 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
+          className={`fixed z-999999 w-72 origin-top rounded-xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark ${
+            cerrando ? "animate-panel-sale" : "animate-panel-entra"
+          }`}
         >
           <div className="mb-2 flex items-center justify-between">
             <button
@@ -407,7 +418,7 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
                 type="button"
                 onClick={() => {
                   onChange("");
-                  setAbierto(false);
+                  cerrar();
                 }}
                 className="rounded-lg px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
               >

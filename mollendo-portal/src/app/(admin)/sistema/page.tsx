@@ -19,6 +19,7 @@ import type {
 import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
+import Combobox from "@/components/form/Combobox";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { BellIcon, BoltIcon, BoxCubeIcon, BoxIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 
@@ -489,19 +490,16 @@ function SincronizacionG4({
                 </button>
                 <span className="text-sm text-gray-700 dark:text-gray-300">Revisión diaria</span>
                 {diariaActiva ? (
-                  <select
-                    value={estado.diaria.hora ?? 0}
-                    disabled={guardandoDiaria}
-                    onChange={(e) => void cambiarDiaria(Number(e.target.value))}
+                  <Combobox
+                    compacto
+                    buscable={false}
+                    className="w-40"
                     aria-label="Hora de la revisión diaria"
-                    className="h-8 rounded-lg border border-gray-300 bg-transparent px-2 text-sm text-gray-700 focus:border-brand-300 focus:outline-none dark:border-gray-700 dark:text-gray-300"
-                  >
-                    {Array.from({ length: 24 }, (_, h) => (
-                      <option key={h} value={h} className="dark:bg-gray-900">
-                        a las {String(h).padStart(2, "0")}:00
-                      </option>
-                    ))}
-                  </select>
+                    disabled={guardandoDiaria}
+                    value={String(estado.diaria.hora ?? 0)}
+                    onChange={(v) => void cambiarDiaria(Number(v))}
+                    options={Array.from({ length: 24 }, (_, h) => ({ value: String(h), label: `a las ${String(h).padStart(2, "0")}:00` }))}
+                  />
                 ) : (
                   <span className="text-xs text-gray-400">Desactivada: solo se sincroniza a mano.</span>
                 )}

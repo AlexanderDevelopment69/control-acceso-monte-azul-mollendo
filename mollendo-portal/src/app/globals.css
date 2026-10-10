@@ -5,6 +5,15 @@
 @theme {
   /* Barra de progreso indeterminada (p. ej. mientras se consulta al G4 Pro). */
   --animate-barra-carga: barra-carga 1.2s ease-in-out infinite;
+  /* Paneles flotantes (calendario): aparecen y se van con un fundido y un leve desplazamiento. */
+  --animate-panel-entra: panel-entra 150ms ease-out;
+  --animate-panel-sale: panel-sale 120ms ease-in forwards;
+  @keyframes panel-entra {
+    from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  }
+  @keyframes panel-sale {
+    to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  }
   @keyframes barra-carga {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(250%); }

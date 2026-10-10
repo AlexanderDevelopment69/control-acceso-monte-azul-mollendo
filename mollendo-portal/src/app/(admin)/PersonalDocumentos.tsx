@@ -6,7 +6,7 @@ import { ApiError } from "@/lib/api/client";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import type { Empresa, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
-import Select from "@/components/form/Select";
+import Combobox from "@/components/form/Combobox";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
@@ -149,11 +149,10 @@ export function PersonalDocumentos() {
         <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] lg:sticky lg:top-24 lg:w-96 lg:shrink-0">
           <div className="space-y-3 border-b border-gray-100 p-4 dark:border-gray-800">
             <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre, DNI o empresa…" />
-            <Select
-              key={`empresas-${empresas.length}`}
-              defaultValue={empresaFiltro}
+            <Combobox
+              value={empresaFiltro}
               onChange={setEmpresaFiltro}
-              mostrarPlaceholder={false}
+              aria-label="Empresa"
               options={[
                 { value: "todas", label: "Todas las empresas" },
                 ...[...empresas]
