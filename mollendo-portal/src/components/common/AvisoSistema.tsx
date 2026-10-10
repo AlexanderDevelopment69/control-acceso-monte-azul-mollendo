@@ -144,9 +144,11 @@ export function AvisoSistema() {
         </div>
       </div>
 
-      {/* Un recuadro por equipo */}
-      {!cerrado && (
-        <>
+      {/* Un recuadro por equipo; se despliega y contrae animando el alto (grid 0fr ↔ 1fr). */}
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${cerrado ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"}`}
+      >
+        <div className="overflow-hidden">
           {/* Las tarjetas crecen hasta llenar cada fila: nunca queda un hueco al final, haya las que haya. */}
           <ul className="flex flex-wrap gap-px bg-gray-100 dark:bg-gray-800">
             {avisos.map((a) => {
@@ -171,8 +173,8 @@ export function AvisoSistema() {
               Informa al administrador o al soporte técnico.
             </p>
           )}
-        </>
-      )}
+        </div>
+      </div>
     </section>
   );
 }
