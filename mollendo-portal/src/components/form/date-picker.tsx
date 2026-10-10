@@ -123,7 +123,7 @@ export default function DatePicker({ id, value, onChange, label, placeholder, mi
     setTimeout(() => {
       setAbierto(false);
       setCerrando(false);
-    }, 120);
+    }, 100);
   };
   const [vista, setVista] = useState<"dias" | "meses" | "anios">("dias");
   const [mesVisible, setMesVisible] = useState<Date>(() => parsearFecha(value) ?? new Date());

@@ -140,10 +140,12 @@ export default function Combobox({
         />
       </button>
 
-      {/* Siempre montado: se abre y se cierra con un fundido y un leve desplazamiento. */}
+      {/* Siempre montado: se abre (150 ms) y se cierra (100 ms) con un fundido y un leve desplazamiento. */}
       <div
-        className={`absolute top-full right-0 left-0 z-50 mt-1 origin-top overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-lg transition duration-150 ease-out dark:border-gray-800 dark:bg-gray-900 ${
-          abierto ? "visible translate-y-0 scale-100 opacity-100" : "invisible -translate-y-1 scale-[0.98] opacity-0"
+        className={`absolute top-full right-0 left-0 z-50 mt-1 origin-top overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-lg transition dark:border-gray-800 dark:bg-gray-900 ${
+          abierto
+            ? "visible translate-y-0 scale-100 opacity-100 duration-150 ease-out"
+            : "invisible -translate-y-1 scale-[0.98] opacity-0 duration-100 ease-in"
         }`}
       >
         {conBuscador && (

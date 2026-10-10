@@ -89,7 +89,9 @@ export const Modal: React.FC<ModalProps> = ({
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses} ${isFullscreen ? "" : "m-auto"} transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"} ${className}`}
+        className={`${contentClasses} ${isFullscreen ? "" : "m-auto"} transition duration-200 ease-out ${
+          visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-1 scale-[0.98] opacity-0"
+        } ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (

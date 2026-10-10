@@ -1,6 +1,6 @@
 "use client";
 import type React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface DropdownProps {
   isOpen: boolean;
@@ -35,12 +35,23 @@ export const Dropdown: React.FC<DropdownProps> = ({
 }, [onClose]);
 
 
-  if (!isOpen) return null;
+  // Sigue montado un instante al cerrarse, para que se desvanezca (igual que el calendario).
+  const [montado, setMontado] = useState(isOpen);
+  if (isOpen && !montado) setMontado(true);
+  useEffect(() => {
+    if (isOpen || !montado) return;
+    const t = setTimeout(() => setMontado(false), 100);
+    return () => clearTimeout(t);
+  }, [isOpen, montado]);
+
+  if (!montado) return null;
 
   return (
     <div
       ref={dropdownRef}
-      className={`absolute z-40  right-0 mt-2  rounded-xl border border-gray-200 bg-white  shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark ${className}`}
+      className={`absolute z-40 right-0 mt-2 origin-top-right rounded-xl border border-gray-200 bg-white shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark ${
+        isOpen ? "animate-panel-entra" : "pointer-events-none animate-panel-sale"
+      } ${className}`}
     >
       {children}
     </div>
