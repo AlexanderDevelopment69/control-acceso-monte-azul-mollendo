@@ -645,12 +645,44 @@ function EstadoIntegracionBadge({
   return <Badge color="success">Disponible</Badge>;
 }
 
+// Colores del código de ejemplo: comentarios, claves JSON, textos, números y
+// literales, métodos HTTP y rutas. Cada token se pinta por separado.
+const TOKEN_CODIGO =
+  /(\/\/.*$)|("(?:[^"\\]|\\.)*"(?=\s*:))|("(?:[^"\\]|\\.)*")|\b(true|false|null)\b|\b(GET|POST|PUT|PATCH|DELETE)\b|((?<![\w.])\/[\w\-./?=&{}:<>]+)|(-?\b\d+(?:\.\d+)?\b)/gm;
+const COLOR_TOKEN = [
+  "italic text-gray-400 dark:text-gray-500", // comentario
+  "text-brand-600 dark:text-brand-400", // clave JSON
+  "text-success-700 dark:text-success-400", // texto
+  "text-orange-600 dark:text-orange-400", // true/false/null
+  "font-semibold text-blue-light-600 dark:text-blue-light-400", // método HTTP
+  "text-theme-purple-500 dark:text-theme-purple-500", // ruta
+  "text-orange-600 dark:text-orange-400", // número
+];
+
+function resaltar(code: string): React.ReactNode[] {
+  const partes: React.ReactNode[] = [];
+  let ultimo = 0;
+  for (const m of code.matchAll(TOKEN_CODIGO)) {
+    const i = m.index ?? 0;
+    if (i > ultimo) partes.push(code.slice(ultimo, i));
+    const grupo = m.slice(1).findIndex((g) => g !== undefined);
+    partes.push(
+      <span key={i} className={COLOR_TOKEN[grupo]}>
+        {m[0]}
+      </span>,
+    );
+    ultimo = i + m[0].length;
+  }
+  if (ultimo < code.length) partes.push(code.slice(ultimo));
+  return partes;
+}
+
 function CodeBlock({ title, code }: { title: string; code: string }) {
   return (
     <div>
       <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">{title}</p>
       <pre className="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-700 dark:border-gray-800 dark:bg-black/40 dark:text-gray-200">
-        <code>{code}</code>
+        <code>{resaltar(code)}</code>
       </pre>
     </div>
   );
