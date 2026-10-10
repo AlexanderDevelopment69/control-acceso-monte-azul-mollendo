@@ -377,6 +377,11 @@ function SincronizacionG4({
   const [confirmar, setConfirmar] = useState(false);
   const [resultado, setResultado] = useState<ResultadoSincronizacionG4 | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // "Simulando…" y el aviso de espera solo si tarda: si responde al instante (p. ej. con el
+  // equipo desconectado), aparecerían y desaparecerían de golpe y la tarjeta parpadearía.
+  const [lento, setLento] = useState(false);
+  // La barra de arriba se ve al menos 0,7 s, para que siempre se note que se consultó.
+  const [barra, setBarra] = useState(false);
   const ultima = resultado ?? estado?.ultima ?? null;
   const ocupado = ejecutando !== null || !!estado?.enCurso;
 
@@ -384,18 +389,31 @@ function SincronizacionG4({
     setConfirmar(false);
     setEjecutando(simular ? "simular" : "sincronizar");
     setError(null);
+    const aviso = setTimeout(() => setLento(true), 500);
+    const inicio = Date.now();
+    setBarra(true);
     try {
       setResultado(await integracionesApi.sincronizarG4(simular));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo sincronizar con el G4 Pro");
     } finally {
+      clearTimeout(aviso);
+      setLento(false);
+      setTimeout(() => setBarra(false), Math.max(0, 700 - (Date.now() - inicio)));
       setEjecutando(null);
       onTerminada();
     }
   }
 
   return (
-    <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="relative mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+      {/* Barra arriba mientras se consulta al equipo: superpuesta, no mueve la tarjeta. */}
+      <div
+        aria-hidden
+        className={`absolute inset-x-0 top-0 h-1 overflow-hidden bg-brand-100 transition-opacity duration-300 dark:bg-brand-500/20 ${barra ? "opacity-100" : "opacity-0"}`}
+      >
+        <div className="h-full w-2/5 animate-barra-carga rounded-full bg-brand-500" />
+      </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sincronización con el G4 Pro</h2>
@@ -420,15 +438,15 @@ function SincronizacionG4({
         </div>
         <div className="flex shrink-0 gap-2">
           <Button type="button" variant="outline" size="sm" disabled={ocupado} onClick={() => void ejecutar(true)}>
-            {ejecutando === "simular" ? "Simulando…" : "Simular"}
+            {lento && ejecutando === "simular" ? "Simulando…" : "Simular"}
           </Button>
           <Button type="button" size="sm" disabled={ocupado} onClick={() => setConfirmar(true)}>
-            {ejecutando === "sincronizar" ? "Sincronizando…" : "Sincronizar ahora"}
+            {lento && ejecutando === "sincronizar" ? "Sincronizando…" : "Sincronizar ahora"}
           </Button>
         </div>
       </div>
 
-      {ejecutando && (
+      {lento && ejecutando && (
         <p className="mt-3 text-xs text-gray-400">Consultando al equipo; puede tardar hasta un minuto.</p>
       )}
       {error && <ErrorBanner className="mt-3">{error}</ErrorBanner>}

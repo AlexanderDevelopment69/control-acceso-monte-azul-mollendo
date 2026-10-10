@@ -290,7 +290,14 @@ export class PushSdkService {
       /** Por equipo: usuarios y rostros que tenía al consultarlo (antes de los cambios). */
       porEquipo: [] as { serialNumber: string; usuarios: number; conRostro: number; sinRostro: string[] }[],
     };
+    const ahora = Date.now();
     for (const dispositivo of await this.prisma.dispositivoAcceso.findMany()) {
+      // Desconectado (sin consultar al servidor en 2 min, como en "Sistema y APIs"): no va a
+      // responder, así que no se le espera 60 s; se cuenta como "no respondió" al instante.
+      if (!dispositivo.ultimaActividad || ahora - dispositivo.ultimaActividad.getTime() >= UMBRAL_EN_LINEA_MS) {
+        resultado.sinRespuesta++;
+        continue;
+      }
       const usuarios = await this.consultar(dispositivo.id, 'DATA QUERY tablename=user,fielddesc=*,filter=*');
       if (usuarios === null) {
         resultado.sinRespuesta++;
