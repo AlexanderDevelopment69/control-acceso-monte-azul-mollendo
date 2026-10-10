@@ -9,6 +9,29 @@ const GRIS = 'FF667085';
  * con cabecera fija, filtros de Excel y fechas como fechas reales (se pueden
  * ordenar y filtrar); y el resumen al final.
  */
+// Espacio extra en la cabecera para la flecha del filtro de Excel, que tapa el final del título.
+const ESPACIO_FILTRO = 4;
+const ANCHO_MAXIMO = 60;
+
+/** Lo que ocupa un valor en la celda, en caracteres (las fechas, con su formato). */
+function largo(valor: Reporte['filas'][number][number], tipo?: string): number {
+  if (valor === null || valor === undefined) return 0;
+  if (valor instanceof Date) return tipo === 'fecha' ? 10 : 16;
+  if (typeof valor === 'object') return valor.texto.length;
+  return String(valor).length;
+}
+
+/**
+ * Ancho de la columna según su contenido: el más largo entre el título (con la
+ * flecha del filtro) y sus valores, sin bajar del ancho sugerido ni pasar de 60.
+ */
+function anchoColumna(reporte: Reporte, i: number): number {
+  const c = reporte.columnas[i];
+  let maximo = c.titulo.length + ESPACIO_FILTRO;
+  for (const fila of reporte.filas) maximo = Math.max(maximo, largo(fila[i], c.tipo) + 2);
+  return Math.min(ANCHO_MAXIMO, Math.max(c.ancho, maximo));
+}
+
 export async function generarExcel(reporte: Reporte, generado: Date): Promise<Buffer> {
   const libro = new ExcelJS.Workbook();
   libro.creator = 'Sistema de Control de Accesos - TMAM';
@@ -63,7 +86,7 @@ export async function generarExcel(reporte: Reporte, generado: Date): Promise<Bu
 
   reporte.columnas.forEach((c, i) => {
     const columna = hoja.getColumn(i + 1);
-    columna.width = c.ancho;
+    columna.width = anchoColumna(reporte, i);
     if (c.tipo === 'fecha') columna.numFmt = 'dd/mm/yyyy';
     if (c.tipo === 'fechaHora') columna.numFmt = 'dd/mm/yyyy hh:mm';
     if (c.tipo === 'numero') columna.alignment = { horizontal: 'right' };
