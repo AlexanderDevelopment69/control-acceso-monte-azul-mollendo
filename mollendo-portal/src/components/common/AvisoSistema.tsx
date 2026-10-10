@@ -163,7 +163,13 @@ export function AvisoSistema() {
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-white/90">{a.equipo}</p>
-                    <p className="text-sm font-medium text-error-600 dark:text-error-400">{a.estado}</p>
+                    <p className="flex items-center gap-1.5 text-sm font-medium text-error-600 dark:text-error-400">
+                      <span className="relative flex size-2 shrink-0" aria-hidden>
+                        <span className="absolute inline-flex size-full animate-ping rounded-full bg-error-400 opacity-75" />
+                        <span className="relative inline-flex size-2 rounded-full bg-error-500" />
+                      </span>
+                      {a.estado}
+                    </p>
                     <p className="mt-0.5 text-xs leading-snug text-gray-500 dark:text-gray-400">{a.impacto}</p>
                     {a.desde && <p className="mt-1 text-xs text-gray-400">Última vez en línea: {fechaCorta(a.desde)}</p>}
                   </div>
