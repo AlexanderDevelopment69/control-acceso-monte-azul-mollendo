@@ -258,7 +258,7 @@ export function PersonaFicha({
             {cumplimiento.habilitado ? (
               <>
                 <p className="font-semibold">✔ Puede ingresar hoy</p>
-                <p className="mt-0.5">Documentos en regla. En garita se completa con el rostro y la prueba de alcohol.</p>
+                <p className="mt-0.5">Todos sus documentos están vigentes. Al ingresar se validan su DNI, su rostro y la prueba de alcohol.</p>
               </>
             ) : (
               <>
