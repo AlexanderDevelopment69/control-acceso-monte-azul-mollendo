@@ -19,14 +19,19 @@ describe('avisosDelSistema', () => {
     expect(avisosDelSistema(base())).toEqual([]);
   });
 
-  it('controlador caído: un solo aviso, no uno por lector y relé', () => {
+  it('controlador caído: un aviso por tarjeta de equipos, como en Sistema y APIs', () => {
     const e = base();
     e.controlador = { remoto: true, conectado: false, ultimoReporte: '2026-10-08T19:39:00Z' };
-    e.lectoresDni.ingreso.conectado = false;
-    e.releMolinetes.ingreso = { conectado: false };
+    e.dispositivos[0] = { serialNumber: 'HSR1', enLinea: false, ultimaActividad: '2026-10-08T19:39:00Z' };
     const avisos = avisosDelSistema(e);
-    expect(avisos).toHaveLength(1);
-    expect(avisos[0]).toMatchObject({ tipo: 'controlador', gravedad: 'critico', desde: '2026-10-08T19:39:00Z' });
+    expect(avisos.map((a) => [a.equipo, a.estado])).toEqual([
+      ['Controlador', 'Desconectado'],
+      ['Terminal facial HSR1', 'Desconectado'],
+      ['Lectores de DNI', 'Desconectados'],
+      ['Relés de molinetes', 'Desconectados'],
+      ['Relés de aviso', 'Desconectados'],
+    ]);
+    expect(avisos[0].desde).toBe('2026-10-08T19:39:00Z');
   });
 
   it('terminal facial desconectado, con la última vez que se lo vio', () => {
@@ -39,16 +44,18 @@ describe('avisosDelSistema', () => {
     const e = base();
     e.lectoresDni.ingreso = { configurado: false, conectado: false, ultimaLectura: null };
     e.lectoresDni.salida.conectado = false;
-    expect(avisosDelSistema(e).map((a) => a.equipo)).toEqual(['Lector de DNI de salida']);
+    expect(avisosDelSistema(e).map((a) => [a.equipo, a.estado, a.impacto])).toEqual([
+      ['Lectores de DNI', 'Desconectado: salida', 'No se leen DNI en la salida'],
+    ]);
   });
 
-  it('relé de aviso y respaldos atrasados son advertencias', () => {
+  it('relé de aviso y respaldos atrasados también avisan', () => {
     const e = base();
     e.releMolinetes.avisoIngreso = { conectado: false };
     e.respaldos.ultimoAutomatico = { fecha: '2026-10-08T00:00:00Z' };
-    expect(avisosDelSistema(e).map((a) => [a.tipo, a.gravedad])).toEqual([
-      ['aviso', 'advertencia'],
-      ['respaldos', 'advertencia'],
+    expect(avisosDelSistema(e).map((a) => [a.tipo, a.estado])).toEqual([
+      ['respaldos', 'Atrasados'],
+      ['aviso', 'Desconectado: ingreso'],
     ]);
   });
 
@@ -56,5 +63,14 @@ describe('avisosDelSistema', () => {
     const e = base();
     e.respaldos = { disponible: false, ultimoAutomatico: null };
     expect(avisosDelSistema(e)).toEqual([]);
+  });
+
+  it('los dos relés de molinetes caídos van en un solo aviso', () => {
+    const e = base();
+    e.releMolinetes.ingreso = { conectado: false };
+    e.releMolinetes.salida = { conectado: false };
+    expect(avisosDelSistema(e)).toEqual([
+      expect.objectContaining({ equipo: 'Relés de molinetes', estado: 'Desconectado: ingreso y salida', impacto: 'No se abre el molinete de ingreso ni el de salida' }),
+    ]);
   });
 });

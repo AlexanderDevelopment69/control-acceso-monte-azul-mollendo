@@ -42,7 +42,6 @@ const SIN_SERVIDOR: Aviso = {
   estado: "Sin respuesta",
   impacto: "No se puede consultar el estado de los equipos",
   desde: null,
-  gravedad: "critico",
 };
 
 const fechaCorta = (iso: string) => new Date(iso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
@@ -98,8 +97,6 @@ export function AvisoSistema() {
 
   const firma = avisos.map((a) => `${a.equipo}:${a.estado}`).join("|");
   const cerrado = contraido === firma;
-  const criticos = avisos.filter((a) => a.gravedad === "critico").length;
-  const rojo = criticos > 0;
 
   const alternar = () => {
     const valor = cerrado ? null : firma;
@@ -112,33 +109,21 @@ export function AvisoSistema() {
     }
   };
 
-  const titulo =
-    avisos.length === 1
-      ? rojo
-        ? "1 equipo con problemas"
-        : "1 advertencia del sistema"
-      : `${avisos.length} ${rojo ? "equipos con problemas" : "advertencias del sistema"}`;
+  const titulo = avisos.length === 1 ? "1 equipo con problemas" : `${avisos.length} equipos con problemas`;
 
   return (
     <section
       role="alert"
       aria-label="Avisos del sistema"
-      className={`mb-4 overflow-hidden rounded-2xl border bg-white shadow-theme-xs dark:bg-white/[0.03] md:mb-6 ${
-        rojo ? "border-error-200 dark:border-error-500/30" : "border-warning-200 dark:border-warning-500/30"
-      }`}
+      className="mb-4 overflow-hidden rounded-2xl border border-error-200 bg-white shadow-theme-xs dark:border-error-500/30 dark:bg-white/[0.03] md:mb-6"
     >
       {/* Encabezado */}
-      <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-white sm:px-5 ${rojo ? "bg-error-500" : "bg-warning-500"}`}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-error-500 px-4 py-3 text-white sm:px-5">
         <span className="relative flex size-2.5 shrink-0" aria-hidden>
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-white opacity-75" />
           <span className="relative inline-flex size-2.5 rounded-full bg-white" />
         </span>
         <p className="font-semibold">{titulo}</p>
-        {rojo && criticos < avisos.length && (
-          <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
-            {criticos} {criticos === 1 ? "crítico" : "críticos"}
-          </span>
-        )}
         {revisado && <span className="text-xs text-white/80">Revisado {revisado.toLocaleTimeString("es-PE")}</span>}
         <div className="ml-auto flex items-center gap-2">
           {esAdmin && pathname !== "/sistema" && (
@@ -162,26 +147,18 @@ export function AvisoSistema() {
       {/* Un recuadro por equipo */}
       {!cerrado && (
         <>
-          <ul className="grid gap-px bg-gray-100 dark:bg-gray-800 sm:grid-cols-2 xl:grid-cols-3">
+          {/* Las tarjetas crecen hasta llenar cada fila: nunca queda un hueco al final, haya las que haya. */}
+          <ul className="flex flex-wrap gap-px bg-gray-100 dark:bg-gray-800">
             {avisos.map((a) => {
               const Icono = ICONO[a.tipo];
-              const critico = a.gravedad === "critico";
               return (
-                <li key={`${a.equipo}-${a.estado}`} className="flex gap-3 bg-white p-4 dark:bg-gray-900">
-                  <span
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl [&_svg]:size-5 ${
-                      critico
-                        ? "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400"
-                        : "bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-warning-400"
-                    }`}
-                  >
+                <li key={`${a.equipo}-${a.estado}`} className="flex min-w-0 flex-1 basis-full gap-3 bg-white p-4 dark:bg-gray-900 sm:basis-72">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400 [&_svg]:size-5">
                     <Icono />
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-white/90">{a.equipo}</p>
-                    <p className={`text-sm font-medium ${critico ? "text-error-600 dark:text-error-400" : "text-warning-600 dark:text-warning-400"}`}>
-                      {a.estado}
-                    </p>
+                    <p className="text-sm font-medium text-error-600 dark:text-error-400">{a.estado}</p>
                     <p className="mt-0.5 text-xs leading-snug text-gray-500 dark:text-gray-400">{a.impacto}</p>
                     {a.desde && <p className="mt-1 text-xs text-gray-400">Última vez en línea: {fechaCorta(a.desde)}</p>}
                   </div>

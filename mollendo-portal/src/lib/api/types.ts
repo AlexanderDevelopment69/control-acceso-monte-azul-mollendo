@@ -185,7 +185,6 @@ export interface AvisoSistema {
   estado: string;
   impacto: string;
   desde: string | null;
-  gravedad: "critico" | "advertencia";
 }
 
 export interface AvisosSistema {

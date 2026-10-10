@@ -15,8 +15,6 @@ export interface AvisoSistema {
   impacto: string;
   /** Desde cuándo (última vez que se lo vio bien), si se sabe. */
   desde: string | null;
-  /** critico: bloquea ingresos o salidas; advertencia: no los bloquea. */
-  gravedad: 'critico' | 'advertencia';
 }
 
 interface Lector {
@@ -42,59 +40,84 @@ export interface EstadoParaAvisos {
 
 export function avisosDelSistema(e: EstadoParaAvisos): AvisoSistema[] {
   const avisos: AvisoSistema[] = [];
-  const critico = (tipo: TipoAviso, equipo: string, estado: string, impacto: string, desde: string | null = null) =>
-    avisos.push({ tipo, equipo, estado, impacto, desde, gravedad: 'critico' });
-  const advertencia = (tipo: TipoAviso, equipo: string, estado: string, impacto: string, desde: string | null = null) =>
-    avisos.push({ tipo, equipo, estado, impacto, desde, gravedad: 'advertencia' });
+  const agregar = (tipo: TipoAviso, equipo: string, estado: string, impacto: string, desde: string | null = null) =>
+    avisos.push({ tipo, equipo, estado, impacto, desde });
 
   if (e.baseDeDatos.estado !== 'up') {
-    critico('base-de-datos', 'Base de datos', 'Sin conexión', 'No se pueden validar ingresos ni salidas');
+    agregar('base-de-datos', 'Base de datos', 'Sin conexión', 'No se pueden validar ingresos ni salidas');
   }
   if (!e.claveEquiposConfigurada) {
-    critico('clave', 'Clave de equipos físicos', 'No configurada', 'Los equipos no pueden registrar ingresos ni salidas');
+    agregar('clave', 'Clave de equipos físicos', 'No configurada', 'Los equipos no pueden registrar ingresos ni salidas');
   }
 
-  // Si el controlador de la garita está caído se avisa una sola vez, no cada lector y relé que depende de él.
-  if (e.controlador.remoto && !e.controlador.conectado) {
-    critico(
+  if (e.respaldos.disponible) {
+    const ultimo = e.respaldos.ultimoAutomatico;
+    if (!ultimo || new Date(e.fecha).getTime() - new Date(ultimo.fecha).getTime() > RESPALDO_ATRASADO_MS) {
+      agregar('respaldos', 'Respaldos', 'Atrasados', 'El último respaldo automático tiene más de 26 horas', ultimo?.fecha ?? null);
+    }
+  }
+
+  // Un aviso por tarjeta de "Equipos de acceso", en el mismo orden que la pantalla.
+  const sinControlador = e.controlador.remoto && !e.controlador.conectado;
+  if (sinControlador) {
+    agregar(
       'controlador',
       'Controlador',
       'Desconectado',
       'Nadie puede ingresar; la salida sigue con la lista del personal guardada',
       e.controlador.ultimoReporte,
     );
-  } else {
-    const lectores = [
-      ['ingreso', e.lectoresDni.ingreso],
-      ['salida', e.lectoresDni.salida],
-    ] as const;
-    for (const [puerta, lector] of lectores) {
-      if (lector.configurado && !lector.conectado) {
-        critico('lector', `Lector de DNI de ${puerta}`, 'Cable desconectado', `No se leen DNI en la ${puerta}`, lector.ultimaLectura);
-      }
-    }
-    const r = e.releMolinetes;
-    if (r.ingreso && !r.ingreso.conectado) critico('rele', 'Relé del molinete de ingreso', 'No conectado', 'El molinete de ingreso no se abre');
-    if (r.salida && !r.salida.conectado) critico('rele', 'Relé del molinete de salida', 'No conectado', 'El molinete de salida no se abre');
-    if (r.avisoIngreso && !r.avisoIngreso.conectado) {
-      advertencia('aviso', 'Relé de aviso de ingreso', 'No conectado', 'No suena el aviso cuando se deniega un ingreso');
-    }
-    if (r.avisoSalida && !r.avisoSalida.conectado) {
-      advertencia('aviso', 'Relé de aviso de salida', 'No conectado', 'No suena el aviso cuando se deniega una salida');
-    }
   }
 
   for (const d of e.dispositivos) {
     if (!d.enLinea) {
-      critico('terminal', `Terminal facial ${d.serialNumber}`, 'Desconectado', 'Nadie puede ingresar: no reconoce el rostro ni toma la prueba de alcohol', d.ultimaActividad);
+      agregar('terminal', `Terminal facial ${d.serialNumber}`, 'Desconectado', 'Nadie puede ingresar: no reconoce el rostro ni toma la prueba de alcohol', d.ultimaActividad);
     }
   }
 
-  if (e.respaldos.disponible) {
-    const ultimo = e.respaldos.ultimoAutomatico;
-    if (!ultimo || new Date(e.fecha).getTime() - new Date(ultimo.fecha).getTime() > RESPALDO_ATRASADO_MS) {
-      advertencia('respaldos', 'Respaldos', 'Atrasados', 'El último respaldo automático tiene más de 26 horas', ultimo?.fecha ?? null);
-    }
+  // Lectores y relés: sin el controlador están todos caídos; si no, solo los que fallan.
+  const puertas = (ingreso: boolean, salida: boolean) =>
+    ingreso && salida ? 'ingreso y salida' : ingreso ? 'ingreso' : salida ? 'salida' : null;
+
+  const ingresoLector = e.lectoresDni.ingreso;
+  const salidaLector = e.lectoresDni.salida;
+  const lectores = sinControlador
+    ? 'ingreso y salida'
+    : puertas(ingresoLector.configurado && !ingresoLector.conectado, salidaLector.configurado && !salidaLector.conectado);
+  if (lectores) {
+    agregar(
+      'lector',
+      'Lectores de DNI',
+      sinControlador ? 'Desconectados' : `Desconectado: ${lectores}`,
+      sinControlador ? 'Sin el controlador no se leen DNI en ingreso ni salida' : `No se leen DNI en ${lectores === 'ingreso y salida' ? 'ingreso ni salida' : `la ${lectores}`}`,
+    );
+  }
+
+  const r = e.releMolinetes;
+  const molinetes = sinControlador ? 'ingreso y salida' : puertas(!!r.ingreso && !r.ingreso.conectado, !!r.salida && !r.salida.conectado);
+  if (molinetes) {
+    agregar(
+      'rele',
+      'Relés de molinetes',
+      sinControlador ? 'Desconectados' : `Desconectado: ${molinetes}`,
+      sinControlador
+        ? 'Sin el controlador no se abren los molinetes'
+        : `No se abre el molinete de ${molinetes === 'ingreso y salida' ? 'ingreso ni el de salida' : molinetes}`,
+    );
+  }
+
+  const avisoIngreso = !!r.avisoIngreso && (sinControlador || !r.avisoIngreso.conectado);
+  const avisoSalida = !!r.avisoSalida && (sinControlador || !r.avisoSalida.conectado);
+  const avisosCaidos = puertas(avisoIngreso, avisoSalida);
+  if (avisosCaidos) {
+    agregar(
+      'aviso',
+      'Relés de aviso',
+      sinControlador ? 'Desconectados' : `Desconectado: ${avisosCaidos}`,
+      sinControlador
+        ? 'Sin el controlador no suenan los avisos de ingreso o salida denegados'
+        : `No suena el aviso cuando se deniega ${avisosCaidos === 'ingreso y salida' ? 'un ingreso o una salida' : avisosCaidos === 'ingreso' ? 'un ingreso' : 'una salida'}`,
+    );
   }
 
   return avisos;

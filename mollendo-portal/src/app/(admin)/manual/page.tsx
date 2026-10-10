@@ -320,8 +320,8 @@ const SECCIONES: SeccionManual[] = [
         </p>
         <p>
           Si algo de esta pantalla se cae, aparece un <strong>aviso</strong> arriba de cualquier página (también para el
-          vigilante): un recuadro por equipo con qué falla, qué deja de funcionar y desde cuándo, y un enlace aquí. Es rojo
-          si bloquea ingresos o salidas y ámbar si es una advertencia. Se revisa cada 30 segundos y desaparece solo
+          vigilante): un recuadro rojo por equipo con qué falla, qué deja de funcionar y desde cuándo, y un enlace aquí.
+          Se revisa cada 30 segundos y desaparece solo
           cuando todo vuelve a estar en línea; con la flecha se contrae hasta que falle algo distinto.
         </p>
       </div>

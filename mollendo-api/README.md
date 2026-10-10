@@ -43,7 +43,6 @@ La zona horaria es la de Lima (`src/common/zona-horaria.ts`); los días de los f
 | `npm test` | Pruebas automáticas (Vitest) |
 | `npm run lint` | Revisión del código (oxlint) |
 | `npm run db:seed` | Crea las cuentas iniciales |
-| `npm run simular` | Simulador de garita: envía ingresos y salidas al backend (`-- --limpiar` los borra) |
 
 ## Datos de demostración
 
@@ -69,7 +68,37 @@ Detalle y variables en la guía de despliegue (sección 8b).
 | `src/panel` | Panel de vigilancia, Dashboard, estado del sistema y canal en tiempo real |
 | `src/reportes` | Reportes en Excel y PDF |
 | `src/auditoria` | Registro de cambios |
-| `prisma` | Esquema, migraciones, cuentas iniciales, simulador y datos de demostración |
+| `prisma` | Esquema, migraciones, cuentas iniciales y datos de demostración |
+
+## Simulador de garita (retirado del proyecto)
+
+Herramienta solo para desarrollo, retirada el 10/10/2026 porque se trabaja con los equipos oficiales. Inventaba ingresos y salidas con el personal registrado y los enviaba a la API como si fueran el lector de DNI y el G4 Pro, para ver el Panel de vigilancia en vivo sin equipos. Para aceptar esos resultados se registraba como un terminal falso llamado `SIMULADOR`, que después aparece desconectado en "Sistema y APIs" y en el aviso de fallas.
+
+> **Nunca en un servidor con equipos reales (nube o garita):** mezcla ingresos inventados con los reales. Solo en la PC de desarrollo.
+
+**Recuperarlo** (desde la raíz del proyecto; está en el commit `e10110d`; si la API cambió mucho desde entonces, puede necesitar ajustes):
+
+```bash
+git checkout e10110d -- mollendo-api/prisma/simular-garita.ts
+```
+
+**Usarlo** (en `mollendo-api`, con la API local corriendo y `DEVICE_API_KEY` en el `.env`):
+
+```bash
+npx tsx prisma/simular-garita.ts                           # 20 eventos, uno cada 4 s
+npx tsx prisma/simular-garita.ts --cada=2 --cantidad=50    # otra frecuencia y cantidad
+npx tsx prisma/simular-garita.ts --limpiar                 # borra los eventos que creó (molinete "SIMULACION")
+```
+
+**Al terminar**, además de `--limpiar`, borrar el terminal falso de la base local:
+
+```sql
+DELETE FROM verificacion_dispositivo WHERE dispositivo_id = (SELECT id FROM dispositivo_acceso WHERE serial_number = 'SIMULADOR');
+DELETE FROM comando_dispositivo WHERE dispositivo_id = (SELECT id FROM dispositivo_acceso WHERE serial_number = 'SIMULADOR');
+DELETE FROM dispositivo_acceso WHERE serial_number = 'SIMULADOR';
+```
+
+Y volver a borrar el archivo (`rm mollendo-api/prisma/simular-garita.ts`) para que no quede en el proyecto.
 
 ## Despliegue
 
