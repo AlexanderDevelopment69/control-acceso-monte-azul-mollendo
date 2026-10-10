@@ -215,6 +215,19 @@ Persona 12345678 encolada para 1 equipo(s), con foto
 ];
 
 /** Mientras llega la primera respuesta del backend no se sabe el estado. */
+/** Etiqueta verde de algo en línea o conectado, con un punto que late: está vivo. */
+function Activo({ children }: { children: React.ReactNode }) {
+  return (
+    <Badge color="success">
+      <span className="relative mr-0.5 flex size-2 shrink-0" aria-hidden>
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-success-400 opacity-75" />
+        <span className="relative inline-flex size-2 rounded-full bg-success-500" />
+      </span>
+      {children}
+    </Badge>
+  );
+}
+
 /** Etiqueta roja de algo caído, con un punto que late (como el aviso de fallas). */
 function Falla({ children }: { children: React.ReactNode }) {
   return (
@@ -233,7 +246,7 @@ function ComprobandoBadge() {
 }
 
 function EstadoBadge({ ok }: { ok: boolean }) {
-  return ok ? <Badge color="success">En línea</Badge> : <Falla>Sin conexión</Falla>;
+  return ok ? <Activo>En línea</Activo> : <Falla>Sin conexión</Falla>;
 }
 
 function ConfiguradoBadge({ ok }: { ok: boolean }) {
@@ -330,7 +343,7 @@ function EquiposEstado({
     <div className="mt-2 space-y-3">
       {equipos.dispositivos.map((d) => (
         <div key={d.serialNumber}>
-          {d.enLinea ? <Badge color="success">En línea</Badge> : <Falla>Desconectado</Falla>}
+          {d.enLinea ? <Activo>En línea</Activo> : <Falla>Desconectado</Falla>}
           <p className="mt-1 text-xs text-gray-400">
             {d.serialNumber}
             {!d.enLinea && ` · ${ultimaVez(d)}`}
@@ -611,7 +624,7 @@ function LectoresDniEstado({
           ) : lector.error === "Controlador desconectado" ? (
             <Falla>Desconectado</Falla>
           ) : lector.conectado ? (
-            <Badge color="success">Cable conectado</Badge>
+            <Activo>Cable conectado</Activo>
           ) : (
             <Falla>Cable desconectado</Falla>
           )}
@@ -638,7 +651,7 @@ function ControladorGaritaEstado({ comprobando, controlador }: { comprobando: bo
   return (
     <>
       <div className="mt-2">
-        {controlador?.conectado ? <Badge color="success">Conectado</Badge> : <Falla>Desconectado</Falla>}
+        {controlador?.conectado ? <Activo>Conectado</Activo> : <Falla>Desconectado</Falla>}
       </div>
       <p className="mt-2 text-xs text-gray-400">
         {controlador?.conectado && controlador.desde ? `Desde ${hora(controlador.desde)}` : "Sin conexión: nadie puede ingresar; se puede salir con la lista del personal guardada"}
@@ -682,7 +695,7 @@ function ReleEstado({ comprobando, rele, avisos = false }: { comprobando: boolea
           {r?.error === "Controlador desconectado" ? (
             <Falla>Desconectado</Falla>
           ) : r?.conectado ? (
-            <Badge color="success">Conectado</Badge>
+            <Activo>Conectado</Activo>
           ) : (
             <Falla>No conectado</Falla>
           )}
