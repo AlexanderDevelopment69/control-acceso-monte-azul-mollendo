@@ -104,7 +104,7 @@ const CAPTURAS = [
     clave: "sistema",
     ruta: "/sistema",
     conAviso: true,
-    alto: 760,
+    alto: 1010,
     puntos: [
       { sel: "::-p-text(equipos con problemas)", recuadro: "section" },
       { sel: "::-p-text(Backend (mollendo-api))", recuadro: ".rounded-2xl" },
