@@ -123,8 +123,11 @@ export function AvisoSistema() {
           <span className="absolute inline-flex size-full animate-ping rounded-full bg-white opacity-75" />
           <span className="relative inline-flex size-2.5 rounded-full bg-white" />
         </span>
-        <p className="font-semibold">{titulo}</p>
-        {revisado && <span className="text-xs text-white/80">Revisado {revisado.toLocaleTimeString("es-PE")}</span>}
+        {/* Título y hora sobre la misma línea de base: con tamaños distintos, centrarlos los descuadra. */}
+        <p className="flex flex-wrap items-baseline gap-x-3">
+          <span className="font-semibold">{titulo}</span>
+          {revisado && <span className="text-xs text-white/80">Revisado {revisado.toLocaleTimeString("es-PE")}</span>}
+        </p>
         <div className="ml-auto flex items-center gap-2">
           {esAdmin && pathname !== "/sistema" && (
             <Link href="/sistema" className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-medium hover:bg-white/25">
