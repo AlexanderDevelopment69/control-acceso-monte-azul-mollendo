@@ -390,25 +390,36 @@ const TONO_ACCION = {
   marca: "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400",
   exito: "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500",
   peligro: "bg-error-50 text-error-500 dark:bg-error-500/15 dark:text-error-400",
+  aviso: "bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400",
 } as const;
 
-/** Botones de una pantalla explicados como tarjetas: ícono, nombre del botón y qué hace. */
+/**
+ * Botones (o estados) de una pantalla explicados como tarjetas: ícono, nombre y
+ * qué hace. Los botones van entre comillas; con comillas = false, un estado o
+ * un dato ("Autorizado", "Presentes actualmente").
+ */
 export function Acciones({
   items,
   columnas = 2,
 }: {
-  items: { Icono: React.ComponentType<PropsIcono>; boton: string; texto: React.ReactNode; tono?: keyof typeof TONO_ACCION }[];
+  items: {
+    Icono: React.ComponentType<PropsIcono>;
+    boton: string;
+    texto: React.ReactNode;
+    tono?: keyof typeof TONO_ACCION;
+    comillas?: boolean;
+  }[];
   columnas?: 2 | 3;
 }) {
   return (
     <div className={`my-1 grid gap-3 ${columnas === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-      {items.map(({ Icono, boton, texto, tono = "marca" }) => (
+      {items.map(({ Icono, boton, texto, tono = "marca", comillas = true }) => (
         <div key={boton} className="flex gap-3 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
           <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${TONO_ACCION[tono]}`}>
             <Icono className="size-5" />
           </span>
           <div className="min-w-0">
-            <p className="font-medium text-gray-800 dark:text-white/90">“{boton}”</p>
+            <p className="font-medium text-gray-800 dark:text-white/90">{comillas ? `“${boton}”` : boton}</p>
             <div className="mt-0.5 text-gray-600 dark:text-gray-300">{texto}</div>
           </div>
         </div>
@@ -429,3 +440,115 @@ export function Nota({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+export function IconoReloj({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </svg>
+  );
+}
+export function IconoAviso({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M10.3 4.3 2.9 17.2A2 2 0 0 0 4.6 20h14.8a2 2 0 0 0 1.7-2.8L13.7 4.3a2 2 0 0 0-3.4 0z" />
+      <path d="M12 9.5v4M12 16.5h.01" />
+    </svg>
+  );
+}
+export function IconoBuscar({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m20 20-4.2-4.2" />
+    </svg>
+  );
+}
+export function IconoCalendario({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <rect x="3.5" y="5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+    </svg>
+  );
+}
+export function IconoGrafico({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M4 4v16h16M8 16v-4M12 16V8M16 16v-6" />
+    </svg>
+  );
+}
+export function IconoUsuarios({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 19c.8-2.8 3-4.3 6-4.3s5.2 1.5 6 4.3M15.5 5a3.2 3.2 0 0 1 0 6.2M17.5 14.9c1.6.6 2.8 2 3.3 4.1" />
+    </svg>
+  );
+}
+export function IconoTabla({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" />
+    </svg>
+  );
+}
+export function IconoPdf({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z" />
+      <path d="M14 3v4h4M9 13h6M9 16.5h4" />
+    </svg>
+  );
+}
+export function IconoComprimido({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M4 8.5V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2.5M4 8.5h16v9.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+      <path d="M10 12.5h4" />
+    </svg>
+  );
+}
+export function IconoLlave({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <circle cx="8" cy="15" r="4" />
+      <path d="m11 12 8.5-8.5M16.5 6.5l2.5 2.5M14 9l2 2" />
+    </svg>
+  );
+}
+export function IconoHistorial({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M4 12a8 8 0 1 0 2.3-5.7M4 4.5v3.8h3.8" />
+      <path d="M12 8v4.5l3 1.5" />
+    </svg>
+  );
+}
+export function IconoServidor({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <rect x="3.5" y="4" width="17" height="7" rx="1.5" />
+      <rect x="3.5" y="13" width="17" height="7" rx="1.5" />
+      <path d="M7 7.5h.01M7 16.5h.01M11 7.5h6M11 16.5h6" />
+    </svg>
+  );
+}
+export function IconoRele({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M13 3 5 13.5h6L10 21l8-10.5h-6z" />
+    </svg>
+  );
+}
+export function IconoCodigo({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="m8.5 8-4 4 4 4M15.5 8l4 4-4 4M13.5 5l-3 14" />
+    </svg>
+  );
+}
+export { IconoRostro, IconoAlcohol, IconoMolinete };

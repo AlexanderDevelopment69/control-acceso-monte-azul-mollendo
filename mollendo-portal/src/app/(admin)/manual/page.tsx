@@ -12,14 +12,31 @@ import {
   Condiciones,
   CuentasManual,
   IconoAgregar,
+  IconoAlcohol,
+  IconoAviso,
   IconoBaja,
+  IconoBuscar,
+  IconoCalendario,
   IconoCamara,
+  IconoCodigo,
+  IconoComprimido,
   IconoDni,
   IconoDocumentos,
   IconoEliminar,
   IconoEmpresa,
+  IconoGrafico,
+  IconoHistorial,
+  IconoLlave,
+  IconoMolinete,
+  IconoPdf,
   IconoRegistrado,
+  IconoRele,
+  IconoReloj,
   IconoRenovar,
+  IconoRostro,
+  IconoServidor,
+  IconoTabla,
+  IconoUsuarios,
   IconoVer,
   Nota,
   PasosTarea,
@@ -234,9 +251,8 @@ const SECCIONES: SeccionManual[] = [
       <div className="space-y-3">
         <p>
           El <Link href="/vigilancia" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Panel de vigilancia</Link> muestra
-          en vivo cada ingreso y salida por el molinete apenas ocurre, autorizado o denegado: la fila nueva aparece
-          arriba de la tabla (el último evento queda resaltado unos segundos), y los contadores se actualizan solos. Los intentos con un documento
-          no registrado también quedan en la tabla, como “No registrado”.
+          en vivo cada ingreso y salida por el molinete apenas ocurre, autorizado o denegado: la fila nueva aparece arriba
+          de la tabla (resaltada unos segundos) y los contadores se actualizan solos.
         </p>
         <Captura
           clave="vigilancia"
@@ -251,49 +267,126 @@ const SECCIONES: SeccionManual[] = [
             "El motivo cuando se deniega.",
           ]}
         />
+
+        <Subtitulo>Cómo se valida un ingreso</Subtitulo>
+        <PasosTarea
+          pasos={[
+            {
+              Icono: IconoDni,
+              titulo: "Pasa su DNI por el lector",
+              texto: (
+                <>
+                  Si el documento <strong>no está registrado</strong>, la persona está <strong>dada de baja</strong>,{" "}
+                  <strong>no tiene documentos</strong> o alguno está <strong>vencido</strong>, se deniega de inmediato y
+                  se muestran los motivos.
+                </>
+              ),
+            },
+            {
+              Icono: IconoRostro,
+              titulo: "Muestra su rostro en el terminal facial",
+              texto: (
+                <>
+                  Con los documentos en regla, el sistema habilita en el terminal <strong>solo a esa persona, por 1
+                  minuto</strong>: el terminal no acepta el rostro de nadie más.
+                </>
+              ),
+            },
+            {
+              Icono: IconoAlcohol,
+              titulo: "Hace la prueba de alcohol",
+              texto: (
+                <>
+                  Si el rostro y el alcohol son conformes, se abre el molinete y el ingreso queda autorizado. Si el alcohol
+                  no es conforme, queda denegado por alcohol; si no se completa en el minuto, queda denegado con{" "}
+                  <strong>“No completó rostro y alcohol”</strong>.
+                </>
+              ),
+            },
+            {
+              Icono: IconoMolinete,
+              titulo: "Queda el resultado",
+              texto: "La fila pasa a ser el ingreso autorizado o denegado, y se le quita el permiso en el terminal.",
+            },
+          ]}
+        />
+
+        <Subtitulo>Qué significa cada fila</Subtitulo>
+        <Acciones
+          items={[
+            {
+              Icono: IconoReloj,
+              boton: "En espera",
+              comillas: false,
+              texto: "Pasó su DNI y tiene su minuto en el terminal facial. Se ve su foto (para compararla con quien está frente al terminal), el tiempo que le queda y una barra que se va vaciando.",
+            },
+            {
+              Icono: IconoUsuarios,
+              boton: "En cola",
+              tono: "neutro",
+              comillas: false,
+              texto: "Otra persona está usando el terminal: “Esperando su turno en el terminal facial”. Su minuto empieza cuando termina la anterior (se habilita a una persona a la vez).",
+            },
+            {
+              Icono: IconoRegistrado,
+              boton: "Autorizado",
+              tono: "exito",
+              comillas: false,
+              texto: "Pasó todos los controles y se abrió el molinete.",
+            },
+            {
+              Icono: IconoAviso,
+              boton: "Denegado",
+              tono: "peligro",
+              comillas: false,
+              texto: (
+                <>
+                  No se abrió, con el motivo (por ejemplo “No registrado” o “Alcohol”). Si fue por documentos,{" "}
+                  <strong>“Documentos ›”</strong> abre una ventana con sus documentos y cuáles debe regularizar.
+                </>
+              ),
+            },
+          ]}
+        />
+
+        <Subtitulo>Buscar y ver otros días</Subtitulo>
         <p>
-          La tabla muestra por defecto los movimientos de <strong>hoy</strong>. Con el calendario se puede ver otro día
-          (“Hoy” vuelve al día actual) o “Todos los días”. El buscador encuentra por nombre, apellido o número de
-          documento en todo el historial, no solo en la página que se está viendo. La tabla va de 10 en 10, con
-          páginas.
+          La tabla muestra por defecto los movimientos de <strong>hoy</strong>. Con el calendario se ve otro día o “Todos
+          los días”, y “Hoy” vuelve al día actual. El buscador encuentra por nombre, apellido o número de documento en todo
+          el historial, no solo en la página visible. La tabla va de 10 en 10, con páginas.
         </p>
+
+        <Subtitulo>La salida</Subtitulo>
         <p>
-          Cuando un ingreso se deniega por documentos, el motivo <strong>“Documentos ›”</strong> abre una ventana con los
-          documentos de la persona y cuáles debe regularizar; con <strong>“Ver”</strong> se abre cada archivo.
+          Solo exige un DNI registrado, aunque la persona esté dada de baja o tenga documentos vencidos, y abre el
+          molinete. No se exige haber marcado un ingreso antes.
         </p>
-        <p>El ingreso se valida en dos pasos:</p>
-        <ol className="list-decimal space-y-1 pl-5">
-          <li>
-            <strong>Al pasar el DNI por el lector:</strong> si el documento <strong>no está registrado</strong>, la
-            persona está <strong>dada de baja</strong>, <strong>no tiene documentos</strong> cargados o alguno está{" "}
-            <strong>vencido</strong>, se deniega de inmediato y se muestran los motivos.
-          </li>
-          <li>
-            <strong>En el terminal facial:</strong> si los documentos están en regla, el sistema habilita en el terminal{" "}
-            <strong>solo a esa persona</strong>, por 1 minuto: el terminal no acepta el rostro de nadie más. La persona
-            muestra el rostro y hace la <strong>prueba de alcohol</strong>; si ambos son conformes, el sistema abre el
-            molinete y el ingreso queda autorizado. Si el alcohol no es conforme, queda denegado por alcohol; si no se
-            completa en el minuto, queda denegado con <strong>“No completó rostro y alcohol”</strong>. Al terminar, se le
-            quita el permiso en el terminal.
-          </li>
-        </ol>
-        <p>
-          Mientras espera, la persona aparece en la primera fila del historial como <strong>“en espera”</strong>, con su{" "}
-          <strong>foto</strong> (para compararla con quien está frente al terminal), el tiempo que le queda y una barra que
-          se va vaciando. Se habilita a una persona a la vez: si otra pasa su DNI mientras tanto, figura{" "}
-          <strong>“en cola”</strong> (“Esperando su turno en el terminal facial”) y su minuto empieza cuando termina la
-          anterior. Al llegar el resultado, la fila pasa a ser el ingreso autorizado o denegado.
-        </p>
-        <p>
-          La salida solo exige un DNI registrado (aunque la persona esté dada de baja o tenga documentos vencidos) y
-          abre el molinete; no se exige un ingreso previo. Si el servidor deja de
-          responder, aparece un aviso arriba a la derecha: mientras dure, no se valida ningún ingreso.
-        </p>
-        <p>
-          Si se cae uno de los equipos de acceso (controlador, terminal facial, lector de DNI o relé), aparece un{" "}
-          <strong>aviso rojo</strong> arriba de la página con el equipo, qué deja de funcionar y desde cuándo:{" "}
-          <strong>infórmalo al administrador o al soporte técnico</strong>. Desaparece solo cuando el equipo vuelve.
-        </p>
+
+        <Subtitulo>Avisos</Subtitulo>
+        <Acciones
+          items={[
+            {
+              Icono: IconoAviso,
+              boton: "Se cae un equipo",
+              tono: "peligro",
+              comillas: false,
+              texto: (
+                <>
+                  Si falla el controlador, el terminal facial, un lector de DNI o un relé, aparece un aviso rojo arriba
+                  de la página con el equipo, qué deja de funcionar y desde cuándo. <strong>Infórmalo al administrador o
+                  al soporte técnico.</strong> Desaparece solo cuando el equipo vuelve.
+                </>
+              ),
+            },
+            {
+              Icono: IconoServidor,
+              boton: "El servidor no responde",
+              tono: "aviso",
+              comillas: false,
+              texto: "Aparece un aviso arriba a la derecha: mientras dure, no se valida ningún ingreso.",
+            },
+          ]}
+        />
       </div>
     ),
   },
@@ -305,8 +398,8 @@ const SECCIONES: SeccionManual[] = [
       <div className="space-y-3">
         <p>
           El <Link href="/dashboard" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Dashboard</Link>{" "}
-          resume en indicadores y gráficos lo que pasa en el terminal. Cada ingreso autorizado de una persona cuenta como
-          una visita. Se actualiza solo con los ingresos y salidas (con mucho movimiento, como máximo cada 10 segundos).
+          resume en indicadores y gráficos lo que pasa en el terminal. Cada ingreso autorizado cuenta como una visita. Se
+          actualiza solo con los ingresos y salidas (con mucho movimiento, como máximo cada 10 segundos).
         </p>
         <Captura
           clave="dashboard"
@@ -318,29 +411,49 @@ const SECCIONES: SeccionManual[] = [
             "Quienes llevan más de un día dentro sin registrar salida.",
           ]}
         />
-        <ul className="list-disc space-y-1 pl-5">
-          <li>
-            <strong>Presentes actualmente</strong>: todas las personas que están dentro ahora, sin importar cuándo
-            entraron. Debajo se indica cuántas ingresaron en el periodo (las “presentes” del gráfico) y cuántas antes.
-          </li>
-          <li>
-            <strong>Total de visitas</strong>: ingresos autorizados en el periodo elegido. De ellas, las{" "}
-            <strong>finalizadas</strong> ya registraron su salida y las <strong>presentes</strong> todavía no.
-          </li>
-          <li>
-            <strong>Permanencia mayor a 24 h</strong>: personas que ingresaron hace más de un día y no registran salida. Al
-            final de la página está la lista con su tiempo dentro.
-          </li>
-          <li>
-            Gráficos de visitas, ingresos y salidas (por día; por semana si el periodo pasa de 2 meses y por mes si pasa de un año), motivos de denegación, documentos del personal activo
-            (vigentes, por vencer en 30 días y vencidos) y personal activo por empresa.
-          </li>
-        </ul>
+
+        <Subtitulo>Los indicadores</Subtitulo>
+        <Acciones
+          items={[
+            {
+              Icono: IconoUsuarios,
+              boton: "Presentes actualmente",
+              comillas: false,
+              texto: "Todas las personas que están dentro ahora, sin importar cuándo entraron. Debajo se indica cuántas ingresaron en el periodo y cuántas antes.",
+            },
+            {
+              Icono: IconoRegistrado,
+              boton: "Visitas finalizadas",
+              tono: "exito",
+              comillas: false,
+              texto: "Visitas del periodo que ya registraron su salida.",
+            },
+            {
+              Icono: IconoGrafico,
+              boton: "Total de visitas",
+              comillas: false,
+              texto: "Ingresos autorizados en el periodo elegido: las finalizadas más las que siguen presentes.",
+            },
+            {
+              Icono: IconoReloj,
+              boton: "Permanencia mayor a 24 h",
+              tono: "aviso",
+              comillas: false,
+              texto: "Personas que ingresaron hace más de un día y no registran salida. Al final de la página está la lista con su tiempo dentro.",
+            },
+          ]}
+        />
+
+        <Subtitulo>Los gráficos</Subtitulo>
         <p>
-          Arriba se elige el periodo: hoy, últimos 7 días, este mes o un rango personalizado. Los indicadores de presencia
-          dependen de que cada persona registre su salida en el molinete: si alguien sale sin registrarla, seguirá
-          figurando como presente.
+          Visitas, ingresos y salidas (por día; por semana si el periodo pasa de 2 meses y por mes si pasa de un año),
+          motivos de denegación, documentos del personal activo (vigentes, por vencer en 30 días y vencidos) y personal
+          activo por empresa.
         </p>
+        <Nota>
+          Los indicadores de presencia dependen de que cada persona registre su salida en el molinete: si alguien sale sin
+          registrarla, seguirá figurando como presente.
+        </Nota>
       </div>
     ),
   },
@@ -369,38 +482,92 @@ const SECCIONES: SeccionManual[] = [
             </>,
           ]}
         />
-        <ul className="list-disc space-y-1 pl-5">
-          <li>
-            <strong>Personal y empresas</strong>: el personal con su empresa, estado y si puede ingresar (con el motivo).
-            Filtros: empresa y activos o dados de baja.
-          </li>
-          <li>
-            <strong>Documentos por persona</strong>: la última versión de cada documento, con su vencimiento y estado
-            (vigente, por vencer en 30 días o vencido). Filtros: empresa y estado del documento. Con{" "}
-            <strong>“Descargar con archivos (ZIP)”</strong> se baja además cada archivo, en carpetas por empresa y
-            persona. Primero descomprime el ZIP (clic derecho → Extraer todo) y abre el Excel desde la carpeta extraída: el
-            enlace “Abrir” de cada fila abre su archivo. Si se abre el Excel desde dentro del ZIP sin extraerlo, los
-            enlaces no encuentran los archivos. También se pueden incluir los documentos anteriores que fueron renovados.
-          </li>
-          <li>
-            <strong>Ingresos y salidas</strong>: el historial del periodo con resultado y motivo. Filtros: periodo,
-            movimiento y resultado.
-          </li>
-          <li>
-            <strong>Visitas del periodo</strong>: cada ingreso autorizado con su salida, duración y si está finalizada o
-            presente.
-          </li>
-          <li>
-            <strong>Personal presente</strong>: quiénes están dentro en el momento de descargarlo, con su tiempo dentro.
-          </li>
-          <li>
-            <strong>Auditoría</strong>: quién creó, modificó o eliminó cada dato, en el periodo elegido.
-          </li>
-        </ul>
-        <p>
-          El Excel trae filtros en la cabecera y las fechas se pueden ordenar; el PDF sale en hoja horizontal con número de
-          página. Un reporte puede tener hasta 100 000 filas en Excel y 20 000 en PDF: si pide más, acota el periodo o los filtros.
-        </p>
+
+        <Subtitulo>Los reportes</Subtitulo>
+        <Acciones
+          items={[
+            {
+              Icono: IconoUsuarios,
+              boton: "Personal y empresas",
+              comillas: false,
+              texto: "El personal con su empresa, estado y si puede ingresar (con el motivo). Filtros: empresa y activos o dados de baja.",
+            },
+            {
+              Icono: IconoDocumentos,
+              boton: "Documentos por persona",
+              comillas: false,
+              texto: "La última versión de cada documento, con su vencimiento y estado (vigente, por vencer en 30 días o vencido). Filtros: empresa y estado del documento.",
+            },
+            {
+              Icono: IconoMolinete,
+              boton: "Ingresos y salidas",
+              comillas: false,
+              texto: "El historial del periodo con resultado y motivo. Filtros: periodo, movimiento y resultado.",
+            },
+            {
+              Icono: IconoRegistrado,
+              boton: "Visitas del periodo",
+              comillas: false,
+              texto: "Cada ingreso autorizado con su salida, duración y si está finalizada o presente.",
+            },
+            {
+              Icono: IconoReloj,
+              boton: "Personal presente",
+              comillas: false,
+              texto: "Quiénes están dentro en el momento de descargarlo, con su tiempo dentro.",
+            },
+            {
+              Icono: IconoHistorial,
+              boton: "Auditoría",
+              comillas: false,
+              texto: "Quién creó, modificó o eliminó cada dato, en el periodo elegido.",
+            },
+          ]}
+        />
+
+        <Subtitulo>Documentos con sus archivos (ZIP)</Subtitulo>
+        <p>En “Documentos por persona” también se pueden bajar los archivos de cada documento:</p>
+        <PasosTarea
+          pasos={[
+            {
+              Icono: IconoComprimido,
+              titulo: "“Descargar con archivos (ZIP)”",
+              texto: "Baja el Excel y cada archivo, en carpetas por empresa y persona. Si quieres, incluye también los documentos anteriores que fueron renovados.",
+            },
+            {
+              Icono: IconoDocumentos,
+              titulo: "Extrae el ZIP",
+              texto: "Clic derecho sobre el archivo → “Extraer todo”.",
+            },
+            {
+              Icono: IconoTabla,
+              titulo: "Abre el Excel desde la carpeta extraída",
+              texto: "El enlace “Abrir” de cada fila abre su archivo.",
+            },
+          ]}
+        />
+        <Nota>
+          Si se abre el Excel desde dentro del ZIP sin extraerlo, los enlaces “Abrir” no encuentran los archivos.
+        </Nota>
+
+        <Subtitulo>Excel o PDF</Subtitulo>
+        <Acciones
+          items={[
+            {
+              Icono: IconoTabla,
+              boton: "Descargar Excel",
+              tono: "exito",
+              texto: "Trae filtros en la cabecera y las fechas se pueden ordenar. Hasta 100 000 filas.",
+            },
+            {
+              Icono: IconoPdf,
+              boton: "Descargar PDF",
+              tono: "peligro",
+              texto: "Sale en hoja horizontal, con número de página. Hasta 20 000 filas.",
+            },
+          ]}
+        />
+        <p>Si un reporte pide más filas, acota el periodo o los filtros.</p>
       </div>
     ),
   },
@@ -410,15 +577,34 @@ const SECCIONES: SeccionManual[] = [
     roles: ["administrador", "vigilancia"],
     contenido: (
       <div className="space-y-3">
-        <p>
-          Para cambiar tu contraseña, haz clic en tu nombre de usuario (arriba a la derecha) y elige{" "}
-          <strong>“Cambiar contraseña”</strong>. Escribe tu contraseña actual y dos veces la nueva, de al menos 8
-          caracteres. Tu sesión sigue abierta; si la tenías abierta en otro equipo, allí tendrás que volver a ingresar. El
-          cambio queda registrado en la auditoría.
-        </p>
-        <p className="text-xs text-gray-400">
-          Si olvidaste tu contraseña, no hay recuperación por correo: pide al soporte técnico del sistema que la restablezca.
-        </p>
+        <p>Para cambiar tu contraseña:</p>
+        <PasosTarea
+          pasos={[
+            {
+              Icono: IconoRegistrado,
+              titulo: "Abre tu menú",
+              texto: (
+                <>
+                  Haz clic en tu nombre de usuario, arriba a la derecha, y elige <strong>“Cambiar contraseña”</strong>.
+                </>
+              ),
+            },
+            {
+              Icono: IconoLlave,
+              titulo: "Escribe tu contraseña actual y la nueva",
+              texto: "La nueva va dos veces y debe tener al menos 8 caracteres.",
+            },
+            {
+              Icono: IconoHistorial,
+              titulo: "Listo",
+              texto: "Tu sesión sigue abierta. Si la tenías abierta en otro equipo, allí tendrás que volver a ingresar. El cambio queda registrado en la auditoría.",
+            },
+          ]}
+        />
+        <Nota>
+          Si olvidaste tu contraseña, no hay recuperación por correo: pide al soporte técnico del sistema que la
+          restablezca.
+        </Nota>
       </div>
     ),
   },
@@ -433,10 +619,22 @@ const SECCIONES: SeccionManual[] = [
           un registro de solo lectura de quién creó o modificó cada dato del sistema (empresas, personal, documentos,
           usuarios) y cuándo. Sirve para rastrear un cambio o responder “¿quién cargó esto?”.
         </p>
-        <p>
-          Se puede buscar por el correo del usuario o por el tipo de dato (“personal”, “documento”, “empresa”…) y filtrar
-          por un rango de fechas (“Desde” y “Hasta”). La búsqueda recorre todos los registros, sin importar su antigüedad.
-        </p>
+        <Acciones
+          items={[
+            {
+              Icono: IconoBuscar,
+              boton: "Buscar",
+              comillas: false,
+              texto: "Por el correo del usuario o por el tipo de dato (“personal”, “documento”, “empresa”…). Recorre todos los registros, sin importar su antigüedad.",
+            },
+            {
+              Icono: IconoCalendario,
+              boton: "Filtrar por fechas",
+              comillas: false,
+              texto: "Elige “Desde” y “Hasta” para ver solo los cambios de ese periodo.",
+            },
+          ]}
+        />
       </div>
     ),
   },
@@ -447,15 +645,10 @@ const SECCIONES: SeccionManual[] = [
     contenido: (
       <div className="space-y-3">
         <p>
-          <Link href="/sistema" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Sistema y APIs</Link> agrupa
-          sus tarjetas en <strong>Servidor</strong>, <strong>Equipos de acceso</strong> y <strong>APIs</strong>. Muestra
-          si el backend y la base de datos responden, si la clave de equipos está configurada, el estado de los{" "}
-          <strong>respaldos</strong> (el último y si está al día), el de los <strong>equipos</strong> (cada terminal G4
-          Pro “En línea” o “Desconectado”, con su última actividad) y el de los <strong>lectores de DNI</strong> de ingreso y
-          salida (“Cable conectado”, “Cable desconectado” o “Sin configurar”, con la hora de su última lectura; el sistema ve el cable de datos, no si el lector tiene energía: si no pita al pasar un DNI, hay que revisar su alimentación) y el de los <strong>relés de los molinetes</strong> (ingreso y salida “Conectado” o “No conectado”, con la última apertura). La tarjeta del G4 Pro muestra cuántas personas y rostros tiene. También trae el enlace a la documentación interactiva de la API (Swagger) y
-          la documentación técnica, con ejemplos, de las APIs que usan los equipos físicos: el terminal ZKTeco G4 Pro
-          con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes, indicando el estado
-          de cada una. Está pensada para quien tenga que conectarlos o dar soporte técnico.
+          <Link href="/sistema" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Sistema y APIs</Link>{" "}
+          muestra el estado del servidor y de los equipos de acceso, la sincronización con el terminal facial y la
+          documentación de las APIs. Las etiquetas verdes (“En línea”, “Conectado”) y rojas (“Desconectado”) llevan un punto
+          que late: verde, conectado ahora; rojo, caído.
         </p>
         <Captura
           clave="sistema"
@@ -466,12 +659,55 @@ const SECCIONES: SeccionManual[] = [
             "Estado de los equipos de acceso: controlador, terminal facial, lectores y relés.",
           ]}
         />
-        <h3 className="pt-2 text-sm font-semibold text-gray-800 dark:text-white/90">Sincronización con el G4 Pro</h3>
+
+        <Subtitulo>Qué muestra cada tarjeta</Subtitulo>
+        <Acciones
+          items={[
+            {
+              Icono: IconoServidor,
+              boton: "Servidor",
+              comillas: false,
+              texto: "Si el backend y la base de datos responden, si la clave de equipos está configurada y si los respaldos están al día (el último, con su fecha y tamaño).",
+            },
+            {
+              Icono: IconoMolinete,
+              boton: "Controlador",
+              comillas: false,
+              texto: "El equipo que lee los DNI y abre los molinetes. Si está desconectado, nadie puede ingresar; se puede salir con la lista del personal guardada.",
+            },
+            {
+              Icono: IconoRostro,
+              boton: "Terminal facial (G4 Pro)",
+              comillas: false,
+              texto: "“En línea” o “Desconectado”, con su última actividad y cuántas personas y rostros tiene.",
+            },
+            {
+              Icono: IconoDni,
+              boton: "Lectores de DNI",
+              comillas: false,
+              texto: "Ingreso y salida, con la hora de su última lectura. Se ve el cable de datos, no si el lector tiene energía: si no pita al pasar un DNI, revisa su alimentación.",
+            },
+            {
+              Icono: IconoRele,
+              boton: "Relés de molinetes y de aviso",
+              comillas: false,
+              texto: "Si cada relé está conectado, con su última apertura o aviso.",
+            },
+            {
+              Icono: IconoCodigo,
+              boton: "APIs",
+              comillas: false,
+              texto: "Enlace a la documentación interactiva (Swagger) y la documentación técnica, con ejemplos, de las APIs de los equipos. Pensada para quien los conecte o dé soporte técnico.",
+            },
+          ]}
+        />
+
+        <Subtitulo>Sincronización con el G4 Pro</Subtitulo>
         <p>
-          Deja el terminal facial igual al sistema: <strong>borra</strong> del terminal a quien no está registrado en el
-          sistema (por ejemplo, alguien registrado a mano en el equipo), <strong>quita</strong> los permisos de paso que
-          quedaron sueltos y <strong>registra con su foto</strong> al personal activo que falte. Nunca hay que registrar
-          personas directamente en el terminal: se registran en Personal y documentos y el sistema las envía.
+          Deja el terminal facial igual al sistema: <strong>borra</strong> del terminal a quien no está registrado (por
+          ejemplo, alguien registrado a mano en el equipo), <strong>quita</strong> los permisos de paso que quedaron sueltos
+          y <strong>registra con su foto</strong> al personal activo que falte. Nunca hay que registrar personas
+          directamente en el terminal: se registran en Personal y documentos y el sistema las envía.
         </p>
         <Captura
           clave="sincronizacion"
@@ -490,31 +726,37 @@ const SECCIONES: SeccionManual[] = [
             "El resultado de la última sincronización, manual o diaria.",
           ]}
         />
-        <ol className="list-decimal space-y-1 pl-5">
-          <li>
-            Usa primero <strong>“Simular”</strong>. Mientras consulta al terminal se ve una barra que se desliza arriba de
-            la tarjeta; puede tardar hasta un minuto.
-          </li>
-          <li>
-            Revisa el resultado: cuántas personas <strong>agregaría</strong>, cuántos usuarios <strong>borraría</strong>{" "}
-            (los que están en el terminal pero no en el sistema) y cuántos <strong>permisos quitaría</strong>.
-          </li>
-          <li>
-            Si está bien, usa <strong>“Sincronizar ahora”</strong> y confírmalo. El resultado pasa a decir
-            “Agregadas”, “Borrados” y “Permisos quitados”.
-          </li>
-        </ol>
+        <PasosTarea
+          pasos={[
+            {
+              Icono: IconoBuscar,
+              titulo: "Usa primero “Simular”",
+              texto: "Mientras consulta al terminal se ve una barra que se desliza arriba de la tarjeta; puede tardar hasta un minuto.",
+            },
+            {
+              Icono: IconoVer,
+              titulo: "Revisa el resultado",
+              texto: "Cuántas personas agregaría, cuántos usuarios borraría (los que están en el terminal pero no en el sistema) y cuántos permisos quitaría.",
+            },
+            {
+              Icono: IconoRenovar,
+              titulo: "Usa “Sincronizar ahora” y confírmalo",
+              texto: "El resultado pasa a decir “Agregadas”, “Borrados” y “Permisos quitados”.",
+            },
+          ]}
+        />
+        <Nota>
+          Si el resultado dice <strong>“equipo(s) no respondieron”</strong>, el terminal facial está desconectado: no se
+          pudo revisar ni cambiar nada. Vuelve a intentarlo cuando su tarjeta diga “En línea”. La revisión diaria hace lo
+          mismo que “Sincronizar ahora”, sola, a la hora elegida.
+        </Nota>
+
+        <Subtitulo>Aviso de fallas</Subtitulo>
         <p>
-          Si el resultado dice <strong>“equipo(s) no respondieron”</strong>, el terminal facial está desconectado: no
-          se pudo revisar ni cambiar nada. Revisa su tarjeta en Equipos de acceso y vuelve a intentarlo cuando esté{" "}
-          “En línea”. La revisión diaria hace lo mismo que “Sincronizar ahora”, sola, a la hora elegida; desactívala con el
-          mismo interruptor.
-        </p>
-        <p>
-          Si algo de esta pantalla se cae, aparece un <strong>aviso</strong> arriba de cualquier página (también para el
-          vigilante): un recuadro rojo por equipo con qué falla, qué deja de funcionar y desde cuándo, y un enlace aquí.
-          Se revisa cada 30 segundos y desaparece solo
-          cuando todo vuelve a estar en línea; con la flecha se contrae hasta que falle algo distinto.
+          Si algo de esta pantalla se cae, aparece un aviso arriba de cualquier página (también para el vigilante): un
+          recuadro rojo por equipo con qué falla, qué deja de funcionar y desde cuándo, y un enlace aquí. Se revisa cada 30
+          segundos y desaparece solo cuando todo vuelve a estar en línea; con la flecha se contrae hasta que falle algo
+          distinto.
         </p>
       </div>
     ),
