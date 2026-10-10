@@ -256,14 +256,42 @@ export function PersonaFicha({
             }`}
           >
             {cumplimiento.habilitado ? (
-              <>✔ Puede ingresar hoy (sujeto a la prueba de alcohol en garita).</>
+              <>
+                <p className="font-semibold">✔ Puede ingresar hoy</p>
+                <p className="mt-0.5">Documentos en regla. En garita se completa con el rostro y la prueba de alcohol.</p>
+              </>
             ) : (
               <>
-                ✖ No puede ingresar:{" "}
-                {persona.estado === "inactivo"
-                  ? `dado de baja${persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}${persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""}`
-                  : motivosCumplimiento(cumplimiento).join(" · ")}
-                .
+                <p className="font-semibold">✖ No puede ingresar</p>
+                {persona.estado === "inactivo" ? (
+                  <>
+                    <p className="mt-0.5">
+                      Dado de baja{persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}
+                      {persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""}.
+                    </p>
+                    <p className="mt-1 text-xs opacity-80">Para que vuelva a ingresar, usa “Reactivar”.</p>
+                  </>
+                ) : (
+                  <>
+                    <ul className="mt-1 space-y-0.5">
+                      {cumplimiento.sinDocumentos && <li>• No tiene documentos cargados.</li>}
+                      {cumplimiento.documentosVencidos.map((nombre) => {
+                        const doc = actuales.find((d) => d.nombre === nombre);
+                        return (
+                          <li key={nombre}>
+                            • <strong className="font-medium">{nombre}</strong>
+                            {doc?.fechaVencimiento ? `: venció el ${formatearFecha(doc.fechaVencimiento)}` : ": vencido"}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <p className="mt-1 text-xs opacity-80">
+                      {cumplimiento.sinDocumentos
+                        ? "Sube sus documentos en la sección Documentos."
+                        : "Sube la versión actualizada en la sección Documentos."}
+                    </p>
+                  </>
+                )}
               </>
             )}
           </div>
