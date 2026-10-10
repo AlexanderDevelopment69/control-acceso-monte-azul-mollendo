@@ -187,7 +187,7 @@ export class ReportesService {
       filtros: [
         ...(await this.filtroEmpresa(query.empresaId)),
         ...(query.estado ? [`Estado: ${query.estado === 'activo' ? 'Activos' : 'Dados de baja'}`] : []),
-        'Puede ingresar: según sus documentos a la fecha (la prueba de alcohol se hace en garita).',
+        'Puede ingresar: según sus documentos a la fecha (la prueba de alcohol se hace al ingresar).',
       ],
       columnas: [
         { titulo: 'Apellidos', ancho: 20 },

@@ -6,7 +6,26 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import type { RolUsuario } from "@/lib/api/types";
-import { Captura, CuentasManual, RecorridoGarita } from "./Figuras";
+import {
+  Acciones,
+  Captura,
+  Condiciones,
+  CuentasManual,
+  IconoAgregar,
+  IconoBaja,
+  IconoCamara,
+  IconoDni,
+  IconoDocumentos,
+  IconoEliminar,
+  IconoEmpresa,
+  IconoRegistrado,
+  IconoRenovar,
+  IconoVer,
+  Nota,
+  PasosTarea,
+  RecorridoAcceso,
+  Subtitulo,
+} from "./Figuras";
 
 interface SeccionManual {
   id: string;
@@ -27,8 +46,8 @@ const SECCIONES: SeccionManual[] = [
           cada una ve solo las secciones que le corresponden en el menú de la izquierda:
         </p>
         <CuentasManual />
-        <p>Así funciona el paso de cada persona por la garita:</p>
-        <RecorridoGarita />
+        <p>Así funcionan el ingreso y la salida de cada persona:</p>
+        <RecorridoAcceso />
       </div>
     ),
   },
@@ -40,13 +59,8 @@ const SECCIONES: SeccionManual[] = [
       <div className="space-y-3">
         <p>
           <Link href="/" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Personal y documentos</Link> es
-          la pantalla de trabajo. A la izquierda está la lista del personal de todas las empresas; cada persona lleva un{" "}
-          <strong>✔</strong> si hoy puede ingresar o un <strong>✖</strong> con el motivo si no puede. Puedes buscar por
-          nombre, DNI o empresa, y filtrar por empresa o por quién puede o no puede ingresar; en{" "}
-          <strong>No pueden</strong> se puede separar a quienes no pueden <strong>por documentos</strong> (sin cargar o
-          vencidos; podrán ingresar en cuanto se regularicen) de los <strong>dados de baja</strong> (los números de cada
-          pestaña cuentan solo lo que queda con la empresa y la búsqueda elegidas). Con mucho personal, la lista muestra
-          las primeras 100 personas y agrega más a medida que bajas.
+          la pantalla de trabajo: a la izquierda, la lista del personal de todas las empresas; a la derecha, la ficha de
+          la persona elegida, con su foto, si puede ingresar y sus documentos.
         </p>
         <Captura
           clave="personal"
@@ -69,65 +83,145 @@ const SECCIONES: SeccionManual[] = [
             </>,
           ]}
         />
-        <ol className="list-decimal space-y-1 pl-5">
-          <li>
-            <strong>“+ Nuevo personal”</strong>: en un solo formulario se registra a la persona y sus documentos.
-            <ul className="mt-1 list-disc space-y-1 pl-5">
-              <li>
-                <strong>Empresa</strong>: elígela de la lista; si no está, “+ Nueva empresa…” y escribe su RUC, razón
-                social y correo ahí mismo.
-              </li>
-              <li>
-                <strong>Tipo y número de documento, nombres y apellidos.</strong> El DNI va con sus 8 dígitos, sin
-                espacios ni guiones: es el número con el que la persona se identifica en el lector de DNI del molinete.
-              </li>
-              <li>
-                <strong>Foto del personal</strong> (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5
-                MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona: no hace falta
-                registrar su rostro en el equipo. Se puede cambiar después desde su ficha (“Cambiar foto”); el
-                terminal se actualiza solo.
-              </li>
-              <li>
-                <strong>Documentos</strong> (al menos uno): escribe el nombre del documento (p. ej. SCTR), elige su fecha
-                de vencimiento en el calendario (vacía si no vence) y adjunta el archivo (PDF, imagen JPG, PNG o WEBP, o
-                Word, hasta 20 MB). Con{" "}
-                <strong>“+ Agregar otro documento”</strong> subes varios a la vez.
-              </li>
-            </ul>
-            Los documentos quedan <strong>válidos desde que se cargan</strong>; no hay aprobación. Si un documento falla
-            al subirse, el personal ya queda registrado: corrige ese documento y vuelve a guardar.
-          </li>
-          <li>
-            En la ficha, la tabla <strong>Documentos</strong> muestra cada documento con su vencimiento y si está
-            vigente o vencido. Desde ahí puedes:
-            <ul className="mt-1 list-disc space-y-1 pl-5">
-              <li>
-                <strong>“Ver”</strong>: abre el archivo cargado en una pestaña nueva (PDF o imagen); si es Word, se
-                descarga. También se puede ver cada versión anterior desde el historial.
-              </li>
-              <li>
-                <strong>“Renovar”</strong>: sube la versión nueva de ese documento (nuevo vencimiento y archivo). Solo
-                cuenta la más reciente; las anteriores quedan en el historial como “Reemplazado”.
-              </li>
-              <li>
-                <strong>“Eliminar”</strong>: borra el documento con todas sus versiones y archivos (pide confirmación y
-                queda en la auditoría). Si era el único, la persona no podrá ingresar hasta que se le agregue otro.
-              </li>
-              <li>
-                <strong>“+ Agregar documento”</strong>: agrega un documento que no tenía (nombre, vencimiento y archivo).
-              </li>
-            </ul>
-          </li>
-          <li>
-            Si alguien deja de trabajar en el Terminal, usa <strong>“Dar de baja”</strong>, si quieres escribe el <strong>motivo</strong> (opcional) y confírmalo en la
-            ventana que aparece. El motivo y la fecha se ven en su ficha, en la lista y en el reporte de personal. Desde ese momento se le deniega el ingreso automáticamente, sin importar sus documentos (sí puede
-            salir). Sus datos e historial se conservan, y con <strong>“Reactivar”</strong> (también con confirmación) vuelve a
-            quedar habilitado; si tiene documentos vencidos, la ventana avisa que aún debe regularizarlos para ingresar.
-          </li>
-        </ol>
-        <p className="text-xs text-gray-400">
-          El personal puede ingresar si no está dado de baja, tiene al menos un documento cargado y ninguno está
-          vencido. El ✔ supone que la prueba de alcohol saldrá conforme: el alcohol solo se sabe en garita.
+        <Subtitulo>¿Quién puede ingresar?</Subtitulo>
+        <p>Una persona puede ingresar hoy si cumple las tres condiciones:</p>
+        <Condiciones
+          items={[
+            <>
+              <strong>No está dada de baja.</strong>
+            </>,
+            <>
+              Tiene <strong>al menos un documento</strong> cargado.
+            </>,
+            <>
+              <strong>Ningún documento está vencido.</strong> Uno que vence hoy sigue válido todo el día.
+            </>,
+          ]}
+        />
+        <p>
+          En la lista se ve con un <strong>✔</strong> si puede ingresar o un <strong>✖</strong> con el motivo si no. El ✔
+          supone que la prueba de alcohol saldrá conforme: el alcohol solo se sabe al momento de ingresar.
+        </p>
+
+        <Subtitulo>Registrar a una persona</Subtitulo>
+        <p>
+          Con <strong>“+ Nuevo personal”</strong> se registra a la persona y sus documentos en un solo formulario:
+        </p>
+        <PasosTarea
+          pasos={[
+            {
+              Icono: IconoEmpresa,
+              titulo: "Empresa",
+              texto: (
+                <>
+                  Elígela de la lista. Si no está, elige <strong>“+ Nueva empresa…”</strong> y escribe su RUC, razón
+                  social y correo ahí mismo.
+                </>
+              ),
+            },
+            {
+              Icono: IconoDni,
+              titulo: "Datos de la persona",
+              texto: (
+                <>
+                  Tipo y número de documento, nombres y apellidos. El DNI va con sus <strong>8 dígitos</strong>, sin
+                  espacios ni guiones: es el número con el que se identifica en el lector de DNI del molinete.
+                </>
+              ),
+            },
+            {
+              Icono: IconoCamara,
+              titulo: "Foto (obligatoria)",
+              texto: (
+                <>
+                  De frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. El sistema la envía al terminal facial, que la
+                  usa para reconocer a la persona: no hace falta registrar su rostro en el equipo. Se cambia después desde
+                  su ficha con <strong>“Cambiar foto”</strong> y el terminal se actualiza solo.
+                </>
+              ),
+            },
+            {
+              Icono: IconoDocumentos,
+              titulo: "Documentos (al menos uno)",
+              texto: (
+                <>
+                  Nombre del documento (p. ej. SCTR), fecha de vencimiento (vacía si no vence) y el archivo: PDF, imagen
+                  JPG, PNG o WEBP, o Word, hasta 20 MB. Con <strong>“+ Agregar otro documento”</strong> subes varios a la
+                  vez.
+                </>
+              ),
+            },
+          ]}
+        />
+        <Nota>
+          Los documentos quedan <strong>válidos desde que se cargan</strong>; no hay que esperar ninguna aprobación. Si un
+          documento falla al subirse, la persona ya queda registrada: corrige ese documento y vuelve a guardar.
+        </Nota>
+
+        <Subtitulo>Sus documentos</Subtitulo>
+        <p>
+          En la ficha, la tabla <strong>Documentos</strong> muestra cada documento con su vencimiento y si está vigente o
+          vencido. Cada uno tiene estos botones:
+        </p>
+        <Acciones
+          items={[
+            {
+              Icono: IconoVer,
+              boton: "Ver",
+              tono: "neutro",
+              texto: "Abre el archivo en una pestaña nueva (PDF o imagen); si es Word, se descarga. Las versiones anteriores se ven desde el historial.",
+            },
+            {
+              Icono: IconoRenovar,
+              boton: "Renovar",
+              texto: "Sube la versión nueva (nuevo vencimiento y archivo). Solo cuenta la más reciente; las anteriores quedan en el historial como “Reemplazado”.",
+            },
+            {
+              Icono: IconoEliminar,
+              boton: "Eliminar",
+              tono: "peligro",
+              texto: "Borra el documento con todas sus versiones (pide confirmación y queda en la auditoría). Si era el único, la persona no podrá ingresar hasta que se le agregue otro.",
+            },
+            {
+              Icono: IconoAgregar,
+              boton: "+ Agregar documento",
+              tono: "exito",
+              texto: "Agrega un documento que no tenía: nombre, vencimiento y archivo.",
+            },
+          ]}
+        />
+
+        <Subtitulo>Dar de baja y reactivar</Subtitulo>
+        <Acciones
+          items={[
+            {
+              Icono: IconoBaja,
+              boton: "Dar de baja",
+              tono: "peligro",
+              texto: (
+                <>
+                  Cuando alguien deja de trabajar en el Terminal. Puedes escribir el <strong>motivo</strong> (opcional) y
+                  se confirma en una ventana. Desde ese momento se le deniega el ingreso, sin importar sus documentos
+                  (sí puede salir). El motivo y la fecha se ven en su ficha, en la lista y en el reporte de personal.
+                </>
+              ),
+            },
+            {
+              Icono: IconoRegistrado,
+              boton: "Reactivar",
+              tono: "exito",
+              texto: "Vuelve a quedar habilitado (también con confirmación); sus datos e historial se conservan. Si tiene documentos vencidos, la ventana avisa que aún debe regularizarlos para ingresar.",
+            },
+          ]}
+        />
+
+        <Subtitulo>Buscar y filtrar</Subtitulo>
+        <p>
+          Busca por nombre, DNI o empresa y filtra por empresa o por quién puede o no puede ingresar. En{" "}
+          <strong>No pueden</strong> se separa a quienes no pueden <strong>por documentos</strong> (sin cargar o
+          vencidos; podrán ingresar en cuanto se regularicen) de los <strong>dados de baja</strong>. Los números de cada
+          pestaña cuentan solo lo que queda con la empresa y la búsqueda elegidas. Con mucho personal, la lista muestra
+          las primeras 100 personas y agrega más a medida que bajas.
         </p>
       </div>
     ),
@@ -196,7 +290,7 @@ const SECCIONES: SeccionManual[] = [
           responder, aparece un aviso arriba a la derecha: mientras dure, no se valida ningún ingreso.
         </p>
         <p>
-          Si se cae un equipo de la garita (controlador, terminal facial, lector de DNI o relé), aparece un{" "}
+          Si se cae uno de los equipos de acceso (controlador, terminal facial, lector de DNI o relé), aparece un{" "}
           <strong>aviso rojo</strong> arriba de la página con el equipo, qué deja de funcionar y desde cuándo:{" "}
           <strong>infórmalo al administrador o al soporte técnico</strong>. Desaparece solo cuando el equipo vuelve.
         </p>
@@ -369,7 +463,7 @@ const SECCIONES: SeccionManual[] = [
           pasos={[
             "El aviso de fallas: aparece arriba de todas las páginas cuando algo se cae.",
             "Estado del servidor: backend, base de datos, clave de equipos y respaldos.",
-            "Estado de los equipos de la garita: controlador, terminal facial, lectores y relés.",
+            "Estado de los equipos de acceso: controlador, terminal facial, lectores y relés.",
           ]}
         />
         <h3 className="pt-2 text-sm font-semibold text-gray-800 dark:text-white/90">Sincronización con el G4 Pro</h3>

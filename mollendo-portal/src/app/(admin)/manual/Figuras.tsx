@@ -253,7 +253,7 @@ function Paso({
 }
 
 /** El recorrido de ingreso y el de salida, paso a paso. */
-export function RecorridoGarita() {
+export function RecorridoAcceso() {
   return (
     <div className="my-2 space-y-6 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
       <div>
@@ -278,6 +278,154 @@ export function RecorridoGarita() {
         Si algo falla en cualquier paso, el molinete no se abre, suena el aviso de denegado y el Panel de vigilancia
         muestra el motivo.
       </p>
+    </div>
+  );
+}
+
+/* ---------- Piezas para explicar tareas (Personal y documentos y otras secciones) ---------- */
+
+export function IconoEmpresa({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M4 21V5.5A1.5 1.5 0 0 1 5.5 4h7A1.5 1.5 0 0 1 14 5.5V21M14 10h4.5a1.5 1.5 0 0 1 1.5 1.5V21M3 21h18" />
+      <path d="M7.5 8h3M7.5 11.5h3M7.5 15h3M16.5 14h1M16.5 17h1" />
+    </svg>
+  );
+}
+export function IconoCamara({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.3l1.2-1.8a1.5 1.5 0 0 1 1.2-.7h3.6a1.5 1.5 0 0 1 1.2.7L16.2 6h1.3A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" />
+      <circle cx="12" cy="12.5" r="3.5" />
+    </svg>
+  );
+}
+export function IconoRenovar({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9" />
+      <path d="M18.5 3v4.1h-4.1M5.5 21v-4.1h4.1" />
+    </svg>
+  );
+}
+export function IconoEliminar({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M4 7h16M9.5 7V5.5A1.5 1.5 0 0 1 11 4h2a1.5 1.5 0 0 1 1.5 1.5V7M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M10 11v6M14 11v6" />
+    </svg>
+  );
+}
+export function IconoAgregar({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z" />
+      <path d="M14 3v4h4M12 11v6M9 14h6" />
+    </svg>
+  );
+}
+export function IconoBaja({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <circle cx="10" cy="8" r="3.5" />
+      <path d="M3.5 19.5c.9-3 3.4-4.5 6.5-4.5 1.2 0 2.3.2 3.2.7M15.5 17.5h5" />
+    </svg>
+  );
+}
+export { IconoDni, IconoDocumentos, IconoRegistrado, IconoVigilancia as IconoVer };
+
+/** Subtítulo dentro de una sección del manual. */
+export function Subtitulo({ children }: { children: React.ReactNode }) {
+  return <h3 className="pt-3 text-sm font-semibold text-gray-800 dark:text-white/90">{children}</h3>;
+}
+
+/** Condiciones que deben cumplirse, cada una con un ✓ verde. */
+export function Condiciones({ items }: { items: React.ReactNode[] }) {
+  return (
+    <ul className="my-1 grid gap-2 sm:grid-cols-3">
+      {items.map((item, i) => (
+        <li key={i} className="flex items-start gap-2.5 rounded-xl border border-success-200 bg-success-50/60 p-3 dark:border-success-500/20 dark:bg-success-500/[0.08]">
+          <span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-success-500 text-white">
+            <svg className="size-3" viewBox="0 0 24 24" {...trazo} strokeWidth={3} aria-hidden>
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+          </span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Pasos de una tarea, uno debajo del otro, cada uno con su ícono y su número. */
+export function PasosTarea({
+  pasos,
+}: {
+  pasos: { Icono: React.ComponentType<PropsIcono>; titulo: React.ReactNode; texto: React.ReactNode }[];
+}) {
+  return (
+    <ol className="my-1">
+      {pasos.map(({ Icono, titulo, texto }, i) => (
+        <li key={i} className="relative flex gap-4 pb-5 last:pb-0">
+          {i < pasos.length - 1 && (
+            <span aria-hidden className="absolute top-12 bottom-0 left-6 w-px bg-brand-200 dark:bg-brand-500/30" />
+          )}
+          <span className="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-2xl border border-brand-100 bg-white text-brand-500 shadow-theme-xs dark:border-brand-500/30 dark:bg-gray-900 dark:text-brand-400">
+            <Icono className="size-6" />
+            <span className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-brand-500 text-[11px] font-semibold text-white">
+              {i + 1}
+            </span>
+          </span>
+          <div className="min-w-0 pt-1">
+            <p className="font-medium text-gray-800 dark:text-white/90">{titulo}</p>
+            <div className="mt-0.5 text-gray-600 dark:text-gray-300">{texto}</div>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+const TONO_ACCION = {
+  neutro: "bg-gray-100 text-gray-600 dark:bg-white/[0.06] dark:text-gray-300",
+  marca: "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400",
+  exito: "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500",
+  peligro: "bg-error-50 text-error-500 dark:bg-error-500/15 dark:text-error-400",
+} as const;
+
+/** Botones de una pantalla explicados como tarjetas: ícono, nombre del botón y qué hace. */
+export function Acciones({
+  items,
+  columnas = 2,
+}: {
+  items: { Icono: React.ComponentType<PropsIcono>; boton: string; texto: React.ReactNode; tono?: keyof typeof TONO_ACCION }[];
+  columnas?: 2 | 3;
+}) {
+  return (
+    <div className={`my-1 grid gap-3 ${columnas === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+      {items.map(({ Icono, boton, texto, tono = "marca" }) => (
+        <div key={boton} className="flex gap-3 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${TONO_ACCION[tono]}`}>
+            <Icono className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-medium text-gray-800 dark:text-white/90">“{boton}”</p>
+            <div className="mt-0.5 text-gray-600 dark:text-gray-300">{texto}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Nota destacada (dato importante para no equivocarse). */
+export function Nota({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex gap-2.5 rounded-xl border border-brand-100 bg-brand-50/60 p-3 text-gray-700 dark:border-brand-500/20 dark:bg-brand-500/[0.08] dark:text-gray-300">
+      <svg className="mt-0.5 size-4 shrink-0 text-brand-500 dark:text-brand-400" viewBox="0 0 24 24" {...trazo} aria-hidden>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v5M12 8h.01" />
+      </svg>
+      <div>{children}</div>
     </div>
   );
 }
