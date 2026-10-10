@@ -313,6 +313,11 @@ const SECCIONES: SeccionManual[] = [
           con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes, indicando el estado
           de cada una. Está pensada para quien tenga que conectarlos o dar soporte técnico.
         </p>
+        <p>
+          Si algo de esta pantalla se cae, aparece una <strong>franja roja</strong> arriba de cualquier página, con lo que
+          está fallando y un enlace aquí. Se revisa cada 30 segundos y desaparece sola cuando todo vuelve a estar en
+          línea; con la ✕ se oculta hasta que falle algo distinto.
+        </p>
       </div>
     ),
   },

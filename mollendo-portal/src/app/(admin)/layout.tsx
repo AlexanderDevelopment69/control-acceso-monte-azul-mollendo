@@ -7,6 +7,7 @@ import Backdrop from "@/layout/Backdrop";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import React, { useEffect } from "react";
 import { precargarGraficos } from "@/components/dashboard/Grafico";
+import { AvisoSistema } from "@/components/common/AvisoSistema";
 
 export default function AdminLayout({
   children,
@@ -45,7 +46,10 @@ export default function AdminLayout({
           {/* Header */}
           <AppHeader />
           {/* Page Content */}
-          <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</div>
+          <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+            <AvisoSistema />
+            {children}
+          </div>
         </div>
       </div>
     </RequireRole>
