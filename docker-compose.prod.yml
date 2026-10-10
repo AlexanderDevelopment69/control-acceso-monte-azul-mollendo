@@ -3,7 +3,7 @@
 # Sirve para dos entornos; las claves van en un .env junto a este archivo:
 #   nube   → deploy/nube.env.example   (AWS/Azure; molinetes en el controlador de la garita)
 #   garita → deploy/garita.env.example (opcional: la mini PC como servidor, con lectores y relés por USB)
-# Guía completa: Registro_Despliegue_MiniPC.md
+# Guía completa: docs/despliegue/Registro_Despliegue_MiniPC.md
 name: mollendo
 
 services:

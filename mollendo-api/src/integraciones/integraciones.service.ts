@@ -43,7 +43,7 @@ const RESUMEN_VACIO = {
 
 /**
  * Adaptadores de los equipos físicos. La integración real está definida en
- * Opciones_Integracion_G4Pro.md:
+ * docs/g4pro/Historial_Integracion_G4Pro.md (Parte A):
  * - Terminal ZKTeco G4 Pro + alcoholímetro: protocolo PUSH del fabricante
  *   (sin ZKBio) para registrar personas y fotos, y recibir los eventos de
  *   verificación (ver push-sdk/). El G4 Pro abre el ingreso con su propio
@@ -54,7 +54,7 @@ const RESUMEN_VACIO = {
  * - Molinetes TS2000 Plus: los abre la mini PC con un módulo de relés USB
  *   para cada uno (ver rele-usb.service.ts), con cada
  *   salida autorizada y con cada ingreso autorizado por el G4 Pro (rostro =
- *   DNI y alcohol conforme), según diagramas/ingreso.svg y salida.svg.
+ *   DNI y alcohol conforme), según docs/diagramas/ingreso.svg y salida.svg.
  */
 @Injectable()
 export class IntegracionesService implements OnModuleInit, OnModuleDestroy {

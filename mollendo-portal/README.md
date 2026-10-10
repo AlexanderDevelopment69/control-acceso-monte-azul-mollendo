@@ -49,7 +49,7 @@ El portal reenvía al backend `/api/v1/*` (incluida la conexión de tiempo real)
 
 ## Despliegue
 
-En la mini PC corre en un contenedor de Docker (`Dockerfile`). La guía completa está en `../Registro_Despliegue_MiniPC.md`.
+En la mini PC corre en un contenedor de Docker (`Dockerfile`). La guía completa está en `../docs/despliegue/Registro_Despliegue_MiniPC.md`.
 
 ## Créditos
 

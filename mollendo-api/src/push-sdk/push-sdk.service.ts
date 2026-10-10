@@ -45,7 +45,7 @@ const UMBRAL_EN_LINEA_MS = 2 * 60 * 1000;
 /**
  * Protocolo ADMS/PUSH real del equipo ZKTeco G4 Pro, implementado a partir de
  * lo validado contra el equipo físico HSR3263100192 (ver
- * Analisis_Control_Acceso_Mollendo.md sección 6.1 y Opciones_Integracion_G4Pro.md).
+ * Analisis_Control_Acceso_Mollendo.md sección 6.1 y docs/g4pro/Historial_Integracion_G4Pro.md).
  *
  * Dos piezas no están documentadas por el fabricante y son indispensables para
  * que el equipo mande datos reales:

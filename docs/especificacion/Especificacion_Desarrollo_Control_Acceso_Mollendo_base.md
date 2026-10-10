@@ -1,6 +1,6 @@
 # Especificación de desarrollo — Sistema de Control de Accesos, Terminal Monte Azul Mollendo (TMAM) · ALCANCE BASE
 
-> **Versión base.** Este documento parte de `Especificacion_Desarrollo_Control_Acceso_Mollendo_final.md` y lo recorta al **alcance base** definido en `Costo_y_Plazo_por_Alcance_TMAM.docx` (S/ 2,500 · 5 días). Todo lo que no figura aquí **no se desarrolla** en esta etapa (ver §11, "Fuera del alcance base").
+> **Versión base.** Este documento parte de `Especificacion_Desarrollo_Control_Acceso_Mollendo_final.md` y lo recorta al **alcance base** definido en `docs/cliente/Costo_y_Plazo_por_Alcance_TMAM.docx` (S/ 2,500 · 5 días). Todo lo que no figura aquí **no se desarrolla** en esta etapa (ver §11, "Fuera del alcance base").
 >
 > **Qué es el alcance base:** es lo mínimo para que el sistema funcione en campo. Un **administrador único** carga la empresa, el trabajador y sus documentos, que quedan **ya válidos** (no hay autoservicio ni aprobación). **No hay perfiles ni puestos** (decisión del cliente, 2026-09-27): el administrador registra empresa, trabajador y documentos, nada más. En el ingreso, el sistema valida **documentos vigentes + prueba de alcohol**, con la integración física conectada (terminal ZKTeco G4 Pro, alcoholímetro y molinete).
 

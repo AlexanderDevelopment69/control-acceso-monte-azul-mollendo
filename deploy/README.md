@@ -1,6 +1,6 @@
 # Despliegue — por dónde empezar
 
-El sistema es el mismo código en todos lados; lo que cambia de un lugar a otro es el archivo de configuración (`.env`). Esta carpeta tiene **una plantilla por entorno**. La guía completa, paso a paso, está en [`Registro_Despliegue_MiniPC.md`](../Registro_Despliegue_MiniPC.md).
+El sistema es el mismo código en todos lados; lo que cambia de un lugar a otro es el archivo de configuración (`.env`). Esta carpeta tiene **una plantilla por entorno**. La guía completa, paso a paso, está en [`Registro_Despliegue_MiniPC.md`](../docs/despliegue/Registro_Despliegue_MiniPC.md).
 
 ## Los entornos
 
@@ -39,7 +39,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ## Dónde está cada cosa en la guía
 
-| Tarea | Sección de `Registro_Despliegue_MiniPC.md` |
+| Tarea | Sección de `docs/despliegue/Registro_Despliegue_MiniPC.md` |
 |---|---|
 | Entornos y opciones de cada uno | 0. Entornos |
 | Primer despliegue de un servidor | 3. Primer despliegue |

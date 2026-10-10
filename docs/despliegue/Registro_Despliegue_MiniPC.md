@@ -805,7 +805,7 @@ El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila
 | **Del mismo tipo** (USB "USBRelay" / DCTTECH, de 1, 2, 4 u 8 relés) | **Nada en el programa.** Cambiarle la serie (vienen con `S2OD2`) y ponerla en `.env`. Un módulo de **2 relés reales** puede manejar los dos molinetes: la misma serie en `RELE_INGRESO_SERIE` y `RELE_SALIDA_SERIE`, con `RELE_INGRESO_CANAL=1` y `RELE_SALIDA_CANAL=2`. |
 | **De otra marca o tipo** (de red Ethernet, Modbus, USB-serie con otros comandos…) | **Agregar su protocolo al programa.** La comunicación con el relé está aislada en `mollendo-api/src/integraciones/rele-usb.service.ts`; se agrega el "idioma" del relé nuevo y el resto (cuándo abrir, Panel, Sistema y APIs) no cambia. Hacen falta su manual o protocolo y una prueba con el equipo real. |
 
-**Recomendación para operación continua:** los módulos actuales son placas sueltas, pensadas para pruebas o proyectos chicos. Para el terminal conviene un **relé industrial de red (Ethernet)**, uno por molinete, como planteaba el diseño original (`Opciones_Integracion_G4Pro.md`):
+**Recomendación para operación continua:** los módulos actuales son placas sueltas, pensadas para pruebas o proyectos chicos. Para el terminal conviene un **relé industrial de red (Ethernet)**, uno por molinete, como planteaba el diseño original (`docs/g4pro/Historial_Integracion_G4Pro.md`, Parte A):
 
 - va **junto al molinete**, por cable de red, sin depender de que la mini PC esté cerca ni de un cable USB;
 - viene en **caja para riel DIN**, más resistente al polvo, la vibración y la humedad;
@@ -821,7 +821,7 @@ Instalado (`ING01`, 04/10/2026). Se activa cuando el **G4 Pro aprueba el rostro 
 
 ## 8e. Terminal facial G4 Pro
 
-El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por la red local, con el protocolo PUSH de ZKTeco en su variante de **control de acceso**. No usa ningún software del fabricante. Referencia técnica completa (rutas, comandos, respuestas, códigos): `Protocolo_G4Pro_Referencia.md`.
+El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por la red local, con el protocolo PUSH de ZKTeco en su variante de **control de acceso**. No usa ningún software del fabricante. Referencia técnica completa (rutas, comandos, respuestas, códigos): `docs/g4pro/Protocolo_G4Pro_Referencia.md`.
 
 ### Apuntar el G4 Pro a la mini PC
 
@@ -1009,8 +1009,8 @@ docker compose -f docker-compose.prod.yml up -d api
 
 ### Otras opciones útiles para pruebas
 
-- `PUSH_SDK_DEPURAR=true` en el `.env` del servidor que recibe al G4: anota cada mensaje del equipo en el registro de la API (ver `Protocolo_G4Pro_Referencia.md`). Volver a `false` al terminar.
-- Para que una persona pueda pasar por el G4 sin el flujo del DNI (pruebas del equipo), se le da permiso a mano con un comando `DATA UPDATE userauthorize …` y se le quita al terminar con `DATA DELETE userauthorize …` (ver `Protocolo_G4Pro_Referencia.md`, sección 9).
+- `PUSH_SDK_DEPURAR=true` en el `.env` del servidor que recibe al G4: anota cada mensaje del equipo en el registro de la API (ver `docs/g4pro/Protocolo_G4Pro_Referencia.md`). Volver a `false` al terminar.
+- Para que una persona pueda pasar por el G4 sin el flujo del DNI (pruebas del equipo), se le da permiso a mano con un comando `DATA UPDATE userauthorize …` y se le quita al terminar con `DATA DELETE userauthorize …` (ver `docs/g4pro/Protocolo_G4Pro_Referencia.md`, sección 9).
 
 ## 9. Seguridad y recomendaciones
 
@@ -1018,7 +1018,7 @@ docker compose -f docker-compose.prod.yml up -d api
 2. **El archivo `~/mollendo/.env`** tiene todas las claves. Debe tener permisos `600` (`chmod 600 .env`) y no copiarse a git, correos ni chats.
 3. **Contraseñas del portal**: cambiar las iniciales después del primer ingreso.
 4. **IP fija en la red local**: los equipos (G4 Pro, relé) necesitarán una dirección estable. Reservar la IP de la mini PC en el router o conectarla por cable.
-5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `Opciones_Integracion_G4Pro.md`, sección 7).
+5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `docs/g4pro/Historial_Integracion_G4Pro.md`, Parte A, sección 7).
 6. **Respaldos fuera de la mini PC**, con regularidad (7.4).
 7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
 8. **Integración de equipos**: los lectores de DNI (8c), los relés de los molinetes (8d) y el G4 Pro (8e) funcionan con la mini PC. El rechazo por alcohol está confirmado (`event=1`); falta que el cliente defina el umbral de alcohol del G4 Pro (8e).

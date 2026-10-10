@@ -114,7 +114,7 @@ function formatoFechaDispositivo(fecha: Date): string {
  * push-sdk/push-sdk.controller.ts). `event=0` es la única verificación
  * exitosa confirmada con el equipo real; cualquier otro código se usa acá
  * solo para simular un rechazo, su significado real todavía no está
- * confirmado (ver Opciones_Integracion_G4Pro.md, pendiente #3).
+ * confirmado (ver docs/g4pro/Historial_Integracion_G4Pro.md, Parte A, pendiente #3).
  */
 async function simularResultadoG4Pro(autorizado: boolean) {
   const linea = [

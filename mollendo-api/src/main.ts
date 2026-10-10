@@ -47,7 +47,7 @@ ${cuerpo}` : ''}`);
   if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER === 'true') {
     const config = new DocumentBuilder()
       .setTitle('Control de Acceso — Terminal de Mollendo')
-      .setDescription('API del sistema de control de acceso (ver Especificacion_Desarrollo_Control_Acceso_Mollendo.md)')
+      .setDescription('API del sistema de control de acceso (ver docs/especificacion/Especificacion_Desarrollo_Control_Acceso_Mollendo.md)')
       .setVersion('1.0')
       .addBearerAuth()
       .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'device-api-key')

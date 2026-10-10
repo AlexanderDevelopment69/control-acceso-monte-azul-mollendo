@@ -90,7 +90,7 @@ El sistema se ejecuta en un servidor local (**mini PC ubicada junto a los moline
 
 La arquitectura es de tres capas: el **portal web** (presentación), el **backend** (reglas de negocio y API REST) y la **base de datos**. El portal se comunica con el backend por HTTP y recibe los eventos de ingreso y salida en tiempo real por WebSocket. Los equipos de garita envían los eventos al backend por su API, autenticados con una clave de equipo.
 
-![Arquitectura de software del sistema](diagramas/arquitectura.svg)
+![Arquitectura de software del sistema](../diagramas/arquitectura.svg)
 
 | Contenedor | Función | Acceso |
 |---|---|---|

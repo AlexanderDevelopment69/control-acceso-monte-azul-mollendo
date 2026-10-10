@@ -3,7 +3,7 @@ import sharp from 'sharp';
 
 /**
  * El G4 Pro exige la foto en JPG de máximo 20 KB, entre 358×441 y 1080×1920
- * píxeles (ver Opciones_Integracion_G4Pro.md sección 9, punto 8 -- el manual
+ * píxeles (ver docs/g4pro/Historial_Integracion_G4Pro.md, Parte A, sección 9, punto 8 -- el manual
  * de la carpeta de equipos no trae el diagrama, esto viene de la ficha
  * técnica real). Las fotos que suben los administradores no respetan ese
  * límite, así que hay que reconvertirlas antes de mandarlas por DATA UPDATE

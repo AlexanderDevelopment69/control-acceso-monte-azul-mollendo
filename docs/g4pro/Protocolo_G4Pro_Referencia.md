@@ -3,7 +3,7 @@
 Proyecto: Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM)
 Última actualización: 05/oct/2026
 
-Este documento reúne **todo lo confirmado con el equipo real** sobre cómo se comunica el sistema con el G4 Pro: conexión, rutas, comandos, respuestas, códigos de evento y particularidades del firmware. Para el historial de las pruebas, ver `Estado_Implementacion_Integracion_G4Pro.md`; para la instalación, `Registro_Despliegue_MiniPC.md` (sección 8e).
+Este documento reúne **todo lo confirmado con el equipo real** sobre cómo se comunica el sistema con el G4 Pro: conexión, rutas, comandos, respuestas, códigos de evento y particularidades del firmware. Para el historial de las pruebas, ver `Historial_Integracion_G4Pro.md` (en esta misma carpeta); para la instalación, `docs/despliegue/Registro_Despliegue_MiniPC.md` (sección 8e).
 
 **Equipo probado:** G4 Pro, serie `HSR3263100192`, firmware `4.1.109-OCM-4101-3`, PushVersion `Ver 2.0.38-20220623`, tipo de firmware **Acceso** (ACC), con alcoholímetro DT1700 por USB.
 
