@@ -896,7 +896,7 @@ Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), 
 | `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@mollendo.local`. | Igual que la anterior |
 | `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@mollendo.local` y `vigilancia@mollendo.local`). | — |
 
-| `G4PRO_HORA_SINCRONIZACION` | No | Hora (0 a 23, hora de Lima) de la sincronización diaria con los G4 Pro, que deja el terminal igual al sistema; `off` la desactiva (sigue disponible la manual en "Sistema y APIs"). | Por defecto `0` (medianoche); hoy `off` en la nube |
+| `G4PRO_HORA_SINCRONIZACION` | No | Valor inicial de la sincronización diaria con los G4 Pro (0 a 23, hora de Lima; `off` la desactiva). Después se activa, desactiva o cambia de hora desde "Sistema y APIs", y eso se guarda en el servidor (`sincronizacion-diaria.json` en el volumen de documentos) y manda sobre este valor. | Por defecto `0` (medianoche); hoy `off` en la nube |
 | `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). Se guardan 14 días. | Por defecto `00:00` |
 | `PUSH_SDK_DEPURAR` | No | `true`: anota en el registro de la API todo lo que envía el G4 Pro (para estudiar el equipo). Volver a `false` al terminar. | Por defecto `false` |
 

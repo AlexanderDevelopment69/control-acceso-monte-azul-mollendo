@@ -6,6 +6,7 @@ import type {
   DocumentoPersona,
   Empresa,
   EstadoSistema,
+  EstadoSincronizacionG4,
   AvisosSistema,
   EventoAcceso,
   FiltrosLista,
@@ -132,6 +133,12 @@ export const integracionesApi = {
   sincronizarG4: (simular: boolean) =>
     apiRequest<ResultadoSincronizacionG4>(`/integraciones/g4pro/sincronizar${simular ? "?simular=true" : ""}`, {
       method: "POST",
+    }),
+  /** Activa (hora 0..23) o desactiva (null) la sincronización diaria; devuelve el estado nuevo. */
+  sincronizacionDiaria: (hora: number | null) =>
+    apiRequest<EstadoSincronizacionG4>("/integraciones/g4pro/sincronizacion-diaria", {
+      method: "PUT",
+      body: { hora },
     }),
 };
 

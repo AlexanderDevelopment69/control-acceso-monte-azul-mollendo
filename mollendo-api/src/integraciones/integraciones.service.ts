@@ -6,6 +6,7 @@ import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { AVISO_DE, ReleUsbService } from './rele-usb.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
+import { guardarHoraDiaria, leerHoraDiaria } from './sincronizacion-diaria.js';
 
 interface PersonaFotoActualizadaEvent {
   personaId: number;
@@ -217,15 +218,25 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit() {
-    // Una vez al día, a la hora G4PRO_HORA_SINCRONIZACION (0 = medianoche, hora de Lima):
-    // revisa cada 10 minutos si ya toca. "off" (o cualquier valor que no sea una hora) la desactiva.
-    const valor = (process.env.G4PRO_HORA_SINCRONIZACION ?? '0').trim();
-    const hora = /^\d{1,2}$/.test(valor) && Number(valor) < 24 ? Number(valor) : null;
+    this.programarDiaria(leerHoraDiaria());
+  }
+
+  /** Activa (hora 0..23, hora de Lima) o desactiva (null) la sincronización diaria, desde "Sistema y APIs". */
+  async cambiarDiaria(hora: number | null) {
+    guardarHoraDiaria(hora);
+    this.programarDiaria(hora);
+    return this.estadoSincronizacion();
+  }
+
+  /** Una vez al día, a esa hora: revisa cada 10 minutos si ya toca. */
+  private programarDiaria(hora: number | null) {
+    if (this.revisionDiaria) clearInterval(this.revisionDiaria);
+    this.revisionDiaria = null;
+    this.horaDiaria = hora;
     if (hora === null) {
-      this.logger.warn(`Sincronización diaria con los G4 Pro desactivada (G4PRO_HORA_SINCRONIZACION=${valor}); sigue disponible la manual`);
+      this.logger.warn('Sincronización diaria con los G4 Pro desactivada; sigue disponible la manual');
       return;
     }
-    this.horaDiaria = hora;
     this.logger.log(`Sincronización diaria con los G4 Pro a las ${hora}:00`);
     this.revisionDiaria = setInterval(() => {
       const ahora = new Date();

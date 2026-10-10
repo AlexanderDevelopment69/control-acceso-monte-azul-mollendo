@@ -89,6 +89,18 @@ const CAPTURAS = [
     ],
   },
   {
+    // Solo la tarjeta de sincronización (recorte = el elemento, con un margen).
+    clave: "sincronizacion",
+    ruta: "/sistema",
+    elemento: { sel: "::-p-text(Sincronización con el G4 Pro)", recuadro: ".rounded-xl" },
+    puntos: [
+      'button[role="switch"]',
+      { sel: "button::-p-text(Simular)", lado: "arriba" },
+      { sel: "button::-p-text(Sincronizar ahora)", lado: "arriba" },
+      { sel: "::-p-text(Última:)", recuadro: ".rounded-lg" },
+    ],
+  },
+  {
     clave: "sistema",
     ruta: "/sistema",
     conAviso: true,
@@ -142,7 +154,15 @@ for (const c of CAPTURAS) {
     await espera(2500);
   }
   const altoPagina = await pagina.evaluate(() => document.documentElement.scrollHeight);
-  const recorte = { ...CONTENIDO, height: (c.completa ? altoPagina : (c.alto ?? 823) + CONTENIDO.y) - CONTENIDO.y };
+  let recorte = { ...CONTENIDO, height: (c.completa ? altoPagina : (c.alto ?? 823) + CONTENIDO.y) - CONTENIDO.y };
+  if (c.elemento) {
+    const el = await pagina.$(c.elemento.sel);
+    const objetivo = c.elemento.recuadro ? await el.evaluateHandle((e, r) => e.closest(r) ?? e, c.elemento.recuadro) : el;
+    // Sin desplazar la página: las cajas quedan en coordenadas de la página, como el recorte.
+    const caja = await objetivo.boundingBox();
+    const margen = 16;
+    recorte = { x: caja.x - margen, y: caja.y - margen, width: caja.width + 2 * margen, height: caja.height + 2 * margen };
+  }
   const puntos = [];
   for (const [i, punto] of c.puntos.entries()) {
     const { sel, recuadro, lado = "izq" } = typeof punto === "string" ? { sel: punto } : punto;

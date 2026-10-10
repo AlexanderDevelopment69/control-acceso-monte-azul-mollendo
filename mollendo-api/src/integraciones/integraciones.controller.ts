@@ -1,6 +1,7 @@
-import { Body, Controller, Post, Query } from '@nestjs/common';
+import { Body, Controller, Post, Put, Query } from '@nestjs/common';
 import { IntegracionesService } from './integraciones.service.js';
 import { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
+import { SincronizacionDiariaDto } from './dto/sincronizacion-diaria.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 
 @Controller('integraciones')
@@ -18,5 +19,12 @@ export class IntegracionesController {
   @Roles('administrador')
   sincronizarG4Pro(@Query('simular') simular?: string) {
     return this.integracionesService.sincronizarTodas(simular === 'true');
+  }
+
+  /** Activa (hora 0..23) o desactiva (null) la sincronización diaria; se guarda en el servidor. */
+  @Put('g4pro/sincronizacion-diaria')
+  @Roles('administrador')
+  cambiarSincronizacionDiaria(@Body() dto: SincronizacionDiariaDto) {
+    return this.integracionesService.cambiarDiaria(dto.hora ?? null);
   }
 }

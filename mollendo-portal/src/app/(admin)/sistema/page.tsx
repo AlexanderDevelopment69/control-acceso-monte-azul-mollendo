@@ -382,6 +382,24 @@ function SincronizacionG4({
   const [lento, setLento] = useState(false);
   // La barra de arriba se ve al menos 0,7 s, para que siempre se note que se consultó.
   const [barra, setBarra] = useState(false);
+  // Revisión diaria: hora a activar (pide confirmación) y si se está guardando el cambio.
+  const [confirmarDiaria, setConfirmarDiaria] = useState<number | null>(null);
+  const [guardandoDiaria, setGuardandoDiaria] = useState(false);
+  const diariaActiva = !!estado?.diaria.activa;
+
+  async function cambiarDiaria(hora: number | null) {
+    setConfirmarDiaria(null);
+    setGuardandoDiaria(true);
+    setError(null);
+    try {
+      await integracionesApi.sincronizacionDiaria(hora);
+      onTerminada();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo cambiar la revisión diaria");
+    } finally {
+      setGuardandoDiaria(false);
+    }
+  }
   const ultima = resultado ?? estado?.ultima ?? null;
   const ocupado = ejecutando !== null || !!estado?.enCurso;
 
@@ -421,19 +439,49 @@ function SincronizacionG4({
             Deja el terminal igual al sistema: borra a quien no está registrado (por ejemplo, registrado a mano en el
             equipo), quita permisos de paso sueltos y registra con foto al personal activo que falte.
           </p>
-          <div className="mt-2">
+          <div className="mt-3 flex min-h-8 flex-wrap items-center gap-3">
             {!estado ? (
               <ComprobandoBadge />
-            ) : estado.diaria.activa ? (
-              <Badge color="success">Diaria activa · {String(estado.diaria.hora).padStart(2, "0")}:00</Badge>
             ) : (
-              <Badge color="primary">Diaria desactivada</Badge>
+              <>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={diariaActiva}
+                  aria-label="Revisión diaria"
+                  disabled={guardandoDiaria}
+                  onClick={() => (diariaActiva ? void cambiarDiaria(null) : setConfirmarDiaria(estado.diaria.hora ?? 0))}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-60 ${
+                    diariaActiva ? "bg-brand-500" : "bg-gray-200 dark:bg-gray-700"
+                  }`}
+                >
+                  <span
+                    className={`inline-block size-5 rounded-full bg-white shadow-theme-xs transition-transform duration-200 ${
+                      diariaActiva ? "translate-x-[22px]" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Revisión diaria</span>
+                {diariaActiva ? (
+                  <select
+                    value={estado.diaria.hora ?? 0}
+                    disabled={guardandoDiaria}
+                    onChange={(e) => void cambiarDiaria(Number(e.target.value))}
+                    aria-label="Hora de la revisión diaria"
+                    className="h-8 rounded-lg border border-gray-300 bg-transparent px-2 text-sm text-gray-700 focus:border-brand-300 focus:outline-none dark:border-gray-700 dark:text-gray-300"
+                  >
+                    {Array.from({ length: 24 }, (_, h) => (
+                      <option key={h} value={h} className="dark:bg-gray-900">
+                        a las {String(h).padStart(2, "0")}:00
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-xs text-gray-400">Desactivada: solo se sincroniza a mano.</span>
+                )}
+              </>
             )}
-            {estado?.enCurso && !ejecutando && (
-              <span className="ml-2">
-                <Badge color="info">En curso…</Badge>
-              </span>
-            )}
+            {estado?.enCurso && !ejecutando && <Badge color="info">En curso…</Badge>}
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
@@ -481,6 +529,23 @@ function SincronizacionG4({
           )}
         </div>
       )}
+
+      <Modal isOpen={confirmarDiaria !== null} onClose={() => setConfirmarDiaria(null)} className="max-w-md p-6 sm:p-8">
+        <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Activar la revisión diaria</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Cada día, a las <strong>{String(confirmarDiaria ?? 0).padStart(2, "0")}:00</strong>, se sincronizará el G4 Pro
+          con el sistema: se <strong>borrarán del terminal</strong> los usuarios que el sistema no conoce y se registrará
+          con su foto al personal activo que falte. La hora se puede cambiar después.
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={() => setConfirmarDiaria(null)}>
+            Cancelar
+          </Button>
+          <Button type="button" onClick={() => void cambiarDiaria(confirmarDiaria)}>
+            Activar
+          </Button>
+        </div>
+      </Modal>
 
       <Modal isOpen={confirmar} onClose={() => setConfirmar(false)} className="max-w-md p-6 sm:p-8">
         <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Sincronizar con el G4 Pro</h2>

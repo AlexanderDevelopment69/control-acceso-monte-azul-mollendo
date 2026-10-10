@@ -153,6 +153,37 @@
       }
     ]
   },
+  "sincronizacion": {
+    "imagen": "/manual/sincronizacion.webp",
+    "ancho": 1124,
+    "alto": 274,
+    "puntos": [
+      {
+        "n": 1,
+        "x": 3.29,
+        "y": 44.16,
+        "lado": "izq"
+      },
+      {
+        "n": 2,
+        "x": 79.78,
+        "y": 13.5,
+        "lado": "arriba"
+      },
+      {
+        "n": 3,
+        "x": 90.37,
+        "y": 13.5,
+        "lado": "arriba"
+      },
+      {
+        "n": 4,
+        "x": 3.29,
+        "y": 71.17,
+        "lado": "izq"
+      }
+    ]
+  },
   "sistema": {
     "imagen": "/manual/sistema.webp",
     "ancho": 1150,

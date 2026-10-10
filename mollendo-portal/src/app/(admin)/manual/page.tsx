@@ -369,7 +369,7 @@ const SECCIONES: SeccionManual[] = [
           si el backend y la base de datos responden, si la clave de equipos está configurada, el estado de los{" "}
           <strong>respaldos</strong> (el último y si está al día), el de los <strong>equipos</strong> (cada terminal G4
           Pro “En línea” o “Desconectado”, con su última actividad) y el de los <strong>lectores de DNI</strong> de ingreso y
-          salida (“Cable conectado”, “Cable desconectado” o “Sin configurar”, con la hora de su última lectura; el sistema ve el cable de datos, no si el lector tiene energía: si no pita al pasar un DNI, hay que revisar su alimentación) y el de los <strong>relés de los molinetes</strong> (ingreso y salida “Conectado” o “No conectado”, con la última apertura). En <strong>“Sincronización con el G4 Pro”</strong> se ve si la revisión diaria está activa y el último resultado, y con <strong>“Simular”</strong> o <strong>“Sincronizar ahora”</strong> se deja el terminal igual al sistema: borra a quien no está registrado (nunca hay que registrar personas directamente en el terminal) y agrega al personal que falte. La tarjeta del G4 Pro muestra cuántas personas y rostros tiene. También trae el enlace a la documentación interactiva de la API (Swagger) y
+          salida (“Cable conectado”, “Cable desconectado” o “Sin configurar”, con la hora de su última lectura; el sistema ve el cable de datos, no si el lector tiene energía: si no pita al pasar un DNI, hay que revisar su alimentación) y el de los <strong>relés de los molinetes</strong> (ingreso y salida “Conectado” o “No conectado”, con la última apertura). La tarjeta del G4 Pro muestra cuántas personas y rostros tiene. También trae el enlace a la documentación interactiva de la API (Swagger) y
           la documentación técnica, con ejemplos, de las APIs que usan los equipos físicos: el terminal ZKTeco G4 Pro
           con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes, indicando el estado
           de cada una. Está pensada para quien tenga que conectarlos o dar soporte técnico.
@@ -383,6 +383,50 @@ const SECCIONES: SeccionManual[] = [
             "Estado de los equipos de la garita: controlador, terminal facial, lectores y relés.",
           ]}
         />
+        <h3 className="pt-2 text-sm font-semibold text-gray-800 dark:text-white/90">Sincronización con el G4 Pro</h3>
+        <p>
+          Deja el terminal facial igual al sistema: <strong>borra</strong> del terminal a quien no está registrado en el
+          sistema (por ejemplo, alguien registrado a mano en el equipo), <strong>quita</strong> los permisos de paso que
+          quedaron sueltos y <strong>registra con su foto</strong> al personal activo que falte. Nunca hay que registrar
+          personas directamente en el terminal: se registran en Personal y documentos y el sistema las envía.
+        </p>
+        <Captura
+          clave="sincronizacion"
+          alt="Tarjeta Sincronización con el G4 Pro con el interruptor de revisión diaria, los botones Simular y Sincronizar ahora y el último resultado"
+          pasos={[
+            <>
+              <strong>Revisión diaria</strong>: actívala para que se sincronice sola cada día y elige la hora en el
+              selector que aparece. Al activarla pide confirmación.
+            </>,
+            <>
+              <strong>“Simular”</strong>: consulta al terminal y muestra qué cambiaría, <strong>sin cambiar nada</strong>.
+            </>,
+            <>
+              <strong>“Sincronizar ahora”</strong>: aplica los cambios en el terminal (pide confirmación).
+            </>,
+            "El resultado de la última sincronización, manual o diaria.",
+          ]}
+        />
+        <ol className="list-decimal space-y-1 pl-5">
+          <li>
+            Usa primero <strong>“Simular”</strong>. Mientras consulta al terminal se ve una barra que se desliza arriba de
+            la tarjeta; puede tardar hasta un minuto.
+          </li>
+          <li>
+            Revisa el resultado: cuántas personas <strong>agregaría</strong>, cuántos usuarios <strong>borraría</strong>{" "}
+            (los que están en el terminal pero no en el sistema) y cuántos <strong>permisos quitaría</strong>.
+          </li>
+          <li>
+            Si está bien, usa <strong>“Sincronizar ahora”</strong> y confírmalo. El resultado pasa a decir
+            “Agregadas”, “Borrados” y “Permisos quitados”.
+          </li>
+        </ol>
+        <p>
+          Si el resultado dice <strong>“equipo(s) no respondieron”</strong>, el terminal facial está desconectado: no
+          se pudo revisar ni cambiar nada. Revisa su tarjeta en Equipos de acceso y vuelve a intentarlo cuando esté{" "}
+          “En línea”. La revisión diaria hace lo mismo que “Sincronizar ahora”, sola, a la hora elegida; desactívala con el
+          mismo interruptor.
+        </p>
         <p>
           Si algo de esta pantalla se cae, aparece un <strong>aviso</strong> arriba de cualquier página (también para el
           vigilante): un recuadro rojo por equipo con qué falla, qué deja de funcionar y desde cuándo, y un enlace aquí.
