@@ -1,3 +1,8 @@
+# Entorno LOCAL: PostgreSQL para desarrollo (puerto 5433). Ver README.md de esta carpeta.
+#   docker compose up -d
+# El nombre fija el proyecto de siempre, así se sigue usando el mismo volumen de datos.
+name: proyectomollendo
+
 services:
   postgres:
     image: postgres:16-alpine

@@ -8,10 +8,7 @@ Controla el ingreso y la salida del personal por los molinetes de la garita. En 
 |---|---|
 | `mollendo-api/` | Backend (NestJS, Prisma, PostgreSQL). También el **controlador** de la garita (`src/controlador/`), que corre con la misma imagen |
 | `mollendo-portal/` | Portal web (Next.js): administración, panel de vigilancia, dashboard, reportes |
-| `deploy/` | **Cómo desplegar**: plantillas de configuración por entorno (nube, controlador, garita) y el script de respaldo. Empezar por [`deploy/README.md`](deploy/README.md) |
-| `docker-compose.yml` | PostgreSQL para desarrollo local |
-| `docker-compose.prod.yml` | Servidor completo en contenedores (nube o garita) |
-| `docker-compose.controlador.yml` | Mini PC de la garita como controlador |
+| `deploy/` | **Cómo desplegar**: una carpeta por entorno (`nube/`, `controlador/`, `garita/`, `local/`), cada una con su `docker-compose.yml`, su `.env.example` y un README con los pasos. Empezar por [`deploy/README.md`](deploy/README.md) |
 | `docs/` | Documentación (ver abajo) |
 | `PROGRESO.md` | Estado del avance y bitácora de cambios |
 

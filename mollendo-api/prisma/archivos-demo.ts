@@ -2,8 +2,8 @@
 // masiva, prisma/carga-masiva-demo.ts): así "Ver" abre algo en lugar de "El
 // archivo del documento no está disponible".
 //
-//   docker compose -f docker-compose.prod.yml cp mollendo-api/prisma/archivos-demo.ts api:/app/prisma/
-//   docker compose -f docker-compose.prod.yml exec -T api npx tsx prisma/archivos-demo.ts
+//   docker compose cp ../../mollendo-api/prisma/archivos-demo.ts api:/app/prisma/
+//   docker compose exec -T api npx tsx prisma/archivos-demo.ts
 //
 // Es un PDF de una página ("Documento de prueba"). Se guarda una sola vez y cada
 // documento recibe un enlace duro (hard link) a él en la carpeta de su persona:

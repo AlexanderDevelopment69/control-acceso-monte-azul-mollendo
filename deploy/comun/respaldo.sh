@@ -1,5 +1,5 @@
 #!/bin/sh
-# Respaldo diario del sistema (corre en el contenedor "backup", ver docker-compose.prod.yml).
+# Respaldo diario del sistema (corre en el contenedor "backup", ver deploy/nube/docker-compose.yml o deploy/garita/docker-compose.yml).
 #
 # Cada día a la hora HORA_RESPALDO (por defecto 00:00, hora de Lima) guarda en
 # /backups un paquete mollendo-AAAAMMDD-HHMM.tar.gz con:
@@ -55,7 +55,7 @@ segundos_hasta_la_hora() {
 }
 
 # Respaldo completo en el momento y salir:
-#   docker compose -f docker-compose.prod.yml run --rm -T backup ahora
+#   docker compose run --rm -T backup ahora      (en la carpeta del entorno)
 if [ "${1:-}" = "ahora" ]; then
   respaldar
   exit 0

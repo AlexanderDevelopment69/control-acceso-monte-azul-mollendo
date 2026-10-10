@@ -3,8 +3,8 @@
 // salidas de los últimos 30 días (y de hoy hasta la hora actual), para ver
 // cómo se comportan el portal, los reportes y el Dashboard con volumen.
 //
-//   docker compose -f docker-compose.prod.yml cp mollendo-api/prisma/carga-masiva-demo.ts api:/app/prisma/
-//   docker compose -f docker-compose.prod.yml exec -T api npx tsx prisma/carga-masiva-demo.ts
+//   docker compose cp ../../mollendo-api/prisma/carga-masiva-demo.ts api:/app/prisma/
+//   docker compose exec -T api npx tsx prisma/carga-masiva-demo.ts
 //   (CANTIDAD=1000 para otra cantidad; PREFIJO=996 para sumar otra tanda)
 //
 // Escribe directo en la base de datos: no pasa por la API, así que NO se

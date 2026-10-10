@@ -1,22 +1,14 @@
-# Mini PC de la garita como CONTROLADOR (el servidor está en la nube):
-# solo lectores de DNI y relés de los molinetes, conectada al servidor.
-# Usa la misma imagen que la API, arrancada en modo controlador
-# (src/controlador/). Sin base de datos ni portal en la mini PC.
-#
-#   docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build
-#
-# controlador.env (plantilla: deploy/controlador.env.example):
-#   SERVIDOR_URL=https://...            servidor en la nube (API)
-#   DEVICE_API_KEY=...                  la misma clave de equipos del servidor
-#   LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/...
-#   LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/...
-#   RELE_INGRESO_SERIE=ING01  RELE_SALIDA_SERIE=SAL01
-# En el servidor, MOLINETES_REMOTOS=true para que mande aquí la orden de abrir.
+# Entorno CONTROLADOR: mini PC de la garita cuando el servidor está en la nube.
+# Solo lectores de DNI y relés de los molinetes, conectada al servidor; usa la
+# misma imagen que la API, arrancada en modo controlador (src/controlador/).
+# Sin base de datos ni portal. Ver README.md de esta carpeta.
+#   cp .env.example .env    (y completar)
+#   docker compose up -d --build
 name: mollendo-controlador
 
 services:
   controlador:
-    build: ./mollendo-api
+    build: ../../mollendo-api
     image: mollendo-controlador
     restart: unless-stopped
     command: ["node", "dist/controlador/main.js"]

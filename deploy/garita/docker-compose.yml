@@ -1,9 +1,8 @@
-# Servidor completo (portal, API, base de datos, respaldos), todo en contenedores.
-#   docker compose -f docker-compose.prod.yml up -d --build
-# Sirve para dos entornos; las claves van en un .env junto a este archivo:
-#   nube   → deploy/nube.env.example   (AWS/Azure; molinetes en el controlador de la garita)
-#   garita → deploy/garita.env.example (opcional: la mini PC como servidor, con lectores y relés por USB)
-# Guía completa: docs/despliegue/Registro_Despliegue_MiniPC.md
+# Entorno GARITA (opcional, hoy no se usa): la mini PC como servidor completo
+# (portal, API, base de datos, respaldos) con los lectores de DNI y los relés
+# conectados por USB. Ver README.md de esta carpeta.
+#   cp .env.example .env    (y completar)
+#   docker compose up -d --build
 name: mollendo
 
 services:
@@ -24,7 +23,7 @@ services:
       retries: 10
 
   api:
-    build: ./mollendo-api
+    build: ../../mollendo-api
     restart: unless-stopped
     depends_on:
       db:
@@ -73,7 +72,7 @@ services:
       RELE_AVISO_SALIDA_CANAL: ${RELE_AVISO_SALIDA_CANAL:-1}
       RELE_AVISO_PULSO_MS: ${RELE_AVISO_PULSO_MS:-}
       # true cuando los lectores y relés están en un controlador conectado por
-      # internet (servidor en la nube; ver docker-compose.controlador.yml): la orden de
+      # internet (servidor en la nube; ver deploy/controlador): la orden de
       # abrir los molinetes se le manda a él.
       MOLINETES_REMOTOS: ${MOLINETES_REMOTOS:-false}
       # true: anota en el registro todo lo que envía el G4 Pro (para estudiar el equipo).
@@ -96,7 +95,7 @@ services:
       - "3001:3001" # equipos (ingreso/salida con X-API-Key) y Swagger
 
   portal:
-    build: ./mollendo-portal
+    build: ../../mollendo-portal
     restart: unless-stopped
     depends_on:
       - api
@@ -105,7 +104,7 @@ services:
 
   # Respaldo diario (base de datos + documentos y fotos) en ./backups, a las
   # HORA_RESPALDO (por defecto 00:00, hora de Lima); se guardan 14 días.
-  # Ver deploy/respaldo.sh.
+  # Ver deploy/comun/respaldo.sh.
   backup:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -118,16 +117,16 @@ services:
       HORA_RESPALDO: ${HORA_RESPALDO:-00:00}
     volumes:
       - ./backups:/backups
-      - ./deploy/respaldo.sh:/respaldo.sh:ro
+      - ../comun/respaldo.sh:/respaldo.sh:ro
       - documentos:/storage:ro
     entrypoint: ["sh", "/respaldo.sh"]
 
   # Enlace público TEMPORAL para mostrar el portal a cualquiera (túnel rápido
   # de Cloudflare, sin cuenta). Apagado por defecto: solo se levanta con el
   # perfil "muestra". Cada vez que arranca, el enlace cambia.
-  #   Encender: docker compose -f docker-compose.prod.yml --profile muestra up -d muestra
-  #   Ver enlace: docker compose -f docker-compose.prod.yml logs muestra | grep trycloudflare
-  #   Apagar:   docker compose -f docker-compose.prod.yml --profile muestra rm -sf muestra
+  #   Encender: docker compose --profile muestra up -d muestra
+  #   Ver enlace: docker compose logs muestra | grep trycloudflare
+  #   Apagar:   docker compose --profile muestra rm -sf muestra
   muestra:
     image: cloudflare/cloudflared:latest
     profiles: ["muestra"]

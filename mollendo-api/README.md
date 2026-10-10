@@ -73,4 +73,4 @@ Detalle y variables en la guía de despliegue (sección 8b).
 
 ## Despliegue
 
-En la mini PC corre en un contenedor de Docker (`Dockerfile`) y aplica las migraciones al arrancar. La guía completa está en `../docs/despliegue/Registro_Despliegue_MiniPC.md`.
+En los servidores corre en un contenedor de Docker (`Dockerfile`) y aplica las migraciones al arrancar. Cómo desplegarlo en cada entorno: `../deploy/README.md`; en desarrollo, `../deploy/local/README.md`.

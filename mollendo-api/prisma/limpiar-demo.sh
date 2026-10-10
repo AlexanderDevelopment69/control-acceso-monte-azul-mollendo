@@ -4,11 +4,13 @@
 # auditoría, los eventos del molinete "DEMO" y los tipos de documento que
 # quedan sin uso. No toca ningún otro dato.
 #
-# Uso, en el servidor (dentro de ~/mollendo):
+# Uso, en el servidor (dentro de ~/mollendo); ENTORNO es la carpeta de deploy/
+# donde corre el sistema (nube por defecto, o garita):
 #   sudo sh mollendo-api/prisma/limpiar-demo.sh
+#   sudo ENTORNO=garita sh mollendo-api/prisma/limpiar-demo.sh
 set -e
-cd "$(dirname "$0")/../.."
-DC="docker compose -f docker-compose.prod.yml"
+cd "$(dirname "$0")/../../deploy/${ENTORNO:-nube}"
+DC="docker compose"
 
 # Carpetas de archivos de las personas DEMO (antes de borrar las filas).
 IDS=$($DC exec -T db psql -U mollendo -d mollendo_control_acceso -tAc \

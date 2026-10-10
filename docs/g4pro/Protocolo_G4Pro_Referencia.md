@@ -177,13 +177,13 @@ time=2026-10-04 04:02:41  sensor=02  relay=01  alarm=0000000000000000  door=01
 En la mini PC, dentro de `~/mollendo`:
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml exec -T db psql -U mollendo -d mollendo_control_acceso -c \
+sudo docker compose exec -T db psql -U mollendo -d mollendo_control_acceso -c \
   "INSERT INTO comando_dispositivo (dispositivo_id, comando) SELECT id, 'DATA COUNT user' FROM dispositivo_acceso;"
 # Estado del comando:
-sudo docker compose -f docker-compose.prod.yml exec -T db psql -U mollendo -d mollendo_control_acceso -c \
+sudo docker compose exec -T db psql -U mollendo -d mollendo_control_acceso -c \
   "SELECT id, estado, return_code, left(comando, 60) FROM comando_dispositivo ORDER BY id DESC LIMIT 5;"
 # Respuesta (en el registro del backend):
-sudo docker compose -f docker-compose.prod.yml logs --since 2m api | grep "Respuesta de"
+sudo docker compose logs --since 2m api | grep "Respuesta de"
 ```
 
 Para los campos separados por tabulador, usar `E'…\t…'` en el texto del comando.

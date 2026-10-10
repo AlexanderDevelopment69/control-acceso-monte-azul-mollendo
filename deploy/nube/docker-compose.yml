@@ -1,0 +1,105 @@
+# Entorno NUBE: servidor en la nube (AWS hoy, Azure después) con el portal, la
+# API, la base de datos y los respaldos. Los lectores de DNI y los relés están
+# en la mini PC de la garita (ver ../controlador). Ver README.md de esta carpeta.
+#   cp .env.example .env    (y completar)
+#   docker compose up -d --build
+name: mollendo
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mollendo
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
+      POSTGRES_DB: mollendo_control_acceso
+      TZ: America/Lima
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mollendo -d mollendo_control_acceso"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ../../mollendo-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://mollendo:${DB_PASSWORD}@db:5432/mollendo_control_acceso?schema=public
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
+      JWT_EXPIRES_IN: 1h
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Falta JWT_REFRESH_SECRET en .env}
+      JWT_REFRESH_EXPIRES_IN: 7d
+      PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      DOCUMENTOS_STORAGE_PATH: /app/storage/documentos
+      DEVICE_API_KEY: ${DEVICE_API_KEY:?Falta DEVICE_API_KEY en .env}
+      SWAGGER: "true"
+      RESPALDOS_PATH: /app/respaldos
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@mollendo.local}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
+      VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@mollendo.local}
+      VIGILANCIA_SEED_PASSWORD: ${VIGILANCIA_SEED_PASSWORD:-}
+      # true cuando los lectores y relés están en un controlador conectado por
+      # internet (servidor en la nube; ver deploy/controlador): la orden de
+      # abrir los molinetes se le manda a él.
+      MOLINETES_REMOTOS: ${MOLINETES_REMOTOS:-true}
+      # true: anota en el registro todo lo que envía el G4 Pro (para estudiar el equipo).
+      PUSH_SDK_DEPURAR: ${PUSH_SDK_DEPURAR:-false}
+      # Hora de la sincronización diaria con los G4 Pro (0 = medianoche, hora de Lima).
+      G4PRO_HORA_SINCRONIZACION: ${G4PRO_HORA_SINCRONIZACION:-0}
+    volumes:
+      - documentos:/app/storage
+      # Solo lectura: para mostrar el último respaldo en "Sistema y APIs".
+      - ./backups:/app/respaldos:ro
+    ports:
+      - "3001:3001" # equipos (ingreso/salida con X-API-Key) y Swagger
+
+  portal:
+    build: ../../mollendo-portal
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+  # Respaldo diario (base de datos + documentos y fotos) en ./backups, a las
+  # HORA_RESPALDO (por defecto 00:00, hora de Lima); se guardan 14 días.
+  # Ver deploy/comun/respaldo.sh.
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+      TZ: America/Lima
+      HORA_RESPALDO: ${HORA_RESPALDO:-00:00}
+    volumes:
+      - ./backups:/backups
+      - ../comun/respaldo.sh:/respaldo.sh:ro
+      - documentos:/storage:ro
+    entrypoint: ["sh", "/respaldo.sh"]
+
+  # Enlace público TEMPORAL para mostrar el portal a cualquiera (túnel rápido
+  # de Cloudflare, sin cuenta). Apagado por defecto: solo se levanta con el
+  # perfil "muestra". Cada vez que arranca, el enlace cambia.
+  #   Encender: docker compose --profile muestra up -d muestra
+  #   Ver enlace: docker compose logs muestra | grep trycloudflare
+  #   Apagar:   docker compose --profile muestra rm -sf muestra
+  muestra:
+    image: cloudflare/cloudflared:latest
+    profiles: ["muestra"]
+    restart: "no"
+    depends_on:
+      - portal
+    command: tunnel --no-autoupdate --url http://portal:3000
+
+volumes:
+  db_data:
+  documentos:

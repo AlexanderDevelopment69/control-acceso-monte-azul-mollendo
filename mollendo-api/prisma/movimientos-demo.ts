@@ -2,8 +2,8 @@
 // personal DEMO desde el último día que tiene movimientos DEMO hasta hoy (a la
 // hora actual), para que el Dashboard y el Panel tengan datos del día.
 //
-//   docker compose -f docker-compose.prod.yml cp mollendo-api/prisma/movimientos-demo.ts api:/app/prisma/
-//   docker compose -f docker-compose.prod.yml exec -T api npx tsx prisma/movimientos-demo.ts
+//   docker compose cp ../../mollendo-api/prisma/movimientos-demo.ts api:/app/prisma/
+//   docker compose exec -T api npx tsx prisma/movimientos-demo.ts
 //
 // Escribe directo en la base de datos (no pasa por la API ni por el G4 Pro), con
 // las mismas reglas del molinete (documentos vigentes ese día, baja, alcohol).

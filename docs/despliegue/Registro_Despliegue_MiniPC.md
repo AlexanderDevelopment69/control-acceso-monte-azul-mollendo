@@ -5,7 +5,9 @@ Proyecto: Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM) �
 
 Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend y base de datos) en la mini PC, cómo actualizarlo y cómo operarlo. Está pensada para que la siga cualquier persona con acceso al servidor, aunque no haya participado en el desarrollo. Al final (anexo A) está el registro del primer despliegue.
 
-> **Esta guía no incluye contraseñas ni claves, porque se versiona en git.** Están solo en el servidor, en `~/mollendo/.env`; quien tenga acceso SSH puede verlas con `cat ~/mollendo/.env`. Para desplegar o actualizar no hace falta conocerlas.
+> **Esta guía no incluye contraseñas ni claves, porque se versiona en git.** Están solo en cada servidor, en el `.env` de su entorno (`~/mollendo/deploy/<entorno>/.env`); quien tenga acceso SSH puede verlas con `cat`. Para desplegar o actualizar no hace falta conocerlas.
+
+> **Cada entorno tiene su carpeta en `deploy/`** (`nube`, `controlador`, `garita`, `local`), con su `docker-compose.yml`, la plantilla de su `.env` y un README con los pasos de despliegue. **Los comandos `docker compose` de esta guía se ejecutan dentro de la carpeta del entorno** (`~/mollendo/deploy/nube`, `~/mollendo/deploy/garita` o `~/mollendo/deploy/controlador`), donde también están su `.env` y su carpeta `backups/`. Hasta el 09/10/2026 los archivos estaban en `~/mollendo` (`docker-compose.prod.yml`, `docker-compose.controlador.yml`, `.env`, `controlador.env`); cómo pasar a la estructura nueva está en el README de cada entorno.
 
 ---
 
@@ -32,14 +34,14 @@ Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend
 
 ## 0. Entornos
 
-El mismo código corre en cuatro lugares. Lo que cambia es la configuración: cada entorno tiene **su propia plantilla** en la carpeta `deploy/` (resumen en `deploy/README.md`).
+El mismo código corre en cuatro lugares. Lo que cambia es la configuración: cada entorno tiene **su propia carpeta** en `deploy/` con su `docker-compose.yml`, su plantilla `.env.example` y un README con los pasos (índice en `deploy/README.md`).
 
-| Entorno | Dónde | Qué corre | Plantilla → archivo | Cómo se levanta |
+| Entorno | Dónde | Qué corre | Carpeta | Cómo se levanta |
 |---|---|---|---|---|
-| **local** | PC de desarrollo | API, portal y PostgreSQL (`docker-compose.yml`) | `mollendo-api/.env.example` → `mollendo-api/.env`; `mollendo-portal/.env.example` → `mollendo-portal/.env.local` | `npm run start:dev` (API) y `npm run dev` (portal) |
-| **nube** | AWS hoy (`54.147.214.38`), Azure después | Portal, API, base de datos y respaldos | `deploy/nube.env.example` → `~/mollendo/.env` | `docker compose -f docker-compose.prod.yml up -d --build` |
-| **controlador** | Mini PC de la garita | Solo lectores de DNI y relés, conectados a la nube | `deploy/controlador.env.example` → `~/mollendo/controlador.env` | `docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build` |
-| **garita** (opcional, hoy no se usa) | Mini PC de la garita | Servidor completo, con lectores y relés por USB | `deploy/garita.env.example` → `~/mollendo/.env` | `docker compose -f docker-compose.prod.yml up -d --build` |
+| **local** | PC de desarrollo | PostgreSQL en Docker; API y portal con Node | `deploy/local/` (el `.env` va en `mollendo-api/` y `mollendo-portal/`) | `docker compose up -d`, luego `npm run start:dev` (API) y `npm run dev` (portal) |
+| **nube** | AWS hoy (`54.147.214.38`), Azure después | Portal, API, base de datos y respaldos | `deploy/nube/` | `docker compose up -d --build` |
+| **controlador** | Mini PC de la garita | Solo lectores de DNI y relés, conectados a la nube | `deploy/controlador/` | `docker compose up -d --build` |
+| **garita** (opcional, hoy no se usa) | Mini PC de la garita | Servidor completo, con lectores y relés por USB | `deploy/garita/` | `docker compose up -d --build` |
 
 Opciones que distinguen a cada entorno:
 
@@ -49,11 +51,11 @@ Opciones que distinguen a cada entorno:
 | `LECTOR_DNI_*`, `RELE_*` | no | no | sí |
 | `G4PRO_HORA_SINCRONIZACION` | `off` | `off` mientras se prueba | `0` (medianoche) |
 
-El controlador es otro programa (`src/controlador/main.ts`) y usa solo `controlador.env`.
+El controlador es otro programa (`src/controlador/main.ts`) y usa solo su `.env` (`deploy/controlador/.env`).
 
 - **Los `.env` no están en git.** Cada máquina tiene el suyo, con sus claves. Al agregar una opción nueva, se agrega también a la plantilla de cada entorno donde corresponda.
 - **El código es el mismo en todos.** Si dos entornos se ven distintos, la diferencia está en el `.env` o en los datos de cada base, no en el código.
-- La guía de los pasos 3 a 7 se escribió para la mini PC como servidor completo (garita); en la nube se siguen los mismos pasos con `deploy/nube.env.example`.
+- **El `.env` y `backups/` de cada carpeta no se borran al actualizar**: al reemplazar el código se borran solo `mollendo-api/` y `mollendo-portal/`.
 
 ---
 
@@ -66,7 +68,7 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 | `db` | Base de datos PostgreSQL 16. Los datos están en el volumen `mollendo_db_data` | ninguno (solo red interna) |
 | `api` | Backend (NestJS). Al arrancar aplica las migraciones pendientes de la base de datos | `3001`: equipos físicos y Swagger |
 | `portal` | Portal web (Next.js). Reenvía al backend las llamadas a la API y el tiempo real | `3000`: el que se abre en el navegador |
-| `backup` | Respaldo diario de la base de datos en `~/mollendo/backups`. Guarda 14 días | ninguno |
+| `backup` | Respaldo diario de la base de datos y los archivos en `backups/`, dentro de la carpeta del entorno. Guarda 14 días | ninguno |
 
 ```
                  Navegador (administrador / vigilante)
@@ -96,8 +98,10 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 
 | Archivo | Para qué sirve |
 |---|---|
-| `docker-compose.prod.yml` | Define los 4 contenedores, los volúmenes y los puertos |
-| `deploy/nube.env.example`, `deploy/garita.env.example`, `deploy/controlador.env.example` | Plantillas del `.env` de cada entorno (ver [sección 0](#0-entornos)) |
+| `deploy/nube/docker-compose.yml`, `deploy/garita/docker-compose.yml` | Definen los 4 contenedores, los volúmenes y los puertos (la garita además da acceso a los USB) |
+| `deploy/controlador/docker-compose.yml` | El contenedor del controlador |
+| `deploy/<entorno>/.env.example` | Plantilla del `.env` de cada entorno (ver [sección 0](#0-entornos)) |
+| `deploy/comun/respaldo.sh` | Script del respaldo diario |
 | `mollendo-api/Dockerfile` | Cómo se construye la imagen del backend |
 | `mollendo-portal/Dockerfile` | Cómo se construye la imagen del portal |
 | `mollendo-api/.dockerignore`, `mollendo-portal/.dockerignore` | Qué no se copia a las imágenes (`node_modules`, `.env`, compilados, archivos subidos) |
@@ -132,184 +136,21 @@ Direcciones actuales:
 
 - Usuario y contraseña SSH del servidor.
 - Para un primer despliegue: nada más (las claves se generan en el servidor).
-- Para una actualización: nada más (las claves ya están en `~/mollendo/.env`).
+- Para una actualización: nada más (las claves ya están en el `.env` del entorno, `~/mollendo/deploy/<entorno>/.env`).
 
 ---
 
 ## 3. Primer despliegue (servidor nuevo)
 
-Solo se hace una vez. Si el sistema ya está desplegado, ve a la [sección 5](#5-actualizar-a-una-versión-nueva).
+Los pasos completos (instalar Docker, empaquetar el código, crear el `.env`, levantar y crear las cuentas iniciales) están en el README de cada entorno:
 
-Los comandos que empiezan en **la PC** se ejecutan en tu computadora; los que empiezan en **el servidor**, dentro de la sesión SSH.
+- Nube: `deploy/nube/README.md`, sección 2.
+- Controlador (mini PC de la garita): `deploy/controlador/README.md`, sección 2.
+- Garita (opcional): `deploy/garita/README.md`, sección 2.
 
-### Paso 1. Conectarse al servidor
-
-En la PC (PowerShell o Git Bash):
-
-```bash
-ssh ma-admin@100.78.153.33
-```
-
-La primera vez pregunta si confías en el servidor. Comprueba que la huella sea esta y responde `yes`:
-
-```
-ED25519 key fingerprint is SHA256:7E0UUb8X7/RlEWjbISN3pl3P5GW23mxXKQVhB2GaWDg
-```
-
-Luego escribe la contraseña del usuario (no se ve mientras la escribes).
-
-### Paso 2. Instalar Docker
-
-En el servidor. Es la **única** instalación que se hace en el sistema:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y docker.io docker-compose-v2 docker-buildx
-sudo systemctl enable --now docker
-```
-
-Comprueba:
-
-```bash
-docker --version            # Docker version 29.x
-docker compose version      # Docker Compose version 2.x
-systemctl is-active docker  # active
-```
-
-### Paso 3. Zona horaria del servidor
-
-En el servidor (los contenedores ya usan la hora de Lima; esto es para que los respaldos y los logs del sistema también la usen):
-
-```bash
-sudo timedatectl set-timezone America/Lima
-timedatectl | grep "Time zone"   # Time zone: America/Lima
-```
-
-### Paso 4. Crear la carpeta del sistema
-
-En el servidor:
-
-```bash
-mkdir -p ~/mollendo/backups
-```
-
-### Paso 5. Empaquetar el código
-
-En la PC, en la carpeta raíz del proyecto (donde está `docker-compose.prod.yml`). Asegúrate de que todo lo que quieres desplegar tenga commit:
-
-```bash
-git status          # no debe haber cambios pendientes que quieras desplegar
-git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy docker-compose.prod.yml
-```
-
-Esto crea `mollendo.tgz` (unos 10 MB) con el código del último commit. No incluye `node_modules`, `.env` ni archivos subidos, porque no están en git.
-
-### Paso 6. Copiar el código al servidor
-
-En la PC:
-
-```bash
-scp mollendo.tgz ma-admin@100.78.153.33:mollendo/
-```
-
-En el servidor:
-
-```bash
-cd ~/mollendo
-tar -xzf mollendo.tgz
-rm mollendo.tgz
-ls        # backups  deploy  docker-compose.prod.yml  mollendo-api  mollendo-portal
-```
-
-### Paso 7. Crear el archivo de claves (.env)
-
-En el servidor. Este archivo **nunca** se sube a git ni se copia a otro lado.
-
-1. Genera las claves y crea el archivo de una vez (copia y pega el bloque completo):
-
-   ```bash
-   cd ~/mollendo
-   cat > .env <<EOF
-   DB_PASSWORD=$(openssl rand -hex 24)
-   JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
-   JWT_REFRESH_SECRET=$(openssl rand -base64 48 | tr -d '\n')
-   DEVICE_API_KEY=$(openssl rand -hex 32)
-   CORS_ORIGIN=http://100.78.153.33:3000,http://192.168.0.165:3000,http://localhost:3000
-   ADMIN_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
-   VIGILANCIA_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
-   EOF
-   chmod 600 .env
-   ```
-
-2. Revisa el contenido y **anota las dos contraseñas iniciales** (`ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD`), las vas a necesitar para entrar al portal:
-
-   ```bash
-   cat .env
-   ```
-
-3. Si las IPs del servidor son otras, corrige `CORS_ORIGIN` con `nano .env` (guardar: `Ctrl+O`, `Enter`; salir: `Ctrl+X`).
-
-El detalle de cada variable está en el [anexo B](#anexo-b-variables-del-archivo-env).
+Para entrar a la mini PC: `ssh ma-admin@100.78.153.33` (por Tailscale). La primera vez pregunta si confías en el servidor; la huella correcta es `SHA256:7E0UUb8X7/RlEWjbISN3pl3P5GW23mxXKQVhB2GaWDg`.
 
 > **No cambies `DB_PASSWORD` después del primer arranque.** PostgreSQL la guarda al crear la base; si la cambias en `.env`, el backend ya no podrá conectarse (ver [sección 8](#8-solución-de-problemas)).
-
-### Paso 8. Construir las imágenes
-
-En el servidor (tarda varios minutos la primera vez, porque descarga las imágenes base y las dependencias):
-
-```bash
-cd ~/mollendo
-sudo docker compose -f docker-compose.prod.yml build
-```
-
-Al final debe decir `mollendo-api  Built` y `mollendo-portal  Built`.
-
-### Paso 9. Levantar los contenedores
-
-```bash
-sudo docker compose -f docker-compose.prod.yml up -d
-```
-
-Espera unos 30 segundos y revisa que el backend haya aplicado las migraciones:
-
-```bash
-sudo docker compose -f docker-compose.prod.yml logs api | grep -E "migrations|successfully started"
-```
-
-Debe mostrar:
-
-```
-All migrations have been successfully applied.
-Nest application successfully started
-```
-
-### Paso 10. Crear las cuentas iniciales
-
-Solo la primera vez. Crea la empresa interna (OTP/MAS), la cuenta del administrador y la de vigilancia, con las contraseñas del `.env`:
-
-```bash
-sudo docker compose -f docker-compose.prod.yml run --rm -T api npm run db:seed
-```
-
-Debe terminar con:
-
-```
-Cuentas listas:
-  Administrador:  admin@mollendo.local / (definida en .env)
-  Vigilancia:     vigilancia@mollendo.local / (definida en .env)
-```
-
-La base queda **sin personal ni documentos**: el administrador los carga desde el portal.
-
-### Paso 11. Borrar el paquete en la PC
-
-En la PC:
-
-```bash
-rm mollendo.tgz
-```
-
-Sigue con la verificación.
 
 ---
 
@@ -318,8 +159,8 @@ Sigue con la verificación.
 ### 4.1. En el servidor
 
 ```bash
-cd ~/mollendo
-sudo docker compose -f docker-compose.prod.yml ps
+cd ~/mollendo/deploy/nube      # o deploy/garita
+sudo docker compose ps
 ```
 
 Los cuatro deben estar `Up` y `db` además `(healthy)`:
@@ -361,56 +202,17 @@ ls backups
 
 ## 5. Actualizar a una versión nueva
 
-Para desplegar cambios nuevos del sistema. Los datos (personal, documentos, eventos) **no se pierden**: están en los volúmenes, que no se tocan.
-
-1. **En la PC**, con los cambios ya confirmados con commit, arma el paquete (el `.env` del servidor ya existe y no se toca):
-
-   ```bash
-   git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy docker-compose.prod.yml
-   scp mollendo.tgz ma-admin@100.78.153.33:mollendo/
-   ```
-
-2. **En el servidor**, saca un respaldo antes de actualizar (por si algo sale mal):
-
-   ```bash
-   cd ~/mollendo
-   sudo docker compose -f docker-compose.prod.yml exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip > backups/antes-de-actualizar-$(date +%Y%m%d-%H%M).sql.gz
-   ```
-
-3. **En el servidor**, reemplaza el código. Se borran las carpetas viejas para que no queden archivos que ya no existen en la versión nueva (`.env`, `backups` y los volúmenes no se tocan):
-
-   ```bash
-   rm -rf mollendo-api mollendo-portal deploy
-   tar -xzf mollendo.tgz && rm mollendo.tgz
-   ```
-
-4. **En el servidor**, reconstruye y levanta:
-
-   ```bash
-   sudo docker compose -f docker-compose.prod.yml up -d --build
-   ```
-
-   Si la versión nueva trae migraciones de base de datos, el backend las aplica solo al arrancar. Revisa:
-
-   ```bash
-   sudo docker compose -f docker-compose.prod.yml logs api | grep -E "migrations|successfully started|Error"
-   ```
-
-5. Verifica como en la [sección 4](#4-verificar-que-funciona). Mientras se reconstruye, el portal deja de responder unos segundos.
-
-6. **En la PC**: `rm mollendo.tgz`.
-
-**Si la actualización falla**, vuelve a la versión anterior repitiendo estos pasos con el commit anterior (`git archive ... <commit-anterior> ...`). Si una migración dañó datos, restaura el respaldo del paso 2 ([sección 7.3](#73-restaurar-un-respaldo)).
+Los pasos están en el README de cada entorno (sección 3 de `deploy/nube/README.md`, `deploy/controlador/README.md` y `deploy/garita/README.md`). En resumen: empaquetar el código con `git archive` en la PC, sacar un respaldo, reemplazar **solo** `mollendo-api/` y `mollendo-portal/` (nunca `deploy/`, donde están el `.env` y los respaldos) y ejecutar `docker compose up -d --build` en la carpeta del entorno. Los datos no se pierden: están en los volúmenes. Si la versión trae migraciones, el backend las aplica solo al arrancar.
 
 ---
 
 ## 6. Operación del día a día
 
-Todos los comandos se ejecutan en el servidor, dentro de `~/mollendo`. Para no repetir el nombre del archivo, puedes definir un atajo en la sesión:
+Todos los comandos se ejecutan en el servidor, dentro de la carpeta del entorno (`~/mollendo/deploy/nube` o `~/mollendo/deploy/garita`). Para escribir menos, puedes definir un atajo en la sesión:
 
 ```bash
-cd ~/mollendo
-alias dc='sudo docker compose -f docker-compose.prod.yml'
+cd ~/mollendo/deploy/nube      # o deploy/garita
+alias dc='sudo docker compose'
 ```
 
 | Para… | Comando |
@@ -432,10 +234,10 @@ alias dc='sudo docker compose -f docker-compose.prod.yml'
 Si alguien olvidó su contraseña y no puede entrar (no hay recuperación por correo). Reemplaza `NuevaClave2026` y el correo:
 
 ```bash
-cd ~/mollendo
-H=$(sudo docker compose -f docker-compose.prod.yml exec -T api node -e "require('bcryptjs').hash(process.argv[1], 10).then(console.log)" 'NuevaClave2026' </dev/null)
+cd ~/mollendo/deploy/nube      # o deploy/garita
+H=$(sudo docker compose exec -T api node -e "require('bcryptjs').hash(process.argv[1], 10).then(console.log)" 'NuevaClave2026' </dev/null)
 echo "UPDATE usuario SET password_hash = :'h', password_cambiado_en = now() WHERE correo = 'admin@mollendo.local';" \
-  | sudo docker compose -f docker-compose.prod.yml exec -T db psql -U mollendo -d mollendo_control_acceso -v h="$H"
+  | sudo docker compose exec -T db psql -U mollendo -d mollendo_control_acceso -v h="$H"
 ```
 
 Debe responder `UPDATE 1`. La persona entra con la contraseña nueva y conviene que la cambie desde el portal. Las sesiones que tenía abiertas se cierran.
@@ -446,7 +248,7 @@ Debe responder `UPDATE 1`. La persona entra con la contraseña nueva y conviene 
 
 ### 7.1. Respaldo automático
 
-El contenedor `backup` (script `deploy/respaldo.sh`) hace **un respaldo completo por día a las 00:00** (hora de Lima) en `~/mollendo/backups/mollendo-AAAAMMDD-HHMM.tar.gz`. Cada paquete contiene:
+El contenedor `backup` (script `deploy/comun/respaldo.sh`) hace **un respaldo completo por día a las 00:00** (hora de Lima) en `backups/mollendo-AAAAMMDD-HHMM.tar.gz`, dentro de la carpeta del entorno. Cada paquete contiene:
 
 | Dentro del paquete | Qué es |
 |---|---|
@@ -459,8 +261,8 @@ El contenedor `backup` (script `deploy/respaldo.sh`) hace **un respaldo completo
 - **Sistema y APIs** muestra la fecha y el tamaño del último respaldo automático, en rojo ("Atrasado") si tiene más de 26 horas.
 
 ```bash
-ls -lh ~/mollendo/backups
-sudo docker compose -f docker-compose.prod.yml logs backup | tail   # "Respaldo mollendo-... (tamaño)"
+ls -lh backups
+sudo docker compose logs backup | tail   # "Respaldo mollendo-... (tamaño)"
 ```
 
 Los respaldos anteriores a este cambio (28/09/2026) son `.sql.gz` y solo tienen la base de datos.
@@ -470,15 +272,15 @@ Los respaldos anteriores a este cambio (28/09/2026) son `.sql.gz` y solo tienen 
 Solo la base de datos (rápido; es el que se saca antes de cada actualización):
 
 ```bash
-cd ~/mollendo
-sudo docker compose -f docker-compose.prod.yml exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip > backups/antes-de-actualizar-$(date +%Y%m%d-%H%M).sql.gz
+cd ~/mollendo/deploy/nube      # o deploy/garita
+sudo docker compose exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip > backups/antes-de-actualizar-$(date +%Y%m%d-%H%M).sql.gz
 ```
 
 Completo (base de datos y archivos), igual al automático, en el momento:
 
 ```bash
-cd ~/mollendo
-sudo docker compose -f docker-compose.prod.yml run --rm -T backup ahora
+cd ~/mollendo/deploy/nube      # o deploy/garita
+sudo docker compose run --rm -T backup ahora
 ```
 
 ### 7.3. Restaurar un respaldo
@@ -486,8 +288,8 @@ sudo docker compose -f docker-compose.prod.yml run --rm -T backup ahora
 Restaurar **reemplaza** los datos actuales. Hazlo solo si es necesario y, antes, saca un respaldo manual de lo que hay (7.2). Reemplaza `mollendo-AAAAMMDD-HHMM.tar.gz` por el archivo que quieres restaurar.
 
 ```bash
-cd ~/mollendo
-alias dc='sudo docker compose -f docker-compose.prod.yml'
+cd ~/mollendo/deploy/nube      # o deploy/garita
+alias dc='sudo docker compose'
 R=mollendo-AAAAMMDD-HHMM.tar.gz
 
 # 1. Descomprimir en una carpeta temporal
@@ -515,7 +317,8 @@ Para un respaldo `.sql.gz` (solo base de datos), el paso 2 es `gunzip -c backups
 Los respaldos quedan en el mismo disco que la base de datos: si el disco falla, se pierden los dos. Cópialos con regularidad a otra computadora o a un disco externo. Desde la PC:
 
 ```bash
-scp -r ma-admin@100.78.153.33:mollendo/backups ./respaldos-mollendo
+scp -r ubuntu@54.147.214.38:mollendo/deploy/nube/backups ./respaldos-mollendo
+# mini PC como servidor: scp -r ma-admin@100.78.153.33:mollendo/deploy/garita/backups ./respaldos-mollendo
 ```
 
 ---
@@ -561,11 +364,11 @@ Sin `DEVICE_API_KEY` carga empresas y personas, pero no los ingresos y salidas. 
 
 **Historial de 30 días (opcional, para el Dashboard):** `prisma/historial-demo.ts` agrega los ingresos y salidas de los últimos 30 días del personal DEMO (unos 2 250 eventos, con las mismas reglas del molinete y doce personas que se quedan dentro más de 24 horas). Como la API registra cada evento con la hora actual, este script escribe directo en la base de datos: necesita `DATABASE_URL` hacia la base, así que se usa en una PC de desarrollo (en `mollendo-api`: `npx tsx prisma/historial-demo.ts`). Sus eventos también llevan el molinete "DEMO" y se borran con el mismo procedimiento.
 
-**Carga masiva (opcional, para probar con volumen):** `prisma/carga-masiva-demo.ts` agrega 480 personas DEMO más (números `995xxxxx`, repartidas en las empresas DEMO; `CANTIDAD=` para otra cantidad y `PREFIJO=996`, `997`… para sumar otra tanda sin borrar la anterior: `docker compose -f docker-compose.prod.yml exec -T -e PREFIJO=996 -e CANTIDAD=1500 api npx tsx prisma/carga-masiva-demo.ts`) con sus documentos (algunas de baja, sin documentos, con documentos vencidos o por vencer) y sus ingresos y salidas de los últimos 30 días y de hoy. Escribe directo en la base de datos, **sin pasar por la API**: no registra a nadie en el G4 Pro. Sin fotos y con documentos sin archivo. Se corre dentro del contenedor de la API (en `~/mollendo`):
+**Carga masiva (opcional, para probar con volumen):** `prisma/carga-masiva-demo.ts` agrega 480 personas DEMO más (números `995xxxxx`, repartidas en las empresas DEMO; `CANTIDAD=` para otra cantidad y `PREFIJO=996`, `997`… para sumar otra tanda sin borrar la anterior: `docker compose exec -T -e PREFIJO=996 -e CANTIDAD=1500 api npx tsx prisma/carga-masiva-demo.ts`) con sus documentos (algunas de baja, sin documentos, con documentos vencidos o por vencer) y sus ingresos y salidas de los últimos 30 días y de hoy. Escribe directo en la base de datos, **sin pasar por la API**: no registra a nadie en el G4 Pro. Sin fotos y con documentos sin archivo. Se corre dentro del contenedor de la API (en `~/mollendo`):
 
 ```bash
-docker compose -f docker-compose.prod.yml cp mollendo-api/prisma/carga-masiva-demo.ts api:/app/prisma/
-docker compose -f docker-compose.prod.yml exec -T api npx tsx prisma/carga-masiva-demo.ts
+docker compose cp mollendo-api/prisma/carga-masiva-demo.ts api:/app/prisma/
+docker compose exec -T api npx tsx prisma/carga-masiva-demo.ts
 ```
 
 Se borra con el mismo `limpiar-demo.sh` (son personas de las empresas DEMO y eventos del molinete "DEMO").
@@ -579,7 +382,7 @@ Se borra con el mismo `limpiar-demo.sh` (son personas de las empresas DEMO y eve
 1. Personas y documentos sin fotos ni eventos: `SIN_FOTOS=1` y sin `DEVICE_API_KEY`.
 2. Historial con el día de hoy hasta la hora actual, escrito directo en la base: `INCLUIR_HOY=1`. Con un túnel SSH (`ssh -L 13001:localhost:3001 -L 15432:<IP del contenedor db>:5432 …`) se usa `API_URL=http://localhost:13001/api/v1` y `DATABASE_URL=postgresql://mollendo:<DB_PASSWORD>@localhost:15432/mollendo_control_acceso`.
 
-**Borrar** (en el servidor, dentro de `~/mollendo`): borra las empresas, personas, documentos, fotos, eventos y auditoría DEMO, y los tipos de documento que queden sin uso.
+**Borrar** (en el servidor, dentro de la carpeta del entorno): borra las empresas, personas, documentos, fotos, eventos y auditoría DEMO, y los tipos de documento que queden sin uso.
 
 ```bash
 sudo sh mollendo-api/prisma/limpiar-demo.sh
@@ -593,11 +396,11 @@ Para que cualquiera pueda ver el portal desde internet, sin Tailscale ni estar e
 
 ```bash
 # Encender
-sudo docker compose -f docker-compose.prod.yml --profile muestra up -d muestra
+sudo docker compose --profile muestra up -d muestra
 # Ver el enlace (https://….trycloudflare.com)
-sudo docker compose -f docker-compose.prod.yml logs muestra | grep trycloudflare
+sudo docker compose logs muestra | grep trycloudflare
 # Apagar (el enlace deja de funcionar)
-sudo docker compose -f docker-compose.prod.yml --profile muestra rm -sf muestra
+sudo docker compose --profile muestra rm -sf muestra
 ```
 
 - El enlace **cambia cada vez** que se enciende.
@@ -621,7 +424,7 @@ El lector viene de fábrica en modo USB (teclado): así pita al leer, pero no en
 
 ### Configurar el servidor
 
-En `~/mollendo/.env`, la ruta fija del adaptador (no cambia aunque se conecten otros USB). Se ve con `ls /dev/serial/by-id/`:
+En el `.env` del entorno que tiene los lectores (`deploy/controlador/.env` o `deploy/garita/.env`), la ruta fija del adaptador (no cambia aunque se conecten otros USB). Se ve con `ls /dev/serial/by-id/`:
 
 ```bash
 LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_FQCLb114J19-if00-port0
@@ -629,7 +432,7 @@ LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/usb-Prolific_Technology_Inc._US
 # LECTOR_DNI_BAUDIOS=115200                              (por defecto)
 ```
 
-Después: `sudo docker compose -f docker-compose.prod.yml up -d`. Sin estas variables, el sistema no abre ningún puerto (así funciona en un servidor sin lectores, como AWS).
+Después: `sudo docker compose up -d`. Sin estas variables, el sistema no abre ningún puerto (así funciona en un servidor sin lectores, como AWS).
 
 Cómo accede el contenedor: ve el `/dev` del servidor en solo lectura (`/dev-servidor`) y solo tiene permiso para puertos serie USB (`device_cgroup_rules`: ttyUSB y ttyACM). Busca el lector por su ruta fija cada vez que reintenta, así se recupera solo aunque al desconectar y volver a conectar el adaptador Linux le cambie el número (`ttyUSB0` ↔ `ttyUSB1`).
 
@@ -661,7 +464,7 @@ A diferencia de los relés (que venían todos con la misma serie y hubo que camb
 - Los adaptadores se pueden conectar **en cualquier puerto USB** de la mini PC: el sistema los encuentra igual (también si Linux les cambia el número, `ttyUSB0`, `ttyUSB1`…).
 - Lo que importa es que **cada lector siga conectado a su propio adaptador**. Si se intercambian los adaptadores entre los lectores, el de ingreso pasaría a registrar salidas y al revés.
 - **Etiquetar cada adaptador** ("INGRESO" / "SALIDA") para que no se crucen al reinstalar.
-- Si se **reemplaza un adaptador** por uno nuevo, hay que poner su ruta en `.env` (`LECTOR_DNI_INGRESO_DISPOSITIVO` o `LECTOR_DNI_SALIDA_DISPOSITIVO`, ver `ls /dev/serial/by-id/`) y ejecutar `sudo docker compose -f docker-compose.prod.yml up -d`.
+- Si se **reemplaza un adaptador** por uno nuevo, hay que poner su ruta en `.env` (`LECTOR_DNI_INGRESO_DISPOSITIVO` o `LECTOR_DNI_SALIDA_DISPOSITIVO`, ver `ls /dev/serial/by-id/`) y ejecutar `sudo docker compose up -d`.
 - La punta **negra** (energía) puede ir en cualquier USB: solo alimenta al lector.
 
 ### Carné de extranjería y pasaporte (pendiente)
@@ -670,7 +473,7 @@ Hoy los lectores **solo reconocen el DNI** (código de barras del reverso: 8 dí
 
 - **Carné de extranjería:** no se pudo probar porque no se tenía uno. Cuando haya uno:
   1. Pasarlo por el lector de ingreso o de salida.
-  2. Si el lector pita, ver lo que envió en el registro del backend: `sudo docker compose -f docker-compose.prod.yml logs --since 5m api | grep "se ignoró una lectura"`. Aparece el contenido del código de barras, por ejemplo `se ignoró una lectura que no es un DNI (9 caracteres): "000123456"`.
+  2. Si el lector pita, ver lo que envió en el registro del backend: `sudo docker compose logs --since 5m api | grep "se ignoró una lectura"`. Aparece el contenido del código de barras, por ejemplo `se ignoró una lectura que no es un DNI (9 caracteres): "000123456"`.
   3. Con ese formato, adaptar `extraerDocumento` en `mollendo-api/src/lectores-dni/lector-dni.util.ts` (y su test) para que reconozca el carné y lo registre con su tipo (`CE`).
   4. Si el lector **no pita**, no reconoce ese tipo de código: revisar en su folleto si hay que habilitar la simbología.
 - **Pasaporte:** normalmente **no tiene código de barras**, solo las líneas de la zona de lectura mecánica (MRZ), que este lector no lee. Si habrá personal con pasaporte, definir con el cliente otro medio (por ejemplo, que el vigilante registre el ingreso).
@@ -684,7 +487,7 @@ A diferencia de los relés, los **adaptadores ya vienen con series distintas de 
 | Cambio | Qué hay que hacer |
 |---|---|
 | **Mismo modelo** (Syble XB-7705H) | Configurarlo con el folleto: Factory Default → RS232 → 115200 → desenchufar y volver a enchufar la energía. Si se mantiene el adaptador, nada más. |
-| **Cambiar el adaptador** (cable blanco) | Poner su ruta nueva en `.env` (`ls /dev/serial/by-id/`) y `sudo docker compose -f docker-compose.prod.yml up -d`. |
+| **Cambiar el adaptador** (cable blanco) | Poner su ruta nueva en `.env` (`ls /dev/serial/by-id/`) y `sudo docker compose up -d`. |
 | **Otra marca, con salida serial** (RS232 o USB-COM) | **Normalmente sin cambiar el programa**: la mayoría de los lectores de códigos de barras en modo serial envían el número y un salto de línea, como este. Ajustar `LECTOR_DNI_BAUDIOS` si su velocidad no es 115200. Si envía otro formato (prefijos, más datos), se ajusta una sola función: `extraerDocumento` en `mollendo-api/src/lectores-dni/lector-dni.util.ts`. Un lector USB-COM aparece como `ttyACM` y ya está permitido. |
 | **Otra marca que solo funcione como teclado** (USB-HID, sin modo serial) | **Hay que agregar código** (el sistema lee puertos serie, no teclados). Mejor elegir lectores con modo **RS232 o USB-COM**. |
 
@@ -697,8 +500,8 @@ Instalados en la mini PC (04/10/2026): **ingreso** con el adaptador `...Serial_C
 1. **Hardware:** un **segundo adaptador USB-serial** (como el ATEN) para el cable DB9 del lector de salida. Su punta USB de energía va a otro puerto USB de la mini PC.
 2. **Configurar el lector** con el folleto, igual que el de ingreso: Factory Default → RS232 → 115200 → desenchufar y volver a enchufar la energía.
 3. **Identificar su adaptador** en la mini PC: `ls /dev/serial/by-id/`. Aparece una segunda ruta `usb-...-port0` (cada adaptador tiene su número de serie; la del ingreso es la que termina en `FQCLb114J19-if00-port0`).
-4. **Agregar en `~/mollendo/.env`:** `LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/<la ruta nueva>`.
-5. **Aplicar:** `sudo docker compose -f docker-compose.prod.yml up -d`.
+4. **Agregar en el `.env` del entorno (`deploy/controlador/.env` o `deploy/garita/.env`):** `LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/<la ruta nueva>`.
+5. **Aplicar:** `sudo docker compose up -d`.
 6. **Comprobar:** en el registro del backend, `Lector de DNI de salida conectado`. En **Sistema y APIs**, salida "Cable conectado". Al pasar un DNI registrado, el Panel muestra una **salida autorizada**.
 
 Probado con el lector real: un DNI registrado queda como **salida autorizada** y uno no registrado como **salida denegada "No registrado"**, al instante. La salida autorizada activa el relé de salida (sección 8d).
@@ -736,7 +539,7 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 | Salida | DNI no registrado, sin conexión a internet (con controlador) | `DSA01` | Al instante: lo activa el controlador si el DNI no está en la lista del personal guardada |
 | Ingreso o salida | Autorizado | — | No se activa |
 
-**Configuración** (sin número de serie, el aviso no se usa). Va en el `.env` de la mini PC como servidor y en `controlador.env` como controlador:
+**Configuración** (sin número de serie, el aviso no se usa). Va en `deploy/garita/.env` (mini PC como servidor) o en `deploy/controlador/.env` (como controlador):
 
 | Variable | Valor | Para qué |
 |---|---|---|
@@ -755,7 +558,7 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 
 ### Configurar el servidor
 
-En `~/mollendo/.env`, el número de serie del módulo de cada molinete:
+En el `.env` del entorno que tiene los relés (`deploy/controlador/.env` o `deploy/garita/.env`), el número de serie del módulo de cada molinete:
 
 ```bash
 RELE_INGRESO_SERIE=ING01
@@ -765,9 +568,10 @@ RELE_SALIDA_SERIE=SAL01
 # RELE_USB_HIDRAW_MAJOR=234                    (ver `grep hidraw /proc/devices`)
 ```
 
-Después: `sudo docker compose -f docker-compose.prod.yml up -d`.
+Después: `sudo docker compose up -d`.
 
-- **Número de serie de un módulo:** con el módulo conectado, `sudo docker compose -f docker-compose.prod.yml exec api sh -c 'for h in /sys/class/hidraw/*; do /app/rele-usb /dev-servidor/$(basename $h) estado; done'` muestra la serie y el estado de cada uno (por ejemplo `S2OD2 0`).
+- Con la mini PC como **controlador**, en los comandos de esta sección va `controlador` en lugar de `api` (en `~/mollendo/deploy/controlador`).
+- **Número de serie de un módulo:** con el módulo conectado, `sudo docker compose exec api sh -c 'for h in /sys/class/hidraw/*; do /app/rele-usb /dev-servidor/$(basename $h) estado; done'` muestra la serie y el estado de cada uno (por ejemplo `S2OD2 0`).
 - Los módulos se pueden conectar **en cualquier USB**: el sistema los busca por su número de serie en cada apertura (también si se desconectan y se vuelven a conectar).
 - Sin número de serie, un molinete usa el único módulo conectado que no esté asignado al otro.
 - **Etiquetar cada módulo** ("INGRESO" / "SALIDA").
@@ -777,14 +581,14 @@ Después: `sudo docker compose -f docker-compose.prod.yml up -d`.
 Necesario al instalar un módulo nuevo, porque todos vienen con `S2OD2`. Conectar **solo** el módulo nuevo (o identificarlo por la hora en que se conectó: `dmesg -T | grep USBRelay`), ver su `hidrawN` con el comando anterior y ponerle una serie de 5 caracteres:
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml exec api /app/rele-usb /dev-servidor/hidraw1 serie ING01
+sudo docker compose exec api /app/rele-usb /dev-servidor/hidraw1 serie ING01
 ```
 
-Volver a leer las series para comprobarlo, poner la serie en `.env` y ejecutar `sudo docker compose -f docker-compose.prod.yml up -d`.
+Volver a leer las series para comprobarlo, poner la serie en `.env` y ejecutar `sudo docker compose up -d`.
 
 ### Cómo funciona
 
-El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila al construir la imagen), que envía los comandos HID al módulo, y tiene permiso solo para dispositivos HID en bruto (`hidraw`) además de los puertos serie (`device_cgroup_rules` en `docker-compose.prod.yml`).
+El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila al construir la imagen), que envía los comandos HID al módulo, y tiene permiso solo para dispositivos HID en bruto (`hidraw`) además de los puertos serie (`device_cgroup_rules` en `deploy/garita/docker-compose.yml` y `deploy/controlador/docker-compose.yml`).
 
 ### Comprobar
 
@@ -872,7 +676,7 @@ El sistema ya borra las tres tablas cuando le cambia el documento a una persona.
 
 ### Comprobar
 
-- En el registro del backend (`sudo docker compose -f docker-compose.prod.yml logs -f api`), al pasar un DNI en regla y completar rostro y alcohol:
+- En el registro del backend (`sudo docker compose logs -f api`), al pasar un DNI en regla y completar rostro y alcohol:
   ```
   DNI leído en ingreso: pendiente_verificacion
   G4 Pro: habilitar DNI 48058719
@@ -930,23 +734,11 @@ Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube 
   - **Con pruebas automáticas:** la salida con y sin lista, el envío posterior con su hora y los avisos DEN01 y DSA01.
   - **Pendiente:** la prueba física completa sin internet (DNI en el ingreso → DEN01; DNI de alguien registrado en la salida → se abre y llega después al historial).
 
-**Instalación en la mini PC** (en `~/mollendo`):
-
-1. `controlador.env` (permisos 600) con `SERVIDOR_URL` (la API en la nube, sin `/api/v1`), `DEVICE_API_KEY` (**la misma** del servidor) y las variables de lectores y relés (`LECTOR_DNI_*_DISPOSITIVO`, `RELE_*_SERIE`; plantilla: `deploy/controlador.env.example`).
-2. Que la API local de la mini PC (si sigue corriendo) no use los lectores: comentar `LECTOR_DNI_INGRESO_DISPOSITIVO` y `LECTOR_DNI_SALIDA_DISPOSITIVO` en `.env` y poner `MOLINETES_REMOTOS=true`; `docker compose -f docker-compose.prod.yml up -d api`.
-3. `docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build`
-4. Comprobar: `docker compose -f docker-compose.controlador.yml --env-file controlador.env logs --tail 20 controlador` debe decir "Lector de DNI … conectado", "Conectado al servidor" y "Lista del personal actualizada: N personas".
+**Instalación en la mini PC:** ver `deploy/controlador/README.md` (`.env` con `SERVIDOR_URL`, la **misma** `DEVICE_API_KEY` del servidor, lectores y relés; luego `docker compose up -d --build` en `~/mollendo/deploy/controlador`). El registro debe decir "Lector de DNI … conectado", "Conectado al servidor" y "Lista del personal actualizada: N personas". Los lectores no pueden estar abiertos a la vez por el controlador y por una API en la mini PC: si el entorno `garita` está levantado, hay que apagarlo antes (sección 8g).
 
 **Prueba del 07/10/2026 (AWS como nube):** controlador en la mini PC conectado a `http://54.147.214.38:3001`; AWS lo ve conectado con los dos lectores y los dos relés (ING01, SAL01) y la lista del personal; una salida registrada en AWS abrió el relé SAL01 de la mini PC; al reiniciar la API de AWS el controlador se reconectó solo. Configuración anterior de la mini PC guardada en `.env.antes-controlador-20261007-0953`.
 
-**Volver a la mini PC como servidor completo:**
-
-```bash
-cd ~/mollendo
-docker compose -f docker-compose.controlador.yml --env-file controlador.env down
-cp .env.antes-controlador-20261007-0953 .env
-docker compose -f docker-compose.prod.yml up -d api
-```
+**Volver a la mini PC como servidor completo:** ver la sección 8g.
 
 **Pendiente para el ingreso completo:** el G4 Pro sigue apuntando a la mini PC; para probar un ingreso con el servidor en la nube hay que cambiar en el equipo la dirección del servidor (Cloud Server) a la de la nube, y registrar allí al personal con su foto.
 
@@ -958,8 +750,8 @@ La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambia
 
 | | **A. Mini PC como servidor completo** (entorno `garita`) | **B. Mini PC como controlador (servidor en la nube)** (entornos `controlador` + `nube`) |
 |---|---|---|
-| Portal, API, base de datos | En la mini PC (`docker-compose.prod.yml`) | En la nube (hoy AWS `54.147.214.38`; después Azure) |
-| Lectores de DNI y relés | Los maneja la API de la mini PC | Los maneja el **controlador** de la mini PC (`docker-compose.controlador.yml`) |
+| Portal, API, base de datos | En la mini PC (`deploy/garita/`) | En la nube (`deploy/nube/`; hoy AWS `54.147.214.38`, después Azure) |
+| Lectores de DNI y relés | Los maneja la API de la mini PC | Los maneja el **controlador** de la mini PC (`deploy/controlador/`) |
 | G4 Pro apunta a (Cloud Server) | `192.168.0.165`, puerto `3001` | `54.147.214.38`, puerto `3001` (o el dominio de Azure) |
 | Desde dónde llega el G4 al servidor | Red local de la garita | Internet, desde la IP pública de la garita (`38.25.53.235` el 07/10/2026) |
 | Personal y fotos en el G4 | Los de la base de la mini PC | Los de la base de la nube |
@@ -967,6 +759,8 @@ La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambia
 **El G4 Pro habla con un solo servidor**: el que tenga configurado. El otro lo ve "Desconectado" (solo guarda la última vez que lo vio). Al cambiar de servidor, el nuevo le envía los comandos que tenía pendientes; revisarlos antes (`select … from comando_dispositivo where estado = 'pendiente'`).
 
 ### Estado actual (08/10/2026): configuración B con AWS
+
+Con la estructura de archivos anterior al 09/10/2026 (`controlador.env`, `.env` y `docker-compose.prod.yml` en `~/mollendo`); al actualizar cada equipo se pasa a `deploy/` como indica el README de su entorno.
 
 - **Mini PC:**
   - `controlador` corriendo con `controlador.env`: `SERVIDOR_URL=http://54.147.214.38:3001`, la clave de equipos de AWS, lectores y relés.
@@ -979,12 +773,11 @@ La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambia
 ### Pasar de B (controlador) a A (servidor completo)
 
 1. **En el G4 Pro** (menú de comunicación → servidor en la nube): dirección `192.168.0.165`, puerto `3001`.
-2. **En la mini PC** (`~/mollendo`):
+2. **En la mini PC**, con `deploy/garita/.env` ya preparado (lectores y relés activos, `MOLINETES_REMOTOS=false`; ver `deploy/garita/README.md`):
 
 ```bash
-docker compose -f docker-compose.controlador.yml --env-file controlador.env down
-cp .env.antes-controlador-20261007-0953 .env     # lectores activos, sin MOLINETES_REMOTOS
-docker compose -f docker-compose.prod.yml up -d api
+cd ~/mollendo/deploy/controlador && sudo docker compose down     # sin -v
+cd ~/mollendo/deploy/garita && sudo docker compose up -d --build
 ```
 
 3. **Comprobar** en "Sistema y APIs" de la mini PC:
@@ -995,13 +788,14 @@ docker compose -f docker-compose.prod.yml up -d api
 
 ### Pasar de A (servidor completo) a B (controlador)
 
-1. **En la mini PC:**
-   - en `.env`, comentar `LECTOR_DNI_INGRESO_DISPOSITIVO` y `LECTOR_DNI_SALIDA_DISPOSITIVO` y poner `MOLINETES_REMOTOS=true`;
-   - `docker compose -f docker-compose.prod.yml up -d api`;
-   - `docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build`.
+1. **En la mini PC** (los lectores no pueden estar abiertos por la API y el controlador a la vez):
 
-   Los lectores no pueden estar abiertos por la API y el controlador a la vez.
-2. **En el servidor en la nube:** `MOLINETES_REMOTOS=true` en `.env` y reiniciar la API.
+```bash
+cd ~/mollendo/deploy/garita && sudo docker compose down          # sin -v: los datos de la mini PC se conservan
+cd ~/mollendo/deploy/controlador && sudo docker compose up -d --build
+```
+
+2. **En el servidor en la nube:** `MOLINETES_REMOTOS=true` en `deploy/nube/.env` y `sudo docker compose up -d api`.
 3. **En el G4 Pro:** dirección y puerto del servidor en la nube.
 4. **Comprobar** en "Sistema y APIs" de la nube:
    - "Controlador: Conectado", con los lectores y relés que informa;
@@ -1015,7 +809,7 @@ docker compose -f docker-compose.prod.yml up -d api
 ## 9. Seguridad y recomendaciones
 
 1. **Contraseña del servidor**: cámbiala si alguna vez se compartió por chat o correo (`passwd` en el servidor). Lo recomendable es entrar con **llave SSH** y desactivar el acceso por contraseña.
-2. **El archivo `~/mollendo/.env`** tiene todas las claves. Debe tener permisos `600` (`chmod 600 .env`) y no copiarse a git, correos ni chats.
+2. **El `.env` de cada entorno** (`~/mollendo/deploy/<entorno>/.env`) tiene todas las claves. Debe tener permisos `600` (`chmod 600 .env`) y no copiarse a git, correos ni chats.
 3. **Contraseñas del portal**: cambiar las iniciales después del primer ingreso.
 4. **IP fija en la red local**: los equipos (G4 Pro, relé) necesitarán una dirección estable. Reservar la IP de la mini PC en el router o conectarla por cable.
 5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `docs/g4pro/Historial_Integracion_G4Pro.md`, Parte A, sección 7).
@@ -1072,7 +866,7 @@ No se probó el acceso desde un navegador en la red local (`192.168.0.165`).
 
 ## Anexo B. Variables del archivo .env
 
-Archivo `~/mollendo/.env` en el servidor, junto a `docker-compose.prod.yml`. La plantilla es `deploy/nube.env.example` en la nube y `deploy/garita.env.example` en la mini PC como servidor completo (ver [sección 0](#0-entornos)).
+Archivo `.env` en la carpeta del entorno (`~/mollendo/deploy/nube/.env` en la nube, `~/mollendo/deploy/garita/.env` en la mini PC como servidor completo). La plantilla es el `.env.example` de esa misma carpeta (ver [sección 0](#0-entornos)).
 
 | Variable | Obligatoria | Para qué sirve | Cómo generarla |
 |---|---|---|---|
@@ -1086,4 +880,4 @@ Archivo `~/mollendo/.env` en el servidor, junto a `docker-compose.prod.yml`. La 
 | `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@mollendo.local`. | Igual que la anterior |
 | `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@mollendo.local` y `vigilancia@mollendo.local`). | — |
 
-Valores fijos que no van en el `.env` (están en `docker-compose.prod.yml`): la duración de las sesiones (1 hora, renovable 7 días), el puerto del backend (`3001`), la carpeta de documentos y `SWAGGER=true`.
+Valores fijos que no van en el `.env` (están en el `docker-compose.yml` del entorno): la duración de las sesiones (1 hora, renovable 7 días), el puerto del backend (`3001`), la carpeta de documentos y `SWAGGER=true`.

@@ -1,59 +1,36 @@
 # Despliegue — por dónde empezar
 
-El sistema es el mismo código en todos lados; lo que cambia de un lugar a otro es el archivo de configuración (`.env`). Esta carpeta tiene **una plantilla por entorno**. La guía completa, paso a paso, está en [`Registro_Despliegue_MiniPC.md`](../docs/despliegue/Registro_Despliegue_MiniPC.md).
+El sistema es el mismo código en todos lados. Cada entorno tiene **su propia carpeta** con todo lo que necesita: su `docker-compose.yml`, la plantilla de su `.env` y un README con los pasos.
 
-## Los entornos
+| Entorno | Carpeta | Dónde | Qué corre |
+|---|---|---|---|
+| **Nube** | [`nube/`](nube/README.md) | Servidor en la nube (AWS hoy, Azure después) | Portal, API, base de datos y respaldos |
+| **Controlador** | [`controlador/`](controlador/README.md) | Mini PC de la garita | Solo lectores de DNI y relés de los molinetes, conectada a la nube |
+| **Garita** (opcional, hoy no se usa) | [`garita/`](garita/README.md) | Mini PC de la garita | Servidor completo, con lectores y relés por USB, sin depender de internet |
+| **Local** | [`local/`](local/README.md) | PC de desarrollo | PostgreSQL en Docker; API y portal con Node |
 
-| Entorno | Dónde | Qué corre | Plantilla | Se copia como |
-|---|---|---|---|---|
-| **Local** | PC de desarrollo | API, portal y PostgreSQL | [`mollendo-api/.env.example`](../mollendo-api/.env.example), [`mollendo-portal/.env.example`](../mollendo-portal/.env.example) | `mollendo-api/.env`, `mollendo-portal/.env.local` |
-| **Nube** | AWS hoy (`54.147.214.38`), Azure después | Portal, API, base de datos y respaldos | [`nube.env.example`](nube.env.example) | `~/mollendo/.env` |
-| **Controlador** | Mini PC de la garita | Solo lectores de DNI y relés de los molinetes | [`controlador.env.example`](controlador.env.example) | `~/mollendo/controlador.env` |
-| **Garita** (opcional, hoy no se usa) | Mini PC de la garita | Servidor completo, con lectores y relés por USB | [`garita.env.example`](garita.env.example) | `~/mollendo/.env` |
+Hoy se trabaja con **nube + controlador**.
 
-Hoy se trabaja con **nube + controlador**: el portal y la base están en AWS, y la mini PC de la garita solo lee los DNI y abre los molinetes.
+`comun/respaldo.sh` es el script del respaldo diario que usan la nube y la garita.
 
-## Cómo levantar cada uno
+## Igual en todos los servidores
 
-**Local**
 ```bash
-docker compose up -d                       # PostgreSQL (puerto 5433)
-cd mollendo-api && npx prisma migrate deploy && npm run start:dev    # API en :3001
-cd mollendo-portal && npm run dev                                    # portal en :3000
+cd ~/mollendo/deploy/<entorno>      # nube, controlador o garita
+cp .env.example .env                # solo la primera vez; completar los valores
+docker compose up -d --build
 ```
 
-**Nube** (en el servidor, carpeta `~/mollendo`)
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-**Controlador** (en la mini PC, carpeta `~/mollendo`)
-```bash
-docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build
-```
-
-**Garita** (en la mini PC, carpeta `~/mollendo`)
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-## Dónde está cada cosa en la guía
-
-| Tarea | Sección de `docs/despliegue/Registro_Despliegue_MiniPC.md` |
-|---|---|
-| Entornos y opciones de cada uno | 0. Entornos |
-| Primer despliegue de un servidor | 3. Primer despliegue |
-| Actualizar a una versión nueva | 5. Actualizar a una versión nueva |
-| Respaldos | 7. Respaldos |
-| Lectores de DNI y relés | 8c y 8d |
-| Terminal facial G4 Pro | 8e |
-| Mini PC como controlador | 8f |
-| Pasar de un modo a otro (garita ↔ controlador) | 8g |
-| Qué significa cada variable del `.env` | Anexo B |
+Docker toma solo el `docker-compose.yml` y el `.env` de la carpeta en la que estás: no hace falta `-f` ni `--env-file`.
 
 ## Reglas
 
-- **Los `.env` no se suben a git.** Tienen las claves de cada máquina. Si se agrega una opción nueva, se agrega también a la plantilla de cada entorno donde corresponda.
+- **El `.env` y `backups/` de cada carpeta no se suben a git** (`.gitignore`) y **nunca se borran** al actualizar: al reemplazar el código se borran solo `mollendo-api/` y `mollendo-portal/`.
 - **Todo en contenedores** en los servidores: solo Docker se instala en el sistema.
 - **La `DEVICE_API_KEY` del controlador es la misma que la del servidor en la nube.**
+- Si se agrega una opción nueva a la configuración, se agrega también al `.env.example` de cada entorno donde corresponda.
 - Si dos entornos se ven distintos con el mismo código, la diferencia está en su `.env` o en los datos de su base.
+
+## Guía completa
+
+[`docs/despliegue/Registro_Despliegue_MiniPC.md`](../docs/despliegue/Registro_Despliegue_MiniPC.md): respaldos y cómo restaurarlos, solución de problemas, lectores de DNI (8c), relés (8d), G4 Pro (8e), controlador y trabajo sin internet (8f), pasar de un modo a otro (8g) y el significado de cada variable del `.env` (anexo B).
