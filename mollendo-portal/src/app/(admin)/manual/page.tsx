@@ -6,6 +6,7 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import type { RolUsuario } from "@/lib/api/types";
+import { Captura, RecorridoGarita } from "./Figuras";
 
 interface SeccionManual {
   id: string;
@@ -37,10 +38,8 @@ const SECCIONES: SeccionManual[] = [
             autoriza o deniega cada uno. No modifica datos.
           </li>
         </ul>
-        <p className="text-xs text-gray-400">
-          Las empresas proveedoras no tienen cuenta propia: el administrador carga sus datos. No hay perfiles ni
-          puestos: el administrador registra empresa, personal y documentos, nada más.
-        </p>
+        <p>Así funciona el paso de cada persona por la garita:</p>
+        <RecorridoGarita />
       </div>
     ),
   },
@@ -60,6 +59,27 @@ const SECCIONES: SeccionManual[] = [
           pestaña cuentan solo lo que queda con la empresa y la búsqueda elegidas). Con mucho personal, la lista muestra
           las primeras 100 personas y agrega más a medida que bajas.
         </p>
+        <Captura
+          clave="personal"
+          alt="Pantalla Personal y documentos con la ficha de una persona abierta"
+          pasos={[
+            "Busca por nombre, DNI o empresa.",
+            "Filtra quién puede o no puede ingresar hoy.",
+            "Elige a una persona para abrir su ficha.",
+            <>
+              <strong>“+ Nuevo personal”</strong> registra a alguien con su foto y documentos.
+            </>,
+            "Sube o cambia la foto: la usa el terminal facial para reconocerlo.",
+            "Si hoy puede ingresar y, si no, por qué.",
+            <>
+              Cada documento: <strong>“Ver”</strong> el archivo, <strong>“Renovar”</strong> con la versión nueva o{" "}
+              <strong>“Eliminar”</strong>.
+            </>,
+            <>
+              <strong>“+ Agregar documento”</strong> agrega uno que no tenía.
+            </>,
+          ]}
+        />
         <ol className="list-decimal space-y-1 pl-5">
           <li>
             <strong>“+ Nuevo personal”</strong>: en un solo formulario se registra a la persona y sus documentos.
@@ -118,8 +138,7 @@ const SECCIONES: SeccionManual[] = [
         </ol>
         <p className="text-xs text-gray-400">
           El personal puede ingresar si no está dado de baja, tiene al menos un documento cargado y ninguno está
-          vencido. El ✔ supone que la prueba de alcohol saldrá conforme: el alcohol solo se sabe en garita. El sistema no
-          sabe qué documentos le corresponden a cada persona; que se suban los correctos depende del administrador.
+          vencido. El ✔ supone que la prueba de alcohol saldrá conforme: el alcohol solo se sabe en garita.
         </p>
       </div>
     ),
@@ -136,6 +155,19 @@ const SECCIONES: SeccionManual[] = [
           arriba de la tabla (el último evento queda resaltado unos segundos), y los contadores se actualizan solos. Los intentos con un documento
           no registrado también quedan en la tabla, como “No registrado”.
         </p>
+        <Captura
+          clave="vigilancia"
+          alt="Panel de vigilancia con el resumen del día y la lista de ingresos y salidas"
+          pasos={[
+            "Resumen del día: denegaciones, alcohol no conforme y documentos vencidos.",
+            "Busca un ingreso o salida por nombre o DNI.",
+            <>
+              Elige un día o <strong>“Todos los días”</strong>; <strong>“Hoy”</strong> vuelve al día actual.
+            </>,
+            "Resultado de cada paso por el molinete: Autorizado o Denegado.",
+            "El motivo cuando se deniega.",
+          ]}
+        />
         <p>
           La tabla muestra por defecto los movimientos de <strong>hoy</strong>. Con el calendario se puede ver otro día
           (“Hoy” vuelve al día actual) o “Todos los días”. El buscador encuentra por nombre, apellido o número de
@@ -193,6 +225,16 @@ const SECCIONES: SeccionManual[] = [
           resume en indicadores y gráficos lo que pasa en el terminal. Cada ingreso autorizado de una persona cuenta como
           una visita. Se actualiza solo con los ingresos y salidas (con mucho movimiento, como máximo cada 10 segundos).
         </p>
+        <Captura
+          clave="dashboard"
+          alt="Dashboard con el periodo elegido, los indicadores y los gráficos"
+          pasos={[
+            "Elige el periodo: hoy, últimos 7 días, este mes o uno personalizado.",
+            "Indicadores del periodo: presentes, visitas finalizadas y total de visitas.",
+            "Gráficos de visitas, ingresos y salidas.",
+            "Quienes llevan más de un día dentro sin registrar salida.",
+          ]}
+        />
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <strong>Presentes actualmente</strong>: todas las personas que están dentro ahora, sin importar cuándo
@@ -230,6 +272,20 @@ const SECCIONES: SeccionManual[] = [
           descarga la información del sistema en <strong>Excel</strong> o <strong>PDF</strong>: se elige el reporte, sus
           filtros y el botón de descarga.
         </p>
+        <Captura
+          clave="reportes"
+          alt="Pantalla de Reportes con la lista de reportes, sus filtros y los botones de descarga"
+          pasos={[
+            "Elige el reporte.",
+            "Ajusta sus filtros (empresa, estado o fechas, según el reporte).",
+            <>
+              <strong>“Descargar Excel”</strong> para trabajarlo en una hoja de cálculo…
+            </>,
+            <>
+              …o <strong>“Descargar PDF”</strong> para imprimirlo o enviarlo.
+            </>,
+          ]}
+        />
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <strong>Personal y empresas</strong>: el personal con su empresa, estado y si puede ingresar (con el motivo).
@@ -318,6 +374,15 @@ const SECCIONES: SeccionManual[] = [
           con su alcoholímetro (protocolo PUSH del fabricante), los lectores de DNI y los molinetes, indicando el estado
           de cada una. Está pensada para quien tenga que conectarlos o dar soporte técnico.
         </p>
+        <Captura
+          clave="sistema"
+          alt="Sistema y APIs con el aviso de fallas arriba y las tarjetas del servidor y de los equipos"
+          pasos={[
+            "El aviso de fallas: aparece arriba de todas las páginas cuando algo se cae.",
+            "Estado del servidor: backend, base de datos, clave de equipos y respaldos.",
+            "Estado de los equipos de la garita: controlador, terminal facial, lectores y relés.",
+          ]}
+        />
         <p>
           Si algo de esta pantalla se cae, aparece un <strong>aviso</strong> arriba de cualquier página (también para el
           vigilante): un recuadro rojo por equipo con qué falla, qué deja de funcionar y desde cuándo, y un enlace aquí.

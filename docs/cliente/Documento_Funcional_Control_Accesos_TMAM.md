@@ -275,7 +275,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 
 ### 4.8. Manual
 
-Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, reportes, cuenta y contraseña, auditoría y sistema. Se muestra una sección a la vez, elegida en el índice (o con "Anterior" y "Siguiente"); cada sección tiene su propio enlace (por ejemplo `/manual#reportes`).
+Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, reportes, cuenta y contraseña, auditoría y sistema. La introducción incluye un diagrama del recorrido de ingreso y de salida por la garita, y las secciones de uso diario muestran capturas de la pantalla con números que señalan cada parte y, debajo, qué hace cada una; un clic amplía la captura. Se muestra una sección a la vez, elegida en el índice (o con "Anterior" y "Siguiente"); cada sección tiene su propio enlace (por ejemplo `/manual#reportes`).
 
 ### 4.9. Características generales del portal
 

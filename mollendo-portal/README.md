@@ -7,6 +7,18 @@ Portal web del Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TM
 
 Hecho con Next.js 16, React 19, Tailwind CSS 4 y ApexCharts (gráficos del Dashboard). Toda la lógica y los datos están en el backend (`../mollendo-api`), que también genera los reportes.
 
+## Capturas del Manual
+
+Las capturas de la sección Manual (`public/manual/*.webp`) y la posición de sus números (`src/app/(admin)/manual/capturas.json`) se generan con un script que abre el portal local en un Chrome oculto, con datos de demostración. Si cambia una pantalla, se vuelven a sacar (con la API y el portal locales corriendo):
+
+```bash
+npm i --no-save puppeteer-core@24
+node scripts/capturas-manual.mjs
+npm prune
+```
+
+Qué se captura y qué señala cada número está al inicio de `scripts/capturas-manual.mjs`; el texto de cada número, en la sección correspondiente de `src/app/(admin)/manual/page.tsx`.
+
 ## Desarrollo
 
 Requisitos: Node.js 22 y npm 12, con el backend corriendo en `http://localhost:3001`.
