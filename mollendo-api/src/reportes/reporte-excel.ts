@@ -89,7 +89,9 @@ export async function generarExcel(reporte: Reporte, generado: Date): Promise<Bu
     columna.width = anchoColumna(reporte, i);
     if (c.tipo === 'fecha') columna.numFmt = 'dd/mm/yyyy';
     if (c.tipo === 'fechaHora') columna.numFmt = 'dd/mm/yyyy hh:mm';
-    if (c.tipo === 'numero') columna.alignment = { horizontal: 'right' };
+    // Todo a la izquierda, también los números, como el resto de las columnas.
+    columna.alignment = { horizontal: 'left' };
+    cabecera.getCell(i + 1).alignment = { vertical: 'middle', horizontal: 'left' };
   });
   if (reporte.filas.length > 0) {
     hoja.autoFilter = {
