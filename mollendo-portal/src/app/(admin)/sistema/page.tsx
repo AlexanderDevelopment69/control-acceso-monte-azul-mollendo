@@ -649,7 +649,7 @@ function CodeBlock({ title, code }: { title: string; code: string }) {
   return (
     <div>
       <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">{title}</p>
-      <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs leading-relaxed text-gray-200 dark:bg-black/40">
+      <pre className="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-700 dark:border-gray-800 dark:bg-black/40 dark:text-gray-200">
         <code>{code}</code>
       </pre>
     </div>
@@ -710,7 +710,7 @@ function FilaApiIntegracion({
                   <ul className="space-y-1">
                     {api.headers.map((h) => (
                       <li key={h}>
-                        <code className="rounded bg-gray-900 px-2 py-1 text-xs text-gray-200 dark:bg-black/40">{h}</code>
+                        <code className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700 dark:border-gray-800 dark:bg-black/40 dark:text-gray-200">{h}</code>
                       </li>
                     ))}
                   </ul>

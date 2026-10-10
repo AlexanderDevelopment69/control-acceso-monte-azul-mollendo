@@ -137,7 +137,7 @@ export function AvisoSistema() {
             aria-expanded={!cerrado}
             aria-label={cerrado ? "Mostrar detalle" : "Ocultar detalle"}
             title={cerrado ? "Mostrar detalle" : "Ocultar detalle"}
-            className="rounded-lg p-1.5 hover:bg-white/20"
+            className="p-1.5 focus:outline-none"
           >
             <ChevronDownIcon className={`size-4 transition-transform ${cerrado ? "" : "rotate-180"}`} />
           </button>
