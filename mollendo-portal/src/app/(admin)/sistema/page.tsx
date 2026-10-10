@@ -19,7 +19,6 @@ import type {
 import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
-import { RESPALDO_ATRASADO_MS } from "@/lib/problemasSistema";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { BellIcon, BoltIcon, BoxCubeIcon, BoxIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 
@@ -227,6 +226,9 @@ function EstadoBadge({ ok }: { ok: boolean }) {
 function ConfiguradoBadge({ ok }: { ok: boolean }) {
   return <Badge color={ok ? "success" : "warning"}>{ok ? "Configurado" : "No configurado"}</Badge>;
 }
+
+// Más de 26 horas sin respaldo automático: alguno falló (se hace uno por día). Igual que los avisos (mollendo-api/src/panel/avisos-sistema.ts).
+const RESPALDO_ATRASADO_MS = 26 * 60 * 60 * 1000;
 
 
 function formatearTamano(bytes: number): string {

@@ -12,6 +12,7 @@ import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
 import { ReleUsbService } from '../integraciones/rele-usb.service.js';
 import { ControladorGateway } from '../controlador-remoto/controlador.gateway.js';
 import { IntegracionesService } from '../integraciones/integraciones.service.js';
+import { avisosDelSistema } from './avisos-sistema.js';
 
 /** Controlador sin datos todavía (nunca informó): lectores y relés, incluidos los de aviso, figuran sin conexión. */
 const sinConfigurarLectores = () => {
@@ -77,7 +78,32 @@ export class PanelController {
   // conectado de verdad (llamó a /iclock/getrequest en los últimos 2 min).
   @Get('panel/estado-sistema')
   @Roles('administrador')
-  async estadoSistema() {
+  estadoSistema() {
+    return this.calcularEstadoSistema();
+  }
+
+  // Lo que está caído, para la franja que el portal muestra arriba de todas las
+  // páginas: también la ve el vigilante, para que pueda informarlo.
+  @Get('panel/avisos')
+  @Roles('administrador', 'vigilancia')
+  async avisos() {
+    const e = await this.calcularEstadoSistema();
+    return {
+      fecha: e.api.fecha,
+      avisos: avisosDelSistema({
+        fecha: e.api.fecha,
+        baseDeDatos: e.baseDeDatos,
+        claveEquiposConfigurada: e.integraciones.claveEquiposConfigurada,
+        respaldos: e.respaldos,
+        dispositivos: e.equipos.dispositivos,
+        lectoresDni: e.lectoresDni,
+        releMolinetes: e.releMolinetes,
+        controlador: e.controladorGarita,
+      }),
+    };
+  }
+
+  private async calcularEstadoSistema() {
     const inicio = Date.now();
     let baseDeDatos: { estado: 'up' | 'down'; latenciaMs: number };
     try {

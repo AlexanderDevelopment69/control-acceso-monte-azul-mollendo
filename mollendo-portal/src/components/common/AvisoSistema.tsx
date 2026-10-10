@@ -6,43 +6,85 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import { problemasDelSistema } from "@/lib/problemasSistema";
-import { AlertIcon, CloseLineIcon } from "@/icons";
+import type { AvisoSistema as Aviso } from "@/lib/api/types";
+import {
+  AlertIcon,
+  BellIcon,
+  BoltIcon,
+  BoxCubeIcon,
+  BoxIcon,
+  ChevronDownIcon,
+  DocsIcon,
+  FolderIcon,
+  LockIcon,
+  PlugInIcon,
+} from "@/icons";
 
 const CADA_MS = 30_000;
-const CLAVE_OCULTO = "aviso-sistema-oculto";
+const CLAVE_CONTRAIDO = "aviso-sistema-contraido";
+
+/** El mismo ícono que la tarjeta de ese equipo en "Sistema y APIs". */
+const ICONO: Record<Aviso["tipo"], React.ComponentType<{ className?: string }>> = {
+  "base-de-datos": BoxCubeIcon,
+  clave: LockIcon,
+  respaldos: FolderIcon,
+  controlador: BoxIcon,
+  terminal: PlugInIcon,
+  lector: DocsIcon,
+  rele: BoltIcon,
+  aviso: BellIcon,
+  servidor: AlertIcon,
+};
+
+const SIN_SERVIDOR: Aviso = {
+  tipo: "servidor",
+  equipo: "Servidor",
+  estado: "Sin respuesta",
+  impacto: "No se puede consultar el estado de los equipos",
+  desde: null,
+  gravedad: "critico",
+};
+
+const fechaCorta = (iso: string) => new Date(iso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
 
 /**
- * Franja arriba de todas las páginas del administrador cuando algo de
- * "Sistema y APIs" está caído, para verlo sin entrar a esa pantalla. Se puede
- * ocultar; vuelve a aparecer si cambia lo que está caído.
+ * Panel arriba de todas las páginas cuando algo de "Sistema y APIs" está caído:
+ * el administrador lo ve sin entrar a esa pantalla y el vigilante puede
+ * informarlo. Se revisa cada 30 s y desaparece solo cuando todo vuelve. Se
+ * puede contraer al encabezado; se vuelve a abrir si cambia lo que falla.
  */
 export function AvisoSistema() {
   const { user } = useAuth();
   const pathname = usePathname();
   const esAdmin = user?.rol === "administrador";
-  const [problemas, setProblemas] = useState<string[]>([]);
-  // La franja recién aparece cuando llega el primer estado, así que leer aquí no descuadra la hidratación.
-  const [oculto, setOculto] = useState<string | null>(() => {
+  const [avisos, setAvisos] = useState<Aviso[]>([]);
+  const [revisado, setRevisado] = useState<Date | null>(null);
+  // El panel recién aparece cuando llega la primera respuesta, así que leer aquí no descuadra la hidratación.
+  const [contraido, setContraido] = useState<string | null>(() => {
     try {
-      return sessionStorage.getItem(CLAVE_OCULTO);
+      return sessionStorage.getItem(CLAVE_CONTRAIDO);
     } catch {
-      return null; // Sin almacenamiento (modo privado o en el servidor): no se recuerda el "ocultar".
+      return null; // Sin almacenamiento (modo privado o en el servidor): no se recuerda.
     }
   });
 
   useEffect(() => {
-    if (!esAdmin) return;
+    if (!user) return;
     let activo = true;
     const revisar = () =>
       panelApi
-        .estadoSistema()
-        .then((estado) => activo && setProblemas(problemasDelSistema(estado)))
+        .avisos()
+        .then((r) => {
+          if (!activo) return;
+          setAvisos(r.avisos);
+          setRevisado(new Date());
+        })
         .catch((err) => {
           if (!activo) return;
           // Sin sesión o sin permiso no es una caída; sin respuesta del backend, sí.
           if (err instanceof ApiError && err.status < 500) return;
-          setProblemas(["No se puede contactar con el backend"]);
+          setAvisos([SIN_SERVIDOR]);
+          setRevisado(new Date());
         });
     revisar();
     const id = setInterval(revisar, CADA_MS);
@@ -50,38 +92,110 @@ export function AvisoSistema() {
       activo = false;
       clearInterval(id);
     };
-  }, [esAdmin]);
+  }, [user]);
 
-  const firma = problemas.join(" · ");
-  if (!esAdmin || problemas.length === 0 || oculto === firma) return null;
+  if (avisos.length === 0) return null;
 
-  const ocultar = () => {
-    setOculto(firma);
+  const firma = avisos.map((a) => `${a.equipo}:${a.estado}`).join("|");
+  const cerrado = contraido === firma;
+  const criticos = avisos.filter((a) => a.gravedad === "critico").length;
+  const rojo = criticos > 0;
+
+  const alternar = () => {
+    const valor = cerrado ? null : firma;
+    setContraido(valor);
     try {
-      sessionStorage.setItem(CLAVE_OCULTO, firma);
+      if (valor) sessionStorage.setItem(CLAVE_CONTRAIDO, valor);
+      else sessionStorage.removeItem(CLAVE_CONTRAIDO);
     } catch {
       // Ver arriba.
     }
   };
 
+  const titulo =
+    avisos.length === 1
+      ? rojo
+        ? "1 equipo con problemas"
+        : "1 advertencia del sistema"
+      : `${avisos.length} ${rojo ? "equipos con problemas" : "advertencias del sistema"}`;
+
   return (
-    <div
+    <section
       role="alert"
-      className="mb-4 flex items-start gap-3 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-500/30 dark:bg-error-500/15 dark:text-error-400 md:mb-6"
+      aria-label="Avisos del sistema"
+      className={`mb-4 overflow-hidden rounded-2xl border bg-white shadow-theme-xs dark:bg-white/[0.03] md:mb-6 ${
+        rojo ? "border-error-200 dark:border-error-500/30" : "border-warning-200 dark:border-warning-500/30"
+      }`}
     >
-      <AlertIcon className="mt-0.5 size-5 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="font-medium">{problemas.length === 1 ? "Hay un problema en el sistema" : `Hay ${problemas.length} problemas en el sistema`}</p>
-        <p className="mt-0.5">{firma}</p>
-        {pathname !== "/sistema" && (
-          <Link href="/sistema" className="mt-1 inline-block font-medium underline underline-offset-2">
-            Ver Sistema y APIs
-          </Link>
+      {/* Encabezado */}
+      <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-white sm:px-5 ${rojo ? "bg-error-500" : "bg-warning-500"}`}>
+        <span className="relative flex size-2.5 shrink-0" aria-hidden>
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-white opacity-75" />
+          <span className="relative inline-flex size-2.5 rounded-full bg-white" />
+        </span>
+        <p className="font-semibold">{titulo}</p>
+        {rojo && criticos < avisos.length && (
+          <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
+            {criticos} {criticos === 1 ? "crítico" : "críticos"}
+          </span>
         )}
+        {revisado && <span className="text-xs text-white/80">Revisado {revisado.toLocaleTimeString("es-PE")}</span>}
+        <div className="ml-auto flex items-center gap-2">
+          {esAdmin && pathname !== "/sistema" && (
+            <Link href="/sistema" className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-medium hover:bg-white/25">
+              Ver Sistema y APIs
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={alternar}
+            aria-expanded={!cerrado}
+            aria-label={cerrado ? "Mostrar detalle" : "Ocultar detalle"}
+            title={cerrado ? "Mostrar detalle" : "Ocultar detalle"}
+            className="rounded-lg p-1.5 hover:bg-white/20"
+          >
+            <ChevronDownIcon className={`size-4 transition-transform ${cerrado ? "" : "rotate-180"}`} />
+          </button>
+        </div>
       </div>
-      <button type="button" onClick={ocultar} title="Ocultar" aria-label="Ocultar aviso" className="shrink-0 rounded p-1 hover:bg-error-100 dark:hover:bg-error-500/20">
-        <CloseLineIcon className="size-4" />
-      </button>
-    </div>
+
+      {/* Un recuadro por equipo */}
+      {!cerrado && (
+        <>
+          <ul className="grid gap-px bg-gray-100 dark:bg-gray-800 sm:grid-cols-2 xl:grid-cols-3">
+            {avisos.map((a) => {
+              const Icono = ICONO[a.tipo];
+              const critico = a.gravedad === "critico";
+              return (
+                <li key={`${a.equipo}-${a.estado}`} className="flex gap-3 bg-white p-4 dark:bg-gray-900">
+                  <span
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-xl [&_svg]:size-5 ${
+                      critico
+                        ? "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400"
+                        : "bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-warning-400"
+                    }`}
+                  >
+                    <Icono />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">{a.equipo}</p>
+                    <p className={`text-sm font-medium ${critico ? "text-error-600 dark:text-error-400" : "text-warning-600 dark:text-warning-400"}`}>
+                      {a.estado}
+                    </p>
+                    <p className="mt-0.5 text-xs leading-snug text-gray-500 dark:text-gray-400">{a.impacto}</p>
+                    {a.desde && <p className="mt-1 text-xs text-gray-400">Última vez en línea: {fechaCorta(a.desde)}</p>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {!esAdmin && (
+            <p className="border-t border-gray-100 px-4 py-2.5 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400 sm:px-5">
+              Informa al administrador o al soporte técnico.
+            </p>
+          )}
+        </>
+      )}
+    </section>
   );
 }

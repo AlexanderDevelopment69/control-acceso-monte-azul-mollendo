@@ -6,6 +6,7 @@ import type {
   DocumentoPersona,
   Empresa,
   EstadoSistema,
+  AvisosSistema,
   EventoAcceso,
   FiltrosLista,
   IngresoEnEspera,
@@ -121,6 +122,8 @@ export const panelApi = {
   permanencia: (params: { pagina?: number; porPagina?: number } = {}) =>
     apiRequest<Paginado<PersonaPermanencia>>(`/panel/dashboard/permanencia${consulta(params)}`),
   estadoSistema: () => apiRequest<EstadoSistema>("/panel/estado-sistema"),
+  /** Lo que está caído, para la franja de arriba (administrador y vigilancia). */
+  avisos: () => apiRequest<AvisosSistema>("/panel/avisos"),
 };
 
 // ---- integraciones ----

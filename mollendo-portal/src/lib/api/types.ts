@@ -178,6 +178,21 @@ export interface EstadoSistema {
   websocket: { namespace: string };
 }
 
+/** Algo caído de "Sistema y APIs", para la franja de arriba (ver mollendo-api/src/panel/avisos-sistema.ts). */
+export interface AvisoSistema {
+  tipo: "base-de-datos" | "clave" | "respaldos" | "controlador" | "terminal" | "lector" | "rele" | "aviso" | "servidor";
+  equipo: string;
+  estado: string;
+  impacto: string;
+  desde: string | null;
+  gravedad: "critico" | "advertencia";
+}
+
+export interface AvisosSistema {
+  fecha: string;
+  avisos: AvisoSistema[];
+}
+
 /** Resultado de una sincronización con los G4 Pro (manual o diaria). */
 export interface ResultadoSincronizacionG4 {
   simulacion: boolean;

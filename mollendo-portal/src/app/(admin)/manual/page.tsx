@@ -174,6 +174,11 @@ const SECCIONES: SeccionManual[] = [
           abre el molinete; no se exige un ingreso previo. Si el servidor deja de
           responder, aparece un aviso arriba a la derecha: mientras dure, no se valida ningún ingreso.
         </p>
+        <p>
+          Si se cae un equipo de la garita (controlador, terminal facial, lector de DNI o relé), aparece un{" "}
+          <strong>aviso rojo</strong> arriba de la página con el equipo, qué deja de funcionar y desde cuándo:{" "}
+          <strong>infórmalo al administrador o al soporte técnico</strong>. Desaparece solo cuando el equipo vuelve.
+        </p>
       </div>
     ),
   },
@@ -314,9 +319,10 @@ const SECCIONES: SeccionManual[] = [
           de cada una. Está pensada para quien tenga que conectarlos o dar soporte técnico.
         </p>
         <p>
-          Si algo de esta pantalla se cae, aparece una <strong>franja roja</strong> arriba de cualquier página, con lo que
-          está fallando y un enlace aquí. Se revisa cada 30 segundos y desaparece sola cuando todo vuelve a estar en
-          línea; con la ✕ se oculta hasta que falle algo distinto.
+          Si algo de esta pantalla se cae, aparece un <strong>aviso</strong> arriba de cualquier página (también para el
+          vigilante): un recuadro por equipo con qué falla, qué deja de funcionar y desde cuándo, y un enlace aquí. Es rojo
+          si bloquea ingresos o salidas y ámbar si es una advertencia. Se revisa cada 30 segundos y desaparece solo
+          cuando todo vuelve a estar en línea; con la flecha se contrae hasta que falle algo distinto.
         </p>
       </div>
     ),
