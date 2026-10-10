@@ -64,6 +64,7 @@ export function PersonaFicha({
   const [errorEstado, setErrorEstado] = useState<string | null>(null);
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [verFoto, setVerFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
 
   const obtener = useCallback(() => personasApi.get(personaId), [personaId]);
@@ -196,7 +197,26 @@ export function PersonaFicha({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="space-y-2 text-center">
-              <FotoGuardada personaId={persona.id} tieneFoto={!!persona.fotoUrl} version={persona.fotoUrl} tamano="size-24" />
+              {persona.fotoUrl ? (
+                // Con foto: al pasar el mouse, "Ver foto" encima; un clic la muestra en grande.
+                <button
+                  type="button"
+                  onClick={() => setVerFoto(true)}
+                  title="Ver foto"
+                  className="group relative block overflow-hidden rounded-xl focus:outline-none"
+                >
+                  <FotoGuardada personaId={persona.id} tieneFoto version={persona.fotoUrl} tamano="size-24" />
+                  <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gray-900/55 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <span className="text-[11px] font-medium">Ver foto</span>
+                  </span>
+                </button>
+              ) : (
+                <FotoGuardada personaId={persona.id} tieneFoto={false} tamano="size-24" />
+              )}
               <button
                 type="button"
                 disabled={subiendoFoto}
@@ -242,6 +262,17 @@ export function PersonaFicha({
         </div>
         {errorFoto && <ErrorBanner className="mt-4">{errorFoto}</ErrorBanner>}
         {errorEstado && !confirmarEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
+        <Modal isOpen={verFoto} onClose={() => setVerFoto(false)} className="max-w-md p-6 sm:p-8">
+          <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">
+            {persona.nombres} {persona.apellidos}
+          </h2>
+          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+            {persona.tipoDocumentoIdentidad} {persona.numeroDocumento}
+          </p>
+          <div className="flex justify-center">
+            <FotoGuardada personaId={persona.id} tieneFoto={!!persona.fotoUrl} version={persona.fotoUrl} tamano="size-72 sm:size-80" />
+          </div>
+        </Modal>
         {!persona.fotoUrl && (
           <div className="mt-4 rounded-lg bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
             Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Usa “Subir foto”.

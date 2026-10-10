@@ -89,7 +89,7 @@ const SECCIONES: SeccionManual[] = [
             <>
               <strong>“+ Nuevo personal”</strong> registra a alguien con su foto y documentos.
             </>,
-            "Sube o cambia la foto: la usa el terminal facial para reconocerlo.",
+            "Ve la foto en grande, súbela o cámbiala: la usa el terminal facial para reconocerlo.",
             "Si hoy puede ingresar y, si no, por qué.",
             <>
               Cada documento: <strong>“Ver”</strong> el archivo, <strong>“Renovar”</strong> con la versión nueva o{" "}
