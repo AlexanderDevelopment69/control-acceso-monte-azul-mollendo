@@ -17,8 +17,8 @@ Hoy se trabaja con **nube + controlador**.
 
 ```bash
 cd ~/mollendo/deploy/<entorno>      # nube, controlador o garita
-cp .env.example .env                # solo la primera vez; completar los valores
-docker compose up -d --build
+# solo la primera vez: crear el .env (cada README dice cómo)
+sudo docker compose up -d --build
 ```
 
 Docker toma solo el `docker-compose.yml` y el `.env` de la carpeta en la que estás: no hace falta `-f` ni `--env-file`.

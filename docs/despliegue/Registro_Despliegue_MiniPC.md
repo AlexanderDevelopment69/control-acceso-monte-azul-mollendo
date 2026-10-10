@@ -1,9 +1,9 @@
-# Guía de despliegue en la mini PC
+# Guía de despliegue y operación
 
 Proyecto: Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM) · Alcance base
-Última actualización: 28/09/2026
+Última actualización: 09/10/2026
 
-Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend y base de datos) en la mini PC, cómo actualizarlo y cómo operarlo. Está pensada para que la siga cualquier persona con acceso al servidor, aunque no haya participado en el desarrollo. Al final (anexo A) está el registro del primer despliegue.
+Esta guía explica cómo desplegar el sistema (portal web, backend y base de datos) en cada entorno —el servidor en la nube, la mini PC de la garita como controlador y, como opción, la mini PC como servidor completo—, cómo actualizarlo y cómo operarlo. Los pasos de despliegue de cada entorno están en el README de su carpeta en `deploy/`; esta guía reúne todo lo demás. Está pensada para que la siga cualquier persona con acceso al servidor, aunque no haya participado en el desarrollo. Al final (anexo A) está el registro del primer despliegue.
 
 > **Esta guía no incluye contraseñas ni claves, porque se versiona en git.** Están solo en cada servidor, en el `.env` de su entorno (`~/mollendo/deploy/<entorno>/.env`); quien tenga acceso SSH puede verlas con `cat`. Para desplegar o actualizar no hace falta conocerlas.
 
@@ -26,6 +26,8 @@ Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend
 8c. [Lectores de DNI](#8c-lectores-de-dni)
 8d. [Relés de los molinetes](#8d-relés-de-los-molinetes)
 8e. [Terminal facial G4 Pro](#8e-terminal-facial-g4-pro)
+8f. [Mini PC como controlador (servidor en la nube)](#8f-mini-pc-como-controlador-servidor-en-la-nube)
+8g. [Configuraciones de la mini PC y del G4 Pro (para pruebas)](#8g-configuraciones-de-la-mini-pc-y-del-g4-pro-para-pruebas)
 9. [Seguridad y recomendaciones](#9-seguridad-y-recomendaciones)
 - [Anexo A. Registro del primer despliegue (28/09/2026)](#anexo-a-registro-del-primer-despliegue-28092026)
 - [Anexo B. Variables del archivo .env](#anexo-b-variables-del-archivo-env)
@@ -110,7 +112,18 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 
 ## 2. Requisitos
 
-### 2.1. El servidor (mini PC)
+### 2.1. El servidor en la nube (entorno `nube`)
+
+| Requisito | Valor actual |
+|---|---|
+| Servidor | AWS EC2, Ubuntu (después Azure) |
+| Disco | 48 GB (11 GB usados al 10/10/2026) |
+| Usuario | `ubuntu`, con permisos de `sudo` |
+| Acceso | SSH con llave (`ssh -i ~/.ssh/aws-ec2 ubuntu@54.147.214.38`) |
+| Puertos que deben estar abiertos (Security Group) | `22` (SSH), `3000` (portal) y `3001` (API: G4 Pro y controlador) |
+| Dirección | `54.147.214.38` |
+
+### 2.2. La mini PC de la garita (entornos `controlador` y `garita`)
 
 | Requisito | Valor actual |
 |---|---|
@@ -118,23 +131,23 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 | Memoria / disco | Mínimo 4 GB de RAM y 20 GB libres (tiene 6,8 GB y 98 GB) |
 | Usuario | Uno con permisos de `sudo` (hoy: `ma-admin`) |
 | Acceso | SSH (puerto 22) |
-| Internet | Necesario al construir las imágenes (descarga Docker, imágenes base y dependencias) |
+| Internet | Como controlador, siempre (habla con el servidor en la nube). Como servidor completo, solo al construir las imágenes |
 | Puertos libres | `3000` y `3001` |
 
 Direcciones actuales:
 - **Tailscale:** `100.78.153.33` (sirve desde cualquier lugar con Tailscale activo)
 - **Red local:** `192.168.0.165` (Wi-Fi; puede cambiar si el router la reasigna, ver sección 9)
 
-### 2.2. La PC desde donde se despliega
+### 2.3. La PC desde donde se despliega
 
 - **Git** (para empaquetar el código).
 - **Cliente SSH** (`ssh` y `scp`). Windows 10/11 ya los trae: se usan desde PowerShell o desde Git Bash.
 - Acceso de red al servidor (misma red local o Tailscale conectado).
 - El proyecto clonado, con los cambios a desplegar **ya confirmados con commit** (el paquete se arma desde el último commit).
 
-### 2.3. Datos que necesitas
+### 2.4. Datos que necesitas
 
-- Usuario y contraseña SSH del servidor.
+- Acceso SSH al servidor: llave `aws-ec2` para la nube; usuario y contraseña (o llave) para la mini PC.
 - Para un primer despliegue: nada más (las claves se generan en el servidor).
 - Para una actualización: nada más (las claves ya están en el `.env` del entorno, `~/mollendo/deploy/<entorno>/.env`).
 
@@ -185,10 +198,10 @@ ls backups
 
 | Qué abrir | Qué debe pasar |
 |---|---|
-| `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
+| Nube: `http://54.147.214.38:3000`. Mini PC como servidor: `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
 | Entrar con `admin@mollendo.local` y la contraseña inicial | Entra a "Personal y documentos" |
 | Menú **Sistema y APIs** | Backend y base de datos "En línea"; clave de equipos "Configurado" |
-| Botón de Swagger en Sistema y APIs (o `http://100.78.153.33:3000/api/docs`) | Abre la documentación de la API |
+| Botón de Swagger en Sistema y APIs (o `http://<servidor>:3000/api/docs`) | Abre la documentación de la API |
 | Menú **Panel de vigilancia** | Carga sin errores; sin el aviso "El servidor no responde" |
 | Menú **Dashboard** | Muestra los indicadores y los gráficos del día (vacíos si todavía no hay ingresos) |
 | Menú **Reportes** → "Personal y empresas" → **Descargar Excel** y **Descargar PDF** | Se descargan los dos archivos con el personal registrado |
@@ -312,7 +325,7 @@ rm -rf /tmp/restaurar
 
 Para un respaldo `.sql.gz` (solo base de datos), el paso 2 es `gunzip -c backups/ARCHIVO.sql.gz | dc exec -T db psql -q -U mollendo -d mollendo_control_acceso` y no hay paso 3. Luego verifica como en la sección 4.
 
-### 7.4. Copiar los respaldos fuera de la mini PC
+### 7.4. Copiar los respaldos fuera del servidor
 
 Los respaldos quedan en el mismo disco que la base de datos: si el disco falla, se pierden los dos. Cópialos con regularidad a otra computadora o a un disco externo. Desde la PC:
 
@@ -813,9 +826,10 @@ cd ~/mollendo/deploy/controlador && sudo docker compose up -d --build
 3. **Contraseñas del portal**: cambiar las iniciales después del primer ingreso.
 4. **IP fija en la red local**: los equipos (G4 Pro, relé) necesitarán una dirección estable. Reservar la IP de la mini PC en el router o conectarla por cable.
 5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `docs/g4pro/Historial_Integracion_G4Pro.md`, Parte A, sección 7).
-6. **Respaldos fuera de la mini PC**, con regularidad (7.4).
+6. **Respaldos fuera del servidor**, con regularidad (7.4).
 7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
-8. **Integración de equipos**: los lectores de DNI (8c), los relés de los molinetes (8d) y el G4 Pro (8e) funcionan con la mini PC. El rechazo por alcohol está confirmado (`event=1`); falta que el cliente defina el umbral de alcohol del G4 Pro (8e).
+8. **Integración de equipos**: los lectores de DNI (8c), los relés de los molinetes (8d) y el G4 Pro (8e) funcionan con la mini PC como controlador (8f) o como servidor completo. El rechazo por alcohol está confirmado (`event=1`); falta que el cliente defina el umbral de alcohol del G4 Pro (8e).
+9. **Servidor en la nube**: dejar abiertos en el Security Group solo los puertos `22`, `3000` y `3001`. Hoy el portal se abre por `http://` con la IP (el navegador lo marca "No es seguro"); para operación conviene un dominio con HTTPS.
 
 ---
 
@@ -866,7 +880,9 @@ No se probó el acceso desde un navegador en la red local (`192.168.0.165`).
 
 ## Anexo B. Variables del archivo .env
 
-Archivo `.env` en la carpeta del entorno (`~/mollendo/deploy/nube/.env` en la nube, `~/mollendo/deploy/garita/.env` en la mini PC como servidor completo). La plantilla es el `.env.example` de esa misma carpeta (ver [sección 0](#0-entornos)).
+Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), `~/mollendo/deploy/controlador/.env` (controlador) o `~/mollendo/deploy/garita/.env` (mini PC como servidor completo). La plantilla es el `.env.example` de esa misma carpeta (ver [sección 0](#0-entornos)). En desarrollo, `mollendo-api/.env` (plantilla `mollendo-api/.env.example`).
+
+### B.1. Servidor (nube y garita)
 
 | Variable | Obligatoria | Para qué sirve | Cómo generarla |
 |---|---|---|---|
@@ -880,4 +896,43 @@ Archivo `.env` en la carpeta del entorno (`~/mollendo/deploy/nube/.env` en la nu
 | `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@mollendo.local`. | Igual que la anterior |
 | `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@mollendo.local` y `vigilancia@mollendo.local`). | — |
 
-Valores fijos que no van en el `.env` (están en el `docker-compose.yml` del entorno): la duración de las sesiones (1 hora, renovable 7 días), el puerto del backend (`3001`), la carpeta de documentos y `SWAGGER=true`.
+| `G4PRO_HORA_SINCRONIZACION` | No | Hora (0 a 23, hora de Lima) de la sincronización diaria con los G4 Pro, que deja el terminal igual al sistema; `off` la desactiva (sigue disponible la manual en "Sistema y APIs"). | Por defecto `0` (medianoche); hoy `off` en la nube |
+| `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). Se guardan 14 días. | Por defecto `00:00` |
+| `PUSH_SDK_DEPURAR` | No | `true`: anota en el registro de la API todo lo que envía el G4 Pro (para estudiar el equipo). Volver a `false` al terminar. | Por defecto `false` |
+
+### B.2. Lectores de DNI (controlador y garita)
+
+En la nube no van: ahí los lectores están en el controlador. Sin estas variables no se abre ningún puerto.
+
+| Variable | Obligatoria | Para qué sirve | Valor |
+|---|---|---|---|
+| `LECTOR_DNI_INGRESO_DISPOSITIVO` | Para leer DNI en el ingreso | Ruta fija del adaptador USB del lector de ingreso (sección 8c). | `ls /dev/serial/by-id/` |
+| `LECTOR_DNI_SALIDA_DISPOSITIVO` | Para leer DNI en la salida | Igual, para el lector de salida. | `ls /dev/serial/by-id/` |
+| `LECTOR_DNI_BAUDIOS` | No | Velocidad del puerto serie. | Por defecto `115200` |
+
+### B.3. Relés USB (controlador y garita)
+
+Cada relé se identifica por el número de serie de su módulo (5 caracteres; cómo ponerlo, sección 8d). En la nube no van.
+
+| Variable | Obligatoria | Para qué sirve | Valor |
+|---|---|---|---|
+| `RELE_INGRESO_SERIE`, `RELE_SALIDA_SERIE` | Para abrir los molinetes | Módulo que abre el molinete de ingreso / de salida. Sin serie se usa el único módulo conectado. | Hoy `ING01` y `SAL01` |
+| `RELE_INGRESO_CANAL`, `RELE_SALIDA_CANAL` | No | Relé del módulo que se usa. | Por defecto `1` |
+| `RELE_PULSO_MS` | No | Duración del pulso que abre un molinete, en milisegundos. | Por defecto `1000` |
+| `RELE_AVISO_INGRESO_SERIE`, `RELE_AVISO_SALIDA_SERIE` | No | Módulo del aviso (luz o sirena) de ingreso denegado / salida denegada. Sin serie, el aviso no se usa. `RELE_AVISO_SERIE` es el nombre anterior del de ingreso. | Hoy `DEN01` y `DSA01` |
+| `RELE_AVISO_INGRESO_CANAL`, `RELE_AVISO_SALIDA_CANAL` | No | Relé del módulo de aviso. | Por defecto `1` |
+| `RELE_AVISO_PULSO_MS` | No | Duración del aviso, en milisegundos. | Por defecto, la misma que `RELE_PULSO_MS` |
+| `RELE_USB_HIDRAW_MAJOR` | Solo si no es 234 | Número que el sistema da a los dispositivos `hidraw` (los módulos de relés), para darle permiso al contenedor. | `grep hidraw /proc/devices` |
+
+### B.4. Solo del controlador
+
+| Variable | Obligatoria | Para qué sirve | Valor |
+|---|---|---|---|
+| `SERVIDOR_URL` | Sí | Dirección de la API en la nube, sin `/api/v1`. | Hoy `http://54.147.214.38:3001` |
+| `DEVICE_API_KEY` | Sí | **La misma** clave de equipos del servidor en la nube. | Copiarla del `.env` de la nube |
+
+Más las de lectores (B.2) y relés (B.3). El controlador no usa base de datos ni las demás variables.
+
+### B.5. Valores fijos
+
+No van en el `.env` (están en el `docker-compose.yml` del entorno): la duración de las sesiones (1 hora, renovable 7 días), el puerto del backend (`3001`), la carpeta de documentos, la de datos del controlador y `SWAGGER=true`.
