@@ -215,12 +215,25 @@ Persona 12345678 encolada para 1 equipo(s), con foto
 ];
 
 /** Mientras llega la primera respuesta del backend no se sabe el estado. */
+/** Etiqueta roja de algo caído, con un punto que late (como el aviso de fallas). */
+function Falla({ children }: { children: React.ReactNode }) {
+  return (
+    <Badge color="error">
+      <span className="relative mr-0.5 flex size-2 shrink-0" aria-hidden>
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-error-400 opacity-75" />
+        <span className="relative inline-flex size-2 rounded-full bg-error-500" />
+      </span>
+      {children}
+    </Badge>
+  );
+}
+
 function ComprobandoBadge() {
   return <Badge color="light">Comprobando…</Badge>;
 }
 
 function EstadoBadge({ ok }: { ok: boolean }) {
-  return <Badge color={ok ? "success" : "error"}>{ok ? "En línea" : "Sin conexión"}</Badge>;
+  return ok ? <Badge color="success">En línea</Badge> : <Falla>Sin conexión</Falla>;
 }
 
 function ConfiguradoBadge({ ok }: { ok: boolean }) {
@@ -270,7 +283,7 @@ function RespaldosEstado({
   return (
     <>
       <div className="mt-2">
-        <Badge color={atrasado ? "error" : "success"}>{atrasado ? "Atrasado" : "Al día"}</Badge>
+        {atrasado ? <Falla>Atrasado</Falla> : <Badge color="success">Al día</Badge>}
       </div>
       <p className="mt-2 text-xs text-gray-400">
         {ultimo
@@ -317,7 +330,7 @@ function EquiposEstado({
     <div className="mt-2 space-y-3">
       {equipos.dispositivos.map((d) => (
         <div key={d.serialNumber}>
-          <Badge color={d.enLinea ? "success" : "error"}>{d.enLinea ? "En línea" : "Desconectado"}</Badge>
+          {d.enLinea ? <Badge color="success">En línea</Badge> : <Falla>Desconectado</Falla>}
           <p className="mt-1 text-xs text-gray-400">
             {d.serialNumber}
             {!d.enLinea && ` · ${ultimaVez(d)}`}
@@ -596,11 +609,11 @@ function LectoresDniEstado({
           {!lector?.configurado ? (
             <Badge color="light">Sin configurar</Badge>
           ) : lector.error === "Controlador desconectado" ? (
-            <Badge color="error">Desconectado</Badge>
+            <Falla>Desconectado</Falla>
           ) : lector.conectado ? (
             <Badge color="success">Cable conectado</Badge>
           ) : (
-            <Badge color="error">Cable desconectado</Badge>
+            <Falla>Cable desconectado</Falla>
           )}
           <p className="mt-1 text-xs text-gray-400">
             {etiqueta}
@@ -625,7 +638,7 @@ function ControladorGaritaEstado({ comprobando, controlador }: { comprobando: bo
   return (
     <>
       <div className="mt-2">
-        <Badge color={controlador?.conectado ? "success" : "error"}>{controlador?.conectado ? "Conectado" : "Desconectado"}</Badge>
+        {controlador?.conectado ? <Badge color="success">Conectado</Badge> : <Falla>Desconectado</Falla>}
       </div>
       <p className="mt-2 text-xs text-gray-400">
         {controlador?.conectado && controlador.desde ? `Desde ${hora(controlador.desde)}` : "Sin conexión: nadie puede ingresar; se puede salir con la lista del personal guardada"}
@@ -667,9 +680,11 @@ function ReleEstado({ comprobando, rele, avisos = false }: { comprobando: boolea
       {filas.map(({ etiqueta, r }) => (
         <div key={etiqueta}>
           {r?.error === "Controlador desconectado" ? (
-            <Badge color="error">Desconectado</Badge>
+            <Falla>Desconectado</Falla>
+          ) : r?.conectado ? (
+            <Badge color="success">Conectado</Badge>
           ) : (
-            <Badge color={r?.conectado ? "success" : "error"}>{r?.conectado ? "Conectado" : "No conectado"}</Badge>
+            <Falla>No conectado</Falla>
           )}
           <p className="mt-1 text-xs text-gray-400">
             {etiqueta}
@@ -720,7 +735,7 @@ function EstadoIntegracionBadge({
     return <ComprobandoBadge />;
   }
   if (!backendUp) {
-    return <Badge color="error">Sin conexión</Badge>;
+    return <Falla>Sin conexión</Falla>;
   }
   if (!claveConfigurada) {
     return <Badge color="warning">Clave no configurada</Badge>;
