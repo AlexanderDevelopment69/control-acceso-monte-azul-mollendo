@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 880" width="1400" height="880" role="img" aria-labelledby="ing-t">
-<title id="ing-t">Ingreso: equipos y señales. El lector envía el DNI a la mini PC, que lo valida y habilita a la persona en el G4 Pro; el G4 Pro reconoce el rostro, toma la prueba de alcohol del DT1700 y envía el resultado; si el rostro es el del DNI y el alcohol es conforme, la mini PC ordena al relé abrir el molinete</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1080" width="1400" height="1080" role="img" aria-labelledby="ing-t">
+<title id="ing-t">Ingreso: el lector envía el DNI a la mini PC de la garita, que lo manda al servidor en la nube; el servidor lo valida y habilita a la persona en el G4 Pro; el G4 Pro reconoce el rostro, toma la prueba de alcohol del DT1700 y envía el resultado al servidor; si el rostro es el del DNI y el alcohol es conforme, el servidor ordena a la mini PC abrir el molinete con su relé</title>
 <style>
   text { font-family: Segoe UI, Arial, sans-serif; }
   .bx { fill: #ffffff; stroke: #c3ccd4; stroke-width: 1.5; }
@@ -24,113 +24,167 @@
   <marker id="mp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#c77700"/></marker>
   <marker id="mb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#1f67a8"/></marker>
   <marker id="mg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#23865a"/></marker>
+  <marker id="mr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#c0392b"/></marker>
 </defs>
-<rect width="1400" height="880" fill="#ffffff"/>
-<rect class="zone" x="150" y="318" width="1190" height="306" rx="12"/>
-<text class="zl" x="1322" y="342" text-anchor="end">PUNTO DE INGRESO · GARITA</text>
-<rect class="bxm" x="520" y="30" width="380" height="196" rx="10"/>
-<text class="ti" x="536" y="60">Mini PC</text>
-<text class="su" x="536" y="80">Sistema · base de datos · portal</text>
-<line x1="536" y1="92" x2="884" y2="92" stroke="#e3e8ec"/>
-<circle cx="548" cy="118" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="548" y="118">3</text>
-<text class="dl" x="568" y="122"><tspan class="dlb">Valida el DNI:</tspan> registrado, activo, documentos vigentes</text>
-<circle cx="548" cy="152" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="548" y="152">8</text>
-<text class="dl" x="568" y="156"><tspan class="dlb">Compara:</tspan> rostro = DNI y alcohol conforme</text>
-<circle cx="548" cy="186" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="548" y="186">9</text>
-<text class="dl" x="568" y="190"><tspan class="dlb">Deshabilita</tspan> a la persona otra vez</text>
-<text class="tg" x="536" y="214">DECIDE SI SE ABRE · SOLO ELLA ABRE EL MOLINETE</text>
-<rect class="bx" x="1020" y="70" width="220" height="92" rx="10"/>
-<text class="ti" x="1036" y="100">Panel de vigilancia</text>
-<text class="su" x="1036" y="120">en la pantalla del vigilante</text>
-<text class="tg" x="1036" y="148">PORTAL WEB</text>
-<path d="M900 116 L1014 116" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
-<circle cx="957" cy="116" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="957" y="116">10</text>
-<text class="lb" x="957" y="98" text-anchor="middle">registra el ingreso</text>
-<rect x="1020" y="186" width="320" height="112" rx="10" fill="#fdf1f0" stroke="#c0392b" stroke-width="1.5"/>
-<text class="xt" x="1036" y="209">✕ No se abre si…</text>
-<text class="xl" x="1036" y="231">• el DNI no está en regla (se deniega al instante)</text>
-<text class="xl" x="1036" y="249">• el rostro no es el de la persona del DNI</text>
-<text class="xl" x="1036" y="267">• no sopló o el resultado indica alcohol</text>
-<text class="xl" x="1036" y="285">• pasaron los 60 s sin terminar</text>
-<g fill="#c77700" transform="translate(52 388)"><circle cx="22" cy="14" r="13"/><path d="M2 88 L2 44 Q2 32 14 32 L30 32 Q42 32 42 44 L42 88 Z"/><rect x="6" y="86" width="12" height="36" rx="3"/><rect x="26" y="86" width="12" height="36" rx="3"/></g>
-<text class="ti" x="74" y="538" text-anchor="middle">Personal</text>
-<rect class="bx" x="190" y="370" width="190" height="96" rx="10"/>
-<text class="ti" x="206" y="400">Lector de DNI</text>
-<text class="su" x="206" y="420">Syble XB-7705H</text>
-<text class="tg" x="206" y="452">USB-COM · LEE EL REVERSO</text>
-<rect class="bx" x="470" y="362" width="220" height="112" rx="10"/>
-<text class="ti" x="486" y="392">G4 Pro</text>
-<text class="su" x="486" y="412">terminal facial</text>
-<text class="su" x="486" y="429">1.º rostro · 2.º alcohol</text>
-<text class="tg" x="486" y="460">NO ABRE EL MOLINETE</text>
-<rect class="bx" x="470" y="528" width="220" height="80" rx="10"/>
-<text class="ti" x="486" y="558">DT1700</text>
-<text class="su" x="486" y="578">alcoholímetro</text>
-<text class="tg" x="486" y="594">PASS · DRINK · FAIL</text>
-<rect class="bx" x="800" y="370" width="190" height="96" rx="10"/>
-<text class="ti" x="816" y="400">Relé de ingreso</text>
-<text class="su" x="816" y="420">1 canal · por comprar</text>
-<text class="tg" x="816" y="452">CIERRA SU CONTACTO</text>
-<rect class="bx" x="1110" y="362" width="200" height="112" rx="10"/>
-<text class="ti" x="1126" y="392">Molinete de ingreso</text>
-<text class="su" x="1126" y="412">TS2000 Plus</text>
-<text class="tg" x="1126" y="460">BORNERA J3 · K1 + COM</text>
-<path d="M104 418 L184 418" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
-<circle cx="144" cy="418" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="144" y="418">1</text>
-<text class="lp" x="144" y="398" text-anchor="middle">pasa su DNI</text>
-<path d="M104 462 C200 520 400 520 464 446" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
-<circle cx="282" cy="503" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="282" y="503">5</text>
-<text class="lp" x="282" y="533" text-anchor="middle">muestra el rostro</text>
-<path d="M104 500 C150 600 360 610 464 576" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
-<circle cx="300" cy="594" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="300" y="594">6</text>
-<text class="lp" x="318" y="616">sopla (después del rostro)</text>
-<path d="M285 366 L285 140 L514 140" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
-<circle cx="285" cy="250" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="285" y="250">2</text>
-<text class="lb" x="400" y="130" text-anchor="middle">número de DNI</text>
-<text class="tg" x="400" y="158" text-anchor="middle" fill="#1f67a8">USB</text>
-<path d="M590 226 L590 356" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
-<circle cx="590" cy="288" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="590" y="288">4</text>
-<text class="lb" x="572" y="282" text-anchor="end">habilita a la persona</text><text class="lb" x="572" y="299" text-anchor="end">por 60 s</text>
-<path d="M650 362 L650 232" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
-<circle cx="650" cy="288" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="650" y="288">7</text>
-<text class="lb" x="668" y="282">rostro reconocido</text><text class="lb" x="668" y="299">+ resultado del alcohol</text>
-<path d="M580 528 L580 480" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
-<text class="tg" x="592" y="508" fill="#1f67a8">USB · RESULTADO</text>
-<path d="M880 226 L880 364" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
-<circle cx="880" cy="288" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="880" y="288">8</text>
-<text class="lb" x="898" y="282">orden de apertura</text><text class="lb" x="898" y="299">solo si todo está OK</text>
-<path d="M990 418 L1104 418" stroke="#23865a" stroke-width="4" fill="none" marker-end="url(#mg)"/>
-<text class="lg" x="1047" y="404" text-anchor="middle">señal</text>
-<text class="tg" x="1047" y="440" text-anchor="middle" fill="#23865a">NO+COM → J3</text>
-<path d="M1310 418 L1388 418" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
-<text class="lp" x="1349" y="404" text-anchor="middle">pasa</text>
-<text class="h2" x="40" y="668">Paso a paso</text>
-<circle cx="52" cy="698" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="698">1</text>
-<text class="st" x="72" y="702">La persona pasa su DNI (reverso) por el lector.</text>
-<circle cx="52" cy="728" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="728">2</text>
-<text class="st" x="72" y="732">El lector envía el número de DNI a la mini PC (USB).</text>
-<circle cx="52" cy="758" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="758">3</text>
-<text class="st" x="72" y="762">La mini PC valida el DNI. Si no está en regla, deniega al instante.</text>
-<circle cx="52" cy="788" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="788">4</text>
-<text class="st" x="72" y="792">La mini PC habilita a la persona en el G4 Pro por 60 s (red).</text>
-<circle cx="52" cy="818" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="818">5</text>
-<text class="st" x="72" y="822">La persona muestra el rostro y el G4 Pro la reconoce.</text>
-<circle cx="732" cy="698" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="698">6</text>
-<text class="st" x="752" y="702">Recién entonces sopla en el alcoholímetro DT1700.</text>
-<circle cx="732" cy="728" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="728">7</text>
-<text class="st" x="752" y="732">El G4 Pro envía a la mini PC el rostro y el resultado del alcohol.</text>
-<circle cx="732" cy="758" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="758">8</text>
-<text class="st" x="752" y="762">Si el rostro es el del DNI y el alcohol es conforme, la mini PC ordena al relé abrir el molinete.</text>
-<circle cx="732" cy="788" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="788">9</text>
-<text class="st" x="752" y="792">La mini PC vuelve a deshabilitar a la persona en el G4 Pro.</text>
-<circle cx="732" cy="818" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="818">10</text>
-<text class="st" x="752" y="822">El ingreso aparece en el Panel de vigilancia.</text>
-<path d="M40 856 L84 856" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
-<text class="dl" x="96" y="860">acción de la persona</text>
-<path d="M286 856 L330 856" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
-<text class="dl" x="342" y="860">datos por la red local</text>
-<path d="M546 856 L590 856" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
-<text class="dl" x="602" y="860">cable USB</text>
-<path d="M715 856 L759 856" stroke="#23865a" stroke-width="4" fill="none" marker-end="url(#mg)"/>
-<text class="dl" x="771" y="860">señal eléctrica que abre el molinete</text>
+<rect width="1400" height="1080" fill="#ffffff"/>
+
+<!-- Servidor en la nube -->
+<rect class="bxm" x="470" y="30" width="460" height="220" rx="10"/>
+<text class="ti" x="486" y="60">Servidor en la nube</text>
+<text class="su" x="486" y="80">AWS · sistema · base de datos · portal</text>
+<line x1="486" y1="92" x2="914" y2="92" stroke="#e3e8ec"/>
+<circle cx="498" cy="118" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="498" y="118">4</text>
+<text class="dl" x="518" y="122"><tspan class="dlb">Valida el DNI:</tspan> registrado, activo, documentos vigentes</text>
+<circle cx="498" cy="152" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="498" y="152">9</text>
+<text class="dl" x="518" y="156"><tspan class="dlb">Compara:</tspan> rostro = DNI y alcohol conforme</text>
+<circle cx="498" cy="186" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="498" y="186">11</text>
+<text class="dl" x="518" y="190"><tspan class="dlb">Deshabilita</tspan> a la persona en el G4 Pro</text>
+<text class="tg" x="486" y="232">DECIDE SI SE ABRE · DA LA ORDEN A LA MINI PC</text>
+
+<!-- Panel -->
+<rect class="bx" x="1040" y="64" width="230" height="92" rx="10"/>
+<text class="ti" x="1056" y="94">Panel de vigilancia</text>
+<text class="su" x="1056" y="114">en la pantalla del vigilante</text>
+<text class="tg" x="1056" y="142">PORTAL WEB</text>
+<path d="M930 110 L1034 110" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<circle cx="982" cy="110" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="982" y="110">12</text>
+<text class="lb" x="982" y="92" text-anchor="middle">registra el ingreso</text>
+
+<!-- No se abre si -->
+<rect x="1040" y="176" width="330" height="168" rx="10" fill="#fdf1f0" stroke="#c0392b" stroke-width="1.5"/>
+<text class="xt" x="1056" y="199">✕ No se abre si…</text>
+<text class="xl" x="1056" y="221">• el DNI no está en regla (se deniega al instante)</text>
+<text class="xl" x="1056" y="239">• el rostro no es el de la persona del DNI</text>
+<text class="xl" x="1056" y="257">• no sopló o el resultado indica alcohol</text>
+<text class="xl" x="1056" y="275">• pasaron los 60 s sin terminar</text>
+<text class="xl" x="1056" y="293">• no hay internet (nadie puede ingresar)</text>
+<text class="su" x="1056" y="317">En cada caso suena el aviso de ingreso</text>
+<text class="su" x="1056" y="333">denegado y el Panel muestra el motivo.</text>
+
+<!-- Garita -->
+<rect class="zone" x="150" y="364" width="1220" height="430" rx="12"/>
+<text class="zl" x="1352" y="388" text-anchor="end">PUNTO DE INGRESO · GARITA</text>
+
+<text class="ti" x="74" y="408" text-anchor="middle">Personal</text>
+<g fill="#c77700" transform="translate(52 420)"><circle cx="22" cy="14" r="13"/><path d="M2 88 L2 44 Q2 32 14 32 L30 32 Q42 32 42 44 L42 88 Z"/><rect x="6" y="86" width="12" height="36" rx="3"/><rect x="26" y="86" width="12" height="36" rx="3"/></g>
+
+<rect class="bx" x="190" y="404" width="180" height="96" rx="10"/>
+<text class="ti" x="206" y="434">Lector de DNI</text>
+<text class="su" x="206" y="454">Syble XB-7705H</text>
+<text class="tg" x="206" y="486">USB-COM · LEE EL REVERSO</text>
+
+<rect class="bxm" x="420" y="396" width="320" height="132" rx="10"/>
+<text class="ti" x="436" y="424">Mini PC · controlador</text>
+<text class="su" x="436" y="444">en la garita · solo lectores y relés</text>
+<rect x="436" y="458" width="140" height="56" rx="8" fill="#fdf1f0" stroke="#c0392b" stroke-width="1.2"/>
+<text class="dlb" x="448" y="480">Relé de aviso</text>
+<text class="tg" x="448" y="502">INGRESO DENEGADO</text>
+<rect x="588" y="458" width="140" height="56" rx="8" fill="#eef7f2" stroke="#23865a" stroke-width="1.2"/>
+<text class="dlb" x="600" y="480">Relé de ingreso</text>
+<text class="tg" x="600" y="502">PULSO DE 1 S</text>
+
+<rect class="bx" x="820" y="404" width="200" height="108" rx="10"/>
+<text class="ti" x="836" y="434">G4 Pro</text>
+<text class="su" x="836" y="454">terminal facial</text>
+<text class="su" x="836" y="471">1.º rostro · 2.º alcohol</text>
+<text class="tg" x="836" y="500">NO ABRE EL MOLINETE</text>
+
+<rect class="bx" x="1090" y="412" width="180" height="80" rx="10"/>
+<text class="ti" x="1106" y="442">DT1700</text>
+<text class="su" x="1106" y="462">alcoholímetro</text>
+<text class="tg" x="1106" y="480">PASS · DRINK · FAIL</text>
+
+<rect class="bx" x="560" y="590" width="200" height="100" rx="10"/>
+<text class="ti" x="576" y="620">Molinete de ingreso</text>
+<text class="su" x="576" y="640">TS2000 Plus</text>
+<text class="tg" x="576" y="676">BORNERA J3 · K1 + COM</text>
+
+<rect x="190" y="592" width="190" height="66" rx="10" fill="#fdf1f0" stroke="#c0392b" stroke-width="1.2"/>
+<text class="dlb" x="206" y="618">Luz o sirena</text>
+<text class="su" x="206" y="638">aviso de ingreso denegado</text>
+
+<!-- 1 persona → lector -->
+<path d="M104 452 L184 452" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
+<circle cx="144" cy="452" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="144" y="452">1</text>
+<text class="lp" x="144" y="432" text-anchor="middle">pasa su DNI</text>
+<!-- 2 lector → mini PC -->
+<path d="M370 452 L414 452" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
+<circle cx="392" cy="452" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="392" y="452">2</text>
+<text class="tg" x="392" y="484" text-anchor="middle" fill="#1f67a8">USB</text>
+<!-- 3 mini PC → nube -->
+<path d="M520 396 L520 256" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<circle cx="520" cy="320" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="520" y="320">3</text>
+<text class="lb" x="502" y="314" text-anchor="end">envía el DNI</text><text class="lb" x="502" y="331" text-anchor="end">por internet</text>
+<!-- 9 nube → mini PC -->
+<path d="M660 250 L660 390" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<circle cx="660" cy="320" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="660" y="320">9</text>
+<text class="lb" x="642" y="314" text-anchor="end">orden de</text><text class="lb" x="642" y="331" text-anchor="end">apertura</text>
+<!-- 5 nube → G4 -->
+<path d="M850 250 L850 398" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<circle cx="850" cy="320" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="850" y="320">5</text>
+<text class="lb" x="832" y="314" text-anchor="end">habilita a la persona</text><text class="lb" x="832" y="331" text-anchor="end">por 60 s</text>
+<!-- 8 G4 → nube -->
+<path d="M900 404 L900 256" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<circle cx="900" cy="320" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="900" y="320">8</text>
+<text class="lb" x="918" y="314">rostro +</text><text class="lb" x="918" y="331">alcohol</text>
+<!-- DT1700 → G4 -->
+<path d="M1090 452 L1026 452" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
+<text class="tg" x="1058" y="440" text-anchor="middle" fill="#1f67a8">USB</text>
+<!-- 10 relé → molinete -->
+<path d="M660 514 L660 584" stroke="#23865a" stroke-width="4" fill="none" marker-end="url(#mg)"/>
+<circle cx="660" cy="550" r="12" fill="#23865a" stroke="#fff" stroke-width="2"/><text class="num" x="660" y="550">10</text>
+<text class="lg" x="680" y="546">señal</text>
+<text class="tg" x="680" y="566" fill="#23865a">NO+COM → J3</text>
+<!-- aviso → luz o sirena -->
+<path d="M506 514 L506 625 L386 625" stroke="#c0392b" stroke-width="2.4" fill="none" marker-end="url(#mr)"/>
+<text class="su" x="516" y="574">si se deniega</text>
+<!-- pasa -->
+<path d="M760 640 L830 640" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
+<text class="lp" x="795" y="628" text-anchor="middle">pasa</text>
+<!-- 6 persona → G4 · 7 persona → DT1700 -->
+<path d="M84 546 L84 740 L920 740 L920 518" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
+<circle cx="500" cy="740" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="500" y="740">6</text>
+<text class="lp" x="500" y="722" text-anchor="middle">muestra el rostro</text>
+<path d="M64 546 L64 762 L1180 762 L1180 498" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
+<circle cx="1040" cy="762" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="1040" y="762">7</text>
+<text class="lp" x="1062" y="784">sopla (después del rostro)</text>
+
+<!-- Paso a paso -->
+<text class="h2" x="40" y="836">Paso a paso</text>
+<circle cx="52" cy="866" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="866">1</text>
+<text class="st" x="72" y="870">La persona pasa su DNI (reverso) por el lector.</text>
+<circle cx="52" cy="896" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="896">2</text>
+<text class="st" x="72" y="900">El lector envía el número a la mini PC de la garita (USB).</text>
+<circle cx="52" cy="926" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="926">3</text>
+<text class="st" x="72" y="930">La mini PC envía el DNI al servidor en la nube, por internet.</text>
+<circle cx="52" cy="956" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="956">4</text>
+<text class="st" x="72" y="960">El servidor valida el DNI. Si no está en regla, deniega al instante.</text>
+<circle cx="52" cy="986" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="986">5</text>
+<text class="st" x="72" y="990">El servidor habilita a la persona en el G4 Pro por 60 s (internet).</text>
+<circle cx="52" cy="1016" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="1016">6</text>
+<text class="st" x="72" y="1020">La persona muestra el rostro y el G4 Pro la reconoce.</text>
+<circle cx="732" cy="866" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="866">7</text>
+<text class="st" x="752" y="870">Recién entonces sopla en el alcoholímetro DT1700.</text>
+<circle cx="732" cy="896" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="896">8</text>
+<text class="st" x="752" y="900">El G4 Pro envía al servidor el rostro y el resultado del alcohol.</text>
+<circle cx="732" cy="926" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="926">9</text>
+<text class="st" x="752" y="930">Si el rostro es el del DNI y el alcohol es conforme, el servidor ordena abrir.</text>
+<circle cx="732" cy="956" r="12" fill="#23865a" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="956">10</text>
+<text class="st" x="752" y="960">La mini PC activa el relé de ingreso y el molinete se abre.</text>
+<circle cx="732" cy="986" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="986">11</text>
+<text class="st" x="752" y="990">El servidor vuelve a deshabilitar a la persona en el G4 Pro.</text>
+<circle cx="732" cy="1016" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="1016">12</text>
+<text class="st" x="752" y="1020">El ingreso aparece en el Panel de vigilancia.</text>
+
+<!-- Leyenda -->
+<path d="M40 1058 L84 1058" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
+<text class="dl" x="96" y="1062">acción de la persona</text>
+<path d="M256 1058 L300 1058" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
+<text class="dl" x="312" y="1062">datos por internet</text>
+<path d="M460 1058 L504 1058" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
+<text class="dl" x="516" y="1062">cable USB</text>
+<path d="M620 1058 L664 1058" stroke="#23865a" stroke-width="4" fill="none" marker-end="url(#mg)"/>
+<text class="dl" x="676" y="1062">señal eléctrica que abre el molinete</text>
+<path d="M920 1058 L964 1058" stroke="#c0392b" stroke-width="2.4" fill="none" marker-end="url(#mr)"/>
+<text class="dl" x="976" y="1062">aviso cuando se deniega (luz o sirena)</text>
 </svg>

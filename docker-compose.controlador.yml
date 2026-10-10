@@ -5,7 +5,7 @@
 #
 #   docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build
 #
-# controlador.env (ver deploy.env.example, sección "Controlador"):
+# controlador.env (plantilla: deploy/controlador.env.example):
 #   SERVIDOR_URL=https://...            servidor en la nube (API)
 #   DEVICE_API_KEY=...                  la misma clave de equipos del servidor
 #   LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/...

@@ -11,6 +11,7 @@ Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend
 
 ## Contenido
 
+0. [Entornos](#0-entornos)
 1. [Cómo está armado](#1-cómo-está-armado)
 2. [Requisitos](#2-requisitos)
 3. [Primer despliegue (servidor nuevo)](#3-primer-despliegue-servidor-nuevo)
@@ -26,6 +27,33 @@ Esta guía explica, paso a paso, cómo desplegar el sistema (portal web, backend
 9. [Seguridad y recomendaciones](#9-seguridad-y-recomendaciones)
 - [Anexo A. Registro del primer despliegue (28/09/2026)](#anexo-a-registro-del-primer-despliegue-28092026)
 - [Anexo B. Variables del archivo .env](#anexo-b-variables-del-archivo-env)
+
+---
+
+## 0. Entornos
+
+El mismo código corre en cuatro lugares. Lo que cambia es la configuración: cada entorno tiene **su propia plantilla** en la carpeta `deploy/` (resumen en `deploy/README.md`).
+
+| Entorno | Dónde | Qué corre | Plantilla → archivo | Cómo se levanta |
+|---|---|---|---|---|
+| **local** | PC de desarrollo | API, portal y PostgreSQL (`docker-compose.yml`) | `mollendo-api/.env.example` → `mollendo-api/.env`; `mollendo-portal/.env.example` → `mollendo-portal/.env.local` | `npm run start:dev` (API) y `npm run dev` (portal) |
+| **nube** | AWS hoy (`54.147.214.38`), Azure después | Portal, API, base de datos y respaldos | `deploy/nube.env.example` → `~/mollendo/.env` | `docker compose -f docker-compose.prod.yml up -d --build` |
+| **controlador** | Mini PC de la garita | Solo lectores de DNI y relés, conectados a la nube | `deploy/controlador.env.example` → `~/mollendo/controlador.env` | `docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build` |
+| **garita** (opcional, hoy no se usa) | Mini PC de la garita | Servidor completo, con lectores y relés por USB | `deploy/garita.env.example` → `~/mollendo/.env` | `docker compose -f docker-compose.prod.yml up -d --build` |
+
+Opciones que distinguen a cada entorno:
+
+| Variable | local | nube | garita |
+|---|---|---|---|
+| `MOLINETES_REMOTOS` | `true` (igual que la nube) | `true` (obligatorio) | `false` |
+| `LECTOR_DNI_*`, `RELE_*` | no | no | sí |
+| `G4PRO_HORA_SINCRONIZACION` | `off` | `off` mientras se prueba | `0` (medianoche) |
+
+El controlador es otro programa (`src/controlador/main.ts`) y usa solo `controlador.env`.
+
+- **Los `.env` no están en git.** Cada máquina tiene el suyo, con sus claves. Al agregar una opción nueva, se agrega también a la plantilla de cada entorno donde corresponda.
+- **El código es el mismo en todos.** Si dos entornos se ven distintos, la diferencia está en el `.env` o en los datos de cada base, no en el código.
+- La guía de los pasos 3 a 7 se escribió para la mini PC como servidor completo (garita); en la nube se siguen los mismos pasos con `deploy/nube.env.example`.
 
 ---
 
@@ -69,7 +97,7 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 | Archivo | Para qué sirve |
 |---|---|
 | `docker-compose.prod.yml` | Define los 4 contenedores, los volúmenes y los puertos |
-| `deploy.env.example` | Plantilla del archivo `.env` con las claves |
+| `deploy/nube.env.example`, `deploy/garita.env.example`, `deploy/controlador.env.example` | Plantillas del `.env` de cada entorno (ver [sección 0](#0-entornos)) |
 | `mollendo-api/Dockerfile` | Cómo se construye la imagen del backend |
 | `mollendo-portal/Dockerfile` | Cómo se construye la imagen del portal |
 | `mollendo-api/.dockerignore`, `mollendo-portal/.dockerignore` | Qué no se copia a las imágenes (`node_modules`, `.env`, compilados, archivos subidos) |
@@ -171,7 +199,7 @@ En la PC, en la carpeta raíz del proyecto (donde está `docker-compose.prod.yml
 
 ```bash
 git status          # no debe haber cambios pendientes que quieras desplegar
-git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy docker-compose.prod.yml deploy.env.example
+git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy docker-compose.prod.yml
 ```
 
 Esto crea `mollendo.tgz` (unos 10 MB) con el código del último commit. No incluye `node_modules`, `.env` ni archivos subidos, porque no están en git.
@@ -190,7 +218,7 @@ En el servidor:
 cd ~/mollendo
 tar -xzf mollendo.tgz
 rm mollendo.tgz
-ls        # backups  deploy.env.example  docker-compose.prod.yml  mollendo-api  mollendo-portal
+ls        # backups  deploy  docker-compose.prod.yml  mollendo-api  mollendo-portal
 ```
 
 ### Paso 7. Crear el archivo de claves (.env)
@@ -335,7 +363,7 @@ ls backups
 
 Para desplegar cambios nuevos del sistema. Los datos (personal, documentos, eventos) **no se pierden**: están en los volúmenes, que no se tocan.
 
-1. **En la PC**, con los cambios ya confirmados con commit, arma el paquete (sin `deploy.env.example`: el `.env` del servidor ya existe):
+1. **En la PC**, con los cambios ya confirmados con commit, arma el paquete (el `.env` del servidor ya existe y no se toca):
 
    ```bash
    git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy docker-compose.prod.yml
@@ -904,7 +932,7 @@ Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube 
 
 **Instalación en la mini PC** (en `~/mollendo`):
 
-1. `controlador.env` (permisos 600) con `SERVIDOR_URL` (la API en la nube, sin `/api/v1`), `DEVICE_API_KEY` (**la misma** del servidor) y las variables de lectores y relés (`LECTOR_DNI_*_DISPOSITIVO`, `RELE_*_SERIE`; ver `deploy.env.example`).
+1. `controlador.env` (permisos 600) con `SERVIDOR_URL` (la API en la nube, sin `/api/v1`), `DEVICE_API_KEY` (**la misma** del servidor) y las variables de lectores y relés (`LECTOR_DNI_*_DISPOSITIVO`, `RELE_*_SERIE`; plantilla: `deploy/controlador.env.example`).
 2. Que la API local de la mini PC (si sigue corriendo) no use los lectores: comentar `LECTOR_DNI_INGRESO_DISPOSITIVO` y `LECTOR_DNI_SALIDA_DISPOSITIVO` en `.env` y poner `MOLINETES_REMOTOS=true`; `docker compose -f docker-compose.prod.yml up -d api`.
 3. `docker compose -f docker-compose.controlador.yml --env-file controlador.env up -d --build`
 4. Comprobar: `docker compose -f docker-compose.controlador.yml --env-file controlador.env logs --tail 20 controlador` debe decir "Lector de DNI … conectado", "Conectado al servidor" y "Lista del personal actualizada: N personas".
@@ -928,7 +956,7 @@ La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambia
 
 ### Las dos configuraciones
 
-| | **A. Mini PC como servidor completo** | **B. Mini PC como controlador (servidor en la nube)** |
+| | **A. Mini PC como servidor completo** (entorno `garita`) | **B. Mini PC como controlador (servidor en la nube)** (entornos `controlador` + `nube`) |
 |---|---|---|
 | Portal, API, base de datos | En la mini PC (`docker-compose.prod.yml`) | En la nube (hoy AWS `54.147.214.38`; después Azure) |
 | Lectores de DNI y relés | Los maneja la API de la mini PC | Los maneja el **controlador** de la mini PC (`docker-compose.controlador.yml`) |
@@ -1044,10 +1072,11 @@ No se probó el acceso desde un navegador en la red local (`192.168.0.165`).
 
 ## Anexo B. Variables del archivo .env
 
-Archivo `~/mollendo/.env` en el servidor, junto a `docker-compose.prod.yml`. La plantilla es `deploy.env.example`.
+Archivo `~/mollendo/.env` en el servidor, junto a `docker-compose.prod.yml`. La plantilla es `deploy/nube.env.example` en la nube y `deploy/garita.env.example` en la mini PC como servidor completo (ver [sección 0](#0-entornos)).
 
 | Variable | Obligatoria | Para qué sirve | Cómo generarla |
 |---|---|---|---|
+| `MOLINETES_REMOTOS` | En la nube | `true`: los lectores y relés están en el controlador de la garita y la orden de abrir se le manda a él. | — |
 | `DB_PASSWORD` | Sí | Contraseña del usuario `mollendo` de PostgreSQL. **No cambiarla después del primer arranque.** | `openssl rand -hex 24` |
 | `JWT_SECRET` | Sí | Firma de las sesiones del portal. Si cambia, todos deben volver a iniciar sesión. | `openssl rand -base64 48` |
 | `JWT_REFRESH_SECRET` | Sí | Firma de la renovación de sesiones. Distinta de `JWT_SECRET`. | `openssl rand -base64 48` |

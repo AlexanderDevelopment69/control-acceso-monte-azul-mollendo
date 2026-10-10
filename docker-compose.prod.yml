@@ -1,6 +1,8 @@
-# Despliegue en la mini PC: todo en contenedores.
+# Servidor completo (portal, API, base de datos, respaldos), todo en contenedores.
 #   docker compose -f docker-compose.prod.yml up -d --build
-# Las claves van en un archivo .env junto a este (ver deploy.env.example).
+# Sirve para dos entornos; las claves van en un .env junto a este archivo:
+#   nube   → deploy/nube.env.example   (AWS/Azure; molinetes en el controlador de la garita)
+#   garita → deploy/garita.env.example (opcional: la mini PC como servidor, con lectores y relés por USB)
 # Guía completa: Registro_Despliegue_MiniPC.md
 name: mollendo
 
