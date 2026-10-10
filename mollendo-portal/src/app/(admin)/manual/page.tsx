@@ -6,7 +6,7 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import type { RolUsuario } from "@/lib/api/types";
-import { Captura, RecorridoGarita } from "./Figuras";
+import { Captura, CuentasManual, RecorridoGarita } from "./Figuras";
 
 interface SeccionManual {
   id: string;
@@ -26,18 +26,7 @@ const SECCIONES: SeccionManual[] = [
           Este sistema controla el ingreso y salida de personas al Terminal de Mollendo. Hay dos tipos de cuenta, y
           cada una ve solo las secciones que le corresponden en el menú de la izquierda:
         </p>
-        <ul className="list-disc space-y-1 pl-5">
-          <li>
-            <strong>Administrador</strong>: registra al personal (y su empresa, si es nueva) y sube sus
-            documentos desde <strong>Personal y documentos</strong>. También ve el <strong>Dashboard</strong> de
-            indicadores, descarga <strong>Reportes</strong> en Excel o PDF y supervisa el sistema (panel de vigilancia,
-            auditoría y estado técnico).
-          </li>
-          <li>
-            <strong>Vigilancia</strong>: ve en tiempo real cada ingreso y salida por el molinete, y por qué se
-            autoriza o deniega cada uno. No modifica datos.
-          </li>
-        </ul>
+        <CuentasManual />
         <p>Así funciona el paso de cada persona por la garita:</p>
         <RecorridoGarita />
       </div>
