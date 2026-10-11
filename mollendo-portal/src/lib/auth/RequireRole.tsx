@@ -18,7 +18,7 @@ export function RequireRole({
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.replace("/signin");
+      router.replace("/iniciar-sesion");
       return;
     }
     if (!roles.includes(user.rol)) {

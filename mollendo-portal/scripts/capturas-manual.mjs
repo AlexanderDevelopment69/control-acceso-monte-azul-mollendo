@@ -136,7 +136,7 @@ const navegador = await puppeteer.launch({
 });
 const pagina = await navegador.newPage();
 const { accessToken, refreshToken } = await sesion("ADMIN");
-await pagina.goto(`${PORTAL}/signin`, { waitUntil: "networkidle2" });
+await pagina.goto(`${PORTAL}/iniciar-sesion`, { waitUntil: "networkidle2" });
 await pagina.evaluate(
   (a, r) => {
     localStorage.setItem("mollendo_access_token", a);

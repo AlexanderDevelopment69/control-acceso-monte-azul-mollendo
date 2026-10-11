@@ -862,7 +862,7 @@ Hecho desde la PC de desarrollo (Windows), por SSH sobre Tailscale.
 
 | Prueba | Resultado |
 |---|---|
-| Portal `/signin`, `/vigilancia`, `/sistema` | 200 |
+| Portal `/iniciar-sesion`, `/vigilancia`, `/sistema` | 200 |
 | Página inexistente | 404 (en español) |
 | Swagger por el portal | 200 |
 | API directa `:3001/api/v1/health` | 200 |
