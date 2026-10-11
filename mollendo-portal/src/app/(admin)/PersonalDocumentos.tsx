@@ -24,6 +24,8 @@ const FILTROS: Filtro[] = ["todos", "no-habilitados", "habilitados"];
 const FILAS_POR_TANDA = 100;
 /** Dentro de "No pueden": por documentos (sin cargar o vencidos) o dados de baja. */
 type MotivoFiltro = "todos" | "documentos" | "baja";
+/** En el orden de las píldoras (para deslizar el fondo de la elegida). */
+const MOTIVOS: MotivoFiltro[] = ["todos", "documentos", "baja"];
 
 /**
  * Pantalla principal del administrador (alcance base, "una sola vista"):
@@ -199,7 +201,13 @@ export function PersonalDocumentos() {
               ))}
             </div>
             {filtro === "no-habilitados" && !loading && (
-              <div className="flex gap-1 text-xs">
+              <div className="relative flex gap-1 text-xs">
+                {/* Fondo rojo que se desliza hasta la píldora elegida (como las pestañas de arriba). */}
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 left-0 w-[calc((100%-0.5rem)/3)] rounded-full bg-error-50 transition-transform duration-200 ease-out dark:bg-error-500/15"
+                  style={{ transform: `translateX(calc(${MOTIVOS.indexOf(motivoFiltro)} * (100% + 0.25rem)))` }}
+                />
                 {(
                   [
                     ["todos", `Todos (${noHabilitados})`, "Todos los que no pueden ingresar"],
@@ -216,10 +224,10 @@ export function PersonalDocumentos() {
                     type="button"
                     title={ayuda}
                     onClick={() => setMotivoFiltro(id)}
-                    className={`flex-1 whitespace-nowrap rounded-full px-2 py-1 font-medium transition-colors ${
+                    className={`relative flex-1 whitespace-nowrap rounded-full px-2 py-1 font-medium transition-colors duration-200 ${
                       motivoFiltro === id
-                        ? "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400"
-                        : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
+                        ? "text-error-600 dark:text-error-400"
+                        : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     }`}
                   >
                     {label}
