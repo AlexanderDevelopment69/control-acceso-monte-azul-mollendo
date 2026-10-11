@@ -9,6 +9,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { Modal } from "@/components/ui/modal";
+import { ChevronDownIcon } from "@/icons";
 import { SubirDocumentoForm } from "./SubirDocumentoForm";
 import { FotoGuardada, validarFoto } from "./FotoPersonal";
 import { VerDocumento } from "./VerDocumento";
@@ -66,6 +67,7 @@ export function PersonaFicha({
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [verFoto, setVerFoto] = useState(false);
   const [subiendoDocumento, setSubiendoDocumento] = useState(false);
+  const [historialAbierto, setHistorialAbierto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
 
   const obtener = useCallback(() => personasApi.get(personaId), [personaId]);
@@ -521,29 +523,50 @@ export function PersonaFicha({
       </Seccion>
 
       {historial.length > actuales.length && (
-        <details className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-          <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+        <section className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+          <button
+            type="button"
+            onClick={() => setHistorialAbierto((v) => !v)}
+            aria-expanded={historialAbierto}
+            className="flex w-full items-center justify-between gap-3 p-5 text-left text-sm font-medium text-gray-700 focus:outline-none dark:text-gray-300"
+          >
             Historial de documentos ({historial.length})
-          </summary>
-          <ul className="mt-4 divide-y divide-gray-100 dark:divide-gray-800">
-            {historial.map((d) => (
-              <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm text-gray-700 dark:text-gray-300">
-                <span>
-                  {d.tipoDocumento?.nombre} v{d.version}
-                  <span className="text-gray-400">
-                    {" "}
-                    · cargado {new Date(d.creadoEn).toLocaleDateString("es-PE")}
-                    {d.fechaVencimiento && ` · vence ${formatearFecha(d.fechaVencimiento)}`}
-                  </span>
-                </span>
-                <span className="flex items-center gap-3">
-                  {!idsActuales.has(d.id) && <Badge color="light">Reemplazado</Badge>}
-                  <VerDocumento personaId={persona.id} documentoId={d.id} variante="enlace" />
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
+            <ChevronDownIcon
+              className={`size-4 shrink-0 text-gray-400 transition-transform duration-300 ease-in-out ${historialAbierto ? "rotate-180" : ""}`}
+            />
+          </button>
+          {/* Igual que las filas de "APIs de integración" (Sistema y APIs): se abre el alto
+              (filas de grilla 0fr ↔ 1fr) y el contenido aparece 100 ms después con un fundido. */}
+          <div
+            className={`grid transition-all duration-300 ease-in-out ${historialAbierto ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          >
+            {/* Cerrado: sus enlaces no se alcanzan con Tab. */}
+            <div className="overflow-hidden" inert={!historialAbierto}>
+              <ul
+                className={`divide-y divide-gray-100 px-5 pb-4 transition-opacity duration-300 ease-in-out dark:divide-gray-800 ${
+                  historialAbierto ? "opacity-100 delay-100" : "opacity-0"
+                }`}
+              >
+                {historial.map((d) => (
+                  <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+                    <span>
+                      {d.tipoDocumento?.nombre} v{d.version}
+                      <span className="text-gray-400">
+                        {" "}
+                        · cargado {new Date(d.creadoEn).toLocaleDateString("es-PE")}
+                        {d.fechaVencimiento && ` · vence ${formatearFecha(d.fechaVencimiento)}`}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-3">
+                      {!idsActuales.has(d.id) && <Badge color="light">Reemplazado</Badge>}
+                      <VerDocumento personaId={persona.id} documentoId={d.id} variante="enlace" />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
       )}
     </div>
   );
