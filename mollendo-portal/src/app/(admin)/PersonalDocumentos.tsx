@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
 import { PersonaFicha, motivosCumplimiento } from "@/components/personal/PersonaFicha";
+import { CheckLineIcon, CloseLineIcon } from "@/icons";
 
 type Filtro = "todos" | "no-habilitados" | "habilitados";
 /** En el orden de las pestañas (para deslizar el fondo de la elegida). */
@@ -183,20 +184,42 @@ export function PersonalDocumentos() {
               />
               {(
                 [
-                  ["todos", loading ? "Todos" : `Todos (${visibles.length})`],
-                  ["no-habilitados", loading ? "✖ No pueden" : `✖ No pueden (${noHabilitados})`],
-                  ["habilitados", loading ? "✔ Pueden" : `✔ Pueden (${visibles.length - noHabilitados})`],
-                ] as [Filtro, string][]
-              ).map(([id, label]) => (
+                  { id: "todos", texto: "Todos", cuenta: visibles.length, icono: null },
+                  {
+                    id: "no-habilitados",
+                    texto: "No pueden",
+                    cuenta: noHabilitados,
+                    icono: (
+                      // Círculo suave como el ícono de la tarjeta de estado de la ficha.
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-error-100 text-error-600 dark:bg-error-500/20 dark:text-error-500">
+                        <CloseLineIcon className="size-3" />
+                      </span>
+                    ),
+                  },
+                  {
+                    id: "habilitados",
+                    texto: "Pueden",
+                    cuenta: visibles.length - noHabilitados,
+                    icono: (
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success-100 text-success-600 dark:bg-success-500/20 dark:text-success-500">
+                        <CheckLineIcon className="size-3" />
+                      </span>
+                    ),
+                  },
+                ] as { id: Filtro; texto: string; cuenta: number; icono: React.ReactNode }[]
+              ).map(({ id, texto, cuenta, icono }) => (
                 <button
                   key={id}
                   type="button"
                   onClick={() => setFiltro(id)}
-                  className={`relative flex-1 rounded-md px-2 py-1.5 font-medium transition-colors duration-200 ${
+                  className={`relative flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 font-medium transition-colors duration-200 ${
                     filtro === id ? "text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   }`}
                 >
-                  {label}
+                  {icono}
+                  {texto}
+                  {/* El número, más suave: se lee primero la palabra. */}
+                  {!loading && <span className="font-normal text-gray-400 dark:text-gray-500">{cuenta}</span>}
                 </button>
               ))}
             </div>
@@ -259,13 +282,14 @@ export function PersonalDocumentos() {
                       seleccionada === p.id ? "bg-brand-50 dark:bg-brand-500/10" : ""
                     }`}
                   >
+                    {/* Círculo de color sólido: se distingue de un vistazo en la lista. */}
                     <span
-                      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                      className={`flex size-6 shrink-0 items-center justify-center self-center rounded-full text-white ${
                         habilitado ? "bg-success-500" : "bg-error-500"
                       }`}
                       aria-label={habilitado ? "Puede ingresar" : "No puede ingresar"}
                     >
-                      {habilitado ? "✔" : "✖"}
+                      {habilitado ? <CheckLineIcon className="size-3.5" /> : <CloseLineIcon className="size-3.5" />}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium text-gray-800 dark:text-white/90">
