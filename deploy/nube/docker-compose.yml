@@ -38,7 +38,12 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       DOCUMENTOS_STORAGE_PATH: /app/storage/documentos
       DEVICE_API_KEY: ${DEVICE_API_KEY:?Falta DEVICE_API_KEY en .env}
-      SWAGGER: "true"
+      # Documentación de la API (/api/docs): apagada en la nube (mostraría todas
+      # las rutas a cualquiera). SWAGGER=true en .env solo para revisarla un momento.
+      SWAGGER: ${SWAGGER:-false}
+      # Números de serie de los G4 Pro que pueden comunicarse (las rutas /iclock no
+      # llevan clave): obligatorio en la nube, porque el puerto 3001 da a internet.
+      G4PRO_SN_PERMITIDOS: ${G4PRO_SN_PERMITIDOS:?Falta G4PRO_SN_PERMITIDOS en .env (número de serie del G4 Pro)}
       RESPALDOS_PATH: /app/respaldos
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@mollendo.local}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}

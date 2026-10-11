@@ -164,10 +164,13 @@ export interface EstadoSistema {
     entorno: string;
     uptimeSegundos: number;
     nodeVersion: string;
+    /** ¿Está publicada la documentación Swagger (/api/docs)? En la nube va apagada. */
+    swagger: boolean;
     fecha: string;
   };
   baseDeDatos: { estado: "up" | "down"; latenciaMs: number };
-  integraciones: { claveEquiposConfigurada: boolean };
+  /** terminalesPermitidos: números de serie del G4 Pro aceptados (vacío = cualquiera). */
+  integraciones: { claveEquiposConfigurada: boolean; terminalesPermitidos: string[] };
   equipos: { total: number; enLinea: number; dispositivos: EstadoDispositivo[] };
   lectoresDni: { ingreso: EstadoLectorDni; salida: EstadoLectorDni };
   releMolinetes: EstadoReleUsb;

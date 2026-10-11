@@ -13,6 +13,8 @@ import { ReleUsbService } from '../integraciones/rele-usb.service.js';
 import { ControladorGateway } from '../controlador-remoto/controlador.gateway.js';
 import { IntegracionesService } from '../integraciones/integraciones.service.js';
 import { avisosDelSistema } from './avisos-sistema.js';
+import { swaggerActivo } from '../common/swagger.util.js';
+import { seriesPermitidas } from '../common/seguridad/equipos.util.js';
 
 /** Controlador sin datos todavía (nunca informó): lectores y relés, incluidos los de aviso, figuran sin conexión. */
 const sinConfigurarLectores = () => {
@@ -125,11 +127,13 @@ export class PanelController {
         entorno: process.env.NODE_ENV ?? 'development',
         uptimeSegundos: Math.round(process.uptime()),
         nodeVersion: process.version,
+        swagger: swaggerActivo(),
         fecha: new Date().toISOString(),
       },
       baseDeDatos,
       integraciones: {
         claveEquiposConfigurada: !!process.env.DEVICE_API_KEY,
+        terminalesPermitidos: seriesPermitidas(),
       },
       equipos: {
         total: dispositivos.length,

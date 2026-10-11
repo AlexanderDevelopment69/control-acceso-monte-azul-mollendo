@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { claveEquiposValida } from '../seguridad/equipos.util.js';
 
 // Autenticación de los equipos físicos (lector DNI, alcoholímetro, torniquete) —
 // no son "usuarios" del portal, así que no tienen JWT. Se validan con una
@@ -12,7 +13,7 @@ export class ApiKeyGuard implements CanActivate {
     if (!process.env.DEVICE_API_KEY) {
       throw new UnauthorizedException('DEVICE_API_KEY no configurada en el servidor');
     }
-    if (apiKey !== process.env.DEVICE_API_KEY) {
+    if (!claveEquiposValida(apiKey)) {
       throw new UnauthorizedException('Clave de equipo inválida');
     }
     return true;

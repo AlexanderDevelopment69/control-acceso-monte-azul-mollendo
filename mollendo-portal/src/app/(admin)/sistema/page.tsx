@@ -958,6 +958,16 @@ function SistemaContent() {
             )}
           </div>
           <p className="mt-2 text-xs text-gray-400">Para las rutas de ingreso y salida (X-API-Key)</p>
+          {estado &&
+            (estado.integraciones.terminalesPermitidos.length > 0 ? (
+              <p className="mt-1 text-xs text-gray-400">
+                Terminal facial: solo {estado.integraciones.terminalesPermitidos.join(", ")}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-warning-600 dark:text-orange-400">
+                Terminal facial: acepta cualquier número de serie (falta G4PRO_SN_PERMITIDOS)
+              </p>
+            ))}
         </StatusCard>
 
         <StatusCard className="lg:col-span-3" icon={<FolderIcon className="text-gray-800 size-6 dark:text-white/90" />}>
@@ -1011,14 +1021,18 @@ function SistemaContent() {
       <div className="mb-6 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between px-5 py-4">
           <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Documentación de la API (Swagger)</h2>
-          <a
-            href={DOCS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
-          >
-            Abrir en pestaña nueva ↗
-          </a>
+          {estado && !estado.api.swagger ? (
+            <span className="text-right text-xs text-gray-400">Desactivada en este servidor por seguridad</span>
+          ) : (
+            <a
+              href={DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
+            >
+              Abrir en pestaña nueva ↗
+            </a>
+          )}
         </div>
       </div>
 

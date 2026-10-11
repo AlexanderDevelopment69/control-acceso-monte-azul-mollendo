@@ -19,7 +19,7 @@ git clone https://github.com/AlexanderDevelopment69/control-acceso-monte-azul-mo
 cd control-acceso-monte-azul-mollendo
 ```
 
-**El servidor:** Ubuntu con un usuario con `sudo` y estos puertos abiertos (en AWS: EC2 → Security Groups → Inbound rules): `22` (SSH), `3000` (portal) y `3001` (API, G4 Pro y controlador).
+**El servidor:** Ubuntu con un usuario con `sudo` y estos puertos abiertos (en AWS: EC2 → Security Groups → Inbound rules): `22` (SSH), `3000` (portal) y `3001` (API, G4 Pro y controlador). Si el internet del terminal tiene IP pública fija, abre el `3001` solo para esa IP (`<IP>/32`): ver [seguridad, 4.2](../../docs/seguridad/Seguridad.md#42-restringir-el-puerto-3001-por-ip).
 
 ## Primer despliegue
 
@@ -40,7 +40,7 @@ git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal de
 scp -i ~/.ssh/aws-ec2 mollendo.tgz ubuntu@54.147.214.38:
 ```
 
-**3. Descomprimir y crear el `.env`** (en el servidor). El bloque genera claves al azar; cambia `CORS_ORIGIN` si la IP es otra:
+**3. Descomprimir y crear el `.env`** (en el servidor). El bloque genera claves al azar; cambia `CORS_ORIGIN` si la IP es otra y pon en `G4PRO_SN_PERMITIDOS` el número de serie del G4 Pro (está en su etiqueta; varios, separados por coma):
 
 ```bash
 mkdir -p ~/mollendo && cd ~/mollendo
@@ -51,6 +51,7 @@ DB_PASSWORD=$(openssl rand -hex 24)
 JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 JWT_REFRESH_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 DEVICE_API_KEY=$(openssl rand -hex 32)
+G4PRO_SN_PERMITIDOS=HSR3263100192
 CORS_ORIGIN=http://54.147.214.38:3000
 ADMIN_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
 VIGILANCIA_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
@@ -62,6 +63,8 @@ cat .env      # anota ADMIN_SEED_PASSWORD, VIGILANCIA_SEED_PASSWORD y DEVICE_API
 ```
 
 > No cambies `DB_PASSWORD` después de este paso: la base la guarda al crearse.
+>
+> `G4PRO_SN_PERMITIDOS` es obligatoria: sin ella `docker compose` no arranca. El servidor solo atiende a esos terminales (las rutas del G4 Pro no llevan clave). Swagger (`/api/docs`) queda apagado; para verlo un momento, `SWAGGER=true` en `.env` y `sudo docker compose up -d`.
 
 **4. Levantar** (la primera vez tarda varios minutos):
 
@@ -86,6 +89,8 @@ sudo docker compose run --rm -T api npm run db:seed
 ## Actualizar a una versión nueva
 
 Los datos están en volúmenes de Docker y no se tocan.
+
+> Desde la versión del 11/10/2026 el `.env` necesita `G4PRO_SN_PERMITIDOS` (número de serie del G4 Pro). Si tu `.env` es anterior, agrégala antes de levantar: `echo "G4PRO_SN_PERMITIDOS=<número de serie>" >> .env`.
 
 ```bash
 # En tu PC (con los cambios ya en un commit)

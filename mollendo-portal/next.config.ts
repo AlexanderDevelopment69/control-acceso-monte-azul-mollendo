@@ -24,9 +24,28 @@ const svgrSvgoConfig = {
 // imagen, ver mollendo-portal/Dockerfile).
 const API_INTERNAL_URL = process.env.API_INTERNAL_URL ?? "http://localhost:3001";
 
+// Cabeceras de seguridad de todas las páginas: no se puede mostrar el portal
+// dentro de otro sitio (clickjacking), el navegador no adivina tipos de archivo,
+// no se envía la dirección completa a otros sitios y no se usan cámara,
+// micrófono ni ubicación.
+const CABECERAS_SEGURIDAD = [
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+];
+
 const nextConfig: NextConfig = {
   // Servidor autónomo (.next/standalone) para la imagen de Docker.
   output: "standalone",
+  // No anunciar "X-Powered-By: Next.js".
+  poweredByHeader: false,
+
+  async headers() {
+    return [{ source: "/:path*", headers: CABECERAS_SEGURIDAD }];
+  },
+
   // Reenvía las llamadas a la API hacia el backend local. Sirve para poder
   // exponer solo el frontend por un túnel (ej. ngrok en el plan gratis, que
   // solo da un dominio) y que el navegador del cliente llame a la API por

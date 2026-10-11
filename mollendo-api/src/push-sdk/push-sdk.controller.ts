@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Header, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Header, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { Public } from '../common/decorators/public.decorator.js';
+import { SerieG4Guard } from '../common/guards/serie-g4.guard.js';
 import { PushSdkService } from './push-sdk.service.js';
 
 /**
@@ -8,9 +9,11 @@ import { PushSdkService } from './push-sdk.service.js';
  * (rutas fijas, sin prefijo, no configurables desde el equipo). Sin
  * autenticación: el equipo no manda ningún token, por eso van marcados
  * @Public() -- ver main.ts para la exclusión del prefijo global "api/v1".
+ * En su lugar, solo se atiende a los números de serie de G4PRO_SN_PERMITIDOS.
  */
 @Controller('iclock')
 @Public()
+@UseGuards(SerieG4Guard)
 export class PushSdkController {
   constructor(private readonly pushSdk: PushSdkService) {}
 

@@ -1,4 +1,5 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
@@ -9,8 +10,10 @@ import { Public } from '../common/decorators/public.decorator.js';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // Límite de intentos (ver limite-intentos.ts): frena a quien prueba contraseñas.
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }

@@ -19,6 +19,7 @@ Controla el ingreso y la salida del personal por los molinetes de la garita. En 
 | `docs/cliente/` | `Documento_Funcional_Control_Accesos_TMAM.md` (qué hace el sistema), `Contingencias_Equipos_Garita.md` (qué pasa si falla un equipo), propuesta técnica y costo y plazo (`.docx`) |
 | `docs/especificacion/` | Especificación de desarrollo: `_base` (alcance vigente), `_final` (alcance completo, para el futuro) y la primera versión |
 | `docs/despliegue/` | `Registro_Despliegue_MiniPC.md`: guía completa de despliegue, operación, respaldos y equipos |
+| `docs/seguridad/` | `Seguridad.md`: medidas de seguridad vigentes, revisión del 10/10/2026, pendientes (HTTPS, puerto 3001 por IP) y lista de control por despliegue |
 | `docs/g4pro/` | `Protocolo_G4Pro_Referencia.md` (referencia técnica vigente del terminal facial) e `Historial_Integracion_G4Pro.md` (diseño, pruebas y hallazgos de la integración) |
 | `docs/diagramas/` | Proceso de ingreso y salida (`ingreso.svg`, `salida.svg`, `Diagrama_Ingreso_Salida.html`) y arquitectura (`arquitectura.svg`) |
 | `docs/equipos/` | Fichas técnicas, manuales y guías de los equipos (alcoholímetro, lector de DNI, terminal facial, molinete) |

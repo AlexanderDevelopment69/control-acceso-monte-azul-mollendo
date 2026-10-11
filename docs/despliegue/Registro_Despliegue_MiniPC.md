@@ -891,14 +891,15 @@ Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), 
 | `JWT_SECRET` | Sí | Firma de las sesiones del portal. Si cambia, todos deben volver a iniciar sesión. | `openssl rand -base64 48` |
 | `JWT_REFRESH_SECRET` | Sí | Firma de la renovación de sesiones. Distinta de `JWT_SECRET`. | `openssl rand -base64 48` |
 | `DEVICE_API_KEY` | Sí | Clave de los equipos físicos (cabecera `X-API-Key` en las rutas de ingreso y salida). Si cambia, hay que actualizarla en los equipos. | `openssl rand -hex 32` |
+| `G4PRO_SN_PERMITIDOS` | En la nube | Números de serie de los G4 Pro que pueden comunicarse con el servidor (`/iclock`), separados por coma. Cualquier otro recibe 403. Vacía = se acepta cualquiera (solo en la red local). En la nube `docker compose` no arranca sin ella. Ver [seguridad](../seguridad/Seguridad.md#31-números-de-serie-permitidos-del-g4-pro). | Etiqueta del equipo o "Sistema y APIs" → Equipo (G4 Pro) |
 | `CORS_ORIGIN` | No | Direcciones desde las que se abre el portal, separadas por coma. | Las IPs del servidor con `:3000` |
 | `ADMIN_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `admin@mollendo.local`. Después del seed no se usa. | Cualquier contraseña de 8 o más caracteres |
 | `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@mollendo.local`. | Igual que la anterior |
 | `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@mollendo.local` y `vigilancia@mollendo.local`). | — |
-
 | `G4PRO_HORA_SINCRONIZACION` | No | Valor inicial de la sincronización diaria con los G4 Pro (0 a 23, hora de Lima; `off` la desactiva). Después se activa, desactiva o cambia de hora desde "Sistema y APIs", y eso se guarda en el servidor (`sincronizacion-diaria.json` en el volumen de documentos) y manda sobre este valor. | Por defecto `0` (medianoche); hoy `off` en la nube |
 | `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). Se guardan 14 días. | Por defecto `00:00` |
 | `PUSH_SDK_DEPURAR` | No | `true`: anota en el registro de la API todo lo que envía el G4 Pro (para estudiar el equipo). Volver a `false` al terminar. | Por defecto `false` |
+| `SWAGGER` | No | `true`: publica la documentación de la API (`/api/docs`). En la nube va apagada por seguridad (mostraría todas las rutas); en la mini PC está activa. | Por defecto `false` en la nube |
 
 ### B.2. Lectores de DNI (controlador y garita)
 

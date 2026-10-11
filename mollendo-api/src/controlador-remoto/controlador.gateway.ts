@@ -16,6 +16,7 @@ import type { EstadoLectorDni } from '../lectores-dni/lectores-dni.service.js';
 import type { EstadoReleUsb } from '../integraciones/rele-usb.service.js';
 import type { AbrirMolineteEvent } from '../eventos-acceso/eventos-acceso.service.js';
 import { Public } from '../common/decorators/public.decorator.js';
+import { claveEquiposValida } from '../common/seguridad/equipos.util.js';
 
 /** Lo que el controlador informa cada pocos segundos. */
 export interface EstadoReportado {
@@ -67,7 +68,7 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
 
   handleConnection(cliente: Socket): void {
     const clave = cliente.handshake.auth?.['clave'];
-    if (!process.env.DEVICE_API_KEY || clave !== process.env.DEVICE_API_KEY) {
+    if (!claveEquiposValida(clave)) {
       this.logger.warn(`Controlador rechazado (clave de equipos inválida) desde ${cliente.handshake.address}`);
       cliente.disconnect(true);
       return;

@@ -42,6 +42,7 @@ DB_PASSWORD=$(openssl rand -hex 24)
 JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 JWT_REFRESH_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 DEVICE_API_KEY=$(openssl rand -hex 32)
+G4PRO_SN_PERMITIDOS=HSR3263100192
 CORS_ORIGIN=http://100.78.153.33:3000,http://192.168.0.165:3000
 ADMIN_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
 VIGILANCIA_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1

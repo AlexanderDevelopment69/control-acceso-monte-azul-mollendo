@@ -388,13 +388,19 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 ## 9. Seguridad
 
 - **Autenticación** con correo y contraseña; las contraseñas se guardan cifradas (bcrypt), nunca en texto plano.
-- **Sesiones** firmadas (JWT) de 1 hora, renovables hasta 7 días; se invalidan al cambiar la contraseña o al dar de baja la cuenta.
+- **Límite de intentos:** tras 5 intentos fallidos en un minuto con el mismo correo, el inicio de sesión de ese correo se bloquea durante un minuto; los demás usuarios siguen ingresando con normalidad. Esto impide probar contraseñas de forma masiva.
+- **Sesiones** firmadas (JWT) de 1 hora, renovables hasta 7 días; se invalidan al cambiar la contraseña o al dar de baja la cuenta, que se verifica en cada operación.
 - **Permisos por rol** aplicados en el backend, no solo en las pantallas.
-- **Equipos** autenticados con una clave propia (`X-API-Key`), distinta de las cuentas de usuario.
+- **Equipos** autenticados con una clave propia (`X-API-Key`), distinta de las cuentas de usuario, y comparada de forma segura.
+- **Terminal facial:** el servidor solo acepta los terminales cuyo número de serie está autorizado en su configuración; cualquier otro equipo es rechazado y queda registrado.
 - **Archivos:** solo formatos y tamaños permitidos; se guardan con nombres generados por el sistema y solo después de validar la petición.
 - **Datos de entrada** validados en el backend (formatos, longitudes, fechas).
+- **Cabeceras de seguridad** en el portal y en la API: el portal no puede mostrarse dentro de otros sitios y el navegador no interpreta los archivos con un tipo distinto al real.
+- **Documentación técnica de la API** (Swagger) disponible solo en la red local; en el servidor en la nube está desactivada.
+- **Librerías** revisadas y actualizadas, sin vulnerabilidades conocidas en lo que se instala en el servidor.
 - **Auditoría** de todos los cambios de datos.
-- **Red:** el sistema solo es accesible desde la red local del terminal o mediante la VPN Tailscale. Las credenciales de producción se almacenan únicamente en el servidor.
+- **Red:** en la mini PC, el sistema solo es accesible desde la red local del terminal o mediante la VPN Tailscale. En el servidor en la nube solo están abiertos el portal, la API y el acceso de administración (SSH, únicamente con llave); la base de datos no es accesible desde fuera. Las credenciales de producción se almacenan únicamente en el servidor.
+- **Cifrado HTTPS:** se habilitará cuando se disponga del dominio del cliente.
 
 ---
 

@@ -39,6 +39,8 @@ services:
       DOCUMENTOS_STORAGE_PATH: /app/storage/documentos
       DEVICE_API_KEY: ${DEVICE_API_KEY:?Falta DEVICE_API_KEY en .env}
       SWAGGER: "true"
+      # Números de serie de los G4 Pro que pueden comunicarse (vacío = cualquiera de la red local).
+      G4PRO_SN_PERMITIDOS: ${G4PRO_SN_PERMITIDOS:-}
       RESPALDOS_PATH: /app/respaldos
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@mollendo.local}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
