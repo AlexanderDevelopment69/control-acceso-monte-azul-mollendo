@@ -2,8 +2,11 @@
 
 Revisión de seguridad del 10/10/2026 (API, portal, servidor de AWS y librerías), lo que se corrigió y lo que queda pendiente. Al final hay una lista de control para revisar en cada despliegue.
 
+> **Estado al 11/10/2026:** el **programa** (API y portal) no tiene problemas de seguridad graves conocidos. Lo que falta para que el sistema en funcionamiento sea seguro es de la **instalación**: HTTPS, cambiar las contraseñas iniciales y guardar los respaldos fuera del servidor (ver [sección 0](#0-estado-actual)).
+
 ## Contenido
 
+0. [Estado actual](#0-estado-actual)
 1. [Resumen](#1-resumen)
 2. [Medidas vigentes](#2-medidas-vigentes)
 3. [Correcciones del 10/10/2026](#3-correcciones-del-10102026)
@@ -12,6 +15,45 @@ Revisión de seguridad del 10/10/2026 (API, portal, servidor de AWS y librerías
 6. [Cómo comprobar cada medida](#6-cómo-comprobar-cada-medida)
 
 ---
+
+## 0. Estado actual
+
+Al 11/10/2026, después de la revisión de seguridad (10/10) y de la revisión del portal (11/10, ver [`../revisiones/Revision_Portal_2026-10-11.md`](../revisiones/Revision_Portal_2026-10-11.md)).
+
+### 0.1. El programa (API y portal)
+
+Sin problemas graves conocidos. Lo que cubre:
+
+| Área | Cómo está |
+|---|---|
+| Contraseñas | Cifradas con bcrypt, mínimo 8 caracteres, nunca en texto plano |
+| Inicio de sesión | Límite de intentos (5 por minuto por correo) |
+| Sesiones | 1 hora, renovables hasta 7 días; se cortan al instante (también el panel en vivo) al dar de baja la cuenta o cambiar la contraseña |
+| Permisos | Cada ruta de la API exige sesión y rol; el vigilante no ve documentos ni pantallas de administrador aunque escriba la dirección |
+| Equipos | Ingreso, salida y controlador con clave (comparada en tiempo constante); el G4 Pro, solo con su número de serie autorizado |
+| Archivos | Solo PDF, imágenes y Word, con tamaño máximo y nombre aleatorio en disco |
+| Datos de entrada | Validados en la API; sin inyección SQL (consultas parametrizadas) ni HTML inyectable en el portal |
+| Navegador | Cabeceras de seguridad; el portal no se puede mostrar dentro de otro sitio |
+| Librerías | Sin vulnerabilidades conocidas en lo que se instala en el servidor |
+| Trazabilidad | Auditoría de todos los cambios |
+
+**Límites conocidos** (ningún sistema es 100 % seguro):
+
+- **El G4 Pro no manda clave:** el protocolo de ZKTeco no lo permite; el número de serie es la única identificación posible en el código. Por eso se recomienda cerrar el puerto 3001 por IP ([4.2](#42-restringir-el-puerto-3001-por-ip)).
+- **Renovación de sesión de 7 días sin lista de revocación:** si alguien robara el token de renovación de un navegador, podría usarlo hasta que venza, salvo que se cambie la contraseña o se dé de baja la cuenta. Es el diseño habitual; se podría endurecer guardando las sesiones en la base para revocarlas una por una.
+- **Sin verificación en dos pasos (2FA)** para el administrador.
+- **Sesión en `localStorage`** ([4.3](#43-otros)).
+- **Revisión de código, no prueba de penetración:** si el cliente la exige, debe hacerla un tercero especializado.
+
+### 0.2. La instalación
+
+| Prioridad | Pendiente | Quién | Estado |
+|---|---|---|---|
+| 🔴 | **Contraseñas iniciales sin cambiar en AWS:** `admin@mollendo.local` y `vigilancia@mollendo.local` entran con la contraseña generada al instalar, que está en texto plano en el `.env` del servidor (comprobado el 11/10/2026). Cambiarlas desde el portal (menú del usuario → "Cambiar contraseña") y después borrar `ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD` del `.env` (solo sirven para crear las cuentas la primera vez) | Administrador del portal; luego soporte | Pendiente |
+| 🔴 | **HTTPS** ([4.1](#41-https)) | Cliente (dominio), luego soporte | Esperando el dominio |
+| 🟠 | **Respaldos fuera del servidor:** hoy los respaldos diarios están en el mismo disco del servidor de AWS; si se pierde o se compromete, se pierden datos y respaldos. Opciones: copias automáticas del disco (AWS Data Lifecycle Manager, desde la consola) o copiar cada respaldo a un bucket S3 | Quien administre AWS | Pendiente |
+| 🟠 | **Puerto 3001 solo para la IP del terminal** ([4.2](#42-restringir-el-puerto-3001-por-ip)) | Quien administre AWS | Pendiente (requiere IP fija) |
+| 🟠 | **Actualizar la mini PC** cuando vuelva a estar en línea: no tiene las correcciones del 10 y 11/10/2026 (`deploy/controlador/README.md`, sección 5) | Soporte | Pendiente |
 
 ## 1. Resumen
 
@@ -148,6 +190,7 @@ Si la IP no es fija, queda como protección el número de serie permitido (3.1) 
 
 - Las sesiones del portal se guardan en el navegador (`localStorage`). Es aceptable porque el portal no inserta HTML sin escapar; si en el futuro se agrega contenido de terceros, conviene pasar a cookies `HttpOnly`.
 - `ufw` está inactivo en el servidor de AWS: el filtro lo hace el Security Group. En la mini PC, revisar que solo estén abiertos los puertos necesarios.
+- Las 5 alertas de `npm audit` en herramientas de desarrollo del portal (eslint y similares) requieren versiones mayores; no se despliegan.
 
 ---
 
@@ -156,7 +199,8 @@ Si la IP no es fija, queda como protección el número de serie permitido (3.1) 
 - [ ] `.env` con claves generadas al azar (anexo B de la guía), permisos `600`, nunca en el repositorio.
 - [ ] En la nube, `G4PRO_SN_PERMITIDOS` con el número de serie del G4 Pro.
 - [ ] En la nube, `SWAGGER` sin definir o en `false`.
-- [ ] Contraseñas iniciales de `admin` y `vigilancia` cambiadas desde el portal después del primer ingreso.
+- [ ] Contraseñas iniciales de `admin` y `vigilancia` cambiadas desde el portal después del primer ingreso, y `ADMIN_SEED_PASSWORD` / `VIGILANCIA_SEED_PASSWORD` borradas del `.env`.
+- [ ] Respaldos copiados fuera del servidor.
 - [ ] Security Group: solo 22, 3000 y 3001 (3001 restringido por IP si es posible); la base de datos nunca publicada.
 - [ ] SSH solo con llave.
 - [ ] `npm audit --omit=dev` sin vulnerabilidades altas o críticas en `mollendo-api` y `mollendo-portal` antes de actualizar.
