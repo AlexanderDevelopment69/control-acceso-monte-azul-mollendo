@@ -9,7 +9,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { Modal } from "@/components/ui/modal";
-import { ChevronDownIcon } from "@/icons";
+import { CheckLineIcon, ChevronDownIcon, CloseLineIcon, FileIcon } from "@/icons";
 import { SubirDocumentoForm } from "./SubirDocumentoForm";
 import { FotoGuardada, validarFoto } from "./FotoPersonal";
 import { VerDocumento } from "./VerDocumento";
@@ -26,6 +26,29 @@ export function motivosCumplimiento(c: Cumplimiento, motivoBaja?: string | null)
   if (c.sinDocumentos) motivos.push("Sin documentos cargados");
   if (c.documentosVencidos.length > 0) motivos.push(`Vencido: ${c.documentosVencidos.join(", ")}`);
   return motivos;
+}
+
+/** Días enteros desde una fecha DATE (medianoche UTC) hasta hoy (hora local). */
+function diasDesde(fecha: string): number {
+  const hoy = new Date();
+  const inicioDeHoy = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  return Math.round((inicioDeHoy - new Date(fecha).getTime()) / 86_400_000);
+}
+
+/** Fila de un problema dentro de la tarjeta de estado: qué falta, desde cuándo y el botón que lo resuelve. */
+function FilaProblema({ titulo, detalle, accion }: { titulo: string; detalle?: string; accion: React.ReactNode }) {
+  return (
+    <li className="flex flex-wrap items-center gap-3 rounded-lg border border-error-100 bg-white px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-white/[0.05] dark:text-gray-400">
+        <FileIcon className="size-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-gray-800 dark:text-white/90">{titulo}</span>
+        {detalle && <span className="block text-xs text-error-600 dark:text-error-400">{detalle}</span>}
+      </span>
+      {accion}
+    </li>
+  );
 }
 
 function Seccion({ titulo, descripcion, children }: { titulo: string; descripcion?: string; children: React.ReactNode }) {
@@ -300,51 +323,84 @@ export function PersonaFicha({
           </div>
         )}
         {cumplimiento && (
+          // Tarjeta de estado: ícono, título, resumen y, si no puede ingresar, cada problema
+          // con el botón que lo resuelve (renovar o agregar documento; si está de baja, “Reactivar” de arriba).
           <div
-            className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+            className={`mt-4 rounded-xl border p-4 ${
               cumplimiento.habilitado
-                ? "bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-500"
-                : "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500"
+                ? "border-success-100 bg-success-50 dark:border-success-500/20 dark:bg-success-500/10"
+                : "border-error-100 bg-error-50 dark:border-error-500/20 dark:bg-error-500/10"
             }`}
           >
-            {cumplimiento.habilitado ? (
-              <>
-                <p className="font-semibold">✔ Puede ingresar hoy</p>
-                <p className="mt-0.5">Todos sus documentos están vigentes. Al ingresar se validan su DNI, su rostro y la prueba de alcohol.</p>
-              </>
-            ) : (
-              <>
-                <p className="font-semibold">✖ No puede ingresar</p>
-                {persona.estado === "inactivo" ? (
-                  <>
-                    <p className="mt-0.5">
-                      Dado de baja{persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}
-                      {persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""}.
-                    </p>
-                    <p className="mt-1 text-xs opacity-80">Para que vuelva a ingresar, usa “Reactivar”.</p>
-                  </>
-                ) : (
-                  <>
-                    <ul className="mt-1 space-y-0.5">
-                      {cumplimiento.sinDocumentos && <li>• No tiene documentos cargados.</li>}
-                      {cumplimiento.documentosVencidos.map((nombre) => {
-                        const doc = actuales.find((d) => d.nombre === nombre);
-                        return (
-                          <li key={nombre}>
-                            • <strong className="font-medium">{nombre}</strong>
-                            {doc?.fechaVencimiento ? `: venció el ${formatearFecha(doc.fechaVencimiento)}` : ": vencido"}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    <p className="mt-1 text-xs opacity-80">
-                      {cumplimiento.sinDocumentos
-                        ? "Sube sus documentos en la sección Documentos."
-                        : "Sube la versión actualizada en la sección Documentos."}
-                    </p>
-                  </>
+            <div className="flex items-start gap-3">
+              <span
+                className={`flex size-10 shrink-0 items-center justify-center rounded-full ${
+                  cumplimiento.habilitado
+                    ? "bg-success-100 text-success-600 dark:bg-success-500/20 dark:text-success-500"
+                    : "bg-error-100 text-error-600 dark:bg-error-500/20 dark:text-error-500"
+                }`}
+              >
+                {cumplimiento.habilitado ? <CheckLineIcon className="size-5" /> : <CloseLineIcon className="size-5" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p
+                  className={`font-semibold ${
+                    cumplimiento.habilitado ? "text-success-700 dark:text-success-500" : "text-error-600 dark:text-error-500"
+                  }`}
+                >
+                  {cumplimiento.habilitado ? "Puede ingresar hoy" : "No puede ingresar"}
+                </p>
+                <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-300">
+                  {cumplimiento.habilitado
+                    ? "Todos sus documentos están vigentes. Al ingresar se validan su DNI, su rostro y la prueba de alcohol."
+                    : persona.estado === "inactivo"
+                      ? `Dado de baja${persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}${
+                          persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""
+                        }. Para que vuelva a ingresar, usa “Reactivar”.`
+                      : cumplimiento.sinDocumentos
+                        ? "No tiene documentos cargados. Agrega al menos uno para que pueda ingresar."
+                        : cumplimiento.documentosVencidos.length === 1
+                          ? "1 documento vencido. Renuévalo para que pueda ingresar."
+                          : `${cumplimiento.documentosVencidos.length} documentos vencidos. Renuévalos para que pueda ingresar.`}
+                </p>
+              </div>
+            </div>
+
+            {!cumplimiento.habilitado && persona.estado !== "inactivo" && (
+              <ul className="mt-3 space-y-2">
+                {cumplimiento.sinDocumentos && (
+                  <FilaProblema
+                    titulo="Sin documentos cargados"
+                    accion={
+                      <Button size="sm" variant="outline" onClick={() => setVentana({ modo: "agregar" })}>
+                        Agregar documento
+                      </Button>
+                    }
+                  />
                 )}
-              </>
+                {cumplimiento.documentosVencidos.map((nombre) => {
+                  const doc = actuales.find((d) => d.nombre === nombre);
+                  const dias = doc?.fechaVencimiento ? diasDesde(doc.fechaVencimiento) : null;
+                  return (
+                    <FilaProblema
+                      key={nombre}
+                      titulo={nombre}
+                      detalle={
+                        doc?.fechaVencimiento
+                          ? `Venció el ${formatearFecha(doc.fechaVencimiento)}${
+                              dias !== null && dias > 0 ? ` · hace ${dias} ${dias === 1 ? "día" : "días"}` : ""
+                            }`
+                          : "Vencido"
+                      }
+                      accion={
+                        <Button size="sm" variant="outline" onClick={() => setVentana({ modo: "renovar", nombre })}>
+                          Renovar
+                        </Button>
+                      }
+                    />
+                  );
+                })}
+              </ul>
             )}
           </div>
         )}
