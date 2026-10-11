@@ -12,7 +12,9 @@ import { TableSearch } from "@/components/tables/TableSearch";
 import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
 import { PersonaFicha, motivosCumplimiento } from "@/components/personal/PersonaFicha";
 
-type Filtro = "todos" | "habilitados" | "no-habilitados";
+type Filtro = "todos" | "no-habilitados" | "habilitados";
+/** En el orden de las pestañas (para deslizar el fondo de la elegida). */
+const FILTROS: Filtro[] = ["todos", "no-habilitados", "habilitados"];
 
 /**
  * Filas que se dibujan de una vez. Con miles de personas, dibujar toda la lista
@@ -170,7 +172,13 @@ export function PersonalDocumentos() {
                   .map((e) => ({ value: String(e.id), label: e.razonSocial })),
               ]}
             />
-            <div className="flex gap-1 rounded-lg bg-gray-100 p-1 text-xs dark:bg-gray-900">
+            {/* Pestañas con un fondo blanco que se desliza hasta la elegida. */}
+            <div className="relative flex rounded-lg bg-gray-100 p-1 text-xs dark:bg-gray-900">
+              <span
+                aria-hidden
+                className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/3)] rounded-md bg-white shadow-theme-xs transition-transform duration-200 ease-out dark:bg-gray-800"
+                style={{ transform: `translateX(${FILTROS.indexOf(filtro) * 100}%)` }}
+              />
               {(
                 [
                   ["todos", loading ? "Todos" : `Todos (${visibles.length})`],
@@ -182,10 +190,8 @@ export function PersonalDocumentos() {
                   key={id}
                   type="button"
                   onClick={() => setFiltro(id)}
-                  className={`flex-1 rounded-md px-2 py-1.5 font-medium ${
-                    filtro === id
-                      ? "bg-white text-gray-900 shadow-theme-xs dark:bg-gray-800 dark:text-white"
-                      : "text-gray-500 dark:text-gray-400"
+                  className={`relative flex-1 rounded-md px-2 py-1.5 font-medium transition-colors duration-200 ${
+                    filtro === id ? "text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   }`}
                 >
                   {label}

@@ -548,3 +548,4 @@ Resumen del estado actual. El detalle de cada cambio está en la bitácora (abaj
 - **2026-10-11** — Recorrido de validación de la ficha sin el paso "Alcohol" (solo se mide en el molinete; no aporta en la ficha): quedan DNI, Documentos y Rostro.
 - **2026-10-11** — Filas de documentos vencidos de la tarjeta de estado sin borde (solo el fondo).
 - **2026-10-11** — El recorrido (DNI → Documentos → Rostro) sale de la tarjeta de estado: ahora va en su propio bloque "Validación de ingreso" debajo de ella, con fondo neutro. La tarjeta de color queda con el estado y los documentos a renovar.
+- **2026-10-11** — Pestañas "Todos / No pueden / Pueden" de Personal con **fondo que se desliza** hasta la elegida (200 ms, `ease-out`) y cambio de color del texto con transición, en vez de saltar. Revisado con capturas en tema claro y oscuro.
