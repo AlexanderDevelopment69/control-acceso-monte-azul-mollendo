@@ -9,73 +9,59 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
 
 ---
 
-## 0. Configuración inicial del proyecto
+## Estado al 11/10/2026
 
-- [x] Estructura monorepo: `/mollendo-api` (NestJS) + `/mollendo-portal` (Next.js, template TailAdmin)
-- [x] mollendo-api: NestJS instalado y corriendo (`npm run start:dev`) — probado, arranca en `http://localhost:3001` (puerto configurado en `.env`)
-- [x] mollendo-portal: dependencias del template instaladas y corriendo (`npm run dev`) — probado, arranca en `http://localhost:3000`
-- [x] Prisma 7.10.0 inicializado en mollendo-api (CLI y client alineados en la misma versión estable; el `latest` de npm apuntaba a un RC de Prisma 8, se evitó a propósito)
-- [x] Esquema de base de datos (`schema.prisma`) a partir del script SQL de la especificación — 10 modelos + enums, `prisma validate` y `prisma generate` OK
-- [x] Primera migración aplicada (`prisma migrate dev --name init`) — Postgres 16 vía Docker (dentro de WSL Ubuntu), 10 tablas creadas y verificadas
-- [x] `.env.example` en mollendo-api y mollendo-portal (sin credenciales reales)
-- [ ] Repositorio git inicializado (pendiente — el usuario lo hará manualmente)
-- [x] `ConfigModule` (`@nestjs/config`) cargando `.env`, prefijo global `/api/v1`, CORS habilitado hacia mollendo-portal, puerto 3001 (api) / 3000 (portal) sin choque
+Resumen del estado actual. El detalle de cada cambio está en la bitácora (abajo); esta lista se reescribió el 11/10/2026 porque la anterior describía el alcance inicial (puestos, visitas, ZKBio, molinete simulado) que ya no aplica.
 
-## 1. mollendo-api — módulos NestJS
+### 0. Proyecto
 
-- [x] Módulo `auth` (login, refresh-token, JWT) — alcance base: sin activación ni recuperación por correo
-- [x] Módulo `empresas` (alta, listado, detalle, editar/estado) — sin invitación (alcance base)
-- [x] Módulo `usuarios` (alta de cuentas administrador/vigilancia, baja/reactivación, restablecer contraseña) — alcance base
-- [x] Módulo `personas` (alta con empresa, listado, detalle, editar/cambiar puesto, dar de baja/reactivar) — lo gestiona el administrador
-- [x] Módulo `tipos-documento` (catálogo) — probado end-to-end
-- [x] Módulo `documentos` (subir/renovar con archivo real a disco, historial) — sin aprobación: válido desde que se carga
-- [x] Módulo `puestos` (catálogo por caso + matriz de requisitos) — probado end-to-end
-- [x] Módulo `solicitudes-visita` (registro, listado, reprogramar/cancelar) — probado end-to-end
-- [x] Módulo `eventos-acceso` (ingreso, salida básica sin antipassback, motor de validación) — probado end-to-end, todos los casos de denegación
-- [x] Módulo `integraciones` (webhook ZKBio CVSecurity que ya ejecuta el ingreso, apertura automática del molinete — el molinete sigue **mock**; contrato de ZKBio provisional)
-- [x] Módulo `panel` (resumen para vigilancia, WebSocket `/ws/eventos`, `/health`) — probado
-- [x] Módulo `auditoria` — conectado a empresas/personas/documentos/puestos
-- [x] Motor de validación de acceso (lógica crítica) — función pura en `validacion-acceso.engine.ts`, **12 tests unitarios con Vitest** (equivalente a Jest, ver bitácora), todos pasan
-- [ ] Pruebas e2e de flujo ingreso/salida (hay smoke test manual end-to-end con curl, pero no un test automatizado e2e todavía)
-- [x] Swagger/OpenAPI expuesto en `/api/docs` (solo fuera de producción)
-- [~] ~~Envío de correos (SMTP)~~ — eliminado en el alcance base (no hay invitaciones ni recuperación por correo)
+- [x] Monorepo: `mollendo-api` (NestJS + Prisma + PostgreSQL) y `mollendo-portal` (Next.js 16).
+- [x] Repositorio git (los commits los hace el usuario).
+- [x] Estructura ordenada: `docs/` (cliente, especificación, despliegue, seguridad, revisiones, G4 Pro, diagramas, equipos) y `deploy/` (un entorno por carpeta). Ver `README.md`.
 
-## 2. mollendo-portal — portal y paneles
+### 1. API (`mollendo-api`)
 
-- [x] Adaptar layout base del template (sidebar por rol, header con usuario real y logout)
-- [x] Login (la activación/recuperación por correo se eliminaron en el alcance base)
-- [x] Panel Administración: alta y gestión de empresas (crear, listar, activar/desactivar)
-- [x] Panel Administración: usuarios (crear cuentas, dar de baja, restablecer contraseña)
-- [x] Panel Administración: catálogo de puestos y requisitos por puesto (matriz de checkboxes)
-- [x] Panel Administración: catálogo de tipos de documento
-- [x] Panel Administración: auditoría (vista completa, solo lectura)
-- [x] Panel Administración: personal de todas las empresas (alta, expediente, cambio de puesto, dar de baja/reactivar)
-- [x] Panel Administración: carga de documentos ya válidos (subida real de archivo, historial de versiones)
-- [x] Panel Administración: visitas (crear, cancelar)
-- [x] ~~Portal Empresa~~ — eliminado en el alcance base (el administrador carga todo)
-- [x] Panel Vigilancia: vista en tiempo real (WebSocket) + resumen (denegaciones, alcohol no conforme, documentos vencidos) + historial
-- [x] Panel Vigilancia: aviso de servidor caído (polling a `/health` cada 15s) — sin modo contingencia en el alcance base
-- [ ] **Verificación interactiva en navegador real** — la extensión Claude en Chrome no estaba conectada en esta sesión, así que no se pudo hacer clic a través de los flujos. Se verificó: type-check limpio, lint limpio, todas las rutas devuelven 200 sin errores de render en el servidor, y el HTML servido contiene el contenido esperado. **Falta la prueba real de clic a clic — recomendado antes de dar por cerrado el frontend.**
+- [x] `auth` y `cuenta`: inicio de sesión con límite de intentos, renovación de sesión, cambio de la propia contraseña (cierra las otras sesiones).
+- [x] `usuarios`: cuentas de administrador y vigilancia, baja y restablecer contraseña (solo por API; no hay pantalla en el portal).
+- [x] `empresas`, `personas` (con foto), `tipos-documento`, `documentos` (versiones, sin vencimientos pasados).
+- [x] `eventos-acceso`: ingreso y salida con el motor de validación (DNI → documentos → rostro y alcohol del G4 Pro → molinete).
+- [x] `push-sdk`: protocolo ADMS del G4 Pro (solo números de serie autorizados) y sincronización del personal (manual y revisión diaria).
+- [x] `lectores-dni`, `controlador` (mini PC) y `controlador-remoto` (canal con la nube): lectores de DNI y relés de molinetes y avisos.
+- [x] `panel`: resumen, Dashboard, estado del sistema, aviso de fallas, `/health` y canal en vivo `/ws/eventos`.
+- [x] `reportes`: seis reportes en Excel y PDF; documentos también en ZIP con archivos (y fotos opcionales).
+- [x] `auditoria`: registro de todos los cambios.
+- [x] Pruebas: 91 (Vitest), incluido el flujo de ingreso y salida (`eventos-acceso.flujo.spec.ts`).
 
-## 3. Integraciones físicas (dependen de datos del cliente)
+### 2. Portal (`mollendo-portal`)
 
-- [ ] Documentación/SDK de ZKBio CVSecurity (webhook o polling, formato del evento) → ajustar `POST /integraciones/zkbio/webhook`
-- [ ] Marca/modelo/SDK del molinete → reemplazar el mock de `IntegracionesService.enviarComandoTorniquete`
+- [x] Inicio de sesión (`/iniciar-sesion`), menú por rol, cambio de contraseña, aviso de fallas arriba de todas las páginas.
+- [x] Personal y documentos (`/`), Dashboard, Panel de vigilancia (en vivo, con reconexión automática), Reportes, Auditoría, Sistema y APIs, Manual con capturas.
+- [~] Verificación en navegador: capturas automáticas (puppeteer) y pruebas en vivo contra la API; no hay una batería de pruebas automáticas en navegador.
 
-## 4. Infraestructura y despliegue
+### 3. Equipos
 
-- [ ] Dockerfile + docker-compose (mollendo-api + mollendo-portal + PostgreSQL) para desarrollo
-- [ ] Configuración de entornos (dev / staging / producción)
-- [ ] ~~Servidor local de contingencia~~ — fuera del alcance base
-- [ ] Backups (servidor + disco externo + nube)
-- [ ] Despliegue en Azure o Hostinger (según decisión final de infraestructura)
+- [x] Terminal facial ZKTeco G4 Pro con alcoholímetro (PUSH/ADMS), probado con el equipo real.
+- [x] Lectores de DNI (serie) y relés USB de molinetes y avisos, en el controlador de la mini PC.
 
-## 5. Pendiente de confirmar con el cliente (bloquea trabajo relacionado)
+### 4. Despliegue e infraestructura
 
-- [ ] Catálogo de puestos por caso y documentos exigidos por cada uno
-- [ ] Documentación/SDK de ZKBio CVSecurity (terminal ZKTeco G4 Pro + alcoholímetro)
-- [ ] Marca y modelo del molinete
-- [ ] Proveedor final de infraestructura (Azure vs. Hostinger) y región
+- [x] Docker Compose por entorno: `deploy/nube`, `deploy/controlador`, `deploy/garita`, `deploy/local`, con guía (`docs/despliegue/Registro_Despliegue_MiniPC.md`).
+- [x] Nube en AWS (`54.147.214.38`), actualizada el 11/10/2026.
+- [~] Mini PC: desplegada el 28/09/2026; **desactualizada** (falta migrarla a la versión actual cuando esté en línea, `deploy/controlador/README.md` sección 5).
+- [~] Respaldos diarios con 14 días de retención; **todavía en el mismo servidor** (falta copia fuera de él).
+- [ ] HTTPS: esperando el dominio del cliente.
+- [ ] Azure: migración futura desde AWS.
+
+### 5. Seguridad (ver `docs/seguridad/Seguridad.md`, sección 0)
+
+- [x] Programa revisado (10 y 11/10/2026): sin problemas graves conocidos.
+- [ ] Cambiar las contraseñas iniciales de `admin` y `vigilancia` en AWS y borrarlas del `.env`.
+- [ ] Puerto 3001 solo para la IP del terminal (requiere IP fija).
+
+### 6. Pendiente del cliente
+
+- [ ] Dominio propio (para HTTPS).
+- [ ] IP pública fija del terminal (para cerrar el puerto 3001 por IP).
 
 ---
 
@@ -554,3 +540,4 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
   Probado: 91/91; en vivo contra la API local (vencimiento pasado 400, token vencido cortado, baja corta el canal, `lib/ws.ts` real reconecta solo en 2 s con token vencido); `next build` OK. Documentado en el documento funcional (4.1, alta de personal, Panel, seguridad, RN-04), `Seguridad.md`, el manual del portal y `README.md`.
 - **2026-10-11** — **Desplegado en AWS** (sin commit): las 6 correcciones de la revisión del portal. Respaldo previo `antes-de-actualizar-20261011-0323.sql.gz`; sin migraciones; mismos datos (1059 personas).
 - **2026-10-11** — `docs/seguridad/Seguridad.md`: nueva sección 0 "Estado actual" (el programa sin problemas graves conocidos, qué cubre, límites conocidos) y pendientes de la instalación con prioridad y responsable: contraseñas iniciales sin cambiar en AWS (comprobado), HTTPS, respaldos fuera del servidor, puerto 3001 por IP y actualizar la mini PC. Lista de control ampliada.
+- **2026-10-11** — **Lista de estado de `PROGRESO.md` reescrita** ("Estado al 11/10/2026"): la anterior describía el alcance inicial (puestos, visitas, ZKBio, molinete simulado, Azure/Hostinger) y marcaba como pendientes cosas ya hechas (Docker, despliegue, respaldos). La bitácora no cambia.
