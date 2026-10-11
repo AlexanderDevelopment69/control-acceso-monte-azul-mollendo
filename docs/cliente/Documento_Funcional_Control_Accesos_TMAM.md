@@ -162,9 +162,21 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 
 **Inicio de sesión**
 
-- El acceso se realiza con correo electrónico y contraseña. Si las credenciales son incorrectas o la cuenta está dada de baja, se informa el motivo.
+- El acceso se realiza en la pantalla **Iniciar sesión** (`/iniciar-sesion`, por ejemplo `http://192.168.0.165:3000/iniciar-sesion`), con correo electrónico y contraseña. Si las credenciales son incorrectas o la cuenta está dada de baja, se informa el motivo. Al abrir cualquier pantalla sin sesión, el portal lleva a esta. La dirección anterior `/signin` sigue funcionando y redirige a `/iniciar-sesion`.
 - La sesión tiene una duración de 1 hora y se renueva automáticamente mientras esté en uso, hasta un máximo de 7 días. Al expirar, el portal redirige al inicio de sesión.
 - Al iniciar sesión, el Administrador accede a "Personal y documentos" y Vigilancia al "Panel de vigilancia".
+- Direcciones de cada pantalla:
+
+| Pantalla | Dirección | Perfil |
+|---|---|---|
+| Iniciar sesión | `/iniciar-sesion` | Todos |
+| Personal y documentos | `/` | Administrador |
+| Dashboard | `/dashboard` | Administrador |
+| Panel de vigilancia | `/vigilancia` | Administrador y Vigilancia |
+| Reportes | `/reportes` | Administrador |
+| Auditoría | `/auditoria` | Administrador |
+| Sistema y APIs | `/sistema` | Administrador |
+| Manual | `/manual` | Administrador y Vigilancia |
 
 **Cambio de contraseña**
 
