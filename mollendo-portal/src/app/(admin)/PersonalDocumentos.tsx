@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
 import { PersonaFicha, motivosCumplimiento } from "@/components/personal/PersonaFicha";
-import { CheckLineIcon, CloseLineIcon } from "@/icons";
+import { CheckLineIcon, CloseLineIcon, GroupIcon } from "@/icons";
 
 type Filtro = "todos" | "no-habilitados" | "habilitados";
 /** En el orden de las pestañas (para deslizar el fondo de la elegida). */
@@ -328,9 +328,63 @@ export function PersonalDocumentos() {
               onCambio={recargar}
             />
           ) : (
+            // Sin nadie elegido: contadores (al presionarlos filtran la lista) y la indicación.
             // En el celular no se muestra: la lista ya ocupa la pantalla.
-            <div className="hidden h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400 dark:border-gray-700 lg:flex">
-              Elige a una persona de la lista para ver y subir sus documentos.
+            <div className="hidden space-y-5 lg:block">
+              <div className="grid grid-cols-3 gap-4">
+                {(
+                  [
+                    {
+                      id: "todos",
+                      titulo: "Personal",
+                      valor: visibles.length,
+                      detalle: empresaFiltro === "todas" ? "En todas las empresas" : "En la empresa elegida",
+                      icono: <GroupIcon />,
+                      fondo: "bg-brand-500",
+                    },
+                    {
+                      id: "habilitados",
+                      titulo: "Pueden ingresar",
+                      valor: visibles.length - noHabilitados,
+                      detalle: "Documentos vigentes",
+                      icono: <CheckLineIcon />,
+                      fondo: "bg-success-500",
+                    },
+                    {
+                      id: "no-habilitados",
+                      titulo: "No pueden ingresar",
+                      valor: noHabilitados,
+                      detalle: "Vencidos o de baja",
+                      icono: <CloseLineIcon />,
+                      fondo: "bg-error-500",
+                    },
+                  ] as { id: Filtro; titulo: string; valor: number; detalle: string; icono: React.ReactNode; fondo: string }[]
+                ).map(({ id, titulo, valor, detalle, icono, fondo }) => (
+                  // Mismo diseño que las tarjetas del Dashboard y del Panel de vigilancia.
+                  <button
+                    key={id}
+                    type="button"
+                    title="Filtrar la lista"
+                    onClick={() => {
+                      setFiltro(id);
+                      setMotivoFiltro("todos");
+                    }}
+                    className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] 2xl:gap-4 2xl:p-5"
+                  >
+                    <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl text-white [&_svg]:size-5 2xl:size-12 2xl:[&_svg]:size-6 ${fondo}`}>
+                      {icono}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{titulo}</span>
+                      <span className="block text-2xl font-semibold text-gray-800 dark:text-white/90">{loading ? "—" : valor}</span>
+                      <span className="block text-xs leading-snug text-gray-400">{detalle}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400 dark:border-gray-700">
+                Elige a una persona de la lista para ver y subir sus documentos.
+              </div>
             </div>
           )}
         </div>
