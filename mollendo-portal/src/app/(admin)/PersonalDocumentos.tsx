@@ -42,6 +42,11 @@ export function PersonalDocumentos() {
   // baja hasta ella, para que se vea que se abrió.
   const fichaRef = useRef<HTMLDivElement>(null);
   function elegir(id: number) {
+    // Otro clic en la persona ya elegida la deselecciona (vuelve a los contadores).
+    if (id === seleccionada) {
+      setSeleccionada(null);
+      return;
+    }
     setSeleccionada(id);
     if (window.innerWidth < 1024) {
       requestAnimationFrame(() => fichaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
