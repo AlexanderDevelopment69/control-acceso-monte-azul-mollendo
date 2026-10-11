@@ -190,8 +190,8 @@ export function PersonalDocumentos() {
                     texto: "No pueden",
                     cuenta: noHabilitados,
                     icono: (
-                      // Círculo suave como el ícono de la tarjeta de estado de la ficha.
-                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-error-100 text-error-600 dark:bg-error-500/20 dark:text-error-500">
+                      // Círculo suave en gris (sin rojo ni verde): el ícono toma el color del texto.
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-white/10">
                         <CloseLineIcon className="size-3" />
                       </span>
                     ),
@@ -201,7 +201,7 @@ export function PersonalDocumentos() {
                     texto: "Pueden",
                     cuenta: visibles.length - noHabilitados,
                     icono: (
-                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success-100 text-success-600 dark:bg-success-500/20 dark:text-success-500">
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-white/10">
                         <CheckLineIcon className="size-3" />
                       </span>
                     ),
