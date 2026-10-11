@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useCallback, useSyncExternalStore } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useCallback, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api/endpoints";
-import { clearTokens, getAccessToken, setTokens, suscribirTokens } from "@/lib/api/client";
+import { clearTokens, getAccessToken, getRefreshToken, renovarSesion, setTokens, suscribirTokens } from "@/lib/api/client";
 import { decodeJwt, isTokenExpired } from "./decode-jwt";
 import type { RolUsuario } from "@/lib/api/types";
 
@@ -25,6 +25,16 @@ const ROLES_VALIDOS: RolUsuario[] = ["administrador", "vigilancia"];
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+/**
+ * ¿Es un token del portal que solo está vencido (rol válido) y hay con qué
+ * renovarlo? Pasa al volver después de más de 1 hora: la sesión se renueva sola
+ * (hasta 7 días) en vez de pedir de nuevo la contraseña.
+ */
+function vencidoRenovable(token: string): boolean {
+  const payload = decodeJwt(token);
+  return !!payload && isTokenExpired(payload) && ROLES_VALIDOS.includes(payload.rol) && !!getRefreshToken();
+}
+
 /** Usuario del token, o null si no hay token o no sirve. */
 function usuarioDelToken(token: string | null): AuthUser | null {
   if (!token) return null;
@@ -41,13 +51,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // El token vive en localStorage: se lee como fuente externa. En el servidor
   // (y al hidratar) todavía no se conoce, por eso `undefined` = cargando.
   const token = useSyncExternalStore<string | null | undefined>(suscribirTokens, getAccessToken, () => undefined);
-  const loading = token === undefined;
   const user = useMemo(() => (token ? usuarioDelToken(token) : null), [token]);
+  const renovable = useMemo(() => !!token && !user && vencidoRenovable(token), [token, user]);
+  // Mientras se renueva, se sigue "cargando": así no se manda al inicio de sesión.
+  const loading = token === undefined || renovable;
+  /** Sube para reintentar la renovación si el servidor no respondió. */
+  const [reintento, setReintento] = useState(0);
 
-  // Un token guardado que no sirve (vencido, rol antiguo) se borra.
+  // Token vencido pero renovable: se piden tokens nuevos. Uno que no sirve
+  // (rol antiguo, sin renovación) o una renovación rechazada borran la sesión.
   useEffect(() => {
-    if (token && !user) clearTokens();
-  }, [token, user]);
+    if (!token || user) return;
+    if (!renovable) {
+      clearTokens();
+      return;
+    }
+    let activo = true;
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    void renovarSesion().then((resultado) => {
+      // Sin conexión: se conserva la sesión y se reintenta en 5 s.
+      if (activo && resultado === "sin-conexion") espera = setTimeout(() => setReintento((n) => n + 1), 5000);
+    });
+    return () => {
+      activo = false;
+      clearTimeout(espera);
+    };
+  }, [token, user, renovable, reintento]);
 
   const login = useCallback(async (correo: string, password: string) => {
     const { accessToken, refreshToken } = await authApi.login(correo, password);

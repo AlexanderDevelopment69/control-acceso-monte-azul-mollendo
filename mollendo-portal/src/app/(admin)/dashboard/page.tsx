@@ -178,7 +178,8 @@ function DashboardContent() {
       void cargarActual.current();
     };
     try {
-      socket = connectEventosSocket();
+      // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
+      socket = connectEventosSocket(recargar);
       socket.on("evento-acceso", () => {
         if (pendiente) return; // ya hay una recarga programada: la incluye
         const espera = Math.max(1000, ultimaRecarga + RECARGA_MINIMA_MS - Date.now());

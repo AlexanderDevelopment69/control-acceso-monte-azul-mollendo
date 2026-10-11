@@ -48,12 +48,22 @@ export function PersonalDocumentos() {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [motivoFiltro, setMotivoFiltro] = useState<MotivoFiltro>("todos");
 
-  // Tras registrar o subir un documento cambia el ✔/✖.
-  const recargar = useCallback(async () => {
-    setPersonas(await personasApi.list());
-  }, []);
-
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
+
+  // Tras registrar o subir un documento cambia el ✔/✖. Si falla, se avisa
+  // (con "Reintentar"): si no, la lista quedaría con el ✔/✖ anterior sin que se note.
+  const recargar = useCallback(async () => {
+    try {
+      setPersonas(await personasApi.list());
+      setErrorCarga(null);
+    } catch (err) {
+      setErrorCarga(
+        err instanceof ApiError
+          ? `No se pudo actualizar la lista: ${err.message}`
+          : "No se pudo actualizar la lista; puede no reflejar el último cambio.",
+      );
+    }
+  }, []);
 
   const cargarTodo = useCallback(async () => {
     try {
@@ -294,7 +304,7 @@ export function PersonalDocumentos() {
         onClose={() => setModalOpen(false)}
         onCreated={(persona) => {
           // Puede haber una empresa nueva, y cambia el ✔/✖.
-          recargar();
+          void recargar();
           empresasApi.list().then(setEmpresas).catch(() => {}); // si falla, queda la lista anterior
           elegir(persona.id);
         }}

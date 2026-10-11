@@ -7,7 +7,8 @@ import { asJwtExpiry } from '../common/utils/jwt-expiry.util.js';
 import type { LoginDto } from './dto/login.dto.js';
 import type { CambiarPasswordDto } from './dto/cambiar-password.dto.js';
 import type { AuthenticatedUser, JwtPayload } from './types/authenticated-user.type.js';
-import { emitidoAntesDelCambio, momentoCambioPassword } from './sesion.util.js';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { emitidoAntesDelCambio, momentoCambioPassword, SESIONES_CERRADAS, type SesionesCerradasEvent } from './sesion.util.js';
 
 const SALT_ROUNDS = 10;
 
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly auditoriaService: AuditoriaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private buildTokens(payload: JwtPayload) {
@@ -85,6 +87,8 @@ export class AuthService {
       registroId: user.id,
       accion: 'modificar',
     });
+    // Corta los paneles en vivo abiertos con la contraseña anterior (este equipo se reconecta con los tokens nuevos).
+    this.eventEmitter.emit(SESIONES_CERRADAS, { usuarioId: user.id } satisfies SesionesCerradasEvent);
     return this.buildTokens({
       sub: usuario.id,
       empresaId: usuario.empresaId,

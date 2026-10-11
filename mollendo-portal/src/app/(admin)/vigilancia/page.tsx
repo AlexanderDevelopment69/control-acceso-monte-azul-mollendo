@@ -34,6 +34,8 @@ interface EventoLive {
 
 // Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
 const RESALTE_MS = 8000;
+/** Recarga de respaldo del panel, por si el canal en vivo se corta sin avisar. */
+const RECARGA_RESPALDO_MS = 60_000;
 
 /** Segundos que faltan hasta `hasta`, como "1:42". */
 function tiempoRestante(hasta: string, ahora: number): string {
@@ -329,7 +331,8 @@ function VigilanciaContent() {
   useEffect(() => {
     let socket: Socket | undefined;
     try {
-      socket = connectEventosSocket();
+      // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
+      socket = connectEventosSocket(() => void cargarActual.current());
       socket.on("evento-acceso", (payload: EventoLive) => {
         setUltimo(payload.eventoId);
         if (finResalte.current) clearTimeout(finResalte.current);
@@ -354,6 +357,13 @@ function VigilanciaContent() {
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
       if (finResalte.current) clearTimeout(finResalte.current);
     };
+  }, []);
+
+  // Respaldo del tiempo real: aunque el canal en vivo falle sin avisar, la
+  // tabla, los contadores y las esperas se ponen al día cada minuto.
+  useEffect(() => {
+    const intervalo = setInterval(() => void cargarActual.current(), RECARGA_RESPALDO_MS);
+    return () => clearInterval(intervalo);
   }, []);
 
   // Cuenta regresiva de las esperas; las vencidas se quitan solas.

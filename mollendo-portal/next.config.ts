@@ -54,12 +54,6 @@ const nextConfig: NextConfig = {
   // directo a localhost:3001 y esta regla queda sin uso).
   // Swagger (/api/docs y sus archivos /api/docs/*) se reenvía igual, para
   // que el enlace de "Sistema y APIs" funcione con NEXT_PUBLIC_API_URL=/api/v1.
-  // El login pasó de /signin (nombre de la plantilla) a /iniciar-sesion: la
-  // dirección vieja sigue funcionando para quien la tenga guardada.
-  async redirects() {
-    return [{ source: "/signin", destination: "/iniciar-sesion", permanent: true }];
-  },
-
   async rewrites() {
     return [
       { source: "/api/v1/:path*", destination: `${API_INTERNAL_URL}/api/v1/:path*` },

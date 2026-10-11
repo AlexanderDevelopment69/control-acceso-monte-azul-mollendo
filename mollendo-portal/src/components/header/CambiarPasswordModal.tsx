@@ -77,7 +77,7 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-md p-6 sm:p-8">
+    <Modal isOpen={isOpen} onClose={onClose} bloqueado={guardando} className="max-w-md p-6 sm:p-8">
       <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">Cambiar contraseña</h2>
       {listo ? (
         <>
@@ -98,7 +98,7 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
           <CampoPassword id="password-nueva" label="Contraseña nueva" onChange={setNueva} />
           <CampoPassword id="password-confirmacion" label="Repite la contraseña nueva" onChange={setConfirmacion} />
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" disabled={guardando} onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={guardando}>

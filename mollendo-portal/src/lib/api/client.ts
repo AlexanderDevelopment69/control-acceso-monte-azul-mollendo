@@ -60,6 +60,12 @@ interface RequestOptions {
   responseType?: "json" | "blob" | "archivo";
 }
 
+/**
+ * Pide tokens nuevos con el de renovación. null = la sesión ya no vale (vencida,
+ * cuenta dada de baja o contraseña cambiada). Si el servidor no responde o
+ * falla (p. ej. mientras se reinicia en una actualización), lanza un error: la
+ * sesión no se da por cerrada por eso.
+ */
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
@@ -69,11 +75,29 @@ async function refreshAccessToken(): Promise<string | null> {
     headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
     body: JSON.stringify({ refreshToken }),
   });
-  if (!res.ok) return null;
+  if (res.status === 400 || res.status === 401) return null;
+  if (!res.ok) throw new Error(`No se pudo renovar la sesión (error ${res.status})`);
 
   const data = await res.json();
   setTokens(data.accessToken, data.refreshToken);
   return data.accessToken as string;
+}
+
+export type ResultadoRenovacion = "renovada" | "rechazada" | "sin-conexion";
+
+/**
+ * Renueva la sesión: "renovada" (tokens nuevos guardados), "rechazada" (ya no
+ * vale: se borran los tokens y el portal vuelve al inicio de sesión) o
+ * "sin-conexion" (el servidor no respondió; los tokens se conservan).
+ */
+export async function renovarSesion(): Promise<ResultadoRenovacion> {
+  try {
+    if (await refreshAccessToken()) return "renovada";
+    clearTokens();
+    return "rechazada";
+  } catch {
+    return "sin-conexion";
+  }
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {

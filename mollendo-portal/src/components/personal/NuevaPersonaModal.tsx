@@ -17,6 +17,7 @@ import {
   validarNumeroDocumento,
 } from "./archivoDocumento";
 import DatePicker from "@/components/form/date-picker";
+import { hoy } from "@/lib/paginaServidor";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { CloseLineIcon } from "@/icons";
 import { SelectorFoto, validarFoto } from "./FotoPersonal";
@@ -78,10 +79,13 @@ function Formulario({
   onClose,
   onCreated,
   empresas,
+  onGuardando,
 }: {
   onClose: () => void;
   onCreated: (persona: Persona) => void;
   empresas: Empresa[];
+  /** Avisa si está guardando: mientras tanto la ventana no se cierra. */
+  onGuardando: (guardando: boolean) => void;
 }) {
   const [empresaId, setEmpresaId] = useState("");
   const [ruc, setRuc] = useState("");
@@ -140,6 +144,9 @@ function Formulario({
       if (!f.archivo) return `Documento${n}: adjunta el archivo`;
       const problemaArchivo = validarArchivoDocumento(f.archivo);
       if (problemaArchivo) return `Documento${n}: ${problemaArchivo}`;
+      if (f.fechaVencimiento && f.fechaVencimiento < hoy()) {
+        return `Documento${n}: la fecha de vencimiento ya pasó (quedaría vencido). Revisa la fecha.`;
+      }
     }
     return null;
   }
@@ -153,6 +160,7 @@ function Formulario({
     }
     setError(null);
     setLoading(true);
+    onGuardando(true);
     try {
       let persona = personaCreada;
       if (!persona) {
@@ -190,12 +198,14 @@ function Formulario({
         actualizarFila(f.clave, { subido: true });
       }
 
+      onGuardando(false);
       onCreated(persona);
       onClose();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo guardar");
     } finally {
       setLoading(false);
+      onGuardando(false);
     }
   }
 
@@ -328,6 +338,7 @@ function Formulario({
                           <DatePicker
                             id={`vence-documento-${f.clave}`}
                             placeholder="DD-MM-AAAA"
+                            min={hoy()}
                             value={f.fechaVencimiento}
                             onChange={(v) => actualizarFila(f.clave, { fechaVencimiento: v })}
                           />
@@ -375,11 +386,12 @@ export function NuevaPersonaModal({
   onCreated: (persona: Persona) => void;
   empresas: Empresa[];
 }) {
+  const [guardando, setGuardando] = useState(false);
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-5xl p-6 sm:p-8">
+    <Modal isOpen={isOpen} onClose={onClose} bloqueado={guardando} className="max-w-5xl p-6 sm:p-8">
       <h2 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90">Nuevo personal</h2>
       {/* Se monta de nuevo cada vez que se abre: el formulario siempre empieza vacío. */}
-      {isOpen && <Formulario onClose={onClose} {...props} />}
+      {isOpen && <Formulario onClose={onClose} onGuardando={setGuardando} {...props} />}
     </Modal>
   );
 }

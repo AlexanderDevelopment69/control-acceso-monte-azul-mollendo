@@ -162,8 +162,9 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 
 **Inicio de sesión**
 
-- El acceso se realiza en la pantalla **Iniciar sesión** (`/iniciar-sesion`, por ejemplo `http://192.168.0.165:3000/iniciar-sesion`), con correo electrónico y contraseña. Si las credenciales son incorrectas o la cuenta está dada de baja, se informa el motivo. Al abrir cualquier pantalla sin sesión, el portal lleva a esta. La dirección anterior `/signin` sigue funcionando y redirige a `/iniciar-sesion`.
-- La sesión tiene una duración de 1 hora y se renueva automáticamente mientras esté en uso, hasta un máximo de 7 días. Al expirar, el portal redirige al inicio de sesión.
+- El acceso se realiza en la pantalla **Iniciar sesión** (`/iniciar-sesion`, por ejemplo `http://192.168.0.165:3000/iniciar-sesion`), con correo electrónico y contraseña. Si las credenciales son incorrectas o la cuenta está dada de baja, se informa el motivo. Al abrir cualquier pantalla sin sesión, el portal lleva a esta.
+- La sesión tiene una duración de 1 hora y se renueva automáticamente, hasta un máximo de 7 días: también al volver al portal después de un rato sin usarlo (por ejemplo, tras cerrar la pestaña), sin pedir de nuevo la contraseña. Al expirar los 7 días, o si la cuenta se da de baja o cambia su contraseña, el portal redirige al inicio de sesión. Si el servidor no responde por un momento (por ejemplo, durante una actualización), la sesión no se cierra.
+- Con la sesión abierta, la pantalla de inicio de sesión no se muestra: el portal lleva directamente a la pantalla de inicio de cada perfil.
 - Al iniciar sesión, el Administrador accede a "Personal y documentos" y Vigilancia al "Panel de vigilancia".
 - Direcciones de cada pantalla:
 
@@ -205,7 +206,7 @@ Un único formulario permite registrar a la persona y sus documentos:
 1. **Empresa:** se elige de la lista o se crea en el mismo formulario ("+ Nueva empresa…": RUC de 11 dígitos, razón social y correo de contacto).
 2. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
 3. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona; no es necesario registrar el rostro en el equipo.
-4. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
+4. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento; no se acepta una fecha ya pasada, porque el documento quedaría vencido al instante) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
 
 Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la información ya guardada no se duplica al corregir y volver a guardar.
 
@@ -223,7 +224,7 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 ### 4.3. Panel de vigilancia (Administrador y Vigilancia)
 
-- **Tiempo real:** cada ingreso o salida se muestra en la tabla en el momento en que ocurre, sin recargar la página; la fila del último evento se resalta durante unos segundos.
+- **Tiempo real:** cada ingreso o salida se muestra en la tabla en el momento en que ocurre, sin recargar la página; la fila del último evento se resalta durante unos segundos. Si la conexión en vivo se corta (internet o una actualización del servidor), el panel se reconecta solo y recupera lo que ocurrió mientras tanto; además, se pone al día cada minuto.
 - **Contadores:** "Denegaciones hoy", "Alcohol no conforme hoy" y "Documentos vencidos" (documentos del personal activo que ya vencieron). Se actualizan automáticamente.
 - **Historial:** hora, documento, persona, movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
 - **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros) y búsqueda por nombre, apellido o número de documento en todo el historial.
@@ -307,7 +308,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | RN-03 | El ingreso se valida **en dos pasos**. Al pasar el DNI: si la persona está activa, se revisan sus documentos; sin documentos o con alguno vencido se deniega de inmediato, informando todos los motivos de documentos. Si están en regla, el sistema **habilita en el terminal facial solo a esa persona**, por 1 minuto: el terminal reconoce su rostro y toma la prueba de alcohol, y rechaza el rostro de cualquier otra persona. Si ambos son conformes, el sistema abre el molinete (autorizado); si el alcohol no es conforme, se deniega por alcohol. Al terminar, se le retira la habilitación. |
 | RN-03a | Se habilita **a una sola persona a la vez** en el terminal facial. Si otra persona pasa un DNI en regla mientras tanto, queda **en cola** y su minuto empieza cuando termina la anterior (puede esperar en cola hasta 3 minutos). Si la misma persona vuelve a pasar su DNI mientras espera, conserva su lugar. |
 | RN-03b | Si la persona habilitada **no completa rostro y alcohol en el minuto** (o espera en cola más de 3 minutos), el ingreso se deniega con el motivo **"No completó rostro y alcohol"** y queda en el historial. |
-| RN-04 | Un documento está **vigente** si no tiene fecha de vencimiento o si vence hoy o después: el día de su vencimiento sigue siendo válido todo el día. |
+| RN-04 | Un documento está **vigente** si no tiene fecha de vencimiento o si vence hoy o después: el día de su vencimiento sigue siendo válido todo el día. Al cargarlo o renovarlo no se acepta una fecha de vencimiento anterior a hoy. |
 | RN-05 | De cada documento **cuenta solo la última versión**. Renovar crea una versión nueva y la anterior queda en el historial. |
 | RN-06 | Los documentos **no requieren aprobación**: tienen validez desde su carga. Verificar que correspondan a cada persona es responsabilidad del administrador. |
 | RN-07 | **Eliminar** un documento borra todas sus versiones y archivos. Si era el único, la persona queda "sin documentos" y no puede ingresar. |
@@ -398,6 +399,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 - **Cabeceras de seguridad** en el portal y en la API: el portal no puede mostrarse dentro de otros sitios y el navegador no interpreta los archivos con un tipo distinto al real.
 - **Documentación técnica de la API** (Swagger) disponible solo en la red local; en el servidor en la nube está desactivada.
 - **Librerías** revisadas y actualizadas, sin vulnerabilidades conocidas en lo que se instala en el servidor.
+- **Panel en vivo:** la conexión en tiempo real exige una sesión válida y una cuenta activa; al dar de baja una cuenta o cambiar su contraseña, se cortan también sus paneles abiertos.
 - **Auditoría** de todos los cambios de datos.
 - **Red:** en la mini PC, el sistema solo es accesible desde la red local del terminal o mediante la VPN Tailscale. En el servidor en la nube solo están abiertos el portal, la API y el acceso de administración (SSH, únicamente con llave); la base de datos no es accesible desde fuera. Las credenciales de producción se almacenan únicamente en el servidor.
 - **Cifrado HTTPS:** se habilitará cuando se disponga del dominio del cliente.

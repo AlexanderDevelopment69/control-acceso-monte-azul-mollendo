@@ -220,6 +220,8 @@ async function main() {
       const form = new FormData();
       form.append('tipoDocumentoId', String(tipos.get(d.nombre)));
       if (d.vence !== null) form.append('fechaVencimiento', fecha(d.vence));
+      // Los vencidos de la demo van a propósito (la API rechaza fechas pasadas si no).
+      if (d.vence !== null && d.vence < 0) form.append('permitirVencido', 'true');
       form.append('archivo', new Blob([new Uint8Array(documentoPdf(d.nombre, nombre))], { type: 'application/pdf' }), `${d.nombre}.pdf`);
       await api(`/personas/${id}/documentos`, { method: 'POST', form });
     }

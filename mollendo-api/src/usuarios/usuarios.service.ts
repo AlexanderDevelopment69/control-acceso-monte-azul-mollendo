@@ -1,11 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { hash } from 'bcryptjs';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 import type { CreateUsuarioDto } from './dto/create-usuario.dto.js';
 import type { UpdateUsuarioDto } from './dto/update-usuario.dto.js';
-import { momentoCambioPassword } from '../auth/sesion.util.js';
+import { momentoCambioPassword, SESIONES_CERRADAS, type SesionesCerradasEvent } from '../auth/sesion.util.js';
 
 const SALT_ROUNDS = 10;
 
@@ -22,6 +23,7 @@ export class UsuariosService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditoriaService: AuditoriaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   findAll() {
@@ -77,6 +79,10 @@ export class UsuariosService {
       registroId: id,
       accion: 'modificar',
     });
+    // Dado de baja o con contraseña restablecida: también se corta su panel en vivo.
+    if (dto.estadoCuenta === 'baja' || dto.password) {
+      this.eventEmitter.emit(SESIONES_CERRADAS, { usuarioId: id } satisfies SesionesCerradasEvent);
+    }
     return actualizado;
   }
 }

@@ -35,6 +35,7 @@ Revisión de seguridad del 10/10/2026 (API, portal, servidor de AWS y librerías
 - Sesión firmada (JWT) de 1 hora, renovable hasta 7 días con un token aparte (`JWT_REFRESH_SECRET`, distinto de `JWT_SECRET`).
 - En **cada pedido** se comprueba que la cuenta siga activa: dar de baja a un usuario lo saca de inmediato. Al cambiar la contraseña se cierran las demás sesiones.
 - Límite de intentos de inicio de sesión (sección 3).
+- **Canal en vivo** (`/ws/eventos`, Panel de vigilancia y Dashboard): al conectarse se comprueba lo mismo que en la API (token válido, rol, cuenta activa, sin cambio de contraseña posterior). Al dar de baja una cuenta o cambiar/restablecer su contraseña, el servidor corta sus conexiones abiertas (evento interno `usuario.sesiones-cerradas`).
 
 **Permisos**
 

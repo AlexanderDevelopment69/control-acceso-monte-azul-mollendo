@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { ApiError } from "@/lib/api/client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,8 +16,14 @@ export default function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { user, loading: cargandoSesion, login } = useAuth();
   const router = useRouter();
+
+  // Con la sesión ya abierta no tiene sentido el login: a la pantalla de inicio
+  // ("/" manda al administrador a Personal y al vigilante a su panel).
+  useEffect(() => {
+    if (!cargandoSesion && user) router.replace("/");
+  }, [cargandoSesion, user, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,6 +37,9 @@ export default function SignInForm() {
       setLoading(false);
     }
   }
+
+  // Mientras se lee la sesión o se redirige, sin formulario (no aparece por un instante).
+  if (cargandoSesion || user) return <div className="flex-1 lg:w-1/2 w-full" />;
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">

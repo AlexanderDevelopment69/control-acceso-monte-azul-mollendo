@@ -9,6 +9,8 @@ import {
 } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import type { JwtPayload } from '../auth/types/authenticated-user.type.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { emitidoAntesDelCambio, SESIONES_CERRADAS, type SesionesCerradasEvent } from '../auth/sesion.util.js';
 
 // Canal en tiempo real para el panel de vigilancia (spec, sección 9.9) —
 // evita que el panel tenga que refrescar para ver ingresos/denegaciones.
@@ -32,20 +34,41 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
   private readonly logger = new Logger(EventosGateway.name);
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  handleConnection(client: Socket): void {
+  /**
+   * Como en la API: token válido, rol del panel, cuenta activa y sin cambio de
+   * contraseña posterior al token. Si no, se corta (el portal renueva la
+   * sesión y vuelve a conectarse, o vuelve al inicio de sesión).
+   */
+  async handleConnection(client: Socket): Promise<void> {
     const token = client.handshake.auth?.['token'] ?? client.handshake.query?.['token'];
     try {
       const payload = this.jwtService.verify<JwtPayload>(String(token), { secret: process.env.JWT_SECRET });
       if (payload.rol !== 'administrador' && payload.rol !== 'vigilancia') {
         throw new Error('Rol no autorizado para el panel de vigilancia');
       }
+      const usuario = await this.prisma.usuario.findUnique({ where: { id: payload.sub } });
+      if (!usuario || usuario.estadoCuenta !== 'activo' || emitidoAntesDelCambio(payload.iat, usuario.passwordCambiadoEn)) {
+        throw new Error('Cuenta inactiva o contraseña cambiada');
+      }
+      (client.data as { usuarioId?: number }).usuarioId = usuario.id;
     } catch {
       client.disconnect(true);
       return;
     }
     this.logger.log(`Cliente conectado al panel: ${client.id}`);
+  }
+
+  /** Usuario dado de baja o con contraseña nueva: se cortan sus paneles abiertos. */
+  @OnEvent(SESIONES_CERRADAS)
+  async cerrarSesiones({ usuarioId }: SesionesCerradasEvent): Promise<void> {
+    for (const cliente of await this.server.fetchSockets()) {
+      if ((cliente.data as { usuarioId?: number }).usuarioId === usuarioId) cliente.disconnect(true);
+    }
   }
 
   handleDisconnect(client: Socket): void {

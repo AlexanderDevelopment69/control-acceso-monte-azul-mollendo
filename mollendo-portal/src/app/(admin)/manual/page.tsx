@@ -162,7 +162,8 @@ const SECCIONES: SeccionManual[] = [
               titulo: "Documentos (al menos uno)",
               texto: (
                 <>
-                  Nombre del documento (p. ej. SCTR), fecha de vencimiento (vacía si no vence) y el archivo: PDF, imagen
+                  Nombre del documento (p. ej. SCTR), fecha de vencimiento (vacía si no vence; no puede ser una fecha ya
+                  pasada) y el archivo: PDF, imagen
                   JPG, PNG o WEBP, o Word, hasta 20 MB. Con <strong>“+ Agregar otro documento”</strong> subes varios a la
                   vez.
                 </>
@@ -252,7 +253,9 @@ const SECCIONES: SeccionManual[] = [
         <p>
           El <Link href="/vigilancia" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Panel de vigilancia</Link> muestra
           en vivo cada ingreso y salida por el molinete apenas ocurre, autorizado o denegado: la fila nueva aparece arriba
-          de la tabla (resaltada unos segundos) y los contadores se actualizan solos.
+          de la tabla (resaltada unos segundos) y los contadores se actualizan solos. Si se corta internet o el
+          servidor se reinicia, el panel se reconecta solo y recupera lo que pasó mientras tanto: no hace falta recargar
+          la página.
         </p>
         <Captura
           clave="vigilancia"

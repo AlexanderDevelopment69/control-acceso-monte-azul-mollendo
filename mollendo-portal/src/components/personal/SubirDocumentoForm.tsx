@@ -10,6 +10,7 @@ import DatePicker from "@/components/form/date-picker";
 import FileInput from "@/components/form/input/FileInput";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { ACEPTA_DOCUMENTO, AYUDA_ARCHIVO_DOCUMENTO, validarArchivoDocumento } from "./archivoDocumento";
+import { hoy } from "@/lib/paginaServidor";
 
 /**
  * Subir (o renovar) un documento de una persona: nombre del documento, fecha
@@ -22,7 +23,10 @@ export function SubirDocumentoForm({
   personaId,
   nombreFijo,
   onSubido,
+  onGuardando,
 }: {
+  /** Avisa si está subiendo: mientras tanto la ventana no se cierra. */
+  onGuardando?: (guardando: boolean) => void;
   personaId: number;
   /** Renovar: el documento ya existe y su nombre no se puede cambiar. */
   nombreFijo?: string;
@@ -50,7 +54,13 @@ export function SubirDocumentoForm({
       setError(problemaArchivo);
       return;
     }
+    // Las fechas AAAA-MM-DD se comparan como texto. Vence hoy sí vale.
+    if (fechaVencimiento && fechaVencimiento < hoy()) {
+      setError("La fecha de vencimiento ya pasó: el documento quedaría vencido. Revisa la fecha.");
+      return;
+    }
     setLoading(true);
+    onGuardando?.(true);
     try {
       const tipo = await tiposDocumentoApi.create({ nombre: nombre.trim() });
       const formData = new FormData();
@@ -58,11 +68,13 @@ export function SubirDocumentoForm({
       if (fechaVencimiento) formData.append("fechaVencimiento", fechaVencimiento);
       formData.append("archivo", archivo);
       await documentosApi.subir(personaId, formData);
+      onGuardando?.(false);
       onSubido();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo subir el documento");
     } finally {
       setLoading(false);
+      onGuardando?.(false);
     }
   }
 
@@ -86,6 +98,7 @@ export function SubirDocumentoForm({
         <DatePicker
           id={`fecha-vencimiento-documento-${personaId}`}
           placeholder="DD-MM-AAAA"
+          min={hoy()}
           value={fechaVencimiento}
           onChange={setFechaVencimiento}
         />

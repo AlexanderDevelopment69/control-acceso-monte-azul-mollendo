@@ -1,12 +1,13 @@
 import { existsSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Express } from 'express';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 import type { CreateDocumentoDto } from './dto/create-documento.dto.js';
 import { borrarArchivo, guardarArchivo } from '../common/archivos-persona.util.js';
+import { claveDia } from '../panel/dashboard.util.js';
 
 /** Tipo de contenido según la extensión con que se guardó el archivo (ver documentos-storage.util.ts). */
 const TIPO_POR_EXTENSION: Record<string, string> = {
@@ -42,6 +43,14 @@ export class DocumentosService {
     user: AuthenticatedUser,
   ) {
     await this.findPersona(personaId);
+    // Un vencimiento ya pasado es casi siempre un error al elegir la fecha: el
+    // documento quedaría vencido al instante y la persona no podría ingresar.
+    // Vence hoy sí vale (sigue válido todo el día).
+    if (dto.fechaVencimiento && dto.permitirVencido !== 'true' && dto.fechaVencimiento.slice(0, 10) < claveDia(new Date())) {
+      throw new BadRequestException(
+        'La fecha de vencimiento ya pasó: el documento quedaría vencido y la persona no podría ingresar. Revisa la fecha.',
+      );
+    }
     const tipoDocumento = await this.prisma.tipoDocumento.findUnique({ where: { id: dto.tipoDocumentoId } });
     if (!tipoDocumento) {
       throw new NotFoundException('Tipo de documento no encontrado');

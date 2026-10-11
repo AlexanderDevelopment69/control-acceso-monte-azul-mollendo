@@ -65,6 +65,7 @@ export function PersonaFicha({
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [verFoto, setVerFoto] = useState(false);
+  const [subiendoDocumento, setSubiendoDocumento] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
 
   const obtener = useCallback(() => personasApi.get(personaId), [personaId]);
@@ -152,7 +153,25 @@ export function PersonaFicha({
     }
   }
 
-  if (error) return <ErrorBanner>{error}</ErrorBanner>;
+  if (error) {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <ErrorBanner className="flex-1">{error}</ErrorBanner>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setError(null);
+            setPersona(null);
+            cargar();
+          }}
+        >
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
   if (!persona) return <div className="p-6 text-sm text-gray-400">Cargando…</div>;
 
   const cumplimiento = persona.cumplimiento;
@@ -329,7 +348,7 @@ export function PersonaFicha({
         )}
       </section>
 
-      <Modal isOpen={ventana !== null} onClose={() => setVentana(null)} className="max-w-2xl p-6 sm:p-8">
+      <Modal isOpen={ventana !== null} onClose={() => setVentana(null)} bloqueado={subiendoDocumento} className="max-w-2xl p-6 sm:p-8">
         <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">
           {ventana?.modo === "renovar" ? "Renovar documento" : "Agregar documento"}
         </h2>
@@ -339,12 +358,25 @@ export function PersonaFicha({
             : "Queda válido desde que se carga. Si ya tiene un documento con ese nombre, se guarda como versión nueva."}
         </p>
         {ventana?.modo === "renovar" && (
-          <SubirDocumentoForm key={ventana.nombre} personaId={persona.id} nombreFijo={ventana.nombre} onSubido={documentoSubido} />
+          <SubirDocumentoForm
+            key={ventana.nombre}
+            personaId={persona.id}
+            nombreFijo={ventana.nombre}
+            onSubido={documentoSubido}
+            onGuardando={setSubiendoDocumento}
+          />
         )}
-        {ventana?.modo === "agregar" && <SubirDocumentoForm personaId={persona.id} onSubido={documentoSubido} />}
+        {ventana?.modo === "agregar" && (
+          <SubirDocumentoForm personaId={persona.id} onSubido={documentoSubido} onGuardando={setSubiendoDocumento} />
+        )}
       </Modal>
 
-      <Modal isOpen={confirmarEstado !== null} onClose={() => setConfirmarEstado(null)} className="max-w-md p-6 sm:p-8">
+      <Modal
+        isOpen={confirmarEstado !== null}
+        onClose={() => setConfirmarEstado(null)}
+        bloqueado={cambiandoEstado}
+        className="max-w-md p-6 sm:p-8"
+      >
         {confirmarEstado === "inactivo" ? (
           <>
             <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Dar de baja</h2>
@@ -386,7 +418,7 @@ export function PersonaFicha({
         )}
         {errorEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => setConfirmarEstado(null)}>
+          <Button type="button" variant="outline" disabled={cambiandoEstado} onClick={() => setConfirmarEstado(null)}>
             Cancelar
           </Button>
           {confirmarEstado === "inactivo" ? (
@@ -406,7 +438,7 @@ export function PersonaFicha({
         </div>
       </Modal>
 
-      <Modal isOpen={aEliminar !== null} onClose={() => setAEliminar(null)} className="max-w-md p-6 sm:p-8">
+      <Modal isOpen={aEliminar !== null} onClose={() => setAEliminar(null)} bloqueado={eliminando} className="max-w-md p-6 sm:p-8">
         <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Eliminar documento</h2>
         <p className="text-sm text-gray-600 dark:text-gray-300">
           Se eliminará <strong>{aEliminar?.nombre}</strong> de {persona.nombres} {persona.apellidos}, con todas sus
@@ -415,7 +447,7 @@ export function PersonaFicha({
         </p>
         {errorEliminar && <ErrorBanner className="mt-4">{errorEliminar}</ErrorBanner>}
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => setAEliminar(null)}>
+          <Button type="button" variant="outline" disabled={eliminando} onClick={() => setAEliminar(null)}>
             Cancelar
           </Button>
           <Button type="button" variant="danger" disabled={eliminando} onClick={confirmarEliminar}>
