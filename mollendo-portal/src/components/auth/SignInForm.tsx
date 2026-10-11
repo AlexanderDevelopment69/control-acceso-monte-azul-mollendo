@@ -86,6 +86,7 @@ export default function SignInForm() {
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="Ingrese su contraseña"
+                    className="pr-12"
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   <span

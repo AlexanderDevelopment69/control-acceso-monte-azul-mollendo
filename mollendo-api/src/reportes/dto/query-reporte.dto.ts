@@ -17,6 +17,11 @@ export class QueryReporteDto {
   @IsIn(['true', 'false'], { message: 'incluirAnteriores debe ser "true" o "false"' })
   incluirAnteriores?: 'true' | 'false';
 
+  /** ZIP de documentos: incluir también la foto de cada persona. */
+  @IsOptional()
+  @IsIn(['true', 'false'], { message: 'incluirFotos debe ser "true" o "false"' })
+  incluirFotos?: 'true' | 'false';
+
   /** Periodo (movimientos, visitas y auditoría): días locales, ambos incluidos; por defecto hoy. */
   @IsOptional()
   @Matches(FECHA, { message: 'La fecha "desde" debe tener el formato AAAA-MM-DD' })

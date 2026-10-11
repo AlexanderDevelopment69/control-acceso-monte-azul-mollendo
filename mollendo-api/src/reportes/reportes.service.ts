@@ -232,6 +232,9 @@ export class ReportesService {
     const hoy = new Date();
     const inicioDeHoy = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
     const anteriores = conArchivos && query.incluirAnteriores === 'true';
+    const conFotos = conArchivos && query.incluirFotos === 'true';
+    /** Foto de cada persona en el ZIP (una sola vez por persona), por id. */
+    const fotos = new Map<number, string | null>();
     const personas = await this.prisma.persona.findMany({
       where: { empresaId: query.empresaId },
       include: {
@@ -278,14 +281,10 @@ export class ReportesService {
             actual ? estados[estado] : 'Reemplazado',
           ];
           if (conArchivos) {
+            const carpeta = ['archivos', nombreSeguro(p.empresa.razonSocial), nombreSeguro(`${persona} (${p.numeroDocumento})`)];
             if (v.archivoUrl && existsSync(v.archivoUrl)) {
               const enZip = rutaUnica(
-                [
-                  'archivos',
-                  nombreSeguro(p.empresa.razonSocial),
-                  nombreSeguro(`${persona} (${p.numeroDocumento})`),
-                  `${nombreSeguro(`${d.tipoDocumento.nombre} v${v.version}`)}${extname(v.archivoUrl).toLowerCase()}`,
-                ].join('/'),
+                [...carpeta, `${nombreSeguro(`${d.tipoDocumento.nombre} v${v.version}`)}${extname(v.archivoUrl).toLowerCase()}`].join('/'),
                 usados,
               );
               archivos.push({ ruta: v.archivoUrl, enZip });
@@ -293,6 +292,17 @@ export class ReportesService {
             } else {
               sinArchivo++;
               fila.push('No disponible');
+            }
+            // La foto va en la misma carpeta de la persona; en el Excel, en cada fila suya.
+            if (conFotos) {
+              if (!fotos.has(p.id)) {
+                const conFoto = !!p.fotoUrl && existsSync(p.fotoUrl);
+                const enZip = conFoto ? rutaUnica([...carpeta, `foto${extname(p.fotoUrl!).toLowerCase()}`].join('/'), usados) : null;
+                if (enZip) archivos.push({ ruta: p.fotoUrl!, enZip });
+                fotos.set(p.id, enZip);
+              }
+              const foto = fotos.get(p.id);
+              fila.push(foto ? { texto: 'Abrir', enlace: foto } : 'Sin foto');
             }
           }
           filas.push({ orden: dias ?? Number.MAX_SAFE_INTEGER, persona, documento: d.tipoDocumento.nombre, version: v.version, fila });
@@ -319,7 +329,9 @@ export class ReportesService {
           ? `Cada documento con todas sus versiones (las anteriores, como "Reemplazado"). Por vencer: vence en los próximos ${DIAS_AVISO} días.`
           : `Última versión de cada documento. Por vencer: vence en los próximos ${DIAS_AVISO} días.`,
         ...(conArchivos
-          ? ['Columna "Archivo": abre el archivo de la carpeta "archivos". Primero descomprime el ZIP (clic derecho → Extraer todo) y abre este Excel desde esa carpeta.']
+          ? [
+              `${conFotos ? 'Columnas "Archivo" y "Foto": abren' : 'Columna "Archivo": abre'} el archivo de la carpeta "archivos". Primero descomprime el ZIP (clic derecho → Extraer todo) y abre este Excel desde esa carpeta.`,
+            ]
           : []),
       ],
       columnas: [
@@ -334,6 +346,7 @@ export class ReportesService {
         { titulo: 'Días para vencer', tipo: 'numero', ancho: 11 },
         { titulo: 'Estado', ancho: 12 },
         ...(conArchivos ? [{ titulo: 'Archivo', ancho: 12 }] : []),
+        ...(conFotos ? [{ titulo: 'Foto', ancho: 10 }] : []),
       ],
       filas: filas.map((f) => f.fila),
       resumen: [
@@ -342,7 +355,8 @@ export class ReportesService {
         ...(query.estadoDocumento
           ? []
           : [`Vigentes: ${cuenta.vigente}`, `Por vencer: ${cuenta.por_vencer}`, `Vencidos: ${cuenta.vencido}`]),
-        ...(conArchivos ? [`Archivos incluidos: ${archivos.length}`] : []),
+        ...(conArchivos ? [`Archivos incluidos: ${archivos.length - [...fotos.values()].filter(Boolean).length}`] : []),
+        ...(conFotos ? [`Fotos incluidas: ${[...fotos.values()].filter(Boolean).length}`] : []),
         ...(sinArchivo ? [`Sin archivo en el servidor: ${sinArchivo}`] : []),
       ],
     };

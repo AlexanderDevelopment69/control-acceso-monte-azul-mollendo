@@ -80,12 +80,15 @@ const CAPTURAS = [
   {
     clave: "reportes",
     ruta: "/reportes",
-    alto: 640,
+    // Documentos por persona: muestra también las opciones del ZIP (anteriores y fotos).
+    preparar: async (p) => p.locator("button ::-p-text(Documentos por persona)").click(),
+    alto: 830,
     puntos: [
-      { sel: "button ::-p-text(Personal y empresas)", recuadro: "button" },
+      { sel: "button ::-p-text(Documentos por persona)", recuadro: "button" },
       "::-p-text(Empresa)",
+      { sel: "::-p-text(Incluir las fotos del personal)", recuadro: "label", lado: "der" },
       "::-p-text(Descargar Excel)",
-      { sel: "::-p-text(Descargar PDF)", lado: "der" },
+      { sel: "::-p-text(Descargar con archivos)", lado: "der" },
     ],
   },
   {

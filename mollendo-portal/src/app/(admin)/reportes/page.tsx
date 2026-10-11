@@ -88,6 +88,43 @@ function Filtro({ etiqueta, children }: { etiqueta: string; children: React.Reac
   );
 }
 
+/** Opción del ZIP en tarjeta: toda la tarjeta se puede pulsar; el casillero real queda oculto pero accesible. */
+function OpcionZip({
+  marcada,
+  onCambio,
+  titulo,
+  detalle,
+}: {
+  marcada: boolean;
+  onCambio: (valor: boolean) => void;
+  titulo: string;
+  detalle: string;
+}) {
+  return (
+    <label
+      className={`flex cursor-pointer items-start gap-3 rounded-lg border bg-white p-3.5 transition-colors has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-brand-500/20 dark:bg-gray-900 ${
+        marcada
+          ? "border-brand-500 dark:border-brand-400"
+          : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
+      }`}
+    >
+      <input type="checkbox" checked={marcada} onChange={(e) => onCambio(e.target.checked)} className="sr-only" />
+      <span
+        aria-hidden
+        className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
+          marcada ? "border-brand-500 bg-brand-500 text-white" : "border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
+        }`}
+      >
+        {marcada && <CheckLineIcon className="size-3.5" />}
+      </span>
+      <span>
+        <span className="block font-medium text-gray-800 dark:text-white/90">{titulo}</span>
+        <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">{detalle}</span>
+      </span>
+    </label>
+  );
+}
+
 function ReportesContent() {
   const [tipo, setTipo] = useState<TipoReporte>("personal");
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -99,6 +136,7 @@ function ReportesContent() {
   const periodo = usePeriodo();
   const [descargando, setDescargando] = useState<"xlsx" | "pdf" | "zip" | null>(null);
   const [incluirAnteriores, setIncluirAnteriores] = useState(false);
+  const [incluirFotos, setIncluirFotos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const filtrosRef = useRef<HTMLElement>(null);
 
@@ -123,6 +161,7 @@ function ReportesContent() {
         ...(tipo === "personal" && estado && { estado }),
         ...(tipo === "documentos" && estadoDocumento && { estadoDocumento }),
         ...(formato === "zip" && incluirAnteriores && { incluirAnteriores: "true" }),
+        ...(formato === "zip" && incluirFotos && { incluirFotos: "true" }),
         ...(tipo === "movimientos" && movimiento && { movimiento }),
         ...(tipo === "movimientos" && resultado && { resultado }),
       });
@@ -272,39 +311,20 @@ function ReportesContent() {
                 <strong className="font-medium text-gray-800 dark:text-white/90">Con archivos (ZIP):</strong> el mismo Excel
                 y los archivos de cada documento en carpetas por empresa y persona.
               </p>
-              {/* Opción en tarjeta: toda la tarjeta se puede pulsar; el casillero real queda oculto pero accesible. */}
-              <label
-                className={`mt-3 flex cursor-pointer items-start gap-3 rounded-lg border bg-white p-3.5 transition-colors has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-brand-500/20 dark:bg-gray-900 ${
-                  incluirAnteriores
-                    ? "border-brand-500 dark:border-brand-400"
-                    : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={incluirAnteriores}
-                  onChange={(e) => setIncluirAnteriores(e.target.checked)}
-                  className="sr-only"
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <OpcionZip
+                  marcada={incluirAnteriores}
+                  onCambio={setIncluirAnteriores}
+                  titulo="Incluir también los documentos anteriores"
+                  detalle="Los que fueron renovados, con su archivo. En el Excel figuran como “Reemplazado”."
                 />
-                <span
-                  aria-hidden
-                  className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
-                    incluirAnteriores
-                      ? "border-brand-500 bg-brand-500 text-white"
-                      : "border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
-                  }`}
-                >
-                  {incluirAnteriores && <CheckLineIcon className="size-3.5" />}
-                </span>
-                <span>
-                  <span className="block font-medium text-gray-800 dark:text-white/90">
-                    Incluir también los documentos anteriores
-                  </span>
-                  <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
-                    Los que fueron renovados, con su archivo. En el Excel figuran como “Reemplazado”.
-                  </span>
-                </span>
-              </label>
+                <OpcionZip
+                  marcada={incluirFotos}
+                  onCambio={setIncluirFotos}
+                  titulo="Incluir las fotos del personal"
+                  detalle="La foto de cada persona en su carpeta y una columna “Foto” en el Excel. El ZIP pesa más."
+                />
+              </div>
             </div>
           )}
 

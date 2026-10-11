@@ -474,11 +474,12 @@ const SECCIONES: SeccionManual[] = [
           pasos={[
             "Elige el reporte.",
             "Ajusta sus filtros (empresa, estado o fechas, según el reporte).",
+            "En Documentos por persona, marca si el ZIP lleva también los documentos anteriores o las fotos del personal.",
             <>
-              <strong>“Descargar Excel”</strong> para trabajarlo en una hoja de cálculo…
+              <strong>“Descargar Excel”</strong> para trabajarlo en una hoja de cálculo, o “Descargar PDF” para imprimirlo.
             </>,
             <>
-              …o <strong>“Descargar PDF”</strong> para imprimirlo o enviarlo.
+              <strong>“Descargar con archivos (ZIP)”</strong>: el Excel con cada archivo (solo en Documentos por persona).
             </>,
           ]}
         />
@@ -532,7 +533,7 @@ const SECCIONES: SeccionManual[] = [
             {
               Icono: IconoComprimido,
               titulo: "“Descargar con archivos (ZIP)”",
-              texto: "Baja el Excel y cada archivo, en carpetas por empresa y persona. Si quieres, incluye también los documentos anteriores que fueron renovados.",
+              texto: "Baja el Excel y cada archivo, en carpetas por empresa y persona. Si quieres, incluye también los documentos anteriores que fueron renovados y las fotos del personal (cada foto en la carpeta de su persona y una columna “Foto” en el Excel).",
             },
             {
               Icono: IconoDocumentos,
