@@ -44,6 +44,8 @@ El portal reenvía al backend `/api/v1/*` (incluida la conexión de tiempo real)
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Compilación de producción (servidor autónomo en `.next/standalone`) |
 | `npm run lint` | Revisión del código con ESLint |
+| `npm test` | Pruebas automáticas (Vitest + Testing Library, sin la API: cada prueba simula sus respuestas) |
+| `npm run test:watch` | Las mismas pruebas, que se repiten al guardar un archivo |
 
 ## Estructura
 

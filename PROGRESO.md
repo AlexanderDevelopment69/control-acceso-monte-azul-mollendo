@@ -36,7 +36,8 @@ Resumen del estado actual. El detalle de cada cambio está en la bitácora (abaj
 
 - [x] Inicio de sesión (`/iniciar-sesion`), menú por rol, cambio de contraseña, aviso de fallas arriba de todas las páginas.
 - [x] Personal y documentos (`/`), Dashboard, Panel de vigilancia (en vivo, con reconexión automática), Reportes, Auditoría, Sistema y APIs, Manual con capturas.
-- [~] Verificación en navegador: capturas automáticas (puppeteer) y pruebas en vivo contra la API; no hay una batería de pruebas automáticas en navegador.
+- [x] Pruebas automáticas (`npm test`, Vitest + Testing Library): 82, junto a cada archivo (`*.test.ts(x)`). Cubren el cliente de la API (renovación de sesión y errores), la sesión y la protección por rol, el inicio de sesión, Personal (pestañas, motivos, búsqueda, empresa, contadores, ficha), la ficha de la persona (estado, renovar, baja y reactivación), las ventanas y las validaciones.
+- [~] Verificación en navegador real: capturas automáticas (puppeteer) y pruebas en vivo contra la API.
 
 ### 3. Equipos
 
