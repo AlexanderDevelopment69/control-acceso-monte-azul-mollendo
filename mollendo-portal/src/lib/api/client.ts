@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+import { API_URL } from "@/lib/config";
 
 const ACCESS_TOKEN_KEY = "mollendo_access_token";
 const REFRESH_TOKEN_KEY = "mollendo_refresh_token";

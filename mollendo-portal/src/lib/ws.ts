@@ -1,9 +1,7 @@
 import { io, type Socket } from "socket.io-client";
 import { getAccessToken, renovarSesion } from "./api/client";
 import { decodeJwt } from "./auth/decode-jwt";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
-const WS_BASE = API_URL.replace(/\/api\/v1\/?$/, "");
+import { API_BASE } from "./config";
 
 /** Espera antes de reintentar: 2 s, 4 s, 8 s… hasta 30 s. */
 const ESPERA_MAXIMA_MS = 30_000;
@@ -27,7 +25,7 @@ function tokenPorVencer(): boolean {
  * mientras estaba cortada.
  */
 export function connectEventosSocket(alReconectar?: () => void): Socket {
-  const socket = io(`${WS_BASE}/ws/eventos`, {
+  const socket = io(`${API_BASE}/ws/eventos`, {
     // Bajo /api/v1, igual que el backend: así el portal lo reenvía con la misma
     // regla que la API (next.config.ts) cuando NEXT_PUBLIC_API_URL=/api/v1.
     // Sin barra final, porque Next redirige las rutas que terminan en "/".

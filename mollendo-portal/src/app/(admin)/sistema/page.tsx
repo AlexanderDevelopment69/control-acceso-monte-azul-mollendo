@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { integracionesApi, panelApi } from "@/lib/api/endpoints";
+import { API_BASE } from "@/lib/config";
 import { ApiError } from "@/lib/api/client";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
@@ -23,8 +24,7 @@ import Combobox from "@/components/form/Combobox";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { BellIcon, BoltIcon, BoxCubeIcon, BoxIcon, CheckCircleIcon, ChevronDownIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
-const DOCS_URL = `${API_URL.replace(/\/api\/v1\/?$/, "")}/api/docs`;
+const DOCS_URL = `${API_BASE}/api/docs`;
 
 interface ApiIntegracion {
   nombre: string;
@@ -817,9 +817,17 @@ function FilaApiIntegracion({
         onClick={() => setAbierto((prev) => !prev)}
       >
         <TableCell className="px-5 py-4 text-sm">
-          <ChevronDownIcon
-            className={`h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${abierto ? "rotate-180" : ""}`}
-          />
+          {/* Botón real para el teclado y los lectores de pantalla; su clic sube a la fila, que es la que abre y cierra. */}
+          <button
+            type="button"
+            aria-expanded={abierto}
+            aria-label={`${abierto ? "Ocultar" : "Ver"} el detalle de ${api.nombre}`}
+            className="-m-1 flex rounded p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          >
+            <ChevronDownIcon
+              className={`h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${abierto ? "rotate-180" : ""}`}
+            />
+          </button>
         </TableCell>
         <TableCell className="px-5 py-4 text-sm font-medium text-gray-700 dark:text-gray-300">{api.nombre}</TableCell>
         <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">

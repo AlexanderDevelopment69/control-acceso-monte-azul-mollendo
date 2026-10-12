@@ -125,6 +125,8 @@ export const panelApi = {
   estadoSistema: () => apiRequest<EstadoSistema>("/panel/estado-sistema"),
   /** Lo que está caído, para la franja de arriba (administrador y vigilancia). */
   avisos: () => apiRequest<AvisosSistema>("/panel/avisos"),
+  /** ¿Responde el servidor? (público, sin sesión). */
+  health: () => apiRequest<{ status: string }>("/health", { skipAuth: true }),
 };
 
 // ---- integraciones ----

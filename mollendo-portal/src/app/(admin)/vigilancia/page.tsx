@@ -24,8 +24,6 @@ import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import DatePicker from "@/components/form/date-picker";
 import { AlertIcon, ArrowRightIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
-
 // Payload del WebSocket (ver EventosAccesoService en el backend): aquí solo
 // se usa el id del evento, para resaltar su fila cuando la tabla se recarga.
 interface EventoLive {
@@ -391,8 +389,8 @@ function VigilanciaContent() {
   useEffect(() => {
     async function chequear() {
       try {
-        const res = await fetch(`${API_URL}/health`, { headers: { "ngrok-skip-browser-warning": "true" } });
-        setServidorCaido(!res.ok);
+        await panelApi.health();
+        setServidorCaido(false);
       } catch {
         setServidorCaido(true);
       }
