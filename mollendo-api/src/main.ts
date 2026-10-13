@@ -4,6 +4,7 @@ import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { text } from 'express';
 import helmet from 'helmet';
+import compression from 'compression';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
 import { SWAGGER_FAVICON } from './common/swagger-favicon.js';
@@ -27,6 +28,11 @@ async function bootstrap() {
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
+
+  // Respuestas comprimidas (gzip) para quien las acepte: la lista del personal pesa
+  // ~430 KB con mil personas y ~20 KB comprimida (se nota con internet lento). Los PDF,
+  // imágenes, Excel y ZIP ya vienen comprimidos y no se tocan.
+  app.use(compression());
 
   // El equipo G4 Pro llama rutas fijas en la raíz (/iclock/cdata, etc.), sin
   // prefijo y sin poder configurarlo -- se excluyen del prefijo global.
