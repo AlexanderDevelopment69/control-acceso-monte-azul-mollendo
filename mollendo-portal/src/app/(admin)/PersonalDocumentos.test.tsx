@@ -10,10 +10,19 @@ vi.mock("@/lib/api/endpoints", () => ({
   personasApi: { list: api.personas },
   empresasApi: { list: api.empresas },
 }));
-// La ficha tiene sus propias consultas: aquí basta saber a quién se abrió.
+// La ficha tiene sus propias consultas: aquí basta saber a quién se abrió y,
+// con un botón, simular que entrega los datos de la persona tras un cambio.
+const cambio = vi.hoisted(() => ({ persona: null as Persona | null }));
 vi.mock("@/components/personal/PersonaFicha", async (original) => ({
   ...(await original<typeof import("@/components/personal/PersonaFicha")>()),
-  PersonaFicha: ({ personaId }: { personaId: number }) => <p>Ficha de la persona {personaId}</p>,
+  PersonaFicha: ({ personaId, onCambio }: { personaId: number; onCambio: (p: Persona) => void }) => (
+    <div>
+      <p>Ficha de la persona {personaId}</p>
+      <button type="button" onClick={() => onCambio(cambio.persona!)}>
+        Simular cambio
+      </button>
+    </div>
+  ),
 }));
 
 const EMPRESAS: Empresa[] = [
@@ -160,6 +169,22 @@ describe("Personal y documentos", () => {
     await userEvent.click(screen.getByText("Torres, Ana"));
     expect(screen.queryByText(/Ficha de la persona/)).not.toBeInTheDocument();
     expect(screen.getByText("Elige a una persona de la lista para ver y subir sus documentos.")).toBeInTheDocument();
+  });
+
+  it("tras un cambio en la ficha, actualiza solo esa fila sin volver a pedir la lista", async () => {
+    await montar();
+    await userEvent.click(screen.getByText("Díaz, Rosa"));
+    expect(screen.getByText("Vencido: SCTR, Licencia")).toBeInTheDocument();
+
+    // La ficha trae también el historial; la fila no lo guarda.
+    cambio.persona = persona(3, "Rosa", "Díaz", 1, { habilitado: true }, { documentos: [], documentosActuales: [] });
+    await userEvent.click(screen.getByRole("button", { name: "Simular cambio" }));
+
+    expect(screen.queryByText("Vencido: SCTR, Licencia")).not.toBeInTheDocument();
+    expect(screen.getAllByLabelText("Puede ingresar")).toHaveLength(2);
+    expect(pestana("Pueden").cuenta).toBe(2);
+    expect(enLista()).toEqual(["Torres, Ana", "Pérez, Luis", "Díaz, Rosa", "Ríos, Juan"]);
+    expect(api.personas).toHaveBeenCalledTimes(1);
   });
 
   it("si la carga falla, avisa y permite reintentar", async () => {

@@ -45,10 +45,10 @@ function persona(cumplimiento: Partial<Cumplimiento>, extra: Partial<Persona> = 
   };
 }
 
-let onCambio: ReturnType<typeof vi.fn<() => void>>;
+let onCambio: ReturnType<typeof vi.fn<(p: Persona) => void>>;
 beforeEach(() => {
   Object.values(api).forEach((f) => f.mockReset());
-  onCambio = vi.fn<() => void>();
+  onCambio = vi.fn<(p: Persona) => void>();
 });
 
 async function montar(p: Persona) {
@@ -100,11 +100,14 @@ describe("Ficha de la persona", () => {
     await userEvent.click(within(tarjeta()).getByRole("button", { name: "Renovar" }));
     expect(screen.getByRole("heading", { name: "Renovar documento" })).toBeInTheDocument();
 
-    api.get.mockResolvedValue(persona({ habilitado: true }));
+    const renovada = persona({ habilitado: true });
+    api.get.mockResolvedValue(renovada);
     await userEvent.click(screen.getByRole("button", { name: "Guardar SCTR" }));
     expect(screen.queryByRole("heading", { name: "Renovar documento" })).not.toBeInTheDocument();
-    expect(onCambio).toHaveBeenCalledTimes(1);
     expect(await within(tarjeta()).findByText("Puede ingresar hoy")).toBeInTheDocument();
+    // La lista recibe los mismos datos que leyó la ficha (no hace otro pedido).
+    expect(onCambio).toHaveBeenCalledTimes(1);
+    expect(onCambio).toHaveBeenCalledWith(renovada);
   });
 
   it("sin documentos: “Agregar documento” abre la ventana para agregar", async () => {
@@ -141,7 +144,7 @@ describe("Ficha de la persona", () => {
 
     expect(api.updateEstado).toHaveBeenCalledWith(7, "inactivo", "Terminó su contrato");
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Dar de baja" })).not.toBeInTheDocument());
-    expect(onCambio).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onCambio).toHaveBeenCalledTimes(1));
   });
 
   it("si dar de baja falla, la ventana queda abierta con el error", async () => {

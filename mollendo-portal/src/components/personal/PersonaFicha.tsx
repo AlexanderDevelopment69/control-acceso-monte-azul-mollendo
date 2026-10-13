@@ -24,8 +24,11 @@ export function PersonaFicha({
   onCambio,
 }: {
   personaId: number;
-  /** Avisa a la pantalla que cambió el cumplimiento del trabajador. */
-  onCambio: () => void;
+  /**
+   * Entrega a la pantalla los datos recién leídos del trabajador (tras un cambio
+   * o un reintento), para actualizar su fila de la lista sin volver a pedirla entera.
+   */
+  onCambio: (persona: Persona) => void;
 }) {
   const [persona, setPersona] = useState<Persona | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +59,17 @@ export function PersonaFicha({
     setError(err instanceof ApiError ? err.message : "No se pudo cargar al personal");
   }, []);
 
-  const cargar = useCallback(() => obtener().then(aplicar).catch(fallar), [obtener, aplicar, fallar]);
+  // Vuelve a leer al trabajador; con esos datos se actualiza también su fila de la lista.
+  const cargar = useCallback(
+    () =>
+      obtener()
+        .then((p) => {
+          aplicar(p);
+          onCambio(p);
+        })
+        .catch(fallar),
+    [obtener, aplicar, fallar, onCambio],
+  );
 
   // Se monta de nuevo por cada persona (key en el padre), así que no hace falta limpiar el estado aquí.
   useEffect(() => {
@@ -69,14 +82,9 @@ export function PersonaFicha({
     };
   }, [obtener, aplicar, fallar]);
 
-  function recargarTodo() {
-    cargar();
-    onCambio();
-  }
-
   function documentoSubido() {
     setVentana(null);
-    recargarTodo();
+    cargar();
   }
 
   async function confirmarEliminar() {
@@ -86,7 +94,7 @@ export function PersonaFicha({
     try {
       await documentosApi.eliminar(personaId, aEliminar.tipoDocumentoId);
       setAEliminar(null);
-      recargarTodo();
+      cargar();
     } catch (err) {
       setErrorEliminar(err instanceof ApiError ? err.message : "No se pudo eliminar el documento");
     } finally {
@@ -122,7 +130,7 @@ export function PersonaFicha({
     try {
       await personasApi.updateEstado(persona.id, estado, estado === "inactivo" ? motivoBaja.trim() || undefined : undefined);
       setConfirmarEstado(null);
-      recargarTodo();
+      cargar();
     } catch (err) {
       setErrorEstado(err instanceof ApiError ? err.message : "No se pudo cambiar el estado");
     } finally {

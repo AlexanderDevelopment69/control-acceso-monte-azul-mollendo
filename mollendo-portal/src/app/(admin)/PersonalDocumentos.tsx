@@ -63,8 +63,16 @@ export function PersonalDocumentos() {
 
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
-  // Tras registrar o subir un documento cambia el ✔/✖. Si falla, se avisa
-  // (con "Reintentar"): si no, la lista quedaría con el ✔/✖ anterior sin que se note.
+  // Tras un cambio en la ficha (documento, baja, foto) cambia el ✔/✖ de esa
+  // persona: se reemplaza su fila con los datos que la ficha acaba de leer, sin
+  // volver a pedir la lista entera. Sin el historial, que la lista no usa.
+  const actualizarFila = useCallback((cambiada: Persona) => {
+    const fila = { ...cambiada, documentos: undefined, documentosActuales: undefined };
+    setPersonas((actuales) => actuales.map((p) => (p.id === fila.id ? fila : p)));
+  }, []);
+
+  // Tras registrar a alguien se pide la lista entera (la persona nueva no está en ella).
+  // Si falla, se avisa (con "Reintentar"): si no, faltaría en la lista sin que se note.
   const recargar = useCallback(async () => {
     try {
       setPersonas(await personasApi.list());
@@ -333,7 +341,7 @@ export function PersonalDocumentos() {
             <PersonaFicha
               key={seleccionada}
               personaId={seleccionada}
-              onCambio={recargar}
+              onCambio={actualizarFila}
             />
           ) : (
             // Sin nadie elegido: contadores (al presionarlos filtran la lista) y la indicación.
