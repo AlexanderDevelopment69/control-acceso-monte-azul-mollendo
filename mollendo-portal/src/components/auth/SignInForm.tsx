@@ -1,8 +1,8 @@
 "use client";
 import Input from "@/components/form/input/InputField";
+import InputPassword from "@/components/form/input/InputPassword";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { EyeCloseIcon, EyeIcon } from "@/icons";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ApiError } from "@/lib/api/client";
@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 export default function SignInForm() {
-  const [showPassword, setShowPassword] = useState(false);
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -91,24 +90,7 @@ export default function SignInForm() {
                 <Label>
                   Contraseña <span className="text-error-500">*</span>
                 </Label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Ingrese su contraseña"
-                    className="pr-12"
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <span
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                  >
-                    {showPassword ? (
-                      <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
-                    ) : (
-                      <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
-                    )}
-                  </span>
-                </div>
+                <InputPassword placeholder="Ingrese su contraseña" onChange={setPassword} />
               </div>
               <div>
                 <Button className="w-full" size="sm" disabled={loading}>

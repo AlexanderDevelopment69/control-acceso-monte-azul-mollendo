@@ -3,126 +3,16 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { documentosApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { Cumplimiento, DocumentoPersona, Persona } from "@/lib/api/types";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
-import Badge from "@/components/ui/badge/Badge";
+import type { DocumentoPersona, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { Modal } from "@/components/ui/modal";
-import { CheckLineIcon, ChevronDownIcon, CloseLineIcon, FileIcon } from "@/icons";
-// Los mismos íconos del recorrido de ingreso del manual.
-import { IconoDni, IconoDocumentos, IconoRostro } from "@/app/(admin)/manual/Figuras";
+import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { SubirDocumentoForm } from "./SubirDocumentoForm";
 import { FotoGuardada, validarFoto } from "./FotoPersonal";
-import { VerDocumento } from "./VerDocumento";
-
-/** Las columnas DATE llegan como medianoche UTC: se muestran en UTC para no correrse un día. */
-export function formatearFecha(fecha: string): string {
-  return new Date(fecha).toLocaleDateString("es-PE", { timeZone: "UTC" });
-}
-
-/** Por qué no puede ingresar; si está de baja, con su motivo (si se registró). */
-export function motivosCumplimiento(c: Cumplimiento, motivoBaja?: string | null): string[] {
-  if (c.dadoDeBaja) return [motivoBaja ? `Dado de baja: ${motivoBaja}` : "Dado de baja"];
-  const motivos: string[] = [];
-  if (c.sinDocumentos) motivos.push("Sin documentos cargados");
-  if (c.documentosVencidos.length > 0) motivos.push(`Vencido: ${c.documentosVencidos.join(", ")}`);
-  return motivos;
-}
-
-/** Días enteros desde una fecha DATE (medianoche UTC) hasta hoy (hora local). */
-function diasDesde(fecha: string): number {
-  const hoy = new Date();
-  const inicioDeHoy = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-  return Math.round((inicioDeHoy - new Date(fecha).getTime()) / 86_400_000);
-}
-
-type EstadoPaso = "ok" | "falla" | "aviso";
-
-/** Recuadro del ícono de cada paso, según cómo está. */
-const CAJA_PASO: Record<EstadoPaso, string> = {
-  ok: "bg-white text-success-600 ring-success-200 dark:bg-gray-900 dark:text-success-500 dark:ring-success-500/30",
-  falla: "bg-white text-error-600 ring-error-200 dark:bg-gray-900 dark:text-error-500 dark:ring-error-500/40",
-  aviso: "bg-white text-warning-600 ring-warning-200 dark:bg-gray-900 dark:text-orange-400 dark:ring-warning-500/30",
-};
-
-/** Insignia de la esquina (✓, ✕, !) de cada paso. */
-const INSIGNIA_PASO: Record<EstadoPaso, { clase: string; marca: string }> = {
-  ok: { clase: "bg-success-500", marca: "✓" },
-  falla: { clase: "bg-error-500", marca: "✕" },
-  aviso: { clase: "bg-warning-500", marca: "!" },
-};
-
-const TEXTO_PASO: Record<EstadoPaso, string> = {
-  ok: "text-success-700 dark:text-success-500",
-  falla: "text-error-600 dark:text-error-500",
-  aviso: "text-warning-700 dark:text-orange-400",
-};
-
-/**
- * Los pasos del ingreso que se pueden revisar desde la ficha (DNI → documentos
- * → rostro), con los íconos del recorrido del manual. La prueba de alcohol no
- * aparece: solo se mide al pasar por el molinete.
- */
-function RecorridoValidacion({
-  pasos,
-}: {
-  pasos: { nombre: string; estado: EstadoPaso; detalle: string; Icono: React.ComponentType<{ className?: string }> }[];
-}) {
-  return (
-    <ol className="mt-4 grid grid-cols-3 gap-1">
-      {pasos.map(({ nombre, estado, detalle, Icono }, i) => (
-        <li key={nombre} className="relative flex flex-col items-center text-center">
-          {/* Línea que une cada paso con el siguiente. */}
-          {i < pasos.length - 1 && (
-            <span
-              aria-hidden
-              className="absolute left-[calc(50%+1.75rem)] top-[22px] h-px w-[calc(100%-3.5rem)] bg-gray-300 dark:bg-gray-700"
-            />
-          )}
-          <span
-            className={`relative flex size-11 items-center justify-center rounded-2xl shadow-theme-xs ring-1 ${CAJA_PASO[estado]}`}
-          >
-            <Icono className="size-6" />
-            <span
-              className={`absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full text-[11px] font-bold text-white ${INSIGNIA_PASO[estado].clase}`}
-            >
-              {INSIGNIA_PASO[estado].marca}
-            </span>
-          </span>
-          <span className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">{nombre}</span>
-          <span className={`text-[11px] leading-tight ${TEXTO_PASO[estado]}`}>{detalle}</span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-/** Fila de un problema dentro de la tarjeta de estado: qué falta, desde cuándo y el botón que lo resuelve. */
-function FilaProblema({ titulo, detalle, accion }: { titulo: string; detalle?: string; accion: React.ReactNode }) {
-  return (
-    <li className="flex flex-wrap items-center gap-3 rounded-lg bg-white px-3 py-2.5 dark:bg-gray-900">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-white/[0.05] dark:text-gray-400">
-        <FileIcon className="size-4" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-gray-800 dark:text-white/90">{titulo}</span>
-        {detalle && <span className="block text-xs text-error-600 dark:text-error-400">{detalle}</span>}
-      </span>
-      {accion}
-    </li>
-  );
-}
-
-function Seccion({ titulo, descripcion, children }: { titulo: string; descripcion?: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{titulo}</h3>
-      {descripcion && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{descripcion}</p>}
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
+import { EstadoIngreso } from "./EstadoIngreso";
+import { DocumentosActuales } from "./DocumentosActuales";
+import { HistorialDocumentos } from "./HistorialDocumentos";
 
 /**
  * Ficha de un trabajador en la pantalla principal del administrador: si puede
@@ -153,7 +43,6 @@ export function PersonaFicha({
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [verFoto, setVerFoto] = useState(false);
   const [subiendoDocumento, setSubiendoDocumento] = useState(false);
-  const [historialAbierto, setHistorialAbierto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
 
   const obtener = useCallback(() => personasApi.get(personaId), [personaId]);
@@ -274,33 +163,10 @@ export function PersonaFicha({
         ? [`Vencido: ${actuales.filter((d) => !d.vigente).map((d) => d.nombre).join(", ")}`]
         : [];
 
-  /** Botones "Ver", "Renovar" y "Eliminar" de un documento (tarjeta en el celular, tabla en pantallas anchas). */
-  function accionesDocumento(d: (typeof actuales)[number], className = "") {
-    return (
-      <>
-        <VerDocumento personaId={persona!.id} documentoId={d.id} className={className} />
-        <Button size="sm" variant="outline" className={className} onClick={() => setVentana({ modo: "renovar", nombre: d.nombre })}>
-          Renovar
-        </Button>
-        <Button
-          size="sm"
-          variant="outline-danger"
-          className={className}
-          onClick={() => {
-            setErrorEliminar(null);
-            setAEliminar({ tipoDocumentoId: d.tipoDocumentoId, nombre: d.nombre });
-          }}
-        >
-          Eliminar
-        </Button>
-      </>
-    );
-  }
-
   return (
     <div className="space-y-5">
       {/* Encabezado + ¿puede ingresar? */}
-      <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+      <Tarjeta as="section" className="p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="space-y-2 text-center">
@@ -386,126 +252,14 @@ export function PersonaFicha({
           </div>
         )}
         {cumplimiento && (
-          <>
-          {/* Tarjeta de estado: ícono, título, resumen y, si no puede ingresar, cada problema
-              con el botón que lo resuelve (renovar o agregar documento; si está de baja, “Reactivar” de arriba). */}
-          <div
-            className={`mt-4 rounded-xl p-4 ${
-              cumplimiento.habilitado ? "bg-success-50 dark:bg-success-500/10" : "bg-error-50 dark:bg-error-500/10"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <span
-                className={`flex size-10 shrink-0 items-center justify-center rounded-full ${
-                  cumplimiento.habilitado
-                    ? "bg-success-100 text-success-600 dark:bg-success-500/20 dark:text-success-500"
-                    : "bg-error-100 text-error-600 dark:bg-error-500/20 dark:text-error-500"
-                }`}
-              >
-                {cumplimiento.habilitado ? <CheckLineIcon className="size-5" /> : <CloseLineIcon className="size-5" />}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p
-                  className={`font-semibold ${
-                    cumplimiento.habilitado ? "text-success-700 dark:text-success-500" : "text-error-600 dark:text-error-500"
-                  }`}
-                >
-                  {cumplimiento.habilitado ? "Puede ingresar hoy" : "No puede ingresar"}
-                </p>
-                <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-300">
-                  {cumplimiento.habilitado
-                    ? "Todos sus documentos están vigentes. Al ingresar se validan su DNI, su rostro y la prueba de alcohol."
-                    : persona.estado === "inactivo"
-                      ? `Dado de baja${persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}${
-                          persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""
-                        }. Para que vuelva a ingresar, usa “Reactivar”.`
-                      : cumplimiento.sinDocumentos
-                        ? "No tiene documentos cargados. Agrega al menos uno para que pueda ingresar."
-                        : cumplimiento.documentosVencidos.length === 1
-                          ? "1 documento vencido. Renuévalo para que pueda ingresar."
-                          : `${cumplimiento.documentosVencidos.length} documentos vencidos. Renuévalos para que pueda ingresar.`}
-                </p>
-              </div>
-            </div>
-
-            {!cumplimiento.habilitado && persona.estado !== "inactivo" && (
-              <ul className="mt-4 space-y-2">
-                {cumplimiento.sinDocumentos && (
-                  <FilaProblema
-                    titulo="Sin documentos cargados"
-                    accion={
-                      <Button size="sm" variant="outline" onClick={() => setVentana({ modo: "agregar" })}>
-                        Agregar documento
-                      </Button>
-                    }
-                  />
-                )}
-                {cumplimiento.documentosVencidos.map((nombre) => {
-                  const doc = actuales.find((d) => d.nombre === nombre);
-                  const dias = doc?.fechaVencimiento ? diasDesde(doc.fechaVencimiento) : null;
-                  return (
-                    <FilaProblema
-                      key={nombre}
-                      titulo={nombre}
-                      detalle={
-                        doc?.fechaVencimiento
-                          ? `Venció el ${formatearFecha(doc.fechaVencimiento)}${
-                              dias !== null && dias > 0 ? ` · hace ${dias} ${dias === 1 ? "día" : "días"}` : ""
-                            }`
-                          : "Vencido"
-                      }
-                      accion={
-                        <Button size="sm" variant="outline" onClick={() => setVentana({ modo: "renovar", nombre })}>
-                          Renovar
-                        </Button>
-                      }
-                    />
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-
-          {/* Validación de ingreso, aparte de la tarjeta de estado. */}
-          <div className="mt-3 rounded-xl bg-gray-50 px-4 py-4 dark:bg-white/[0.03]">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Validación de ingreso</p>
-              <RecorridoValidacion
-                pasos={[
-                  {
-                    nombre: "DNI",
-                    Icono: IconoDni,
-                    ...(persona.estado === "inactivo"
-                      ? { estado: "falla" as const, detalle: "Dado de baja" }
-                      : { estado: "ok" as const, detalle: "Registrado" }),
-                  },
-                  {
-                    nombre: "Documentos",
-                    Icono: IconoDocumentos,
-                    ...(cumplimiento.sinDocumentos
-                      ? { estado: "falla" as const, detalle: "Sin documentos" }
-                      : cumplimiento.documentosVencidos.length > 0
-                        ? {
-                            estado: "falla" as const,
-                            detalle:
-                              cumplimiento.documentosVencidos.length === 1
-                                ? "1 vencido"
-                                : `${cumplimiento.documentosVencidos.length} vencidos`,
-                          }
-                        : { estado: "ok" as const, detalle: "Vigentes" }),
-                  },
-                  {
-                    nombre: "Rostro",
-                    Icono: IconoRostro,
-                    ...(persona.fotoUrl
-                      ? { estado: "ok" as const, detalle: "Con foto" }
-                      : { estado: "aviso" as const, detalle: "Sin foto" }),
-                  },
-                ]}
-              />
-          </div>
-          </>
+          <EstadoIngreso
+            persona={persona}
+            cumplimiento={cumplimiento}
+            onAgregar={() => setVentana({ modo: "agregar" })}
+            onRenovar={(nombre) => setVentana({ modo: "renovar", nombre })}
+          />
         )}
-      </section>
+      </Tarjeta>
 
       <Modal isOpen={ventana !== null} onClose={() => setVentana(null)} bloqueado={subiendoDocumento} className="max-w-2xl p-6 sm:p-8">
         <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -615,115 +369,19 @@ export function PersonaFicha({
         </div>
       </Modal>
 
-      <Seccion
-        titulo="Documentos"
-        descripcion="Cuenta la última versión de cada documento. Uno que vence hoy sigue válido todo el día."
-      >
-        {actuales.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Todavía no tiene documentos: sin documentos no puede ingresar. Usa “+ Agregar documento”.
-          </p>
-        ) : (
-          <>
-            {/* Celular: una tarjeta por documento, con los botones a la vista. */}
-            <ul className="space-y-3 sm:hidden">
-              {actuales.map((d) => (
-                <li key={d.tipoDocumentoId} className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="text-sm font-medium text-gray-800 dark:text-white/90">{d.nombre}</span>
-                    {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {d.fechaVencimiento ? `Vence el ${formatearFecha(d.fechaVencimiento)}` : "No vence"}
-                  </p>
-                  <div className="mt-3 flex gap-2">{accionesDocumento(d, "flex-1")}</div>
-                </li>
-              ))}
-            </ul>
-
-            {/* Pantallas más anchas: tabla. */}
-            <div className="hidden overflow-x-auto sm:block">
-              <Table>
-                <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-                  <TableRow>
-                    <TableCell isHeader className="py-2 pr-4 text-start text-xs font-medium text-gray-500">Documento</TableCell>
-                    <TableCell isHeader className="py-2 pr-4 text-start text-xs font-medium text-gray-500">Vence</TableCell>
-                    <TableCell isHeader className="py-2 pr-4 text-start text-xs font-medium text-gray-500">Estado</TableCell>
-                    <TableCell isHeader className="py-2 text-start text-xs font-medium text-gray-500"></TableCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {actuales.map((d) => (
-                    <TableRow key={d.tipoDocumentoId}>
-                      <TableCell className="py-3 pr-4 text-sm text-gray-700 dark:text-gray-300">{d.nombre}</TableCell>
-                      <TableCell className="whitespace-nowrap py-3 pr-4 text-sm text-gray-700 dark:text-gray-300">
-                        {d.fechaVencimiento ? formatearFecha(d.fechaVencimiento) : "No vence"}
-                      </TableCell>
-                      <TableCell className="py-3 pr-4 text-sm">
-                        {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
-                      </TableCell>
-                      <TableCell className="py-3 text-sm">
-                        <div className="flex justify-end gap-2">{accionesDocumento(d)}</div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </>
-        )}
-        <div className="mt-4">
-          <Button size="sm" variant="outline" onClick={() => setVentana({ modo: "agregar" })}>
-            + Agregar documento
-          </Button>
-        </div>
-      </Seccion>
+      <DocumentosActuales
+        personaId={persona.id}
+        actuales={actuales}
+        onAgregar={() => setVentana({ modo: "agregar" })}
+        onRenovar={(nombre) => setVentana({ modo: "renovar", nombre })}
+        onEliminar={(d) => {
+          setErrorEliminar(null);
+          setAEliminar({ tipoDocumentoId: d.tipoDocumentoId, nombre: d.nombre });
+        }}
+      />
 
       {historial.length > actuales.length && (
-        <section className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-          <button
-            type="button"
-            onClick={() => setHistorialAbierto((v) => !v)}
-            aria-expanded={historialAbierto}
-            className="flex w-full items-center justify-between gap-3 p-5 text-left text-sm font-medium text-gray-700 focus:outline-none dark:text-gray-300"
-          >
-            Historial de documentos ({historial.length})
-            <ChevronDownIcon
-              className={`size-4 shrink-0 text-gray-400 transition-transform duration-300 ease-in-out ${historialAbierto ? "rotate-180" : ""}`}
-            />
-          </button>
-          {/* Igual que las filas de "APIs de integración" (Sistema y APIs): se abre el alto
-              (filas de grilla 0fr ↔ 1fr) y el contenido aparece 100 ms después con un fundido. */}
-          <div
-            className={`grid transition-all duration-300 ease-in-out ${historialAbierto ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-          >
-            {/* Cerrado: sus enlaces no se alcanzan con Tab. */}
-            <div className="overflow-hidden" inert={!historialAbierto}>
-              <ul
-                className={`divide-y divide-gray-100 px-5 pb-4 transition-opacity duration-300 ease-in-out dark:divide-gray-800 ${
-                  historialAbierto ? "opacity-100 delay-100" : "opacity-0"
-                }`}
-              >
-                {historial.map((d) => (
-                  <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm text-gray-700 dark:text-gray-300">
-                    <span>
-                      {d.tipoDocumento?.nombre} v{d.version}
-                      <span className="text-gray-400">
-                        {" "}
-                        · cargado {new Date(d.creadoEn).toLocaleDateString("es-PE")}
-                        {d.fechaVencimiento && ` · vence ${formatearFecha(d.fechaVencimiento)}`}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-3">
-                      {!idsActuales.has(d.id) && <Badge color="light">Reemplazado</Badge>}
-                      <VerDocumento personaId={persona.id} documentoId={d.id} variante="enlace" />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
+        <HistorialDocumentos personaId={persona.id} historial={historial} idsActuales={idsActuales} />
       )}
     </div>
   );

@@ -6,31 +6,14 @@ import { ApiError, setTokens } from "@/lib/api/client";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
-import Input from "@/components/form/input/InputField";
+import InputPassword from "@/components/form/input/InputPassword";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
-import { EyeCloseIcon, EyeIcon } from "@/icons";
 
-/** Campo de contraseña con el ojo para mostrarla u ocultarla, como en el inicio de sesión. */
 function CampoPassword({ id, label, onChange }: { id: string; label: string; onChange: (valor: string) => void }) {
-  const [visible, setVisible] = useState(false);
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <Input id={id} type={visible ? "text" : "password"} className="pr-12" onChange={(e) => onChange(e.target.value)} />
-        <button
-          type="button"
-          onClick={() => setVisible((v) => !v)}
-          aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
-          className="absolute right-4 top-1/2 z-30 -translate-y-1/2 cursor-pointer"
-        >
-          {visible ? (
-            <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
-          ) : (
-            <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
-          )}
-        </button>
-      </div>
+      <InputPassword id={id} onChange={onChange} />
     </div>
   );
 }

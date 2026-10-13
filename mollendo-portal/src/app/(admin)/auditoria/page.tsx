@@ -16,6 +16,7 @@ import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import DatePicker from "@/components/form/date-picker";
+import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 
 // Nombres de las tablas de la base de datos, como los entiende quien usa el sistema.
 const TABLA_LABEL: Record<string, string> = {
@@ -147,7 +148,7 @@ function AuditoriaContent() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <Tarjeta className="overflow-hidden">
         {/* Una línea por celda: en el celular la tabla se desliza hacia los lados. */}
         <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
           <AltoEstable paginaCompleta={entradas.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
@@ -199,7 +200,7 @@ function AuditoriaContent() {
           </AltoEstable>
         </div>
         {!loading && <TableFooter {...pie} onPageChange={setPagina} />}
-      </div>
+      </Tarjeta>
     </div>
   );
 }

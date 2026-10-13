@@ -3,26 +3,27 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { RequireRole } from "@/lib/auth/RequireRole";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { connectEventosSocket } from "@/lib/ws";
-import { eventosAccesoApi, panelApi, personasApi } from "@/lib/api/endpoints";
+import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { EventoAcceso, IngresoEnEspera, Paginado, Persona, ResumenPanel } from "@/lib/api/types";
+import type { EventoAcceso, IngresoEnEspera, Paginado, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
-import { VerDocumento } from "@/components/personal/VerDocumento";
-import { FotoGuardada } from "@/components/personal/FotoPersonal";
-import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Button from "@/components/ui/button/Button";
+import TarjetaIndicador from "@/components/ui/tarjeta/TarjetaIndicador";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import DatePicker from "@/components/form/date-picker";
-import { AlertIcon, ArrowRightIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
+import { AlertIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
+import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
+import { FilasEnEspera } from "./FilasEnEspera";
+import { documentoDelEvento, MotivoDenegacion, Movimiento } from "./CeldasEvento";
+import { DocumentosModal } from "./DocumentosModal";
 
 // Payload del WebSocket (ver EventosAccesoService en el backend): aquí solo
 // se usa el id del evento, para resaltar su fila cuando la tabla se recarga.
@@ -34,239 +35,6 @@ interface EventoLive {
 const RESALTE_MS = 8000;
 /** Recarga de respaldo del panel, por si el canal en vivo se corta sin avisar. */
 const RECARGA_RESPALDO_MS = 60_000;
-
-/** Segundos que faltan hasta `hasta`, como "1:42". */
-function tiempoRestante(hasta: string, ahora: number): string {
-  const s = Math.max(0, Math.round((new Date(hasta).getTime() - ahora) / 1000));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
-
-/** Fracción de la espera que queda (1 al habilitarlo, 0 al vencer). */
-function fraccionRestante(i: IngresoEnEspera, ahora: number): number {
-  if (!i.hasta) return 1;
-  const total = new Date(i.hasta).getTime() - new Date(i.desde).getTime();
-  return total > 0 ? Math.min(1, Math.max(0, (new Date(i.hasta).getTime() - ahora) / total)) : 0;
-}
-
-/**
- * DNI en regla que esperan el rostro y el alcohol del G4 Pro: filas arriba
- * del historial, con las mismas columnas. Al llegar el resultado, la fila se
- * reemplaza por la del evento (que se resalta); al vencer la espera, se quita.
- */
-function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]; ahora: number }) {
-  return (
-    <>
-      {ingresos.map((i) => (
-        <TableRow key={`espera-${i.id}`}>
-          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-            {new Date(i.desde).toLocaleTimeString("es-PE")}
-          </TableCell>
-          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{i.numeroDocumento}</TableCell>
-          <TableCell className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
-            {/* Foto para comparar con quien está frente al terminal facial. */}
-            <div className="flex items-center gap-3">
-              <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} tamano="size-12" />
-              <span>
-                {i.nombres} {i.apellidos}
-              </span>
-            </div>
-          </TableCell>
-          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-            <Movimiento tipo="ingreso" />
-          </TableCell>
-          <TableCell className="px-5 py-4 text-sm">
-            <Badge color={i.enCola ? "light" : "success"}>
-              <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden />
-              {i.enCola ? "en cola" : "en espera"}
-            </Badge>
-          </TableCell>
-          <TableCell className="px-5 py-4 text-sm">
-            <div className="flex items-center justify-between gap-3 text-gray-700 dark:text-gray-300">
-              <span>{i.enCola ? "Esperando su turno en el terminal facial" : "Esperando rostro y alcohol"}</span>
-              {i.hasta && (
-                <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400" title="Tiempo para completar el ingreso en el terminal facial">
-                  {tiempoRestante(i.hasta, ahora)}
-                </span>
-              )}
-            </div>
-            <div className={`mt-1.5 h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 ${i.enCola ? "invisible" : ""}`}>
-              <div
-                className="h-full rounded-full bg-success-500 transition-[width] duration-1000 ease-linear"
-                style={{ width: `${fraccionRestante(i, ahora) * 100}%` }}
-              />
-            </div>
-          </TableCell>
-        </TableRow>
-      ))}
-    </>
-  );
-}
-
-/** `value` null = todavía no se cargó (se muestra "—" en vez de un 0 que luego salta). */
-function StatCard({
-  label,
-  value,
-  color,
-  icono,
-  fondoIcono,
-  detalle,
-}: {
-  label: string;
-  value: number | null;
-  color: string;
-  icono: React.ReactNode;
-  fondoIcono: string;
-  detalle: string;
-}) {
-  return (
-    // Igual que las tarjetas del Dashboard: ícono de color y, a su lado, título, número y descripción.
-    // En el celular el ícono y la descripción se ocultan para que entren las tres.
-    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
-      <span className={`hidden size-12 shrink-0 items-center justify-center rounded-xl text-white sm:flex [&_svg]:size-6 ${fondoIcono}`}>
-        {icono}
-      </span>
-      <div className="min-w-0">
-        <p className="text-xs leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">{label}</p>
-        <p className={`text-xl font-semibold sm:text-2xl ${value === null ? "text-gray-300 dark:text-gray-600" : color}`}>{value ?? "—"}</p>
-        <p className="hidden text-xs leading-snug text-gray-400 sm:block">{detalle}</p>
-      </div>
-    </div>
-  );
-}
-
-/** Ingreso (flecha hacia adentro, azul) o salida (hacia afuera, gris), para distinguirlos sin leer. */
-function Movimiento({ tipo }: { tipo: string }) {
-  const ingreso = tipo === "ingreso";
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className={ingreso ? "text-brand-500 dark:text-brand-400" : "rotate-180 text-gray-400"}>
-        <ArrowRightIcon className="size-4" />
-      </span>
-      {ingreso ? "Ingreso" : "Salida"}
-    </span>
-  );
-}
-
-function MotivoDenegacion({
-  evento,
-  onVerDocumentos,
-}: {
-  evento: Pick<
-    EventoAcceso,
-    | "denegadoNoRegistrado"
-    | "denegadoPorBaja"
-    | "denegadoSinDocumentos"
-    | "denegadoPorAlcohol"
-    | "denegadoPorDocumentos"
-    | "denegadoSinVerificacion"
-  >;
-  onVerDocumentos: () => void;
-}) {
-  if (evento.denegadoNoRegistrado) return <Badge color="error">No registrado</Badge>;
-  if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
-  if (evento.denegadoSinVerificacion) return <Badge color="error">No completó rostro y alcohol</Badge>;
-  const motivos: string[] = [];
-  if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
-  if (evento.denegadoPorAlcohol) motivos.push("Alcohol");
-  if (evento.denegadoPorDocumentos) motivos.push("Documentos");
-  if (motivos.length === 0) return null;
-  return (
-    <div className="flex flex-wrap gap-1">
-      {motivos.map((m) =>
-        m === "Alcohol" ? (
-          <Badge key={m} color="error">{m}</Badge>
-        ) : (
-          // Documentos: clic para ver qué debe regularizar.
-          <button key={m} type="button" onClick={onVerDocumentos} title="Ver documentos" className="underline-offset-2 hover:underline">
-            <Badge color="error">{m} ›</Badge>
-          </button>
-        ),
-      )}
-    </div>
-  );
-}
-
-/** Documento con el que se identificó (el leído por el equipo; si falta, el de la persona). */
-function documentoDelEvento(ev: EventoAcceso): string {
-  const tipo = ev.tipoDocumentoIdentidad ?? ev.persona?.tipoDocumentoIdentidad;
-  const numero = ev.numeroDocumento ?? ev.persona?.numeroDocumento;
-  if (!numero) return "—";
-  return tipo && tipo !== "DNI" ? `${tipo} ${numero}` : numero;
-}
-
-function formatearFecha(fecha: string): string {
-  return new Date(fecha).toLocaleDateString("es-PE", { timeZone: "UTC" });
-}
-
-/** Modal de solo lectura: documentos actuales de la persona y cuáles debe regularizar. */
-function DocumentosModal({ personaId, onClose }: { personaId: number | null; onClose: () => void }) {
-  const [persona, setPersona] = useState<Persona | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  // El vigilante solo ve si está vigente o vencido; abrir el archivo es del administrador.
-  const puedeVerArchivo = useAuth().user?.rol === "administrador";
-
-  useEffect(() => {
-    if (personaId === null) return;
-    let activo = true;
-    personasApi
-      .get(personaId)
-      .then((p) => activo && setPersona(p))
-      .catch((err) => activo && setError(err instanceof ApiError ? err.message : "No se pudieron cargar los documentos"));
-    return () => {
-      activo = false;
-      setPersona(null);
-      setError(null);
-    };
-  }, [personaId]);
-
-  const actuales = persona?.documentosActuales ?? [];
-
-  return (
-    <Modal isOpen={personaId !== null} onClose={onClose} className="max-w-lg p-6 sm:p-8">
-      <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">Documentos</h2>
-      {error ? (
-        <ErrorBanner>{error}</ErrorBanner>
-      ) : !persona ? (
-        <p className="text-sm text-gray-400">Cargando…</p>
-      ) : (
-        <>
-          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-            {persona.nombres} {persona.apellidos} · DNI {persona.numeroDocumento}
-            {persona.empresa && ` · ${persona.empresa.razonSocial}`}
-          </p>
-          {actuales.length === 0 ? (
-            <p className="rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
-              No tiene ningún documento cargado.
-            </p>
-          ) : (
-            <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
-              {actuales.map((d) => (
-                <li key={d.tipoDocumentoId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                  <span>
-                    <span className="font-medium text-gray-800 dark:text-white/90">{d.nombre}</span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400">
-                      {d.fechaVencimiento
-                        ? `${d.vigente ? "Vence" : "Venció"} el ${formatearFecha(d.fechaVencimiento)}`
-                        : "No vence"}
-                    </span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-3">
-                    {puedeVerArchivo && <VerDocumento personaId={persona.id} documentoId={d.id} variante="enlace" />}
-                    {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-4 text-xs text-gray-400">
-            Estado de hoy. Para regularizar, debe entregar el documento actualizado al administrador.
-          </p>
-        </>
-      )}
-    </Modal>
-  );
-}
-
 const POR_PAGINA = 10;
 
 function VigilanciaContent() {
@@ -446,26 +214,29 @@ function VigilanciaContent() {
 
       {/* En el celular, los tres contadores en una fila y compactos. */}
       <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">
-        <StatCard
-          label="Denegaciones hoy"
-          value={resumen?.denegacionesHoy ?? null}
-          color="text-error-500"
+        <TarjetaIndicador
+          tamano="celular"
+          titulo="Denegaciones hoy"
+          valor={resumen?.denegacionesHoy ?? null}
+          colorValor="text-error-500"
           icono={<CloseLineIcon />}
           fondoIcono="bg-error-500"
           detalle="Ingresos y salidas rechazados en el día"
         />
-        <StatCard
-          label="Alcohol no conforme hoy"
-          value={resumen?.alcoholNoConformeHoy ?? null}
-          color="text-warning-500"
+        <TarjetaIndicador
+          tamano="celular"
+          titulo="Alcohol no conforme hoy"
+          valor={resumen?.alcoholNoConformeHoy ?? null}
+          colorValor="text-warning-500"
           icono={<AlertIcon />}
           fondoIcono="bg-warning-500"
           detalle="Ingresos denegados por la prueba de alcohol"
         />
-        <StatCard
-          label="Documentos vencidos"
-          value={resumen?.documentosVencidos ?? null}
-          color="text-gray-700 dark:text-gray-300"
+        <TarjetaIndicador
+          tamano="celular"
+          titulo="Documentos vencidos"
+          valor={resumen?.documentosVencidos ?? null}
+          colorValor="text-gray-700 dark:text-gray-300"
           icono={<DocsIcon />}
           fondoIcono="bg-gray-500"
           detalle="Del personal activo; impiden su ingreso"
@@ -525,7 +296,7 @@ function VigilanciaContent() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <Tarjeta className="overflow-hidden">
         {/* Una línea por celda: en el celular la tabla se desliza hacia los lados. */}
         <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
           <AltoEstable paginaCompleta={eventos.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
@@ -599,7 +370,7 @@ function VigilanciaContent() {
           </AltoEstable>
         </div>
         {!loading && <TableFooter {...pie} onPageChange={setPagina} />}
-      </div>
+      </Tarjeta>
 
       <DocumentosModal personaId={personaDocumentos} onClose={() => setPersonaDocumentos(null)} />
     </div>

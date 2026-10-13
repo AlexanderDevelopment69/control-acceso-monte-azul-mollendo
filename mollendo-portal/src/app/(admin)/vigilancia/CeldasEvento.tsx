@@ -1,0 +1,64 @@
+import React from "react";
+import type { EventoAcceso } from "@/lib/api/types";
+import Badge from "@/components/ui/badge/Badge";
+import { ArrowRightIcon } from "@/icons";
+
+/** Ingreso (flecha hacia adentro, azul) o salida (hacia afuera, gris), para distinguirlos sin leer. */
+export function Movimiento({ tipo }: { tipo: string }) {
+  const ingreso = tipo === "ingreso";
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={ingreso ? "text-brand-500 dark:text-brand-400" : "rotate-180 text-gray-400"}>
+        <ArrowRightIcon className="size-4" />
+      </span>
+      {ingreso ? "Ingreso" : "Salida"}
+    </span>
+  );
+}
+
+export function MotivoDenegacion({
+  evento,
+  onVerDocumentos,
+}: {
+  evento: Pick<
+    EventoAcceso,
+    | "denegadoNoRegistrado"
+    | "denegadoPorBaja"
+    | "denegadoSinDocumentos"
+    | "denegadoPorAlcohol"
+    | "denegadoPorDocumentos"
+    | "denegadoSinVerificacion"
+  >;
+  onVerDocumentos: () => void;
+}) {
+  if (evento.denegadoNoRegistrado) return <Badge color="error">No registrado</Badge>;
+  if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
+  if (evento.denegadoSinVerificacion) return <Badge color="error">No completó rostro y alcohol</Badge>;
+  const motivos: string[] = [];
+  if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
+  if (evento.denegadoPorAlcohol) motivos.push("Alcohol");
+  if (evento.denegadoPorDocumentos) motivos.push("Documentos");
+  if (motivos.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {motivos.map((m) =>
+        m === "Alcohol" ? (
+          <Badge key={m} color="error">{m}</Badge>
+        ) : (
+          // Documentos: clic para ver qué debe regularizar.
+          <button key={m} type="button" onClick={onVerDocumentos} title="Ver documentos" className="underline-offset-2 hover:underline">
+            <Badge color="error">{m} ›</Badge>
+          </button>
+        ),
+      )}
+    </div>
+  );
+}
+
+/** Documento con el que se identificó (el leído por el equipo; si falta, el de la persona). */
+export function documentoDelEvento(ev: EventoAcceso): string {
+  const tipo = ev.tipoDocumentoIdentidad ?? ev.persona?.tipoDocumentoIdentidad;
+  const numero = ev.numeroDocumento ?? ev.persona?.numeroDocumento;
+  if (!numero) return "—";
+  return tipo && tipo !== "DNI" ? `${tipo} ${numero}` : numero;
+}

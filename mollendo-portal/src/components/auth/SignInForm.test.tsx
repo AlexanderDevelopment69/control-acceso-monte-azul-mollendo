@@ -60,13 +60,22 @@ describe("SignInForm", () => {
   it("el ojo muestra y oculta la contraseña", async () => {
     render(<SignInForm />);
     const campo = screen.getByPlaceholderText("Ingrese su contraseña");
-    // El ojo está junto al campo (no es un botón con nombre: se ubica por su posición).
-    const ojo = campo.parentElement!.nextElementSibling as HTMLElement;
     expect(campo).toHaveAttribute("type", "password");
-    await userEvent.click(ojo);
+    await userEvent.click(screen.getByRole("button", { name: "Mostrar contraseña" }));
     expect(campo).toHaveAttribute("type", "text");
-    await userEvent.click(ojo);
+    await userEvent.click(screen.getByRole("button", { name: "Ocultar contraseña" }));
     expect(campo).toHaveAttribute("type", "password");
+  });
+
+  it("el ojo se alcanza con Tab desde la contraseña y se activa con Enter", async () => {
+    const usuario = userEvent.setup();
+    render(<SignInForm />);
+    const campo = screen.getByPlaceholderText("Ingrese su contraseña");
+    await usuario.click(campo);
+    await usuario.tab();
+    expect(screen.getByRole("button", { name: "Mostrar contraseña" })).toHaveFocus();
+    await usuario.keyboard("{Enter}");
+    expect(campo).toHaveAttribute("type", "text");
   });
 
   it("con la sesión ya abierta, no muestra el formulario y va al inicio", () => {

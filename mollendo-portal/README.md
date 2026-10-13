@@ -17,7 +17,7 @@ node scripts/capturas-manual.mjs
 npm prune
 ```
 
-Qué se captura y qué señala cada número está al inicio de `scripts/capturas-manual.mjs`; el texto de cada número, en la sección correspondiente de `src/app/(admin)/manual/page.tsx`.
+Qué se captura y qué señala cada número está al inicio de `scripts/capturas-manual.mjs`; el texto de cada número, en la sección correspondiente de `src/app/(admin)/manual/secciones.tsx`.
 
 ## Desarrollo
 

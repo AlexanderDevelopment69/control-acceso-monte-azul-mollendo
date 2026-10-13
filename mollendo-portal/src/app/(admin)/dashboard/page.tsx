@@ -10,6 +10,8 @@ import type { Dashboard, Paginado, PersonaPermanencia } from "@/lib/api/types";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Button from "@/components/ui/button/Button";
+import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
+import TarjetaIndicador from "@/components/ui/tarjeta/TarjetaIndicador";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { COLORES, Grafico } from "@/components/dashboard/Grafico";
 import { TableFooter } from "@/components/tables/TableFooter";
@@ -80,34 +82,8 @@ function detallePresentes(d: Dashboard | null): string {
   return `${d.visitas.presentes} ingresaron en el periodo · ${anteriores} antes del periodo`;
 }
 
-function Indicador({
-  titulo,
-  valor,
-  detalle,
-  icono,
-  color,
-}: {
-  titulo: string;
-  valor: number | null;
-  detalle?: string;
-  icono: React.ReactNode;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <span className={`flex size-12 shrink-0 items-center justify-center rounded-xl text-white ${color} [&_svg]:size-6`}>
-        {icono}
-      </span>
-      <div className="min-w-0">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{titulo}</p>
-        <p className="text-2xl font-semibold text-gray-800 dark:text-white/90">{valor ?? "—"}</p>
-        {detalle && <p className="text-xs leading-snug text-gray-400">{detalle}</p>}
-      </div>
-    </div>
-  );
-}
-
-function Tarjeta({
+/** Recuadro de un gráfico o tabla del Dashboard, con su título y descripción. */
+function Bloque({
   titulo,
   descripcion,
   children,
@@ -119,11 +95,11 @@ function Tarjeta({
   className?: string;
 }) {
   return (
-    <section className={`flex flex-col rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] ${className}`}>
+    <Tarjeta as="section" className={`flex flex-col p-5 ${className}`}>
       <h2 className="text-sm font-semibold text-gray-800 dark:text-white/90">{titulo}</h2>
       {descripcion && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{descripcion}</p>}
       <div className="mt-4 flex flex-1 flex-col">{children}</div>
-    </section>
+    </Tarjeta>
   );
 }
 
@@ -225,33 +201,33 @@ function DashboardContent() {
 
       {/* Indicadores principales */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Indicador
+        <TarjetaIndicador
           titulo="Presentes actualmente"
           valor={d?.presencia.presentes ?? null}
           detalle={detallePresentes(d)}
           icono={<UserIcon />}
-          color="bg-brand-500"
+          fondoIcono="bg-brand-500"
         />
-        <Indicador
+        <TarjetaIndicador
           titulo="Visitas finalizadas"
           valor={d?.visitas.finalizadas ?? null}
           detalle="Visitas del periodo que ya registraron su salida"
           icono={<CheckCircleIcon />}
-          color="bg-success-500"
+          fondoIcono="bg-success-500"
         />
-        <Indicador
+        <TarjetaIndicador
           titulo="Total de visitas"
           valor={d?.visitas.total ?? null}
           detalle="Ingresos autorizados en el periodo"
           icono={<GroupIcon />}
-          color="bg-[#7a5af8]"
+          fondoIcono="bg-[#7a5af8]"
         />
-        <Indicador
+        <TarjetaIndicador
           titulo="Permanencia mayor a 24 h"
           valor={d?.presencia.masDe24h ?? null}
           detalle="Ingresaron hace más de un día y no registran salida"
           icono={<TimeIcon />}
-          color="bg-warning-500"
+          fondoIcono="bg-warning-500"
         />
       </div>
 
@@ -262,7 +238,7 @@ function DashboardContent() {
           <div className="space-y-6">
             {/* Visitas */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <Tarjeta titulo="Comparativa de visitas" descripcion={`Total de visitas en el periodo: ${d.visitas.total}`}>
+              <Bloque titulo="Comparativa de visitas" descripcion={`Total de visitas en el periodo: ${d.visitas.total}`}>
                 {!hayVisitas ? (
                   <SinDatos texto="No hubo visitas en el periodo." />
                 ) : (
@@ -279,8 +255,8 @@ function DashboardContent() {
                     }}
                   />
                 )}
-              </Tarjeta>
-              <Tarjeta titulo="Distribución: presentes frente a finalizadas" descripcion="Visitas del periodo según hayan registrado su salida">
+              </Bloque>
+              <Bloque titulo="Distribución: presentes frente a finalizadas" descripcion="Visitas del periodo según hayan registrado su salida">
                 {hayVisitas ? (
                   <Grafico
                     tipo="donut"
@@ -297,11 +273,11 @@ function DashboardContent() {
                 ) : (
                   <SinDatos texto="No hubo visitas en el periodo." />
                 )}
-              </Tarjeta>
+              </Bloque>
             </div>
 
             {/* Ingresos y salidas */}
-            <Tarjeta
+            <Bloque
               titulo={`Ingresos y salidas ${TITULO_TENDENCIA[agrupacion]}`}
               descripcion={
                 totales
@@ -328,10 +304,10 @@ function DashboardContent() {
                   yaxis: ejeEntero(tendencia.flatMap((t) => [t.ingresos, t.denegados, t.salidas])),
                 }}
               />
-            </Tarjeta>
+            </Bloque>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <Tarjeta titulo="Motivos de denegación" descripcion="Una denegación puede tener varios motivos">
+              <Bloque titulo="Motivos de denegación" descripcion="Una denegación puede tener varios motivos">
                 {hayMotivos && motivos ? (
                   <Grafico
                     tipo="bar"
@@ -354,8 +330,8 @@ function DashboardContent() {
                 ) : (
                   <SinDatos texto="No hubo denegaciones en el periodo." />
                 )}
-              </Tarjeta>
-              <Tarjeta
+              </Bloque>
+              <Bloque
                 titulo="Documentos del personal activo"
                 descripcion={`Por vencer: vencen en los próximos ${d.documentos.diasAviso} días`}
               >
@@ -375,14 +351,14 @@ function DashboardContent() {
                 ) : (
                   <SinDatos texto="Todavía no hay documentos cargados." />
                 )}
-              </Tarjeta>
+              </Bloque>
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <Tarjeta titulo="Personal registrado">
+              <Bloque titulo="Personal registrado">
                 <ResumenPersonal personal={d.personal} presentes={d.presencia.presentes} />
-              </Tarjeta>
-              <Tarjeta titulo="Personal activo por empresa" className="lg:col-span-2">
+              </Bloque>
+              <Bloque titulo="Personal activo por empresa" className="lg:col-span-2">
                 {d.porEmpresa.length ? (
                   <Grafico
                     tipo="bar"
@@ -404,11 +380,11 @@ function DashboardContent() {
                 ) : (
                   <SinDatos texto="Todavía no hay personal activo." />
                 )}
-              </Tarjeta>
+              </Bloque>
             </div>
 
             {/* Permanencia mayor a 24 horas */}
-            <Tarjeta
+            <Bloque
               titulo="Permanencia mayor a 24 horas"
               descripcion="Personas cuyo último movimiento es un ingreso de hace más de un día. Si salieron sin pasar por el molinete, seguirán figurando aquí hasta que registren su salida."
             >
@@ -457,7 +433,7 @@ function DashboardContent() {
                   <TableFooter {...pieDePagina(permanencia)} onPageChange={setPaginaPermanencia} />
                 </div>
               )}
-            </Tarjeta>
+            </Bloque>
           </div>
         )
       )}

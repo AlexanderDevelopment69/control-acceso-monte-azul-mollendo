@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { SelectorPeriodo, usePeriodo } from "@/components/common/SelectorPeriodo";
 import Button from "@/components/ui/button/Button";
+import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
 import { CheckLineIcon, DocsIcon, DownloadIcon, GroupIcon, ListIcon, PageIcon, TimeIcon, UserIcon } from "@/icons";
@@ -217,9 +218,10 @@ function ReportesContent() {
       </div>
 
       {/* Filtros y descarga */}
-      <section
+      <Tarjeta
+        as="section"
         ref={filtrosRef}
-        className="scroll-mt-20 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6"
+        className="scroll-mt-20 p-5 sm:p-6"
       >
         <h2 className="text-base font-semibold text-gray-800 dark:text-white/90">{opcion.titulo}</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{opcion.descripcion}</p>
@@ -368,7 +370,7 @@ function ReportesContent() {
             </Button>
           )}
         </div>
-      </section>
+      </Tarjeta>
     </div>
   );
 }

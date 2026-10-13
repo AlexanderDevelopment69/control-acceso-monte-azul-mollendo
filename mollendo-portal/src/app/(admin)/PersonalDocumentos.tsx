@@ -6,11 +6,14 @@ import { ApiError } from "@/lib/api/client";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import type { Empresa, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
+import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
+import TarjetaIndicador from "@/components/ui/tarjeta/TarjetaIndicador";
 import Combobox from "@/components/form/Combobox";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
-import { PersonaFicha, motivosCumplimiento } from "@/components/personal/PersonaFicha";
+import { PersonaFicha } from "@/components/personal/PersonaFicha";
+import { motivosCumplimiento } from "@/components/personal/cumplimiento";
 import { CheckLineIcon, CloseLineIcon, GroupIcon } from "@/icons";
 
 type Filtro = "todos" | "no-habilitados" | "habilitados";
@@ -166,7 +169,7 @@ export function PersonalDocumentos() {
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         {/* Lista */}
-        <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] lg:sticky lg:top-24 lg:w-96 lg:shrink-0">
+        <Tarjeta className="lg:sticky lg:top-24 lg:w-96 lg:shrink-0">
           <div className="space-y-3 border-b border-gray-100 p-4 dark:border-gray-800">
             <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre, DNI o empresa…" />
             <Combobox
@@ -317,7 +320,7 @@ export function PersonalDocumentos() {
               </li>
             )}
           </ul>
-        </div>
+        </Tarjeta>
 
         {/* Ficha */}
         {/* Con alguien elegido, en el celular ocupa al menos una pantalla: así se
@@ -365,26 +368,20 @@ export function PersonalDocumentos() {
                     },
                   ] as { id: Filtro; titulo: string; valor: number; detalle: string; icono: React.ReactNode; fondo: string }[]
                 ).map(({ id, titulo, valor, detalle, icono, fondo }) => (
-                  // Mismo diseño que las tarjetas del Dashboard y del Panel de vigilancia.
-                  <button
+                  <TarjetaIndicador
                     key={id}
-                    type="button"
+                    tamano="compacta"
+                    titulo={titulo}
+                    valor={loading ? null : valor}
+                    detalle={detalle}
+                    icono={icono}
+                    fondoIcono={fondo}
                     title="Filtrar la lista"
                     onClick={() => {
                       setFiltro(id);
                       setMotivoFiltro("todos");
                     }}
-                    className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left transition-colors hover:bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] 2xl:gap-4 2xl:p-5"
-                  >
-                    <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl text-white [&_svg]:size-5 2xl:size-12 2xl:[&_svg]:size-6 ${fondo}`}>
-                      {icono}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{titulo}</span>
-                      <span className="block text-2xl font-semibold text-gray-800 dark:text-white/90">{loading ? "—" : valor}</span>
-                      <span className="block text-xs leading-snug text-gray-400">{detalle}</span>
-                    </span>
-                  </button>
+                  />
                 ))}
               </div>
               <div className="flex h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400 dark:border-gray-700">

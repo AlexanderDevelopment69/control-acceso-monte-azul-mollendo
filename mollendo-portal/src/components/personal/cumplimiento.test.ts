@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Cumplimiento } from "@/lib/api/types";
-import { motivosCumplimiento } from "./PersonaFicha";
+import { motivosCumplimiento } from "./cumplimiento";
 
 const base: Cumplimiento = { habilitado: false, dadoDeBaja: false, sinDocumentos: false, documentosVencidos: [] };
 
