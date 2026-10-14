@@ -15,6 +15,9 @@ export interface EstadoRespaldos {
   /** Último respaldo previo a una actualización (antes-de-actualizar-*). */
   ultimoPrevioActualizacion: ResumenRespaldo | null;
   cantidad: number;
+  /** Hora del respaldo diario (HH:MM, hora de Lima) y días que se guardan, según la configuración. */
+  hora: string;
+  dias: number;
 }
 
 const RESPALDO = /^(mollendo|antes-de-actualizar)-\d{8}-\d{4}\.(tar\.gz|sql\.gz)$/;
@@ -24,7 +27,9 @@ const RESPALDO = /^(mollendo|antes-de-actualizar)-\d{8}-\d{4}\.(tar\.gz|sql\.gz)
  * contenedor del backend) para mostrar en "Sistema y APIs" cuándo fue el último.
  */
 export function estadoRespaldos(carpeta = process.env.RESPALDOS_PATH): EstadoRespaldos {
-  if (!carpeta) return { disponible: false, ultimoAutomatico: null, ultimoPrevioActualizacion: null, cantidad: 0 };
+  const config = configuracionRespaldos();
+  const sinCarpeta = { disponible: false, ultimoAutomatico: null, ultimoPrevioActualizacion: null, cantidad: 0, ...config };
+  if (!carpeta) return sinCarpeta;
   let archivos: ResumenRespaldo[];
   try {
     archivos = readdirSync(carpeta)
@@ -35,12 +40,23 @@ export function estadoRespaldos(carpeta = process.env.RESPALDOS_PATH): EstadoRes
       })
       .sort((a, b) => b.fecha.localeCompare(a.fecha));
   } catch {
-    return { disponible: false, ultimoAutomatico: null, ultimoPrevioActualizacion: null, cantidad: 0 };
+    return sinCarpeta;
   }
   return {
     disponible: true,
     ultimoAutomatico: archivos.find((a) => a.archivo.startsWith('mollendo-')) ?? null,
     ultimoPrevioActualizacion: archivos.find((a) => a.archivo.startsWith('antes-de-actualizar-')) ?? null,
     cantidad: archivos.length,
+    ...config,
   };
+}
+
+/**
+ * Hora y días de los respaldos, con los mismos valores por defecto que
+ * deploy/comun/respaldo.sh (00:00 y 14; un número de días no válido cuenta como 14).
+ */
+export function configuracionRespaldos(env: NodeJS.ProcessEnv = process.env): { hora: string; dias: number } {
+  const hora = /^\d{1,2}:\d{2}$/.test(env.HORA_RESPALDO ?? '') ? env.HORA_RESPALDO! : '00:00';
+  const dias = /^\d+$/.test(env.DIAS_RESPALDO ?? '') && Number(env.DIAS_RESPALDO) > 0 ? Number(env.DIAS_RESPALDO) : 14;
+  return { hora, dias };
 }

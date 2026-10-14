@@ -60,7 +60,7 @@ export function RespaldosEstado({
         {ultimo
           ? `Último: ${new Date(ultimo.fecha).toLocaleString("es-PE")} · ${formatearTamano(ultimo.tamanoBytes)}`
           : "Todavía no hay respaldos automáticos."}
-        {" "}· Diario a las 00:00, se guardan 14 días
+        {" "}· Diario a las {respaldos.hora}, se guardan {respaldos.dias} días
       </p>
     </>
   );

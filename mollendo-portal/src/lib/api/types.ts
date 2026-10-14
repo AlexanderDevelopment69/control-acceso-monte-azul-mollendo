@@ -254,6 +254,9 @@ export interface EstadoRespaldos {
   ultimoAutomatico: ResumenRespaldo | null;
   ultimoPrevioActualizacion: ResumenRespaldo | null;
   cantidad: number;
+  /** Hora del respaldo diario (HH:MM) y días que se guardan, según la configuración del servidor. */
+  hora: string;
+  dias: number;
 }
 
 export interface AuditoriaEntry {

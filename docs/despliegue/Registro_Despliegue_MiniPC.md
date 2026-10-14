@@ -70,7 +70,7 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 | `db` | Base de datos PostgreSQL 16. Los datos están en el volumen `mollendo_db_data` | ninguno (solo red interna) |
 | `api` | Backend (NestJS). Al arrancar aplica las migraciones pendientes de la base de datos | `3001`: equipos físicos y Swagger |
 | `portal` | Portal web (Next.js). Reenvía al backend las llamadas a la API y el tiempo real | `3000`: el que se abre en el navegador |
-| `backup` | Respaldo diario de la base de datos y los archivos en `backups/`, dentro de la carpeta del entorno. Guarda 14 días | ninguno |
+| `backup` | Respaldo diario de la base de datos y los archivos en `backups/`, dentro de la carpeta del entorno. Guarda 14 días (o `DIAS_RESPALDO`) | ninguno |
 
 ```
                  Navegador (administrador / vigilante)
@@ -261,16 +261,16 @@ Debe responder `UPDATE 1`. La persona entra con la contraseña nueva y conviene 
 
 ### 7.1. Respaldo automático
 
-El contenedor `backup` (script `deploy/comun/respaldo.sh`) hace **un respaldo completo por día a las 00:00** (hora de Lima) en `backups/mollendo-AAAAMMDD-HHMM.tar.gz`, dentro de la carpeta del entorno. Cada paquete contiene:
+El contenedor `backup` (script `deploy/comun/respaldo.sh`) hace **un respaldo completo por día a las 00:00** (hora de Lima; se cambia con `HORA_RESPALDO`) en `backups/mollendo-AAAAMMDD-HHMM.tar.gz`, dentro de la carpeta del entorno. Cada paquete contiene:
 
 | Dentro del paquete | Qué es |
 |---|---|
 | `base-de-datos.sql` | Copia completa de la base de datos: personal, empresas, documentos registrados, eventos, auditoría, usuarios |
 | `archivos/` | Los archivos subidos: documentos (PDF, imágenes, Word) y fotos del personal |
 
-- Al arrancar el contenedor (por ejemplo, después de un corte de luz), si no hay un respaldo de las últimas 24 horas, hace uno en ese momento.
-- Después de cada respaldo, borra los diarios de más de **14 días** y los previos a actualizaciones (`antes-de-actualizar-*`) de más de 14 días, conservando siempre el más reciente.
-- La hora se cambia con `HORA_RESPALDO=HH:MM` en el `.env` (y `dc up -d backup`).
+- Al arrancar el contenedor (por ejemplo, después de un corte de luz o al cambiar la hora), si del último respaldo al próximo programado pasarían más de 24 horas, hace uno en ese momento.
+- Después de cada respaldo, borra los diarios de más de **14 días** y los previos a actualizaciones (`antes-de-actualizar-*`) de más de 14 días, conservando siempre el más reciente. Los días se cambian con `DIAS_RESPALDO`.
+- La hora y los días se cambian en el `.env` con `HORA_RESPALDO=HH:MM` y `DIAS_RESPALDO=N` (y `dc up -d backup api`, para que Sistema y APIs muestre los valores nuevos).
 - **Sistema y APIs** muestra la fecha y el tamaño del último respaldo automático, en rojo ("Atrasado") si tiene más de 26 horas.
 
 ```bash
@@ -897,7 +897,8 @@ Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), 
 | `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@mollendo.local`. | Igual que la anterior |
 | `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@mollendo.local` y `vigilancia@mollendo.local`). | — |
 | `G4PRO_HORA_SINCRONIZACION` | No | Valor inicial de la sincronización diaria con los G4 Pro (0 a 23, hora de Lima; `off` la desactiva). Después se activa, desactiva o cambia de hora desde "Sistema y APIs", y eso se guarda en el servidor (`sincronizacion-diaria.json` en el volumen de documentos) y manda sobre este valor. | Por defecto `0` (medianoche); hoy `off` en la nube |
-| `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). Se guardan 14 días. | Por defecto `00:00` |
+| `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). | Por defecto `00:00`; en la nube `04:00` desde el 14/10/2026 |
+| `DIAS_RESPALDO` | No | Días que se guardan los respaldos (diarios y previos a actualizaciones; de estos últimos siempre queda el más reciente). Un valor no válido cuenta como 14. | Por defecto `14`; en la nube `30` desde el 14/10/2026 |
 | `PUSH_SDK_DEPURAR` | No | `true`: anota en el registro de la API todo lo que envía el G4 Pro (para estudiar el equipo). Volver a `false` al terminar. | Por defecto `false` |
 | `SWAGGER` | No | `true`: publica la documentación de la API (`/api/docs`). En la nube va apagada por seguridad (mostraría todas las rutas); en la mini PC está activa. | Por defecto `false` en la nube |
 

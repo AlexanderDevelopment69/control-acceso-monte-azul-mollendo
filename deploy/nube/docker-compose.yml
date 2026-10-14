@@ -45,6 +45,9 @@ services:
       # llevan clave): obligatorio en la nube, porque el puerto 3001 da a internet.
       G4PRO_SN_PERMITIDOS: ${G4PRO_SN_PERMITIDOS:?Falta G4PRO_SN_PERMITIDOS en .env (número de serie del G4 Pro)}
       RESPALDOS_PATH: /app/respaldos
+      # Solo para mostrarlos en "Sistema y APIs" (los usa el contenedor backup).
+      HORA_RESPALDO: ${HORA_RESPALDO:-00:00}
+      DIAS_RESPALDO: ${DIAS_RESPALDO:-14}
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@mollendo.local}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
       VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@mollendo.local}
@@ -73,7 +76,8 @@ services:
       - "3000:3000"
 
   # Respaldo diario (base de datos + documentos y fotos) en ./backups, a las
-  # HORA_RESPALDO (por defecto 00:00, hora de Lima); se guardan 14 días.
+  # HORA_RESPALDO (por defecto 00:00, hora de Lima); se guardan DIAS_RESPALDO
+  # días (por defecto 14).
   # Ver deploy/comun/respaldo.sh.
   backup:
     image: postgres:16-alpine
@@ -85,6 +89,7 @@ services:
       PGPASSWORD: ${DB_PASSWORD}
       TZ: America/Lima
       HORA_RESPALDO: ${HORA_RESPALDO:-00:00}
+      DIAS_RESPALDO: ${DIAS_RESPALDO:-14}
     volumes:
       - ./backups:/backups
       - ../comun/respaldo.sh:/respaldo.sh:ro

@@ -9,9 +9,9 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho
 
 ---
 
-## Estado al 11/10/2026
+## Estado al 14/10/2026
 
-Resumen del estado actual. El detalle de cada cambio está en la bitácora (abajo); esta lista se reescribió el 11/10/2026 porque la anterior describía el alcance inicial (puestos, visitas, ZKBio, molinete simulado) que ya no aplica.
+Resumen del estado actual. El detalle de cada cambio está en la bitácora (abajo); esta lista se reescribió el 11/10/2026 porque la anterior describía el alcance inicial (puestos, visitas, ZKBio, molinete simulado) que ya no aplica, y se actualizó el 14/10/2026 (revisión del portal terminada, compresión, contingencias).
 
 ### 0. Proyecto
 
@@ -30,26 +30,30 @@ Resumen del estado actual. El detalle de cada cambio está en la bitácora (abaj
 - [x] `panel`: resumen, Dashboard, estado del sistema, aviso de fallas, `/health` y canal en vivo `/ws/eventos`.
 - [x] `reportes`: seis reportes en Excel y PDF; documentos también en ZIP con archivos (y fotos opcionales).
 - [x] `auditoria`: registro de todos los cambios.
+- [x] Respuestas comprimidas (gzip, `compression`): la lista del personal en AWS pasó de 431 KB a 20 KB (1,47 s → 0,69 s, medido el 13/10/2026).
 - [x] Pruebas: 91 (Vitest), incluido el flujo de ingreso y salida (`eventos-acceso.flujo.spec.ts`).
 
 ### 2. Portal (`mollendo-portal`)
 
 - [x] Inicio de sesión (`/iniciar-sesion`), menú por rol, cambio de contraseña, aviso de fallas arriba de todas las páginas.
 - [x] Personal y documentos (`/`), Dashboard, Panel de vigilancia (en vivo, con reconexión automática), Reportes, Auditoría, Sistema y APIs, Manual con capturas.
-- [x] Pruebas automáticas (`npm test`, Vitest + Testing Library): 83, junto a cada archivo (`*.test.ts(x)`). Cubren el cliente de la API (renovación de sesión y errores), la sesión y la protección por rol, el inicio de sesión, Personal (pestañas, motivos, búsqueda, empresa, contadores, ficha), la ficha de la persona (estado, renovar, baja y reactivación), las ventanas y las validaciones.
+- [x] Revisión del portal terminada (11–13/10/2026, `docs/revisiones/Revision_Portal_2026-10-11.md`), en 4 fases: (1) dirección de la API en `lib/config.ts`, filas de "APIs de integración" con teclado y menú lateral a 1024 px; (2) pruebas automáticas; (3) piezas comunes (`Tarjeta`, `TarjetaIndicador`, `InputPassword`) y archivos grandes divididos, sin cambios visibles; (4) rendimiento: tras un cambio en la ficha solo se actualiza la fila de esa persona (sin volver a pedir la lista) y respuestas comprimidas. Los puntos opcionales de la fase 4 (pausar consultas con la pestaña oculta, cuenta regresiva del Panel) se descartaron por su bajo beneficio.
+- [x] Pruebas automáticas (`npm test`, Vitest + Testing Library): 84, junto a cada archivo (`*.test.ts(x)`). Cubren el cliente de la API (renovación de sesión y errores), la sesión y la protección por rol, el inicio de sesión, Personal (pestañas, motivos, búsqueda, empresa, contadores, ficha), la ficha de la persona (estado, renovar, baja y reactivación), las ventanas y las validaciones.
 - [~] Verificación en navegador real: capturas automáticas (puppeteer) y pruebas en vivo contra la API.
 
 ### 3. Equipos
 
 - [x] Terminal facial ZKTeco G4 Pro con alcoholímetro (PUSH/ADMS), probado con el equipo real.
 - [x] Lectores de DNI (serie) y relés USB de molinetes y avisos, en el controlador de la mini PC.
+- [ ] Pruebas físicas en la garita: ingreso completo con AWS (falló el 08/10 por el rostro), salida sin internet y G4 Pro apagado.
+- [ ] Contingencias (`docs/cliente/Contingencias_Equipos_Garita.md`): alternativas A–E propuestas, incluida la E "ingreso como la salida" (ingresar sin internet con rostro y alcohol); sin programar hasta que el cliente decida.
 
 ### 4. Despliegue e infraestructura
 
 - [x] Docker Compose por entorno: `deploy/nube`, `deploy/controlador`, `deploy/garita`, `deploy/local`, con guía (`docs/despliegue/Registro_Despliegue_MiniPC.md`).
-- [x] Nube en AWS (`54.147.214.38`), actualizada el 11/10/2026.
+- [x] Nube en AWS (`54.147.214.38`), actualizada el 13/10/2026 (fases 1–4 de la revisión del portal y compresión; comprobado el 14/10: los 432 archivos del programa iguales a los del proyecto).
 - [~] Mini PC: desplegada el 28/09/2026; **desactualizada** (falta migrarla a la versión actual cuando esté en línea, `deploy/controlador/README.md` sección 5).
-- [~] Respaldos diarios con 14 días de retención; **todavía en el mismo servidor** (falta copia fuera de él).
+- [~] Respaldos diarios (en AWS a las 04:00, se guardan 30 días; configurable con `HORA_RESPALDO` y `DIAS_RESPALDO`) en `/home/ubuntu/mollendo/deploy/nube/backups`; **todavía en el mismo servidor** (falta copia fuera de él).
 - [ ] HTTPS: esperando el dominio del cliente.
 - [ ] Azure: migración futura desde AWS.
 
@@ -63,6 +67,7 @@ Resumen del estado actual. El detalle de cada cambio está en la bitácora (abaj
 
 - [ ] Dominio propio (para HTTPS).
 - [ ] IP pública fija del terminal (para cerrar el puerto 3001 por IP).
+- [ ] Decisiones de contingencia (las 7 preguntas de la sección 7 de `Contingencias_Equipos_Garita.md`), entre ellas si se instala internet de respaldo (D) y si se programa el ingreso sin internet (E).
 
 ---
 
@@ -560,3 +565,4 @@ Resumen del estado actual. El detalle de cada cambio está en la bitácora (abaj
 - **2026-10-12** — **Personal más liviano tras cada cambio (fase 4, punto 1)**: al subir, renovar o eliminar un documento, dar de baja, reactivar o cambiar la foto, la lista ya no se vuelve a pedir entera (~431 KB con 1059 personas en la nube): la ficha entrega a la lista los datos que acaba de leer de esa persona y solo se reemplaza su fila (sin pedidos extra). "+ Nuevo personal" sigue recargando la lista entera. Comprobado: TypeScript, lint y compilación sin errores; 84/84 pruebas (una nueva: la fila cambia y la lista no se pide otra vez), 3 veces en orden aleatorio.
 - **2026-10-13** — **Respuestas de la API comprimidas (fase 4, punto 2)**: `compression@1.8.1` en `mollendo-api/src/main.ts` (gzip para quien lo pida; el portal lo reenvía tal cual). Local (64 personas): lista del personal 31,7 KB → 4,3 KB, directo y por el portal; en la nube (1059 personas) se espera ~431 KB → ~20 KB al abrir Personal. Sin cambios en lo demás: Excel, PDF y ZIP de reportes salen igual (sin recomprimir), el aviso en vivo (socket) conecta y el equipo G4 Pro (que no pide gzip) recibe lo mismo de siempre. Comprobado: TypeScript y lint sin errores; 91/91 pruebas de la API. Subido a la nube (AWS) el 13/10 junto con las fases 1–3 y el punto 1 (respaldo previo `antes-de-actualizar-20261013-0523.sql.gz`); API y portal en línea, sin migraciones pendientes.
 - **2026-10-13** — `Contingencias_Equipos_Garita.md`: nueva **alternativa E "Ingreso como la salida"** para cortes de internet (tabla 6.3, recomendación, nueva sección 6.4 y pregunta 7 del cliente): la PC de la garita guarda la lista de quién puede ingresar y hace de intermediaria con el G4 Pro (que pasaría a conectarse a ella); sin internet habilita a la persona en el G4, que hace rostro y alcohol como siempre, y abre el molinete; al volver internet envía los ingresos. Mantiene todos los controles salvo las bajas hechas durante el corte. Programación considerable; sugerida después del internet de respaldo (D). Sin programar.
+- **2026-10-14** — **Respaldos: días configurables y nueva hora en AWS** (pedido del cliente). `deploy/comun/respaldo.sh` lee `DIAS_RESPALDO` (por defecto 14; un valor no válido cuenta como 14) para borrar los diarios y los previos a actualizaciones; al arrancar hace un respaldo si del último al próximo programado pasarían más de 24 h (antes: si no había uno de las últimas 24 h), para que un cambio de hora no lo marque como atrasado. `docker-compose.yml` de `nube` y `garita` pasan `HORA_RESPALDO` y `DIAS_RESPALDO` al respaldo y a la API; la API los informa (`configuracionRespaldos` en `panel/respaldos.util.ts`) y "Sistema y APIs" muestra la hora y los días reales (antes decía fijo "00:00, 14 días"). Probado en un contenedor `postgres:16-alpine` (30 días, 14 por defecto, valor no válido, conserva el último previo a actualizar, respalda o no al arrancar según el caso); pruebas API 94/94 (3 nuevas), portal 84/84. **AWS:** `HORA_RESPALDO=04:00` y `DIAS_RESPALDO=30` en el `.env` (copia previa del `.env` en `~/env-antes-respaldos-*.bak`); respaldo previo `antes-de-actualizar-20261014-1658.sql.gz`; al arrancar hizo `mollendo-20261014-1200.tar.gz` (4,4 MB) y el próximo es mañana a las 04:00. Guía (7.1 y anexo B) y documento funcional (10.3) actualizados.

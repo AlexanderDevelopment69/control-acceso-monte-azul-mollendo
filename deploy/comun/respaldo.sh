@@ -5,14 +5,19 @@
 # /backups un paquete mollendo-AAAAMMDD-HHMM.tar.gz con:
 #   base-de-datos.sql   copia completa de PostgreSQL
 #   archivos/           documentos (PDF, imágenes, Word) y fotos del personal
-# Al arrancar, si no hay un respaldo de las últimas 24 horas, hace uno en ese momento.
+# Al arrancar, si del último respaldo al próximo programado pasarían más de 24
+# horas (p. ej. no hay ninguno, o se cambió la hora a una más tarde), hace uno en
+# ese momento: así "Sistema y APIs" no lo marca como atrasado.
 #
-# Limpieza (después de cada respaldo):
-#   - respaldos diarios (mollendo-*) de más de 14 días;
+# Limpieza (después de cada respaldo), con DIAS_RESPALDO días (por defecto 14):
+#   - respaldos diarios (mollendo-*) de más de DIAS_RESPALDO días;
 #   - respaldos previos a actualizaciones (antes-de-actualizar-*) de más de
-#     14 días, conservando siempre el más reciente.
+#     DIAS_RESPALDO días, conservando siempre el más reciente.
 
 HORA="${HORA_RESPALDO:-00:00}"
+DIAS="${DIAS_RESPALDO:-14}"
+# Un valor que no sea un número entero positivo no debe borrar de más: se usan 14.
+case "$DIAS" in '' | *[!0-9]* | 0) echo "DIAS_RESPALDO no válido ($DIAS): se guardan 14 días"; DIAS=14 ;; esac
 DESTINO=/backups
 ARCHIVOS=/storage # volumen de documentos y fotos (solo lectura)
 
@@ -38,9 +43,9 @@ respaldar() {
 }
 
 limpiar() {
-  find "$DESTINO" -maxdepth 1 -name 'mollendo-*' -mtime +14 -delete
+  find "$DESTINO" -maxdepth 1 -name 'mollendo-*' -mtime +"$DIAS" -delete
   ultimo=$(ls -1t "$DESTINO"/antes-de-actualizar-* 2>/dev/null | head -n 1)
-  find "$DESTINO" -maxdepth 1 -name 'antes-de-actualizar-*' -mtime +14 | while read -r f; do
+  find "$DESTINO" -maxdepth 1 -name 'antes-de-actualizar-*' -mtime +"$DIAS" | while read -r f; do
     [ "$f" != "$ultimo" ] && rm -f "$f"
   done
 }
@@ -61,8 +66,11 @@ if [ "${1:-}" = "ahora" ]; then
   exit 0
 fi
 
-echo "Respaldo diario a las $HORA (hora del contenedor: $(date +%H:%M))"
-if [ -z "$(find "$DESTINO" -maxdepth 1 -name 'mollendo-*' -mmin -1440 2>/dev/null)" ]; then
+echo "Respaldo diario a las $HORA, se guardan $DIAS días (hora del contenedor: $(date +%H:%M))"
+# Minutos hacia atrás en que debe haber un respaldo para que, con el próximo
+# programado, no pasen más de 24 horas entre uno y otro.
+ventana=$(( (86400 - $(segundos_hasta_la_hora)) / 60 ))
+if [ -z "$(find "$DESTINO" -maxdepth 1 -name 'mollendo-*' -mmin -"$ventana" 2>/dev/null)" ]; then
   respaldar
 fi
 while true; do

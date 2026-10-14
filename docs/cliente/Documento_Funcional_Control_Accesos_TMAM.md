@@ -418,8 +418,8 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 
 ### 10.3. Respaldos
 
-- **Diarios a las 00:00**, automáticos: base de datos completa y archivos (documentos y fotos) en un solo paquete.
-- Se conservan **14 días**. Si al iniciar el servidor no existe un respaldo de las últimas 24 horas, se genera uno en ese momento.
+- **Diarios a las 04:00** (hora configurable), automáticos: base de datos completa y archivos (documentos y fotos) en un solo paquete.
+- Se conservan **30 días** (cantidad configurable). Si al iniciar el servidor el siguiente respaldo quedaría a más de 24 horas del último, se genera uno en ese momento.
 - También se genera un respaldo antes de cada actualización, y es posible generar uno completo en cualquier momento.
 - El estado del último respaldo se muestra en Sistema y APIs. La restauración está documentada y probada.
 
