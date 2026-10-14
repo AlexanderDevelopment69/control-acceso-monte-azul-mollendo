@@ -120,12 +120,52 @@ Para ingresar hacen falta dos controles:
 | **B. Verificación manual** | Ingresa con su DNI en regla; el vigilante compara su foto y le toma la prueba con un alcoholímetro portátil (como en la sección 4.2) | Mantiene los controles | Más lenta; depende del vigilante |
 | **C. PC de la garita como respaldo completo** | El equipo facial se conecta a la PC de la garita y esta al servidor. Sin internet, la PC de la garita hace todo localmente | Todo funciona igual, con rostro y alcohol | **Es la más compleja:** duplica el sistema y obliga a mantener sincronizados el personal, los documentos y las fotos |
 | **D. Internet de respaldo** | Una segunda conexión (por ejemplo, un router 4G) que entra sola si se cae la principal | No requiere programación; el sistema sigue completo | Costo del equipo y del plan de datos |
+| **E. Ingreso como la salida** | La PC de la garita guarda también la lista de quién puede ingresar y hace de intermediaria con el equipo facial (ver 6.4) | **Mantiene rostro y alcohol** sin internet; sirve aunque falle el servidor en la nube | Programación considerable y pruebas con el equipo facial real; cambia cómo se conecta el equipo |
 
 **Recomendación:**
 - **Principal: D (internet de respaldo).** Hace que el corte sea muy poco probable sin bajar ningún control.
 - **Si aun así se corta: B (verificación manual),** la misma contingencia propuesta para la falla del equipo facial.
 - **A** baja la seguridad: se ingresaría sin prueba de alcohol.
 - **C** es mucho trabajo y agrega puntos de falla.
+- **E** es la mejor solución técnica si el cliente quiere que se ingrese sin internet con todos los controles; conviene después de D, por su costo de programación y pruebas.
+
+### 6.4. Alternativa E en detalle: ingreso como la salida
+
+**Idea:** hacer con el ingreso lo mismo que ya se hace con la salida (sección 6.1). Es posible porque el equipo facial **ya guarda las caras del personal y mide el alcohol por su cuenta**: del servidor solo necesita la orden de habilitar a la persona, y luego informa el resultado.
+
+**Cambio principal:** hoy el equipo facial se conecta directo al servidor en la nube. Pasaría a conectarse a la **PC de la garita** (misma red local), que hace de intermediaria:
+
+- **Con internet:** la PC de la garita le pasa todo al servidor, sin cambios; el sistema funciona como ahora.
+- **Sin internet:** la PC de la garita atiende sola al equipo facial.
+
+**Cómo sería un ingreso sin internet:**
+
+| Paso | Qué hace la PC de la garita |
+|---|---|
+| Cada 10 minutos, con internet | Guarda la lista de quién puede ingresar: activos, con sus documentos y fechas de vencimiento (junto con la lista para salir) |
+| La persona pasa su DNI | Revisa en la lista que esté activa y con sus documentos vigentes **ese día** |
+| | Habilita a la persona en el equipo facial |
+| | El equipo reconoce el rostro y toma la prueba de alcohol, como siempre |
+| | Si es apto, abre el molinete de ingreso |
+| Vuelve internet | Envía al servidor los ingresos con su hora real y el resultado de la prueba |
+
+**Qué se mantiene y qué no sin internet:**
+
+| Control | ¿Se mantiene? |
+|---|---|
+| DNI registrado y documentos vigentes | Sí, con la lista guardada (las fechas de vencimiento se revisan en el día) |
+| Rostro y alcohol | Sí, los hace el equipo facial |
+| Bajas hechas **durante** el corte | No: la PC de la garita se entera al volver internet (riesgo pequeño) |
+| Ingresos en vivo en el portal | Aparecen al volver internet |
+
+**Esfuerzo y riesgos:**
+
+- **Programación considerable:** la PC de la garita debe hablar el protocolo del equipo facial (ADMS) y reenviar al servidor, además de guardar la lista de ingreso y los ingresos pendientes.
+- **Pruebas con el equipo real en la garita**, incluido cortar internet varias veces.
+- **Nuevo punto de falla:** si la PC de la garita se apaga, el equipo facial queda sin servidor (hoy, sin la PC de la garita tampoco hay lectores de DNI ni molinetes, así que el ingreso ya depende de ella).
+- **Ventaja sobre D:** también cubre una caída del servidor en la nube, no solo del internet de la garita.
+
+**Sugerencia:** primero D (internet de respaldo), por ser barato e inmediato; E si el cliente necesita ingresar sin internet con todos los controles.
 
 ---
 
@@ -137,7 +177,7 @@ Para ingresar hacen falta dos controles:
 4. ¿Habrá un **alcoholímetro portátil de respaldo** en la garita? (Si falla el equipo facial, el propio alcoholímetro del equipo sirve como portátil; ver la sección 8.1. Si falla el alcoholímetro, haría falta otro.)
 5. ¿Hay un **tiempo máximo** para la contingencia (por ejemplo, 48 horas), tras el cual se debe reautorizar?
 6. Como el equipo no avisa la desconexión del alcoholímetro, ¿se quiere una **alerta en el Panel** cuando varias personas seguidas no completan la verificación ("posible falla del alcoholímetro o del equipo facial")?
-7. Ante un **corte de internet** (modalidad con servidor en la nube): ¿se mantiene que **no ingrese nadie**, o se permite el ingreso **solo con DNI** (A), **con verificación manual** (B) o con la **PC de la garita como respaldo completo** (C)? ¿Se instalará un **internet de respaldo** (D)?
+7. Ante un **corte de internet** (modalidad con servidor en la nube): ¿se mantiene que **no ingrese nadie**, o se permite el ingreso **solo con DNI** (A), **con verificación manual** (B), con la **PC de la garita como respaldo completo** (C) o **como la salida, con rostro y alcohol** (E)? ¿Se instalará un **internet de respaldo** (D)?
 
 Con estas respuestas se programa un único "Modo de contingencia" que cubre los dos equipos y, si se decide, el ingreso sin internet.
 
