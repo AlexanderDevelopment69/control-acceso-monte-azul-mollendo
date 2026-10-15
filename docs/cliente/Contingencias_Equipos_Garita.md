@@ -2,7 +2,7 @@
 
 Sistema de Control de Accesos — Terminal Monte Azul Mollendo (TMAM)
 
-Este documento describe **qué hacer cuando falla un equipo de la garita**: cómo se detecta, qué hace el vigilante, qué hace el sistema y cómo se vuelve a la normalidad. Cubre el alcoholímetro, el equipo de reconocimiento facial, el corte de internet, el lector de DNI, los relés de los molinetes, la PC de la garita y el servidor en la nube.
+Este documento describe **qué hacer cuando falla un equipo de la garita**: cómo se detecta, quién hace cada cosa (vigilante, soporte y administrador), qué hace el sistema y cómo se vuelve a la normalidad. Cubre el alcoholímetro, el equipo de reconocimiento facial, el corte de internet, el lector de DNI, los relés de los molinetes, la PC de la garita y el servidor en la nube.
 
 Actualizado al 15/10/2026, con las decisiones del cliente de esa fecha. **Lo que dice "por programar" todavía no existe en el sistema.**
 
@@ -12,15 +12,23 @@ Actualizado al 15/10/2026, con las decisiones del cliente de esa fecha. **Lo que
 
 | Si falla… | Qué se hace | Quién | ¿Se pierde algún control? | Estado |
 |---|---|---|---|---|
-| **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3) | Vigilante | No | Decidido. Falta comprar el repuesto |
+| **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3) | El vigilante informa; soporte lo cambia | No | Decidido. Falta comprar el repuesto |
 | **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto (sección 4) | Vigilante o administrador la activan; el vigilante aprueba cada ingreso | No | Decidido. Por programar |
 | **Internet** de la garita | **Segunda conexión de otro proveedor** que entra sola (sección 5) | TMAM | No | Decidido, a cargo de TMAM |
-| **Lector de DNI** | Mientras tanto, dos opciones: **solo el equipo facial** identifica a la persona (ingreso) o **el vigilante escribe el DNI** en el Panel (ingreso y salida); se conecta el **lector de repuesto** (sección 6) | Automático / vigilante (y soporte, según el adaptador) | No | Decidido. Por programar; la opción del equipo facial requiere una prueba; falta el repuesto |
-| **Relé de un molinete** | Se cambia por el **relé de repuesto** (sección 7.1) | Vigilante o soporte | No | Decidido. Falta el repuesto preparado |
-| **PC de la garita** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | Vigilante y soporte | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
+| **Lector de DNI** | Mientras tanto, dos opciones: **solo el equipo facial** identifica a la persona (ingreso) o **el vigilante escribe el DNI** en el Panel (ingreso y salida); se conecta el **lector de repuesto** (sección 6) | El vigilante informa y, mientras tanto, opera con la opción elegida; soporte cambia el lector | No | Decidido. Por programar; la opción del equipo facial requiere una prueba; falta el repuesto |
+| **Relé de un molinete** | Se cambia por el **relé de repuesto** (sección 7.1) | El vigilante informa; soporte lo cambia | No | Decidido. Falta el repuesto preparado |
+| **PC de la garita** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | El vigilante informa; soporte la cambia | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
 | **Servidor en la nube** | Se recupera solo al reiniciarse; respaldos diarios probados (sección 7.3) | Soporte | No | Funciona hoy |
 
 **Regla general:** en todos los casos el sistema **sigue exigiendo el DNI con documentos vigentes**, y quien no cumple se deniega igual que siempre. Ninguna contingencia decidida deja entrar a alguien sin prueba de alcohol.
+
+**Quién hace qué:**
+
+| Rol | Qué hace ante una falla |
+|---|---|
+| **Vigilante** | **Informa** la falla a soporte y al administrador. No cambia ni configura equipos. Sigue operando la garita con lo que el sistema le muestre (por ejemplo, la verificación manual de la sección 4 o el DNI escrito de la sección 6.3) |
+| **Administrador** | Gestiona la reparación o la compra de repuestos; puede activar y desactivar la verificación manual |
+| **Soporte** | **Cambia los equipos** por sus repuestos y hace la **configuración** que haga falta en la PC de la garita |
 
 ---
 
@@ -84,14 +92,14 @@ La persona que no puede soplar **no se va**: le avisa al vigilante en ese moment
 | **Pista en el Panel** junto a ese denegado: *"Si la persona dice que no pudo soplar, revise el alcoholímetro del equipo facial (punto rojo en la pantalla) y conecte el repuesto"* | Por programar |
 | Punto rojo en la pantalla del equipo facial | Ya existe |
 
-### 3.3. Qué hace el vigilante
+### 3.3. Qué se hace
 
-1. Mira la pantalla del equipo facial: si tiene el **punto rojo**, es el alcoholímetro.
-2. Desconecta el alcoholímetro malogrado y **conecta el de repuesto** al equipo facial.
-3. Le pide a la **misma persona** que vuelva a pasar su DNI: el equipo le pide soplar y, si es apta, ingresa normal.
-4. Avisa al administrador para que gestione la reparación del alcoholímetro malogrado.
+1. **Vigilante:** mira la pantalla del equipo facial; si tiene el **punto rojo**, es el alcoholímetro. **Informa** a soporte y al administrador.
+2. **Soporte:** desconecta el alcoholímetro malogrado y **conecta el de repuesto** al equipo facial.
+3. **Soporte:** comprueba con una persona que el equipo le pida soplar y la apruebe. La persona que no pudo pasar vuelve a pasar su DNI e ingresa normal.
+4. **Administrador:** gestiona la reparación del alcoholímetro malogrado.
 
-Si en ese momento **no hubiera repuesto a mano**, se activa la verificación manual de la sección 4, usando el alcoholímetro malogrado solo si todavía mide por su cuenta.
+Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar, el vigilante o el administrador pueden activar la **verificación manual** de la sección 4 (con el alcoholímetro de repuesto usado solo).
 
 ### 3.4. Requisitos del repuesto
 
@@ -285,17 +293,16 @@ Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**,
 
 | Opción | Cómo | Ventaja | Desventaja |
 |---|---|---|---|
-| **A. Soporte lo registra en el momento** | El vigilante conecta el repuesto y avisa a soporte, que lo registra a distancia en la PC de la garita | No requiere programar nada | Depende de que soporte responda en ese momento |
-| **B. Adaptador de repuesto registrado desde antes** (recomendada) | La PC de la garita acepta, para cada lector, **también** el adaptador de repuesto | **Se conecta y funciona solo**, sin llamar a nadie | Requiere un cambio pequeño de programación |
+| **A. Soporte lo registra al cambiarlo** | Soporte conecta el repuesto y registra el adaptador nuevo en la PC de la garita | No requiere programar nada | Un paso más para soporte en el momento del cambio |
+| **B. Adaptador de repuesto registrado desde antes** (recomendada) | La PC de la garita acepta, para cada lector, **también** el adaptador de repuesto | Soporte **lo conecta y funciona solo** | Requiere un cambio pequeño de programación |
 
-**Qué hace el vigilante:**
+**Qué se hace:**
 
-1. Ve la franja roja *"Lector de DNI: cable desconectado"*, o nota que el lector no lee.
-2. Mientras tanto se sigue operando con las opciones de la sección 6.3: en el ingreso, el equipo facial identifica a la persona (si la opción 1 está disponible) o el vigilante escribe el DNI; en la salida, el vigilante escribe el DNI.
-3. **Conecta el repuesto** (lector y, si hace falta, su adaptador).
-4. Con la opción B, funciona solo; con la A, avisa a soporte para que registre el adaptador.
-5. Comprueba que el aviso desaparezca y que el lector lea un DNI.
-6. Avisa al administrador para que gestione la reparación o la compra de otro repuesto.
+1. **Vigilante:** ve la franja roja *"Lector de DNI: cable desconectado"*, o nota que el lector no lee. **Informa** a soporte y al administrador.
+2. **Mientras tanto** se sigue operando con las opciones de la sección 6.3: en el ingreso, el equipo facial identifica a la persona (si la opción 1 está disponible) o el vigilante escribe el DNI; en la salida, el vigilante escribe el DNI.
+3. **Soporte:** conecta el repuesto (lector y, si hace falta, su adaptador). Con la opción B funciona solo; con la A, registra el adaptador nuevo.
+4. **Soporte:** comprueba que el aviso desaparezca y que el lector lea un DNI.
+5. **Administrador:** gestiona la reparación o la compra de otro repuesto.
 
 **Requisitos del repuesto:** un **lector del mismo modelo, ya configurado**, y su **adaptador USB**. Conviene **etiquetar** los adaptadores ("INGRESO", "SALIDA", "REPUESTO") y **probar el cambio una vez** antes de necesitarlo.
 
@@ -309,12 +316,12 @@ Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**,
 
 **Qué pasa cuando falla:** el sistema valida a la persona y da la orden de abrir, pero el molinete **no se abre**. La franja roja muestra el relé como *"No conectado"*. El ingreso o la salida **queda registrado** en el sistema, porque la validación se hizo.
 
-**Qué hace el vigilante:**
+**Qué se hace:**
 
-1. Ve el aviso del relé en la franja roja (o que el molinete no abre aunque el Panel dice "Autorizado").
-2. Desconecta el relé malogrado de la PC de la garita y **conecta el de repuesto** en su lugar.
-3. Comprueba en la franja roja que el aviso desaparezca (el sistema reconecta el relé solo) y pide a la persona que vuelva a pasar su DNI.
-4. Avisa al administrador para que gestione la reparación o la compra de otro repuesto.
+1. **Vigilante:** ve el aviso del relé en la franja roja (o que el molinete no abre aunque el Panel dice "Autorizado"). **Informa** a soporte y al administrador.
+2. **Soporte:** desconecta el relé malogrado de la PC de la garita y **conecta el de repuesto** en su lugar.
+3. **Soporte:** comprueba en la franja roja que el aviso desaparezca (el sistema reconecta el relé solo) y prueba un paso por el molinete.
+4. **Administrador:** gestiona la reparación o la compra de otro repuesto.
 
 **Requisito del repuesto:** cada relé tiene grabada una **serie** que la PC de la garita usa para saber cuál es cuál (ingreso `ING01`, salida `SAL01` y, si hay, avisos `DEN01` y `DSA01`). Un relé nuevo viene de fábrica con otra serie, así que **el repuesto debe dejarse preparado por soporte** con la serie que va a reemplazar (`deploy/controlador/README.md`, paso 6). Con un solo repuesto, soporte le graba la serie del molinete que falle, o se tienen dos repuestos ya preparados (uno para ingreso y uno para salida). **Probar el cambio una vez** antes de necesitarlo.
 
@@ -326,7 +333,9 @@ Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**,
 
 **Qué pasa cuando falla:** sin la PC de la garita no funcionan los **lectores de DNI** ni los **relés**: nadie pasa por el sistema, ni para ingresar ni para salir. La franja roja muestra *"Controlador desconectado"*. El equipo facial sigue conectado al servidor, pero sin DNI nadie llega a usarlo.
 
-**Opción 1 (recomendada): PC de repuesto**
+El **vigilante informa** a soporte y al administrador. Luego:
+
+**Opción 1 (recomendada): PC de repuesto** (la hace soporte)
 
 1. Desconectar de la PC malograda los lectores de DNI y los relés, y conectarlos a la PC de repuesto, en los mismos puertos.
 2. Encender la PC de repuesto: se conecta sola al servidor y descarga la lista del personal.
@@ -337,8 +346,8 @@ Requisitos: la PC de repuesto debe estar **instalada y configurada por soporte c
 
 **Opción 2 (si no hay PC de repuesto): liberar el molinete a mano**
 
-- El vigilante libera el molinete a mano y controla el paso personalmente.
-- Mientras tanto **el sistema no registra los ingresos ni las salidas** y no revisa los documentos. El vigilante debe **anotar** a cada persona (nombre, DNI, hora y, en el ingreso, el resultado de la prueba de alcohol con el alcoholímetro de repuesto).
+- **Soporte** libera el molinete a mano.
+- El vigilante controla el paso. Mientras tanto **el sistema no registra los ingresos ni las salidas** y no revisa los documentos, así que el vigilante debe **anotar** a cada persona (nombre, DNI, hora y, en el ingreso, el resultado de la prueba de alcohol con el alcoholímetro de repuesto).
 - Es el **último recurso**, hasta que la PC funcione o llegue el repuesto.
 
 ### 7.3. Servidor en la nube
@@ -367,7 +376,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | 8 | ¿Qué se hace si falla el **lector de DNI**? | Mientras tanto, **solo el equipo facial** identifica a la persona en el ingreso (si la prueba con el equipo sale bien) o **el vigilante escribe el DNI** (ingreso y salida); se conecta el **lector de repuesto** (15/10/2026) |
 | 9 | ¿Qué se hace si falla el **relé de un molinete**? | Se cambia de inmediato por el **repuesto** (15/10/2026) |
 | 10 | ¿Qué se hace si falla la **PC de la garita**? | **PC de repuesto**; si no la hay, liberar el molinete a mano y anotar los pasos (15/10/2026) |
-| 11 | ¿El **adaptador del lector de repuesto** lo registra soporte en el momento (A) o queda registrado desde antes (B)? | **Pendiente** (se recomienda B; sección 6.4) |
+| 11 | ¿El **adaptador del lector de repuesto** lo registra soporte en el momento (A) o queda registrado desde antes (B)? | **Pendiente** (se recomienda B; sección 6.4). No haría falta si se programa la vista opcional de la sección 10 |
 
 ---
 
@@ -377,7 +386,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 
 | Qué | Para qué | Responsable |
 |---|---|---|
-| Alcoholímetro de repuesto **DT1700** (o compatible) | Secciones 3 y 4 | TMAM compra; probar el cambio una vez |
+| Alcoholímetro de repuesto **DT1700** (o compatible) | Secciones 3 y 4 | TMAM compra; soporte prueba el cambio una vez |
 | Relé de repuesto, **con la serie grabada** | Sección 7.1 | TMAM compra; soporte lo prepara |
 | PC de la garita de repuesto, **instalada y configurada** | Sección 7.2 | TMAM compra; soporte la prepara |
 | Segunda conexión de internet, router con doble salida, UPS e IP fija | Sección 5.2 | TMAM |
@@ -392,6 +401,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Identificación por rostro en el ingreso, automática al desconectarse el lector (opción 1; solo si la prueba sale bien) | 6.3 |
 | Campo "Ingresar DNI manualmente" en el Panel (ingreso y salida), con la marca en el historial (opción 2) | 6.3 |
 | Adaptador de repuesto registrado desde antes (si se elige la opción B) | 6.4 |
+| *Opcional:* vista "Configuración de equipos" en el portal, para que soporte asigne lectores y relés de repuesto sin entrar a la PC de la garita | 10 |
 
 **Probar en la garita:**
 
@@ -403,6 +413,56 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Cambiar la PC de la garita por la de repuesto | 7.2 |
 | Cambiar un lector de DNI por el repuesto | 6.4 |
 | Identificación por rostro con el equipo real (antes de programar la opción 1) | 6.3 |
+
+---
+
+## 10. Desarrollo opcional: configuración de equipos desde el portal
+
+> **Pendiente, opcional** (15/10/2026). No es necesario para las contingencias de este documento: sin esta vista, soporte hace la configuración directamente en la PC de la garita, como hoy. Se programa solo si el cliente lo pide.
+
+### 10.1. Para qué sirve
+
+Hoy, cuando soporte cambia un **lector de DNI** (su adaptador USB) o un **relé** por un repuesto, tiene que entrar a la PC de la garita, editar su configuración y reiniciar el programa; y el relé de repuesto debe tener grabada la serie correcta antes de conectarlo (secciones 6.4 y 7.1). Con esta vista, soporte haría esa configuración **desde el portal**, sin entrar a la PC de la garita.
+
+### 10.2. Cómo sería
+
+Una pantalla **"Configuración de equipos"**, solo para soporte (y el administrador, si el cliente lo decide; **nunca el vigilante**). Muestra los equipos que la PC de la garita tiene conectados en ese momento:
+
+| Lectores de DNI detectados | Uso | Estado |
+|---|---|---|
+| Adaptador `FQCLb114J19` | Lector de ingreso | Conectado |
+| Adaptador `A_BCb14C705` | Lector de salida | Conectado |
+| Adaptador `ZX91Kd02P44` (nuevo) | *Sin asignar* → elegir "Lector de ingreso" o "Lector de salida" | Conectado |
+
+| Relés detectados | Uso | Estado |
+|---|---|---|
+| `ING01` | Molinete de ingreso | Conectado |
+| `SAL01` | Molinete de salida | Conectado |
+| `S2OD2` (nuevo, serie de fábrica) | *Sin asignar* → elegir el uso; el sistema le graba la serie | Conectado |
+
+| Acción | Qué hace |
+|---|---|
+| **Asignar un lector** | Soporte conecta el adaptador de repuesto, aparece como "nuevo" y elige si es de ingreso o de salida. La PC de la garita lo empieza a usar al instante |
+| **Asignar un relé** | Soporte conecta el relé de repuesto, aparece con la serie de fábrica y elige su uso (molinete de ingreso, de salida o aviso). El sistema le **graba la serie** y lo empieza a usar |
+| **Probar un relé** | Un botón que lo activa un segundo, para comprobar que abre el molinete correcto |
+
+Cada cambio queda en la **auditoría**: quién, cuándo, qué equipo y para qué uso.
+
+### 10.3. Qué cambiaría
+
+| | Hoy | Con la vista |
+|---|---|---|
+| Dónde configura soporte | Entrando a la PC de la garita | **Desde el portal** |
+| Preparar el repuesto antes (grabar la serie del relé, registrar el adaptador) | Necesario | **No hace falta**: se asigna al conectarlo |
+| Registro de los cambios | No | **Sí**, en la auditoría |
+| Decisión 11 (adaptador de repuesto, opción A o B) | Pendiente | Ya no haría falta |
+
+### 10.4. A tener en cuenta
+
+- **Necesita internet:** la vista habla con la PC de la garita a través del servidor. Sin internet no se puede configurar, aunque los equipos ya configurados siguen funcionando.
+- **Relés nuevos de uno en uno:** todos los relés nuevos traen de fábrica la misma serie; si se conectan dos a la vez, el sistema no puede distinguirlos.
+- **La configuración se guarda en la PC de la garita** y se respeta aunque se reinicie. La configuración inicial de la instalación sigue sirviendo como base.
+- **Solo soporte (o el administrador):** una asignación equivocada, por ejemplo cruzar ingreso con salida, cambiaría cómo funciona la garita.
 
 ---
 
