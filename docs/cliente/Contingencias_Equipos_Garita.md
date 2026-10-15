@@ -212,7 +212,7 @@ Para ingresar hacen falta dos controles:
 | **A. Solo DNI** | Si la persona está en regla según la lista guardada en la garita, ingresa solo con su DNI | Sencilla | **Sin control de rostro ni de alcohol** mientras dure el corte |
 | **B. Verificación manual** | Ingresa con su DNI en regla; el vigilante compara su foto y le toma la prueba con un alcoholímetro portátil (como en la sección 4.2) | Mantiene los controles | Más lenta; depende del vigilante |
 | **C. PC de la garita como respaldo completo** | El equipo facial se conecta a la PC de la garita y esta al servidor. Sin internet, la PC de la garita hace todo localmente | Todo funciona igual, con rostro y alcohol | **Es la más compleja:** duplica el sistema y obliga a mantener sincronizados el personal, los documentos y las fotos |
-| **D. Internet de respaldo** | Una segunda conexión (por ejemplo, un router 4G) que entra sola si se cae la principal | No requiere programación; el sistema sigue completo | Costo del equipo y del plan de datos |
+| **D. Internet de respaldo** | Una segunda conexión de internet, de otro proveedor, que entra sola si se cae la principal | No requiere programación; el sistema sigue completo | Costo de la segunda conexión y del router |
 | **E. Ingreso como la salida** | La PC de la garita guarda también la lista de quién puede ingresar y hace de intermediaria con el equipo facial (ver 6.4) | **Mantiene rostro y alcohol** sin internet; sirve aunque falle el servidor en la nube | Programación considerable y pruebas con el equipo facial real; cambia cómo se conecta el equipo |
 
 **Recomendación:**
@@ -258,7 +258,7 @@ Para ingresar hacen falta dos controles:
 - **Nuevo punto de falla:** si la PC de la garita se apaga, el equipo facial queda sin servidor (hoy, sin la PC de la garita tampoco hay lectores de DNI ni molinetes, así que el ingreso ya depende de ella).
 - **Ventaja sobre D:** también cubre una caída del servidor en la nube, no solo del internet de la garita.
 
-**Sugerencia:** primero D (internet de respaldo), por ser barato e inmediato; E si el cliente necesita ingresar sin internet con todos los controles.
+**Sugerencia:** primero D (internet de respaldo), porque no requiere programación; E si el cliente necesita ingresar sin internet con todos los controles.
 
 ### 6.5. Lo que debe tener la garita (a cargo de TMAM)
 
@@ -267,13 +267,13 @@ Para que un corte de internet no detenga los ingresos, la garita debe contar con
 | # | Requisito | Para qué |
 |---|---|---|
 | 1 | **Conexión principal estable** (por ejemplo, fibra óptica) | Uso normal: la PC de la garita y el equipo facial se comunican con el servidor todo el tiempo |
-| 2 | **Conexión de respaldo de otro proveedor** (por ejemplo, 4G/5G o una segunda fibra de otra empresa) | Si cae la principal, sigue funcionando. Conviene que sea de **otra empresa**, para que no fallen las dos a la vez |
+| 2 | **Segunda conexión de internet de alta velocidad, de otro proveedor** | Si cae la principal, sigue funcionando. Conviene que sea de **otra empresa**, para que no fallen las dos a la vez |
 | 3 | **Router con doble salida y cambio automático** (*dual WAN / failover*) | Que pase a la conexión de respaldo **solo**, en segundos, sin que nadie tenga que hacer nada, y que vuelva a la principal cuando regrese |
 | 4 | **Equipo de respaldo de energía (UPS)** para el router, la PC de la garita, el equipo facial y el switch de red | Que un corte de luz breve no corte también el internet ni los equipos |
 | 5 | **IP pública fija** en la conexión principal (y, si es posible, también en la de respaldo) | Permite cerrar el puerto del equipo facial en el servidor para que solo acepte la garita (ver `docs/seguridad/Seguridad.md`, sección 4.2). Con dos conexiones, se autorizan las dos IP |
 | 6 | **Que nadie cambie la configuración de red** de la PC de la garita ni del equipo facial sin avisar a soporte | Ambos tienen configurada la dirección del servidor; un cambio de red puede dejarlos sin conexión |
 
-**Consumo de datos:** bajo. Por internet viajan los datos de cada ingreso y salida y, al registrar o actualizar personal, sus fotos. Un plan de datos móviles básico alcanza para la conexión de respaldo.
+**Uso de internet del sistema:** bajo. Por internet viajan los datos de cada ingreso y salida y, al registrar o actualizar personal, sus fotos. Cualquier conexión de alta velocidad es suficiente, también la de respaldo.
 
 **Cómo se nota un corte:** el sistema ya muestra en la franja roja de fallas *"Controlador desconectado"* (la PC de la garita) y *"Equipo facial desconectado"* cuando dejan de comunicarse con el servidor.
 
