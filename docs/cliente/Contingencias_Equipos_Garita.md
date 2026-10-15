@@ -15,7 +15,7 @@ Actualizado al 15/10/2026, con las decisiones del cliente de esa fecha. **Lo que
 | **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3) | Vigilante | No | Decidido. Falta comprar el repuesto |
 | **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto (sección 4) | Vigilante o administrador la activan; el vigilante aprueba cada ingreso | No | Decidido. Por programar |
 | **Internet** de la garita | **Segunda conexión de otro proveedor** que entra sola (sección 5) | TMAM | No | Decidido, a cargo de TMAM |
-| **Lector de DNI** | Por definir (sección 6) | — | — | Pendiente |
+| **Lector de DNI** | Mientras tanto, dos opciones: **solo el equipo facial** identifica a la persona (ingreso) o **el vigilante escribe el DNI** en el Panel (ingreso y salida); se conecta el **lector de repuesto** (sección 6) | Automático / vigilante (y soporte, según el adaptador) | No | Decidido. Por programar; la opción del equipo facial requiere una prueba; falta el repuesto |
 | **Relé de un molinete** | Se cambia por el **relé de repuesto** (sección 7.1) | Vigilante o soporte | No | Decidido. Falta el repuesto preparado |
 | **PC de la garita** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | Vigilante y soporte | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
 | **Servidor en la nube** | Se recupera solo al reiniciarse; respaldos diarios probados (sección 7.3) | Soporte | No | Funciona hoy |
@@ -208,44 +208,96 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 
 ---
 
-## 6. Falla del lector de DNI (pendiente)
+## 6. Falla del lector de DNI
 
-> **Pendiente** (15/10/2026): se verá más adelante. Antes de decidir hace falta una prueba con el equipo facial (sección 6.4).
+**Decidido (15/10/2026):** mientras se cambia el lector hay **dos opciones** para seguir operando (sección 6.3): **usar solo el equipo facial** para identificar a la persona en el ingreso, o que **el vigilante escriba el DNI** en el Panel. Luego se conecta el **lector de repuesto** (sección 6.4). Por programar.
 
 ### 6.1. Qué pasa cuando falla
 
 - **Ingreso:** nadie puede ingresar. Sin el DNI, el sistema no sabe quién es la persona y no la habilita en el equipo facial.
 - **Salida:** nadie sale por el molinete.
-- La franja roja muestra *"Cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
+- La franja roja muestra *"Lector de DNI de ingreso (o de salida): cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
 
-### 6.2. Por qué no basta con "solo rostro"
+### 6.2. Cómo está conectado un lector
 
-Cuando el equipo facial aprueba a alguien (rostro y alcohol conformes), **no informa quién fue**: el sistema lo sabe porque solo había una persona habilitada. Si se habilitara a todos los que están en regla para usar solo el rostro, el sistema **no sabría quién entró**. El único momento en que el equipo informa **quién es** la persona es cuando **la rechaza** por estar bloqueada: en ese caso envía su DNI.
+Cada lector tiene **dos partes**:
 
-### 6.3. Alternativas
+| Parte | Qué es | Qué reconoce el sistema |
+|---|---|---|
+| **Lector** (Syble XB-7705H) | Lee el código de barras del reverso del DNI | Nada: el sistema no distingue un lector de otro |
+| **Adaptador USB** (cable blanco) | Une el lector con la PC de la garita | **Su número de serie**, que trae de fábrica. La PC de la garita tiene configurado cuál es el de ingreso y cuál el de salida |
 
-| Alternativa | Cómo funciona | ¿Una sola mirada al equipo? | ¿Se sabe quién entró? | Estado |
-|---|---|---|---|---|
-| **Lector de repuesto** | Se cambia el lector malogrado | Sí | Sí | Requiere comprarlo; puede requerir que soporte actualice la configuración de la PC de la garita |
-| **El vigilante escribe el DNI** | En el Panel, un campo "Ingresar DNI manualmente" que hace lo mismo que el lector | Sí | Sí | Por programar. Sirve también para la **salida** |
-| **Identificación por rostro (automática)** | La persona se para frente al equipo: el equipo la rechaza e informa su DNI; el sistema revisa sus documentos y la habilita (~2 s); si el equipo **la vuelve a reconocer solo** mientras sigue frente a él, toma la prueba de alcohol y se abre el molinete | Sí, si el equipo vuelve a reconocer solo (la persona se queda unos segundos) | Sí | Requiere la prueba de la sección 6.4 |
-| Habilitar a todos (solo rostro) | Todos los que están en regla quedan habilitados | Sí | **No** (salvo que el equipo guarde quién pasó y se pueda consultar) | No recomendada |
+Por eso, lo que haya que hacer al cambiarlo depende de qué parte se malogró (sección 6.4).
 
-### 6.4. Prueba pendiente con el equipo facial
+### 6.3. Mientras tanto: dos opciones
 
-Con el equipo conectado al servidor y una persona registrada con foto, la persona se para frente al equipo **sin pasar el DNI** y se queda ahí. Comprobar:
+| | **Opción 1: solo el equipo facial** | **Opción 2: el vigilante escribe el DNI** |
+|---|---|---|
+| Para qué paso | **Ingreso** (la salida no tiene equipo facial) | **Ingreso y salida** |
+| Quién identifica a la persona | El **equipo facial**, por su rostro | El **vigilante**, que escribe el número del DNI en el Panel |
+| ¿Hace algo el vigilante? | No: se activa **solo** cuando el lector de ingreso se desconecta | Sí: escribe cada DNI |
+| ¿La persona mira el equipo una sola vez? | Sí (se queda unos segundos frente a él) | Sí, como siempre |
+| Documentos, rostro, alcohol y quién entró | Se mantienen | Se mantienen |
+| Estado | Por programar. **Requiere antes una prueba con el equipo real** (abajo) | Por programar. Funciona seguro: es el mismo proceso de siempre |
+
+**Cómo se usan juntas:** si la prueba con el equipo facial sale bien, el **ingreso** usa la opción 1 (automática) y la **salida** la opción 2. Si la prueba no sale bien, se usa la opción 2 para los dos. La opción 2 queda siempre disponible, también como respaldo de la opción 1.
+
+#### Opción 1: solo el equipo facial (ingreso)
+
+**Por qué no basta con "habilitar a todos" en el equipo:** cuando el equipo facial aprueba a alguien (rostro y alcohol conformes), **no informa quién fue**: el sistema lo sabe porque solo había una persona habilitada. Si se habilitara a todos los que están en regla, el sistema **no sabría quién entró**. El único momento en que el equipo informa quién es la persona es cuando **la rechaza** por estar bloqueada: en ese caso envía su DNI. La opción 1 usa justamente eso.
+
+**Cómo funciona:**
+
+1. El lector de ingreso se desconecta: el sistema pasa **solo** a "identificación por rostro" y el Panel muestra la franja *"Lector de DNI de ingreso sin conexión: identificación por rostro"*.
+2. La persona se para frente al equipo facial **y se queda ahí**.
+3. El equipo la reconoce y, como está bloqueada, la rechaza e **informa su DNI** al sistema.
+4. El sistema revisa sus documentos, como si hubiera pasado el DNI. Si no cumple, se deniega igual que siempre.
+5. Si cumple, la habilita en el equipo (~2 segundos).
+6. El equipo **la vuelve a reconocer solo**, porque sigue frente a él, y le pide soplar.
+7. Si es apta, se abre el molinete. En el historial queda marcado como **"identificado por rostro"**.
+8. Cuando el lector vuelve a conectarse, el sistema regresa **solo** al modo normal: como esta opción no baja ningún control, no hace falta que nadie lo active ni lo desactive.
+
+**Prueba pendiente con el equipo real** (no requiere programar): con el equipo conectado al servidor, una persona registrada se para frente al equipo **sin pasar el DNI** y se queda ahí. Comprobar:
 
 1. Que el equipo informe su DNI al rechazarla, y cuánto tarda.
-2. Si, una vez habilitada, el equipo **la vuelve a reconocer solo** sin que se mueva, y qué muestra en su pantalla.
-3. Si el registro interno del equipo guarda quién pasó en los ingresos aprobados.
+2. Si, una vez habilitada, el equipo **la vuelve a reconocer solo** sin que se mueva, y qué muestra en su pantalla durante esos segundos.
 
-No requiere programar nada.
+Si el equipo no la vuelve a reconocer sola, la persona tendría que mirar dos veces, y esta opción no se usa.
 
-### 6.5. Recomendación
+#### Opción 2: el vigilante escribe el DNI (ingreso y salida)
 
-- **Ingreso:** identificación por rostro si la prueba sale bien; si no, el vigilante escribe el DNI.
-- **Salida:** el vigilante escribe el DNI.
-- En ambos casos conviene tener un **lector de repuesto**.
+El Panel de vigilancia tendrá un campo **"Ingresar DNI manualmente"**, uno para el ingreso y otro para la salida. Hace exactamente lo mismo que el lector; solo cambia de dónde sale el número.
+
+- **Ingreso:** la persona le muestra su DNI al vigilante, que escribe el número en el campo de **ingreso**. Desde ahí todo sigue igual que siempre (sección 1): documentos, equipo facial (rostro y alcohol) y molinete.
+- **Salida:** el vigilante escribe el número en el campo de **salida** y, si la persona está registrada, se abre el molinete de salida.
+
+Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**, con el nombre del vigilante. El campo se puede usar en cualquier momento, no solo cuando falla el lector: por ejemplo, si un DNI está gastado y el lector no lo lee.
+
+### 6.4. Cambio por el repuesto
+
+| Qué se malogró | ¿Basta con conectar el repuesto? | Qué hay que hacer |
+|---|---|---|
+| **El lector** (el adaptador está bien) | **Sí**, si el lector de repuesto ya está configurado | Conectar el lector de repuesto **al mismo adaptador**. El lector nuevo se configura **una sola vez, con anticipación**, con su folleto (Factory Default → RS232 → 115200) |
+| **El adaptador** (cable blanco) | Depende de la opción elegida (abajo) | El adaptador nuevo tiene otro número de serie |
+| **Los dos** | Igual que el adaptador | Las dos cosas |
+
+**Para el adaptador hay dos opciones** (decisión 11 de la sección 8, pendiente):
+
+| Opción | Cómo | Ventaja | Desventaja |
+|---|---|---|---|
+| **A. Soporte lo registra en el momento** | El vigilante conecta el repuesto y avisa a soporte, que lo registra a distancia en la PC de la garita | No requiere programar nada | Depende de que soporte responda en ese momento |
+| **B. Adaptador de repuesto registrado desde antes** (recomendada) | La PC de la garita acepta, para cada lector, **también** el adaptador de repuesto | **Se conecta y funciona solo**, sin llamar a nadie | Requiere un cambio pequeño de programación |
+
+**Qué hace el vigilante:**
+
+1. Ve la franja roja *"Lector de DNI: cable desconectado"*, o nota que el lector no lee.
+2. Mientras tanto se sigue operando con las opciones de la sección 6.3: en el ingreso, el equipo facial identifica a la persona (si la opción 1 está disponible) o el vigilante escribe el DNI; en la salida, el vigilante escribe el DNI.
+3. **Conecta el repuesto** (lector y, si hace falta, su adaptador).
+4. Con la opción B, funciona solo; con la A, avisa a soporte para que registre el adaptador.
+5. Comprueba que el aviso desaparezca y que el lector lea un DNI.
+6. Avisa al administrador para que gestione la reparación o la compra de otro repuesto.
+
+**Requisitos del repuesto:** un **lector del mismo modelo, ya configurado**, y su **adaptador USB**. Conviene **etiquetar** los adaptadores ("INGRESO", "SALIDA", "REPUESTO") y **probar el cambio una vez** antes de necesitarlo.
 
 ---
 
@@ -312,9 +364,10 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | 5 | ¿Tiempo máximo para la verificación manual? | **No** (15/10/2026) |
 | 6 | ¿Aviso por "varias personas seguidas sin completar la prueba"? | **No**: la persona avisa al vigilante en ese momento. En su lugar, una pista en el Panel (15/10/2026) |
 | 7 | ¿Qué se hace ante un **corte de internet**? | **A cargo de TMAM**: segunda conexión con los requisitos de la sección 5.2. Si fallan las dos, nadie ingresa y las salidas siguen (15/10/2026) |
-| 8 | ¿Qué se hace si falla el **lector de DNI**? | **Pendiente**: se verá más adelante, tras la prueba de la sección 6.4 |
+| 8 | ¿Qué se hace si falla el **lector de DNI**? | Mientras tanto, **solo el equipo facial** identifica a la persona en el ingreso (si la prueba con el equipo sale bien) o **el vigilante escribe el DNI** (ingreso y salida); se conecta el **lector de repuesto** (15/10/2026) |
 | 9 | ¿Qué se hace si falla el **relé de un molinete**? | Se cambia de inmediato por el **repuesto** (15/10/2026) |
 | 10 | ¿Qué se hace si falla la **PC de la garita**? | **PC de repuesto**; si no la hay, liberar el molinete a mano y anotar los pasos (15/10/2026) |
+| 11 | ¿El **adaptador del lector de repuesto** lo registra soporte en el momento (A) o queda registrado desde antes (B)? | **Pendiente** (se recomienda B; sección 6.4) |
 
 ---
 
@@ -328,7 +381,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Relé de repuesto, **con la serie grabada** | Sección 7.1 | TMAM compra; soporte lo prepara |
 | PC de la garita de repuesto, **instalada y configurada** | Sección 7.2 | TMAM compra; soporte la prepara |
 | Segunda conexión de internet, router con doble salida, UPS e IP fija | Sección 5.2 | TMAM |
-| Lector de DNI de repuesto (recomendado) | Sección 6 | TMAM |
+| Lector de DNI de repuesto **con su adaptador USB**, el lector ya configurado | Sección 6.4 | TMAM compra; soporte lo configura (y, con la opción B, registra el adaptador) |
 
 **Programar (soporte):**
 
@@ -336,6 +389,9 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 |---|---|
 | Verificación manual (activar y desactivar, franja, ventana con la foto y los botones, marca en historial y reportes, "¿volver a modo normal?") | 4 |
 | Pista en el Panel junto a "no completó rostro y alcohol" | 3.2 |
+| Identificación por rostro en el ingreso, automática al desconectarse el lector (opción 1; solo si la prueba sale bien) | 6.3 |
+| Campo "Ingresar DNI manualmente" en el Panel (ingreso y salida), con la marca en el historial (opción 2) | 6.3 |
+| Adaptador de repuesto registrado desde antes (si se elige la opción B) | 6.4 |
 
 **Probar en la garita:**
 
@@ -345,7 +401,8 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Verificación manual con el equipo facial apagado (una vez programada) | 4.4 |
 | Cambiar un relé por el repuesto | 7.1 |
 | Cambiar la PC de la garita por la de repuesto | 7.2 |
-| Identificación por rostro (para decidir lo del lector de DNI) | 6.4 |
+| Cambiar un lector de DNI por el repuesto | 6.4 |
+| Identificación por rostro con el equipo real (antes de programar la opción 1) | 6.3 |
 
 ---
 
