@@ -2,7 +2,9 @@
 
 Sistema de Control de Accesos — Terminal Portuario de Mollendo
 
-Este documento describe qué ocurre cuando falla el **alcoholímetro**, el **equipo de reconocimiento facial** o la **conexión a internet** de la garita, y las alternativas de contingencia para que el terminal siga operando mientras el equipo se repara o se reemplaza. Las alternativas **bajan o reemplazan controles de seguridad**, por lo que su uso debe ser aprobado por el cliente (ver la sección 7).
+Este documento describe qué ocurre cuando falla el **alcoholímetro**, el **equipo de reconocimiento facial**, el **lector de DNI** o la **conexión a internet** de la garita, y las alternativas de contingencia para que el terminal siga operando mientras el equipo se repara o se reemplaza. Las alternativas **bajan o reemplazan controles de seguridad**, por lo que su uso debe ser aprobado por el cliente (ver la sección 7).
+
+> **Estado al 15/10/2026:** el cliente comprará un **alcoholímetro de repuesto** (mismo modelo DT1700). Si falla **solo el alcoholímetro**, se conecta el repuesto al equipo facial y se sigue normal, sin contingencia (sección 2.2). Si falla el **equipo facial**, se usa la **verificación manual con prueba de alcohol a todos**, con el repuesto usado solo (sección 5). La **conexión a internet** de la garita queda **a cargo de TMAM**, con los requisitos de la sección 6.5. Queda pendiente la **falla del lector de DNI** (sección 10). Nada de esto está programado todavía.
 
 ---
 
@@ -26,6 +28,30 @@ La **salida** solo pide el DNI: no usa el equipo facial ni el alcoholímetro.
 - **Ingresos: nadie puede ingresar, pero nadie entra sin control** (comprobado el 07/10/2026, ver la sección 8). Sin el alcoholímetro, el equipo facial reconoce el rostro, muestra *"Verificación de identidad completada. Realice una medición de alcohol."* y **se queda esperando la prueba**: no aprueba y no informa nada al sistema. Después de 1 minuto, el sistema deniega a la persona por "No completó rostro y alcohol".
 - **El equipo no avisa la desconexión:** al desconectar o volver a conectar el alcoholímetro, el equipo facial no envía ninguna señal al sistema. Solo muestra un ícono con un punto rojo en su propia pantalla. El sistema solo puede notarlo de forma indirecta, por ejemplo si varias personas seguidas quedan en "No completó rostro y alcohol".
 
+### 2.2. Qué se hace (decidido el 15/10/2026): reemplazo por el repuesto
+
+Si falla **solo el alcoholímetro**, **no hace falta contingencia**: se conecta el alcoholímetro de repuesto al equipo facial y el ingreso sigue normal, con todos los controles.
+
+**Cómo se sabe que falló:**
+
+| Forma | Cómo | Estado |
+|---|---|---|
+| Pantalla del equipo facial | Ícono con un punto rojo | Ya existe (hay que estar mirando el equipo) |
+| Aviso en el portal | Si **varias personas seguidas** no completan la prueba (el equipo reconoce el rostro pero no llega el resultado del alcohol), la franja roja de fallas muestra *"Posible falla del alcoholímetro: revisar el equipo facial"* | Por programar (pequeño) |
+
+**Pasos:**
+
+1. Aparece el aviso o el vigilante ve el punto rojo en el equipo facial.
+2. Se desconecta el alcoholímetro malogrado y se conecta el de repuesto.
+3. Se comprueba con una persona que el equipo pida soplar y apruebe.
+4. El aviso desaparece solo cuando las personas vuelven a completar la prueba.
+
+**Requisitos del repuesto:**
+
+- Debe ser **el mismo modelo (DT1700)** u otro que el equipo facial acepte: un alcoholímetro portátil cualquiera **no se puede conectar** al equipo facial.
+- El DT1700 **también funciona solo** (pantalla, botón "Test" y registro de pruebas; sección 8.1), así que el mismo repuesto sirve para la verificación manual si falla el equipo facial (sección 5).
+- **Probar el cambio una vez** antes de necesitarlo: conectar el repuesto al equipo facial y comprobar que lo reconoce y mide bien (puede requerir algún ajuste en el menú del equipo).
+
 ---
 
 ## 3. Falla del equipo de reconocimiento facial
@@ -36,7 +62,7 @@ La **salida** solo pide el DNI: no usa el equipo facial ni el alcoholímetro.
 - **Ingresos:** **nadie puede ingresar.** La persona pasa su DNI, el sistema la habilita en el equipo, pero el equipo no responde; después de 1 minuto queda denegada por "No completó rostro y alcohol".
 - Como el alcoholímetro está conectado al equipo facial, **también se pierde la prueba de alcohol**.
 - No hay riesgo de ingresos sin control: sin el equipo, el molinete de ingreso no se abre.
-- El sistema detecta que el equipo dejó de comunicarse y lo muestra como **"Desconectado"** en "Sistema y APIs". Hoy no se avisa en el Panel de vigilancia.
+- El sistema detecta que el equipo dejó de comunicarse (2 minutos sin contacto) y lo muestra como **"Desconectado"** en "Sistema y APIs" y en la **franja roja de fallas** que aparece arriba de todas las pantallas, también para el vigilante.
 
 ---
 
@@ -79,20 +105,87 @@ En todas las alternativas el sistema **sigue revisando con el DNI** que la perso
 
 ---
 
-## 5. Cómo se activaría la contingencia (propuesta)
+## 5. Contingencia decidida: verificación manual (falla del equipo facial)
 
-- **Quién:** un **administrador**, desde "Sistema y APIs", elige el modo: **Normal**, **Sin alcoholímetro** o **Solo DNI** (alternativa A), o habilita la **verificación manual** (alternativa B). Debe escribir el **motivo**, por ejemplo "alcoholímetro en reparación".
-- **Aviso en la garita:** mientras la contingencia esté activa, el **Panel de vigilancia muestra una franja** con el modo vigente, para que el vigilante sepa qué control no se está haciendo.
-- **Registro:**
-  - Cada ingreso del periodo queda **marcado** en el historial y en los reportes: "sin prueba de alcohol", "solo DNI" o "verificación manual", con el vigilante y el resultado de la prueba manual cuando corresponda.
-  - La activación y la desactivación quedan en la **auditoría**: quién, cuándo y por qué.
-- **Fin:** al reparar o reemplazar el equipo, el administrador vuelve a **Normal**. La contingencia **no se activa ni se desactiva sola**, a propósito: si el sistema bajara los controles por su cuenta, una falla podría pasar inadvertida.
+Decidido por el cliente el 15/10/2026: si falla el **equipo facial**, **alternativa B (verificación manual), con prueba de alcohol a todos**. Como el alcoholímetro va conectado al equipo facial, también se pierde; la prueba se toma con el **repuesto usado solo**. La pueden activar **el vigilante y el administrador** y **no tiene tiempo máximo**: dura hasta que se repare el equipo. Pendiente de programar.
+
+Si falla **solo el alcoholímetro**, no se usa esta contingencia: se reemplaza por el repuesto (sección 2.2). La verificación manual queda como respaldo si en ese momento no hubiera repuesto a mano.
+
+### 5.1. Decisiones
+
+| Pregunta | Decisión |
+|---|---|
+| ¿Qué se hace si falla el equipo facial? | Verificación manual (alternativa B) |
+| ¿Y si falla solo el alcoholímetro? | Se reemplaza por el repuesto, sin contingencia (sección 2.2) |
+| Prueba de alcohol durante la contingencia | **A todos**, con el alcoholímetro de repuesto usado solo |
+| ¿Quién activa y desactiva la contingencia? | **Vigilante y administrador** |
+| ¿Quién aprueba cada ingreso? | El vigilante de turno |
+| Tiempo máximo | **Ninguno** |
+
+### 5.2. Paso a paso
+
+**1. Se detecta la falla**
+
+A los 2 minutos sin comunicación aparece la franja roja *"Equipo facial (G4 Pro) desconectado"* arriba de todas las pantallas (ya existe).
+
+**2. Se activa**
+
+El vigilante o el administrador presiona **"Activar verificación manual"** en el Panel de vigilancia y escribe el **motivo** (por ejemplo, "equipo facial apagado"). Queda en la **auditoría** quién, cuándo y por qué. Mientras dure, el Panel muestra una franja fija:
+
+> **Verificación manual activa** desde 15/10 08:30, activada por *vigilante 1*. Motivo: equipo facial apagado.
+
+**3. Ingreso de cada persona**
+
+1. Pasa su **DNI** por el lector, como siempre.
+2. El sistema revisa que esté registrada, activa y con sus documentos vigentes. Si no cumple, **se deniega igual que siempre**.
+3. Si cumple, el Panel muestra una ventana grande con su **foto registrada**, nombre, DNI y empresa.
+4. El vigilante **compara el rostro** con la foto y le toma la **prueba de alcohol** con el alcoholímetro de repuesto.
+5. El vigilante elige:
+
+| Botón | Qué hace | Cómo queda en el historial |
+|---|---|---|
+| **"Apto: abrir"** | Abre el molinete de ingreso | Autorizado, verificación manual, con el vigilante que lo aprobó |
+| **"Alcohol: no apto"** | No abre; activa el aviso de ingreso denegado | Denegado por alcohol, verificación manual |
+| **"No es la persona"** | No abre; activa el aviso de ingreso denegado | Denegado: el rostro no coincide con el DNI |
+
+Si el vigilante no elige en **2 minutos**, el ingreso se deniega y la ventana se cierra.
+
+**4. Mientras dure**
+
+- Las **salidas** siguen normales (no usan el equipo facial).
+- Cada ingreso queda **marcado como "verificación manual"** en el historial y en los reportes, con el vigilante y el resultado.
+- Si el equipo facial vuelve a conectarse, el Panel avisa: *"El equipo facial volvió a conectarse. ¿Volver a modo normal?"*
+
+**5. Fin**
+
+El vigilante o el administrador presiona **"Volver a modo normal"** (queda en la auditoría). No vuelve solo, a propósito: si el equipo se conectara y desconectara varias veces seguidas, el modo cambiaría a cada rato y el vigilante no sabría en cuál está.
+
+### 5.3. Lo que se necesita
+
+| Qué | Estado |
+|---|---|
+| Alcoholímetro para la prueba manual | El **repuesto DT1700** que comprará el cliente, usado solo (decisión 4 de la sección 7). También sirve el que estaba conectado al equipo facial, que funciona solo (sección 8.1) |
+| Foto de cada persona | Ya se guarda en el sistema |
+| Activar y desactivar (vigilante y administrador), con motivo y auditoría | Por programar |
+| Franja fija con el modo vigente en el Panel | Por programar |
+| Ventana con la foto y los botones, con límite de 2 minutos | Por programar |
+| Abrir el molinete desde "Apto: abrir" | Por programar (la orden de abrir ya existe) |
+| Marca "verificación manual" en historial y reportes | Por programar |
+| Aviso "¿volver a modo normal?" | Por programar |
+
+Una vez programado, se hace una **prueba en la garita**: apagar el equipo facial y usar el alcoholímetro de repuesto.
+
+### 5.4. Modos que bajan controles (alternativa A)
+
+Con la prueba de alcohol a todos, los modos **"Solo DNI"** y **"Sin alcoholímetro"** (sección 4.1) no son necesarios. Quedan descritos solo como referencia; no se programan salvo que el cliente lo pida.
 
 ---
 
 ## 6. Corte de internet (modalidad con servidor en la nube)
 
 Cuando el sistema está en un servidor en la nube y la PC de la garita trabaja como controlador, la garita depende de internet para decidir los ingresos.
+
+> **Responsable:** la conexión a internet de la garita y su respaldo quedan **a cargo de TMAM** (15/10/2026). Lo que debe tener está en la sección 6.5.
 
 ### 6.1. Qué ocurre hoy
 
@@ -167,19 +260,39 @@ Para ingresar hacen falta dos controles:
 
 **Sugerencia:** primero D (internet de respaldo), por ser barato e inmediato; E si el cliente necesita ingresar sin internet con todos los controles.
 
+### 6.5. Lo que debe tener la garita (a cargo de TMAM)
+
+Para que un corte de internet no detenga los ingresos, la garita debe contar con:
+
+| # | Requisito | Para qué |
+|---|---|---|
+| 1 | **Conexión principal estable** (por ejemplo, fibra óptica) | Uso normal: la PC de la garita y el equipo facial se comunican con el servidor todo el tiempo |
+| 2 | **Conexión de respaldo de otro proveedor** (por ejemplo, 4G/5G o una segunda fibra de otra empresa) | Si cae la principal, sigue funcionando. Conviene que sea de **otra empresa**, para que no fallen las dos a la vez |
+| 3 | **Router con doble salida y cambio automático** (*dual WAN / failover*) | Que pase a la conexión de respaldo **solo**, en segundos, sin que nadie tenga que hacer nada, y que vuelva a la principal cuando regrese |
+| 4 | **Equipo de respaldo de energía (UPS)** para el router, la PC de la garita, el equipo facial y el switch de red | Que un corte de luz breve no corte también el internet ni los equipos |
+| 5 | **IP pública fija** en la conexión principal (y, si es posible, también en la de respaldo) | Permite cerrar el puerto del equipo facial en el servidor para que solo acepte la garita (ver `docs/seguridad/Seguridad.md`, sección 4.2). Con dos conexiones, se autorizan las dos IP |
+| 6 | **Que nadie cambie la configuración de red** de la PC de la garita ni del equipo facial sin avisar a soporte | Ambos tienen configurada la dirección del servidor; un cambio de red puede dejarlos sin conexión |
+
+**Consumo de datos:** bajo. Por internet viajan los datos de cada ingreso y salida y, al registrar o actualizar personal, sus fotos. Un plan de datos móviles básico alcanza para la conexión de respaldo.
+
+**Cómo se nota un corte:** el sistema ya muestra en la franja roja de fallas *"Controlador desconectado"* (la PC de la garita) y *"Equipo facial desconectado"* cuando dejan de comunicarse con el servidor.
+
+**Si aun así fallan las dos conexiones**, se mantiene lo de la sección 6.1: nadie ingresa, pero las salidas siguen funcionando. La alternativa E (ingreso como la salida) queda como mejora futura si TMAM la requiere.
+
 ---
 
-## 7. Decisiones pendientes del cliente
+## 7. Decisiones del cliente
 
-1. Con el **alcoholímetro** malogrado: ¿se permite el ingreso **sin prueba de alcohol** (A), **con alcoholímetro portátil** (B) o **no ingresa nadie** hasta repararlo?
-2. Con el **equipo facial** malogrado: ¿se permite el ingreso **solo con DNI** (A), **con verificación manual** (B) o **no ingresa nadie** hasta repararlo?
-3. ¿Quién puede activar la contingencia: **solo administradores** o también **vigilancia**? En la alternativa B, ¿cada apertura manual la puede hacer **cualquier vigilante** o necesita la **autorización de un supervisor**?
-4. ¿Habrá un **alcoholímetro portátil de respaldo** en la garita? (Si falla el equipo facial, el propio alcoholímetro del equipo sirve como portátil; ver la sección 8.1. Si falla el alcoholímetro, haría falta otro.)
-5. ¿Hay un **tiempo máximo** para la contingencia (por ejemplo, 48 horas), tras el cual se debe reautorizar?
-6. Como el equipo no avisa la desconexión del alcoholímetro, ¿se quiere una **alerta en el Panel** cuando varias personas seguidas no completan la verificación ("posible falla del alcoholímetro o del equipo facial")?
-7. Ante un **corte de internet** (modalidad con servidor en la nube): ¿se mantiene que **no ingrese nadie**, o se permite el ingreso **solo con DNI** (A), **con verificación manual** (B), con la **PC de la garita como respaldo completo** (C) o **como la salida, con rostro y alcohol** (E)? ¿Se instalará un **internet de respaldo** (D)?
-
-Con estas respuestas se programa un único "Modo de contingencia" que cubre los dos equipos y, si se decide, el ingreso sin internet.
+| # | Pregunta | Respuesta |
+|---|---|---|
+| 1 | Con el **alcoholímetro** malogrado: ¿ingreso **sin prueba de alcohol** (A), **con alcoholímetro portátil** (B) o **no ingresa nadie**? | **Se reemplaza por el repuesto** conectado al equipo facial, sin contingencia (sección 2.2; 15/10/2026) |
+| 2 | Con el **equipo facial** malogrado: ¿ingreso **solo con DNI** (A), **con verificación manual** (B) o **no ingresa nadie**? | **B**, prueba a todos (15/10/2026) |
+| 3 | ¿Quién activa la contingencia? ¿Cada apertura manual la hace cualquier vigilante o necesita un supervisor? | **Vigilante y administrador** activan y desactivan; cada ingreso lo aprueba el vigilante de turno (15/10/2026) |
+| 4 | ¿Habrá un **alcoholímetro de respaldo** en la garita? | **Sí**: el cliente comprará un repuesto, que debe ser **DT1700** u otro compatible con el equipo facial (15/10/2026) |
+| 5 | ¿Hay un **tiempo máximo** para la contingencia? | **No** (15/10/2026) |
+| 6 | ¿Se quiere una **alerta** cuando varias personas seguidas no completan la verificación ("posible falla del alcoholímetro")? | **Sí**, para saber cuándo cambiar el alcoholímetro (sección 2.2; 15/10/2026) |
+| 7 | Ante un **corte de internet**: ¿no ingresa nadie, **solo DNI** (A), **verificación manual** (B), **PC de la garita como respaldo completo** (C) o **como la salida, con rostro y alcohol** (E)? ¿Se instalará **internet de respaldo** (D)? | **A cargo de TMAM**: internet de respaldo (D) con los requisitos de la sección 6.5 (15/10/2026). Si fallan las dos conexiones, nadie ingresa y las salidas siguen. La alternativa E queda como mejora futura |
+| 8 | Con el **lector de DNI** malogrado: ¿el vigilante **escribe el DNI** en el Panel, o se usa la **identificación por rostro** (sección 10)? | **Pendiente**: se verá más adelante (requiere una prueba con el equipo facial) |
 
 ---
 
@@ -218,5 +331,48 @@ Se probó conectar el alcoholímetro a la PC de la garita en lugar del equipo fa
 | Falla | Qué ocurre |
 |---|---|
 | **Corte de internet** (con el servidor en la nube) | Ver la sección 6. |
-| **Lector de DNI desconectado** | "Sistema y APIs" lo muestra como "Cable desconectado"; el sistema vuelve a intentar abrirlo cada 5 segundos y se recupera solo al reconectarlo |
+| **Lector de DNI desconectado** | "Sistema y APIs" lo muestra como "Cable desconectado"; el sistema vuelve a intentar abrirlo cada 5 segundos y se recupera solo al reconectarlo. Para seguir operando mientras tanto, ver la sección 10 |
 | **Relé del molinete desconectado** | "Sistema y APIs" lo muestra como "No conectado"; el sistema registra la orden de abrir y se recupera solo al reconectarlo |
+
+---
+
+## 10. Falla del lector de DNI (propuesta, por confirmar)
+
+> **Pendiente** (15/10/2026): se verá más adelante. Antes de decidir hace falta la prueba con el equipo facial de la sección 10.4.
+
+### 10.1. Qué ocurre hoy
+
+- **Ingreso:** nadie puede ingresar. Sin el DNI, el sistema no sabe quién es la persona y no la habilita en el equipo facial.
+- **Salida:** nadie sale por el molinete (la salida solo usa el DNI).
+- El sistema lo detecta y lo muestra como **"Cable desconectado"** en la franja roja de fallas.
+
+### 10.2. Por qué no basta con "solo rostro"
+
+Las personas están cargadas en el equipo facial pero **bloqueadas** hasta que pasan su DNI. Cuando el equipo aprueba a alguien (rostro y alcohol conformes), **no informa quién fue** (envía "persona 0"); el sistema lo sabe porque solo había una persona habilitada. Si se habilitara a todos los que están en regla para usar solo el rostro, el sistema **no sabría quién entró**. Por eso no se recomienda.
+
+El único momento en que el equipo informa **quién es** la persona es cuando **la rechaza** por estar bloqueada: en ese caso envía su DNI.
+
+### 10.3. Alternativas
+
+| Alternativa | Cómo funciona | ¿Una sola mirada al equipo? | ¿Se sabe quién entró? | Estado |
+|---|---|---|---|---|
+| **Lector de repuesto** | Se cambia el lector malogrado | Sí | Sí | Solo requiere comprarlo |
+| **El vigilante escribe el DNI** | En el Panel, un campo "Ingresar DNI manualmente" que hace lo mismo que el lector | Sí | Sí | Por programar (pequeño). Sirve también para la **salida** |
+| **Identificación por rostro (automática)** | Con el lector desconectado, la persona se para frente al equipo facial: el equipo la rechaza e informa su DNI; el sistema revisa sus documentos y la habilita (~2 s); si el equipo **la vuelve a reconocer solo** mientras sigue frente a él, toma la prueba de alcohol y se abre el molinete | Sí, si el equipo vuelve a reconocer solo (la persona se queda unos segundos) | Sí | **Requiere una prueba con el equipo real** antes de programar |
+| Habilitar a todos (solo rostro) | Todos los que están en regla quedan habilitados | Sí | **No** (salvo que el equipo guarde quién pasó y se pueda consultar; por probar) | No recomendada |
+
+### 10.4. Prueba pendiente con el equipo facial
+
+Con el equipo conectado al servidor y una persona registrada con foto, la persona se para frente al equipo **sin pasar el DNI** y se queda ahí. Comprobar:
+
+1. Que el equipo informe su DNI al rechazarla, y cuánto tarda.
+2. Si, una vez habilitada, el equipo **la vuelve a reconocer solo** sin que se mueva, y qué muestra en su pantalla.
+3. Si el registro interno del equipo guarda quién pasó en los ingresos aprobados (para la alternativa "habilitar a todos").
+
+No requiere programar nada; toma unos 15 minutos.
+
+### 10.5. Recomendación
+
+- **Ingreso:** identificación por rostro si la prueba sale bien; si no, el vigilante escribe el DNI.
+- **Salida:** el vigilante escribe el DNI.
+- En ambos casos conviene tener un **lector de repuesto**.
