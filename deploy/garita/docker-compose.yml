@@ -85,12 +85,34 @@ services:
       # Hora de la sincronización diaria con los G4 Pro (0 = medianoche, hora de Lima).
       G4PRO_HORA_SINCRONIZACION: ${G4PRO_HORA_SINCRONIZACION:-0}
     # Solo puertos serie USB (ttyUSB = 188, ttyACM = 166, los lectores de DNI) y
-    # dispositivos HID en bruto (hidraw, el módulo de relés USB de los molinetes;
-    # su número lo asigna el kernel: ver `grep hidraw /proc/devices`).
+    # dispositivos HID en bruto (hidraw, el módulo de relés USB de los molinetes).
     device_cgroup_rules:
       - "c 188:* rmw"
       - "c 166:* rmw"
-      - "c ${RELE_USB_HIDRAW_MAJOR:-234}:* rmw"
+      # Relés USB (hidraw): el kernel les da un número al arrancar, dentro del rango
+      # dinámico 234-254, y puede cambiar en cada reinicio (15/10/2026 pasó de 234 a
+      # 238 y los molinetes dejaron de abrir). Se permite todo el rango.
+      - "c 234:* rmw"
+      - "c 235:* rmw"
+      - "c 236:* rmw"
+      - "c 237:* rmw"
+      - "c 238:* rmw"
+      - "c 239:* rmw"
+      - "c 240:* rmw"
+      - "c 241:* rmw"
+      - "c 242:* rmw"
+      - "c 243:* rmw"
+      - "c 244:* rmw"
+      - "c 245:* rmw"
+      - "c 246:* rmw"
+      - "c 247:* rmw"
+      - "c 248:* rmw"
+      - "c 249:* rmw"
+      - "c 250:* rmw"
+      - "c 251:* rmw"
+      - "c 252:* rmw"
+      - "c 253:* rmw"
+      - "c 254:* rmw"
     volumes:
       - /dev:/dev-servidor:ro
       - documentos:/app/storage

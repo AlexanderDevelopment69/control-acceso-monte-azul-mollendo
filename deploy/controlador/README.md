@@ -46,7 +46,6 @@ tar -xzf ~/mollendo.tgz && rm ~/mollendo.tgz
 cd deploy/controlador
 cp .env.example .env && chmod 600 .env
 ls /dev/serial/by-id/          # una ruta por lector: anota cuál es el de ingreso y cuál el de salida
-grep hidraw /proc/devices      # con un relé conectado; si no dice 234, agrega RELE_USB_HIDRAW_MAJOR=<número> al .env
 ```
 
 **4. Completar el `.env`** (`nano .env`; guardar `Ctrl+O`, salir `Ctrl+X`):

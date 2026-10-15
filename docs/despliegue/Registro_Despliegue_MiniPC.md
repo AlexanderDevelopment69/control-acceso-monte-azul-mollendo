@@ -578,7 +578,6 @@ RELE_INGRESO_SERIE=ING01
 RELE_SALIDA_SERIE=SAL01
 # RELE_INGRESO_CANAL=1 / RELE_SALIDA_CANAL=1   (relé del módulo, 1 por defecto)
 # RELE_PULSO_MS=1000                           (duración del pulso)
-# RELE_USB_HIDRAW_MAJOR=234                    (ver `grep hidraw /proc/devices`)
 ```
 
 Después: `sudo docker compose up -d`.
@@ -924,7 +923,7 @@ Cada relé se identifica por el número de serie de su módulo (5 caracteres; c�
 | `RELE_AVISO_INGRESO_SERIE`, `RELE_AVISO_SALIDA_SERIE` | No | Módulo del aviso (luz o sirena) de ingreso denegado / salida denegada. Sin serie, el aviso no se usa. `RELE_AVISO_SERIE` es el nombre anterior del de ingreso. | Hoy `DEN01` y `DSA01` |
 | `RELE_AVISO_INGRESO_CANAL`, `RELE_AVISO_SALIDA_CANAL` | No | Relé del módulo de aviso. | Por defecto `1` |
 | `RELE_AVISO_PULSO_MS` | No | Duración del aviso, en milisegundos. | Por defecto, la misma que `RELE_PULSO_MS` |
-| `RELE_USB_HIDRAW_MAJOR` | Solo si no es 234 | Número que el sistema da a los dispositivos `hidraw` (los módulos de relés), para darle permiso al contenedor. | `grep hidraw /proc/devices` |
+| ~~`RELE_USB_HIDRAW_MAJOR`~~ | Ya no se usa (15/10/2026) | El número de los relés (`hidraw`) lo da el kernel al arrancar y puede cambiar en cada reinicio; los `docker-compose.yml` de `controlador` y `garita` permiten todo el rango dinámico (234 a 254). Si un `.env` antiguo lo tiene, se ignora | — |
 
 ### B.4. Solo del controlador
 

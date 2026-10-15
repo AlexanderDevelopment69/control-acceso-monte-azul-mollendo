@@ -384,6 +384,21 @@ export const SECCIONES: SeccionManual[] = [
               comillas: false,
               texto: "Aparece un aviso arriba a la derecha: mientras dure, no se valida ningún ingreso.",
             },
+            {
+              Icono: IconoAlcohol,
+              boton: "No completó rostro y alcohol",
+              tono: "aviso",
+              comillas: false,
+              texto: (
+                <>
+                  Cuando alguien no completa la verificación en su minuto, aparece un aviso ámbar arriba del Panel con su
+                  nombre y la hora. Si la persona dice que no pudo soplar, revisa si el terminal facial muestra un{" "}
+                  <strong>punto rojo</strong> (alcoholímetro desconectado) y <strong>avisa al soporte técnico</strong>{" "}
+                  para que conecte el repuesto. El aviso se cierra con la ✕ o desaparece solo cuando la siguiente persona
+                  ingresa bien. La misma explicación sale al pasar el mouse sobre la ⓘ de la tabla.
+                </>
+              ),
+            },
           ]}
         />
       </div>

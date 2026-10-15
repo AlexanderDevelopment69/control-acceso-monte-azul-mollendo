@@ -89,7 +89,7 @@ La persona que no puede soplar **no se va**: le avisa al vigilante en ese moment
 |---|---|
 | La persona dice *"miré al equipo pero no me deja soplar"* | — |
 | El Panel muestra "esperando rostro y alcohol" y, al minuto, "Denegado: no completó rostro y alcohol" | Ya existe |
-| **Pista en el Panel** junto a ese denegado: *"Si la persona dice que no pudo soplar, revise el alcoholímetro del equipo facial (punto rojo en la pantalla) y conecte el repuesto"* | Por programar |
+| **Aviso en el Panel**: en el momento en que alguien no completa, aparece arriba del Panel un aviso ámbar con su nombre y la hora: *"Si dice que no pudo soplar: revise si el equipo facial muestra un punto rojo (alcoholímetro desconectado) y avise a soporte."* Se cierra con la ✕ o desaparece solo cuando la siguiente persona ingresa bien; se mantiene al recargar la página. La etiqueta "No completó rostro y alcohol" de la tabla lleva una ⓘ con la misma explicación | Programado (15/10/2026); falta subirlo al servidor |
 | Punto rojo en la pantalla del equipo facial | Ya existe |
 
 ### 3.3. Qué se hace
@@ -371,7 +371,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | 3 | ¿Quién activa la verificación manual? ¿Quién aprueba cada ingreso? | La activan y desactivan **el vigilante y el administrador**; cada ingreso lo aprueba el vigilante de turno (15/10/2026) |
 | 4 | ¿Habrá un **alcoholímetro de repuesto**? | **Sí**, DT1700 u otro compatible con el equipo facial (15/10/2026) |
 | 5 | ¿Tiempo máximo para la verificación manual? | **No** (15/10/2026) |
-| 6 | ¿Aviso por "varias personas seguidas sin completar la prueba"? | **No**: la persona avisa al vigilante en ese momento. En su lugar, una pista en el Panel (15/10/2026) |
+| 6 | ¿Aviso por "varias personas seguidas sin completar la prueba"? | **No**: la persona avisa al vigilante en ese momento. En su lugar, un aviso en el Panel con la primera persona que no completa (15/10/2026) |
 | 7 | ¿Qué se hace ante un **corte de internet**? | **A cargo de TMAM**: segunda conexión con los requisitos de la sección 5.2. Si fallan las dos, nadie ingresa y las salidas siguen (15/10/2026) |
 | 8 | ¿Qué se hace si falla el **lector de DNI**? | Mientras tanto, **solo el equipo facial** identifica a la persona en el ingreso (si la prueba con el equipo sale bien) o **el vigilante escribe el DNI** (ingreso y salida); se conecta el **lector de repuesto** (15/10/2026) |
 | 9 | ¿Qué se hace si falla el **relé de un molinete**? | Se cambia de inmediato por el **repuesto** (15/10/2026) |
@@ -397,7 +397,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Qué | Sección |
 |---|---|
 | Verificación manual (activar y desactivar, franja, ventana con la foto y los botones, marca en historial y reportes, "¿volver a modo normal?") | 4 |
-| Pista en el Panel junto a "no completó rostro y alcohol" | 3.2 |
+| ~~Aviso en el Panel junto a "no completó rostro y alcohol"~~ Hecho el 15/10/2026 (falta subirlo al servidor) | 3.2 |
 | Identificación por rostro en el ingreso, automática al desconectarse el lector (opción 1; solo si la prueba sale bien) | 6.3 |
 | Campo "Ingresar DNI manualmente" en el Panel (ingreso y salida), con la marca en el historial (opción 2) | 6.3 |
 | Adaptador de repuesto registrado desde antes (si se elige la opción B) | 6.4 |

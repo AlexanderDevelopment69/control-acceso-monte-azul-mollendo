@@ -24,15 +24,20 @@ import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { FilasEnEspera } from "./FilasEnEspera";
 import { documentoDelEvento, MotivoDenegacion, Movimiento } from "./CeldasEvento";
 import { DocumentosModal } from "./DocumentosModal";
-
-// Payload del WebSocket (ver EventosAccesoService en el backend): aquí solo
-// se usa el id del evento, para resaltar su fila cuando la tabla se recarga.
-interface EventoLive {
-  eventoId: number;
-}
+import {
+  avisoDesdeHistorial,
+  AvisoNoCompletoBanner,
+  siguienteAviso,
+  type AvisoNoCompleto,
+  type EventoEnVivo,
+} from "./AvisoNoCompleto";
 
 // Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
 const RESALTE_MS = 8000;
+/** Último aviso de "no completó" cerrado con la ✕ (su id de evento), para que no vuelva al recargar. */
+const CLAVE_AVISO_CERRADO = "vigilancia.avisoNoCompletoCerrado";
+/** Ingresos recientes que se miran al abrir el Panel para saber si corresponde el aviso. */
+const EVENTOS_PARA_AVISO = 20;
 /** Recarga de respaldo del panel, por si el canal en vivo se corta sin avisar. */
 const RECARGA_RESPALDO_MS = 60_000;
 const POR_PAGINA = 10;
@@ -84,6 +89,38 @@ function VigilanciaContent() {
     void cargar();
   }, [cargar]);
 
+  // Aviso de "no completó rostro y alcohol": al abrir el Panel (y al recuperar
+  // la conexión) se calcula con los ingresos de hoy, sin importar los filtros
+  // de la tabla; después lo actualizan los eventos en vivo.
+  const [aviso, setAviso] = useState<AvisoNoCompleto | null>(null);
+  const [avisoCerrado, setAvisoCerrado] = useState<number | null>(() => {
+    try {
+      return Number(localStorage.getItem(CLAVE_AVISO_CERRADO)) || null;
+    } catch {
+      return null; // Sin almacenamiento (modo privado o en el servidor): no se recuerda.
+    }
+  });
+  const cargarAviso = useCallback(async () => {
+    try {
+      const recientes = await eventosAccesoApi.list({ pagina: 1, porPagina: EVENTOS_PARA_AVISO, desde: hoy(), hasta: hoy() });
+      setAviso(avisoDesdeHistorial(recientes.datos));
+    } catch {
+      // Si falla, la tabla ya avisa del error de carga; el aviso llega con el próximo evento en vivo.
+    }
+  }, []);
+  useEffect(() => {
+    void cargarAviso();
+  }, [cargarAviso]);
+  function cerrarAviso() {
+    if (!aviso) return;
+    setAvisoCerrado(aviso.eventoId);
+    try {
+      localStorage.setItem(CLAVE_AVISO_CERRADO, String(aviso.eventoId));
+    } catch {
+      // Ver arriba.
+    }
+  }
+
   // El socket se conecta una sola vez; siempre recarga con los filtros vigentes.
   const cargarActual = useRef(cargar);
   useEffect(() => {
@@ -98,8 +135,12 @@ function VigilanciaContent() {
     let socket: Socket | undefined;
     try {
       // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
-      socket = connectEventosSocket(() => void cargarActual.current());
-      socket.on("evento-acceso", (payload: EventoLive) => {
+      socket = connectEventosSocket(() => {
+        void cargarActual.current();
+        void cargarAviso();
+      });
+      socket.on("evento-acceso", (payload: EventoEnVivo) => {
+        setAviso((actual) => siguienteAviso(actual, payload));
         setUltimo(payload.eventoId);
         if (finResalte.current) clearTimeout(finResalte.current);
         finResalte.current = setTimeout(() => setUltimo(null), RESALTE_MS);
@@ -123,7 +164,7 @@ function VigilanciaContent() {
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
       if (finResalte.current) clearTimeout(finResalte.current);
     };
-  }, []);
+  }, [cargarAviso]);
 
   // Respaldo del tiempo real: aunque el canal en vivo falle sin avisar, la
   // tabla, los contadores y las esperas se ponen al día cada minuto.
@@ -211,6 +252,8 @@ function VigilanciaContent() {
           </Button>
         </div>
       )}
+
+      {aviso && aviso.eventoId !== avisoCerrado && <AvisoNoCompletoBanner aviso={aviso} onCerrar={cerrarAviso} />}
 
       {/* En el celular, los tres contadores en una fila y compactos. */}
       <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">

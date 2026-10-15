@@ -54,7 +54,6 @@ RELE_AVISO_SALIDA_SERIE=DSA01
 EOF
 chmod 600 .env
 ls /dev/serial/by-id/          # una ruta por lector
-grep hidraw /proc/devices      # con un relé conectado; si no dice 234, agrega RELE_USB_HIDRAW_MAJOR=<número> al .env
 nano .env                      # agrega LECTOR_DNI_INGRESO_DISPOSITIVO=... y LECTOR_DNI_SALIDA_DISPOSITIVO=... con esas rutas
 cat .env                       # anota las dos contraseñas iniciales
 ```

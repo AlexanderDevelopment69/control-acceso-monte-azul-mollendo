@@ -1,7 +1,8 @@
 import React from "react";
 import type { EventoAcceso } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
-import { ArrowRightIcon } from "@/icons";
+import { ArrowRightIcon, InfoIcon } from "@/icons";
+import { PISTA_NO_COMPLETO } from "./AvisoNoCompleto";
 
 /** Ingreso (flecha hacia adentro, azul) o salida (hacia afuera, gris), para distinguirlos sin leer. */
 export function Movimiento({ tipo }: { tipo: string }) {
@@ -33,7 +34,16 @@ export function MotivoDenegacion({
 }) {
   if (evento.denegadoNoRegistrado) return <Badge color="error">No registrado</Badge>;
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
-  if (evento.denegadoSinVerificacion) return <Badge color="error">No completó rostro y alcohol</Badge>;
+  if (evento.denegadoSinVerificacion) {
+    // La ⓘ explica qué revisar, para quien lo mira después del aviso de arriba.
+    return (
+      <span title={PISTA_NO_COMPLETO} aria-label={`No completó rostro y alcohol. ${PISTA_NO_COMPLETO}`} className="cursor-help">
+        <Badge color="error" endIcon={<InfoIcon className="size-3.5" />}>
+          No completó rostro y alcohol
+        </Badge>
+      </span>
+    );
+  }
   const motivos: string[] = [];
   if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
   if (evento.denegadoPorAlcohol) motivos.push("Alcohol");
