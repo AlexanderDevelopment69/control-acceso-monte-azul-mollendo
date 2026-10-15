@@ -560,6 +560,8 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 | `RELE_AVISO_SALIDA_SERIE` | `DSA01` | Aviso de salida denegada |
 | `RELE_AVISO_*_CANAL` | 1 por defecto | Relé del módulo que se usa |
 | `RELE_AVISO_PULSO_MS` | por defecto la de los molinetes, 1 s | Duración del pulso de los dos avisos |
+| `RELE_AVISO_INGRESO_MODO`, `RELE_AVISO_SALIDA_MODO` | vacío (un pulso) | `alterno` si lo conectado se prende con un contacto y se apaga con el siguiente (el **pitido de los torniquetes**): se dan dos pulsos |
+| `RELE_AVISO_ALTERNO_MS` | `3000` | Con el modo `alterno`, cuánto suena entre los dos pulsos |
 
 - **Con controlador:** el servidor en la nube le manda el aviso al controlador por el mismo canal de las aperturas, indicando la puerta.
 - **En "Sistema y APIs":** aparecen en la tarjeta de relés como **"Aviso ingreso denegado"** y **"Aviso salida denegada"**, con la hora del último aviso.
@@ -923,6 +925,8 @@ Cada relé se identifica por el número de serie de su módulo (5 caracteres; c�
 | `RELE_AVISO_INGRESO_SERIE`, `RELE_AVISO_SALIDA_SERIE` | No | Módulo del aviso (luz o sirena) de ingreso denegado / salida denegada. Sin serie, el aviso no se usa. `RELE_AVISO_SERIE` es el nombre anterior del de ingreso. | Hoy `DEN01` y `DSA01` |
 | `RELE_AVISO_INGRESO_CANAL`, `RELE_AVISO_SALIDA_CANAL` | No | Relé del módulo de aviso. | Por defecto `1` |
 | `RELE_AVISO_PULSO_MS` | No | Duración del aviso, en milisegundos. | Por defecto, la misma que `RELE_PULSO_MS` |
+| `RELE_AVISO_INGRESO_MODO`, `RELE_AVISO_SALIDA_MODO` | No | `alterno` cuando lo conectado al aviso se prende con un contacto y se apaga con el siguiente, como el pitido de los torniquetes de la garita: el sistema da un pulso para prenderlo y otro, `RELE_AVISO_ALTERNO_MS` después, para apagarlo. Si llega otro denegado mientras suena, solo alarga el tiempo (nunca da un pulso de más); si el apagado falla, lo reintenta hasta 3 veces y deja el error en "Sistema y APIs". Vacío = un solo pulso (luz o sirena común) | Vacío; en la garita `alterno` (desde el 15/10/2026, primero la salida) |
+| `RELE_AVISO_ALTERNO_MS` | No | Con el modo `alterno`, milisegundos entre el pulso que prende y el que apaga. | `3000` |
 | ~~`RELE_USB_HIDRAW_MAJOR`~~ | Ya no se usa (15/10/2026) | El número de los relés (`hidraw`) lo da el kernel al arrancar y puede cambiar en cada reinicio; los `docker-compose.yml` de `controlador` y `garita` permiten todo el rango dinámico (234 a 254). Si un `.env` antiguo lo tiene, se ignora | — |
 
 ### B.4. Solo del controlador

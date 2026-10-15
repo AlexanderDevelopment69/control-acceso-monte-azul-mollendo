@@ -16,7 +16,21 @@ type Molinete = Rele;
 /** Relé de aviso de cada puerta. */
 export const AVISO_DE = { ingreso: 'avisoIngreso', salida: 'avisoSalida' } as const;
 
-const esAviso = (rele: Rele) => rele === 'avisoIngreso' || rele === 'avisoSalida';
+type Aviso = 'avisoIngreso' | 'avisoSalida';
+const esAviso = (rele: Rele): rele is Aviso => rele === 'avisoIngreso' || rele === 'avisoSalida';
+
+/**
+ * Cómo responde lo que está conectado al relé de aviso:
+ * - `pulso`: suena mientras el contacto está cerrado (una luz o una sirena común).
+ * - `alterno`: un contacto lo prende y el siguiente lo apaga (el pitido de los
+ *   torniquetes de la garita, 15/10/2026): se dan dos pulsos, separados por
+ *   `RELE_AVISO_ALTERNO_MS`.
+ */
+type ModoAviso = 'pulso' | 'alterno';
+const modoAviso = (valor: string | undefined): ModoAviso => (valor?.trim().toLowerCase() === 'alterno' ? 'alterno' : 'pulso');
+
+/** Intentos para callar un aviso alterno si el pulso de apagado falla (relé desconectado, por ejemplo). */
+const INTENTOS_APAGADO = 3;
 const NOMBRE: Record<Rele, string> = {
   ingreso: 'molinete de ingreso',
   salida: 'molinete de salida',
@@ -63,7 +77,10 @@ export type EstadoReleUsb = Record<'ingreso' | 'salida', EstadoReleMolinete> & {
  * sirena o un tablero de garita): uno cada vez que se deniega un ingreso
  * (`RELE_AVISO_INGRESO_SERIE`, o `RELE_AVISO_SERIE`) y otro cada vez que se
  * deniega una salida (`RELE_AVISO_SALIDA_SERIE`), con su `…_CANAL` y la
- * duración `RELE_AVISO_PULSO_MS`. Sin número de serie no se usan.
+ * duración `RELE_AVISO_PULSO_MS`. Sin número de serie no se usan. Con
+ * `RELE_AVISO_INGRESO_MODO` / `RELE_AVISO_SALIDA_MODO` = `alterno`, el aviso da
+ * dos pulsos (prende y apaga) separados por `RELE_AVISO_ALTERNO_MS` (3000 por
+ * defecto): ver `ModoAviso`.
  */
 @Injectable()
 export class ReleUsbService {
@@ -84,6 +101,19 @@ export class ReleUsbService {
   private readonly pulsoAvisoMs = Number(process.env.RELE_AVISO_PULSO_MS) || this.pulsoMs;
   private readonly ultimoPulso: Record<Molinete, string | null> = { ingreso: null, salida: null, avisoIngreso: null, avisoSalida: null };
   private readonly ultimoError: Record<Molinete, string | null> = { ingreso: null, salida: null, avisoIngreso: null, avisoSalida: null };
+  private readonly modo: Record<Aviso, ModoAviso> = {
+    avisoIngreso: modoAviso(process.env.RELE_AVISO_INGRESO_MODO),
+    avisoSalida: modoAviso(process.env.RELE_AVISO_SALIDA_MODO),
+  };
+  /** Cuánto suena un aviso alterno: desde que termina el pulso que lo prende hasta el que lo apaga. */
+  private readonly alternoMs = Number(process.env.RELE_AVISO_ALTERNO_MS) || 3000;
+  /**
+   * Aviso alterno sonando: el apagado programado. El sistema no puede leer si
+   * el torniquete pita; lo sabe por los pulsos que dio. Por eso cada aviso se
+   * maneja en orden (`colaAviso`) y nunca se da un pulso de más.
+   */
+  private readonly apagado: Partial<Record<Aviso, ReturnType<typeof setTimeout>>> = {};
+  private readonly colaAviso: Record<Aviso, Promise<unknown>> = { avisoIngreso: Promise.resolve(), avisoSalida: Promise.resolve() };
 
   /** ¿Está configurado ese relé de aviso? Sin número de serie no se usa (no se adivina cuál es). */
   avisoConfigurado(aviso: 'avisoIngreso' | 'avisoSalida'): boolean {
@@ -134,8 +164,54 @@ export class ReleUsbService {
     return modulos.length === 1 ? modulos[0] : null;
   }
 
-  /** Pulso en el relé del molinete indicado. Nunca lanza: los errores quedan en el registro y en el estado. */
+  /**
+   * Pulso en el relé del molinete indicado (o el aviso, según su modo). Nunca
+   * lanza: los errores quedan en el registro y en el estado. En un aviso
+   * alterno vuelve tras prenderlo; el apagado queda programado.
+   */
   async pulso(molinete: Molinete): Promise<boolean> {
+    if (esAviso(molinete) && this.modo[molinete] === 'alterno') return this.enOrden(molinete, () => this.prenderAlterno(molinete));
+    return this.pulsoSimple(molinete);
+  }
+
+  private enOrden<T>(aviso: Aviso, tarea: () => Promise<T>): Promise<T> {
+    const resultado = this.colaAviso[aviso].then(tarea, tarea);
+    this.colaAviso[aviso] = resultado.catch(() => undefined);
+    return resultado;
+  }
+
+  /** Denegado con un aviso alterno: si ya suena, solo se alarga; si no, se prende y se programa el apagado. */
+  private async prenderAlterno(aviso: Aviso): Promise<boolean> {
+    const programado = this.apagado[aviso];
+    if (programado) {
+      clearTimeout(programado);
+      this.programarApagado(aviso, 1);
+      this.logger.log(`Contacto de ${NOMBRE[aviso]}: ya estaba sonando; se alarga ${this.alternoMs} ms`);
+      return true;
+    }
+    if (!(await this.pulsoSimple(aviso))) return false; // no se prendió: no hay nada que apagar
+    this.programarApagado(aviso, 1);
+    return true;
+  }
+
+  private programarApagado(aviso: Aviso, intento: number) {
+    this.apagado[aviso] = setTimeout(() => void this.enOrden(aviso, () => this.apagarAlterno(aviso, intento)), this.alternoMs);
+  }
+
+  /** Segundo pulso: lo apaga. Si falla, sigue sonando y se reintenta (y queda el error a la vista en "Sistema y APIs"). */
+  private async apagarAlterno(aviso: Aviso, intento: number) {
+    delete this.apagado[aviso];
+    if (await this.pulsoSimple(aviso)) {
+      this.logger.log(`Contacto de ${NOMBRE[aviso]}: segundo pulso, apagado`);
+      return;
+    }
+    this.ultimoError[aviso] = `No se pudo apagar el aviso (intento ${intento} de ${INTENTOS_APAGADO}): puede seguir sonando`;
+    this.logger.error(`${NOMBRE[aviso]}: ${this.ultimoError[aviso]}`);
+    if (intento < INTENTOS_APAGADO) this.programarApagado(aviso, intento + 1);
+  }
+
+  /** Un pulso (prender, esperar, apagar el relé). Protegido para poder simularlo en las pruebas. */
+  protected async pulsoSimple(molinete: Molinete): Promise<boolean> {
     const modulo = await this.moduloDe(molinete);
     const { canal, serie } = this.config[molinete];
     const que = esAviso(molinete) ? NOMBRE[molinete] : `abrir ${NOMBRE[molinete]}`;

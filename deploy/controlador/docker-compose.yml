@@ -33,6 +33,11 @@ services:
       RELE_AVISO_SALIDA_SERIE: ${RELE_AVISO_SALIDA_SERIE:-}
       RELE_AVISO_SALIDA_CANAL: ${RELE_AVISO_SALIDA_CANAL:-1}
       RELE_AVISO_PULSO_MS: ${RELE_AVISO_PULSO_MS:-}
+      # "alterno": un contacto prende el aviso y el siguiente lo apaga (el pitido de los
+      # torniquetes); se dan dos pulsos separados por RELE_AVISO_ALTERNO_MS. Vacío = un pulso.
+      RELE_AVISO_INGRESO_MODO: ${RELE_AVISO_INGRESO_MODO:-}
+      RELE_AVISO_SALIDA_MODO: ${RELE_AVISO_SALIDA_MODO:-}
+      RELE_AVISO_ALTERNO_MS: ${RELE_AVISO_ALTERNO_MS:-3000}
     # Igual que la API de la mini PC: puertos serie USB (lectores) y hidraw (relés).
     device_cgroup_rules:
       - "c 188:* rmw"
