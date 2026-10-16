@@ -60,6 +60,8 @@ const UMBRAL_EN_LINEA_MS = 2 * 60 * 1000;
 @Injectable()
 export class PushSdkService {
   private readonly logger = new Logger(PushSdkService.name);
+  /** Equipos a los que ya se les pidió "INFO" desde que arrancó la API (una vez por equipo). */
+  private readonly infoPedida = new Set<string>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -80,6 +82,27 @@ export class PushSdkService {
     return this.prisma.dispositivoAcceso.create({
       data: { serialNumber, registryCode, ipAddress, ipLocal: ipLocal ?? null, ultimaActividad: new Date() },
     });
+  }
+
+  /**
+   * Pide al equipo sus datos (comando INFO) la primera vez que se conecta
+   * desde que arrancó la API: responde por /iclock/devicecmd con su IP en la
+   * garita, entre otros datos. Así la IP está aunque el equipo no se haya
+   * vuelto a registrar (solo lo hace al encenderse o tras un corte).
+   */
+  async pedirInfoUnaVez(serialNumber: string) {
+    if (this.infoPedida.has(serialNumber)) return;
+    this.infoPedida.add(serialNumber);
+    try {
+      await this.encolarComando(serialNumber, 'INFO');
+    } catch {
+      this.infoPedida.delete(serialNumber); // todavía no registrado: se intenta en la próxima llamada
+    }
+  }
+
+  /** IP en la garita que informó el equipo (en el registro o en la respuesta a INFO). */
+  async guardarIpLocal(serialNumber: string, ipLocal: string) {
+    await this.prisma.dispositivoAcceso.updateMany({ where: { serialNumber }, data: { ipLocal } });
   }
 
   async tocarActividad(serialNumber: string, ipAddress?: string) {

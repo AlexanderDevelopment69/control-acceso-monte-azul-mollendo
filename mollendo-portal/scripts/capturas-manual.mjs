@@ -77,7 +77,7 @@ const CAPTURAS = [
     puntos: [
       { sel: "button::-p-text(Este mes)", recuadro: "div" },
       { sel: "::-p-text(Presentes actualmente)", recuadro: ".border" },
-      { sel: "::-p-text(Comparativa de visitas)", recuadro: ".border" },
+      { sel: "::-p-text(Comparativa de ingresos)", recuadro: ".border" },
       { sel: "::-p-text(Permanencia mayor)", recuadro: ".border" },
     ],
   },

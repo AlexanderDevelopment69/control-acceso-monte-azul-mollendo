@@ -35,6 +35,7 @@ export class PushSdkController {
   @Header('Content-Type', 'text/plain')
   async getrequest(@Query('SN') sn: string, @Req() req: Request) {
     await this.pushSdk.tocarActividad(sn, req.ip);
+    await this.pushSdk.pedirInfoUnaVez(sn);
     const comandos = await this.pushSdk.entregarComandosPendientes(sn);
     return comandos.length > 0 ? comandos.join('\n') : 'OK';
   }
@@ -42,6 +43,9 @@ export class PushSdkController {
   @Post('devicecmd')
   @Header('Content-Type', 'text/plain')
   async devicecmd(@Query('SN') sn: string, @Body() body: string) {
+    // La respuesta a INFO trae los datos del equipo, uno por línea (entre ellos "IPAddress=").
+    const ipLocal = ipLocalDeRegistro(body);
+    if (ipLocal) await this.pushSdk.guardarIpLocal(sn, ipLocal);
     // Si el equipo recibió varios comandos juntos, confirma todos en el mismo
     // mensaje: una línea "ID=..&Return=..&CMD=.." por comando.
     for (const linea of (body ?? '').split(/\r?\n/)) {

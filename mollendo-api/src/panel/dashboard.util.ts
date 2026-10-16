@@ -4,8 +4,9 @@ import { esDocumentoVigente } from '../eventos-acceso/validacion-acceso.engine.j
  * Cálculos del dashboard (indicadores y gráficos). Son funciones puras sobre
  * los datos ya leídos de la base: el servicio solo consulta y arma la respuesta.
  * Los días se cuentan en la hora local del servidor (Lima, ver zona-horaria.ts).
- * El cliente llama "visita" a cada acceso del personal: cada ingreso autorizado
- * de una persona es una visita.
+ * Cada ingreso autorizado de una persona cuenta en el Dashboard como un
+ * ingreso (en el código, "visita": el cliente lo llamaba así hasta el 16/10/2026,
+ * cuando "Visita" pasó a ser un perfil de persona).
  */
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000;

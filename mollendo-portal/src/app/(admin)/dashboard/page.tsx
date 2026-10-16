@@ -70,7 +70,7 @@ const horas = (v: number) => v.toLocaleString("es-PE", { maximumFractionDigits: 
 function textoHorasHombre(d: Dashboard): string {
   const h = d.horasHombre;
   if (!h) return "Tiempo dentro del terminal, de cada ingreso a su salida";
-  return `Total del periodo: ${horas(h.horas)} h, de ${h.visitas} visitas (ingreso y salida por el molinete).`;
+  return `Total del periodo: ${horas(h.horas)} h, de ${h.visitas} ingresos con su salida por el molinete.`;
 }
 
 /** Horas o días transcurridos desde una fecha, para la permanencia. */
@@ -82,7 +82,7 @@ function tiempoDentro(desde: string, ahora: string): string {
 
 /**
  * Presentes actualmente = todas las personas dentro, sin importar cuándo
- * entraron. El gráfico solo cuenta las visitas del periodo; la diferencia son
+ * entraron. El gráfico solo cuenta los ingresos del periodo; la diferencia son
  * quienes entraron antes del periodo (p. ej. la permanencia mayor a 12 h).
  */
 function detallePresentes(d: Dashboard | null): string {
@@ -194,7 +194,7 @@ function DashboardContent() {
     <div>
       <PageHeader
         title="Dashboard"
-        description="Indicadores de presencia, visitas, ingresos y salidas, personal y documentos. Cada ingreso autorizado cuenta como una visita. Se actualiza en tiempo real."
+        description="Indicadores de presencia, ingresos y salidas, personal y documentos. Se actualiza en tiempo real."
       />
 
       <SelectorPeriodo estado={periodoElegido} id="dashboard" className="mb-6" />
@@ -219,14 +219,14 @@ function DashboardContent() {
           fondoIcono="bg-brand-500"
         />
         <TarjetaIndicador
-          titulo="Visitas finalizadas"
+          titulo="Ingresos finalizados"
           valor={d?.visitas.finalizadas ?? null}
-          detalle="Visitas del periodo que ya registraron su salida"
+          detalle="Ingresos del periodo que ya registraron su salida"
           icono={<CheckCircleIcon />}
           fondoIcono="bg-success-500"
         />
         <TarjetaIndicador
-          titulo="Total de visitas"
+          titulo="Total de ingresos"
           valor={d?.visitas.total ?? null}
           detalle="Ingresos autorizados en el periodo"
           icono={<GroupIcon />}
@@ -247,33 +247,33 @@ function DashboardContent() {
       ) : (
         d && (
           <div className="space-y-6">
-            {/* Visitas */}
+            {/* Ingresos del periodo: presentes y finalizados */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <Bloque titulo="Comparativa de visitas" descripcion={`Total de visitas en el periodo: ${d.visitas.total}`}>
+              <Bloque titulo="Comparativa de ingresos" descripcion={`Total de ingresos en el periodo: ${d.visitas.total}`}>
                 {!hayVisitas ? (
-                  <SinDatos texto="No hubo visitas en el periodo." />
+                  <SinDatos texto="No hubo ingresos en el periodo." />
                 ) : (
                   <Grafico
                     tipo="bar"
-                    series={[{ name: "Visitas", data: [d.visitas.presentes, d.visitas.finalizadas] }]}
+                    series={[{ name: "Ingresos", data: [d.visitas.presentes, d.visitas.finalizadas] }]}
                     opciones={{
                       colors: [COLORES.marca, COLORES.exito],
                       plotOptions: { bar: { distributed: true, borderRadius: 6, columnWidth: "45%", dataLabels: { position: "top" } } },
                       dataLabels: { enabled: true, offsetY: -24, style: { fontSize: "13px", colors: ["#667085"] } },
-                      xaxis: { categories: ["Presentes", "Finalizadas"] },
+                      xaxis: { categories: ["Presentes", "Finalizados"] },
                       yaxis: ejeEntero([d.visitas.presentes, d.visitas.finalizadas], true),
                       legend: { show: false },
                     }}
                   />
                 )}
               </Bloque>
-              <Bloque titulo="Distribución: presentes frente a finalizadas" descripcion="Visitas del periodo según hayan registrado su salida">
+              <Bloque titulo="Distribución: presentes frente a finalizados" descripcion="Ingresos del periodo según hayan registrado su salida">
                 {hayVisitas ? (
                   <Grafico
                     tipo="donut"
                     series={[d.visitas.presentes, d.visitas.finalizadas]}
                     opciones={{
-                      labels: ["Presentes", "Finalizadas"],
+                      labels: ["Presentes", "Finalizados"],
                       colors: [COLORES.marca, COLORES.exito],
                       dataLabels: { enabled: true, formatter: porcentajeVisible },
                       plotOptions: {
@@ -282,7 +282,7 @@ function DashboardContent() {
                     }}
                   />
                 ) : (
-                  <SinDatos texto="No hubo visitas en el periodo." />
+                  <SinDatos texto="No hubo ingresos en el periodo." />
                 )}
               </Bloque>
             </div>
@@ -446,7 +446,7 @@ function DashboardContent() {
                   }}
                 />
               ) : (
-                <SinDatos texto="Ninguna visita con salida en el periodo." />
+                <SinDatos texto="Ningún ingreso con salida en el periodo." />
               )}
             </Bloque>
 

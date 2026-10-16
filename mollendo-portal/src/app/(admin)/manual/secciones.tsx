@@ -597,16 +597,16 @@ export const SECCIONES: SeccionManual[] = [
       <div className="space-y-3">
         <p>
           El <Link href="/dashboard" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">Dashboard</Link>{" "}
-          resume en indicadores y gráficos lo que pasa en el terminal. Cada ingreso autorizado cuenta como una visita. Se
-          actualiza solo con los ingresos y salidas (con mucho movimiento, como máximo cada 10 segundos).
+          resume en indicadores y gráficos lo que pasa en el terminal. Cuenta los ingresos autorizados (de cualquier
+          perfil) y sus salidas. Se actualiza solo con los ingresos y salidas (con mucho movimiento, como máximo cada 10 segundos).
         </p>
         <Captura
           clave="dashboard"
           alt="Dashboard con el periodo elegido, los indicadores y los gráficos"
           pasos={[
             "Elige el periodo: hoy, últimos 7 días, este mes o uno personalizado.",
-            "Indicadores del periodo: presentes, visitas finalizadas y total de visitas.",
-            "Gráficos de visitas, ingresos y salidas.",
+            "Indicadores del periodo: presentes, ingresos finalizados y total de ingresos.",
+            "Gráficos de ingresos y salidas.",
             "Quienes llevan más de 12 horas dentro sin registrar salida.",
           ]}
         />
@@ -622,16 +622,16 @@ export const SECCIONES: SeccionManual[] = [
             },
             {
               Icono: IconoRegistrado,
-              boton: "Visitas finalizadas",
+              boton: "Ingresos finalizados",
               tono: "exito",
               comillas: false,
-              texto: "Visitas del periodo que ya registraron su salida.",
+              texto: "Ingresos del periodo que ya registraron su salida.",
             },
             {
               Icono: IconoGrafico,
-              boton: "Total de visitas",
+              boton: "Total de ingresos",
               comillas: false,
-              texto: "Ingresos autorizados en el periodo elegido: las finalizadas más las que siguen presentes.",
+              texto: "Ingresos autorizados en el periodo elegido: los finalizados más los que siguen presentes.",
             },
             {
               Icono: IconoReloj,
@@ -645,7 +645,7 @@ export const SECCIONES: SeccionManual[] = [
 
         <Subtitulo>Los gráficos</Subtitulo>
         <p>
-          Visitas, ingresos y salidas (por día; por semana si el periodo pasa de 2 meses y por mes si pasa de un año),
+          Ingresos presentes y finalizados, ingresos y salidas (por día; por semana si el periodo pasa de 2 meses y por mes si pasa de un año),
           motivos de denegación, documentos del personal activo (vigentes, por vencer en 30 días y vencidos), personal
           activo por empresa, <strong>ingresos por perfil</strong> y <strong>horas-hombre por empresa</strong>.
         </p>
@@ -655,9 +655,9 @@ export const SECCIONES: SeccionManual[] = [
         </p>
         <p>
           <strong>Horas-hombre por empresa</strong>: las horas que el personal de cada empresa estuvo dentro en el periodo,
-          de cada ingreso a su salida, de mayor a menor (las 8 primeras y “Otras”). Una visita que cruza el periodo suma
-          solo sus horas dentro de él. Solo cuentan las visitas <strong>completas</strong> (ingreso y salida por el
-          molinete): quien sigue dentro suma sus horas cuando marca la salida. Arriba del gráfico se indica el total. El
+          de cada ingreso a su salida, de mayor a menor (las 8 primeras y “Otras”). Un ingreso que cruza el periodo suma
+          solo sus horas dentro de él. Solo cuentan los ingresos <strong>con su salida</strong> por el
+          molinete: quien sigue dentro suma sus horas cuando marca la salida. Arriba del gráfico se indica el total. El
           detalle por empresa y por persona está en el reporte “Horas-hombre”.
         </p>
         <Nota>
@@ -718,9 +718,9 @@ export const SECCIONES: SeccionManual[] = [
             },
             {
               Icono: IconoRegistrado,
-              boton: "Visitas del periodo",
+              boton: "Ingresos del periodo",
               comillas: false,
-              texto: "Cada ingreso autorizado con su salida, duración y si está finalizada o presente. Filtros: periodo y perfil.",
+              texto: "Cada ingreso autorizado con su salida, duración y si está finalizado o presente. Filtros: periodo y perfil.",
             },
             {
               Icono: IconoCalendario,
@@ -728,8 +728,8 @@ export const SECCIONES: SeccionManual[] = [
               comillas: false,
               texto: (
                 <>
-                  Horas dentro del terminal <strong>por empresa</strong> (personas, visitas y horas-hombre) y, en otra hoja,{" "}
-                  <strong>por persona</strong>. Solo cuentan las visitas con ingreso y salida por el molinete. Las horas salen en horas y minutos (por ejemplo, 61:01 = 61 horas y 1 minuto). Filtros:
+                  Horas dentro del terminal <strong>por empresa</strong> (personas, ingresos y horas-hombre) y, en otra hoja,{" "}
+                  <strong>por persona</strong>. Solo cuentan los ingresos con su salida por el molinete. Las horas salen en horas y minutos (por ejemplo, 61:01 = 61 horas y 1 minuto). Filtros:
                   periodo, empresa y perfil.
                 </>
               ),

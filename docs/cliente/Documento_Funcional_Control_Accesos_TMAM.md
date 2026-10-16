@@ -238,17 +238,17 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 ### 4.4. Dashboard (Administrador)
 
-Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salidas registrados. Cada ingreso autorizado de una persona cuenta como una **visita**. Se actualiza en tiempo real con cada ingreso o salida, y cada minuto.
+Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salidas registrados. Cuenta los **ingresos** autorizados de las personas (de cualquier perfil) y sus salidas. Se actualiza en tiempo real con cada ingreso o salida, y cada minuto.
 
 | Indicador | Cálculo |
 |---|---|
 | Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 12 horas). |
-| Visitas finalizadas | Visitas del periodo que ya registraron su salida. |
-| Total de visitas | Ingresos autorizados en el periodo. |
+| Ingresos finalizados | Ingresos del periodo que ya registraron su salida. |
+| Total de ingresos | Ingresos autorizados en el periodo. |
 | Permanencia mayor a 12 horas | Personas que ingresaron hace más de 12 horas y no registran salida. |
 
 - **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
-- **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa; **ingresos por perfil**: ingresos autorizados del periodo según el perfil de la persona ("Sin perfil" al final); y **horas-hombre por empresa**: suma del tiempo dentro del terminal en el periodo, de cada ingreso autorizado a su salida autorizada, de mayor a menor (8 empresas y "Otras"); una visita que cruza el periodo suma solo sus horas dentro de él y solo cuentan las visitas completas (ingreso y salida por el molinete).
+- **Gráficos:** comparativa de ingresos presentes (aún sin salida) y finalizados; distribución de presentes frente a finalizados; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa; **ingresos por perfil**: ingresos autorizados del periodo según el perfil de la persona ("Sin perfil" al final); y **horas-hombre por empresa**: suma del tiempo dentro del terminal en el periodo, de cada ingreso autorizado a su salida autorizada, de mayor a menor (8 empresas y "Otras"); una visita que cruza el periodo suma solo sus horas dentro de él y solo cuentan las visitas completas (ingreso y salida por el molinete).
 - **Personal registrado:** total de personas, barra con la proporción de activos y dados de baja (con sus porcentajes) y cuántas personas del personal activo están en el terminal en ese momento.
 - **Lista de permanencia mayor a 12 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
 
@@ -266,8 +266,8 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 | Personal y empresas | Apellidos, nombres, documento de identidad, empresa y RUC, perfil, estado, si puede ingresar (con el motivo si no puede), cantidad de documentos y fecha de registro. | Empresa; perfil; activos o dados de baja. |
 | Documentos por persona | Última versión de cada documento: persona, empresa, perfil, documento, versión, fecha de carga, vencimiento, días para vencer y estado (vigente, por vencer en 30 días o vencido). Primero los más urgentes. | Empresa; perfil; estado del documento. |
 | Ingresos y salidas | Historial en orden cronológico: fecha y hora, movimiento, resultado, documento, persona, empresa, perfil, motivo de denegación y molinete. | Periodo; perfil; ingresos o salidas; autorizados o denegados. |
-| Visitas del periodo | Cada ingreso autorizado con su salida, duración y estado (finalizada o presente). | Periodo; perfil. |
-| Horas-hombre | Por empresa: personas, visitas y horas-hombre (en horas:minutos, por ejemplo 61:01 = 61 horas y 1 minuto). En otra hoja, el detalle por persona. Solo cuentan las visitas con ingreso y salida por el molinete; quien sigue dentro suma cuando marca la salida. Mismo cálculo que el indicador del Dashboard. | Periodo, empresa y perfil. |
+| Ingresos del periodo | Cada ingreso autorizado con su salida, duración y estado (finalizado o presente). | Periodo; perfil. |
+| Horas-hombre | Por empresa: personas, ingresos y horas-hombre (en horas:minutos, por ejemplo 61:01 = 61 horas y 1 minuto). En otra hoja, el detalle por persona. Solo cuentan los ingresos con su salida por el molinete; quien sigue dentro suma cuando marca la salida. Mismo cálculo que el indicador del Dashboard. | Periodo, empresa y perfil. |
 | Personal presente | Personas dentro del terminal en el momento de la descarga, con hora de ingreso, tiempo dentro y si superan las 12 horas. | Perfil. |
 | Empresas por perfil | Cada empresa con cuántas personas activas tiene de cada perfil (y "Sin perfil"). Con un perfil elegido, solo las empresas que lo tienen, de más a menos. | Empresa; perfil. |
 | Auditoría | Fecha y hora, usuario, acción (crear, modificar o eliminar), dato y número de registro. | Periodo. |
@@ -382,7 +382,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
 | `GET /panel/dashboard` | Indicadores y gráficos del Dashboard, por periodo | Administrador |
 | `GET /panel/dashboard/permanencia` | Personas con permanencia mayor a 12 horas, paginado | Administrador |
-| `GET /reportes/:tipo` | Reporte en Excel o PDF (`personal`, `documentos`, `movimientos`, `visitas`, `horas-hombre`, `presentes`, `empresas-perfil`, `auditoria`; filtro `perfil` en los de personas); documentos también en ZIP con sus archivos | Administrador |
+| `GET /reportes/:tipo` | Reporte en Excel o PDF (`personal`, `documentos`, `movimientos`, `visitas` (Ingresos del periodo), `horas-hombre`, `presentes`, `empresas-perfil`, `auditoria`; filtro `perfil` en los de personas); documentos también en ZIP con sus archivos | Administrador |
 | `GET /panel/estado-sistema` · `/health` | Estado del sistema y de los respaldos | Administrador · público |
 | `GET /panel/avisos` | Equipos y servicios caídos, para el aviso de la parte superior del portal | Administrador y Vigilancia |
 | `GET /auditoria` | Auditoría paginada, con búsqueda y fechas | Administrador |
@@ -467,7 +467,7 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Permiso de paso | Autorización que el terminal facial guarda para dejar pasar a una persona. Sin ella, el terminal la reconoce pero la rechaza. El sistema no se la da a nadie de forma permanente: solo durante la habilitación. |
 | Habilitación | Permiso de paso que el sistema da en el terminal facial solo a la persona que pasó su DNI en regla, durante su minuto de espera (RN-03). |
 | En cola | Persona con DNI en regla que espera su turno porque otra está habilitada en el terminal facial (RN-03a). |
-| Visita | Cada ingreso autorizado de una persona al terminal; se usa en los indicadores del Dashboard. |
+| Visita | Perfil de persona: alguien de afuera que viene de visita (no un trabajador). Hasta el 16/10/2026 el Dashboard llamaba "visita" a cada ingreso; ahora dice "ingreso". |
 | Respaldo | Copia de la base de datos y de los archivos para recuperar la información. |
 | Tailscale | Red privada virtual (VPN) que permite acceder a la mini PC desde fuera del terminal sin exponerla a internet. |
 | X-API-Key | Clave con la que se identifican los equipos ante el sistema. |

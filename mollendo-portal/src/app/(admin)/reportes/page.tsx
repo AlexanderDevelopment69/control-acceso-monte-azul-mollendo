@@ -53,8 +53,8 @@ const REPORTES: OpcionReporte[] = [
   },
   {
     tipo: "visitas",
-    titulo: "Visitas del periodo",
-    descripcion: "Cada ingreso autorizado con su salida y duración; finalizadas y presentes.",
+    titulo: "Ingresos del periodo",
+    descripcion: "Cada ingreso autorizado con su salida y duración; finalizados y presentes.",
     icono: <UserIcon />,
     periodo: true,
     perfil: true,

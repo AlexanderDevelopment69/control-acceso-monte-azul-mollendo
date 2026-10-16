@@ -144,7 +144,8 @@ export interface ResumenPanel {
 
 /**
  * Indicadores del dashboard (GET /panel/dashboard). Cada ingreso autorizado de
- * una persona cuenta como una visita (el cliente llama visitas a todos los accesos).
+ * una persona cuenta como un ingreso (los campos se llaman "visitas" por historia:
+ * el cliente los llamaba así hasta que "Visita" pasó a ser un perfil, 16/10/2026).
  */
 export interface Dashboard {
   periodo: { desde: string; hasta: string };
@@ -152,7 +153,7 @@ export interface Dashboard {
   /** masDe12h: presentes que ingresaron hace más de 12 horas (permanencia larga). */
   presencia: { presentes: number; masDe12h: number };
   visitas: { total: number; finalizadas: number; presentes: number };
-  /** Horas-hombre del periodo (gráfico por empresa): de cada ingreso a su salida (solo visitas completas). */
+  /** Horas-hombre del periodo (gráfico por empresa): de cada ingreso a su salida (solo los que tienen salida). */
   horasHombre?: { horas: number; visitas: number; porEmpresa: { empresa: string; horas: number }[] };
   /** Ingresos autorizados del periodo por perfil (solo los perfiles con ingresos). */
   porPerfil?: { perfil: string; ingresos: number }[];

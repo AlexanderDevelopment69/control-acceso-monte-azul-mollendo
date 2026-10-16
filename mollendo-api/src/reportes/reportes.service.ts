@@ -459,7 +459,7 @@ export class ReportesService {
   }
 
   /**
-   * Visitas del periodo: cada ingreso autorizado, con la primera salida
+   * Ingresos del periodo: cada ingreso autorizado, con la primera salida
    * autorizada posterior de esa persona (si la hay). Igual que el Dashboard.
    */
   private async visitas(query: QueryReporteDto): Promise<Reporte> {
@@ -508,16 +508,16 @@ export class ReportesService {
         i.fechaHora,
         salida,
         textoDuracion((salida ?? ahora).getTime() - i.fechaHora.getTime()),
-        salida ? 'Finalizada' : 'Presente',
+        salida ? 'Finalizado' : 'Presente',
       ];
     });
     return {
-      titulo: 'Visitas del periodo',
-      archivo: `reporte-visitas-${periodo.sufijo}`,
+      titulo: 'Ingresos del periodo',
+      archivo: `reporte-ingresos-${periodo.sufijo}`,
       filtros: [
         periodo.texto,
         ...filtroPerfil(query),
-        'Cada ingreso autorizado es una visita. Finalizada: registró su salida; presente: todavía no (duración hasta ahora).',
+        'Cada ingreso autorizado, con su salida. Finalizado: registró su salida; presente: todavía no (duración hasta ahora).',
       ],
       columnas: [
         { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
@@ -527,10 +527,10 @@ export class ReportesService {
         { titulo: 'Ingreso', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora del ingreso por el molinete.' },
         { titulo: 'Salida', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora de la salida por el molinete. Vacío si todavía está dentro.' },
         { titulo: 'Duración', ancho: 14, descripcion: 'Tiempo dentro del terminal, del ingreso a la salida (si sigue dentro, hasta la descarga del reporte). Ejemplo: 8 h 30 min; desde 48 horas, en días y horas.' },
-        { titulo: 'Estado', ancho: 11, descripcion: 'Finalizada: ya salió. Presente: sigue dentro.' },
+        { titulo: 'Estado', ancho: 11, descripcion: 'Finalizado: ya salió. Presente: sigue dentro.' },
       ],
       filas,
-      resumen: [`Total de visitas: ${ingresos.length}`, `Finalizadas: ${finalizadas}`, `Presentes: ${ingresos.length - finalizadas}`],
+      resumen: [`Total de ingresos: ${ingresos.length}`, `Finalizados: ${finalizadas}`, `Presentes: ${ingresos.length - finalizadas}`],
     };
   }
 
@@ -588,33 +588,33 @@ export class ReportesService {
         periodo.texto,
         ...filtroEmpresa,
         ...filtroPerfil(query),
-        'Horas-hombre: tiempo dentro del terminal, de cada ingreso a su salida por el molinete (solo movimientos autorizados). Una visita que cruza el periodo suma solo sus horas dentro de él.',
+        'Horas-hombre: tiempo dentro del terminal, de cada ingreso a su salida por el molinete (solo movimientos autorizados). Un ingreso que cruza el periodo suma solo sus horas dentro de él.',
       ],
       columnas: [
         { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
         { titulo: 'RUC', ancho: 13, descripcion: 'RUC de la empresa.' },
         { titulo: 'Personas', tipo: 'numero', ancho: 10, descripcion: 'Cuántas personas de la empresa entraron y salieron en el periodo.' },
-        { titulo: 'Visitas', tipo: 'numero', ancho: 9, descripcion: 'Cuántas veces entró y salió por el molinete en el periodo. Cada ingreso con su salida es una visita. En la hoja por empresa, sumando a todo su personal.' },
-        { titulo: 'Horas-hombre (h:mm)', tipo: 'horas', ancho: 16, descripcion: 'Tiempo total dentro del terminal en el periodo, sumando todas las visitas (en la hoja por empresa, de todo su personal). En horas:minutos: 61:01 = 61 horas y 1 minuto (no es 61,01). Solo cuentan las visitas con ingreso y salida por el molinete.' },
+        { titulo: 'Ingresos', tipo: 'numero', ancho: 9, descripcion: 'Cuántas veces entró y salió por el molinete en el periodo (cada ingreso con su salida). En la hoja por empresa, sumando a todo su personal.' },
+        { titulo: 'Horas-hombre (h:mm)', tipo: 'horas', ancho: 16, descripcion: 'Tiempo total dentro del terminal en el periodo, sumando todos sus ingresos (en la hoja por empresa, de todo su personal). En horas:minutos: 61:01 = 61 horas y 1 minuto (no es 61,01). Solo cuentan los ingresos con su salida por el molinete.' },
       ],
       filas: empresas.map((e) => [e.razonSocial, e.ruc, e.personas, e.visitas, e.ms]),
       resumen: [
         `Empresas: ${empresas.length}`,
         `Personas: ${porPersona.size}`,
-        `Visitas: ${visitas.length}`,
+        `Ingresos: ${visitas.length}`,
         `Horas-hombre: ${textoHoras(totalMs)} (h:mm)`,
       ],
       secciones: [
         {
           titulo: 'Detalle por persona',
-          nota: 'Cada persona con sus visitas y horas en el periodo, por empresa.',
+          nota: 'Cada persona con sus ingresos y horas en el periodo, por empresa.',
           columnas: [
             { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
             { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
             { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
             { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
-            { titulo: 'Visitas', tipo: 'numero', ancho: 9, descripcion: 'Cuántas veces entró y salió por el molinete en el periodo. Cada ingreso con su salida es una visita. En la hoja por empresa, sumando a todo su personal.' },
-            { titulo: 'Horas-hombre (h:mm)', tipo: 'horas', ancho: 16, descripcion: 'Tiempo total dentro del terminal en el periodo, sumando todas las visitas (en la hoja por empresa, de todo su personal). En horas:minutos: 61:01 = 61 horas y 1 minuto (no es 61,01). Solo cuentan las visitas con ingreso y salida por el molinete.' },
+            { titulo: 'Ingresos', tipo: 'numero', ancho: 9, descripcion: 'Cuántas veces entró y salió por el molinete en el periodo (cada ingreso con su salida). En la hoja por empresa, sumando a todo su personal.' },
+            { titulo: 'Horas-hombre (h:mm)', tipo: 'horas', ancho: 16, descripcion: 'Tiempo total dentro del terminal en el periodo, sumando todos sus ingresos (en la hoja por empresa, de todo su personal). En horas:minutos: 61:01 = 61 horas y 1 minuto (no es 61,01). Solo cuentan los ingresos con su salida por el molinete.' },
           ],
           filas: detalle.map((d) => [
             `${d.p.apellidos}, ${d.p.nombres}`,
