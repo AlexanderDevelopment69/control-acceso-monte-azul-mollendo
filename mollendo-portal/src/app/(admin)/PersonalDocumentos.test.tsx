@@ -34,6 +34,7 @@ function persona(id: number, nombres: string, apellidos: string, empresaId: numb
   return {
     id,
     empresaId,
+    perfil: null,
     tipoDocumentoIdentidad: "DNI",
     numeroDocumento: String(40000000 + id),
     nombres,
@@ -210,5 +211,33 @@ describe("Personal y documentos", () => {
     await screen.findByText("A1, N1");
     expect(enLista()).toHaveLength(100);
     expect(screen.getByText("Mostrando 100 de 250…")).toBeInTheDocument();
+  });
+  it("filtra por perfil y, con un perfil, solo ofrece las empresas que lo tienen", async () => {
+    api.personas.mockResolvedValue([
+      persona(1, "Ana", "Torres", 1, { habilitado: true }, { perfil: "conductor" }),
+      persona(2, "Luis", "Pérez", 2, { habilitado: true }, { perfil: "contratista" }),
+      persona(3, "Rosa", "Díaz", 1, { habilitado: true }, { perfil: "conductor" }),
+      persona(4, "Juan", "Ríos", 2, { habilitado: true }),
+    ]);
+    await montar();
+    const personal = within(screen.getByRole("list"));
+    expect(personal.getAllByText("Conductor")).toHaveLength(2);
+    expect(personal.getByText("Sin perfil")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Perfil" }));
+    await userEvent.click(screen.getByRole("option", { name: "Conductor" }));
+    expect(enLista()).toEqual(["Torres, Ana", "Díaz, Rosa"]);
+
+    // Solo "Transportes Norte" tiene conductores (2).
+    const empresa = screen.getByRole("combobox", { name: "Empresa" });
+    await userEvent.click(empresa);
+    const lista = document.getElementById(empresa.getAttribute("aria-controls")!)!;
+    const opciones = within(lista).getAllByRole("option").map((o) => o.textContent);
+    expect(opciones).toEqual(["Todas las empresas (1)", "Transportes Norte2"]);
+    await userEvent.keyboard("{Escape}");
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Perfil" }));
+    await userEvent.click(screen.getByRole("option", { name: "Sin perfil" }));
+    expect(enLista()).toEqual(["Ríos, Juan"]);
   });
 });

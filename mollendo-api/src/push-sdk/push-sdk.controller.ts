@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import { Public } from '../common/decorators/public.decorator.js';
 import { SerieG4Guard } from '../common/guards/serie-g4.guard.js';
 import { PushSdkService } from './push-sdk.service.js';
+import { ipLocalDeRegistro } from './ip-local.util.js';
 
 /**
  * Endpoints del protocolo ADMS/PUSH que llama el equipo G4 Pro directamente
@@ -19,8 +20,8 @@ export class PushSdkController {
 
   @Post('registry')
   @Header('Content-Type', 'application/push;charset=UTF-8')
-  async registry(@Query('SN') sn: string, @Req() req: Request) {
-    const dispositivo = await this.pushSdk.obtenerOCrearDispositivo(sn, req.ip);
+  async registry(@Query('SN') sn: string, @Req() req: Request, @Body() body: string) {
+    const dispositivo = await this.pushSdk.obtenerOCrearDispositivo(sn, req.ip, ipLocalDeRegistro(body));
     return `RegistryCode=${dispositivo.registryCode}`;
   }
 

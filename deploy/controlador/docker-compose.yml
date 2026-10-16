@@ -12,6 +12,11 @@ services:
     image: mollendo-controlador
     restart: unless-stopped
     command: ["node", "dist/controlador/main.js"]
+    # Usa la red de la mini PC (no una red interna de Docker): así informa su IP
+    # real en la garita y no puede chocar con las redes de TMAM (el 16/10/2026 la
+    # red interna 172.20.0.0/16 chocaba con la de los biométricos, 172.20.20.x).
+    # El controlador solo hace conexiones de salida: no publica puertos.
+    network_mode: host
     environment:
       SERVIDOR_URL: ${SERVIDOR_URL:?Falta SERVIDOR_URL (servidor en la nube)}
       DEVICE_API_KEY: ${DEVICE_API_KEY:?Falta DEVICE_API_KEY (la clave de equipos del servidor)}

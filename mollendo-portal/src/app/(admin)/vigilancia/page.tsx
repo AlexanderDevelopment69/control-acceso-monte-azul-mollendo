@@ -37,6 +37,7 @@ import {
   DecisionManualVentana,
   FranjaVerificacionManual,
 } from "./VerificacionManual";
+import { EtiquetaPerfil } from "@/components/personal/EtiquetaPerfil";
 
 // Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
 const RESALTE_MS = 8000;
@@ -483,7 +484,11 @@ function VigilanciaContent() {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {ev.persona ? (
-                        `${ev.persona.nombres} ${ev.persona.apellidos}`
+                        <span className="flex flex-wrap items-center gap-2">
+                          {ev.persona.nombres} {ev.persona.apellidos}
+                          {/* Solo si tiene perfil: al vigilante no le sirve ver "Sin perfil". */}
+                          {ev.persona.perfil && <EtiquetaPerfil perfil={ev.persona.perfil} />}
+                        </span>
                       ) : (
                         <span className="text-gray-400">No registrado</span>
                       )}

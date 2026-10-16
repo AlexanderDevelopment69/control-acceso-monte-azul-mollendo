@@ -45,10 +45,12 @@ const CAPTURAS = [
     completa: true,
     puntos: [
       'input[placeholder*="Buscar por nombre, DNI o empresa"]',
-      "::-p-text(Todos ()",
+      'button[aria-label="Perfil"]',
+      "::-p-text(No pueden)",
       { sel: "::-p-text(Apaza Condori, Jorge Luis)", recuadro: "button" },
       "::-p-text(Nuevo personal)",
       "::-p-text(Cambiar foto)",
+      { sel: "::-p-text(Perfil:)", lado: "izq" },
       "::-p-text(Puede ingresar hoy)",
       "button::-p-text(Ver)",
       "::-p-text(Agregar documento)",

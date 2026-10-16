@@ -32,6 +32,8 @@ export interface EstadoDispositivo {
   enLinea: boolean;
   ultimaActividad: string | null;
   ipAddress: string | null;
+  /** IP en la red de la garita (la que informa el equipo al registrarse). */
+  ipLocal: string | null;
 }
 
 /**
@@ -65,18 +67,18 @@ export class PushSdkService {
   ) {}
 
   /** Busca o crea el dispositivo, generando su RegistryCode la primera vez. */
-  async obtenerOCrearDispositivo(serialNumber: string, ipAddress?: string) {
+  async obtenerOCrearDispositivo(serialNumber: string, ipAddress?: string, ipLocal?: string | null) {
     const existente = await this.prisma.dispositivoAcceso.findUnique({ where: { serialNumber } });
     if (existente) {
       return this.prisma.dispositivoAcceso.update({
         where: { id: existente.id },
-        data: { ultimaActividad: new Date(), ipAddress: ipAddress ?? existente.ipAddress },
+        data: { ultimaActividad: new Date(), ipAddress: ipAddress ?? existente.ipAddress, ...(ipLocal ? { ipLocal } : {}) },
       });
     }
     const registryCode = randomBytes(5).toString('hex');
     this.logger.log(`Nuevo equipo registrado: ${serialNumber} (RegistryCode=${registryCode})`);
     return this.prisma.dispositivoAcceso.create({
-      data: { serialNumber, registryCode, ipAddress, ultimaActividad: new Date() },
+      data: { serialNumber, registryCode, ipAddress, ipLocal: ipLocal ?? null, ultimaActividad: new Date() },
     });
   }
 
@@ -113,6 +115,7 @@ export class PushSdkService {
       enLinea: !!d.ultimaActividad && ahora - d.ultimaActividad.getTime() < UMBRAL_EN_LINEA_MS,
       ultimaActividad: d.ultimaActividad?.toISOString() ?? null,
       ipAddress: d.ipAddress,
+      ipLocal: d.ipLocal,
     }));
   }
 

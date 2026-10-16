@@ -26,6 +26,8 @@ export interface EstadoReportado {
   listaPersonal: { personas: number; actualizado: string | null };
   /** Salidas hechas sin conexión que todavía no llegaron al servidor. */
   salidasPendientes: number;
+  /** IP de la mini PC en la red de la garita (los controladores anteriores no la envían). */
+  ipLocal?: string | null;
 }
 
 interface Conexion {

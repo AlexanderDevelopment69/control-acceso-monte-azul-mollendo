@@ -13,6 +13,9 @@ import { FotoGuardada, validarFoto } from "./FotoPersonal";
 import { EstadoIngreso } from "./EstadoIngreso";
 import { DocumentosActuales } from "./DocumentosActuales";
 import { HistorialDocumentos } from "./HistorialDocumentos";
+import { EtiquetaPerfil } from "./EtiquetaPerfil";
+import Select from "@/components/form/Select";
+import { OPCIONES_PERFIL, type Perfil } from "@/lib/perfiles";
 
 /**
  * Ficha de un trabajador en la pantalla principal del administrador: si puede
@@ -47,6 +50,10 @@ export function PersonaFicha({
   const [verFoto, setVerFoto] = useState(false);
   const [subiendoDocumento, setSubiendoDocumento] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
+  /** Ventana para cambiar el perfil: el perfil elegido (vacío = todavía sin elegir). */
+  const [nuevoPerfil, setNuevoPerfil] = useState<Perfil | "" | null>(null);
+  const [guardandoPerfil, setGuardandoPerfil] = useState(false);
+  const [errorPerfil, setErrorPerfil] = useState<string | null>(null);
 
   const obtener = useCallback(() => personasApi.get(personaId), [personaId]);
 
@@ -117,6 +124,21 @@ export function PersonaFicha({
       setErrorFoto(err instanceof ApiError ? err.message : "No se pudo subir la foto");
     } finally {
       setSubiendoFoto(false);
+    }
+  }
+
+  async function guardarPerfil() {
+    if (!persona || !nuevoPerfil) return;
+    setGuardandoPerfil(true);
+    setErrorPerfil(null);
+    try {
+      await personasApi.update(persona.id, { perfil: nuevoPerfil });
+      setNuevoPerfil(null);
+      cargar();
+    } catch (err) {
+      setErrorPerfil(err instanceof ApiError ? err.message : "No se pudo cambiar el perfil");
+    } finally {
+      setGuardandoPerfil(false);
     }
   }
 
@@ -226,6 +248,19 @@ export function PersonaFicha({
                 {persona.tipoDocumentoIdentidad} {persona.numeroDocumento}
                 {persona.empresa && ` · ${persona.empresa.razonSocial}`}
               </p>
+              <p className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                Perfil: <EtiquetaPerfil perfil={persona.perfil} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setErrorPerfil(null);
+                    setNuevoPerfil(persona.perfil ?? "");
+                  }}
+                  className="text-xs font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                >
+                  {persona.perfil ? "Cambiar" : "Asignar"}
+                </button>
+              </p>
             </div>
           </div>
           <Button
@@ -243,6 +278,29 @@ export function PersonaFicha({
         </div>
         {errorFoto && <ErrorBanner className="mt-4">{errorFoto}</ErrorBanner>}
         {errorEstado && !confirmarEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
+        <Modal isOpen={nuevoPerfil !== null} onClose={() => setNuevoPerfil(null)} bloqueado={guardandoPerfil} className="max-w-md p-6 sm:p-8">
+          <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Perfil del personal</h2>
+          <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+            Solo clasifica a la persona (lista, Dashboard y reportes): no cambia lo que se valida en el molinete.
+          </p>
+          {errorPerfil && <ErrorBanner className="mb-4">{errorPerfil}</ErrorBanner>}
+          {nuevoPerfil !== null && (
+            <Select
+              defaultValue={nuevoPerfil}
+              onChange={(v) => setNuevoPerfil(v as Perfil)}
+              placeholder="Selecciona un perfil"
+              options={OPCIONES_PERFIL}
+            />
+          )}
+          <div className="mt-6 flex justify-end gap-3">
+            <Button size="sm" variant="outline" disabled={guardandoPerfil} onClick={() => setNuevoPerfil(null)}>
+              Cancelar
+            </Button>
+            <Button size="sm" disabled={guardandoPerfil || !nuevoPerfil || nuevoPerfil === persona.perfil} onClick={guardarPerfil}>
+              {guardandoPerfil ? "Guardando…" : "Guardar"}
+            </Button>
+          </div>
+        </Modal>
         <Modal isOpen={verFoto} onClose={() => setVerFoto(false)} className="max-w-md p-6 sm:p-8">
           <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">
             {persona.nombres} {persona.apellidos}

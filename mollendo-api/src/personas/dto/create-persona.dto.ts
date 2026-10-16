@@ -1,10 +1,14 @@
 import { Transform } from 'class-transformer';
 import { IsIn, IsInt, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
 import { normalizarNumeroDocumento, recortar } from '../../common/transformaciones.js';
+import { PERFILES, type Perfil } from '../perfiles.js';
 
 export class CreatePersonaDto {
   @IsInt({ message: 'La empresa es obligatoria' })
   empresaId!: number;
+
+  @IsIn(PERFILES, { message: 'Elige el perfil de la persona' })
+  perfil!: Perfil;
 
   @IsIn(['DNI', 'CE', 'PASAPORTE'], { message: 'El tipo de documento debe ser DNI, CE o PASAPORTE' })
   tipoDocumentoIdentidad!: 'DNI' | 'CE' | 'PASAPORTE';

@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { paginacion, rangoDeDias, type ListaPaginadaDto, type Paginado } from '../common/paginacion.js';
 import { ultimasVersiones } from '../eventos-acceso/validacion-acceso.engine.js';
@@ -12,6 +13,7 @@ import {
   resumirMovimientos,
 } from './dashboard.util.js';
 import { calcularHorasHombre, horasDecimales } from './horas-hombre.util.js';
+import { PERFIL_LABEL, PERFILES, SIN_PERFIL } from '../personas/perfiles.js';
 
 /**
  * Para las horas-hombre se leen también los movimientos de 7 días antes y
@@ -42,10 +44,11 @@ export class DashboardService {
     }
     const rango = rangoDeDias(desde, hasta)!;
 
-    const [presencia, visitas, horasHombre, movimientos, personal, porEmpresa, documentos] = await Promise.all([
+    const [presencia, visitas, horasHombre, porPerfil, movimientos, personal, porEmpresa, documentos] = await Promise.all([
       this.presencia(ahora),
       this.visitas(rango),
       this.horasHombre(rango as { gte: Date; lt: Date }),
+      this.ingresosPorPerfil(rango),
       this.movimientos(rango, dias),
       this.personal(),
       this.personalPorEmpresa(),
@@ -58,6 +61,7 @@ export class DashboardService {
       presencia,
       visitas,
       horasHombre,
+      porPerfil,
       movimientos,
       personal,
       porEmpresa,
@@ -96,12 +100,12 @@ export class DashboardService {
    * salida, recortadas al periodo. También las usa el reporte de horas-hombre,
    * con su detalle.
    */
-  async calcularHorasHombre(rango: { gte: Date; lt: Date }, empresaId?: number) {
+  async calcularHorasHombre(rango: { gte: Date; lt: Date }, persona?: Prisma.PersonaWhereInput) {
     const movimientos = await this.prisma.eventoAcceso.findMany({
       where: {
         resultado: 'autorizado',
         personaId: { not: null },
-        ...(empresaId !== undefined && { persona: { empresaId } }),
+        ...(persona && { persona }),
         fechaHora: {
           gte: new Date(rango.gte.getTime() - MARGEN_HORAS_HOMBRE_MS),
           lt: new Date(rango.lt.getTime() + MARGEN_HORAS_HOMBRE_MS),
@@ -224,6 +228,31 @@ export class DashboardService {
       },
     });
     return resumirMovimientos(eventos, dias);
+  }
+
+  /**
+   * Ingresos autorizados del periodo por perfil de la persona (en el orden de
+   * los perfiles; "Sin perfil" al final). Los perfiles sin ingresos no se muestran.
+   */
+  private async ingresosPorPerfil(rango: { gte?: Date; lt?: Date }) {
+    const porPersona = await this.prisma.eventoAcceso.groupBy({
+      by: ['personaId'],
+      where: { tipoMovimiento: 'ingreso', resultado: 'autorizado', fechaHora: rango, personaId: { not: null } },
+      _count: { _all: true },
+    });
+    const personas = await this.prisma.persona.findMany({
+      where: { id: { in: porPersona.map((p) => p.personaId!) } },
+      select: { id: true, perfil: true },
+    });
+    const perfilDe = new Map(personas.map((p) => [p.id, p.perfil]));
+    const ingresos = new Map<string | null, number>();
+    for (const p of porPersona) {
+      const perfil = perfilDe.get(p.personaId!) ?? null;
+      ingresos.set(perfil, (ingresos.get(perfil) ?? 0) + p._count._all);
+    }
+    return [...PERFILES, null]
+      .map((perfil) => ({ perfil: perfil ? PERFIL_LABEL[perfil] : SIN_PERFIL, ingresos: ingresos.get(perfil) ?? 0 }))
+      .filter((p) => p.ingresos > 0);
   }
 
   /** Personal registrado, activo y dado de baja. */

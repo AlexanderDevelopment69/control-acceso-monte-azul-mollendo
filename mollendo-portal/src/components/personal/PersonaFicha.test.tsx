@@ -30,6 +30,7 @@ function persona(cumplimiento: Partial<Cumplimiento>, extra: Partial<Persona> = 
   return {
     id: 7,
     empresaId: 1,
+    perfil: null,
     tipoDocumentoIdentidad: "DNI",
     numeroDocumento: "45678912",
     nombres: "Rosa",

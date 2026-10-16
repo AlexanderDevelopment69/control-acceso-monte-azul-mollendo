@@ -14,6 +14,8 @@ import { TableSearch } from "@/components/tables/TableSearch";
 import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
 import { PersonaFicha } from "@/components/personal/PersonaFicha";
 import { motivosCumplimiento } from "@/components/personal/cumplimiento";
+import { OPCIONES_PERFIL, SIN_PERFIL, textoPerfil, type Perfil } from "@/lib/perfiles";
+import { EtiquetaPerfil } from "@/components/personal/EtiquetaPerfil";
 import { CheckLineIcon, CloseLineIcon, GroupIcon } from "@/icons";
 
 type Filtro = "todos" | "no-habilitados" | "habilitados";
@@ -26,6 +28,9 @@ const FILTROS: Filtro[] = ["todos", "no-habilitados", "habilitados"];
  * agregan más al acercarse al final de la lista.
  */
 const FILAS_POR_TANDA = 100;
+/** Filtro de perfil de la lista: todos, uno de los perfiles o los que todavía no tienen. */
+type PerfilFiltro = "todos" | Perfil | "sin_perfil";
+
 /** Dentro de "No pueden": por documentos (sin cargar o vencidos) o dados de baja. */
 type MotivoFiltro = "todos" | "documentos" | "baja";
 /** En el orden de las píldoras (para deslizar el fondo de la elegida). */
@@ -58,6 +63,7 @@ export function PersonalDocumentos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [empresaFiltro, setEmpresaFiltro] = useState("todas");
+  const [perfilFiltro, setPerfilFiltro] = useState<PerfilFiltro>("todos");
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [motivoFiltro, setMotivoFiltro] = useState<MotivoFiltro>("todos");
 
@@ -109,9 +115,24 @@ export function PersonalDocumentos() {
   }
 
   const q = busqueda.trim().toLowerCase();
-  // Primero empresa y búsqueda; las pestañas cuentan sobre ese resultado, así
-  // sus números coinciden con lo que se ve en la lista.
+  const delPerfil = (p: Persona) =>
+    perfilFiltro === "todos" || (perfilFiltro === "sin_perfil" ? p.perfil === null : p.perfil === perfilFiltro);
+  // Con un perfil elegido, el desplegable de empresas muestra solo las que tienen
+  // personal de ese perfil, con cuántos.
+  const personasPorEmpresa = new Map<number, number>();
+  for (const p of personas) if (delPerfil(p)) personasPorEmpresa.set(p.empresaId, (personasPorEmpresa.get(p.empresaId) ?? 0) + 1);
+  const opcionesEmpresa = [...empresas]
+    .filter((e) => perfilFiltro === "todos" || personasPorEmpresa.has(e.id))
+    .sort((a, b) => a.razonSocial.localeCompare(b.razonSocial))
+    .map((e) => ({
+      value: String(e.id),
+      label: e.razonSocial,
+      detalle: perfilFiltro === "todos" ? undefined : String(personasPorEmpresa.get(e.id)),
+    }));
+  // Primero perfil, empresa y búsqueda; las pestañas cuentan sobre ese resultado,
+  // así sus números coinciden con lo que se ve en la lista.
   const visibles = personas.filter((p) => {
+    if (!delPerfil(p)) return false;
     if (empresaFiltro !== "todas" && p.empresaId !== Number(empresaFiltro)) return false;
     if (!q) return true;
     return (
@@ -133,7 +154,7 @@ export function PersonalDocumentos() {
   });
 
   // Cuántas filas se dibujan; vuelve a la primera tanda al cambiar la búsqueda o los filtros.
-  const claveLista = `${q}|${empresaFiltro}|${filtro}|${motivoFiltro}`;
+  const claveLista = `${q}|${perfilFiltro}|${empresaFiltro}|${filtro}|${motivoFiltro}`;
   const [tanda, setTanda] = useState({ clave: claveLista, cantidad: FILAS_POR_TANDA });
   const cantidad = tanda.clave === claveLista ? tanda.cantidad : FILAS_POR_TANDA;
   const mostradas = filtradas.slice(0, cantidad);
@@ -181,14 +202,26 @@ export function PersonalDocumentos() {
           <div className="space-y-3 border-b border-gray-100 p-4 dark:border-gray-800">
             <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre, DNI o empresa…" />
             <Combobox
+              value={perfilFiltro}
+              onChange={(v) => {
+                setPerfilFiltro(v as PerfilFiltro);
+                // La empresa elegida puede no tener personal de ese perfil.
+                setEmpresaFiltro("todas");
+              }}
+              aria-label="Perfil"
+              options={[{ value: "todos", label: "Todos los perfiles" }, ...OPCIONES_PERFIL, { value: "sin_perfil", label: SIN_PERFIL }]}
+            />
+            <Combobox
               value={empresaFiltro}
               onChange={setEmpresaFiltro}
               aria-label="Empresa"
+              buscable
               options={[
-                { value: "todas", label: "Todas las empresas" },
-                ...[...empresas]
-                  .sort((a, b) => a.razonSocial.localeCompare(b.razonSocial))
-                  .map((e) => ({ value: String(e.id), label: e.razonSocial })),
+                {
+                  value: "todas",
+                  label: perfilFiltro === "todos" ? "Todas las empresas" : `Todas las empresas (${opcionesEmpresa.length})`,
+                },
+                ...opcionesEmpresa,
               ]}
             />
             {/* Pestañas con un fondo blanco que se desliza hasta la elegida. */}
@@ -308,8 +341,11 @@ export function PersonalDocumentos() {
                       {habilitado ? <CheckLineIcon className="size-3.5" /> : <CloseLineIcon className="size-3.5" />}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-gray-800 dark:text-white/90">
-                        {p.apellidos}, {p.nombres}
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium text-gray-800 dark:text-white/90">
+                          {p.apellidos}, {p.nombres}
+                        </span>
+                        <EtiquetaPerfil perfil={p.perfil} />
                       </span>
                       <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
                         {p.numeroDocumento} · {p.empresa?.razonSocial}
@@ -354,7 +390,12 @@ export function PersonalDocumentos() {
                       id: "todos",
                       titulo: "Personal",
                       valor: visibles.length,
-                      detalle: empresaFiltro === "todas" ? "En todas las empresas" : "En la empresa elegida",
+                      detalle:
+                        perfilFiltro !== "todos"
+                          ? `Perfil: ${perfilFiltro === "sin_perfil" ? SIN_PERFIL : textoPerfil(perfilFiltro)}`
+                          : empresaFiltro === "todas"
+                            ? "En todas las empresas"
+                            : "En la empresa elegida",
                       icono: <GroupIcon />,
                       fondo: "bg-brand-500",
                     },
@@ -411,6 +452,7 @@ export function PersonalDocumentos() {
           elegir(persona.id);
         }}
         empresas={empresas}
+        personas={personas}
       />
     </div>
   );

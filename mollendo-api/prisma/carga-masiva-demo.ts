@@ -18,6 +18,7 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, type Prisma } from '../src/generated/prisma/client.js';
 import { documentosActuales, evaluarIngreso } from '../src/eventos-acceso/validacion-acceso.engine.js';
+import { perfilDemo } from './perfil-demo.js';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
@@ -88,6 +89,7 @@ async function main() {
     const tirada = azar();
     datosPersonas.push({
       empresaId: empresas[i % empresas.length].id,
+      perfil: perfilDemo(empresas[i % empresas.length].ruc, numeroDocumento),
       tipoDocumentoIdentidad: 'DNI',
       numeroDocumento,
       nombres: elegir(NOMBRES),

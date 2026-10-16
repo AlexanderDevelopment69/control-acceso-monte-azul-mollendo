@@ -12,7 +12,8 @@ import Button from "@/components/ui/button/Button";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
-import { CalenderIcon, CheckLineIcon, DocsIcon, DownloadIcon, GroupIcon, ListIcon, PageIcon, TimeIcon, UserIcon } from "@/icons";
+import { OPCIONES_PERFIL, SIN_PERFIL } from "@/lib/perfiles";
+import { BoxIcon, CalenderIcon, CheckLineIcon, DocsIcon, DownloadIcon, GroupIcon, ListIcon, PageIcon, TimeIcon, UserIcon } from "@/icons";
 
 interface OpcionReporte {
   tipo: TipoReporte;
@@ -22,6 +23,7 @@ interface OpcionReporte {
   /** Qué filtros usa. */
   periodo?: boolean;
   empresa?: boolean;
+  perfil?: boolean;
 }
 
 const REPORTES: OpcionReporte[] = [
@@ -31,6 +33,7 @@ const REPORTES: OpcionReporte[] = [
     descripcion: "Listado del personal con su empresa, estado y si puede ingresar (con el motivo si no puede).",
     icono: <GroupIcon />,
     empresa: true,
+    perfil: true,
   },
   {
     tipo: "documentos",
@@ -38,6 +41,7 @@ const REPORTES: OpcionReporte[] = [
     descripcion: "Última versión de cada documento: vigente, por vencer (30 días) o vencido, con su fecha de vencimiento.",
     icono: <DocsIcon />,
     empresa: true,
+    perfil: true,
   },
   {
     tipo: "movimientos",
@@ -45,6 +49,7 @@ const REPORTES: OpcionReporte[] = [
     descripcion: "Historial del periodo: fecha y hora, persona, movimiento, resultado y motivo de denegación.",
     icono: <ListIcon />,
     periodo: true,
+    perfil: true,
   },
   {
     tipo: "visitas",
@@ -52,6 +57,7 @@ const REPORTES: OpcionReporte[] = [
     descripcion: "Cada ingreso autorizado con su salida y duración; finalizadas y presentes.",
     icono: <UserIcon />,
     periodo: true,
+    perfil: true,
   },
   {
     tipo: "horas-hombre",
@@ -61,12 +67,22 @@ const REPORTES: OpcionReporte[] = [
     icono: <CalenderIcon />,
     periodo: true,
     empresa: true,
+    perfil: true,
   },
   {
     tipo: "presentes",
     titulo: "Personal presente",
     descripcion: "Quiénes están dentro del terminal ahora, con su hora de ingreso y tiempo dentro.",
     icono: <TimeIcon />,
+    perfil: true,
+  },
+  {
+    tipo: "empresas-perfil",
+    titulo: "Empresas por perfil",
+    descripcion: "Cuántas personas activas tiene cada empresa de cada perfil; con un perfil elegido, solo las empresas que lo tienen.",
+    icono: <BoxIcon />,
+    empresa: true,
+    perfil: true,
   },
   {
     tipo: "auditoria",
@@ -143,6 +159,7 @@ function ReportesContent() {
   const [estadoDocumento, setEstadoDocumento] = useState("");
   const [movimiento, setMovimiento] = useState("");
   const [resultado, setResultado] = useState("");
+  const [perfil, setPerfil] = useState("");
   const periodo = usePeriodo();
   const [descargando, setDescargando] = useState<"xlsx" | "pdf" | "zip" | null>(null);
   const [incluirAnteriores, setIncluirAnteriores] = useState(false);
@@ -168,6 +185,7 @@ function ReportesContent() {
         formato,
         ...(opcion.periodo && { desde: periodo.desde, hasta: periodo.hasta }),
         ...(opcion.empresa && empresaId && { empresaId }),
+        ...(opcion.perfil && perfil && { perfil }),
         ...(tipo === "personal" && estado && { estado }),
         ...(tipo === "documentos" && estadoDocumento && { estadoDocumento }),
         ...(formato === "zip" && incluirAnteriores && { incluirAnteriores: "true" }),
@@ -244,8 +262,18 @@ function ReportesContent() {
             </div>
           )}
 
-          {(opcion.empresa || tipo === "movimientos") && (
+          {(opcion.empresa || opcion.perfil || tipo === "movimientos") && (
             <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+              {opcion.perfil && (
+                <Filtro etiqueta="Perfil">
+                  <Select
+                    defaultValue={perfil}
+                    onChange={setPerfil}
+                    mostrarPlaceholder={false}
+                    options={[{ value: "", label: "Todos los perfiles" }, ...OPCIONES_PERFIL, { value: "sin_perfil", label: SIN_PERFIL }]}
+                  />
+                </Filtro>
+              )}
               {opcion.empresa && (
                 <Filtro etiqueta="Empresa">
                   <Select
@@ -342,7 +370,7 @@ function ReportesContent() {
 
           {tipo === "presentes" && (
             <p className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:bg-white/[0.03] dark:text-gray-300">
-              Muestra la situación en el momento de descargarlo; no usa filtros.
+              Muestra la situación en el momento de descargarlo.
             </p>
           )}
         </div>

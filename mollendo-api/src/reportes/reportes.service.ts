@@ -12,6 +12,8 @@ import {
   evaluarIngreso,
   ultimasVersiones,
 } from '../eventos-acceso/validacion-acceso.engine.js';
+import { PERFIL_LABEL, PERFILES, SIN_PERFIL, textoPerfil } from '../personas/perfiles.js';
+import type { Prisma } from '../generated/prisma/client.js';
 import type { QueryReporteDto, TipoReporte } from './dto/query-reporte.dto.js';
 import { textoDia, textoDuracion, textoHoras, type Celda, type Reporte } from './reporte.types.js';
 
@@ -72,6 +74,20 @@ export function rutaUnica(ruta: string, usados: Set<string>): string {
 }
 
 const ESTADO_PERSONA = { activo: 'Activo', inactivo: 'Dado de baja' } as const;
+
+/** Filtro por perfil sobre la persona ("sin_perfil": las que todavía no tienen). */
+function wherePerfil(query: QueryReporteDto): Prisma.PersonaWhereInput {
+  if (!query.perfil) return {};
+  return { perfil: query.perfil === 'sin_perfil' ? null : query.perfil };
+}
+
+/** Línea del encabezado con el perfil elegido. */
+function filtroPerfil(query: QueryReporteDto): string[] {
+  if (!query.perfil) return [];
+  return [`Perfil: ${query.perfil === 'sin_perfil' ? SIN_PERFIL : PERFIL_LABEL[query.perfil]}`];
+}
+
+const PERFIL_DESCRIPCION = `Cómo se clasifica a la persona: ${PERFILES.map((p) => PERFIL_LABEL[p]).join(', ')}. "${SIN_PERFIL}": registrada antes de que existiera el perfil. Solo clasifica: el molinete valida a todos igual.`;
 const ACCION = { crear: 'Crear', modificar: 'Modificar', eliminar: 'Eliminar' } as const;
 
 /** Motivos de denegación de un evento, como en el Panel de vigilancia. */
@@ -121,7 +137,9 @@ export class ReportesService {
       case 'horas-hombre':
         return this.horasHombre(query);
       case 'presentes':
-        return this.presentes();
+        return this.presentes(query);
+      case 'empresas-perfil':
+        return this.empresasPorPerfil(query);
       case 'auditoria':
         return this.auditoria(query);
     }
@@ -151,7 +169,7 @@ export class ReportesService {
   private async personal(query: QueryReporteDto): Promise<Reporte> {
     const hoy = new Date();
     const personas = await this.prisma.persona.findMany({
-      where: { empresaId: query.empresaId, estado: query.estado },
+      where: { empresaId: query.empresaId, estado: query.estado, ...wherePerfil(query) },
       include: {
         empresa: { select: { razonSocial: true, ruc: true } },
         documentos: { include: { tipoDocumento: { select: { nombre: true } } } },
@@ -178,6 +196,7 @@ export class ReportesService {
         p.numeroDocumento,
         p.empresa.razonSocial,
         p.empresa.ruc,
+        textoPerfil(p.perfil),
         ESTADO_PERSONA[p.estado],
         resultado.autorizado ? 'Sí' : 'No',
         motivos || null,
@@ -190,6 +209,7 @@ export class ReportesService {
       archivo: `reporte-personal-${claveDia(hoy)}`,
       filtros: [
         ...(await this.filtroEmpresa(query.empresaId)),
+        ...filtroPerfil(query),
         ...(query.estado ? [`Estado: ${query.estado === 'activo' ? 'Activos' : 'Dados de baja'}`] : []),
         'Puede ingresar: según sus documentos a la fecha (la prueba de alcohol se hace al ingresar).',
       ],
@@ -200,6 +220,7 @@ export class ReportesService {
         { titulo: 'N° documento', ancho: 12, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
         { titulo: 'Empresa', ancho: 30, descripcion: 'Empresa a la que pertenece la persona.' },
         { titulo: 'RUC', ancho: 14, descripcion: 'RUC de la empresa.' },
+        { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
         { titulo: 'Estado', ancho: 12, descripcion: 'Activo: puede ingresar si cumple sus documentos. Dado de baja: ya no puede ingresar; se conserva su historial.' },
         { titulo: 'Puede ingresar', ancho: 10, descripcion: 'Sí: hoy tiene sus documentos en regla y el molinete lo dejaría pasar (la prueba de alcohol se hace al ingresar). No: ver la columna Motivo.' },
         { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué no puede ingresar: dado de baja, sin documentos cargados o con documentos vencidos. Vacío si puede ingresar.' },
@@ -240,7 +261,7 @@ export class ReportesService {
     /** Foto de cada persona en el ZIP (una sola vez por persona), por id. */
     const fotos = new Map<number, string | null>();
     const personas = await this.prisma.persona.findMany({
-      where: { empresaId: query.empresaId },
+      where: { empresaId: query.empresaId, ...wherePerfil(query) },
       include: {
         empresa: { select: { razonSocial: true } },
         documentos: { include: { tipoDocumento: { select: { nombre: true } } } },
@@ -276,6 +297,7 @@ export class ReportesService {
             persona,
             p.numeroDocumento,
             p.empresa.razonSocial,
+            textoPerfil(p.perfil),
             ESTADO_PERSONA[p.estado],
             d.tipoDocumento.nombre,
             v.version,
@@ -321,13 +343,14 @@ export class ReportesService {
         a.documento.localeCompare(b.documento) ||
         b.version - a.version,
     );
-    const actuales = filas.filter((f) => f.fila[9] !== 'Reemplazado').length;
+    const actuales = filas.filter((f) => f.fila[10] !== 'Reemplazado').length;
 
     const reporte: Reporte = {
       titulo: 'Documentos por persona',
       archivo: `reporte-documentos-${claveDia(hoy)}`,
       filtros: [
         ...(await this.filtroEmpresa(query.empresaId)),
+        ...filtroPerfil(query),
         ...(query.estadoDocumento ? [`Estado del documento: ${estados[query.estadoDocumento]}`] : []),
         anteriores
           ? `Cada documento con todas sus versiones (las anteriores, como "Reemplazado"). Por vencer: vence en los próximos ${DIAS_AVISO} días.`
@@ -342,6 +365,7 @@ export class ReportesService {
         { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
         { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
         { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
         { titulo: 'Estado de la persona', ancho: 14, descripcion: 'Activo o dado de baja.' },
         { titulo: 'Documento', ancho: 26, descripcion: 'Nombre del documento, tal como está configurado en el sistema.' },
         { titulo: 'Versión', tipo: 'numero', ancho: 8, descripcion: '1 es el primero que se cargó; cada renovación suma uno.' },
@@ -370,14 +394,19 @@ export class ReportesService {
   /** Historial de ingresos y salidas del periodo, en orden cronológico. */
   private async movimientos(query: QueryReporteDto): Promise<Reporte> {
     const periodo = this.periodo(query);
-    const where = { fechaHora: periodo.rango, tipoMovimiento: query.movimiento, resultado: query.resultado };
+    const where: Prisma.EventoAccesoWhereInput = {
+      fechaHora: periodo.rango,
+      tipoMovimiento: query.movimiento,
+      resultado: query.resultado,
+      ...(query.perfil && { persona: wherePerfil(query) }),
+    };
     // Se cuenta antes de cargar: un periodo demasiado grande se rechaza sin traer las filas.
     const cantidad = await this.prisma.eventoAcceso.count({ where });
     if (cantidad > maxFilas(query)) throw demasiadasFilas(cantidad, maxFilas(query));
     const eventos = await this.prisma.eventoAcceso.findMany({
       where,
       include: {
-        persona: { select: { nombres: true, apellidos: true, empresa: { select: { razonSocial: true } } } },
+        persona: { select: { nombres: true, apellidos: true, perfil: true, empresa: { select: { razonSocial: true } } } },
         verificadoPor: { select: { correo: true } },
       },
       orderBy: [{ fechaHora: 'asc' }, { id: 'asc' }],
@@ -389,6 +418,7 @@ export class ReportesService {
       archivo: `reporte-ingresos-salidas-${periodo.sufijo}`,
       filtros: [
         periodo.texto,
+        ...filtroPerfil(query),
         ...(query.movimiento ? [`Movimiento: ${query.movimiento === 'ingreso' ? 'Ingresos' : 'Salidas'}`] : []),
         ...(query.resultado ? [`Resultado: ${query.resultado === 'autorizado' ? 'Autorizados' : 'Denegados'}`] : []),
       ],
@@ -400,6 +430,7 @@ export class ReportesService {
         { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento que se pasó por el lector.' },
         { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona. "No registrado" si el documento no está en el sistema.' },
         { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
         { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, o rostro no coincide.' },
         { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Vacío: verificación normal.' },
         { titulo: 'Molinete', ancho: 12, descripcion: 'Molinete por el que pasó.' },
@@ -412,6 +443,7 @@ export class ReportesService {
         e.numeroDocumento,
         e.persona ? `${e.persona.apellidos}, ${e.persona.nombres}` : 'No registrado',
         e.persona?.empresa.razonSocial ?? null,
+        e.persona ? textoPerfil(e.persona.perfil) : null,
         e.resultado === 'denegado' ? motivosEvento(e) || null : null,
         // Rostro y alcohol: los del equipo facial, o los que verificó un vigilante (contingencia).
         e.verificacionManual ? `Manual (${e.verificadoPor?.correo ?? 'sin decisión'})` : null,
@@ -432,12 +464,20 @@ export class ReportesService {
    */
   private async visitas(query: QueryReporteDto): Promise<Reporte> {
     const periodo = this.periodo(query);
-    const whereIngresos = { tipoMovimiento: 'ingreso' as const, resultado: 'autorizado' as const, fechaHora: periodo.rango, personaId: { not: null } };
+    const whereIngresos: Prisma.EventoAccesoWhereInput = {
+      tipoMovimiento: 'ingreso',
+      resultado: 'autorizado',
+      fechaHora: periodo.rango,
+      personaId: { not: null },
+      ...(query.perfil && { persona: wherePerfil(query) }),
+    };
     const cantidad = await this.prisma.eventoAcceso.count({ where: whereIngresos });
     if (cantidad > maxFilas(query)) throw demasiadasFilas(cantidad, maxFilas(query));
     const ingresos = await this.prisma.eventoAcceso.findMany({
       where: whereIngresos,
-      include: { persona: { select: { nombres: true, apellidos: true, numeroDocumento: true, empresa: { select: { razonSocial: true } } } } },
+      include: {
+        persona: { select: { nombres: true, apellidos: true, numeroDocumento: true, perfil: true, empresa: { select: { razonSocial: true } } } },
+      },
       orderBy: [{ fechaHora: 'asc' }, { id: 'asc' }],
     });
     const salidas = ingresos.length
@@ -464,6 +504,7 @@ export class ReportesService {
         `${i.persona!.apellidos}, ${i.persona!.nombres}`,
         i.persona!.numeroDocumento,
         i.persona!.empresa.razonSocial,
+        textoPerfil(i.persona!.perfil),
         i.fechaHora,
         salida,
         textoDuracion((salida ?? ahora).getTime() - i.fechaHora.getTime()),
@@ -475,12 +516,14 @@ export class ReportesService {
       archivo: `reporte-visitas-${periodo.sufijo}`,
       filtros: [
         periodo.texto,
+        ...filtroPerfil(query),
         'Cada ingreso autorizado es una visita. Finalizada: registró su salida; presente: todavía no (duración hasta ahora).',
       ],
       columnas: [
         { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
         { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
         { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
         { titulo: 'Ingreso', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora del ingreso por el molinete.' },
         { titulo: 'Salida', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora de la salida por el molinete. Vacío si todavía está dentro.' },
         { titulo: 'Duración', ancho: 14, descripcion: 'Tiempo dentro del terminal, del ingreso a la salida (si sigue dentro, hasta la descarga del reporte). Ejemplo: 8 h 30 min; desde 48 horas, en días y horas.' },
@@ -498,11 +541,21 @@ export class ReportesService {
   private async horasHombre(query: QueryReporteDto): Promise<Reporte> {
     const periodo = this.periodo(query);
     const filtroEmpresa = await this.filtroEmpresa(query.empresaId);
-    const visitas = await this.dashboard.calcularHorasHombre(periodo.rango as { gte: Date; lt: Date }, query.empresaId);
+    const visitas = await this.dashboard.calcularHorasHombre(periodo.rango as { gte: Date; lt: Date }, {
+      ...(query.empresaId !== undefined && { empresaId: query.empresaId }),
+      ...wherePerfil(query),
+    });
     const ids = [...new Set(visitas.map((v) => v.personaId))];
     const personas = await this.prisma.persona.findMany({
       where: { id: { in: ids } },
-      select: { id: true, nombres: true, apellidos: true, numeroDocumento: true, empresa: { select: { id: true, razonSocial: true, ruc: true } } },
+      select: {
+        id: true,
+        nombres: true,
+        apellidos: true,
+        numeroDocumento: true,
+        perfil: true,
+        empresa: { select: { id: true, razonSocial: true, ruc: true } },
+      },
     });
     const porId = new Map(personas.map((p) => [p.id, p]));
 
@@ -534,6 +587,7 @@ export class ReportesService {
       filtros: [
         periodo.texto,
         ...filtroEmpresa,
+        ...filtroPerfil(query),
         'Horas-hombre: tiempo dentro del terminal, de cada ingreso a su salida por el molinete (solo movimientos autorizados). Una visita que cruza el periodo suma solo sus horas dentro de él.',
       ],
       columnas: [
@@ -558,6 +612,7 @@ export class ReportesService {
             { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
             { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
             { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
+            { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
             { titulo: 'Visitas', tipo: 'numero', ancho: 9, descripcion: 'Cuántas veces entró y salió por el molinete en el periodo. Cada ingreso con su salida es una visita. En la hoja por empresa, sumando a todo su personal.' },
             { titulo: 'Horas-hombre (h:mm)', tipo: 'horas', ancho: 16, descripcion: 'Tiempo total dentro del terminal en el periodo, sumando todas las visitas (en la hoja por empresa, de todo su personal). En horas:minutos: 61:01 = 61 horas y 1 minuto (no es 61,01). Solo cuentan las visitas con ingreso y salida por el molinete.' },
           ],
@@ -565,6 +620,7 @@ export class ReportesService {
             `${d.p.apellidos}, ${d.p.nombres}`,
             d.p.numeroDocumento,
             d.p.empresa.razonSocial,
+            textoPerfil(d.p.perfil),
             d.visitas,
             d.ms,
           ]),
@@ -574,42 +630,120 @@ export class ReportesService {
   }
 
   /** Personas dentro del terminal ahora, con su tiempo dentro. */
-  private async presentes(): Promise<Reporte> {
+  private async presentes(query: QueryReporteDto): Promise<Reporte> {
     const ahora = new Date();
     const { dentro } = await this.dashboard.calcularPresenciaActual(ahora);
     const personas = await this.prisma.persona.findMany({
       where: { id: { in: dentro.map((d) => d.personaId) } },
-      select: { id: true, nombres: true, apellidos: true, numeroDocumento: true, estado: true, empresa: { select: { razonSocial: true } } },
+      select: {
+        id: true,
+        nombres: true,
+        apellidos: true,
+        numeroDocumento: true,
+        estado: true,
+        perfil: true,
+        empresa: { select: { razonSocial: true } },
+      },
     });
     const porId = new Map(personas.map((p) => [p.id, p]));
-    const masDe12h = dentro.filter((d) => ahora.getTime() - d.fechaHora.getTime() > MS_PERMANENCIA_LARGA).length;
+    // Con perfil elegido, solo los de ese perfil.
+    const delPerfil = (perfil: (typeof personas)[number]['perfil']) =>
+      !query.perfil || (query.perfil === 'sin_perfil' ? perfil === null : perfil === query.perfil);
+    const presentes = dentro.filter((d) => porId.has(d.personaId) && delPerfil(porId.get(d.personaId)!.perfil));
+    const masDe12h = presentes.filter((d) => ahora.getTime() - d.fechaHora.getTime() > MS_PERMANENCIA_LARGA).length;
     return {
       titulo: 'Personal presente',
       archivo: `reporte-presentes-${claveDia(ahora)}`,
-      filtros: ['Personas cuyo último movimiento autorizado es un ingreso, de mayor a menor permanencia.'],
+      filtros: [...filtroPerfil(query), 'Personas cuyo último movimiento autorizado es un ingreso, de mayor a menor permanencia.'],
       columnas: [
         { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
         { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
         { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
         { titulo: 'Estado', ancho: 13, descripcion: 'Activo o dado de baja.' },
         { titulo: 'Ingreso', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora de su último ingreso por el molinete.' },
         { titulo: 'Tiempo dentro', ancho: 14, descripcion: 'Tiempo desde su ingreso hasta la descarga del reporte.' },
         { titulo: `Más de ${HORAS_PERMANENCIA_LARGA} h`, ancho: 10, descripcion: `Sí, si lleva más de ${HORAS_PERMANENCIA_LARGA} horas dentro.` },
       ],
-      filas: dentro.map((d) => {
+      filas: presentes.map((d) => {
         const p = porId.get(d.personaId)!;
         const ms = ahora.getTime() - d.fechaHora.getTime();
         return [
           `${p.apellidos}, ${p.nombres}`,
           p.numeroDocumento,
           p.empresa.razonSocial,
+          textoPerfil(p.perfil),
           ESTADO_PERSONA[p.estado],
           d.fechaHora,
           textoDuracion(ms),
           ms > MS_PERMANENCIA_LARGA ? 'Sí' : 'No',
         ];
       }),
-      resumen: [`Presentes: ${dentro.length}`, `Más de ${HORAS_PERMANENCIA_LARGA} horas: ${masDe12h}`],
+      resumen: [`Presentes: ${presentes.length}`, `Más de ${HORAS_PERMANENCIA_LARGA} horas: ${masDe12h}`],
+    };
+  }
+
+  /**
+   * Empresas con cuántas personas activas tienen de cada perfil. Con un perfil
+   * elegido, solo las empresas que tienen personas de ese perfil (de más a menos).
+   */
+  private async empresasPorPerfil(query: QueryReporteDto): Promise<Reporte> {
+    const hoy = new Date();
+    const grupos = await this.prisma.persona.groupBy({
+      by: ['empresaId', 'perfil'],
+      where: { estado: 'activo', empresaId: query.empresaId },
+      _count: { _all: true },
+    });
+    const empresas = await this.prisma.empresa.findMany({
+      where: { id: { in: [...new Set(grupos.map((g) => g.empresaId))] } },
+      select: { id: true, razonSocial: true, ruc: true },
+    });
+    const claves = [...PERFILES, null] as const;
+    const conteo = new Map<number, Map<string | null, number>>();
+    for (const g of grupos) {
+      const porPerfil = conteo.get(g.empresaId) ?? conteo.set(g.empresaId, new Map()).get(g.empresaId)!;
+      porPerfil.set(g.perfil, g._count._all);
+    }
+    const elegido = query.perfil ? (query.perfil === 'sin_perfil' ? null : query.perfil) : undefined;
+    const filas = empresas
+      .map((e) => {
+        const porPerfil = conteo.get(e.id)!;
+        const cantidades = claves.map((c) => porPerfil.get(c) ?? 0);
+        return { e, cantidades, total: cantidades.reduce((suma, n) => suma + n, 0), delElegido: elegido === undefined ? 0 : (porPerfil.get(elegido) ?? 0) };
+      })
+      .filter((f) => elegido === undefined || f.delElegido > 0)
+      .sort((a, b) => b.delElegido - a.delElegido || b.total - a.total || a.e.razonSocial.localeCompare(b.e.razonSocial));
+    const totales = claves.map((_, i) => filas.reduce((suma, f) => suma + f.cantidades[i], 0));
+
+    return {
+      titulo: 'Empresas por perfil',
+      archivo: `reporte-empresas-perfil-${claveDia(hoy)}`,
+      filtros: [
+        ...(await this.filtroEmpresa(query.empresaId)),
+        ...filtroPerfil(query),
+        query.perfil
+          ? 'Solo las empresas con personal activo de ese perfil, de más a menos.'
+          : 'Personal activo de cada empresa, por perfil.',
+      ],
+      columnas: [
+        { titulo: 'Empresa', ancho: 34, descripcion: 'Razón social de la empresa.' },
+        { titulo: 'RUC', ancho: 13, descripcion: 'RUC de la empresa.' },
+        { titulo: 'Personal activo', tipo: 'numero', ancho: 12, descripcion: 'Personas activas de la empresa (sin las dadas de baja), de todos los perfiles.' },
+        ...claves.map((c) => ({
+          titulo: c ? PERFIL_LABEL[c] : SIN_PERFIL,
+          tipo: 'numero' as const,
+          ancho: 12,
+          descripcion: c
+            ? `Personas activas de la empresa con perfil "${PERFIL_LABEL[c]}".`
+            : 'Personas activas registradas antes de que existiera el perfil: falta asignárselo en su ficha.',
+        })),
+      ],
+      filas: filas.map((f) => [f.e.razonSocial, f.e.ruc, f.total, ...f.cantidades]),
+      resumen: [
+        `Empresas: ${filas.length}`,
+        `Personal activo: ${totales.reduce((suma, n) => suma + n, 0)}`,
+        ...claves.map((c, i) => `${c ? PERFIL_LABEL[c] : SIN_PERFIL}: ${totales[i]}`),
+      ],
     };
   }
 

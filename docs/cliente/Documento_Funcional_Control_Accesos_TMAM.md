@@ -48,6 +48,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 
 - Dashboard con indicadores (KPI) y gráficos (sección 4.4).
 - Reportes en Excel o PDF (sección 4.5).
+- Perfil de la persona (sección 4.2): personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica: no cambia la validación del ingreso ni los documentos exigidos.
 
 **Fuera del alcance base:**
 
@@ -197,22 +198,24 @@ Pantalla principal del administrador. Muestra a la izquierda la lista del person
 **Lista del personal**
 
 - Cada persona muestra un **✔** si está habilitada para ingresar en la fecha o un **✖** con el motivo (dado de baja, sin documentos, documento vencido).
-- Búsqueda por nombre, número de documento o empresa; filtro por empresa; pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una. Dentro de "No pueden" se puede separar "Documentos" (personal activo con documentos sin cargar o vencidos; podrá ingresar al regularizarlos) de "De baja".
+- Cada persona muestra su **perfil**; las registradas antes de que existiera el perfil figuran como "Sin perfil" (en ámbar), para completarlo desde su ficha.
+- Búsqueda por nombre, número de documento o empresa; filtro por **perfil** y por empresa (con un perfil elegido, el filtro de empresas muestra solo las que tienen personal de ese perfil, con cuántos); pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una. Dentro de "No pueden" se puede separar "Documentos" (personal activo con documentos sin cargar o vencidos; podrá ingresar al regularizarlos) de "De baja".
 
 **Registrar personal ("+ Nuevo personal")**
 
 Un único formulario permite registrar a la persona y sus documentos:
 
-1. **Empresa:** se elige de la lista o se crea en el mismo formulario ("+ Nueva empresa…": RUC de 11 dígitos, razón social y correo de contacto).
-2. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
-3. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona; no es necesario registrar el rostro en el equipo.
-4. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento; no se acepta una fecha ya pasada, porque el documento quedaría vencido al instante) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
+1. **Perfil** (obligatorio): personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica a la persona (lista, Dashboard y reportes); el molinete valida a todos por igual.
+2. **Empresa:** se elige de la lista o se crea en el mismo formulario ("+ Nueva empresa…": RUC de 11 dígitos, razón social y correo de contacto). Con el perfil elegido, la lista muestra primero las empresas que ya tienen personal de ese perfil (con cuántos) y después las demás.
+3. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
+4. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona; no es necesario registrar el rostro en el equipo.
+5. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento; no se acepta una fecha ya pasada, porque el documento quedaría vencido al instante) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
 
 Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la información ya guardada no se duplica al corregir y volver a guardar.
 
 **Ficha de la persona**
 
-- Datos, empresa y foto ("Cambiar foto"). Si no tiene foto, se advierte que no podrá identificarse en el terminal.
+- Datos, empresa y foto ("Cambiar foto"). **Perfil**, con "Cambiar" (o "Asignar" si todavía no tiene); el cambio queda en la auditoría. Si no tiene foto, se advierte que no podrá identificarse en el terminal.
 - Recuadro de estado: "Puede ingresar hoy (sujeto a la prueba de alcohol en garita)" o "No puede ingresar" con los motivos.
 - **Documentos actuales:** nombre, vencimiento y estado (Vigente / Vencido), con las acciones:
   - **Ver:** abre el archivo cargado en una pestaña nueva (PDF o imagen); si es Word, lo descarga.
@@ -226,7 +229,7 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 - **Tiempo real:** cada ingreso o salida se muestra en la tabla en el momento en que ocurre, sin recargar la página; la fila del último evento se resalta durante unos segundos. Si la conexión en vivo se corta (internet o una actualización del servidor), el panel se reconecta solo y recupera lo que ocurrió mientras tanto; además, se pone al día cada minuto.
 - **Contadores:** "Accesos restringidos hoy", "Prueba de alcohol test positivo hoy" y "Documentos vencidos" (documentos del personal activo que ya vencieron). Se actualizan automáticamente.
-- **Historial:** hora, documento, persona, movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
+- **Historial:** hora, documento, persona (con su perfil), movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
 - **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros) y búsqueda por nombre, apellido o número de documento en todo el historial.
 - **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol, No completó rostro y alcohol (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar. El administrador puede además abrir cada documento ("Ver"); vigilancia solo ve su estado.
 - Los intentos con un documento **no registrado** también quedan en el historial.
@@ -245,7 +248,7 @@ Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salid
 | Permanencia mayor a 12 horas | Personas que ingresaron hace más de 12 horas y no registran salida. |
 
 - **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
-- **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa; y **horas-hombre por empresa**: suma del tiempo dentro del terminal en el periodo, de cada ingreso autorizado a su salida autorizada, de mayor a menor (8 empresas y "Otras"); una visita que cruza el periodo suma solo sus horas dentro de él y las visitas sin salida registrada no suman (se indica el total y cuántas hay).
+- **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa; **ingresos por perfil**: ingresos autorizados del periodo según el perfil de la persona ("Sin perfil" al final); y **horas-hombre por empresa**: suma del tiempo dentro del terminal en el periodo, de cada ingreso autorizado a su salida autorizada, de mayor a menor (8 empresas y "Otras"); una visita que cruza el periodo suma solo sus horas dentro de él y solo cuentan las visitas completas (ingreso y salida por el molinete).
 - **Personal registrado:** total de personas, barra con la proporción de activos y dados de baja (con sus porcentajes) y cuántas personas del personal activo están en el terminal en ese momento.
 - **Lista de permanencia mayor a 12 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
 
@@ -260,12 +263,13 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 
 | Reporte | Contenido | Filtros |
 |---|---|---|
-| Personal y empresas | Apellidos, nombres, documento de identidad, empresa y RUC, estado, si puede ingresar (con el motivo si no puede), cantidad de documentos y fecha de registro. | Empresa; activos o dados de baja. |
-| Documentos por persona | Última versión de cada documento: persona, empresa, documento, versión, fecha de carga, vencimiento, días para vencer y estado (vigente, por vencer en 30 días o vencido). Primero los más urgentes. | Empresa; estado del documento. |
-| Ingresos y salidas | Historial en orden cronológico: fecha y hora, movimiento, resultado, documento, persona, empresa, motivo de denegación y molinete. | Periodo; ingresos o salidas; autorizados o denegados. |
-| Visitas del periodo | Cada ingreso autorizado con su salida, duración y estado (finalizada o presente). | Periodo. |
-| Horas-hombre | Por empresa: personas, visitas y horas-hombre (en horas:minutos, por ejemplo 61:01 = 61 horas y 1 minuto). En otra hoja, el detalle por persona. Solo cuentan las visitas con ingreso y salida por el molinete; quien sigue dentro suma cuando marca la salida. Mismo cálculo que el indicador del Dashboard. | Periodo y empresa. |
-| Personal presente | Personas dentro del terminal en el momento de la descarga, con hora de ingreso, tiempo dentro y si superan las 12 horas. | — |
+| Personal y empresas | Apellidos, nombres, documento de identidad, empresa y RUC, perfil, estado, si puede ingresar (con el motivo si no puede), cantidad de documentos y fecha de registro. | Empresa; perfil; activos o dados de baja. |
+| Documentos por persona | Última versión de cada documento: persona, empresa, perfil, documento, versión, fecha de carga, vencimiento, días para vencer y estado (vigente, por vencer en 30 días o vencido). Primero los más urgentes. | Empresa; perfil; estado del documento. |
+| Ingresos y salidas | Historial en orden cronológico: fecha y hora, movimiento, resultado, documento, persona, empresa, perfil, motivo de denegación y molinete. | Periodo; perfil; ingresos o salidas; autorizados o denegados. |
+| Visitas del periodo | Cada ingreso autorizado con su salida, duración y estado (finalizada o presente). | Periodo; perfil. |
+| Horas-hombre | Por empresa: personas, visitas y horas-hombre (en horas:minutos, por ejemplo 61:01 = 61 horas y 1 minuto). En otra hoja, el detalle por persona. Solo cuentan las visitas con ingreso y salida por el molinete; quien sigue dentro suma cuando marca la salida. Mismo cálculo que el indicador del Dashboard. | Periodo, empresa y perfil. |
+| Personal presente | Personas dentro del terminal en el momento de la descarga, con hora de ingreso, tiempo dentro y si superan las 12 horas. | Perfil. |
+| Empresas por perfil | Cada empresa con cuántas personas activas tiene de cada perfil (y "Sin perfil"). Con un perfil elegido, solo las empresas que lo tienen, de más a menos. | Empresa; perfil. |
 | Auditoría | Fecha y hora, usuario, acción (crear, modificar o eliminar), dato y número de registro. | Periodo. |
 
 - **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
@@ -344,7 +348,7 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | Entidad | Contenido principal |
 |---|---|
 | Empresa | RUC (único), razón social, correo y teléfono de contacto, estado (activa / inactiva). |
-| Persona (personal) | Empresa, tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
+| Persona (personal) | Empresa, perfil (vacío en las registradas antes de que existiera), tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
 | Tipo de documento | Nombre (único, sin distinguir mayúsculas), por ejemplo "SCTR Salud". |
 | Documento de la persona | Persona, tipo de documento, fecha de vencimiento (opcional), archivo y número de versión. |
 | Evento de acceso | Persona (vacía si no está registrada), documento leído, ingreso o salida, resultado, motivos de denegación (incluido "No completó rostro y alcohol"), fecha y hora, molinete. |
@@ -378,7 +382,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
 | `GET /panel/dashboard` | Indicadores y gráficos del Dashboard, por periodo | Administrador |
 | `GET /panel/dashboard/permanencia` | Personas con permanencia mayor a 12 horas, paginado | Administrador |
-| `GET /reportes/:tipo` | Reporte en Excel o PDF (`personal`, `documentos`, `movimientos`, `visitas`, `presentes`, `auditoria`); documentos también en ZIP con sus archivos | Administrador |
+| `GET /reportes/:tipo` | Reporte en Excel o PDF (`personal`, `documentos`, `movimientos`, `visitas`, `horas-hombre`, `presentes`, `empresas-perfil`, `auditoria`; filtro `perfil` en los de personas); documentos también en ZIP con sus archivos | Administrador |
 | `GET /panel/estado-sistema` · `/health` | Estado del sistema y de los respaldos | Administrador · público |
 | `GET /panel/avisos` | Equipos y servicios caídos, para el aviso de la parte superior del portal | Administrador y Vigilancia |
 | `GET /auditoria` | Auditoría paginada, con búsqueda y fechas | Administrador |

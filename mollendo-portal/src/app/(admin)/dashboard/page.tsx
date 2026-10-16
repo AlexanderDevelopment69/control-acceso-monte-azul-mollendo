@@ -394,6 +394,33 @@ function DashboardContent() {
               </Bloque>
             </div>
 
+            {/* Ingresos por perfil */}
+            <Bloque
+              titulo="Ingresos por perfil"
+              descripcion="Ingresos autorizados del periodo según el perfil de la persona. “Sin perfil”: registradas antes de que existiera el perfil."
+            >
+              {d.porPerfil?.length ? (
+                <Grafico
+                  tipo="bar"
+                  alto={Math.max(200, d.porPerfil.length * 42)}
+                  series={[{ name: "Ingresos", data: d.porPerfil.map((p) => p.ingresos) }]}
+                  opciones={{
+                    colors: [COLORES.marca],
+                    plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: "60%" } },
+                    dataLabels: { enabled: true },
+                    xaxis: {
+                      categories: d.porPerfil.map((p) => p.perfil),
+                      ...ejeEntero(d.porPerfil.map((p) => p.ingresos)),
+                    },
+                    yaxis: { labels: { maxWidth: 220 } },
+                    responsive: [{ breakpoint: 640, options: { yaxis: { labels: { maxWidth: 110 } } } }],
+                  }}
+                />
+              ) : (
+                <SinDatos texto="Ningún ingreso autorizado en el periodo." />
+              )}
+            </Bloque>
+
             {/* Horas-hombre por empresa */}
             <Bloque
               titulo="Horas-hombre por empresa"

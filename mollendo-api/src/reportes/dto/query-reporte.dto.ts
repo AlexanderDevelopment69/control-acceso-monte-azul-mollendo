@@ -1,9 +1,19 @@
 import { Transform } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, Matches } from 'class-validator';
+import { PERFILES, type Perfil } from '../../personas/perfiles.js';
 
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
-export const TIPOS_REPORTE = ['personal', 'documentos', 'movimientos', 'visitas', 'horas-hombre', 'presentes', 'auditoria'] as const;
+export const TIPOS_REPORTE = [
+  'personal',
+  'documentos',
+  'movimientos',
+  'visitas',
+  'horas-hombre',
+  'presentes',
+  'empresas-perfil',
+  'auditoria',
+] as const;
 export type TipoReporte = (typeof TIPOS_REPORTE)[number];
 
 /** Formato y filtros de un reporte. Cada reporte usa solo los que le corresponden. */
@@ -36,6 +46,11 @@ export class QueryReporteDto {
   @Transform(({ value }) => Number(value))
   @IsInt({ message: 'La empresa debe ser un número' })
   empresaId?: number;
+
+  /** Reportes de personas: solo las de ese perfil ("sin_perfil": las que todavía no tienen). */
+  @IsOptional()
+  @IsIn([...PERFILES, 'sin_perfil'], { message: 'El perfil no es válido' })
+  perfil?: Perfil | 'sin_perfil';
 
   /** Personal: activos o dados de baja. */
   @IsOptional()

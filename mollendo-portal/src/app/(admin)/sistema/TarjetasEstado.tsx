@@ -106,6 +106,7 @@ export function EquiposEstado({
             {d.serialNumber}
             {!d.enLinea && ` · ${ultimaVez(d)}`}
           </p>
+          {d.ipLocal && <p className="mt-1 text-xs text-gray-400">IP: {d.ipLocal}</p>}
           <ContenidoEquipo
             datos={sincronizacion?.ultima?.porEquipo.find((e) => e.serialNumber === d.serialNumber)}
             fecha={sincronizacion?.ultima?.fecha}
@@ -210,6 +211,12 @@ export function ControladorGaritaEstado({ comprobando, controlador }: { comproba
       <p className="mt-2 text-xs text-gray-400">
         {controlador?.conectado && controlador.desde ? `Desde ${hora(controlador.desde)}` : "Sin conexión: nadie puede ingresar; se puede salir con la lista del personal guardada"}
       </p>
+      {controlador?.estado?.ipLocal && (
+        <p className="mt-1 text-xs text-gray-400">
+          IP: {controlador.estado.ipLocal}
+          {!controlador.conectado && " (la última que informó)"}
+        </p>
+      )}
       {controlador?.estado && (
         <p className="mt-1 text-xs text-gray-400">
           Personal guardado para salir sin internet: {controlador.estado.listaPersonal.personas}

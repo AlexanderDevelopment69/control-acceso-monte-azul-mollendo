@@ -1,5 +1,6 @@
 import { apiRequest } from "./client";
 import { consulta } from "@/lib/paginaServidor";
+import type { Perfil } from "@/lib/perfiles";
 import type {
   AuditoriaEntry,
   Dashboard,
@@ -56,6 +57,7 @@ export const personasApi = {
   get: (id: number) => apiRequest<Persona>(`/personas/${id}`),
   create: (data: {
     empresaId: number;
+    perfil: Perfil;
     tipoDocumentoIdentidad: string;
     numeroDocumento: string;
     nombres: string;
@@ -68,6 +70,8 @@ export const personasApi = {
     return apiRequest<Persona>(`/personas/${id}/foto`, { method: "POST", body: formData, isFormData: true });
   },
   foto: (id: number) => apiRequest<Blob>(`/personas/${id}/foto`, { responseType: "blob" }),
+  /** Cambia el perfil (u otro dato) de la persona. */
+  update: (id: number, data: { perfil?: Perfil }) => apiRequest<Persona>(`/personas/${id}`, { method: "PATCH", body: data }),
   /** Al dar de baja se puede indicar el motivo (opcional). */
   updateEstado: (id: number, estado: "activo" | "inactivo", motivo?: string) =>
     apiRequest<Persona>(`/personas/${id}/estado`, { method: "PATCH", body: { estado, motivo } }),
@@ -119,7 +123,15 @@ export const eventosAccesoApi = {
 };
 
 // ---- reportes ----
-export type TipoReporte = "personal" | "documentos" | "movimientos" | "visitas" | "horas-hombre" | "presentes" | "auditoria";
+export type TipoReporte =
+  | "personal"
+  | "documentos"
+  | "movimientos"
+  | "visitas"
+  | "horas-hombre"
+  | "presentes"
+  | "empresas-perfil"
+  | "auditoria";
 export const reportesApi = {
   /** Descarga un reporte en Excel o PDF, con los filtros indicados. */
   descargar: (tipo: TipoReporte, params: Record<string, string | number | undefined>) =>

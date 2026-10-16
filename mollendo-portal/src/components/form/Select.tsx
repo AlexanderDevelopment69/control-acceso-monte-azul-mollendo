@@ -1,12 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import Combobox from "./Combobox";
+import Combobox, { type Opcion } from "./Combobox";
 
-interface Option {
-  value: string;
-  label: string;
-}
+type Option = Opcion;
 
 interface SelectProps {
   options: Option[];

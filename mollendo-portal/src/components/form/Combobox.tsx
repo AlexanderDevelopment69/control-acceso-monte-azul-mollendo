@@ -3,9 +3,13 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { CheckLineIcon, ChevronDownIcon } from "@/icons";
 
-interface Opcion {
+export interface Opcion {
   value: string;
   label: string;
+  /** Texto suave a la derecha, solo en la lista (por ejemplo, una cantidad). */
+  detalle?: string;
+  /** Título de grupo: se muestra encima de la primera opción de cada grupo. */
+  grupo?: string;
 }
 
 interface ComboboxProps {
@@ -172,21 +176,31 @@ export default function Combobox({
           {visibles.length === 0 && <li className="px-3 py-2.5 text-sm text-gray-400">Sin resultados</li>}
           {visibles.map((o, i) => {
             const seleccionada = o.value === value;
+            const tituloGrupo = o.grupo && o.grupo !== visibles[i - 1]?.grupo ? o.grupo : null;
             return (
-              <li
-                key={o.value}
-                role="option"
-                aria-selected={seleccionada}
-                onMouseEnter={() => setActiva(i)}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => elegir(o)}
-                className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  i === activa ? "bg-gray-100 dark:bg-white/[0.06]" : ""
-                } ${seleccionada ? "font-medium text-brand-600 dark:text-brand-400" : "text-gray-700 dark:text-gray-300"}`}
-              >
-                <span className="truncate">{o.label}</span>
-                {seleccionada && <CheckLineIcon className="size-4 shrink-0" />}
-              </li>
+              <React.Fragment key={o.value}>
+                {tituloGrupo && (
+                  <li role="presentation" className="px-3 pt-2 pb-1 text-xs font-medium text-gray-400 dark:text-gray-500">
+                    {tituloGrupo}
+                  </li>
+                )}
+                <li
+                  role="option"
+                  aria-selected={seleccionada}
+                  onMouseEnter={() => setActiva(i)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => elegir(o)}
+                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    i === activa ? "bg-gray-100 dark:bg-white/[0.06]" : ""
+                  } ${seleccionada ? "font-medium text-brand-600 dark:text-brand-400" : "text-gray-700 dark:text-gray-300"}`}
+                >
+                  <span className="truncate">{o.label}</span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    {o.detalle && <span className="text-xs font-normal text-gray-400 dark:text-gray-500">{o.detalle}</span>}
+                    {seleccionada && <CheckLineIcon className="size-4 shrink-0" />}
+                  </span>
+                </li>
+              </React.Fragment>
             );
           })}
         </ul>

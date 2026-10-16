@@ -80,12 +80,20 @@ export const SECCIONES: SeccionManual[] = [
           alt="Pantalla Personal y documentos con la ficha de una persona abierta"
           pasos={[
             "Busca por nombre, DNI o empresa.",
+            <>
+              Filtra por <strong>perfil</strong> y por empresa: con un perfil elegido, la lista de empresas muestra solo
+              las que tienen personal de ese perfil, con cuántos.
+            </>,
             "Filtra quién puede o no puede ingresar hoy.",
             "Elige a una persona para abrir su ficha.",
             <>
               <strong>“+ Nuevo personal”</strong> registra a alguien con su foto y documentos.
             </>,
             "Ve la foto en grande, súbela o cámbiala: la usa el terminal facial para reconocerlo.",
+            <>
+              Su <strong>perfil</strong>. Con <strong>“Cambiar”</strong> (o <strong>“Asignar”</strong>, si todavía no
+              tiene) se corrige.
+            </>,
             "Si hoy puede ingresar y, si no, por qué.",
             <>
               Cada documento: <strong>“Ver”</strong> el archivo, <strong>“Renovar”</strong> con la versión nueva o{" "}
@@ -123,11 +131,22 @@ export const SECCIONES: SeccionManual[] = [
         <PasosTarea
           pasos={[
             {
+              Icono: IconoUsuarios,
+              titulo: "Perfil",
+              texto: (
+                <>
+                  Personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista.
+                  Solo clasifica a la persona (lista, Dashboard y reportes): el molinete valida a todos igual.
+                </>
+              ),
+            },
+            {
               Icono: IconoEmpresa,
               titulo: "Empresa",
               texto: (
                 <>
-                  Elígela de la lista. Si no está, elige <strong>“+ Nueva empresa…”</strong> y escribe su RUC, razón
+                  Con el perfil elegido, arriba salen las empresas que ya tienen personal de ese perfil (con cuántos) y
+                  después las demás. Elígela de la lista. Si no está, elige <strong>“+ Nueva empresa…”</strong> y escribe su RUC, razón
                   social y correo ahí mismo.
                 </>
               ),
@@ -628,7 +647,11 @@ export const SECCIONES: SeccionManual[] = [
         <p>
           Visitas, ingresos y salidas (por día; por semana si el periodo pasa de 2 meses y por mes si pasa de un año),
           motivos de denegación, documentos del personal activo (vigentes, por vencer en 30 días y vencidos), personal
-          activo por empresa y <strong>horas-hombre por empresa</strong>.
+          activo por empresa, <strong>ingresos por perfil</strong> y <strong>horas-hombre por empresa</strong>.
+        </p>
+        <p>
+          <strong>Ingresos por perfil</strong>: los ingresos autorizados del periodo según el perfil de cada persona.
+          “Sin perfil” son las personas registradas antes de que existiera el perfil: se completa en su ficha.
         </p>
         <p>
           <strong>Horas-hombre por empresa</strong>: las horas que el personal de cada empresa estuvo dentro en el periodo,
@@ -679,25 +702,25 @@ export const SECCIONES: SeccionManual[] = [
               Icono: IconoUsuarios,
               boton: "Personal y empresas",
               comillas: false,
-              texto: "El personal con su empresa, estado y si puede ingresar (con el motivo). Filtros: empresa y activos o dados de baja.",
+              texto: "El personal con su empresa, perfil, estado y si puede ingresar (con el motivo). Filtros: empresa, perfil y activos o dados de baja.",
             },
             {
               Icono: IconoDocumentos,
               boton: "Documentos por persona",
               comillas: false,
-              texto: "La última versión de cada documento, con su vencimiento y estado (vigente, por vencer en 30 días o vencido). Filtros: empresa y estado del documento.",
+              texto: "La última versión de cada documento, con su vencimiento y estado (vigente, por vencer en 30 días o vencido). Filtros: empresa, perfil y estado del documento.",
             },
             {
               Icono: IconoMolinete,
               boton: "Ingresos y salidas",
               comillas: false,
-              texto: "El historial del periodo con resultado y motivo. Filtros: periodo, movimiento y resultado.",
+              texto: "El historial del periodo con resultado y motivo. Filtros: periodo, perfil, movimiento y resultado.",
             },
             {
               Icono: IconoRegistrado,
               boton: "Visitas del periodo",
               comillas: false,
-              texto: "Cada ingreso autorizado con su salida, duración y si está finalizada o presente.",
+              texto: "Cada ingreso autorizado con su salida, duración y si está finalizada o presente. Filtros: periodo y perfil.",
             },
             {
               Icono: IconoCalendario,
@@ -707,7 +730,7 @@ export const SECCIONES: SeccionManual[] = [
                 <>
                   Horas dentro del terminal <strong>por empresa</strong> (personas, visitas y horas-hombre) y, en otra hoja,{" "}
                   <strong>por persona</strong>. Solo cuentan las visitas con ingreso y salida por el molinete. Las horas salen en horas y minutos (por ejemplo, 61:01 = 61 horas y 1 minuto). Filtros:
-                  periodo y empresa.
+                  periodo, empresa y perfil.
                 </>
               ),
             },
@@ -715,7 +738,14 @@ export const SECCIONES: SeccionManual[] = [
               Icono: IconoReloj,
               boton: "Personal presente",
               comillas: false,
-              texto: "Quiénes están dentro en el momento de descargarlo, con su tiempo dentro.",
+              texto: "Quiénes están dentro en el momento de descargarlo, con su tiempo dentro. Filtro: perfil.",
+            },
+            {
+              Icono: IconoUsuarios,
+              boton: "Empresas por perfil",
+              comillas: false,
+              texto:
+                "Cuántas personas activas tiene cada empresa de cada perfil. Con un perfil elegido, solo las empresas que lo tienen, de más a menos.",
             },
             {
               Icono: IconoHistorial,

@@ -10,6 +10,7 @@
 // Uso (desde la PC, contra el servidor):
 //   API_URL=http://100.78.153.33:3000/api/v1 ADMIN_PASSWORD=... DEVICE_API_KEY=... npx tsx prisma/datos-demo.ts
 import { crc32, deflateSync } from 'node:zlib';
+import { perfilDemo } from './perfil-demo.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001/api/v1';
 const ADMIN_CORREO = process.env.ADMIN_CORREO ?? 'admin@mollendo.local';
@@ -202,7 +203,7 @@ async function main() {
   for (const [i, p] of PERSONAS.entries()) {
     const { id } = await api<{ id: number }>('/personas', {
       method: 'POST',
-      json: { empresaId: empresas[p.empresa], tipoDocumentoIdentidad: p.tipo ?? 'DNI', numeroDocumento: p.numero, nombres: p.nombres, apellidos: p.apellidos },
+      json: { empresaId: empresas[p.empresa], perfil: perfilDemo(EMPRESAS[p.empresa].ruc, p.numero), tipoDocumentoIdentidad: p.tipo ?? 'DNI', numeroDocumento: p.numero, nombres: p.nombres, apellidos: p.apellidos },
     });
     const nombre = `${p.nombres} ${p.apellidos}`;
 

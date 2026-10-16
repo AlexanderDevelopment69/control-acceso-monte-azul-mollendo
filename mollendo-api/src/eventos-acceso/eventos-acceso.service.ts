@@ -601,6 +601,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
               empresaId: true,
               tipoDocumentoIdentidad: true,
               numeroDocumento: true,
+              perfil: true,
             },
           },
           verificadoPor: { select: { id: true, correo: true } },

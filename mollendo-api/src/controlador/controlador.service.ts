@@ -8,6 +8,7 @@ import type { SalidaDto } from '../eventos-acceso/dto/salida.dto.js';
 import { AVISO_DE, ReleUsbService } from '../integraciones/rele-usb.service.js';
 import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
 import { RegistroLecturas, type ResultadoLectura } from '../lectores-dni/registro-lecturas.js';
+import { ipLocalDelEquipo } from './ip-local.util.js';
 
 /** Cada cuánto se informa al servidor el estado de los lectores y relés. */
 const ESTADO_CADA_MS = 15_000;
@@ -172,6 +173,7 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
       releMolinetes: await this.releUsb.estado(),
       listaPersonal: { personas: this.listaPersonal.size, actualizado: this.listaPersonalActualizada },
       salidasPendientes: this.pendientes.length,
+      ipLocal: ipLocalDelEquipo(),
     });
   }
 

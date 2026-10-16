@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { documentosApi, empresasApi, personasApi, tiposDocumentoApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { Empresa, Persona } from "@/lib/api/types";
+import { OPCIONES_PERFIL, PERFIL_LABEL, type Perfil } from "@/lib/perfiles";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
@@ -23,6 +24,28 @@ import { CloseLineIcon } from "@/icons";
 import { SelectorFoto, validarFoto } from "./FotoPersonal";
 
 const NUEVA_EMPRESA = "nueva";
+
+/**
+ * Empresas para el desplegable: con un perfil elegido, primero las que ya
+ * tienen personal activo de ese perfil (con cuántos), y después las demás.
+ */
+export function opcionesEmpresa(empresas: Empresa[], personas: Persona[], perfil: Perfil | "") {
+  const activas = empresas.filter((e) => e.estado === "activa").sort((a, b) => a.razonSocial.localeCompare(b.razonSocial));
+  const nueva = { value: NUEVA_EMPRESA, label: "+ Nueva empresa…" };
+  if (!perfil) return [...activas.map((e) => ({ value: String(e.id), label: e.razonSocial })), nueva];
+  const cuantas = new Map<number, number>();
+  for (const p of personas) {
+    if (p.perfil === perfil && p.estado === "activo") cuantas.set(p.empresaId, (cuantas.get(p.empresaId) ?? 0) + 1);
+  }
+  const con = activas.filter((e) => cuantas.has(e.id)).sort((a, b) => cuantas.get(b.id)! - cuantas.get(a.id)!);
+  const sin = activas.filter((e) => !cuantas.has(e.id));
+  const grupoCon = `Con personal ${PERFIL_LABEL[perfil]}`;
+  return [
+    ...con.map((e) => ({ value: String(e.id), label: e.razonSocial, detalle: String(cuantas.get(e.id)), grupo: grupoCon })),
+    ...sin.map((e) => ({ value: String(e.id), label: e.razonSocial, grupo: con.length ? "Otras empresas" : undefined })),
+    { ...nueva, grupo: con.length ? "Otras empresas" : undefined },
+  ];
+}
 
 interface FilaDocumento {
   clave: number;
@@ -79,14 +102,18 @@ function Formulario({
   onClose,
   onCreated,
   empresas,
+  personas,
   onGuardando,
 }: {
   onClose: () => void;
   onCreated: (persona: Persona) => void;
   empresas: Empresa[];
+  /** Para ordenar las empresas según el perfil elegido. */
+  personas: Persona[];
   /** Avisa si está guardando: mientras tanto la ventana no se cierra. */
   onGuardando: (guardando: boolean) => void;
 }) {
+  const [perfil, setPerfil] = useState<Perfil | "">("");
   const [empresaId, setEmpresaId] = useState("");
   const [ruc, setRuc] = useState("");
   const [razonSocial, setRazonSocial] = useState("");
@@ -122,6 +149,7 @@ function Formulario({
 
   function validar(): string | null {
     if (!personaCreada) {
+      if (!perfil) return "Elige el perfil del personal";
       if (!empresaId) return "Elige la empresa (o crea una nueva)";
       if (esNuevaEmpresa && !empresaCreada && (!ruc || !razonSocial || !correoContacto)) {
         return "Completa RUC, razón social y correo de la empresa nueva";
@@ -171,6 +199,7 @@ function Formulario({
         }
         persona = await personasApi.create({
           empresaId: empresa ? empresa.id : Number(empresaId),
+          perfil: perfil as Perfil,
           tipoDocumentoIdentidad,
           numeroDocumento,
           nombres,
@@ -225,15 +254,22 @@ function Formulario({
         <Seccion numero={1} titulo="Datos del personal">
           <fieldset disabled={bloqueado} className="space-y-4 disabled:opacity-60">
             <div>
+              <Label>Perfil</Label>
+              <Select
+                defaultValue={perfil}
+                onChange={(v) => setPerfil(v as Perfil)}
+                placeholder="Selecciona un perfil"
+                options={OPCIONES_PERFIL}
+              />
+            </div>
+
+            <div>
               <Label>Empresa</Label>
               <Select
                 defaultValue={empresaId}
                 onChange={setEmpresaId}
                 placeholder="Selecciona una empresa"
-                options={[
-                  ...empresas.filter((e) => e.estado === "activa").map((e) => ({ value: String(e.id), label: e.razonSocial })),
-                  { value: NUEVA_EMPRESA, label: "+ Nueva empresa…" },
-                ]}
+                options={opcionesEmpresa(empresas, personas, perfil)}
               />
             </div>
 
@@ -385,6 +421,7 @@ export function NuevaPersonaModal({
   onClose: () => void;
   onCreated: (persona: Persona) => void;
   empresas: Empresa[];
+  personas: Persona[];
 }) {
   const [guardando, setGuardando] = useState(false);
   return (

@@ -1,3 +1,5 @@
+import type { Perfil } from "@/lib/perfiles";
+
 export type RolUsuario = "administrador" | "vigilancia";
 
 export interface Empresa {
@@ -28,6 +30,8 @@ export interface Persona {
   /** Ruta de la foto para reconocimiento facial; null = sin foto. */
   fotoUrl: string | null;
   estado: "activo" | "inactivo";
+  /** null: registrada antes de que existiera el perfil ("Sin perfil"). */
+  perfil: Perfil | null;
   /** Por qué se la dio de baja y cuándo (solo si está de baja; las bajas antiguas pueden no tenerlo). */
   motivoBaja?: string | null;
   fechaBaja?: string | null;
@@ -128,6 +132,7 @@ export interface EventoAcceso {
     empresaId: number;
     tipoDocumentoIdentidad: "DNI" | "CE" | "PASAPORTE";
     numeroDocumento: string;
+    perfil?: Perfil | null;
   };
 }
 
@@ -149,6 +154,8 @@ export interface Dashboard {
   visitas: { total: number; finalizadas: number; presentes: number };
   /** Horas-hombre del periodo (gráfico por empresa): de cada ingreso a su salida (solo visitas completas). */
   horasHombre?: { horas: number; visitas: number; porEmpresa: { empresa: string; horas: number }[] };
+  /** Ingresos autorizados del periodo por perfil (solo los perfiles con ingresos). */
+  porPerfil?: { perfil: string; ingresos: number }[];
   movimientos: {
     totales: { ingresosAutorizados: number; ingresosDenegados: number; salidasAutorizadas: number; salidasDenegadas: number };
     motivos: {
@@ -182,6 +189,8 @@ export interface EstadoDispositivo {
   enLinea: boolean;
   ultimaActividad: string | null;
   ipAddress: string | null;
+  /** IP del equipo en la red de la garita (la que informa al registrarse). */
+  ipLocal?: string | null;
 }
 
 export interface EstadoSistema {
@@ -322,5 +331,7 @@ export interface EstadoControladorGarita {
   estado: {
     listaPersonal: { personas: number; actualizado: string | null };
     salidasPendientes: number;
+    /** IP de la mini PC en la red de la garita. */
+    ipLocal?: string | null;
   } | null;
 }
