@@ -31,6 +31,19 @@ export interface Reporte {
   filas: Celda[][];
   /** Totales para el pie ("Total: 38", "Finalizadas: 13"…). */
   resumen: string[];
+  /**
+   * Tablas adicionales, después de la principal (en Excel, cada una en su hoja;
+   * en el PDF, una debajo de otra). Por ejemplo, el detalle por persona de las horas-hombre.
+   */
+  secciones?: SeccionReporte[];
+}
+
+export interface SeccionReporte {
+  titulo: string;
+  /** Una línea que explica la tabla (debajo del título). */
+  nota?: string;
+  columnas: Columna[];
+  filas: Celda[][];
 }
 
 const dos = (n: number) => String(n).padStart(2, '0');

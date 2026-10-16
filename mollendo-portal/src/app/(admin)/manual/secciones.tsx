@@ -627,12 +627,20 @@ export const SECCIONES: SeccionManual[] = [
         <Subtitulo>Los gráficos</Subtitulo>
         <p>
           Visitas, ingresos y salidas (por día; por semana si el periodo pasa de 2 meses y por mes si pasa de un año),
-          motivos de denegación, documentos del personal activo (vigentes, por vencer en 30 días y vencidos) y personal
-          activo por empresa.
+          motivos de denegación, documentos del personal activo (vigentes, por vencer en 30 días y vencidos), personal
+          activo por empresa y <strong>horas-hombre por empresa</strong>.
+        </p>
+        <p>
+          <strong>Horas-hombre por empresa</strong>: las horas que el personal de cada empresa estuvo dentro en el periodo,
+          de cada ingreso a su salida, de mayor a menor (las 8 primeras y “Otras”). Una visita que cruza el periodo suma
+          solo sus horas dentro de él. Solo cuentan las visitas <strong>completas</strong> (ingreso y salida por el
+          molinete): quien sigue dentro suma sus horas cuando marca la salida. Arriba del gráfico se indica el total. El
+          detalle por empresa y por persona está en el reporte “Horas-hombre”.
         </p>
         <Nota>
-          Los indicadores de presencia dependen de que cada persona registre su salida en el molinete: si alguien sale sin
-          registrarla, seguirá figurando como presente.
+          Todos entran y salen por el molinete. La única excepción es una <strong>emergencia con los brazos del
+          molinete liberados</strong>: quienes salgan así seguirán figurando como presentes hasta su siguiente marcación
+          en el molinete.
         </Nota>
       </div>
     ),
@@ -690,6 +698,18 @@ export const SECCIONES: SeccionManual[] = [
               boton: "Visitas del periodo",
               comillas: false,
               texto: "Cada ingreso autorizado con su salida, duración y si está finalizada o presente.",
+            },
+            {
+              Icono: IconoCalendario,
+              boton: "Horas-hombre",
+              comillas: false,
+              texto: (
+                <>
+                  Horas dentro del terminal <strong>por empresa</strong> (personas, visitas y horas-hombre) y, en otra hoja,{" "}
+                  <strong>por persona</strong>. Solo cuentan las visitas con ingreso y salida por el molinete. Las horas salen con decimales (8.5, para sumar) y en horas:minutos (8:30). Filtros:
+                  periodo y empresa.
+                </>
+              ),
             },
             {
               Icono: IconoReloj,

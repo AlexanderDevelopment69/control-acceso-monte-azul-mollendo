@@ -49,8 +49,8 @@ export default function TarjetaIndicador({
   title,
 }: {
   titulo: string;
-  /** `null` = todavía no se cargó: se muestra "—" en gris claro en vez de un 0 que luego salta. */
-  valor: number | null;
+  /** `null` = todavía no se cargó: se muestra "—" en gris claro en vez de un 0 que luego salta. Texto = ya formateado ("1,234.5 h"). */
+  valor: number | string | null;
   detalle?: string;
   icono: React.ReactNode;
   /** Color del cuadro del ícono, p. ej. `bg-success-500`. */

@@ -6,6 +6,7 @@ import { rangoDeDias } from '../common/paginacion.js';
 import { TABLA_LABEL } from '../auditoria/auditoria.service.js';
 import { DashboardService } from '../panel/dashboard.service.js';
 import { claveDia, diasDelRango, HORAS_PERMANENCIA_LARGA, MS_PERMANENCIA_LARGA } from '../panel/dashboard.util.js';
+import { horasDecimales, horasYMinutos } from '../panel/horas-hombre.util.js';
 import {
   documentosActuales,
   esDocumentoVigente,
@@ -118,6 +119,8 @@ export class ReportesService {
         return this.movimientos(query);
       case 'visitas':
         return this.visitas(query);
+      case 'horas-hombre':
+        return this.horasHombre(query);
       case 'presentes':
         return this.presentes();
       case 'auditoria':
@@ -486,6 +489,92 @@ export class ReportesService {
       ],
       filas,
       resumen: [`Total de visitas: ${ingresos.length}`, `Finalizadas: ${finalizadas}`, `Presentes: ${ingresos.length - finalizadas}`],
+    };
+  }
+
+  /**
+   * Horas-hombre del periodo (ver panel/horas-hombre.util.ts): por empresa en la
+   * tabla principal, y en hojas aparte el detalle por persona y las visitas sin
+   * salida, que no suman horas.
+   */
+  private async horasHombre(query: QueryReporteDto): Promise<Reporte> {
+    const periodo = this.periodo(query);
+    const filtroEmpresa = await this.filtroEmpresa(query.empresaId);
+    const visitas = await this.dashboard.calcularHorasHombre(periodo.rango as { gte: Date; lt: Date }, query.empresaId);
+    const ids = [...new Set(visitas.map((v) => v.personaId))];
+    const personas = await this.prisma.persona.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, nombres: true, apellidos: true, numeroDocumento: true, empresa: { select: { id: true, razonSocial: true, ruc: true } } },
+    });
+    const porId = new Map(personas.map((p) => [p.id, p]));
+
+    const porPersona = new Map<number, { visitas: number; ms: number }>();
+    for (const v of visitas) {
+      const p = porPersona.get(v.personaId) ?? porPersona.set(v.personaId, { visitas: 0, ms: 0 }).get(v.personaId)!;
+      p.visitas++;
+      p.ms += v.ms;
+    }
+
+    const porEmpresa = new Map<number, { razonSocial: string; ruc: string; personas: number; visitas: number; ms: number }>();
+    for (const [id, t] of porPersona) {
+      const e = porId.get(id)!.empresa;
+      const fila = porEmpresa.get(e.id) ?? porEmpresa.set(e.id, { razonSocial: e.razonSocial, ruc: e.ruc, personas: 0, visitas: 0, ms: 0 }).get(e.id)!;
+      fila.personas++;
+      fila.visitas += t.visitas;
+      fila.ms += t.ms;
+    }
+
+    const empresas = [...porEmpresa.values()].sort((a, b) => b.ms - a.ms || a.razonSocial.localeCompare(b.razonSocial));
+    const detalle = [...porPersona.entries()]
+      .map(([id, t]) => ({ p: porId.get(id)!, ...t }))
+      .sort((a, b) => a.p.empresa.razonSocial.localeCompare(b.p.empresa.razonSocial) || b.ms - a.ms);
+    const totalMs = visitas.reduce((suma, v) => suma + v.ms, 0);
+
+    return {
+      titulo: 'Horas-hombre',
+      archivo: `reporte-horas-hombre-${periodo.sufijo}`,
+      filtros: [
+        periodo.texto,
+        ...filtroEmpresa,
+        'Horas-hombre: tiempo dentro del terminal, de cada ingreso a su salida por el molinete (solo movimientos autorizados). Una visita que cruza el periodo suma solo sus horas dentro de él.',
+      ],
+      columnas: [
+        { titulo: 'Empresa', ancho: 34 },
+        { titulo: 'RUC', ancho: 13 },
+        { titulo: 'Personas', tipo: 'numero', ancho: 10 },
+        { titulo: 'Visitas', tipo: 'numero', ancho: 9 },
+        { titulo: 'Horas-hombre', tipo: 'numero', ancho: 13 },
+        { titulo: 'Horas (h:mm)', ancho: 12 },
+      ],
+      filas: empresas.map((e) => [e.razonSocial, e.ruc, e.personas, e.visitas, horasDecimales(e.ms), horasYMinutos(e.ms)]),
+      resumen: [
+        `Empresas: ${empresas.length}`,
+        `Personas: ${porPersona.size}`,
+        `Visitas: ${visitas.length}`,
+        `Horas-hombre: ${horasDecimales(totalMs)} (${horasYMinutos(totalMs)})`,
+      ],
+      secciones: [
+        {
+          titulo: 'Detalle por persona',
+          nota: 'Cada persona con sus visitas y horas en el periodo, por empresa.',
+          columnas: [
+            { titulo: 'Persona', ancho: 30 },
+            { titulo: 'N° documento', ancho: 13 },
+            { titulo: 'Empresa', ancho: 34 },
+            { titulo: 'Visitas', tipo: 'numero', ancho: 9 },
+            { titulo: 'Horas-hombre', tipo: 'numero', ancho: 13 },
+            { titulo: 'Horas (h:mm)', ancho: 12 },
+          ],
+          filas: detalle.map((d) => [
+            `${d.p.apellidos}, ${d.p.nombres}`,
+            d.p.numeroDocumento,
+            d.p.empresa.razonSocial,
+            d.visitas,
+            horasDecimales(d.ms),
+            horasYMinutos(d.ms),
+          ]),
+        },
+      ],
     };
   }
 

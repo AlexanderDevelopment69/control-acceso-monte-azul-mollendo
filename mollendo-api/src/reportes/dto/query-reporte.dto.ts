@@ -3,7 +3,7 @@ import { IsIn, IsInt, IsOptional, Matches } from 'class-validator';
 
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
-export const TIPOS_REPORTE = ['personal', 'documentos', 'movimientos', 'visitas', 'presentes', 'auditoria'] as const;
+export const TIPOS_REPORTE = ['personal', 'documentos', 'movimientos', 'visitas', 'horas-hombre', 'presentes', 'auditoria'] as const;
 export type TipoReporte = (typeof TIPOS_REPORTE)[number];
 
 /** Formato y filtros de un reporte. Cada reporte usa solo los que le corresponden. */

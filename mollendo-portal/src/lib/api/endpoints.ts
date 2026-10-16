@@ -119,7 +119,7 @@ export const eventosAccesoApi = {
 };
 
 // ---- reportes ----
-export type TipoReporte = "personal" | "documentos" | "movimientos" | "visitas" | "presentes" | "auditoria";
+export type TipoReporte = "personal" | "documentos" | "movimientos" | "visitas" | "horas-hombre" | "presentes" | "auditoria";
 export const reportesApi = {
   /** Descarga un reporte en Excel o PDF, con los filtros indicados. */
   descargar: (tipo: TipoReporte, params: Record<string, string | number | undefined>) =>

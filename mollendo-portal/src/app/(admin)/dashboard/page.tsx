@@ -63,6 +63,16 @@ const RECARGA_MINIMA_MS = 10_000;
 
 const TITULO_TENDENCIA = { dia: "por día", semana: "por semana", mes: "por mes" } as const;
 
+/** 9452.1 → "9,452.1" (un decimal como mucho). */
+const horas = (v: number) => v.toLocaleString("es-PE", { maximumFractionDigits: 1 });
+
+/** Debajo del título del gráfico: el total del periodo. */
+function textoHorasHombre(d: Dashboard): string {
+  const h = d.horasHombre;
+  if (!h) return "Tiempo dentro del terminal, de cada ingreso a su salida";
+  return `Total del periodo: ${horas(h.horas)} h, de ${h.visitas} visitas (ingreso y salida por el molinete).`;
+}
+
 /** Horas o días transcurridos desde una fecha, para la permanencia. */
 function tiempoDentro(desde: string, ahora: string): string {
   const horas = Math.floor((new Date(ahora).getTime() - new Date(desde).getTime()) / 3_600_000);
@@ -224,7 +234,7 @@ function DashboardContent() {
         />
         <TarjetaIndicador
           // Espacio que no se corta: "12 h" siempre en la misma línea.
-          titulo={"Permanencia mayor a 12 h"}
+          titulo={"Permanencia mayor a 12\u00a0h"}
           valor={d?.presencia.masDe12h ?? null}
           detalle="Ingresaron hace más de 12 horas y no registran salida"
           icono={<TimeIcon />}
@@ -384,10 +394,39 @@ function DashboardContent() {
               </Bloque>
             </div>
 
+            {/* Horas-hombre por empresa */}
+            <Bloque
+              titulo="Horas-hombre por empresa"
+              descripcion={textoHorasHombre(d)}
+            >
+              {d.horasHombre?.porEmpresa.length ? (
+                <Grafico
+                  tipo="bar"
+                  alto={Math.max(200, d.horasHombre.porEmpresa.length * 42)}
+                  series={[{ name: "Horas-hombre", data: d.horasHombre.porEmpresa.map((e) => e.horas) }]}
+                  opciones={{
+                    colors: [COLORES.marca],
+                    plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: "60%" } },
+                    dataLabels: { enabled: true, formatter: (v: number) => `${horas(v)} h` },
+                    tooltip: { y: { formatter: (v: number) => `${horas(v)} h` } },
+                    xaxis: {
+                      categories: d.horasHombre.porEmpresa.map((e) => e.empresa),
+                      labels: { formatter: (v: string) => horas(Number(v)) },
+                    },
+                    yaxis: { labels: { maxWidth: 260 } },
+                    // En el celular, nombres más cortos para que las barras tengan espacio.
+                    responsive: [{ breakpoint: 640, options: { yaxis: { labels: { maxWidth: 110 } } } }],
+                  }}
+                />
+              ) : (
+                <SinDatos texto="Ninguna visita con salida en el periodo." />
+              )}
+            </Bloque>
+
             {/* Permanencia mayor a 12 horas */}
             <Bloque
               titulo="Permanencia mayor a 12 horas"
-              descripcion="Personas cuyo último movimiento es un ingreso de hace más de 12 horas. Si salieron sin pasar por el molinete, seguirán figurando aquí hasta que registren su salida."
+              descripcion="Personas cuyo último movimiento es un ingreso de hace más de 12 horas."
             >
               {!permanencia || permanencia.total === 0 ? (
                 <SinDatos texto="Nadie lleva más de 12 horas dentro." />

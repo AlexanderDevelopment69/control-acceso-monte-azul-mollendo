@@ -12,7 +12,7 @@ import Button from "@/components/ui/button/Button";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
-import { CheckLineIcon, DocsIcon, DownloadIcon, GroupIcon, ListIcon, PageIcon, TimeIcon, UserIcon } from "@/icons";
+import { CalenderIcon, CheckLineIcon, DocsIcon, DownloadIcon, GroupIcon, ListIcon, PageIcon, TimeIcon, UserIcon } from "@/icons";
 
 interface OpcionReporte {
   tipo: TipoReporte;
@@ -52,6 +52,15 @@ const REPORTES: OpcionReporte[] = [
     descripcion: "Cada ingreso autorizado con su salida y duración; finalizadas y presentes.",
     icono: <UserIcon />,
     periodo: true,
+  },
+  {
+    tipo: "horas-hombre",
+    titulo: "Horas-hombre",
+    descripcion:
+      "Horas dentro del terminal por empresa (y en otra hoja, por persona), de cada ingreso a su salida por el molinete.",
+    icono: <CalenderIcon />,
+    periodo: true,
+    empresa: true,
   },
   {
     tipo: "presentes",
@@ -180,8 +189,10 @@ function ReportesContent() {
 
       {/* Tipo de reporte */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {REPORTES.map((r) => {
+        {REPORTES.map((r, i) => {
           const activo = r.tipo === tipo;
+          // Son 7: el último ocupa la fila entera, para que no quede solo con huecos al lado.
+          const ultimo = i === REPORTES.length - 1;
           return (
             <button
               key={r.tipo}
@@ -195,7 +206,7 @@ function ReportesContent() {
                 }
               }}
               aria-pressed={activo}
-              className={`flex items-start gap-4 rounded-xl border p-5 text-left transition-colors ${
+              className={`flex items-start gap-4 rounded-xl border p-5 text-left transition-colors ${ultimo ? "sm:col-span-2 xl:col-span-3" : ""} ${
                 activo
                   ? "border-brand-500 bg-brand-50 ring-1 ring-brand-500 dark:border-brand-400 dark:bg-brand-500/10 dark:ring-brand-400"
                   : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-800 dark:bg-white/[0.03] dark:hover:border-gray-700"

@@ -53,6 +53,34 @@ describe('generarExcel', () => {
   });
 });
 
+describe('reporte con varias tablas (horas-hombre)', () => {
+  const conSecciones: Reporte = {
+    ...reporte,
+    secciones: [
+      { titulo: 'Detalle por persona', nota: 'Una línea que explica la tabla.', columnas: reporte.columnas, filas: reporte.filas },
+      { titulo: 'Tercera hoja', columnas: [{ titulo: 'Persona', ancho: 30 }], filas: [] },
+    ],
+  };
+
+  it('Excel: cada tabla en su hoja, con su título y la nota', async () => {
+    const libro = new ExcelJS.Workbook();
+    await libro.xlsx.load((await generarExcel(conSecciones, new Date(2026, 8, 30, 18, 0))) as unknown as ArrayBuffer);
+    expect(libro.worksheets.map((h) => h.name)).toEqual(['Prueba de reporte', 'Detalle por persona', 'Tercera hoja']);
+    const detalle = libro.worksheets[1];
+    expect(detalle.getRow(1).getCell(1).value).toBe('Detalle por persona');
+    expect(detalle.getRow(3).getCell(1).value).toBe('Una línea que explica la tabla.');
+    expect(detalle.getRow(5).values).toEqual([undefined, 'Persona', 'Ingreso', 'Vence', 'Cantidad']);
+    expect(detalle.getRow(6).getCell(1).value).toBe('Ñique Céspedes, José');
+    const vacia = libro.worksheets[2];
+    expect(vacia.getRow(vacia.rowCount).getCell(1).value).toBe('Sin registros.');
+  });
+
+  it('PDF: las tablas una debajo de otra', async () => {
+    const pdf = await generarPdf(conSecciones, new Date(2026, 8, 30, 18, 0));
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+  });
+});
+
 describe('generarPdf', () => {
   it('genera un PDF válido', async () => {
     const pdf = await generarPdf(reporte, new Date(2026, 8, 30, 18, 0));

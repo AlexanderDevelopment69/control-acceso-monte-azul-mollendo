@@ -36,20 +36,31 @@ function texto(valor: Celda, columna: Columna): string {
  * el número de página en el pie.
  */
 export async function generarPdf(reporte: Reporte, generado: Date): Promise<Buffer> {
-  const totalAncho = reporte.columnas.reduce((suma, c) => suma + c.ancho, 0);
-  // Cada celda tiene 4 pt de relleno a cada lado.
-  const anchos = reporte.columnas.map((c) => (c.ancho / totalAncho) * ANCHO_UTIL - 8);
+  const secciones: Content[] = (reporte.secciones ?? []).flatMap((s): Content[] => [
+    { text: s.titulo, fontSize: 12, bold: true, margin: [0, 16, 0, 2] },
+    ...(s.nota ? [{ text: s.nota, color: GRIS, margin: [0, 0, 0, 6] as [number, number, number, number] }] : []),
+    s.filas.length > 0 ? tablaPdf(s.columnas, s.filas) : { text: 'Sin registros.', italics: true, color: GRIS },
+  ]);
+  const tabla = tablaPdf(reporte.columnas, reporte.filas);
+  return generarDocumento(reporte, generado, tabla, secciones);
+}
 
-  const tabla: Content = {
+/** Tabla con la cabecera repetida en cada página y filas alternadas. */
+function tablaPdf(columnas: Columna[], filas: Celda[][]): Content {
+  const totalAncho = columnas.reduce((suma, c) => suma + c.ancho, 0);
+  // Cada celda tiene 4 pt de relleno a cada lado.
+  const anchos = columnas.map((c) => (c.ancho / totalAncho) * ANCHO_UTIL - 8);
+
+  return {
     table: {
       headerRows: 1,
       widths: anchos,
       body: [
-        reporte.columnas.map((c) => ({ text: c.titulo, bold: true, color: '#ffffff', fillColor: MARCA })),
-        ...reporte.filas.map((fila) =>
+        columnas.map((c) => ({ text: c.titulo, bold: true, color: '#ffffff', fillColor: MARCA })),
+        ...filas.map((fila) =>
           fila.map((valor, i) => ({
-            text: texto(valor, reporte.columnas[i]),
-            alignment: reporte.columnas[i].tipo === 'numero' ? ('right' as const) : ('left' as const),
+            text: texto(valor, columnas[i]),
+            alignment: columnas[i].tipo === 'numero' ? ('right' as const) : ('left' as const),
           })),
         ),
       ],
@@ -63,7 +74,9 @@ export async function generarPdf(reporte: Reporte, generado: Date): Promise<Buff
       paddingBottom: () => 4,
     },
   };
+}
 
+async function generarDocumento(reporte: Reporte, generado: Date, tabla: Content, secciones: Content[]): Promise<Buffer> {
   const documento: TDocumentDefinitions = {
     pageSize: 'A4',
     pageOrientation: 'landscape',
@@ -79,6 +92,7 @@ export async function generarPdf(reporte: Reporte, generado: Date): Promise<Buff
       ...(reporte.resumen.length
         ? [{ text: reporte.resumen.join('   ·   '), bold: true, margin: [0, 10, 0, 0] as [number, number, number, number] }]
         : []),
+      ...secciones,
     ],
     footer: (pagina: number, paginas: number) => ({
       columns: [

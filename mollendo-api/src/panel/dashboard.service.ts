@@ -11,6 +11,13 @@ import {
   diasDelRango,
   resumirMovimientos,
 } from './dashboard.util.js';
+import { calcularHorasHombre, horasDecimales } from './horas-hombre.util.js';
+
+/**
+ * Para las horas-hombre se leen también los movimientos de 7 días antes y
+ * después del periodo: así se emparejan las visitas que lo cruzan.
+ */
+const MARGEN_HORAS_HOMBRE_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** Periodo máximo del dashboard, para que la serie diaria siga siendo legible. */
 const MAX_DIAS = 366;
@@ -35,9 +42,10 @@ export class DashboardService {
     }
     const rango = rangoDeDias(desde, hasta)!;
 
-    const [presencia, visitas, movimientos, personal, porEmpresa, documentos] = await Promise.all([
+    const [presencia, visitas, horasHombre, movimientos, personal, porEmpresa, documentos] = await Promise.all([
       this.presencia(ahora),
       this.visitas(rango),
+      this.horasHombre(rango as { gte: Date; lt: Date }),
       this.movimientos(rango, dias),
       this.personal(),
       this.personalPorEmpresa(),
@@ -49,6 +57,7 @@ export class DashboardService {
       generadoEn: ahora.toISOString(),
       presencia,
       visitas,
+      horasHombre,
       movimientos,
       personal,
       porEmpresa,
@@ -80,6 +89,56 @@ export class DashboardService {
       })),
       ahora,
     );
+  }
+
+  /**
+   * Horas-hombre del periodo (ver horas-hombre.util.ts): visitas con ingreso y
+   * salida, recortadas al periodo. También las usa el reporte de horas-hombre,
+   * con su detalle.
+   */
+  async calcularHorasHombre(rango: { gte: Date; lt: Date }, empresaId?: number) {
+    const movimientos = await this.prisma.eventoAcceso.findMany({
+      where: {
+        resultado: 'autorizado',
+        personaId: { not: null },
+        ...(empresaId !== undefined && { persona: { empresaId } }),
+        fechaHora: {
+          gte: new Date(rango.gte.getTime() - MARGEN_HORAS_HOMBRE_MS),
+          lt: new Date(rango.lt.getTime() + MARGEN_HORAS_HOMBRE_MS),
+        },
+      },
+      select: { personaId: true, tipoMovimiento: true, fechaHora: true },
+    });
+    return calcularHorasHombre(
+      movimientos.map((m) => ({ personaId: m.personaId!, tipoMovimiento: m.tipoMovimiento, fechaHora: m.fechaHora })),
+      rango.gte,
+      rango.lt,
+    );
+  }
+
+  /** Horas-hombre del periodo por empresa, de mayor a menor (las primeras MAX_EMPRESAS y "Otras"), para el gráfico. */
+  private async horasHombre(rango: { gte: Date; lt: Date }) {
+    const visitas = await this.calcularHorasHombre(rango);
+    const personas = await this.prisma.persona.findMany({
+      where: { id: { in: [...new Set(visitas.map((v) => v.personaId))] } },
+      select: { id: true, empresa: { select: { razonSocial: true } } },
+    });
+    const empresaDe = new Map(personas.map((p) => [p.id, p.empresa.razonSocial]));
+    const msPorEmpresa = new Map<string, number>();
+    for (const v of visitas) {
+      const empresa = empresaDe.get(v.personaId) ?? '—';
+      msPorEmpresa.set(empresa, (msPorEmpresa.get(empresa) ?? 0) + v.ms);
+    }
+    const ordenadas = [...msPorEmpresa.entries()]
+      .map(([empresa, ms]) => ({ empresa, ms }))
+      .sort((a, b) => b.ms - a.ms || a.empresa.localeCompare(b.empresa));
+    const otras = ordenadas.slice(MAX_EMPRESAS).reduce((suma, e) => suma + e.ms, 0);
+    const porEmpresa = [...ordenadas.slice(0, MAX_EMPRESAS), ...(otras > 0 ? [{ empresa: 'Otras', ms: otras }] : [])];
+    return {
+      horas: horasDecimales(visitas.reduce((suma, v) => suma + v.ms, 0)),
+      visitas: visitas.length,
+      porEmpresa: porEmpresa.map((e) => ({ empresa: e.empresa, horas: horasDecimales(e.ms) })),
+    };
   }
 
   private async presencia(ahora: Date) {

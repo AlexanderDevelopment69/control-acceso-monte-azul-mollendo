@@ -147,6 +147,8 @@ export interface Dashboard {
   /** masDe12h: presentes que ingresaron hace más de 12 horas (permanencia larga). */
   presencia: { presentes: number; masDe12h: number };
   visitas: { total: number; finalizadas: number; presentes: number };
+  /** Horas-hombre del periodo (gráfico por empresa): de cada ingreso a su salida (solo visitas completas). */
+  horasHombre?: { horas: number; visitas: number; porEmpresa: { empresa: string; horas: number }[] };
   movimientos: {
     totales: { ingresosAutorizados: number; ingresosDenegados: number; salidasAutorizadas: number; salidasDenegadas: number };
     motivos: {
