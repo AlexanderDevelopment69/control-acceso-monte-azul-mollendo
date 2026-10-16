@@ -12,7 +12,7 @@ import Button from "@/components/ui/button/Button";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Select";
-import { OPCIONES_PERFIL, SIN_PERFIL } from "@/lib/perfiles";
+import { OPCIONES_PERFIL } from "@/lib/perfiles";
 import { BoxIcon, CalenderIcon, CheckLineIcon, DocsIcon, DownloadIcon, GroupIcon, ListIcon, PageIcon, TimeIcon, UserIcon } from "@/icons";
 
 interface OpcionReporte {
@@ -270,7 +270,7 @@ function ReportesContent() {
                     defaultValue={perfil}
                     onChange={setPerfil}
                     mostrarPlaceholder={false}
-                    options={[{ value: "", label: "Todos los perfiles" }, ...OPCIONES_PERFIL, { value: "sin_perfil", label: SIN_PERFIL }]}
+                    options={[{ value: "", label: "Todos los perfiles" }, ...OPCIONES_PERFIL]}
                   />
                 </Filtro>
               )}

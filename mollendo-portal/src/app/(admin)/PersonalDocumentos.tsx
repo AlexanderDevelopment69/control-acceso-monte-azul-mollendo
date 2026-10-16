@@ -14,7 +14,7 @@ import { TableSearch } from "@/components/tables/TableSearch";
 import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
 import { PersonaFicha } from "@/components/personal/PersonaFicha";
 import { motivosCumplimiento } from "@/components/personal/cumplimiento";
-import { OPCIONES_PERFIL, SIN_PERFIL, textoPerfil, type Perfil } from "@/lib/perfiles";
+import { OPCIONES_PERFIL, textoPerfil, type Perfil } from "@/lib/perfiles";
 import { EtiquetaPerfil } from "@/components/personal/EtiquetaPerfil";
 import { CheckLineIcon, CloseLineIcon, GroupIcon } from "@/icons";
 
@@ -28,8 +28,8 @@ const FILTROS: Filtro[] = ["todos", "no-habilitados", "habilitados"];
  * agregan más al acercarse al final de la lista.
  */
 const FILAS_POR_TANDA = 100;
-/** Filtro de perfil de la lista: todos, uno de los perfiles o los que todavía no tienen. */
-type PerfilFiltro = "todos" | Perfil | "sin_perfil";
+/** Filtro de perfil de la lista: todos o uno de los perfiles. */
+type PerfilFiltro = "todos" | Perfil;
 
 /** Dentro de "No pueden": por documentos (sin cargar o vencidos) o dados de baja. */
 type MotivoFiltro = "todos" | "documentos" | "baja";
@@ -116,7 +116,7 @@ export function PersonalDocumentos() {
 
   const q = busqueda.trim().toLowerCase();
   const delPerfil = (p: Persona) =>
-    perfilFiltro === "todos" || (perfilFiltro === "sin_perfil" ? p.perfil === null : p.perfil === perfilFiltro);
+    perfilFiltro === "todos" || p.perfil === perfilFiltro;
   // Con un perfil elegido, el desplegable de empresas muestra solo las que tienen
   // personal de ese perfil, con cuántos.
   const personasPorEmpresa = new Map<number, number>();
@@ -209,7 +209,7 @@ export function PersonalDocumentos() {
                 setEmpresaFiltro("todas");
               }}
               aria-label="Perfil"
-              options={[{ value: "todos", label: "Todos los perfiles" }, ...OPCIONES_PERFIL, { value: "sin_perfil", label: SIN_PERFIL }]}
+              options={[{ value: "todos", label: "Todos los perfiles" }, ...OPCIONES_PERFIL]}
             />
             <Combobox
               value={empresaFiltro}
@@ -392,7 +392,7 @@ export function PersonalDocumentos() {
                       valor: visibles.length,
                       detalle:
                         perfilFiltro !== "todos"
-                          ? `Perfil: ${perfilFiltro === "sin_perfil" ? SIN_PERFIL : textoPerfil(perfilFiltro)}`
+                          ? `Perfil: ${textoPerfil(perfilFiltro)}`
                           : empresaFiltro === "todas"
                             ? "En todas las empresas"
                             : "En la empresa elegida",

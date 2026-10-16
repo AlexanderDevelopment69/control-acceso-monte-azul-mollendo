@@ -198,7 +198,7 @@ Pantalla principal del administrador. Muestra a la izquierda la lista del person
 **Lista del personal**
 
 - Cada persona muestra un **✔** si está habilitada para ingresar en la fecha o un **✖** con el motivo (dado de baja, sin documentos, documento vencido).
-- Cada persona muestra su **perfil**; las registradas antes de que existiera el perfil figuran como "Sin perfil" (en ámbar), para completarlo desde su ficha.
+- Cada persona muestra su **perfil**; las registradas antes de que existiera el perfil figuran como "Sin perfil" (en ámbar), para completarlo desde su ficha. "Sin perfil" no es una opción de los filtros.
 - Búsqueda por nombre, número de documento o empresa; filtro por **perfil** y por empresa (con un perfil elegido, el filtro de empresas muestra solo las que tienen personal de ese perfil, con cuántos); pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una. Dentro de "No pueden" se puede separar "Documentos" (personal activo con documentos sin cargar o vencidos; podrá ingresar al regularizarlos) de "De baja".
 
 **Registrar personal ("+ Nuevo personal")**
@@ -215,7 +215,7 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 **Ficha de la persona**
 
-- Datos, empresa y foto ("Cambiar foto"). **Perfil**, con "Cambiar" (o "Asignar" si todavía no tiene); el cambio queda en la auditoría. Si no tiene foto, se advierte que no podrá identificarse en el terminal.
+- Datos, empresa y foto ("Cambiar foto"). **Perfil** junto al nombre: un clic en la etiqueta lo cambia, o lo asigna si todavía no tiene; el cambio queda en la auditoría. Si no tiene foto, se advierte que no podrá identificarse en el terminal.
 - Recuadro de estado: "Puede ingresar hoy (sujeto a la prueba de alcohol en garita)" o "No puede ingresar" con los motivos.
 - **Documentos actuales:** nombre, vencimiento y estado (Vigente / Vencido), con las acciones:
   - **Ver:** abre el archivo cargado en una pestaña nueva (PDF o imagen); si es Word, lo descarga.

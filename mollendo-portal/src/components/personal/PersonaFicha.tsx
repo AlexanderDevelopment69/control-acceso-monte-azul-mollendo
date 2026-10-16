@@ -13,7 +13,7 @@ import { FotoGuardada, validarFoto } from "./FotoPersonal";
 import { EstadoIngreso } from "./EstadoIngreso";
 import { DocumentosActuales } from "./DocumentosActuales";
 import { HistorialDocumentos } from "./HistorialDocumentos";
-import { EtiquetaPerfil } from "./EtiquetaPerfil";
+import { BotonPerfil } from "./EtiquetaPerfil";
 import Select from "@/components/form/Select";
 import { OPCIONES_PERFIL, type Perfil } from "@/lib/perfiles";
 
@@ -241,25 +241,21 @@ export function PersonaFicha({
               />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                {persona.nombres} {persona.apellidos}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {persona.tipoDocumentoIdentidad} {persona.numeroDocumento}
-                {persona.empresa && ` · ${persona.empresa.razonSocial}`}
-              </p>
-              <p className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                Perfil: <EtiquetaPerfil perfil={persona.perfil} />
-                <button
-                  type="button"
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                  {persona.nombres} {persona.apellidos}
+                </h2>
+                <BotonPerfil
+                  perfil={persona.perfil}
                   onClick={() => {
                     setErrorPerfil(null);
                     setNuevoPerfil(persona.perfil ?? "");
                   }}
-                  className="text-xs font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                >
-                  {persona.perfil ? "Cambiar" : "Asignar"}
-                </button>
+                />
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {persona.tipoDocumentoIdentidad} {persona.numeroDocumento}
+                {persona.empresa && ` · ${persona.empresa.razonSocial}`}
               </p>
             </div>
           </div>

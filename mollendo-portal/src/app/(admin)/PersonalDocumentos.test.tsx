@@ -236,8 +236,10 @@ describe("Personal y documentos", () => {
     expect(opciones).toEqual(["Todas las empresas (1)", "Transportes Norte2"]);
     await userEvent.keyboard("{Escape}");
 
-    await userEvent.click(screen.getByRole("combobox", { name: "Perfil" }));
-    await userEvent.click(screen.getByRole("option", { name: "Sin perfil" }));
-    expect(enLista()).toEqual(["Ríos, Juan"]);
+    // "Sin perfil" no es una opción del filtro: solo se ve en la etiqueta, para completarlo.
+    const perfil = screen.getByRole("combobox", { name: "Perfil" });
+    await userEvent.click(perfil);
+    const opcionesPerfil = document.getElementById(perfil.getAttribute("aria-controls")!)!;
+    expect(within(opcionesPerfil).queryByRole("option", { name: "Sin perfil" })).toBeNull();
   });
 });
