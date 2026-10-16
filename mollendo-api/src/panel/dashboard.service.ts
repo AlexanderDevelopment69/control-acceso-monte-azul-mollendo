@@ -84,19 +84,19 @@ export class DashboardService {
 
   private async presencia(ahora: Date) {
     const resultado = await this.calcularPresenciaActual(ahora);
-    return { presentes: resultado.presentes, masDe24h: resultado.masDe24h.length };
+    return { presentes: resultado.presentes, masDe12h: resultado.masDe12h.length };
   }
 
   /**
-   * Personas con permanencia mayor a 24 horas, paginadas en el servidor: la de
+   * Personas con permanencia mayor a 12 horas, paginadas en el servidor: la de
    * mayor permanencia primero.
    */
   async permanencia(query: ListaPaginadaDto) {
     const { pagina, porPagina, skip, take } = paginacion(query, 10);
-    const { masDe24h } = await this.calcularPresenciaActual(new Date());
-    const pagina24h = masDe24h.slice(skip, skip + take);
+    const { masDe12h } = await this.calcularPresenciaActual(new Date());
+    const paginaLarga = masDe12h.slice(skip, skip + take);
     const personas = await this.prisma.persona.findMany({
-      where: { id: { in: pagina24h.map((p) => p.personaId) } },
+      where: { id: { in: paginaLarga.map((p) => p.personaId) } },
       select: {
         id: true,
         nombres: true,
@@ -106,7 +106,7 @@ export class DashboardService {
       },
     });
     const porId = new Map(personas.map((p) => [p.id, p]));
-    const datos = pagina24h.map((p) => {
+    const datos = paginaLarga.map((p) => {
       const persona = porId.get(p.personaId)!;
       return {
         personaId: p.personaId,
@@ -117,7 +117,7 @@ export class DashboardService {
         ingreso: p.fechaHora.toISOString(),
       };
     });
-    return { datos, total: masDe24h.length, pagina, porPagina } satisfies Paginado<(typeof datos)[number]>;
+    return { datos, total: masDe12h.length, pagina, porPagina } satisfies Paginado<(typeof datos)[number]>;
   }
 
   /** Visitas del periodo: cada ingreso autorizado de cualquier persona. */

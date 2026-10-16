@@ -32,8 +32,20 @@ describe('calcularPresencia', () => {
       ahora,
     );
     expect(r.presentes).toBe(3);
-    // Más de 24 h dentro: la persona 2 (desde el 29 a las 9) y la 4; la más antigua primero.
-    expect(r.masDe24h.map((p) => p.personaId)).toEqual([4, 2]);
+    // Más de 12 h dentro: la persona 2 (desde el 29 a las 9) y la 4; la más antigua primero.
+    expect(r.masDe12h.map((p) => p.personaId)).toEqual([4, 2]);
+  });
+
+  it('permanencia larga desde las 12 horas (antes 24)', () => {
+    const ahora = hora(30, 12);
+    const r = calcularPresencia(
+      [
+        { personaId: 1, tipoMovimiento: 'ingreso', fechaHora: hora(29, 23) }, // 13 h: sí
+        { personaId: 2, tipoMovimiento: 'ingreso', fechaHora: hora(30, 1) }, // 11 h: no
+      ],
+      ahora,
+    );
+    expect(r.masDe12h.map((p) => p.personaId)).toEqual([1]);
   });
 });
 

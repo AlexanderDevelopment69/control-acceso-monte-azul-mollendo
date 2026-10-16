@@ -10,6 +10,13 @@ import { esDocumentoVigente } from '../eventos-acceso/validacion-acceso.engine.j
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
 
+/**
+ * "Permanencia larga": presentes que ingresaron hace más de estas horas (Dashboard
+ * y reporte de personal presente). 12 h desde el 15/10/2026 (antes 24 h), a pedido del cliente.
+ */
+export const HORAS_PERMANENCIA_LARGA = 12;
+export const MS_PERMANENCIA_LARGA = HORAS_PERMANENCIA_LARGA * 60 * 60 * 1000;
+
 /** Día local AAAA-MM-DD de una fecha. */
 export function claveDia(fecha: Date): string {
   const a = fecha.getFullYear();
@@ -42,17 +49,17 @@ export interface UltimoMovimiento {
 
 /**
  * Presentes = personas cuyo último movimiento autorizado es un ingreso.
- * Permanencia mayor a 24 horas = presentes que ingresaron hace más de 24 h.
+ * Permanencia mayor a 12 horas = presentes que ingresaron hace más de 12 h (HORAS_PERMANENCIA_LARGA).
  */
 export function calcularPresencia(ultimos: UltimoMovimiento[], ahora: Date) {
   const dentro = ultimos
     .filter((u) => u.tipoMovimiento === 'ingreso')
     .sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
-  const limite = ahora.getTime() - MS_POR_DIA;
-  const masDe24h = dentro
+  const limite = ahora.getTime() - MS_PERMANENCIA_LARGA;
+  const masDe12h = dentro
     .filter((u) => u.fechaHora.getTime() < limite)
     .sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
-  return { presentes: dentro.length, dentro, masDe24h };
+  return { presentes: dentro.length, dentro, masDe12h };
 }
 
 // ---------------------------------------------------------------------------

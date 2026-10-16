@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { rangoDeDias } from '../common/paginacion.js';
 import { TABLA_LABEL } from '../auditoria/auditoria.service.js';
 import { DashboardService } from '../panel/dashboard.service.js';
-import { claveDia, diasDelRango } from '../panel/dashboard.util.js';
+import { claveDia, diasDelRango, HORAS_PERMANENCIA_LARGA, MS_PERMANENCIA_LARGA } from '../panel/dashboard.util.js';
 import {
   documentosActuales,
   esDocumentoVigente,
@@ -498,7 +498,7 @@ export class ReportesService {
       select: { id: true, nombres: true, apellidos: true, numeroDocumento: true, estado: true, empresa: { select: { razonSocial: true } } },
     });
     const porId = new Map(personas.map((p) => [p.id, p]));
-    const masDe24h = dentro.filter((d) => ahora.getTime() - d.fechaHora.getTime() > MS_POR_DIA).length;
+    const masDe12h = dentro.filter((d) => ahora.getTime() - d.fechaHora.getTime() > MS_PERMANENCIA_LARGA).length;
     return {
       titulo: 'Personal presente',
       archivo: `reporte-presentes-${claveDia(ahora)}`,
@@ -510,7 +510,7 @@ export class ReportesService {
         { titulo: 'Estado', ancho: 13 },
         { titulo: 'Ingreso', tipo: 'fechaHora', ancho: 16 },
         { titulo: 'Tiempo dentro', ancho: 14 },
-        { titulo: 'Más de 24 h', ancho: 10 },
+        { titulo: `Más de ${HORAS_PERMANENCIA_LARGA} h`, ancho: 10 },
       ],
       filas: dentro.map((d) => {
         const p = porId.get(d.personaId)!;
@@ -522,10 +522,10 @@ export class ReportesService {
           ESTADO_PERSONA[p.estado],
           d.fechaHora,
           textoDuracion(ms),
-          ms > MS_POR_DIA ? 'Sí' : 'No',
+          ms > MS_PERMANENCIA_LARGA ? 'Sí' : 'No',
         ];
       }),
-      resumen: [`Presentes: ${dentro.length}`, `Más de 24 horas: ${masDe24h}`],
+      resumen: [`Presentes: ${dentro.length}`, `Más de ${HORAS_PERMANENCIA_LARGA} horas: ${masDe12h}`],
     };
   }
 

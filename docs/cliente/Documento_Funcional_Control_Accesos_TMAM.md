@@ -239,18 +239,18 @@ Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salid
 
 | Indicador | Cálculo |
 |---|---|
-| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 24 horas). |
+| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 12 horas). |
 | Visitas finalizadas | Visitas del periodo que ya registraron su salida. |
 | Total de visitas | Ingresos autorizados en el periodo. |
-| Permanencia mayor a 24 horas | Personas que ingresaron hace más de 24 horas y no registran salida. |
+| Permanencia mayor a 12 horas | Personas que ingresaron hace más de 12 horas y no registran salida. |
 
 - **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
 - **Gráficos:** comparativa de visitas presentes (aún sin salida) y finalizadas; distribución de presentes frente a finalizadas; ingresos autorizados, denegados y salidas por día; motivos de denegación; documentos del personal activo (vigentes, por vencer en los próximos 30 días y vencidos) y personal activo por empresa.
 - **Personal registrado:** total de personas, barra con la proporción de activos y dados de baja (con sus porcentajes) y cuántas personas del personal activo están en el terminal en ese momento.
-- **Lista de permanencia mayor a 24 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
+- **Lista de permanencia mayor a 12 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
 
 - **Acceso:** solo el Administrador, desde la opción "Dashboard" del menú.
-- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 24 horas).
+- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 12 horas).
 
 Los indicadores de presencia dependen de que cada persona registre su salida en el molinete. Si una persona sale sin registrarla (por ejemplo, durante una emergencia con los brazos del molinete liberados), seguirá figurando como presente hasta que registre su salida.
 
@@ -264,7 +264,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 | Documentos por persona | Última versión de cada documento: persona, empresa, documento, versión, fecha de carga, vencimiento, días para vencer y estado (vigente, por vencer en 30 días o vencido). Primero los más urgentes. | Empresa; estado del documento. |
 | Ingresos y salidas | Historial en orden cronológico: fecha y hora, movimiento, resultado, documento, persona, empresa, motivo de denegación y molinete. | Periodo; ingresos o salidas; autorizados o denegados. |
 | Visitas del periodo | Cada ingreso autorizado con su salida, duración y estado (finalizada o presente). | Periodo. |
-| Personal presente | Personas dentro del terminal en el momento de la descarga, con hora de ingreso, tiempo dentro y si superan las 24 horas. | — |
+| Personal presente | Personas dentro del terminal en el momento de la descarga, con hora de ingreso, tiempo dentro y si superan las 12 horas. | — |
 | Auditoría | Fecha y hora, usuario, acción (crear, modificar o eliminar), dato y número de registro. | Periodo. |
 
 - **Periodo:** hoy, últimos 7 días, este mes o un rango personalizado (hasta 366 días).
@@ -376,7 +376,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `GET /eventos-acceso` | Historial paginado, con búsqueda y fechas | Administrador y Vigilancia |
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
 | `GET /panel/dashboard` | Indicadores y gráficos del Dashboard, por periodo | Administrador |
-| `GET /panel/dashboard/permanencia` | Personas con permanencia mayor a 24 horas, paginado | Administrador |
+| `GET /panel/dashboard/permanencia` | Personas con permanencia mayor a 12 horas, paginado | Administrador |
 | `GET /reportes/:tipo` | Reporte en Excel o PDF (`personal`, `documentos`, `movimientos`, `visitas`, `presentes`, `auditoria`); documentos también en ZIP con sus archivos | Administrador |
 | `GET /panel/estado-sistema` · `/health` | Estado del sistema y de los respaldos | Administrador · público |
 | `GET /panel/avisos` | Equipos y servicios caídos, para el aviso de la parte superior del portal | Administrador y Vigilancia |

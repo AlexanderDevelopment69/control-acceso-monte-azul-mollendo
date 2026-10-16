@@ -588,7 +588,7 @@ export const SECCIONES: SeccionManual[] = [
             "Elige el periodo: hoy, últimos 7 días, este mes o uno personalizado.",
             "Indicadores del periodo: presentes, visitas finalizadas y total de visitas.",
             "Gráficos de visitas, ingresos y salidas.",
-            "Quienes llevan más de un día dentro sin registrar salida.",
+            "Quienes llevan más de 12 horas dentro sin registrar salida.",
           ]}
         />
 
@@ -616,10 +616,10 @@ export const SECCIONES: SeccionManual[] = [
             },
             {
               Icono: IconoReloj,
-              boton: "Permanencia mayor a 24 h",
+              boton: "Permanencia mayor a 12 h",
               tono: "aviso",
               comillas: false,
-              texto: "Personas que ingresaron hace más de un día y no registran salida. Al final de la página está la lista con su tiempo dentro.",
+              texto: "Personas que ingresaron hace más de 12 horas y no registran salida. Al final de la página está la lista con su tiempo dentro.",
             },
           ]}
         />

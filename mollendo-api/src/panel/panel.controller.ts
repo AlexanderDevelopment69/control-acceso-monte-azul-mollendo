@@ -53,7 +53,7 @@ export class PanelController {
     return this.dashboardService.obtener(query);
   }
 
-  // Lista paginada de la permanencia mayor a 24 horas del dashboard.
+  // Lista paginada de la permanencia mayor a 12 horas del dashboard.
   @Get('panel/dashboard/permanencia')
   @Roles('administrador')
   permanencia(@Query() query: ListaPaginadaDto) {

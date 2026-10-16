@@ -73,7 +73,7 @@ function tiempoDentro(desde: string, ahora: string): string {
 /**
  * Presentes actualmente = todas las personas dentro, sin importar cuándo
  * entraron. El gráfico solo cuenta las visitas del periodo; la diferencia son
- * quienes entraron antes del periodo (p. ej. la permanencia mayor a 24 h).
+ * quienes entraron antes del periodo (p. ej. la permanencia mayor a 12 h).
  */
 function detallePresentes(d: Dashboard | null): string {
   if (!d) return "Personas que ingresaron y aún no registran salida";
@@ -137,7 +137,7 @@ function DashboardContent() {
   }, [cargar]);
 
   // Se actualiza con los ingresos y salidas (tiempo real) y cada minuto, para
-  // que la permanencia mayor a 24 horas avance aunque no haya movimientos. Con
+  // que la permanencia mayor a 12 horas avance aunque no haya movimientos. Con
   // mucho movimiento (cambio de turno) se recarga como máximo cada 10 s: si se
   // recargara con cada persona, los gráficos se redibujarían sin parar.
   const cargarActual = useRef(cargar);
@@ -223,9 +223,10 @@ function DashboardContent() {
           fondoIcono="bg-[#7a5af8]"
         />
         <TarjetaIndicador
-          titulo="Permanencia mayor a 24 h"
-          valor={d?.presencia.masDe24h ?? null}
-          detalle="Ingresaron hace más de un día y no registran salida"
+          // Espacio que no se corta: "12 h" siempre en la misma línea.
+          titulo={"Permanencia mayor a 12 h"}
+          valor={d?.presencia.masDe12h ?? null}
+          detalle="Ingresaron hace más de 12 horas y no registran salida"
           icono={<TimeIcon />}
           fondoIcono="bg-warning-500"
         />
@@ -383,13 +384,13 @@ function DashboardContent() {
               </Bloque>
             </div>
 
-            {/* Permanencia mayor a 24 horas */}
+            {/* Permanencia mayor a 12 horas */}
             <Bloque
-              titulo="Permanencia mayor a 24 horas"
-              descripcion="Personas cuyo último movimiento es un ingreso de hace más de un día. Si salieron sin pasar por el molinete, seguirán figurando aquí hasta que registren su salida."
+              titulo="Permanencia mayor a 12 horas"
+              descripcion="Personas cuyo último movimiento es un ingreso de hace más de 12 horas. Si salieron sin pasar por el molinete, seguirán figurando aquí hasta que registren su salida."
             >
               {!permanencia || permanencia.total === 0 ? (
-                <SinDatos texto="Nadie lleva más de 24 horas dentro." />
+                <SinDatos texto="Nadie lleva más de 12 horas dentro." />
               ) : (
                 <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
                   <AltoEstable

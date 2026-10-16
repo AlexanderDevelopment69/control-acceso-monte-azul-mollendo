@@ -144,7 +144,8 @@ export interface ResumenPanel {
 export interface Dashboard {
   periodo: { desde: string; hasta: string };
   generadoEn: string;
-  presencia: { presentes: number; masDe24h: number };
+  /** masDe12h: presentes que ingresaron hace más de 12 horas (permanencia larga). */
+  presencia: { presentes: number; masDe12h: number };
   visitas: { total: number; finalizadas: number; presentes: number };
   movimientos: {
     totales: { ingresosAutorizados: number; ingresosDenegados: number; salidasAutorizadas: number; salidasDenegadas: number };
@@ -164,7 +165,7 @@ export interface Dashboard {
   documentos: { vigentes: number; porVencer: number; vencidos: number; diasAviso: number };
 }
 
-/** Persona con permanencia mayor a 24 horas (GET /panel/dashboard/permanencia, paginado). */
+/** Persona con permanencia mayor a 12 horas (GET /panel/dashboard/permanencia, paginado). */
 export interface PersonaPermanencia {
   personaId: number;
   nombres: string;
