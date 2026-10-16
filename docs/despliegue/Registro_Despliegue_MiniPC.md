@@ -121,7 +121,7 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 | Usuario | `atenasac`, con `sudo` sin contraseña |
 | Acceso | SSH con llave (`ssh -i ~/.ssh/id_ed25519 atenasac@74.163.89.6`) |
 | Puertos que deben estar abiertos (grupo de seguridad de red de Azure, lo administra TMAM) | `22` (SSH), `3000` (portal), `3001` (API: G4 Pro y controlador); `80` y `443` para el HTTPS. Los cinco abiertos (16/10/2026) |
-| Dirección | `74.163.89.6` |
+| Dirección | `74.163.89.6`; portal en **https://accesos.monteazulsur.com.pe** (HTTPS con Caddy y Let's Encrypt, ver `deploy/nube/README.md`) |
 
 ### 2.2. La mini PC de la garita (entornos `controlador` y `garita`)
 
@@ -198,7 +198,7 @@ ls backups
 
 | Qué abrir | Qué debe pasar |
 |---|---|
-| Nube: `http://74.163.89.6:3000`. Mini PC como servidor: `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
+| Nube: `https://accesos.monteazulsur.com.pe`. Mini PC como servidor: `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
 | Entrar con `admin@mollendo.local` y la contraseña inicial | Entra a "Personal y documentos" |
 | Menú **Sistema y APIs** | Backend y base de datos "En línea"; clave de equipos "Configurado" |
 | Botón de Swagger en Sistema y APIs (o `http://<servidor>:3000/api/docs`) | Abre la documentación de la API |
@@ -766,7 +766,7 @@ La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambia
 |---|---|---|
 | Portal, API, base de datos | En la mini PC (`deploy/garita/`) | En la nube (`deploy/nube/`; Azure `74.163.89.6`) |
 | Lectores de DNI y relés | Los maneja la API de la mini PC | Los maneja el **controlador** de la mini PC (`deploy/controlador/`) |
-| G4 Pro apunta a (Cloud Server) | `192.168.0.165`, puerto `3001` | `74.163.89.6`, puerto `3001` (o el dominio, cuando haya HTTPS) |
+| G4 Pro apunta a (Cloud Server) | `192.168.0.165`, puerto `3001` | `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto `3001` |
 | Desde dónde llega el G4 al servidor | Red local de la garita | Internet, desde la IP pública de la garita (`38.25.53.235` el 07/10/2026) |
 | Personal y fotos en el G4 | Los de la base de la mini PC | Los de la base de la nube |
 
@@ -775,8 +775,8 @@ La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambia
 ### Estado actual (16/10/2026): configuración B con Azure
 
 - **Servidor:** Azure `74.163.89.6`, instalado limpio el 16/10/2026 (sin datos de prueba). Persona de prueba: **Amiel Bautista (48058719)**, con foto y SCTR Salud hasta el 23/10/2026.
-- **Mini PC:** IP fija `172.20.20.197` en la red de TMAM (biométricos), controlador con `SERVIDOR_URL=http://74.163.89.6:3001` desde el 16/10/2026 16:24 (configuración anterior en `deploy/controlador/.env.antes-azure-20261016-1624`; para volver a AWS, restaurarla y `docker compose up -d`). El controlador usa la red de la mini PC (`network_mode: host`).
-- **G4 Pro:** IP `172.20.20.198`. **Pendiente:** cambiarlo a Azure en su menú (*Cloud Service Settings*: `74.163.89.6`, puerto `3001`) y luego "Sincronizar" en Sistema y APIs.
+- **Mini PC:** IP fija `172.20.20.197` en la red de TMAM (biométricos), controlador con `SERVIDOR_URL=https://accesos.monteazulsur.com.pe` desde el 16/10/2026 17:15 (antes, `http://74.163.89.6:3001` desde las 16:24; copia en `.env.antes-https-*`) (configuración anterior en `deploy/controlador/.env.antes-azure-20261016-1624`; para volver a AWS, restaurarla y `docker compose up -d`). El controlador usa la red de la mini PC (`network_mode: host`).
+- **G4 Pro:** IP `172.20.20.198`, conectado a Azure desde el 16/10/2026 16:54 (sincronizado: tiene a Amiel con su rostro). Conviene poner en su menú el dominio `accesos.monteazulsur.com.pe` en vez de la IP.
 - **AWS (`54.147.214.38`):** queda de respaldo con los datos de prueba; ya no recibe al controlador.
 
 ### Estado anterior (08/10/2026): configuración B con AWS
@@ -940,7 +940,7 @@ Cada relé se identifica por el número de serie de su módulo (5 caracteres; c�
 
 | Variable | Obligatoria | Para qué sirve | Valor |
 |---|---|---|---|
-| `SERVIDOR_URL` | Sí | Dirección de la API en la nube, sin `/api/v1`. | Hoy `http://74.163.89.6:3001` (Azure) |
+| `SERVIDOR_URL` | Sí | Dirección de la API en la nube, sin `/api/v1`. | Hoy `https://accesos.monteazulsur.com.pe` (Azure) |
 | `DEVICE_API_KEY` | Sí | **La misma** clave de equipos del servidor en la nube. | Copiarla del `.env` de la nube |
 
 Más las de lectores (B.2) y relés (B.3). El controlador no usa base de datos ni las demás variables.

@@ -72,8 +72,30 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    # Hacia afuera, el portal sale por HTTPS (caddy). El 3000 queda solo en el
+    # propio servidor (para revisar con curl), no desde internet.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+
+  # HTTPS con el dominio (DOMINIO en .env): certificado de Let's Encrypt que
+  # Caddy saca y renueva solo. Reenvía /api/v1 a la API y lo demás al portal.
+  # Ver Caddyfile.
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - portal
+    environment:
+      DOMINIO: ${DOMINIO:?Falta DOMINIO en .env (ej. accesos.monteazulsur.com.pe)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificados y su renovación: se conservan entre reinicios.
+      - caddy_data:/data
+      - caddy_config:/config
 
   # Respaldo diario (base de datos + documentos y fotos) en ./backups, a las
   # HORA_RESPALDO (por defecto 00:00, hora de Lima); se guardan DIAS_RESPALDO
@@ -113,3 +135,5 @@ services:
 volumes:
   db_data:
   documentos:
+  caddy_data:
+  caddy_config:

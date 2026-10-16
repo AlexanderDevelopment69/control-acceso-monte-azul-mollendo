@@ -102,7 +102,7 @@ La arquitectura es de tres capas: el **portal web** (presentación), el **backen
 
 Los contenedores se reinician automáticamente ante una falla y se inician junto con el servidor. Acceso: por la red local (`http://192.168.0.165:3000`) o por Tailscale (`http://100.78.153.33:3000`).
 
-**Modalidad con servidor en la nube.** El sistema también puede instalarse con el portal, el backend y la base de datos en un servidor en la nube. **Es la modalidad en uso desde el 16/10/2026, con un servidor en Azure de TMAM** (dirección `74.163.89.6`; con HTTPS cuando se cuente con el dominio). En esa modalidad, la mini PC de la garita trabaja como **controlador**:
+**Modalidad con servidor en la nube.** El sistema también puede instalarse con el portal, el backend y la base de datos en un servidor en la nube. **Es la modalidad en uso desde el 16/10/2026, con un servidor en Azure de TMAM** (portal en **https://accesos.monteazulsur.com.pe**, con certificado de seguridad que se renueva solo). En esa modalidad, la mini PC de la garita trabaja como **controlador**:
 
 - lee los DNI y los envía al servidor por internet, con la clave de equipos;
 - recibe del servidor la orden de abrir cada molinete y activa su relé;

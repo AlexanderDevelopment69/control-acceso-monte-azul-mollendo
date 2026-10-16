@@ -1,0 +1,19 @@
+# HTTPS del servidor en la nube (contenedor "caddy" de docker-compose.yml).
+# Caddy saca y renueva solo el certificado de Let's Encrypt para {$DOMINIO}
+# (por eso los puertos 80 y 443 deben estar abiertos y el registro DNS debe
+# apuntar directo a este servidor: en Cloudflare, "DNS only", nube gris).
+# http:// se redirige solo a https://.
+{$DOMINIO} {
+	# La API directo (con su canal en vivo, /api/v1/socket.io): así ve la IP
+	# real de cada usuario (X-Forwarded-For; trust proxy en mollendo-api/src/main.ts).
+	reverse_proxy /api/v1/* api:3001
+
+	# Todo lo demás, el portal.
+	reverse_proxy portal:3000
+
+	header {
+		# El navegador usa siempre HTTPS con este dominio (1 año).
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}

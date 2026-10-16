@@ -2,7 +2,7 @@
 
 Revisión de seguridad del 10/10/2026 (API, portal, servidor en la nube y librerías; el servidor pasó de AWS a Azure el 16/10/2026), lo que se corrigió y lo que queda pendiente. Al final hay una lista de control para revisar en cada despliegue.
 
-> **Estado al 11/10/2026:** el **programa** (API y portal) no tiene problemas de seguridad graves conocidos. Lo que falta para que el sistema en funcionamiento sea seguro es de la **instalación**: HTTPS, cambiar las contraseñas iniciales y guardar los respaldos fuera del servidor (ver [sección 0](#0-estado-actual)).
+> **Estado al 11/10/2026:** el **programa** (API y portal) no tiene problemas de seguridad graves conocidos. Lo que falta para que el sistema en funcionamiento sea seguro es de la **instalación**: cambiar las contraseñas iniciales y guardar los respaldos fuera del servidor (el HTTPS quedó listo el 16/10/2026) (ver [sección 0](#0-estado-actual)).
 
 ## Contenido
 
@@ -50,7 +50,7 @@ Sin problemas graves conocidos. Lo que cubre:
 | Prioridad | Pendiente | Quién | Estado |
 |---|---|---|---|
 | 🔴 | **Contraseñas iniciales sin cambiar en Azure** (instalado el 16/10/2026; antes, lo mismo en AWS): `admin@mollendo.local` y `vigilancia@mollendo.local` entran con la contraseña generada al instalar, que está en texto plano en el `.env` del servidor. En Azure, además, se compartieron por chat el 16/10/2026: **cambiarlas cuanto antes**. Cambiarlas desde el portal (menú del usuario → "Cambiar contraseña") y después borrar `ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD` del `.env` (solo sirven para crear las cuentas la primera vez) | Administrador del portal; luego soporte | Pendiente |
-| 🔴 | **HTTPS** ([4.1](#41-https)) | Cliente (dominio), luego soporte | Esperando el dominio |
+| ✅ | **HTTPS** ([4.1](#41-https)): `https://accesos.monteazulsur.com.pe` con Let's Encrypt (16/10/2026) | Soporte | Hecho |
 | 🟠 | **Respaldos fuera del servidor:** hoy los respaldos diarios están en el mismo disco del servidor de Azure; si se pierde o se compromete, se pierden datos y respaldos. Opciones: Azure Backup de la máquina virtual (desde el portal de Azure) o copiar cada respaldo a un Azure Storage (Blob) | Quien administre Azure (TMAM) | Pendiente |
 | 🟠 | **Puerto 3001 solo para la IP del terminal** ([4.2](#42-restringir-el-puerto-3001-por-ip)) | Quien administre Azure (TMAM) | Pendiente (requiere IP fija) |
 | 🟠 | **Actualizar la mini PC** cuando vuelva a estar en línea: no tiene las correcciones del 10 y 11/10/2026 (`deploy/controlador/README.md`, sección 5) | Soporte | Pendiente |
@@ -65,7 +65,7 @@ Sin problemas graves conocidos. Lo que cubre:
 | 4 | Swagger (`/api/docs`) público en la nube: mostraba todas las rutas de la API | Bajo | ✅ Corregido: apagado en la nube (`SWAGGER=false` por defecto) |
 | 5 | Sin cabeceras de seguridad; el portal anunciaba `X-Powered-By: Next.js` | Bajo | ✅ Corregido: `helmet` en la API y cabeceras en el portal |
 | 6 | La clave de equipos se comparaba con `!==` (en teoría, medible por tiempo de respuesta) | Muy bajo | ✅ Corregido: comparación en tiempo constante |
-| 7 | Sin HTTPS: contraseñas y datos viajan sin cifrar | Alto | ⏳ Pendiente: se espera el dominio del cliente ([4.1](#41-https)) |
+| 7 | Sin HTTPS: contraseñas y datos viajan sin cifrar | Alto | ✅ Corregido el 16/10/2026: `https://accesos.monteazulsur.com.pe`, `http://` redirige a `https://`, HSTS de 1 año; el 3000 ya no se abre desde afuera ([4.1](#41-https)) |
 
 ---
 
@@ -105,7 +105,7 @@ Sin problemas graves conocidos. Lo que cubre:
 **Servidor (Azure; la revisión original fue en AWS)**
 
 - SSH solo con llave: sin contraseña y root solo con llave (comprobado en Azure el 16/10/2026).
-- Puertos abiertos: 22, 3000 y 3001 (y 80 y 443 para el HTTPS). La base de datos (5432) no está publicada.
+- Puertos publicados: 22, 80 y 443 (HTTPS) y 3001 (G4 Pro). El 3000 (portal) solo en la propia máquina. La base de datos (5432) no está publicada.
 - `.env` con permisos `600`; claves largas generadas al azar (ver anexo B de la guía de despliegue).
 - Respaldo diario y antes de cada actualización.
 - Ningún `.env` ni llave en el repositorio ni en su historial.
@@ -144,7 +144,7 @@ Sin problemas graves conocidos. Lo que cubre:
 - **Por el portal la API no ve la IP del usuario:** Next.js reenvía `/api/v1` sin `X-Forwarded-For`, así que todos llegan con la IP del contenedor del portal (y esa cabecera no se puede tomar del navegador, porque se falsearía). Por eso:
   - el límite **por correo** rige siempre (por el portal, 5 por minuto para cada correo, venga de donde venga);
   - el límite **por IP** se aplica solo cuando la IP es real (pedidos directos a la API, como los del puerto 3001) y se omite para IPs internas (`esIpInterna`), para que los intentos de uno no bloqueen el login de todos.
-- Cuando se ponga el proxy HTTPS ([4.1](#41-https)), configurarlo para que envíe `X-Forwarded-For`: la API ya confía en esa cabecera cuando viene de la propia máquina o de una red privada (`trust proxy`), y los dos límites pasarán a usar la IP real también por el portal.
+- Con el proxy HTTPS (Caddy, [4.1](#41-https)), las llamadas a `/api/v1` llegan a la API con `X-Forwarded-For`: la API confía en esa cabecera cuando viene de una red privada (`trust proxy`), así que los dos límites usan la IP real también desde el portal.
 - Efecto secundario aceptado: quien conozca un correo puede bloquear su inicio de sesión durante un minuto con 5 intentos fallidos.
 - Los contadores están en memoria: se reinician si se reinicia la API.
 
@@ -169,12 +169,13 @@ Sin problemas graves conocidos. Lo que cubre:
 
 ### 4.1. HTTPS
 
-Sin HTTPS, quien esté en la misma red (o en el camino) puede ver contraseñas, sesiones y datos. Se habilitará cuando el cliente tenga su dominio:
+**Hecho el 16/10/2026.** Sin HTTPS, quien esté en la misma red (o en el camino) puede ver contraseñas, sesiones y datos. Así quedó:
 
-1. Apuntar el dominio (registro A) a la IP del servidor.
-2. Poner un proxy con certificado automático (Caddy o Nginx + Let's Encrypt) delante del portal y de la API, en un contenedor más, que envíe `X-Forwarded-For` (para el límite de intentos por IP, ver 3.3).
-3. Abrir 80 y 443 en el Security Group y cerrar 3000 desde afuera.
-4. Cambiar `CORS_ORIGIN` a `https://<dominio>` y la dirección del servidor en el G4 Pro y en el controlador.
+1. El dominio `accesos.monteazulsur.com.pe` (registro A en Cloudflare, "DNS only") apunta a `74.163.89.6`.
+2. Contenedor `caddy` (`deploy/nube/Caddyfile`) con certificado de Let's Encrypt que se renueva solo; reenvía `/api/v1` a la API (con `X-Forwarded-For`) y lo demás al portal. HSTS de 1 año.
+3. 80 y 443 abiertos en Azure; el 3000 del portal solo en la propia máquina.
+4. `CORS_ORIGIN=https://accesos.monteazulsur.com.pe`; el controlador se conecta por `https://accesos.monteazulsur.com.pe`.
+5. **Pendiente:** el G4 Pro sigue por HTTP en el puerto 3001 (no está confirmado que este modelo funcione con HTTPS). Lo que envía (resultados de rostro y alcohol, comandos) no lleva contraseñas, y el servidor solo acepta su número de serie.
 
 ### 4.2. Restringir el puerto 3001 por IP
 

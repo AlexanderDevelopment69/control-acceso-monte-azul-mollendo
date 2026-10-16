@@ -13,6 +13,13 @@ import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { ComprobandoBadge } from "./Insignias";
 import { personas } from "./TarjetasEstado";
 
+/** "1 persona, con rostro" · "5 personas, todas con rostro" · "5 personas, 3 con rostro". */
+export function resumenEquipo({ usuarios, conRostro }: { usuarios: number; conRostro: number }): string {
+  if (usuarios === 0) return "ninguna persona";
+  const rostro = conRostro === usuarios ? (usuarios === 1 ? "con rostro" : "todas con rostro") : `${conRostro} con rostro`;
+  return `${personas(usuarios)}, ${rostro}`;
+}
+
 /**
  * Sincronización con los G4 Pro: si la diaria está activa, el último resultado
  * y los botones para simularla o ejecutarla (la real pide confirmación).
@@ -142,9 +149,6 @@ export function SincronizacionG4({
         </div>
       </div>
 
-      {lento && ejecutando && (
-        <p className="mt-3 text-xs text-gray-400">Consultando al equipo; puede tardar hasta un minuto.</p>
-      )}
       {error && <ErrorBanner className="mt-3">{error}</ErrorBanner>}
 
       {ultima && (
@@ -176,10 +180,9 @@ export function SincronizacionG4({
                 ultima.agregadas + ultima.borradas + ultima.permisosQuitados === 0 &&
                 ultima.equiposSinRespuesta === 0 && (
                   <p className="mt-1 text-xs text-success-600 dark:text-success-500">
-                    ✔ {ultima.simulacion ? "No hay nada que cambiar" : "Sin cambios"}: el terminal ya estaba igual al sistema
-                    {ultima.porEquipo.length === 1 &&
-                      ` (${personas(ultima.porEquipo[0].usuarios)}, ${ultima.porEquipo[0].conRostro} con rostro)`}
-                    .
+                    ✔ Todo en orden: el terminal {ultima.simulacion ? "tiene" : "ya tenía"} a las mismas
+                    personas que el sistema
+                    {ultima.porEquipo.length === 1 && ` (${resumenEquipo(ultima.porEquipo[0])})`}.
                   </p>
                 )
               )}

@@ -15,12 +15,19 @@ En el servidor todo vive en `~/mollendo`, y los comandos `docker compose` se eje
 | Dato | Valor |
 |---|---|
 | Acceso | `ssh -i ~/.ssh/id_ed25519 atenasac@74.163.89.6` (`sudo` sin contraseña) |
-| Portal | `http://74.163.89.6:3000` (HTTPS cuando TMAM entregue su dominio) |
-| Equipos | API `74.163.89.6:3001`: controlador de la mini PC y G4 Pro |
+| Portal | **https://accesos.monteazulsur.com.pe** (HTTPS con certificado de Let's Encrypt que el contenedor `caddy` saca y renueva solo; `http://` redirige a `https://`). El 3000 ya no se abre desde afuera |
+| Equipos | Controlador de la mini PC: `https://accesos.monteazulsur.com.pe`. G4 Pro: servidor `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto `3001` (HTTP) |
 | Máquina | Ubuntu 26.04, 4 CPU, 7,7 GB de memoria, 124 GB de disco, hora de Lima |
 | Instalado | 16/10/2026, limpio (sin datos de prueba). Respaldos diarios a las 04:00, se guardan 30 días |
 
 Las contraseñas iniciales quedaron en `~/mollendo/deploy/nube/.env` (`ADMIN_SEED_PASSWORD`, `VIGILANCIA_SEED_PASSWORD`): cambiarlas desde el portal después de entrar.
+
+### HTTPS (dominio)
+
+- El dominio `accesos.monteazulsur.com.pe` apunta a `74.163.89.6` (registro A en Cloudflare, en **"DNS only"**, nube gris: si se pasa a "Proxied", Caddy no puede renovar el certificado).
+- `caddy` (ver `Caddyfile`) atiende 80 y 443: reenvía `/api/v1` a la API (con la IP real del usuario en `X-Forwarded-For`) y lo demás al portal. Certificado de Let's Encrypt desde el 16/10/2026, se renueva solo antes de vencer.
+- En `.env`: `DOMINIO=accesos.monteazulsur.com.pe` y `CORS_ORIGIN=https://accesos.monteazulsur.com.pe`.
+- El 3001 sigue abierto en HTTP para el G4 Pro (no está confirmado que este modelo funcione con HTTPS).
 
 ## Requisitos
 
@@ -64,7 +71,8 @@ JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 JWT_REFRESH_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 DEVICE_API_KEY=$(openssl rand -hex 32)
 G4PRO_SN_PERMITIDOS=HSR3263100192
-CORS_ORIGIN=http://74.163.89.6:3000
+DOMINIO=accesos.monteazulsur.com.pe
+CORS_ORIGIN=https://accesos.monteazulsur.com.pe
 ADMIN_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
 VIGILANCIA_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
 MOLINETES_REMOTOS=true
@@ -93,10 +101,10 @@ sudo docker compose run --rm -T api npm run db:seed
 ```
 
 **6. Conectar los equipos:**
-- G4 Pro (*Cloud Service Settings*): servidor `74.163.89.6`, puerto `3001`. Después, en **Sistema y APIs**, "Sincronizar" para enviarle al personal con su foto.
-- Controlador de la garita: en su `.env`, `SERVIDOR_URL=http://74.163.89.6:3001` y la **misma** `DEVICE_API_KEY` (ver [`../controlador`](../controlador/README.md)).
+- G4 Pro (*Cloud Service Settings*): servidor `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto `3001`. Después, en **Sistema y APIs**, "Sincronizar" para enviarle al personal con su foto.
+- Controlador de la garita: en su `.env`, `SERVIDOR_URL=https://accesos.monteazulsur.com.pe` y la **misma** `DEVICE_API_KEY` (ver [`../controlador`](../controlador/README.md)).
 
-7. Entra a `http://74.163.89.6:3000` con `admin@mollendo.local` y cambia las contraseñas iniciales (también la de `vigilancia@mollendo.local`).
+7. Entra a `https://accesos.monteazulsur.com.pe` con `admin@mollendo.local` y cambia las contraseñas iniciales (también la de `vigilancia@mollendo.local`).
 
 ## Actualizar a una versión nueva
 

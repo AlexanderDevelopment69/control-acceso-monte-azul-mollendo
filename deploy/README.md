@@ -4,7 +4,7 @@ El sistema es el mismo código en todos lados. Cada entorno tiene **su propia ca
 
 | Entorno | Carpeta | Dónde | Qué corre |
 |---|---|---|---|
-| **Nube** | [`nube/`](nube/README.md) | Servidor en la nube (Azure, `74.163.89.6`) | Portal, API, base de datos y respaldos |
+| **Nube** | [`nube/`](nube/README.md) | Servidor en la nube (Azure, `74.163.89.6`, `https://accesos.monteazulsur.com.pe`) | Portal, API, base de datos y respaldos |
 | **Controlador** | [`controlador/`](controlador/README.md) | Mini PC de la garita | Solo lectores de DNI y relés de los molinetes, conectada a la nube |
 | **Garita** (opcional, hoy no se usa) | [`garita/`](garita/README.md) | Mini PC de la garita | Servidor completo, con lectores y relés por USB, sin depender de internet |
 | **Local** | [`local/`](local/README.md) | PC de desarrollo | PostgreSQL en Docker; API y portal con Node |
