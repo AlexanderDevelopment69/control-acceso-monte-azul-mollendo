@@ -359,7 +359,7 @@ Requisitos: la PC de repuesto debe estar **instalada y configurada por soporte c
 | **Pérdida o daño de los datos** | Respaldo diario a las 04:00 (base de datos, documentos y fotos), guardado 30 días. La restauración se probó el 15/10/2026 en el propio servidor: datos completos e iguales al sistema |
 | **El servidor no responde** | Igual que un corte de internet (sección 5.1): nadie ingresa, las salidas siguen con la lista guardada. Soporte revisa el servidor |
 
-Pendientes de la instalación (no de contingencia): copia de los respaldos fuera del servidor y confirmar que la IP del servidor sea fija (*Elastic IP* de AWS).
+Pendientes de la instalación (no de contingencia): copia de los respaldos fuera del servidor y confirmar con TMAM que la IP del servidor de Azure (`74.163.89.6`) sea fija (IP pública estática).
 
 ---
 

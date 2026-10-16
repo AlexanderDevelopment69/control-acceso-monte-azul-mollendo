@@ -51,7 +51,7 @@ ls /dev/serial/by-id/          # una ruta por lector: anota cuál es el de ingre
 **4. Completar el `.env`** (`nano .env`; guardar `Ctrl+O`, salir `Ctrl+X`):
 
 ```
-SERVIDOR_URL=http://54.147.214.38:3001
+SERVIDOR_URL=http://74.163.89.6:3001
 DEVICE_API_KEY=<la misma del servidor en la nube>
 LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/usb-...   (la del lector de ingreso)
 LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/usb-...    (la del lector de salida)

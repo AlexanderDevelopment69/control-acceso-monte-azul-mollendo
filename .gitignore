@@ -4,3 +4,6 @@
 # Configuración y respaldos de cada entorno de despliegue (tienen claves y datos).
 deploy/*/.env
 deploy/*/backups/
+
+# Hoja de accesos para el cliente (contraseñas): se entrega aparte, no se sube.
+docs/cliente/Accesos_Sistema_TMAM.md

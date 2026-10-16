@@ -70,7 +70,7 @@ export type EstadoReleUsb = Record<'ingreso' | 'salida', EstadoReleMolinete> & {
  * buscan en cada orden (por su identificación USB en /sys/class/hidraw), así
  * se encuentran aunque se desconecten y se vuelvan a conectar. Los comandos HID
  * los envía `rele-usb` (tools/rele-usb.c, compilado en la imagen): Node no
- * puede hacer ese ioctl. Sin módulo (por ejemplo en AWS), la orden solo queda
+ * puede hacer ese ioctl. Sin módulo (por ejemplo en el servidor en la nube), la orden solo queda
  * en el registro.
  *
  * Dos módulos opcionales de **aviso** dan un contacto seco (para una luz, una

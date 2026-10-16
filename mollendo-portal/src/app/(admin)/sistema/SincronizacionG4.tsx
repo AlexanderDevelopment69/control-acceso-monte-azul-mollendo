@@ -168,6 +168,21 @@ export function SincronizacionG4({
                   (probablemente creadas a mano en el equipo)
                 </p>
               )}
+              {ultima.equipos === 0 ? (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Ningún terminal facial conectado a este servidor: no se revisó nada.
+                </p>
+              ) : (
+                ultima.agregadas + ultima.borradas + ultima.permisosQuitados === 0 &&
+                ultima.equiposSinRespuesta === 0 && (
+                  <p className="mt-1 text-xs text-success-600 dark:text-success-500">
+                    ✔ {ultima.simulacion ? "No hay nada que cambiar" : "Sin cambios"}: el terminal ya estaba igual al sistema
+                    {ultima.porEquipo.length === 1 &&
+                      ` (${personas(ultima.porEquipo[0].usuarios)}, ${ultima.porEquipo[0].conRostro} con rostro)`}
+                    .
+                  </p>
+                )
+              )}
               {ultima.equiposSinRespuesta > 0 && (
                 <p className="mt-1 text-xs text-error-600 dark:text-error-400">
                   {ultima.equiposSinRespuesta} equipo(s) no respondieron.

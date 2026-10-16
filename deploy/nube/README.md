@@ -1,6 +1,6 @@
 # Entorno NUBE — servidor en la nube
 
-Portal, API, base de datos y respaldos en un servidor en la nube (hoy AWS `54.147.214.38`; después Azure). Los lectores de DNI y los relés están en la mini PC de la garita ([`../controlador`](../controlador/README.md)), que se conecta a este servidor. El G4 Pro también se conecta directo aquí.
+Portal, API, base de datos y respaldos en el servidor en la nube: **Azure `74.163.89.6`** (de TMAM, desde el 16/10/2026; antes se usó AWS `54.147.214.38` para pruebas). Los lectores de DNI y los relés están en la mini PC de la garita ([`../controlador`](../controlador/README.md)), que se conecta a este servidor. El G4 Pro también se conecta directo aquí.
 
 En el servidor todo vive en `~/mollendo`, y los comandos `docker compose` se ejecutan en `~/mollendo/deploy/nube`:
 
@@ -10,23 +10,35 @@ En el servidor todo vive en `~/mollendo`, y los comandos `docker compose` se eje
   deploy/nube/   docker-compose.yml · .env (claves; nunca borrar) · backups/ (nunca borrar)
 ```
 
+## Servidor actual (Azure)
+
+| Dato | Valor |
+|---|---|
+| Acceso | `ssh -i ~/.ssh/id_ed25519 atenasac@74.163.89.6` (`sudo` sin contraseña) |
+| Portal | `http://74.163.89.6:3000` (HTTPS cuando TMAM entregue su dominio) |
+| Equipos | API `74.163.89.6:3001`: controlador de la mini PC y G4 Pro |
+| Máquina | Ubuntu 26.04, 4 CPU, 7,7 GB de memoria, 124 GB de disco, hora de Lima |
+| Instalado | 16/10/2026, limpio (sin datos de prueba). Respaldos diarios a las 04:00, se guardan 30 días |
+
+Las contraseñas iniciales quedaron en `~/mollendo/deploy/nube/.env` (`ADMIN_SEED_PASSWORD`, `VIGILANCIA_SEED_PASSWORD`): cambiarlas desde el portal después de entrar.
+
 ## Requisitos
 
-**En tu PC:** Git y SSH (Windows 10/11 ya trae `ssh` y `scp`; usar PowerShell o Git Bash), la llave del servidor (`~/.ssh/aws-ec2`) y el proyecto:
+**En tu PC:** Git y SSH (Windows 10/11 ya trae `ssh` y `scp`; usar PowerShell o Git Bash), la llave del servidor (`~/.ssh/id_ed25519`) y el proyecto:
 
 ```bash
 git clone https://github.com/AlexanderDevelopment69/control-acceso-monte-azul-mollendo.git
 cd control-acceso-monte-azul-mollendo
 ```
 
-**El servidor:** Ubuntu con un usuario con `sudo` y estos puertos abiertos (en AWS: EC2 → Security Groups → Inbound rules): `22` (SSH), `3000` (portal) y `3001` (API, G4 Pro y controlador). Si el internet del terminal tiene IP pública fija, abre el `3001` solo para esa IP (`<IP>/32`): ver [seguridad, 4.2](../../docs/seguridad/Seguridad.md#42-restringir-el-puerto-3001-por-ip).
+**El servidor:** Ubuntu con un usuario con `sudo` y estos puertos abiertos (en Azure: grupo de seguridad de red de la máquina → reglas de entrada; los administra TMAM): `22` (SSH), `3000` (portal) y `3001` (API, G4 Pro y controlador); `80` y `443` para el HTTPS con el dominio. En Azure están abiertos los cinco (comprobado el 16/10/2026). Si el internet del terminal tiene IP pública fija, abre el `3001` solo para esa IP (`<IP>/32`): ver [seguridad, 4.2](../../docs/seguridad/Seguridad.md#42-restringir-el-puerto-3001-por-ip).
 
 ## Primer despliegue
 
 **1. Instalar Docker en el servidor** (es lo único que se instala en el sistema):
 
 ```bash
-ssh -i ~/.ssh/aws-ec2 ubuntu@54.147.214.38
+ssh -i ~/.ssh/id_ed25519 atenasac@74.163.89.6
 sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 docker-buildx
 sudo systemctl enable --now docker
 sudo timedatectl set-timezone America/Lima
@@ -37,7 +49,7 @@ exit
 
 ```bash
 git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy
-scp -i ~/.ssh/aws-ec2 mollendo.tgz ubuntu@54.147.214.38:
+scp -i ~/.ssh/id_ed25519 mollendo.tgz atenasac@74.163.89.6:
 ```
 
 **3. Descomprimir y crear el `.env`** (en el servidor). El bloque genera claves al azar; cambia `CORS_ORIGIN` si la IP es otra y pon en `G4PRO_SN_PERMITIDOS` el número de serie del G4 Pro (está en su etiqueta; varios, separados por coma):
@@ -52,7 +64,7 @@ JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 JWT_REFRESH_SECRET=$(openssl rand -base64 48 | tr -d '\n')
 DEVICE_API_KEY=$(openssl rand -hex 32)
 G4PRO_SN_PERMITIDOS=HSR3263100192
-CORS_ORIGIN=http://54.147.214.38:3000
+CORS_ORIGIN=http://74.163.89.6:3000
 ADMIN_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
 VIGILANCIA_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
 MOLINETES_REMOTOS=true
@@ -81,10 +93,10 @@ sudo docker compose run --rm -T api npm run db:seed
 ```
 
 **6. Conectar los equipos:**
-- G4 Pro (*Cloud Service Settings*): servidor `54.147.214.38`, puerto `3001`.
-- Controlador de la garita: en su `.env`, `SERVIDOR_URL=http://54.147.214.38:3001` y la **misma** `DEVICE_API_KEY` (ver [`../controlador`](../controlador/README.md)).
+- G4 Pro (*Cloud Service Settings*): servidor `74.163.89.6`, puerto `3001`. Después, en **Sistema y APIs**, "Sincronizar" para enviarle al personal con su foto.
+- Controlador de la garita: en su `.env`, `SERVIDOR_URL=http://74.163.89.6:3001` y la **misma** `DEVICE_API_KEY` (ver [`../controlador`](../controlador/README.md)).
 
-7. Entra a `http://54.147.214.38:3000` con `admin@mollendo.local` y cambia las contraseñas iniciales (también la de `vigilancia@mollendo.local`).
+7. Entra a `http://74.163.89.6:3000` con `admin@mollendo.local` y cambia las contraseñas iniciales (también la de `vigilancia@mollendo.local`).
 
 ## Actualizar a una versión nueva
 
@@ -95,7 +107,7 @@ Los datos están en volúmenes de Docker y no se tocan.
 ```bash
 # En tu PC (con los cambios ya en un commit)
 git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy
-scp -i ~/.ssh/aws-ec2 mollendo.tgz ubuntu@54.147.214.38:
+scp -i ~/.ssh/id_ed25519 mollendo.tgz atenasac@74.163.89.6:
 
 # En el servidor
 cd ~/mollendo/deploy/nube
@@ -124,7 +136,7 @@ En el portal, **Sistema y APIs**: backend y base de datos "En línea"; controlad
 
 | Síntoma | Qué hacer |
 |---|---|
-| El portal no abre desde afuera | `curl -I http://localhost:3000` en el servidor; si responde, revisar los puertos del Security Group |
+| El portal no abre desde afuera | `curl -I http://localhost:3000` en el servidor; si responde, revisar las reglas de entrada del grupo de seguridad de red en Azure |
 | `api` se reinicia y el log dice "Authentication failed" | Se cambió `DB_PASSWORD`: volver a la original y `sudo docker compose up -d` |
 | Cambié el `.env` y no toma efecto | `sudo docker compose up -d` (recrea los contenedores con el `.env` nuevo) |
 | Ver qué pasa | `sudo docker compose logs -f api` |

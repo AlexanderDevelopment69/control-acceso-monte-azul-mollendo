@@ -191,6 +191,19 @@ export const SECCIONES: SeccionManual[] = [
           documento falla al subirse, la persona ya queda registrada: corrige ese documento y vuelve a guardar.
         </Nota>
 
+        <Subtitulo>Corregir los datos de una persona</Subtitulo>
+        <p>
+          Si algo se escribió mal, <strong>“Editar datos”</strong> (en la ficha, arriba a la derecha) corrige el perfil, la
+          empresa, el tipo y número de documento, los nombres y los apellidos. Se valida igual que al registrar: el DNI con
+          sus 8 dígitos y sin repetirse con otra persona. Queda en la Auditoría.
+        </p>
+        <Nota>
+          Si cambias el <strong>número de documento</strong>, desde que guardes la persona debe pasar su{" "}
+          <strong>documento nuevo</strong> por el lector. El terminal facial se actualiza solo (borra el anterior y
+          registra el nuevo con su foto); los ingresos y salidas anteriores conservan el documento con el que se
+          registraron. La foto y los documentos se cambian en la ficha, como siempre.
+        </Nota>
+
         <Subtitulo>Sus documentos</Subtitulo>
         <p>
           En la ficha, la tabla <strong>Documentos</strong> muestra cada documento con su vencimiento y si está vigente o
@@ -366,6 +379,11 @@ export const SECCIONES: SeccionManual[] = [
             },
           ]}
         />
+
+        <p>
+          Junto al nombre de cada persona se ve su <strong>perfil</strong> (contratista, conductor, visita…), para saber
+          de un vistazo quién está pasando.
+        </p>
 
         <Subtitulo>Buscar y ver otros días</Subtitulo>
         <p>
@@ -904,13 +922,13 @@ export const SECCIONES: SeccionManual[] = [
               Icono: IconoMolinete,
               boton: "Controlador",
               comillas: false,
-              texto: "El equipo que lee los DNI y abre los molinetes. Si está desconectado, nadie puede ingresar; se puede salir con la lista del personal guardada.",
+              texto: "El equipo que lee los DNI y abre los molinetes, con su IP en la red de la garita. Si está desconectado, nadie puede ingresar; se puede salir con la lista del personal guardada.",
             },
             {
               Icono: IconoRostro,
               boton: "Terminal facial (G4 Pro)",
               comillas: false,
-              texto: "“En línea” o “Desconectado”, con su última actividad y cuántas personas y rostros tiene.",
+              texto: "“En línea” o “Desconectado”, con su IP en la red de la garita, su última actividad y cuántas personas y rostros tiene.",
             },
             {
               Icono: IconoDni,

@@ -41,7 +41,7 @@ El mismo código corre en cuatro lugares. Lo que cambia es la configuración: ca
 | Entorno | Dónde | Qué corre | Carpeta | Cómo se levanta |
 |---|---|---|---|---|
 | **local** | PC de desarrollo | PostgreSQL en Docker; API y portal con Node | `deploy/local/` (el `.env` va en `mollendo-api/` y `mollendo-portal/`) | `docker compose up -d`, luego `npm run start:dev` (API) y `npm run dev` (portal) |
-| **nube** | AWS hoy (`54.147.214.38`), Azure después | Portal, API, base de datos y respaldos | `deploy/nube/` | `docker compose up -d --build` |
+| **nube** | Azure (`74.163.89.6`; antes AWS para pruebas) | Portal, API, base de datos y respaldos | `deploy/nube/` | `docker compose up -d --build` |
 | **controlador** | Mini PC de la garita | Solo lectores de DNI y relés, conectados a la nube | `deploy/controlador/` | `docker compose up -d --build` |
 | **garita** (opcional, hoy no se usa) | Mini PC de la garita | Servidor completo, con lectores y relés por USB | `deploy/garita/` | `docker compose up -d --build` |
 
@@ -116,12 +116,12 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 
 | Requisito | Valor actual |
 |---|---|
-| Servidor | AWS EC2, Ubuntu (después Azure) |
-| Disco | 48 GB (11 GB usados al 10/10/2026) |
-| Usuario | `ubuntu`, con permisos de `sudo` |
-| Acceso | SSH con llave (`ssh -i ~/.ssh/aws-ec2 ubuntu@54.147.214.38`) |
-| Puertos que deben estar abiertos (Security Group) | `22` (SSH), `3000` (portal) y `3001` (API: G4 Pro y controlador) |
-| Dirección | `54.147.214.38` |
+| Servidor | Azure (de TMAM), Ubuntu 26.04 LTS, desde el 16/10/2026. Antes se usó AWS (`54.147.214.38`) para pruebas |
+| Recursos | 4 CPU, 7,7 GB de memoria, 124 GB de disco |
+| Usuario | `atenasac`, con `sudo` sin contraseña |
+| Acceso | SSH con llave (`ssh -i ~/.ssh/id_ed25519 atenasac@74.163.89.6`) |
+| Puertos que deben estar abiertos (grupo de seguridad de red de Azure, lo administra TMAM) | `22` (SSH), `3000` (portal), `3001` (API: G4 Pro y controlador); `80` y `443` para el HTTPS. Los cinco abiertos (16/10/2026) |
+| Dirección | `74.163.89.6` |
 
 ### 2.2. La mini PC de la garita (entornos `controlador` y `garita`)
 
@@ -147,7 +147,7 @@ Direcciones actuales:
 
 ### 2.4. Datos que necesitas
 
-- Acceso SSH al servidor: llave `aws-ec2` para la nube; usuario y contraseña (o llave) para la mini PC.
+- Acceso SSH al servidor: llave `id_ed25519` para la nube (Azure); usuario y contraseña (o llave) para la mini PC.
 - Para un primer despliegue: nada más (las claves se generan en el servidor).
 - Para una actualización: nada más (las claves ya están en el `.env` del entorno, `~/mollendo/deploy/<entorno>/.env`).
 
@@ -198,7 +198,7 @@ ls backups
 
 | Qué abrir | Qué debe pasar |
 |---|---|
-| Nube: `http://54.147.214.38:3000`. Mini PC como servidor: `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
+| Nube: `http://74.163.89.6:3000`. Mini PC como servidor: `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
 | Entrar con `admin@mollendo.local` y la contraseña inicial | Entra a "Personal y documentos" |
 | Menú **Sistema y APIs** | Backend y base de datos "En línea"; clave de equipos "Configurado" |
 | Botón de Swagger en Sistema y APIs (o `http://<servidor>:3000/api/docs`) | Abre la documentación de la API |
@@ -330,7 +330,7 @@ Para un respaldo `.sql.gz` (solo base de datos), el paso 2 es `gunzip -c backups
 Los respaldos quedan en el mismo disco que la base de datos: si el disco falla, se pierden los dos. Cópialos con regularidad a otra computadora o a un disco externo. Desde la PC:
 
 ```bash
-scp -r ubuntu@54.147.214.38:mollendo/deploy/nube/backups ./respaldos-mollendo
+scp -r atenasac@74.163.89.6:mollendo/deploy/nube/backups ./respaldos-mollendo
 # mini PC como servidor: scp -r ma-admin@100.78.153.33:mollendo/deploy/garita/backups ./respaldos-mollendo
 ```
 
@@ -764,15 +764,22 @@ La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambia
 
 | | **A. Mini PC como servidor completo** (entorno `garita`) | **B. Mini PC como controlador (servidor en la nube)** (entornos `controlador` + `nube`) |
 |---|---|---|
-| Portal, API, base de datos | En la mini PC (`deploy/garita/`) | En la nube (`deploy/nube/`; hoy AWS `54.147.214.38`, después Azure) |
+| Portal, API, base de datos | En la mini PC (`deploy/garita/`) | En la nube (`deploy/nube/`; Azure `74.163.89.6`) |
 | Lectores de DNI y relés | Los maneja la API de la mini PC | Los maneja el **controlador** de la mini PC (`deploy/controlador/`) |
-| G4 Pro apunta a (Cloud Server) | `192.168.0.165`, puerto `3001` | `54.147.214.38`, puerto `3001` (o el dominio de Azure) |
+| G4 Pro apunta a (Cloud Server) | `192.168.0.165`, puerto `3001` | `74.163.89.6`, puerto `3001` (o el dominio, cuando haya HTTPS) |
 | Desde dónde llega el G4 al servidor | Red local de la garita | Internet, desde la IP pública de la garita (`38.25.53.235` el 07/10/2026) |
 | Personal y fotos en el G4 | Los de la base de la mini PC | Los de la base de la nube |
 
 **El G4 Pro habla con un solo servidor**: el que tenga configurado. El otro lo ve "Desconectado" (solo guarda la última vez que lo vio). Al cambiar de servidor, el nuevo le envía los comandos que tenía pendientes; revisarlos antes (`select … from comando_dispositivo where estado = 'pendiente'`).
 
-### Estado actual (08/10/2026): configuración B con AWS
+### Estado actual (16/10/2026): configuración B con Azure
+
+- **Servidor:** Azure `74.163.89.6`, instalado limpio el 16/10/2026 (sin datos de prueba). Persona de prueba: **Amiel Bautista (48058719)**, con foto y SCTR Salud hasta el 23/10/2026.
+- **Mini PC:** IP fija `172.20.20.197` en la red de TMAM (biométricos), controlador con `SERVIDOR_URL=http://74.163.89.6:3001` desde el 16/10/2026 16:24 (configuración anterior en `deploy/controlador/.env.antes-azure-20261016-1624`; para volver a AWS, restaurarla y `docker compose up -d`). El controlador usa la red de la mini PC (`network_mode: host`).
+- **G4 Pro:** IP `172.20.20.198`. **Pendiente:** cambiarlo a Azure en su menú (*Cloud Service Settings*: `74.163.89.6`, puerto `3001`) y luego "Sincronizar" en Sistema y APIs.
+- **AWS (`54.147.214.38`):** queda de respaldo con los datos de prueba; ya no recibe al controlador.
+
+### Estado anterior (08/10/2026): configuración B con AWS
 
 Con la estructura de archivos anterior al 09/10/2026 (`controlador.env`, `.env` y `docker-compose.prod.yml` en `~/mollendo`); al actualizar cada equipo se pasa a `deploy/` como indica el README de su entorno.
 
@@ -933,7 +940,7 @@ Cada relé se identifica por el número de serie de su módulo (5 caracteres; c�
 
 | Variable | Obligatoria | Para qué sirve | Valor |
 |---|---|---|---|
-| `SERVIDOR_URL` | Sí | Dirección de la API en la nube, sin `/api/v1`. | Hoy `http://54.147.214.38:3001` |
+| `SERVIDOR_URL` | Sí | Dirección de la API en la nube, sin `/api/v1`. | Hoy `http://74.163.89.6:3001` (Azure) |
 | `DEVICE_API_KEY` | Sí | **La misma** clave de equipos del servidor en la nube. | Copiarla del `.env` de la nube |
 
 Más las de lectores (B.2) y relés (B.3). El controlador no usa base de datos ni las demás variables.

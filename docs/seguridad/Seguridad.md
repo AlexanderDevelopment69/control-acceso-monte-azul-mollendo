@@ -1,6 +1,6 @@
 # Seguridad del sistema de control de accesos
 
-Revisión de seguridad del 10/10/2026 (API, portal, servidor de AWS y librerías), lo que se corrigió y lo que queda pendiente. Al final hay una lista de control para revisar en cada despliegue.
+Revisión de seguridad del 10/10/2026 (API, portal, servidor en la nube y librerías; el servidor pasó de AWS a Azure el 16/10/2026), lo que se corrigió y lo que queda pendiente. Al final hay una lista de control para revisar en cada despliegue.
 
 > **Estado al 11/10/2026:** el **programa** (API y portal) no tiene problemas de seguridad graves conocidos. Lo que falta para que el sistema en funcionamiento sea seguro es de la **instalación**: HTTPS, cambiar las contraseñas iniciales y guardar los respaldos fuera del servidor (ver [sección 0](#0-estado-actual)).
 
@@ -49,10 +49,10 @@ Sin problemas graves conocidos. Lo que cubre:
 
 | Prioridad | Pendiente | Quién | Estado |
 |---|---|---|---|
-| 🔴 | **Contraseñas iniciales sin cambiar en AWS:** `admin@mollendo.local` y `vigilancia@mollendo.local` entran con la contraseña generada al instalar, que está en texto plano en el `.env` del servidor (comprobado el 11/10/2026). Cambiarlas desde el portal (menú del usuario → "Cambiar contraseña") y después borrar `ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD` del `.env` (solo sirven para crear las cuentas la primera vez) | Administrador del portal; luego soporte | Pendiente |
+| 🔴 | **Contraseñas iniciales sin cambiar en Azure** (instalado el 16/10/2026; antes, lo mismo en AWS): `admin@mollendo.local` y `vigilancia@mollendo.local` entran con la contraseña generada al instalar, que está en texto plano en el `.env` del servidor. En Azure, además, se compartieron por chat el 16/10/2026: **cambiarlas cuanto antes**. Cambiarlas desde el portal (menú del usuario → "Cambiar contraseña") y después borrar `ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD` del `.env` (solo sirven para crear las cuentas la primera vez) | Administrador del portal; luego soporte | Pendiente |
 | 🔴 | **HTTPS** ([4.1](#41-https)) | Cliente (dominio), luego soporte | Esperando el dominio |
-| 🟠 | **Respaldos fuera del servidor:** hoy los respaldos diarios están en el mismo disco del servidor de AWS; si se pierde o se compromete, se pierden datos y respaldos. Opciones: copias automáticas del disco (AWS Data Lifecycle Manager, desde la consola) o copiar cada respaldo a un bucket S3 | Quien administre AWS | Pendiente |
-| 🟠 | **Puerto 3001 solo para la IP del terminal** ([4.2](#42-restringir-el-puerto-3001-por-ip)) | Quien administre AWS | Pendiente (requiere IP fija) |
+| 🟠 | **Respaldos fuera del servidor:** hoy los respaldos diarios están en el mismo disco del servidor de Azure; si se pierde o se compromete, se pierden datos y respaldos. Opciones: Azure Backup de la máquina virtual (desde el portal de Azure) o copiar cada respaldo a un Azure Storage (Blob) | Quien administre Azure (TMAM) | Pendiente |
+| 🟠 | **Puerto 3001 solo para la IP del terminal** ([4.2](#42-restringir-el-puerto-3001-por-ip)) | Quien administre Azure (TMAM) | Pendiente (requiere IP fija) |
 | 🟠 | **Actualizar la mini PC** cuando vuelva a estar en línea: no tiene las correcciones del 10 y 11/10/2026 (`deploy/controlador/README.md`, sección 5) | Soporte | Pendiente |
 
 ## 1. Resumen
@@ -102,10 +102,10 @@ Sin problemas graves conocidos. Lo que cubre:
 - Base de datos con Prisma (consultas parametrizadas: sin inyección SQL).
 - El portal no inserta HTML sin escapar (`dangerouslySetInnerHTML` no se usa).
 
-**Servidor (AWS)**
+**Servidor (Azure; la revisión original fue en AWS)**
 
-- SSH solo con llave (sin contraseña, sin root).
-- Puertos abiertos: 22, 3000 y 3001. La base de datos (5432) no está publicada.
+- SSH solo con llave: sin contraseña y root solo con llave (comprobado en Azure el 16/10/2026).
+- Puertos abiertos: 22, 3000 y 3001 (y 80 y 443 para el HTTPS). La base de datos (5432) no está publicada.
 - `.env` con permisos `600`; claves largas generadas al azar (ver anexo B de la guía de despliegue).
 - Respaldo diario y antes de cada actualización.
 - Ningún `.env` ni llave en el repositorio ni en su historial.
@@ -180,7 +180,7 @@ Sin HTTPS, quien esté en la misma red (o en el camino) puede ver contraseñas, 
 
 El puerto 3001 lo usan solo el G4 Pro y el controlador (el portal llega a la API por dentro, por el puerto 3000). Si la conexión a internet del terminal tiene **IP pública fija**:
 
-- AWS → EC2 → Security Groups → Inbound rules → regla del puerto `3001`: cambiar el origen `0.0.0.0/0` por `<IP pública del terminal>/32`.
+- Azure → la máquina → Redes → grupo de seguridad de red → regla de entrada del puerto `3001`: cambiar el origen "Any" por `<IP pública del terminal>/32` (lo hace TMAM).
 - Así nadie más puede llegar a `/iclock` ni a las rutas con clave de equipos, aunque conozca el número de serie o la clave.
 - Para saber la IP: desde la red del terminal, `curl -s ifconfig.me`.
 
@@ -189,7 +189,7 @@ Si la IP no es fija, queda como protección el número de serie permitido (3.1) 
 ### 4.3. Otros
 
 - Las sesiones del portal se guardan en el navegador (`localStorage`). Es aceptable porque el portal no inserta HTML sin escapar; si en el futuro se agrega contenido de terceros, conviene pasar a cookies `HttpOnly`.
-- `ufw` está inactivo en el servidor de AWS: el filtro lo hace el Security Group. En la mini PC, revisar que solo estén abiertos los puertos necesarios.
+- `ufw` está inactivo en el servidor de Azure: el filtro lo hace el grupo de seguridad de red de Azure (abiertos 22, 80, 443, 3000 y 3001; probado el 16/10/2026). En la mini PC, revisar que solo estén abiertos los puertos necesarios.
 - Las 5 alertas de `npm audit` en herramientas de desarrollo del portal (eslint y similares) requieren versiones mayores; no se despliegan.
 
 ---
