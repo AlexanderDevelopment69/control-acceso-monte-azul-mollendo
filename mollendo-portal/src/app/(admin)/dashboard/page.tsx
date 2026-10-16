@@ -314,7 +314,7 @@ function DashboardContent() {
                     series={[
                       {
                         name: "Denegaciones",
-                        data: [motivos.documentos, motivos.sinDocumentos, motivos.alcohol, motivos.sinVerificacion, motivos.dadoDeBaja, motivos.noRegistrado],
+                        data: [motivos.documentos, motivos.sinDocumentos, motivos.alcohol, motivos.sinVerificacion, motivos.rostroNoCoincide ?? 0, motivos.dadoDeBaja, motivos.noRegistrado],
                       },
                     ]}
                     opciones={{
@@ -322,7 +322,7 @@ function DashboardContent() {
                       plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: "55%" } },
                       dataLabels: { enabled: true },
                       xaxis: {
-                        categories: ["Documentos vencidos", "Sin documentos", "Alcohol", "No completó rostro y alcohol", "Dado de baja", "No registrado"],
+                        categories: ["Documentos vencidos", "Sin documentos", "Alcohol", "No completó rostro y alcohol", "Rostro no coincide", "Dado de baja", "No registrado"],
                         ...ejeEntero(Object.values(motivos)),
                       },
                     }}

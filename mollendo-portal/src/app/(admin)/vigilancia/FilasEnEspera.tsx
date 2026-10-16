@@ -52,7 +52,15 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
           </TableCell>
           <TableCell className="px-5 py-4 text-sm">
             <div className="flex items-center justify-between gap-3 text-gray-700 dark:text-gray-300">
-              <span>{i.enCola ? "Esperando su turno en el terminal facial" : "Esperando rostro y alcohol"}</span>
+              <span>
+                {i.manual
+                  ? i.enCola
+                    ? "Esperando su turno (verificación manual)"
+                    : "Verificación manual: el vigilante decide"
+                  : i.enCola
+                    ? "Esperando su turno en el terminal facial"
+                    : "Esperando rostro y alcohol"}
+              </span>
               {i.hasta && (
                 <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400" title="Tiempo para completar el ingreso en el terminal facial">
                   {tiempoRestante(i.hasta, ahora)}

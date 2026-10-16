@@ -257,7 +257,7 @@ export const SECCIONES: SeccionManual[] = [
           clave="vigilancia"
           alt="Panel de vigilancia con el resumen del día y la lista de ingresos y salidas"
           pasos={[
-            "Resumen del día: denegaciones, alcohol no conforme y documentos vencidos.",
+            "Resumen del día: accesos restringidos, prueba de alcohol test positivo y documentos vencidos.",
             "Busca un ingreso o salida por nombre o DNI.",
             <>
               Elige un día o <strong>“Todos los días”</strong>; <strong>“Hoy”</strong> vuelve al día actual.
@@ -401,6 +401,172 @@ export const SECCIONES: SeccionManual[] = [
             },
           ]}
         />
+
+        <Subtitulo>Si falla el terminal facial: verificación manual</Subtitulo>
+        <p>
+          Si el terminal facial se desconecta o se malogra, <strong>nadie puede completar rostro y alcohol</strong> y los
+          ingresos se deniegan al minuto. Mientras soporte lo repara, se puede activar la{" "}
+          <strong>verificación manual</strong>: el DNI y los documentos se revisan igual que siempre, y el vigilante
+          reemplaza al terminal: <strong>compara el rostro</strong> con la foto registrada y <strong>toma la prueba de
+          alcohol a todos</strong> con el alcoholímetro de repuesto. Las salidas no cambian.
+        </p>
+        <Nota>
+          La pueden activar y terminar el <strong>vigilante</strong> y el <strong>administrador</strong>. No tiene tiempo
+          máximo: dura hasta que se vuelva a modo normal. Activarla, terminarla y cada decisión quedan registradas con quién
+          lo hizo.
+        </Nota>
+
+        <p className="font-medium text-gray-800 dark:text-white/90">Activarla</p>
+        <Captura
+          clave="verificacion-activar"
+          alt="Aviso del terminal facial desconectado, con el botón Activar verificación manual"
+          pasos={[
+            <>
+              La franja roja de arriba avisa <strong>“Terminal facial … Desconectado”</strong> (a los 2 minutos sin
+              comunicación).
+            </>,
+            <>
+              Presiona <strong>“Activar verificación manual”</strong>, escribe el <strong>motivo</strong> (por ejemplo,
+              “terminal facial apagado”) y presiona <strong>“Activar”</strong>.
+            </>,
+          ]}
+        />
+        <p>
+          Arriba del Panel aparece una <strong>franja azul</strong> fija: “Verificación manual activa desde…, activada
+          por… Motivo: …”, con el botón <strong>“Volver a modo normal”</strong>. Mientras se vea, todos los ingresos se
+          verifican a mano.
+        </p>
+
+        <p className="font-medium text-gray-800 dark:text-white/90">Cada ingreso, paso a paso</p>
+        <PasosTarea
+          pasos={[
+            {
+              Icono: IconoDni,
+              titulo: "La persona pasa su DNI por el lector",
+              texto: (
+                <>
+                  Si no está registrada, está dada de baja o sus documentos no están vigentes, se deniega de inmediato,{" "}
+                  <strong>igual que siempre</strong>, y no aparece ninguna ventana.
+                </>
+              ),
+            },
+            {
+              Icono: IconoVer,
+              titulo: "Aparece la ventana de verificación",
+              texto: (
+                <>
+                  Con su <strong>foto registrada</strong>, nombre, DNI y empresa. Tienes <strong>2 minutos</strong> para
+                  decidir; si no decides, el ingreso se deniega solo.
+                </>
+              ),
+            },
+            {
+              Icono: IconoRostro,
+              titulo: "Compara el rostro con la foto",
+              texto: "Que la persona frente al molinete sea la de la foto. Si no tiene foto, compárala con su DNI.",
+            },
+            {
+              Icono: IconoAlcohol,
+              titulo: "Tómale la prueba de alcohol",
+              texto: "Con el alcoholímetro de repuesto, a todas las personas, sin excepción.",
+            },
+            {
+              Icono: IconoMolinete,
+              titulo: "Presiona un botón",
+              texto: (
+                <>
+                  <strong>“Apto: abrir”</strong> abre el molinete de ingreso. <strong>“Alcohol: no apto”</strong> o{" "}
+                  <strong>“No es la persona”</strong> no lo abren y suena el pitido de denegado.
+                </>
+              ),
+            },
+          ]}
+        />
+        <Captura
+          clave="verificacion-ventana"
+          alt="Ventana de verificación manual con la foto, los datos de la persona y los tres botones"
+          pasos={[
+            "Tiempo que queda para decidir (2 minutos).",
+            "Sus documentos ya se revisaron: están vigentes.",
+            "Lo que debes hacer antes de decidir.",
+            <>
+              <strong>“Apto: abrir”</strong>: rostro y alcohol conformes; se abre el molinete.
+            </>,
+            <>
+              <strong>“Alcohol: no apto”</strong>: la prueba salió sobre el límite; no se abre.
+            </>,
+            <>
+              <strong>“No es la persona”</strong>: el rostro no es el de la foto; no se abre.
+            </>,
+          ]}
+        />
+        <Acciones
+          items={[
+            {
+              Icono: IconoUsuarios,
+              boton: "Varias personas a la vez",
+              tono: "neutro",
+              comillas: false,
+              texto: "Se atienden de una en una, en el orden en que pasaron el DNI. Las demás esperan en la tabla: “Esperando su turno (verificación manual)”.",
+            },
+            {
+              Icono: IconoReloj,
+              boton: "Nadie decide en 2 minutos",
+              tono: "aviso",
+              comillas: false,
+              texto: "El ingreso se deniega solo y pasa la siguiente persona. Puede volver a pasar su DNI.",
+            },
+            {
+              Icono: IconoHistorial,
+              boton: "Cómo queda registrado",
+              tono: "marca",
+              comillas: false,
+              texto: (
+                <>
+                  Cada ingreso lleva la marca <strong>“Manual”</strong> con quien decidió, en la tabla y en el reporte de
+                  ingresos y salidas (columna “Verificación”). “No es la persona” queda como{" "}
+                  <strong>“Rostro no coincide”</strong>.
+                </>
+              ),
+            },
+            {
+              Icono: IconoAviso,
+              boton: "Otro vigilante decidió antes",
+              tono: "neutro",
+              comillas: false,
+              texto: "Vale la primera decisión; la ventana del otro se cierra o avisa que esa persona ya no está esperando.",
+            },
+          ]}
+        />
+
+        <p className="font-medium text-gray-800 dark:text-white/90">Volver a modo normal</p>
+        <Acciones
+          items={[
+            {
+              Icono: IconoRegistrado,
+              boton: "Volver a modo normal",
+              tono: "exito",
+              texto: (
+                <>
+                  Cuando el terminal facial vuelve a conectarse, el Panel lo avisa en verde:{" "}
+                  <strong>“El equipo facial volvió a conectarse. ¿Volver a modo normal?”</strong>. También está en la
+                  franja azul. Desde ahí, los ingresos vuelven a pasar por el terminal facial.
+                </>
+              ),
+            },
+            {
+              Icono: IconoRenovar,
+              boton: "Seguir en manual",
+              tono: "neutro",
+              texto:
+                "Si el terminal se conectó pero todavía no funciona bien (por ejemplo, mientras lo prueban), se sigue en manual. El aviso vuelve si el terminal se desconecta y se reconecta otra vez.",
+            },
+          ]}
+        />
+        <Nota>
+          No vuelve a modo normal sola, a propósito: si el terminal se conectara y desconectara varias veces seguidas, el
+          modo cambiaría a cada rato y el vigilante no sabría en cuál está.
+        </Nota>
       </div>
     ),
   },

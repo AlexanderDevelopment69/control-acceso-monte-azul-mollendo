@@ -6,7 +6,7 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { connectEventosSocket } from "@/lib/ws";
 import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { EventoAcceso, IngresoEnEspera, Paginado, ResumenPanel } from "@/lib/api/types";
+import type { DecisionManual, EstadoVerificacionManual, EventoAcceso, IngresoEnEspera, Paginado, ResumenPanel } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -22,7 +22,7 @@ import DatePicker from "@/components/form/date-picker";
 import { AlertIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { FilasEnEspera } from "./FilasEnEspera";
-import { documentoDelEvento, MotivoDenegacion, Movimiento } from "./CeldasEvento";
+import { documentoDelEvento, MarcaVerificacionManual, MotivoDenegacion, Movimiento } from "./CeldasEvento";
 import { DocumentosModal } from "./DocumentosModal";
 import {
   avisoDesdeHistorial,
@@ -31,6 +31,12 @@ import {
   type AvisoNoCompleto,
   type EventoEnVivo,
 } from "./AvisoNoCompleto";
+import {
+  ActivarVerificacionManual,
+  AvisoEquipoVolvio,
+  DecisionManualVentana,
+  FranjaVerificacionManual,
+} from "./VerificacionManual";
 
 // Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
 const RESALTE_MS = 8000;
@@ -38,6 +44,8 @@ const RESALTE_MS = 8000;
 const CLAVE_AVISO_CERRADO = "vigilancia.avisoNoCompletoCerrado";
 /** Ingresos recientes que se miran al abrir el Panel para saber si corresponde el aviso. */
 const EVENTOS_PARA_AVISO = 20;
+/** Cada cuánto se revisa si el equipo facial sigue desconectado, mientras el aviso está a la vista. */
+const REVISION_EQUIPO_MS = 30_000;
 /** Recarga de respaldo del panel, por si el canal en vivo se corta sin avisar. */
 const RECARGA_RESPALDO_MS = 60_000;
 const POR_PAGINA = 10;
@@ -61,7 +69,7 @@ function VigilanciaContent() {
   const [dia, setDia] = useState(hoy);
 
   // Contadores e historial. Se vuelve a pedir con cada evento en vivo, así
-  // "Denegaciones hoy" y la tabla quedan al día sin recargar la página.
+  // "Accesos restringidos hoy" y la tabla quedan al día sin recargar la página.
   const cargar = useCallback(async () => {
     try {
       const [r, e, espera] = await Promise.all([
@@ -111,6 +119,85 @@ function VigilanciaContent() {
   useEffect(() => {
     void cargarAviso();
   }, [cargarAviso]);
+  // Mientras el aviso está a la vista, se mira si el equipo facial está
+  // desconectado (los mismos avisos de la franja roja): entonces la causa no es
+  // el alcoholímetro y el texto lo dice.
+  const [equipoFacialDesconectado, setEquipoFacialDesconectado] = useState<boolean | null>(null);
+  const hayAviso = !!aviso;
+
+  // Verificación manual (contingencia por falla del equipo facial): la franja, la
+  // ventana para activarla y la decisión del vigilante sobre quien está en su turno.
+  const [manual, setManual] = useState<EstadoVerificacionManual | null>(null);
+  const [activando, setActivando] = useState(false);
+  const [terminando, setTerminando] = useState(false);
+  const [seguirEnManual, setSeguirEnManual] = useState(false);
+  const cargarManual = useCallback(async () => {
+    try {
+      setManual(await eventosAccesoApi.verificacionManual());
+    } catch {
+      // Sin respuesta: se mantiene lo último conocido.
+    }
+  }, []);
+  useEffect(() => {
+    void cargarManual();
+  }, [cargarManual]);
+  // El botón "Activar verificación manual" está en la franja roja de fallas (AvisoSistema):
+  // desde esta página avisa con un evento; desde otra, trae aquí con ?activarManual=1.
+  useEffect(() => {
+    const abrir = () => setActivando(true);
+    window.addEventListener("activar-verificacion-manual", abrir);
+    if (new URLSearchParams(window.location.search).has("activarManual")) {
+      setActivando(true);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    return () => window.removeEventListener("activar-verificacion-manual", abrir);
+  }, []);
+  async function activarManual(motivo: string) {
+    setManual(await eventosAccesoApi.activarVerificacionManual(motivo));
+    setActivando(false);
+    setSeguirEnManual(false);
+  }
+  async function terminarManual() {
+    setTerminando(true);
+    try {
+      setManual(await eventosAccesoApi.terminarVerificacionManual());
+    } catch (err) {
+      setErrorCarga(err instanceof ApiError ? err.message : "No se pudo volver a modo normal");
+    } finally {
+      setTerminando(false);
+    }
+  }
+  async function decidir(id: number, decision: DecisionManual) {
+    await eventosAccesoApi.decidir(id, decision);
+    setEnEspera((actuales) => actuales.filter((i) => i.id !== id));
+  }
+  const manualActiva = !!manual?.activa;
+  // La franja roja de fallas (AvisoSistema) muestra u oculta su botón "Activar verificación manual" al instante.
+  useEffect(() => {
+    if (manual) window.dispatchEvent(new CustomEvent("verificacion-manual", { detail: manual.activa }));
+  }, [manual]);
+
+  useEffect(() => {
+    if (!hayAviso && !manualActiva) return;
+    let activo = true;
+    const revisar = () =>
+      panelApi
+        .avisos()
+        .then((r) => activo && setEquipoFacialDesconectado(r.avisos.some((a) => a.tipo === "terminal")))
+        .catch(() => {
+          // Sin respuesta, se deja el texto anterior.
+        });
+    revisar();
+    const intervalo = setInterval(revisar, REVISION_EQUIPO_MS);
+    return () => {
+      activo = false;
+      clearInterval(intervalo);
+    };
+  }, [hayAviso, manualActiva]);
+  // "Seguir en manual" vale hasta que el equipo vuelva a desconectarse.
+  useEffect(() => {
+    if (equipoFacialDesconectado) setSeguirEnManual(false);
+  }, [equipoFacialDesconectado]);
   function cerrarAviso() {
     if (!aviso) return;
     setAvisoCerrado(aviso.eventoId);
@@ -138,7 +225,9 @@ function VigilanciaContent() {
       socket = connectEventosSocket(() => {
         void cargarActual.current();
         void cargarAviso();
+        void cargarManual();
       });
+      socket.on("verificacion-manual", (estado: EstadoVerificacionManual) => setManual(estado));
       socket.on("evento-acceso", (payload: EventoEnVivo) => {
         setAviso((actual) => siguienteAviso(actual, payload));
         setUltimo(payload.eventoId);
@@ -164,7 +253,7 @@ function VigilanciaContent() {
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
       if (finResalte.current) clearTimeout(finResalte.current);
     };
-  }, [cargarAviso]);
+  }, [cargarAviso, cargarManual]);
 
   // Respaldo del tiempo real: aunque el canal en vivo falle sin avisar, la
   // tabla, los contadores y las esperas se ponen al día cada minuto.
@@ -253,13 +342,23 @@ function VigilanciaContent() {
         </div>
       )}
 
-      {aviso && aviso.eventoId !== avisoCerrado && <AvisoNoCompletoBanner aviso={aviso} onCerrar={cerrarAviso} />}
+      {manual && (
+        <FranjaVerificacionManual estado={manual} terminando={terminando} onTerminar={() => void terminarManual()} />
+      )}
+      {manualActiva && equipoFacialDesconectado === false && !seguirEnManual && (
+        <AvisoEquipoVolvio terminando={terminando} onVolver={() => void terminarManual()} onSeguir={() => setSeguirEnManual(true)} />
+      )}
+      {aviso && aviso.eventoId !== avisoCerrado && (
+        <AvisoNoCompletoBanner aviso={aviso} equipoFacialDesconectado={!!equipoFacialDesconectado} onCerrar={cerrarAviso} />
+      )}
+      <ActivarVerificacionManual abierta={activando} onCerrar={() => setActivando(false)} onActivar={activarManual} />
+      <DecisionManualVentana ingreso={enEspera.find((i) => i.manual && !i.enCola) ?? null} ahora={ahora} onDecidir={decidir} />
 
       {/* En el celular, los tres contadores en una fila y compactos. */}
       <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">
         <TarjetaIndicador
           tamano="celular"
-          titulo="Denegaciones hoy"
+          titulo="Accesos restringidos hoy"
           valor={resumen?.denegacionesHoy ?? null}
           colorValor="text-error-500"
           icono={<CloseLineIcon />}
@@ -268,7 +367,7 @@ function VigilanciaContent() {
         />
         <TarjetaIndicador
           tamano="celular"
-          titulo="Alcohol no conforme hoy"
+          titulo="Prueba de alcohol test positivo hoy"
           valor={resumen?.alcoholNoConformeHoy ?? null}
           colorValor="text-warning-500"
           icono={<AlertIcon />}
@@ -404,7 +503,10 @@ function VigilanciaContent() {
                       )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm">
-                      <MotivoDenegacion evento={ev} onVerDocumentos={() => setPersonaDocumentos(ev.personaId)} />
+                      <div className="flex flex-wrap items-center gap-1">
+                        <MotivoDenegacion evento={ev} onVerDocumentos={() => setPersonaDocumentos(ev.personaId)} />
+                        <MarcaVerificacionManual evento={ev} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

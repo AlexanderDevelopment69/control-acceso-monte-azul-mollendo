@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { panelApi } from "@/lib/api/endpoints";
+import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { AvisoSistema as Aviso } from "@/lib/api/types";
 import {
@@ -58,6 +58,14 @@ export function AvisoSistema() {
   const esAdmin = user?.rol === "administrador";
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [revisado, setRevisado] = useState<Date | null>(null);
+  const [manualActiva, setManualActiva] = useState(true);
+  const router = useRouter();
+  // El Panel de vigilancia avisa cuando se activa o termina, sin esperar la próxima revisión.
+  useEffect(() => {
+    const alCambiar = (e: Event) => setManualActiva((e as CustomEvent<boolean>).detail);
+    window.addEventListener("verificacion-manual", alCambiar);
+    return () => window.removeEventListener("verificacion-manual", alCambiar);
+  }, []);
   // El panel recién aparece cuando llega la primera respuesta, así que leer aquí no descuadra la hidratación.
   const [contraido, setContraido] = useState<string | null>(() => {
     try {
@@ -77,6 +85,13 @@ export function AvisoSistema() {
           if (!activo) return;
           setAvisos(r.avisos);
           setRevisado(new Date());
+          // Con el equipo facial caído se ofrece la verificación manual (si no está ya activa).
+          if (r.avisos.some((a) => a.tipo === "terminal")) {
+            eventosAccesoApi
+              .verificacionManual()
+              .then((m) => activo && setManualActiva(m.activa))
+              .catch(() => undefined);
+          }
         })
         .catch((err) => {
           if (!activo) return;
@@ -172,6 +187,20 @@ export function AvisoSistema() {
                     </p>
                     <p className="mt-0.5 text-xs leading-snug text-gray-500 dark:text-gray-400">{a.impacto}</p>
                     {a.desde && <p className="mt-1 text-xs text-gray-400">Última vez en línea: {fechaCorta(a.desde)}</p>}
+                    {/* Contingencia por falla del equipo facial (contingencias, sección 4). */}
+                    {a.tipo === "terminal" && !manualActiva && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          pathname === "/vigilancia"
+                            ? window.dispatchEvent(new Event("activar-verificacion-manual"))
+                            : router.push("/vigilancia?activarManual=1")
+                        }
+                        className="mt-2 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                      >
+                        Activar verificación manual
+                      </button>
+                    )}
                   </div>
                 </li>
               );

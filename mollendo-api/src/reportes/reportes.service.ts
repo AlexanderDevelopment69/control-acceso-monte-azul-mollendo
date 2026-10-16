@@ -82,6 +82,7 @@ function motivosEvento(e: {
   denegadoPorDocumentos: boolean;
   denegadoPorAlcohol: boolean;
   denegadoSinVerificacion: boolean;
+  denegadoRostroNoCoincide?: boolean;
 }): string {
   const motivos: string[] = [];
   if (e.denegadoNoRegistrado) motivos.push('No registrado');
@@ -90,6 +91,7 @@ function motivosEvento(e: {
   if (e.denegadoPorDocumentos) motivos.push('Documentos');
   if (e.denegadoPorAlcohol) motivos.push('Alcohol');
   if (e.denegadoSinVerificacion) motivos.push('No completó rostro y alcohol');
+  if (e.denegadoRostroNoCoincide) motivos.push('Rostro no coincide');
   return motivos.join(', ');
 }
 
@@ -372,7 +374,10 @@ export class ReportesService {
     if (cantidad > maxFilas(query)) throw demasiadasFilas(cantidad, maxFilas(query));
     const eventos = await this.prisma.eventoAcceso.findMany({
       where,
-      include: { persona: { select: { nombres: true, apellidos: true, empresa: { select: { razonSocial: true } } } } },
+      include: {
+        persona: { select: { nombres: true, apellidos: true, empresa: { select: { razonSocial: true } } } },
+        verificadoPor: { select: { correo: true } },
+      },
       orderBy: [{ fechaHora: 'asc' }, { id: 'asc' }],
     });
     const contar = (mov: string, res: string) =>
@@ -394,6 +399,7 @@ export class ReportesService {
         { titulo: 'Persona', ancho: 30 },
         { titulo: 'Empresa', ancho: 32 },
         { titulo: 'Motivo', ancho: 26 },
+        { titulo: 'Verificación', ancho: 30 },
         { titulo: 'Molinete', ancho: 12 },
       ],
       filas: eventos.map((e) => [
@@ -405,6 +411,8 @@ export class ReportesService {
         e.persona ? `${e.persona.apellidos}, ${e.persona.nombres}` : 'No registrado',
         e.persona?.empresa.razonSocial ?? null,
         e.resultado === 'denegado' ? motivosEvento(e) || null : null,
+        // Rostro y alcohol: los del equipo facial, o los que verificó un vigilante (contingencia).
+        e.verificacionManual ? `Manual (${e.verificadoPor?.correo ?? 'sin decisión'})` : null,
         e.torniqueteId,
       ]),
       resumen: [

@@ -17,6 +17,8 @@ node scripts/capturas-manual.mjs
 npm prune
 ```
 
+Para sacar solo algunas (las demás quedan como están): `CAPTURAS=verificacion-activar,verificacion-ventana node scripts/capturas-manual.mjs`. Las de la verificación manual la activan, pasan un DNI DEMO con la clave de equipos y la terminan al final.
+
 Qué se captura y qué señala cada número está al inicio de `scripts/capturas-manual.mjs`; el texto de cada número, en la sección correspondiente de `src/app/(admin)/manual/secciones.tsx`.
 
 ## Desarrollo

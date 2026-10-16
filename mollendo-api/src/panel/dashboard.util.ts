@@ -94,13 +94,14 @@ export interface EventoPeriodo {
   denegadoPorDocumentos: boolean;
   denegadoPorAlcohol: boolean;
   denegadoSinVerificacion: boolean;
+  denegadoRostroNoCoincide?: boolean;
 }
 
 /** Totales, motivos de denegación y serie diaria de los movimientos del periodo. */
 export function resumirMovimientos(eventos: EventoPeriodo[], dias: string[]) {
   const porDia = new Map(dias.map((dia) => [dia, { dia, ingresos: 0, denegados: 0, salidas: 0 }]));
   const totales = { ingresosAutorizados: 0, ingresosDenegados: 0, salidasAutorizadas: 0, salidasDenegadas: 0 };
-  const motivos = { noRegistrado: 0, dadoDeBaja: 0, sinDocumentos: 0, documentos: 0, alcohol: 0, sinVerificacion: 0 };
+  const motivos = { noRegistrado: 0, dadoDeBaja: 0, sinDocumentos: 0, documentos: 0, alcohol: 0, sinVerificacion: 0, rostroNoCoincide: 0 };
 
   for (const e of eventos) {
     const fila = porDia.get(claveDia(e.fechaHora));
@@ -123,6 +124,7 @@ export function resumirMovimientos(eventos: EventoPeriodo[], dias: string[]) {
       if (e.denegadoPorDocumentos) motivos.documentos++;
       if (e.denegadoPorAlcohol) motivos.alcohol++;
       if (e.denegadoSinVerificacion) motivos.sinVerificacion++;
+      if (e.denegadoRostroNoCoincide) motivos.rostroNoCoincide++;
     }
   }
   return { totales, motivos, tendencia: [...porDia.values()] };

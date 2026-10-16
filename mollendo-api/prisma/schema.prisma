@@ -110,7 +110,11 @@ model Usuario {
   /// Último cambio de contraseña: las sesiones iniciadas antes dejan de valer.
   passwordCambiadoEn DateTime?    @map("password_cambiado_en")
 
-  auditorias Auditoria[]
+  auditorias                  Auditoria[]
+  /// Ingresos que aprobó o denegó en la verificación manual.
+  eventosVerificados          EventoAcceso[]              @relation("VerificadoPor")
+  verificacionManualActivada  PeriodoVerificacionManual[] @relation("ActivadaPor")
+  verificacionManualTerminada PeriodoVerificacionManual[] @relation("TerminadaPor")
 
   @@index([empresaId])
   @@map("usuario")
@@ -191,24 +195,31 @@ model DocumentoPersona {
 // salida siempre se registra como autorizada.
 // ---------------------------------------------------------------------
 model EventoAcceso {
-  id                      Int                     @id @default(autoincrement())
+  id                       Int                     @id @default(autoincrement())
   /// Vacío si el documento no está registrado (intento de una persona desconocida).
-  personaId               Int?                    @map("persona_id")
-  persona                 Persona?                @relation(fields: [personaId], references: [id], onDelete: Restrict)
+  personaId                Int?                    @map("persona_id")
+  persona                  Persona?                @relation(fields: [personaId], references: [id], onDelete: Restrict)
   /// Documento con el que se identificó (lo que leyó el equipo), registrado o no.
-  tipoDocumentoIdentidad  TipoDocumentoIdentidad? @map("tipo_documento_identidad")
-  numeroDocumento         String?                 @map("numero_documento") @db.VarChar(20)
-  tipoMovimiento          TipoMovimiento          @map("tipo_movimiento")
-  resultado               ResultadoAcceso
-  denegadoNoRegistrado    Boolean                 @default(false) @map("denegado_no_registrado")
-  denegadoPorBaja         Boolean                 @default(false) @map("denegado_por_baja")
-  denegadoPorAlcohol      Boolean                 @default(false) @map("denegado_por_alcohol")
-  denegadoPorDocumentos   Boolean                 @default(false) @map("denegado_por_documentos")
-  denegadoSinDocumentos   Boolean                 @default(false) @map("denegado_sin_documentos")
+  tipoDocumentoIdentidad   TipoDocumentoIdentidad? @map("tipo_documento_identidad")
+  numeroDocumento          String?                 @map("numero_documento") @db.VarChar(20)
+  tipoMovimiento           TipoMovimiento          @map("tipo_movimiento")
+  resultado                ResultadoAcceso
+  denegadoNoRegistrado     Boolean                 @default(false) @map("denegado_no_registrado")
+  denegadoPorBaja          Boolean                 @default(false) @map("denegado_por_baja")
+  denegadoPorAlcohol       Boolean                 @default(false) @map("denegado_por_alcohol")
+  denegadoPorDocumentos    Boolean                 @default(false) @map("denegado_por_documentos")
+  denegadoSinDocumentos    Boolean                 @default(false) @map("denegado_sin_documentos")
   /// Pasó su DNI en regla pero no completó rostro y alcohol en el G4 Pro a tiempo.
-  denegadoSinVerificacion Boolean                 @default(false) @map("denegado_sin_verificacion")
-  fechaHora               DateTime                @default(now()) @map("fecha_hora")
-  torniqueteId            String?                 @map("torniquete_id") @db.VarChar(50)
+  denegadoSinVerificacion  Boolean                 @default(false) @map("denegado_sin_verificacion")
+  /// Verificación manual: el vigilante indicó que el rostro no es el de la foto registrada.
+  denegadoRostroNoCoincide Boolean                 @default(false) @map("denegado_rostro_no_coincide")
+  /// Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio), no el G4 Pro.
+  verificacionManual       Boolean                 @default(false) @map("verificacion_manual")
+  /// Quién decidió en la verificación manual.
+  verificadoPorId          Int?                    @map("verificado_por_id")
+  verificadoPor            Usuario?                @relation("VerificadoPor", fields: [verificadoPorId], references: [id], onDelete: SetNull)
+  fechaHora                DateTime                @default(now()) @map("fecha_hora")
+  torniqueteId             String?                 @map("torniquete_id") @db.VarChar(50)
 
   verificacionesDispositivo VerificacionDispositivo[]
 
@@ -236,9 +247,30 @@ model IngresoPendiente {
   consumidoEn  DateTime? @map("consumido_en")
   /// Cuándo se le dio permiso de paso en el G4 Pro (null = en cola, esperando que termine la anterior).
   habilitadoEn DateTime? @map("habilitado_en")
+  /// Creada durante la verificación manual: la decide un vigilante (no se habilita en el G4 Pro).
+  manual       Boolean   @default(false)
 
   @@index([personaId, consumidoEn])
   @@map("ingreso_pendiente")
+}
+
+// ---------------------------------------------------------------------
+// PERIODO_VERIFICACION_MANUAL (contingencia por falla del equipo facial)
+// Mientras hay un periodo abierto (terminadoEn null), cada ingreso en regla lo
+// aprueba un vigilante en el Panel. Ver docs/cliente/Contingencias_Equipos_Garita.md, sección 4.
+// ---------------------------------------------------------------------
+model PeriodoVerificacionManual {
+  id             Int       @id @default(autoincrement())
+  motivo         String    @db.VarChar(300)
+  activadoEn     DateTime  @default(now()) @map("activado_en")
+  activadoPorId  Int?      @map("activado_por_id")
+  activadoPor    Usuario?  @relation("ActivadaPor", fields: [activadoPorId], references: [id], onDelete: SetNull)
+  terminadoEn    DateTime? @map("terminado_en")
+  terminadoPorId Int?      @map("terminado_por_id")
+  terminadoPor   Usuario?  @relation("TerminadaPor", fields: [terminadoPorId], references: [id], onDelete: SetNull)
+
+  @@index([terminadoEn])
+  @@map("periodo_verificacion_manual")
 }
 
 // ---------------------------------------------------------------------

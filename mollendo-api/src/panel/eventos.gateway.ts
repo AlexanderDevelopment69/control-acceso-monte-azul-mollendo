@@ -90,4 +90,10 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
   handleEsperaTerminada(payload: unknown): void {
     this.server.emit('ingreso-espera-terminada', payload);
   }
+
+  // Se activó o terminó la verificación manual: los paneles abiertos actualizan su franja.
+  @OnEvent('verificacion-manual.cambio')
+  handleVerificacionManual(payload: unknown): void {
+    this.server.emit('verificacion-manual', payload);
+  }
 }

@@ -13,7 +13,7 @@ Actualizado al 15/10/2026, con las decisiones del cliente de esa fecha. **Lo que
 | Si falla… | Qué se hace | Quién | ¿Se pierde algún control? | Estado |
 |---|---|---|---|---|
 | **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3) | El vigilante informa; soporte lo cambia | No | Decidido. Falta comprar el repuesto |
-| **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto (sección 4) | Vigilante o administrador la activan; el vigilante aprueba cada ingreso | No | Decidido. Por programar |
+| **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto (sección 4) | Vigilante o administrador la activan; el vigilante aprueba cada ingreso | No | **Programado** (15/10/2026); falta la prueba en la garita |
 | **Internet** de la garita | **Segunda conexión de otro proveedor** que entra sola (sección 5) | TMAM | No | Decidido, a cargo de TMAM |
 | **Lector de DNI** | Mientras tanto, dos opciones: **solo el equipo facial** identifica a la persona (ingreso) o **el vigilante escribe el DNI** en el Panel (ingreso y salida); se conecta el **lector de repuesto** (sección 6) | El vigilante informa y, mientras tanto, opera con la opción elegida; soporte cambia el lector | No | Decidido. Por programar; la opción del equipo facial requiere una prueba; falta el repuesto |
 | **Relé de un molinete** | Se cambia por el **relé de repuesto** (sección 7.1) | El vigilante informa; soporte lo cambia | No | Decidido. Falta el repuesto preparado |
@@ -112,7 +112,7 @@ Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar
 
 ## 4. Falla del equipo facial: verificación manual
 
-**Decidido (15/10/2026):** si falla el equipo facial (G4 Pro), se usa la **verificación manual**: el DNI sigue igual, el vigilante compara el rostro con la foto registrada y toma la **prueba de alcohol a todos** con el alcoholímetro de repuesto. **Por programar.**
+**Decidido (15/10/2026):** si falla el equipo facial (G4 Pro), se usa la **verificación manual**: el DNI sigue igual, el vigilante compara el rostro con la foto registrada y toma la **prueba de alcohol a todos** con el alcoholímetro de repuesto. **Programado el 15/10/2026**; falta la prueba en la garita.
 
 ### 4.1. Qué pasa cuando falla
 
@@ -133,7 +133,7 @@ Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar
 
 ### 4.3. Paso a paso
 
-**1. Se detecta la falla.** Aparece la franja roja *"Equipo facial (G4 Pro) desconectado"*.
+**1. Se detecta la falla.** Aparece la franja roja *"Terminal facial desconectado"*, con el botón **"Activar verificación manual"**. Si alguien no completó rostro y alcohol en ese momento, el aviso ámbar del Panel dice *"El equipo facial está desconectado: nadie puede completar rostro y alcohol. Avise a soporte."*
 
 **2. Se activa.** El vigilante o el administrador presiona **"Activar verificación manual"** en el Panel de vigilancia y escribe el **motivo** (por ejemplo, "equipo facial apagado"). Queda en la **auditoría** quién, cuándo y por qué. Mientras dure, el Panel muestra una franja fija:
 
@@ -169,12 +169,13 @@ Si el vigilante no elige en **2 minutos**, el ingreso se deniega y la ventana se
 |---|---|
 | Alcoholímetro para la prueba manual | El repuesto DT1700 (sección 3.4). También sirve el que estaba conectado al equipo facial, que funciona solo |
 | Foto de cada persona | Ya se guarda en el sistema |
-| Activar y desactivar (vigilante y administrador), con motivo y auditoría | Por programar |
-| Franja fija con el modo vigente en el Panel | Por programar |
-| Ventana con la foto y los botones, con límite de 2 minutos | Por programar |
-| Abrir el molinete desde "Apto: abrir" | Por programar (la orden de abrir ya existe) |
-| Marca "verificación manual" en historial y reportes | Por programar |
-| Aviso "¿volver a modo normal?" | Por programar |
+| Activar y desactivar (vigilante y administrador), con motivo y auditoría | Programado |
+| Franja fija con el modo vigente en el Panel | Programado |
+| Ventana con la foto y los botones, con límite de 2 minutos | Programado |
+| Abrir el molinete desde "Apto: abrir" | Programado |
+| Marca "Manual" con quien decidió en historial y reportes; motivo "Rostro no coincide" | Programado |
+| Aviso "¿volver a modo normal?" | Programado |
+| En modo manual no se envían órdenes al equipo facial (al volver, nadie queda habilitado) | Programado |
 
 Una vez programado, se hace una **prueba en la garita**: apagar el equipo facial, activar la verificación manual y usar el alcoholímetro de repuesto.
 
@@ -396,7 +397,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 
 | Qué | Sección |
 |---|---|
-| Verificación manual (activar y desactivar, franja, ventana con la foto y los botones, marca en historial y reportes, "¿volver a modo normal?") | 4 |
+| ~~Verificación manual~~ Hecho el 15/10/2026 (falta subirlo a la nube y probarlo en la garita) | 4 |
 | ~~Aviso en el Panel junto a "no completó rostro y alcohol"~~ Hecho el 15/10/2026 (falta subirlo al servidor) | 3.2 |
 | Identificación por rostro en el ingreso, automática al desconectarse el lector (opción 1; solo si la prueba sale bien) | 6.3 |
 | Campo "Ingresar DNI manualmente" en el Panel (ingreso y salida), con la marca en el historial (opción 2) | 6.3 |

@@ -2,7 +2,7 @@ import React from "react";
 import type { EventoAcceso } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
 import { ArrowRightIcon, InfoIcon } from "@/icons";
-import { PISTA_NO_COMPLETO } from "./AvisoNoCompleto";
+import { PISTA_TABLA } from "./AvisoNoCompleto";
 
 /** Ingreso (flecha hacia adentro, azul) o salida (hacia afuera, gris), para distinguirlos sin leer. */
 export function Movimiento({ tipo }: { tipo: string }) {
@@ -29,6 +29,7 @@ export function MotivoDenegacion({
     | "denegadoPorAlcohol"
     | "denegadoPorDocumentos"
     | "denegadoSinVerificacion"
+    | "denegadoRostroNoCoincide"
   >;
   onVerDocumentos: () => void;
 }) {
@@ -37,13 +38,14 @@ export function MotivoDenegacion({
   if (evento.denegadoSinVerificacion) {
     // La ⓘ explica qué revisar, para quien lo mira después del aviso de arriba.
     return (
-      <span title={PISTA_NO_COMPLETO} aria-label={`No completó rostro y alcohol. ${PISTA_NO_COMPLETO}`} className="cursor-help">
+      <span title={PISTA_TABLA} aria-label={`No completó rostro y alcohol. ${PISTA_TABLA}`} className="cursor-help">
         <Badge color="error" endIcon={<InfoIcon className="size-3.5" />}>
           No completó rostro y alcohol
         </Badge>
       </span>
     );
   }
+  if (evento.denegadoRostroNoCoincide) return <Badge color="error">Rostro no coincide</Badge>;
   const motivos: string[] = [];
   if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
   if (evento.denegadoPorAlcohol) motivos.push("Alcohol");
@@ -71,4 +73,14 @@ export function documentoDelEvento(ev: EventoAcceso): string {
   const numero = ev.numeroDocumento ?? ev.persona?.numeroDocumento;
   if (!numero) return "—";
   return tipo && tipo !== "DNI" ? `${tipo} ${numero}` : numero;
+}
+
+/** Verificación manual (equipo facial fuera de servicio): quién aprobó o denegó el ingreso. */
+export function MarcaVerificacionManual({ evento }: { evento: Pick<EventoAcceso, "verificacionManual" | "verificadoPor"> }) {
+  if (!evento.verificacionManual) return null;
+  return (
+    <span title="Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio)">
+      <Badge color="primary">Manual{evento.verificadoPor ? ` · ${evento.verificadoPor.correo}` : ""}</Badge>
+    </span>
+  );
 }

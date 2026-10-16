@@ -6,6 +6,13 @@ import { AlertIcon } from "@/icons";
 export const PISTA_NO_COMPLETO =
   "Si dice que no pudo soplar: revise si el equipo facial muestra un punto rojo (alcoholímetro desconectado) y avise a soporte.";
 
+/** Con el equipo facial desconectado la causa es otra: nadie puede completar (contingencias, sección 4). */
+export const PISTA_EQUIPO_DESCONECTADO =
+  "El equipo facial está desconectado: nadie puede completar rostro y alcohol. Avise a soporte.";
+
+/** Explicación de la ⓘ de la tabla: sirve para cualquier momento, sin saber el estado del equipo de entonces. */
+export const PISTA_TABLA = `Si el equipo facial estaba desconectado, nadie podía completar: avise a soporte. Si estaba conectado y la persona no pudo soplar, revise si muestra un punto rojo (alcoholímetro desconectado) y avise a soporte.`;
+
 /** Ingreso que terminó en "No completó rostro y alcohol" y todavía merece el aviso. */
 export interface AvisoNoCompleto {
   eventoId: number;
@@ -56,8 +63,19 @@ export function avisoDesdeHistorial(eventos: EventoAcceso[]): AvisoNoCompleto | 
   };
 }
 
-/** Aviso ámbar arriba del Panel: quién no completó y qué revisar. Se cierra con la ✕. */
-export function AvisoNoCompletoBanner({ aviso, onCerrar }: { aviso: AvisoNoCompleto; onCerrar: () => void }) {
+/**
+ * Aviso ámbar arriba del Panel: quién no completó y qué revisar. Se cierra con
+ * la ✕. Con el equipo facial desconectado, la causa no es el alcoholímetro.
+ */
+export function AvisoNoCompletoBanner({
+  aviso,
+  equipoFacialDesconectado = false,
+  onCerrar,
+}: {
+  aviso: AvisoNoCompleto;
+  equipoFacialDesconectado?: boolean;
+  onCerrar: () => void;
+}) {
   const hora = new Date(aviso.fechaHora).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
   return (
     <div
@@ -69,7 +87,7 @@ export function AvisoNoCompletoBanner({ aviso, onCerrar }: { aviso: AvisoNoCompl
         <span className="font-semibold text-warning-700 dark:text-orange-400">
           {aviso.persona} no completó rostro y alcohol ({hora}).
         </span>{" "}
-        {PISTA_NO_COMPLETO}
+        {equipoFacialDesconectado ? PISTA_EQUIPO_DESCONECTADO : PISTA_NO_COMPLETO}
       </p>
       <button
         type="button"

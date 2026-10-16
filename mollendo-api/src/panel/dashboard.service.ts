@@ -161,6 +161,7 @@ export class DashboardService {
         denegadoPorDocumentos: true,
         denegadoPorAlcohol: true,
         denegadoSinVerificacion: true,
+        denegadoRostroNoCoincide: true,
       },
     });
     return resumirMovimientos(eventos, dias);

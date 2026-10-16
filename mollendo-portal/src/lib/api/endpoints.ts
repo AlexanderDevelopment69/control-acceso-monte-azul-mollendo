@@ -10,6 +10,8 @@ import type {
   AvisosSistema,
   EventoAcceso,
   FiltrosLista,
+  DecisionManual,
+  EstadoVerificacionManual,
   IngresoEnEspera,
   Paginado,
   Persona,
@@ -103,8 +105,17 @@ export const eventosAccesoApi = {
   /** Historial paginado en el servidor, más recientes primero. */
   list: (params: FiltrosLista & { personaId?: number; resultado?: string } = {}) =>
     apiRequest<Paginado<EventoAcceso>>(`/eventos-acceso${consulta({ ...params })}`),
-  /** DNI en regla esperando el rostro y el alcohol del G4 Pro. */
+  /** DNI en regla esperando el rostro y el alcohol del G4 Pro, o al vigilante. */
   enEspera: () => apiRequest<IngresoEnEspera[]>("/eventos-acceso/en-espera"),
+  /** Verificación manual (contingencia por falla del equipo facial). */
+  verificacionManual: () => apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual"),
+  activarVerificacionManual: (motivo: string) =>
+    apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual", { method: "POST", body: { motivo } }),
+  terminarVerificacionManual: () =>
+    apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual", { method: "DELETE" }),
+  /** Decisión del vigilante sobre la persona en su turno. */
+  decidir: (id: number, decision: DecisionManual) =>
+    apiRequest<{ ok: true }>(`/eventos-acceso/en-espera/${id}/decision`, { method: "POST", body: { decision } }),
 };
 
 // ---- reportes ----

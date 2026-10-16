@@ -2,7 +2,14 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { EventoAcceso } from "@/lib/api/types";
-import { avisoDesdeHistorial, AvisoNoCompletoBanner, PISTA_NO_COMPLETO, siguienteAviso } from "./AvisoNoCompleto";
+import {
+  avisoDesdeHistorial,
+  AvisoNoCompletoBanner,
+  PISTA_EQUIPO_DESCONECTADO,
+  PISTA_NO_COMPLETO,
+  PISTA_TABLA,
+  siguienteAviso,
+} from "./AvisoNoCompleto";
 import { MotivoDenegacion } from "./CeldasEvento";
 
 const JUAN = { nombres: "Juan", apellidos: "Pérez Quispe" };
@@ -79,8 +86,14 @@ describe("Aviso de “no completó rostro y alcohol”", () => {
     expect(onCerrar).toHaveBeenCalledTimes(1);
   });
 
-  it("la etiqueta de la tabla explica qué revisar al pasar el mouse", () => {
+  it("con el equipo facial desconectado no habla del alcoholímetro: dice que nadie puede completar", () => {
+    render(<AvisoNoCompletoBanner aviso={AVISO} equipoFacialDesconectado onCerrar={() => {}} />);
+    expect(screen.getByRole("status")).toHaveTextContent(PISTA_EQUIPO_DESCONECTADO);
+    expect(screen.getByRole("status")).not.toHaveTextContent("punto rojo");
+  });
+
+  it("la etiqueta de la tabla explica qué revisar al pasar el mouse (equipo desconectado o alcoholímetro)", () => {
     render(<MotivoDenegacion evento={evento(1, { denegadoSinVerificacion: true })} onVerDocumentos={() => {}} />);
-    expect(screen.getByText("No completó rostro y alcohol").closest("[title]")).toHaveAttribute("title", PISTA_NO_COMPLETO);
+    expect(screen.getByText("No completó rostro y alcohol").closest("[title]")).toHaveAttribute("title", PISTA_TABLA);
   });
 });

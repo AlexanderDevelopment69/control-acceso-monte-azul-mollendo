@@ -8,6 +8,8 @@ import type { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
 import type { Persona, Prisma } from '../generated/prisma/client.js';
 import { paginacion, palabras, rangoDeDias, type Paginado } from '../common/paginacion.js';
 import type { RtlogRecibidoEvent } from '../push-sdk/push-sdk.service.js';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
+import { VerificacionManualService } from './verificacion-manual.service.js';
 
 /** Payload del evento interno que ordena abrir el molinete (lo atiende IntegracionesModule). */
 export interface AbrirMolineteEvent {
@@ -24,8 +26,25 @@ export interface AbrirMolineteEvent {
  */
 const VENTANA_INGRESO_PENDIENTE_MS = 60 * 1000;
 
+/**
+ * En la verificación manual (equipo facial fuera de servicio), el vigilante
+ * tiene 2 minutos para comparar el rostro y tomar la prueba de alcohol
+ * (contingencias, sección 4). Al vencer, el ingreso queda denegado.
+ */
+const VENTANA_VERIFICACION_MANUAL_MS = 2 * 60 * 1000;
+
+/** El turno de una espera: el del G4 Pro o el del vigilante. */
+const ventanaDe = (pendiente: { manual: boolean }) =>
+  pendiente.manual ? VENTANA_VERIFICACION_MANUAL_MS : VENTANA_INGRESO_PENDIENTE_MS;
+
+/** El turno más largo: para buscar en la base las esperas que pueden seguir abiertas. */
+const VENTANA_MAXIMA_MS = Math.max(VENTANA_INGRESO_PENDIENTE_MS, VENTANA_VERIFICACION_MANUAL_MS);
+
 /** Cuánto puede esperar en cola un DNI (otra persona estaba habilitada) antes de cerrarse sin verificar. */
 const ESPERA_MAXIMA_EN_COLA_MS = 3 * VENTANA_INGRESO_PENDIENTE_MS;
+
+/** Decisión del vigilante en la verificación manual. */
+export type DecisionManual = 'apto' | 'alcohol' | 'no-es-la-persona';
 
 /** Cada cuánto se revisan las esperas vencidas. */
 const REVISION_VENCIDOS_MS = 5000;
@@ -49,6 +68,8 @@ export interface IngresoEnEspera {
   desde: string;
   hasta: string | null;
   enCola: boolean;
+  /** La decide un vigilante (verificación manual), no el G4 Pro. */
+  manual: boolean;
 }
 
 const CON_PERSONA = { persona: { include: { empresa: { select: { razonSocial: true } } } } } as const;
@@ -66,10 +87,9 @@ function aEnEspera(pendiente: PendienteConPersona): IngresoEnEspera {
     tieneFoto: !!pendiente.persona.fotoUrl,
     torniqueteId: pendiente.torniqueteId,
     desde: (pendiente.habilitadoEn ?? pendiente.creadoEn).toISOString(),
-    hasta: pendiente.habilitadoEn
-      ? new Date(pendiente.habilitadoEn.getTime() + VENTANA_INGRESO_PENDIENTE_MS).toISOString()
-      : null,
+    hasta: pendiente.habilitadoEn ? new Date(pendiente.habilitadoEn.getTime() + ventanaDe(pendiente)).toISOString() : null,
     enCola: !pendiente.habilitadoEn,
+    manual: pendiente.manual,
   };
 }
 
@@ -103,6 +123,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly verificacionManual: VerificacionManualService,
   ) {}
 
   onModuleInit() {
@@ -191,14 +212,16 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       });
     }
 
+    // Con la verificación manual activa, la decide un vigilante y no se usa el G4 Pro.
+    const manual = await this.verificacionManual.activa();
     await this.enSerie(async () => {
       // Si ya está esperando (volvió a pasar el DNI), se mantiene su lugar.
-      const abierto = await this.prisma.ingresoPendiente.findFirst({
-        where: { personaId: persona.id, consumidoEn: null, ...this.filtroAbiertos() },
-      });
+      const abierto = (
+        await this.prisma.ingresoPendiente.findMany({ where: { personaId: persona.id, consumidoEn: null, ...this.filtroAbiertos() } })
+      ).find((p) => this.sigueAbierta(p));
       if (abierto) return;
       const pendiente = await this.prisma.ingresoPendiente.create({
-        data: { personaId: persona.id, torniqueteId: dto.torniqueteId },
+        data: { personaId: persona.id, torniqueteId: dto.torniqueteId, manual },
         include: CON_PERSONA,
       });
       const habilitado = await this.habilitarSiguiente();
@@ -209,7 +232,9 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       estado: 'pendiente_verificacion' as const,
       persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
       numeroDocumento: persona.numeroDocumento,
-      mensaje: 'Documentos en regla. Esperando el resultado del equipo (rostro + alcoholímetro).',
+      mensaje: manual
+        ? 'Documentos en regla. Verificación manual: el vigilante compara el rostro y toma la prueba de alcohol.'
+        : 'Documentos en regla. Esperando el resultado del equipo (rostro + alcoholímetro).',
     };
   }
 
@@ -256,14 +281,35 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     return respuesta;
   }
 
-  /** Esperas abiertas: la habilitada dentro de su minuto, o en cola sin pasarse del máximo. */
+  /**
+   * Esperas que pueden seguir abiertas (en la base): la habilitada dentro del
+   * turno más largo, o en cola sin pasarse del máximo. El turno exacto de cada
+   * una (G4 Pro o vigilante) lo revisa `sigueAbierta`.
+   */
   private filtroAbiertos(ahora = Date.now()): Prisma.IngresoPendienteWhereInput {
     return {
       OR: [
-        { habilitadoEn: { gte: new Date(ahora - VENTANA_INGRESO_PENDIENTE_MS) } },
+        { habilitadoEn: { gte: new Date(ahora - VENTANA_MAXIMA_MS) } },
         { habilitadoEn: null, creadoEn: { gte: new Date(ahora - ESPERA_MAXIMA_EN_COLA_MS) } },
       ],
     };
+  }
+
+  /** ¿Sigue dentro de su turno (o de la espera máxima en cola)? */
+  private sigueAbierta(p: { habilitadoEn: Date | null; creadoEn: Date; manual: boolean }, ahora = Date.now()): boolean {
+    return p.habilitadoEn
+      ? p.habilitadoEn.getTime() >= ahora - ventanaDe(p)
+      : p.creadoEn.getTime() >= ahora - ESPERA_MAXIMA_EN_COLA_MS;
+  }
+
+  /** La espera habilitada ahora (a lo sumo una: el G4 Pro o el vigilante atienden a una persona a la vez). */
+  private async enTurno() {
+    const ahora = Date.now();
+    const candidatas = await this.prisma.ingresoPendiente.findMany({
+      where: { consumidoEn: null, habilitadoEn: { gte: new Date(ahora - VENTANA_MAXIMA_MS) } },
+      include: { persona: true },
+    });
+    return candidatas.find((p) => this.sigueAbierta(p, ahora)) ?? null;
   }
 
   /**
@@ -273,10 +319,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    */
   private async habilitarSiguiente(): Promise<number | null> {
     const ahora = Date.now();
-    const activo = await this.prisma.ingresoPendiente.findFirst({
-      where: { consumidoEn: null, habilitadoEn: { gte: new Date(ahora - VENTANA_INGRESO_PENDIENTE_MS) } },
-    });
-    if (activo) return null;
+    if (await this.enTurno()) return null;
     const siguiente = await this.prisma.ingresoPendiente.findFirst({
       where: { consumidoEn: null, habilitadoEn: null, creadoEn: { gte: new Date(ahora - ESPERA_MAXIMA_EN_COLA_MS) } },
       orderBy: { creadoEn: 'asc' },
@@ -287,10 +330,14 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       data: { habilitadoEn: new Date() },
       include: CON_PERSONA,
     });
-    this.eventEmitter.emit('g4pro.habilitar', {
-      numeroDocumento: habilitado.persona.numeroDocumento,
-      habilitar: true,
-    } satisfies HabilitarEnEquipoEvent);
+    // En la verificación manual no se usa el G4 Pro: las órdenes quedarían
+    // pendientes y, al volver, el equipo dejaría a alguien habilitado.
+    if (!habilitado.manual) {
+      this.eventEmitter.emit('g4pro.habilitar', {
+        numeroDocumento: habilitado.persona.numeroDocumento,
+        habilitar: true,
+      } satisfies HabilitarEnEquipoEvent);
+    }
     this.eventEmitter.emit('ingreso.en-espera', aEnEspera(habilitado));
     return habilitado.id;
   }
@@ -301,7 +348,15 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    */
   private async cerrarEspera(
     pendiente: Prisma.IngresoPendienteGetPayload<{ include: { persona: true } }>,
-    resultado: { autorizado: boolean; denegadoPorAlcohol?: boolean; denegadoSinVerificacion?: boolean; fechaHora?: Date },
+    resultado: {
+      autorizado: boolean;
+      denegadoPorAlcohol?: boolean;
+      denegadoSinVerificacion?: boolean;
+      denegadoRostroNoCoincide?: boolean;
+      fechaHora?: Date;
+      /** Verificación manual: el vigilante que decidió. */
+      verificadoPor?: AuthenticatedUser;
+    },
     verificacionId?: number,
   ) {
     const eventoAcceso = await this.prisma.eventoAcceso.create({
@@ -313,6 +368,9 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         resultado: resultado.autorizado ? 'autorizado' : 'denegado',
         denegadoPorAlcohol: resultado.denegadoPorAlcohol ?? false,
         denegadoSinVerificacion: resultado.denegadoSinVerificacion ?? false,
+        denegadoRostroNoCoincide: resultado.denegadoRostroNoCoincide ?? false,
+        verificacionManual: pendiente.manual,
+        verificadoPorId: resultado.verificadoPor?.id,
         torniqueteId: pendiente.torniqueteId ?? undefined,
         ...(resultado.fechaHora ? { fechaHora: resultado.fechaHora } : {}),
       },
@@ -323,7 +381,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         ? [this.prisma.verificacionDispositivo.update({ where: { id: verificacionId }, data: { eventoAccesoId: eventoAcceso.id } })]
         : []),
     ]);
-    if (pendiente.habilitadoEn) {
+    if (pendiente.habilitadoEn && !pendiente.manual) {
       this.eventEmitter.emit('g4pro.habilitar', {
         numeroDocumento: pendiente.persona.numeroDocumento,
         habilitar: false,
@@ -343,7 +401,13 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       fechaHora: eventoAcceso.fechaHora.toISOString(),
       persona: { id: pendiente.persona.id, nombres: pendiente.persona.nombres, apellidos: pendiente.persona.apellidos },
       numeroDocumento: pendiente.persona.numeroDocumento,
-      motivos: { alcohol: !!resultado.denegadoPorAlcohol, sinVerificacion: !!resultado.denegadoSinVerificacion },
+      motivos: {
+        alcohol: !!resultado.denegadoPorAlcohol,
+        sinVerificacion: !!resultado.denegadoSinVerificacion,
+        rostroNoCoincide: !!resultado.denegadoRostroNoCoincide,
+      },
+      verificacionManual: pendiente.manual,
+      verificadoPor: resultado.verificadoPor?.correo ?? null,
     });
     this.eventEmitter.emit('ingreso.espera-terminada', { id: pendiente.id });
     await this.habilitarSiguiente();
@@ -369,13 +433,9 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   @OnEvent('dispositivo.rtlog')
   async correlacionarVerificacionDispositivo(evento: RtlogRecibidoEvent): Promise<void> {
     await this.enSerie(async () => {
-      const activo = await this.prisma.ingresoPendiente.findFirst({
-        where: {
-          consumidoEn: null,
-          habilitadoEn: { gte: new Date(Date.now() - VENTANA_INGRESO_PENDIENTE_MS) },
-        },
-        include: { persona: true },
-      });
+      const enTurno = await this.enTurno();
+      // En la verificación manual decide el vigilante: lo que mande el G4 Pro no cierra la espera.
+      const activo = enTurno && !enTurno.manual ? enTurno : null;
       const codigo = evento.eventCode ?? '';
 
       if (codigo === '23' || codigo === '27') {
@@ -412,32 +472,58 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    */
   private async cerrarVencidos(): Promise<void> {
     const ahora = Date.now();
-    const vencidas = await this.prisma.ingresoPendiente.findMany({
-      where: {
-        consumidoEn: null,
-        OR: [
-          { habilitadoEn: { lt: new Date(ahora - VENTANA_INGRESO_PENDIENTE_MS) } },
-          { habilitadoEn: null, creadoEn: { lt: new Date(ahora - ESPERA_MAXIMA_EN_COLA_MS) } },
-        ],
-      },
-      include: { persona: true },
-      orderBy: { creadoEn: 'asc' },
-    });
+    const vencidas = (
+      await this.prisma.ingresoPendiente.findMany({
+        where: {
+          consumidoEn: null,
+          OR: [
+            { habilitadoEn: { lt: new Date(ahora - VENTANA_INGRESO_PENDIENTE_MS) } },
+            { habilitadoEn: null, creadoEn: { lt: new Date(ahora - ESPERA_MAXIMA_EN_COLA_MS) } },
+          ],
+        },
+        include: { persona: true },
+        orderBy: { creadoEn: 'asc' },
+      })
+    ).filter((p) => !this.sigueAbierta(p, ahora));
     for (const pendiente of vencidas) {
-      this.logger.log(`DNI ${pendiente.persona.numeroDocumento}: no completó rostro y alcohol a tiempo`);
+      this.logger.log(
+        `DNI ${pendiente.persona.numeroDocumento}: ${pendiente.manual ? 'el vigilante no decidió a tiempo' : 'no completó rostro y alcohol a tiempo'}`,
+      );
       await this.cerrarEspera(pendiente, { autorizado: false, denegadoSinVerificacion: true });
     }
     if (vencidas.length === 0) await this.habilitarSiguiente();
   }
 
-  /** DNI en regla que todavía esperan el resultado del G4 Pro (habilitado y en cola), para el Panel. */
+  /** DNI en regla que todavía esperan el resultado del G4 Pro o del vigilante (habilitado y en cola), para el Panel. */
   async ingresosEnEspera(): Promise<IngresoEnEspera[]> {
     const pendientes = await this.prisma.ingresoPendiente.findMany({
       where: { consumidoEn: null, ...this.filtroAbiertos() },
       orderBy: { creadoEn: 'desc' },
       include: CON_PERSONA,
     });
-    return pendientes.map(aEnEspera);
+    return pendientes.filter((p) => this.sigueAbierta(p)).map(aEnEspera);
+  }
+
+  /**
+   * Decisión del vigilante en la verificación manual: "apto" abre el molinete;
+   * "alcohol" y "no es la persona" lo deniegan (y suena el aviso de denegado).
+   * Solo vale para la persona en su turno: si ya venció o la decidió otro
+   * vigilante, se avisa y no se hace nada.
+   */
+  async decidirManual(pendienteId: number, decision: DecisionManual, usuario: AuthenticatedUser) {
+    return this.enSerie(async () => {
+      const enTurno = await this.enTurno();
+      if (!enTurno || enTurno.id !== pendienteId || !enTurno.manual) {
+        throw new BadRequestException('Esa persona ya no está esperando la verificación manual (venció o ya se decidió)');
+      }
+      await this.cerrarEspera(enTurno, {
+        autorizado: decision === 'apto',
+        denegadoPorAlcohol: decision === 'alcohol',
+        denegadoRostroNoCoincide: decision === 'no-es-la-persona',
+        verificadoPor: usuario,
+      });
+      return { ok: true };
+    });
   }
 
   /**
@@ -517,6 +603,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
               numeroDocumento: true,
             },
           },
+          verificadoPor: { select: { id: true, correo: true } },
         },
         orderBy: [{ fechaHora: 'desc' }, { id: 'desc' }],
         skip,

@@ -7,6 +7,8 @@
 // Uso (con la API y el portal locales corriendo, en mollendo-portal):
 //   npm i --no-save puppeteer-core@24
 //   node scripts/capturas-manual.mjs
+// Solo algunas (las demás quedan como están):
+//   CAPTURAS=verificacion-activar,verificacion-ventana node scripts/capturas-manual.mjs
 //
 // Usa datos de demostración (personas DEMO). Nunca ejecutarlo contra datos reales.
 import fs from "node:fs";
@@ -58,7 +60,7 @@ const CAPTURAS = [
     preparar: async (p) => p.locator("::-p-text(Todos los días)").click(),
     alto: 640,
     puntos: [
-      { sel: "::-p-text(Denegaciones hoy)", recuadro: ".rounded-xl" },
+      { sel: "::-p-text(Accesos restringidos hoy)", recuadro: ".rounded-xl" },
       'input[placeholder*="Buscar por nombre o DNI"]',
       { sel: "button::-p-text(Hoy)", lado: "der" },
       "::-p-text(Denegado)",
@@ -114,7 +116,68 @@ const CAPTURAS = [
       "::-p-text(Equipos de acceso)",
     ],
   },
+  {
+    // Verificación manual (contingencias, sección 4): el aviso del terminal facial
+    // caído en la franja roja, con su botón. En la PC de desarrollo no hay G4: sale caído.
+    clave: "verificacion-activar",
+    ruta: "/vigilancia",
+    conAviso: true,
+    preparar: async () => verificacionManual("DELETE"),
+    elemento: { sel: "::-p-text(Activar verificación manual)", recuadro: "li" },
+    puntos: [
+      { sel: "::-p-text(Terminal facial)", lado: "izq" },
+      { sel: "button::-p-text(Activar verificación manual)", lado: "der" },
+    ],
+  },
+  {
+    // La ventana de decisión: se activa la verificación manual y una persona DEMO
+    // en regla "pasa su DNI" (con la clave de equipos, como el lector).
+    clave: "verificacion-ventana",
+    ruta: "/vigilancia",
+    preparar: async (p) => {
+      await verificacionManual("POST", { motivo: "Terminal facial desconectado" });
+      await p.reload({ waitUntil: "networkidle2" });
+      await p.addStyleTag({ content: OCULTAR + OCULTAR_AVISO });
+      await pasarDni("99010001");
+      await p.waitForFunction(() => document.body.innerText.includes("Verificación manual de ingreso"), { timeout: 15000 });
+    },
+    elemento: { sel: "::-p-text(Verificación manual de ingreso)", recuadro: "[class*='max-w-xl']" },
+    // Al terminar: se decide (para no dejar la espera abierta) y se vuelve a modo normal.
+    despues: async (p) => {
+      await p.locator("button::-p-text(No es la persona)").click();
+      await espera(1500);
+      await verificacionManual("DELETE");
+    },
+    puntos: [
+      { sel: "::-p-text(Tiempo para decidir)", lado: "izq" },
+      { sel: "::-p-text(Documentos vigentes)", lado: "der" },
+      { sel: "::-p-text(Compare el rostro con la foto)", recuadro: "ol", lado: "der" },
+      { sel: "button::-p-text(Apto: abrir)", lado: "arriba" },
+      { sel: "button::-p-text(Alcohol: no apto)", lado: "arriba" },
+      { sel: "button::-p-text(No es la persona)", lado: "arriba" },
+    ],
+  },
 ];
+
+/** Activa (POST) o termina (DELETE) la verificación manual con la cuenta del administrador. */
+async function verificacionManual(method, body) {
+  await fetch(`${API}/eventos-acceso/verificacion-manual`, {
+    method,
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    ...(body && { body: JSON.stringify(body) }),
+  });
+}
+
+/** Un DNI por el "lector de ingreso" (clave de equipos de mollendo-api/.env). */
+async function pasarDni(numeroDocumento) {
+  await fetch(`${API}/eventos-acceso/ingreso`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": valor("DEVICE_API_KEY") },
+    body: JSON.stringify({ tipoDocumentoIdentidad: "DNI", numeroDocumento }),
+  });
+}
+
+const SOLO = process.env.CAPTURAS?.split(",").map((c) => c.trim()).filter(Boolean);
 
 async function sesion(rol) {
   const r = await fetch(`${API}/auth/login`, {
@@ -147,8 +210,9 @@ await pagina.evaluate(
   refreshToken,
 );
 
-const resultado = {};
-for (const c of CAPTURAS) {
+// Con CAPTURAS=…, las demás se conservan tal como están.
+const resultado = SOLO ? JSON.parse(fs.readFileSync(SALIDA_JSON, "utf8")) : {};
+for (const c of CAPTURAS.filter((c) => !SOLO || SOLO.includes(c.clave))) {
   await pagina.goto(`${PORTAL}${c.ruta}`, { waitUntil: "networkidle2" });
   await pagina.addStyleTag({ content: OCULTAR + (c.conAviso ? "" : OCULTAR_AVISO) });
   await espera(2000);
@@ -191,6 +255,7 @@ for (const c of CAPTURAS) {
   await pagina.screenshot({ path: path.join(SALIDA_IMG, archivo), type: "webp", quality: 82, clip: recorte, captureBeyondViewport: true });
   resultado[c.clave] = { imagen: `/manual/${archivo}`, ancho: recorte.width, alto: recorte.height, puntos };
   console.log(`ok ${archivo} (${puntos.length} puntos)`);
+  if (c.despues) await c.despues(pagina);
 }
 await navegador.close();
 fs.writeFileSync(SALIDA_JSON, `${JSON.stringify(resultado, null, 2)}\n`);

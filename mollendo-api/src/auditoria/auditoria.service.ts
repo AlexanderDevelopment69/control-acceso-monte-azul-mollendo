@@ -19,6 +19,7 @@ export const TABLA_LABEL: Record<string, string> = {
   documento_persona: 'Documento',
   tipo_documento: 'Tipo de documento',
   usuario: 'Usuario',
+  periodo_verificacion_manual: 'Verificación manual',
 };
 
 /** Tablas cuyo nombre visible contiene la palabra (sin distinguir mayúsculas ni tildes). */

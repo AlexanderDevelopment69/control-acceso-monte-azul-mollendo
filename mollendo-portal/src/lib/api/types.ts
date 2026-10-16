@@ -86,7 +86,17 @@ export interface IngresoEnEspera {
   desde: string;
   hasta: string | null;
   enCola: boolean;
+  /** La decide un vigilante (verificación manual, equipo facial fuera de servicio), no el G4 Pro. */
+  manual?: boolean;
 }
+
+/** Verificación manual vigente (contingencia por falla del equipo facial). */
+export interface EstadoVerificacionManual {
+  activa: boolean;
+  periodo: { id: number; motivo: string; desde: string; activadaPor: string | null } | null;
+}
+
+export type DecisionManual = "apto" | "alcohol" | "no-es-la-persona";
 
 export interface EventoAcceso {
   id: number;
@@ -104,6 +114,11 @@ export interface EventoAcceso {
   /** Pasó su DNI en regla pero no completó rostro y alcohol a tiempo. */
   denegadoSinVerificacion: boolean;
   denegadoPorDocumentos: boolean;
+  /** Verificación manual: el vigilante indicó que el rostro no es el de la foto. */
+  denegadoRostroNoCoincide?: boolean;
+  /** Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio). */
+  verificacionManual?: boolean;
+  verificadoPor?: { id: number; correo: string } | null;
   fechaHora: string;
   torniqueteId: string | null;
   persona?: {
@@ -133,7 +148,15 @@ export interface Dashboard {
   visitas: { total: number; finalizadas: number; presentes: number };
   movimientos: {
     totales: { ingresosAutorizados: number; ingresosDenegados: number; salidasAutorizadas: number; salidasDenegadas: number };
-    motivos: { noRegistrado: number; dadoDeBaja: number; sinDocumentos: number; documentos: number; alcohol: number; sinVerificacion: number };
+    motivos: {
+      noRegistrado: number;
+      dadoDeBaja: number;
+      sinDocumentos: number;
+      documentos: number;
+      alcohol: number;
+      sinVerificacion: number;
+      rostroNoCoincide?: number;
+    };
     tendencia: { dia: string; ingresos: number; denegados: number; salidas: number }[];
   };
   personal: { total: number; activos: number; dadosDeBaja: number };
