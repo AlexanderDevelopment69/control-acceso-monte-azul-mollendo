@@ -215,7 +215,8 @@ Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la 
 
 **Ficha de la persona**
 
-- Datos, empresa y foto ("Cambiar foto"). **Perfil** junto al nombre: un clic en la etiqueta lo cambia, o lo asigna si todavía no tiene; el cambio queda en la auditoría. Si no tiene foto, se advierte que no podrá identificarse en el terminal.
+- Datos, empresa y foto ("Cambiar foto"). **Perfil** junto al nombre.
+- **Editar datos:** corrige el perfil, la empresa, el tipo y número de documento, los nombres y los apellidos (se valida igual que al registrar: DNI de 8 dígitos y sin repetir). Si cambia el número o el nombre, el terminal facial se actualiza solo (con un número nuevo se borra el anterior y se registra el nuevo con su foto); los ingresos y salidas anteriores conservan el documento con el que se registraron. El cambio queda en la auditoría. Si no tiene foto, se advierte que no podrá identificarse en el terminal.
 - Recuadro de estado: "Puede ingresar hoy (sujeto a la prueba de alcohol en garita)" o "No puede ingresar" con los motivos.
 - **Documentos actuales:** nombre, vencimiento y estado (Vigente / Vencido), con las acciones:
   - **Ver:** abre el archivo cargado en una pestaña nueva (PDF o imagen); si es Word, lo descarga.

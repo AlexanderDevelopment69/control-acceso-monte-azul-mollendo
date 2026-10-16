@@ -50,7 +50,7 @@ const CAPTURAS = [
       { sel: "::-p-text(Apaza Condori, Jorge Luis)", recuadro: "button" },
       "::-p-text(Nuevo personal)",
       "::-p-text(Cambiar foto)",
-      'button[title="Cambiar el perfil"]',
+      "::-p-text(Editar datos)",
       "::-p-text(Puede ingresar hoy)",
       "button::-p-text(Ver)",
       "::-p-text(Agregar documento)",

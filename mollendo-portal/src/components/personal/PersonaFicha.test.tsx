@@ -5,10 +5,18 @@ import { ApiError } from "@/lib/api/client";
 import type { Cumplimiento, DocumentoActual, Persona } from "@/lib/api/types";
 import { PersonaFicha } from "./PersonaFicha";
 
-const api = vi.hoisted(() => ({ get: vi.fn(), updateEstado: vi.fn(), subirFoto: vi.fn(), eliminar: vi.fn() }));
+const api = vi.hoisted(() => ({
+  get: vi.fn(),
+  update: vi.fn(),
+  updateEstado: vi.fn(),
+  subirFoto: vi.fn(),
+  eliminar: vi.fn(),
+  empresas: vi.fn(),
+}));
 vi.mock("@/lib/api/endpoints", () => ({
-  personasApi: { get: api.get, updateEstado: api.updateEstado, subirFoto: api.subirFoto },
+  personasApi: { get: api.get, update: api.update, updateEstado: api.updateEstado, subirFoto: api.subirFoto },
   documentosApi: { eliminar: api.eliminar },
+  empresasApi: { list: api.empresas },
 }));
 // Piezas con sus propias consultas (foto, archivo, formulario de subida): se simulan.
 vi.mock("./FotoPersonal", async (original) => ({
@@ -177,5 +185,49 @@ describe("Ficha de la persona", () => {
     expect(await screen.findByText("Personal no encontrado")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByRole("heading", { name: "Rosa Díaz" })).toBeInTheDocument();
+  });
+  it("editar datos: envía solo lo que cambió, avisa si cambia el documento y vuelve a leer la ficha", async () => {
+    await montar(persona({ habilitado: true }, { perfil: "contratista" }));
+    api.empresas.mockResolvedValue([{ id: 1, razonSocial: "Agencia Sur", estado: "activa" }]);
+    api.update.mockResolvedValueOnce(undefined);
+
+    await userEvent.click(screen.getByRole("button", { name: "Editar datos" }));
+    const ventana = screen.getByRole("heading", { name: "Editar datos del personal" }).parentElement!;
+    const guardar = within(ventana).getByRole("button", { name: "Guardar" });
+    await waitFor(() => expect(within(ventana).queryByText("Cargando…")).not.toBeInTheDocument());
+    // Sin cambios: avisa y no envía nada.
+    await userEvent.click(guardar);
+    expect(within(ventana).getByText("No cambiaste ningún dato.")).toBeInTheDocument();
+    expect(api.update).not.toHaveBeenCalled();
+
+    const [numero, , apellidos] = within(ventana).getAllByRole("textbox");
+    await userEvent.clear(apellidos);
+    await userEvent.type(apellidos, "Díaz Pérez");
+    expect(within(ventana).queryByText("No cambiaste ningún dato.")).not.toBeInTheDocument(); // se va al cambiar algo
+    expect(within(ventana).queryByText(/Cambias el documento/)).not.toBeInTheDocument();
+    await userEvent.clear(numero);
+    await userEvent.type(numero, "45678913");
+    expect(within(ventana).getByText(/Cambias el documento/)).toBeInTheDocument();
+
+    await userEvent.click(guardar);
+    expect(api.update).toHaveBeenCalledWith(7, { numeroDocumento: "45678913", apellidos: "Díaz Pérez" });
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Editar datos del personal" })).not.toBeInTheDocument());
+    await waitFor(() => expect(onCambio).toHaveBeenCalledTimes(1));
+  });
+
+  it("editar datos: un DNI mal escrito no se envía", async () => {
+    await montar(persona({ habilitado: true }, { perfil: "contratista" }));
+    api.empresas.mockResolvedValue([{ id: 1, razonSocial: "Agencia Sur", estado: "activa" }]);
+
+    await userEvent.click(screen.getByRole("button", { name: "Editar datos" }));
+    const ventana = screen.getByRole("heading", { name: "Editar datos del personal" }).parentElement!;
+    await waitFor(() => expect(within(ventana).queryByText("Cargando…")).not.toBeInTheDocument());
+    const [numero] = within(ventana).getAllByRole("textbox");
+    await userEvent.clear(numero);
+    await userEvent.type(numero, "4567");
+    await userEvent.click(within(ventana).getByRole("button", { name: "Guardar" }));
+
+    expect(within(ventana).getByText("El DNI debe tener 8 dígitos")).toBeInTheDocument();
+    expect(api.update).not.toHaveBeenCalled();
   });
 });

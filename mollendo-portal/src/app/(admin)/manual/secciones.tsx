@@ -91,7 +91,8 @@ export const SECCIONES: SeccionManual[] = [
             </>,
             "Ve la foto en grande, súbela o cámbiala: la usa el terminal facial para reconocerlo.",
             <>
-              Su <strong>perfil</strong>, junto al nombre: un clic en la etiqueta lo cambia o, si todavía no tiene, lo asigna.
+              Su <strong>perfil</strong>, junto al nombre. <strong>“Editar datos”</strong> corrige el perfil, la empresa, el
+              documento, los nombres o los apellidos.
             </>,
             "Si hoy puede ingresar y, si no, por qué.",
             <>

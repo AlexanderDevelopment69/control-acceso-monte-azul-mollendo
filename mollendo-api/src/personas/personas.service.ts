@@ -188,10 +188,17 @@ export class PersonasService {
       registroId: persona.id,
       accion: 'modificar',
     });
-    this.eventEmitter.emit('persona.guardada', {
-      personaId: persona.id,
-      numeroAnterior: actualizada.numeroDocumento !== persona.numeroDocumento ? persona.numeroDocumento : undefined,
-    });
+    // Al G4 Pro solo le importan el número y el nombre: si cambió solo el perfil o la empresa, no se le envía nada.
+    const cambioParaEquipos =
+      actualizada.numeroDocumento !== persona.numeroDocumento ||
+      actualizada.nombres !== persona.nombres ||
+      actualizada.apellidos !== persona.apellidos;
+    if (cambioParaEquipos) {
+      this.eventEmitter.emit('persona.guardada', {
+        personaId: persona.id,
+        numeroAnterior: actualizada.numeroDocumento !== persona.numeroDocumento ? persona.numeroDocumento : undefined,
+      });
+    }
     return actualizada;
   }
 

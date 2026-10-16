@@ -70,8 +70,18 @@ export const personasApi = {
     return apiRequest<Persona>(`/personas/${id}/foto`, { method: "POST", body: formData, isFormData: true });
   },
   foto: (id: number) => apiRequest<Blob>(`/personas/${id}/foto`, { responseType: "blob" }),
-  /** Cambia el perfil (u otro dato) de la persona. */
-  update: (id: number, data: { perfil?: Perfil }) => apiRequest<Persona>(`/personas/${id}`, { method: "PATCH", body: data }),
+  /** Corrige los datos de la persona (solo se envía lo que cambió). */
+  update: (
+    id: number,
+    data: {
+      perfil?: Perfil;
+      empresaId?: number;
+      tipoDocumentoIdentidad?: Persona["tipoDocumentoIdentidad"];
+      numeroDocumento?: string;
+      nombres?: string;
+      apellidos?: string;
+    },
+  ) => apiRequest<Persona>(`/personas/${id}`, { method: "PATCH", body: data }),
   /** Al dar de baja se puede indicar el motivo (opcional). */
   updateEstado: (id: number, estado: "activo" | "inactivo", motivo?: string) =>
     apiRequest<Persona>(`/personas/${id}/estado`, { method: "PATCH", body: { estado, motivo } }),
