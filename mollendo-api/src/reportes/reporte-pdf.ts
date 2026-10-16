@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import pdfmake from 'pdfmake';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces.js';
-import { textoFecha, textoFechaHora, type Celda, type Columna, type Reporte } from './reporte.types.js';
+import { leyenda, textoFecha, textoFechaHora, textoHoras, type Celda, type Columna, type Reporte } from './reporte.types.js';
 
 // Fuente Roboto que trae pdfmake (acentos y ñ). Solo se permite leer esa
 // carpeta y ninguna URL: el PDF no carga nada más.
@@ -26,14 +26,16 @@ const ANCHO_UTIL = 842 - 2 * 28;
 function texto(valor: Celda, columna: Columna): string {
   if (valor === null || valor === '') return '—';
   if (valor instanceof Date) return columna.tipo === 'fecha' ? textoFecha(valor) : textoFechaHora(valor);
+  if (columna.tipo === 'horas' && typeof valor === 'number') return textoHoras(valor);
   if (typeof valor === 'object') return valor.texto;
   return String(valor);
 }
 
 /**
  * PDF del reporte en A4 horizontal: título, filtros y fecha arriba; la tabla con
- * la cabecera repetida en cada página y filas alternadas; el resumen al final y
- * el número de página en el pie.
+ * la cabecera repetida en cada página y filas alternadas; el resumen, las otras
+ * tablas y la leyenda (qué significa cada columna) al final; y el número de
+ * página en el pie.
  */
 export async function generarPdf(reporte: Reporte, generado: Date): Promise<Buffer> {
   const secciones: Content[] = (reporte.secciones ?? []).flatMap((s): Content[] => [
@@ -41,6 +43,17 @@ export async function generarPdf(reporte: Reporte, generado: Date): Promise<Buff
     ...(s.nota ? [{ text: s.nota, color: GRIS, margin: [0, 0, 0, 6] as [number, number, number, number] }] : []),
     s.filas.length > 0 ? tablaPdf(s.columnas, s.filas) : { text: 'Sin registros.', italics: true, color: GRIS },
   ]);
+  secciones.push(
+    { text: 'Leyenda', fontSize: 12, bold: true, margin: [0, 16, 0, 2] },
+    { text: 'Qué significa cada columna del reporte.', color: GRIS, margin: [0, 0, 0, 6] },
+    tablaPdf(
+      [
+        { titulo: 'Columna', ancho: 22, descripcion: '' },
+        { titulo: 'Qué significa', ancho: 100, descripcion: '' },
+      ],
+      leyenda(reporte),
+    ),
+  );
   const tabla = tablaPdf(reporte.columnas, reporte.filas);
   return generarDocumento(reporte, generado, tabla, secciones);
 }
@@ -60,7 +73,7 @@ function tablaPdf(columnas: Columna[], filas: Celda[][]): Content {
         ...filas.map((fila) =>
           fila.map((valor, i) => ({
             text: texto(valor, columnas[i]),
-            alignment: columnas[i].tipo === 'numero' ? ('right' as const) : ('left' as const),
+            alignment: columnas[i].tipo === 'numero' || columnas[i].tipo === 'horas' ? ('right' as const) : ('left' as const),
           })),
         ),
       ],

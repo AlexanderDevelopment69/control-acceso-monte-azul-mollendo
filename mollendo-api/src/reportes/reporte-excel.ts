@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { textoFechaHora, type Celda, type Columna, type Reporte } from './reporte.types.js';
+import { leyenda, textoFechaHora, textoHoras, type Celda, type Columna, type Reporte } from './reporte.types.js';
 
 const MARCA = 'FF465FFF';
 const GRIS = 'FF667085';
@@ -7,7 +7,8 @@ const GRIS = 'FF667085';
 /**
  * Excel del reporte: título, filtros y fecha de generación arriba; la tabla
  * con cabecera fija, filtros de Excel y fechas como fechas reales (se pueden
- * ordenar y filtrar); y el resumen al final.
+ * ordenar y filtrar); y el resumen al final. La última hoja, "Leyenda", explica
+ * cada columna.
  */
 // Espacio extra en la cabecera para la flecha del filtro de Excel, que tapa el final del título.
 const ESPACIO_FILTRO = 4;
@@ -17,6 +18,7 @@ const ANCHO_MAXIMO = 60;
 function largo(valor: Celda, tipo?: string): number {
   if (valor === null || valor === undefined) return 0;
   if (valor instanceof Date) return tipo === 'fecha' ? 10 : 16;
+  if (tipo === 'horas' && typeof valor === 'number') return textoHoras(valor).length;
   if (typeof valor === 'object') return valor.texto.length;
   return String(valor).length;
 }
@@ -50,6 +52,8 @@ function escribirTabla(hoja: ExcelJS.Worksheet, columnas: Columna[], filas: Celd
         if (valor instanceof Date && columnas[i].tipo === 'fechaHora') {
           return new Date(Date.UTC(valor.getFullYear(), valor.getMonth(), valor.getDate(), valor.getHours(), valor.getMinutes()));
         }
+        // Horas: duración de Excel (en días), redondeada al minuto como en el PDF.
+        if (typeof valor === 'number' && columnas[i].tipo === 'horas') return Math.round(valor / 60_000) / 1440;
         // Enlace relativo: Excel lo abre desde la carpeta donde está el archivo.
         if (valor !== null && typeof valor === 'object' && !(valor instanceof Date)) {
           return { text: valor.texto, hyperlink: valor.enlace };
@@ -67,6 +71,7 @@ function escribirTabla(hoja: ExcelJS.Worksheet, columnas: Columna[], filas: Celd
     columna.width = anchoColumna(columnas, filas, i);
     if (c.tipo === 'fecha') columna.numFmt = 'dd/mm/yyyy';
     if (c.tipo === 'fechaHora') columna.numFmt = 'dd/mm/yyyy hh:mm';
+    if (c.tipo === 'horas') columna.numFmt = '[h]:mm';
     // Todo a la izquierda, también los números, como el resto de las columnas.
     columna.alignment = { horizontal: 'left' };
     cabecera.getCell(i + 1).alignment = { vertical: 'middle', horizontal: 'left' };
@@ -96,6 +101,7 @@ export async function generarExcel(reporte: Reporte, generado: Date): Promise<Bu
     'Sistema de Control de Accesos - Terminal Monte Azul Mollendo',
     ...reporte.filtros,
     `Generado el ${textoFechaHora(generado)}`,
+    'Qué significa cada columna: hoja "Leyenda".',
   ];
   for (const texto of encabezado) {
     const fila = hoja.addRow([texto]);
@@ -132,5 +138,32 @@ export async function generarExcel(reporte: Reporte, generado: Date): Promise<Bu
     }
   }
 
+  escribirLeyenda(libro, reporte);
   return Buffer.from(await libro.xlsx.writeBuffer());
+}
+
+/** Hoja "Leyenda": cada columna del reporte con lo que significa. */
+function escribirLeyenda(libro: ExcelJS.Workbook, reporte: Reporte) {
+  const hoja = libro.addWorksheet('Leyenda', {
+    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 },
+  });
+  const t = hoja.addRow(['Leyenda']);
+  t.font = { bold: true, size: 14, color: { argb: 'FF1D2939' } };
+  hoja.mergeCells(t.number, 1, t.number, 2);
+  const nota = hoja.addRow([`Qué significa cada columna del reporte "${reporte.titulo}".`]);
+  nota.font = { size: 10, color: { argb: GRIS } };
+  hoja.mergeCells(nota.number, 1, nota.number, 2);
+  hoja.addRow([]);
+  escribirTabla(
+    hoja,
+    [
+      { titulo: 'Columna', ancho: 22, descripcion: '' },
+      { titulo: 'Qué significa', ancho: 100, descripcion: '' },
+    ],
+    leyenda(reporte),
+  );
+  // La explicación, en un ancho fijo y en varias líneas si no entra.
+  hoja.getColumn(2).width = 100;
+  hoja.getColumn(2).alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+  hoja.getColumn(1).alignment = { horizontal: 'left', vertical: 'top' };
 }

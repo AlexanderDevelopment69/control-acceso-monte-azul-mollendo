@@ -706,7 +706,7 @@ export const SECCIONES: SeccionManual[] = [
               texto: (
                 <>
                   Horas dentro del terminal <strong>por empresa</strong> (personas, visitas y horas-hombre) y, en otra hoja,{" "}
-                  <strong>por persona</strong>. Solo cuentan las visitas con ingreso y salida por el molinete. Las horas salen con decimales (8.5, para sumar) y en horas:minutos (8:30). Filtros:
+                  <strong>por persona</strong>. Solo cuentan las visitas con ingreso y salida por el molinete. Las horas salen en horas y minutos (por ejemplo, 61:01 = 61 horas y 1 minuto). Filtros:
                   periodo y empresa.
                 </>
               ),
@@ -758,13 +758,13 @@ export const SECCIONES: SeccionManual[] = [
               Icono: IconoTabla,
               boton: "Descargar Excel",
               tono: "exito",
-              texto: "Trae filtros en la cabecera y las fechas se pueden ordenar. Hasta 100 000 filas.",
+              texto: "Trae filtros en la cabecera, las fechas se pueden ordenar y la última hoja, “Leyenda”, explica cada columna. Hasta 100 000 filas.",
             },
             {
               Icono: IconoPdf,
               boton: "Descargar PDF",
               tono: "peligro",
-              texto: "Sale en hoja horizontal, con número de página. Hasta 20 000 filas.",
+              texto: "Sale en hoja horizontal, con número de página y la leyenda de las columnas al final. Hasta 20 000 filas.",
             },
           ]}
         />

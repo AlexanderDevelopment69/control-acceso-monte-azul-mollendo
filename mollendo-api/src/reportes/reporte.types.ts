@@ -3,12 +3,17 @@
  * (reporte-excel.ts, reporte-pdf.ts) la dibujan igual para todos los reportes.
  */
 
-/** Cómo se muestra una columna. `fecha` = columna DATE (medianoche UTC); `fechaHora` = instante. */
-export type TipoColumna = 'texto' | 'numero' | 'fecha' | 'fechaHora';
+/**
+ * Cómo se muestra una columna. `fecha` = columna DATE (medianoche UTC); `fechaHora` = instante;
+ * `horas` = milisegundos, mostrados como "61:01" (horas:minutos) (en Excel, una duración que se puede sumar).
+ */
+export type TipoColumna = 'texto' | 'numero' | 'fecha' | 'fechaHora' | 'horas';
 
 export interface Columna {
   titulo: string;
   tipo?: TipoColumna;
+  /** Qué significa la columna: va en la hoja "Leyenda" del Excel y al final del PDF. */
+  descripcion: string;
   /** Ancho en Excel (caracteres). En el PDF se reparte el ancho de la página en proporción. */
   ancho: number;
 }
@@ -62,6 +67,24 @@ export function textoFecha(fecha: Date): string {
 export function textoDia(dia: string): string {
   const [a, m, d] = dia.split('-');
   return `${d}/${m}/${a}`;
+}
+
+/**
+ * Leyenda del reporte: cada columna (de todas sus tablas, sin repetir) con lo
+ * que significa.
+ */
+export function leyenda(reporte: Reporte): [string, string][] {
+  const vistas = new Map<string, string>();
+  for (const c of [reporte.columnas, ...(reporte.secciones ?? []).map((s) => s.columnas)].flat()) {
+    if (!vistas.has(c.titulo)) vistas.set(c.titulo, c.descripcion);
+  }
+  return [...vistas];
+}
+
+/** Horas:minutos exactas al minuto, sin pasar a días: "61:01". */
+export function textoHoras(ms: number): string {
+  const minutos = Math.round(ms / 60_000);
+  return `${Math.floor(minutos / 60)}:${dos(minutos % 60)}`;
 }
 
 /** Duración legible: "2 h 05 min", "3 días 4 h". */

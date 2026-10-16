@@ -6,7 +6,6 @@ import { rangoDeDias } from '../common/paginacion.js';
 import { TABLA_LABEL } from '../auditoria/auditoria.service.js';
 import { DashboardService } from '../panel/dashboard.service.js';
 import { claveDia, diasDelRango, HORAS_PERMANENCIA_LARGA, MS_PERMANENCIA_LARGA } from '../panel/dashboard.util.js';
-import { horasDecimales, horasYMinutos } from '../panel/horas-hombre.util.js';
 import {
   documentosActuales,
   esDocumentoVigente,
@@ -14,7 +13,7 @@ import {
   ultimasVersiones,
 } from '../eventos-acceso/validacion-acceso.engine.js';
 import type { QueryReporteDto, TipoReporte } from './dto/query-reporte.dto.js';
-import { textoDia, textoDuracion, type Celda, type Reporte } from './reporte.types.js';
+import { textoDia, textoDuracion, textoHoras, type Celda, type Reporte } from './reporte.types.js';
 
 /** Periodo máximo de los reportes con fechas. */
 const MAX_DIAS = 366;
@@ -195,17 +194,17 @@ export class ReportesService {
         'Puede ingresar: según sus documentos a la fecha (la prueba de alcohol se hace al ingresar).',
       ],
       columnas: [
-        { titulo: 'Apellidos', ancho: 20 },
-        { titulo: 'Nombres', ancho: 16 },
-        { titulo: 'Tipo doc.', ancho: 8 },
-        { titulo: 'N° documento', ancho: 12 },
-        { titulo: 'Empresa', ancho: 30 },
-        { titulo: 'RUC', ancho: 14 },
-        { titulo: 'Estado', ancho: 12 },
-        { titulo: 'Puede ingresar', ancho: 10 },
-        { titulo: 'Motivo', ancho: 26 },
-        { titulo: 'N° docs.', tipo: 'numero', ancho: 9 },
-        { titulo: 'Registrado', tipo: 'fechaHora', ancho: 18 },
+        { titulo: 'Apellidos', ancho: 20, descripcion: 'Apellidos de la persona.' },
+        { titulo: 'Nombres', ancho: 16, descripcion: 'Nombres de la persona.' },
+        { titulo: 'Tipo doc.', ancho: 8, descripcion: 'Tipo de documento de identidad: DNI, CE (carné de extranjería) o pasaporte.' },
+        { titulo: 'N° documento', ancho: 12, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
+        { titulo: 'Empresa', ancho: 30, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'RUC', ancho: 14, descripcion: 'RUC de la empresa.' },
+        { titulo: 'Estado', ancho: 12, descripcion: 'Activo: puede ingresar si cumple sus documentos. Dado de baja: ya no puede ingresar; se conserva su historial.' },
+        { titulo: 'Puede ingresar', ancho: 10, descripcion: 'Sí: hoy tiene sus documentos en regla y el molinete lo dejaría pasar (la prueba de alcohol se hace al ingresar). No: ver la columna Motivo.' },
+        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué no puede ingresar: dado de baja, sin documentos cargados o con documentos vencidos. Vacío si puede ingresar.' },
+        { titulo: 'N° docs.', tipo: 'numero', ancho: 9, descripcion: 'Cantidad de documentos cargados de la persona (la última versión de cada uno).' },
+        { titulo: 'Registrado', tipo: 'fechaHora', ancho: 18, descripcion: 'Fecha y hora en que se registró a la persona en el sistema.' },
       ],
       filas,
       resumen: [`Total: ${personas.length}`, `Pueden ingresar: ${pueden}`, `No pueden: ${personas.length - pueden}`],
@@ -340,18 +339,18 @@ export class ReportesService {
           : []),
       ],
       columnas: [
-        { titulo: 'Persona', ancho: 30 },
-        { titulo: 'N° documento', ancho: 13 },
-        { titulo: 'Empresa', ancho: 32 },
-        { titulo: 'Estado de la persona', ancho: 14 },
-        { titulo: 'Documento', ancho: 26 },
-        { titulo: 'Versión', tipo: 'numero', ancho: 8 },
-        { titulo: 'Cargado', tipo: 'fechaHora', ancho: 16 },
-        { titulo: 'Vence', tipo: 'fecha', ancho: 12 },
-        { titulo: 'Días para vencer', tipo: 'numero', ancho: 11 },
-        { titulo: 'Estado', ancho: 12 },
-        ...(conArchivos ? [{ titulo: 'Archivo', ancho: 12 }] : []),
-        ...(conFotos ? [{ titulo: 'Foto', ancho: 10 }] : []),
+        { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
+        { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
+        { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Estado de la persona', ancho: 14, descripcion: 'Activo o dado de baja.' },
+        { titulo: 'Documento', ancho: 26, descripcion: 'Nombre del documento, tal como está configurado en el sistema.' },
+        { titulo: 'Versión', tipo: 'numero', ancho: 8, descripcion: '1 es el primero que se cargó; cada renovación suma uno.' },
+        { titulo: 'Cargado', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora en que se cargó esa versión.' },
+        { titulo: 'Vence', tipo: 'fecha', ancho: 12, descripcion: 'Fecha de vencimiento. Vacío si el documento no vence.' },
+        { titulo: 'Días para vencer', tipo: 'numero', ancho: 11, descripcion: 'Días que faltan para que venza; si es negativo, hace cuántos días venció. Vacío si no vence o si es una versión anterior.' },
+        { titulo: 'Estado', ancho: 12, descripcion: `Vigente; Por vencer: vence en los próximos ${DIAS_AVISO} días; Vencido; Reemplazado: versión anterior, ya renovada.` },
+        ...(conArchivos ? [{ titulo: 'Archivo', ancho: 12, descripcion: 'Abre el archivo del documento. Funciona con el ZIP descomprimido.' }] : []),
+        ...(conFotos ? [{ titulo: 'Foto', ancho: 10, descripcion: 'Abre la foto de la persona. Funciona con el ZIP descomprimido.' }] : []),
       ],
       filas: filas.map((f) => f.fila),
       resumen: [
@@ -394,16 +393,16 @@ export class ReportesService {
         ...(query.resultado ? [`Resultado: ${query.resultado === 'autorizado' ? 'Autorizados' : 'Denegados'}`] : []),
       ],
       columnas: [
-        { titulo: 'Fecha y hora', tipo: 'fechaHora', ancho: 16 },
-        { titulo: 'Movimiento', ancho: 11 },
-        { titulo: 'Resultado', ancho: 11 },
-        { titulo: 'Tipo doc.', ancho: 9 },
-        { titulo: 'N° documento', ancho: 13 },
-        { titulo: 'Persona', ancho: 30 },
-        { titulo: 'Empresa', ancho: 32 },
-        { titulo: 'Motivo', ancho: 26 },
-        { titulo: 'Verificación', ancho: 30 },
-        { titulo: 'Molinete', ancho: 12 },
+        { titulo: 'Fecha y hora', tipo: 'fechaHora', ancho: 16, descripcion: 'Cuándo pasó el documento por el lector del molinete.' },
+        { titulo: 'Movimiento', ancho: 11, descripcion: 'Ingreso o salida.' },
+        { titulo: 'Resultado', ancho: 11, descripcion: 'Autorizado: el molinete se abrió. Denegado: no se abrió (ver la columna Motivo).' },
+        { titulo: 'Tipo doc.', ancho: 9, descripcion: 'Tipo de documento de identidad: DNI, CE (carné de extranjería) o pasaporte.' },
+        { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento que se pasó por el lector.' },
+        { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona. "No registrado" si el documento no está en el sistema.' },
+        { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, o rostro no coincide.' },
+        { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Vacío: verificación normal.' },
+        { titulo: 'Molinete', ancho: 12, descripcion: 'Molinete por el que pasó.' },
       ],
       filas: eventos.map((e) => [
         e.fechaHora,
@@ -479,13 +478,13 @@ export class ReportesService {
         'Cada ingreso autorizado es una visita. Finalizada: registró su salida; presente: todavía no (duración hasta ahora).',
       ],
       columnas: [
-        { titulo: 'Persona', ancho: 30 },
-        { titulo: 'N° documento', ancho: 13 },
-        { titulo: 'Empresa', ancho: 34 },
-        { titulo: 'Ingreso', tipo: 'fechaHora', ancho: 16 },
-        { titulo: 'Salida', tipo: 'fechaHora', ancho: 16 },
-        { titulo: 'Duración', ancho: 14 },
-        { titulo: 'Estado', ancho: 11 },
+        { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
+        { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
+        { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Ingreso', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora del ingreso por el molinete.' },
+        { titulo: 'Salida', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora de la salida por el molinete. Vacío si todavía está dentro.' },
+        { titulo: 'Duración', ancho: 14, descripcion: 'Tiempo dentro del terminal, del ingreso a la salida (si sigue dentro, hasta la descarga del reporte). Ejemplo: 8 h 30 min; desde 48 horas, en días y horas.' },
+        { titulo: 'Estado', ancho: 11, descripcion: 'Finalizada: ya salió. Presente: sigue dentro.' },
       ],
       filas,
       resumen: [`Total de visitas: ${ingresos.length}`, `Finalizadas: ${finalizadas}`, `Presentes: ${ingresos.length - finalizadas}`],
@@ -494,8 +493,7 @@ export class ReportesService {
 
   /**
    * Horas-hombre del periodo (ver panel/horas-hombre.util.ts): por empresa en la
-   * tabla principal, y en hojas aparte el detalle por persona y las visitas sin
-   * salida, que no suman horas.
+   * tabla principal, y en otra hoja el detalle por persona.
    */
   private async horasHombre(query: QueryReporteDto): Promise<Reporte> {
     const periodo = this.periodo(query);
@@ -539,39 +537,36 @@ export class ReportesService {
         'Horas-hombre: tiempo dentro del terminal, de cada ingreso a su salida por el molinete (solo movimientos autorizados). Una visita que cruza el periodo suma solo sus horas dentro de él.',
       ],
       columnas: [
-        { titulo: 'Empresa', ancho: 34 },
-        { titulo: 'RUC', ancho: 13 },
-        { titulo: 'Personas', tipo: 'numero', ancho: 10 },
-        { titulo: 'Visitas', tipo: 'numero', ancho: 9 },
-        { titulo: 'Horas-hombre', tipo: 'numero', ancho: 13 },
-        { titulo: 'Horas (h:mm)', ancho: 12 },
+        { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'RUC', ancho: 13, descripcion: 'RUC de la empresa.' },
+        { titulo: 'Personas', tipo: 'numero', ancho: 10, descripcion: 'Cuántas personas de la empresa entraron y salieron en el periodo.' },
+        { titulo: 'Visitas', tipo: 'numero', ancho: 9, descripcion: 'Cuántas veces entró y salió por el molinete en el periodo. Cada ingreso con su salida es una visita. En la hoja por empresa, sumando a todo su personal.' },
+        { titulo: 'Horas-hombre (h:mm)', tipo: 'horas', ancho: 16, descripcion: 'Tiempo total dentro del terminal en el periodo, sumando todas las visitas (en la hoja por empresa, de todo su personal). En horas:minutos: 61:01 = 61 horas y 1 minuto (no es 61,01). Solo cuentan las visitas con ingreso y salida por el molinete.' },
       ],
-      filas: empresas.map((e) => [e.razonSocial, e.ruc, e.personas, e.visitas, horasDecimales(e.ms), horasYMinutos(e.ms)]),
+      filas: empresas.map((e) => [e.razonSocial, e.ruc, e.personas, e.visitas, e.ms]),
       resumen: [
         `Empresas: ${empresas.length}`,
         `Personas: ${porPersona.size}`,
         `Visitas: ${visitas.length}`,
-        `Horas-hombre: ${horasDecimales(totalMs)} (${horasYMinutos(totalMs)})`,
+        `Horas-hombre: ${textoHoras(totalMs)} (h:mm)`,
       ],
       secciones: [
         {
           titulo: 'Detalle por persona',
           nota: 'Cada persona con sus visitas y horas en el periodo, por empresa.',
           columnas: [
-            { titulo: 'Persona', ancho: 30 },
-            { titulo: 'N° documento', ancho: 13 },
-            { titulo: 'Empresa', ancho: 34 },
-            { titulo: 'Visitas', tipo: 'numero', ancho: 9 },
-            { titulo: 'Horas-hombre', tipo: 'numero', ancho: 13 },
-            { titulo: 'Horas (h:mm)', ancho: 12 },
+            { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
+            { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
+            { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
+            { titulo: 'Visitas', tipo: 'numero', ancho: 9, descripcion: 'Cuántas veces entró y salió por el molinete en el periodo. Cada ingreso con su salida es una visita. En la hoja por empresa, sumando a todo su personal.' },
+            { titulo: 'Horas-hombre (h:mm)', tipo: 'horas', ancho: 16, descripcion: 'Tiempo total dentro del terminal en el periodo, sumando todas las visitas (en la hoja por empresa, de todo su personal). En horas:minutos: 61:01 = 61 horas y 1 minuto (no es 61,01). Solo cuentan las visitas con ingreso y salida por el molinete.' },
           ],
           filas: detalle.map((d) => [
             `${d.p.apellidos}, ${d.p.nombres}`,
             d.p.numeroDocumento,
             d.p.empresa.razonSocial,
             d.visitas,
-            horasDecimales(d.ms),
-            horasYMinutos(d.ms),
+            d.ms,
           ]),
         },
       ],
@@ -593,13 +588,13 @@ export class ReportesService {
       archivo: `reporte-presentes-${claveDia(ahora)}`,
       filtros: ['Personas cuyo último movimiento autorizado es un ingreso, de mayor a menor permanencia.'],
       columnas: [
-        { titulo: 'Persona', ancho: 30 },
-        { titulo: 'N° documento', ancho: 13 },
-        { titulo: 'Empresa', ancho: 34 },
-        { titulo: 'Estado', ancho: 13 },
-        { titulo: 'Ingreso', tipo: 'fechaHora', ancho: 16 },
-        { titulo: 'Tiempo dentro', ancho: 14 },
-        { titulo: `Más de ${HORAS_PERMANENCIA_LARGA} h`, ancho: 10 },
+        { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
+        { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
+        { titulo: 'Empresa', ancho: 34, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Estado', ancho: 13, descripcion: 'Activo o dado de baja.' },
+        { titulo: 'Ingreso', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora de su último ingreso por el molinete.' },
+        { titulo: 'Tiempo dentro', ancho: 14, descripcion: 'Tiempo desde su ingreso hasta la descarga del reporte.' },
+        { titulo: `Más de ${HORAS_PERMANENCIA_LARGA} h`, ancho: 10, descripcion: `Sí, si lleva más de ${HORAS_PERMANENCIA_LARGA} horas dentro.` },
       ],
       filas: dentro.map((d) => {
         const p = porId.get(d.personaId)!;
@@ -631,11 +626,11 @@ export class ReportesService {
       archivo: `reporte-auditoria-${periodo.sufijo}`,
       filtros: [periodo.texto],
       columnas: [
-        { titulo: 'Fecha y hora', tipo: 'fechaHora', ancho: 16 },
-        { titulo: 'Usuario', ancho: 30 },
-        { titulo: 'Acción', ancho: 12 },
-        { titulo: 'Dato', ancho: 20 },
-        { titulo: 'N° de registro', tipo: 'numero', ancho: 13 },
+        { titulo: 'Fecha y hora', tipo: 'fechaHora', ancho: 16, descripcion: 'Cuándo se hizo el cambio.' },
+        { titulo: 'Usuario', ancho: 30, descripcion: 'Correo del usuario que hizo el cambio. "Sistema" si lo hizo el propio sistema.' },
+        { titulo: 'Acción', ancho: 12, descripcion: 'Crear, Modificar o Eliminar.' },
+        { titulo: 'Dato', ancho: 20, descripcion: 'Qué se cambió: personal, empresa, documento, tipo de documento, usuario o verificación manual.' },
+        { titulo: 'N° de registro', tipo: 'numero', ancho: 13, descripcion: 'Número interno del dato cambiado, para ubicarlo en el sistema.' },
       ],
       filas: registros.map((r) => [
         r.fechaHora,

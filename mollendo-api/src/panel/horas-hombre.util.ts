@@ -51,11 +51,5 @@ export function calcularHorasHombre(movimientos: MovimientoAutorizado[], inicio:
   return visitas;
 }
 
-/** Horas con un decimal (para sumar en Excel): 8.5. */
+/** Horas con un decimal, para el gráfico del Dashboard: 8.5. */
 export const horasDecimales = (ms: number) => Math.round(ms / 360_000) / 10;
-
-/** Horas y minutos (para leer): "8:30". */
-export function horasYMinutos(ms: number): string {
-  const minutos = Math.round(ms / 60_000);
-  return `${Math.floor(minutos / 60)}:${String(minutos % 60).padStart(2, '0')}`;
-}

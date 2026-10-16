@@ -1,4 +1,4 @@
-import { calcularHorasHombre, horasDecimales, horasYMinutos, type MovimientoAutorizado } from './horas-hombre.util.js';
+import { calcularHorasHombre, horasDecimales, type MovimientoAutorizado } from './horas-hombre.util.js';
 
 const h = (dia: number, hora: number, min = 0) => new Date(2026, 9, dia, hora, min);
 const ingreso = (personaId: number, fechaHora: Date): MovimientoAutorizado => ({ personaId, tipoMovimiento: 'ingreso', fechaHora });
@@ -67,11 +67,9 @@ describe('calcularHorasHombre', () => {
   });
 });
 
-describe('formato de las horas', () => {
-  it('decimales con uno, y horas:minutos', () => {
+describe('horas del gráfico', () => {
+  it('con un decimal', () => {
     expect(horasDecimales(8.5 * 3_600_000)).toBe(8.5);
     expect(horasDecimales(20 * 60_000)).toBe(0.3);
-    expect(horasYMinutos(8.5 * 3_600_000)).toBe('8:30');
-    expect(horasYMinutos(125 * 3_600_000 + 5 * 60_000)).toBe('125:05');
   });
 });
