@@ -12,9 +12,9 @@ vi.mock("@/lib/descargas", () => ({ guardarArchivo }));
 const base = { perfil: "Contratista", empresa: "DEMO Islay S.A.", tipoDocumento: "DNI", nombres: "Juan", apellidos: "Pérez" };
 const persona = { empresaId: 1, perfil: "contratista" as const, tipoDocumentoIdentidad: "DNI" as const, numeroDocumento: "40000001", nombres: "Juan", apellidos: "Pérez" };
 const FILAS: FilaCargaMasiva[] = [
-  { fila: 2, ...base, numeroDocumento: "40000001", estado: "lista", motivos: [], persona },
-  { fila: 3, ...base, numeroDocumento: "48058719", nombres: "Amiel", apellidos: "Bautista", estado: "existe", motivos: ["Ya está registrado: Bautista, Amiel"] },
-  { fila: 4, ...base, numeroDocumento: "1234", nombres: "Ana", apellidos: "Rojas", estado: "error", motivos: ["El DNI debe tener 8 dígitos"] },
+  { fila: 2, ...base, numeroDocumento: "40000001", estado: "lista", motivos: [], campos: [], persona },
+  { fila: 3, ...base, numeroDocumento: "48058719", nombres: "Amiel", apellidos: "Bautista", estado: "existe", motivos: ["Ya está registrado: Bautista, Amiel"], campos: [] },
+  { fila: 4, ...base, numeroDocumento: "1234", nombres: "Ana", apellidos: "Rojas", estado: "error", motivos: ["El DNI debe tener 8 dígitos"], campos: ["numeroDocumento"] },
 ];
 
 beforeEach(() => {
@@ -63,7 +63,7 @@ describe("carga masiva de personal", () => {
     await revisarArchivo();
     await userEvent.click(screen.getByRole("button", { name: "Descargar filas con error" }));
     expect(api.erroresCarga).toHaveBeenCalledWith([
-      { fila: 4, ...base, numeroDocumento: "1234", nombres: "Ana", apellidos: "Rojas", motivo: "Fila 4: El DNI debe tener 8 dígitos" },
+      { fila: 4, ...base, numeroDocumento: "1234", nombres: "Ana", apellidos: "Rojas", motivo: "Fila 4: El DNI debe tener 8 dígitos", campos: ["numeroDocumento"] },
     ]);
     expect(guardarArchivo).toHaveBeenCalledWith(expect.any(Blob), "carga-personal-errores.xlsx");
   });

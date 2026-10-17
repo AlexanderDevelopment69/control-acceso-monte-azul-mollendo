@@ -39,6 +39,8 @@ export interface FilaRevisada extends FilaCarga {
   /** lista: se puede registrar; existe: el documento ya está registrado (se omite); error: hay que corregirla. */
   estado: 'lista' | 'existe' | 'error';
   motivos: string[];
+  /** Columnas con error (para pintarlas en el Excel de filas con error). */
+  campos: ClaveCarga[];
   /** Solo en las filas "lista": los datos tal como se registrarán. */
   persona?: PersonaCarga;
 }
@@ -166,42 +168,47 @@ export function revisarFilasCarga(
 
   return filas.map((fila) => {
     const motivos: string[] = [];
+    const campos = new Set<ClaveCarga>();
+    const marcar = (campo: ClaveCarga, motivo: string) => {
+      motivos.push(motivo);
+      campos.add(campo);
+    };
 
     const perfil = fila.perfil ? PERFIL_POR_TEXTO.get(normalizar(fila.perfil)) : undefined;
-    if (!fila.perfil) motivos.push('Falta el perfil');
-    else if (!perfil) motivos.push(`Perfil desconocido: "${fila.perfil}"`);
+    if (!fila.perfil) marcar('perfil', 'Falta el perfil');
+    else if (!perfil) marcar('perfil', `Perfil desconocido: "${fila.perfil}"`);
 
     let empresa: EmpresaCarga | undefined;
-    if (!fila.empresa) motivos.push('Falta la empresa');
+    if (!fila.empresa) marcar('empresa', 'Falta la empresa');
     else {
       const texto = fila.empresa.replace(/\s+/g, '');
       empresa = /^\d{11}$/.test(texto) ? empresaPorRuc.get(texto) : empresaPorNombre.get(normalizar(fila.empresa));
-      if (!empresa) motivos.push(`La empresa no está registrada en el sistema (regístrala en Empresas): "${fila.empresa}"`);
-      else if (empresa.estado !== 'activa') motivos.push(`La empresa está inactiva (se activa en Empresas): ${empresa.razonSocial}`);
+      if (!empresa) marcar('empresa', `La empresa no está registrada en el sistema (regístrala en Empresas): "${fila.empresa}"`);
+      else if (empresa.estado !== 'activa') marcar('empresa', `La empresa está inactiva (se activa en Empresas): ${empresa.razonSocial}`);
     }
 
     const tipo = fila.tipoDocumento ? TIPO_POR_TEXTO.get(normalizar(fila.tipoDocumento)) : undefined;
-    if (!fila.tipoDocumento) motivos.push('Falta el tipo de documento');
-    else if (!tipo) motivos.push(`Tipo de documento desconocido: "${fila.tipoDocumento}" (DNI, CE o PASAPORTE)`);
+    if (!fila.tipoDocumento) marcar('tipoDocumento', 'Falta el tipo de documento');
+    else if (!tipo) marcar('tipoDocumento', `Tipo de documento desconocido: "${fila.tipoDocumento}" (DNI, CE o PASAPORTE)`);
 
     // Igual que en el registro uno por uno: sin espacios y en mayúsculas.
     const numero = fila.numeroDocumento.replace(/\s+/g, '').toUpperCase();
-    if (!numero) motivos.push('Falta el número de documento');
-    else if (!/^[A-Z0-9]+$/.test(numero)) motivos.push('El número de documento solo puede tener letras y números');
-    else if (numero.length > 20) motivos.push('El número de documento no puede tener más de 20 caracteres');
-    else if (tipo === 'DNI' && !/^\d{8}$/.test(numero)) motivos.push('El DNI debe tener 8 dígitos');
+    if (!numero) marcar('numeroDocumento', 'Falta el número de documento');
+    else if (!/^[A-Z0-9]+$/.test(numero)) marcar('numeroDocumento', 'El número de documento solo puede tener letras y números');
+    else if (numero.length > 20) marcar('numeroDocumento', 'El número de documento no puede tener más de 20 caracteres');
+    else if (tipo === 'DNI' && !/^\d{8}$/.test(numero)) marcar('numeroDocumento', 'El DNI debe tener 8 dígitos');
 
     const nombres = fila.nombres.trim();
     const apellidos = fila.apellidos.trim();
-    if (!nombres) motivos.push('Faltan los nombres');
-    else if (nombres.length > 150) motivos.push('Los nombres no pueden tener más de 150 caracteres');
-    if (!apellidos) motivos.push('Faltan los apellidos');
-    else if (apellidos.length > 150) motivos.push('Los apellidos no pueden tener más de 150 caracteres');
+    if (!nombres) marcar('nombres', 'Faltan los nombres');
+    else if (nombres.length > 150) marcar('nombres', 'Los nombres no pueden tener más de 150 caracteres');
+    if (!apellidos) marcar('apellidos', 'Faltan los apellidos');
+    else if (apellidos.length > 150) marcar('apellidos', 'Los apellidos no pueden tener más de 150 caracteres');
 
     if (tipo && numero) {
       const clave = clavePersona(tipo, numero);
       const anterior = vistas.get(clave);
-      if (anterior) motivos.push(`El documento se repite: ya está en la fila ${anterior}`);
+      if (anterior) marcar('numeroDocumento', `El documento se repite: ya está en la fila ${anterior}`);
       else vistas.set(clave, fila.fila);
       if (!motivos.length) {
         const registrada = registradas.get(clave);
@@ -211,16 +218,18 @@ export function revisarFilasCarga(
             ...fila,
             estado: 'existe',
             motivos: [`Ya está registrado: ${registrada.apellidos}, ${registrada.nombres}${baja}`],
+            campos: [],
           };
         }
       }
     }
 
-    if (motivos.length || !perfil || !empresa || !tipo) return { ...fila, estado: 'error', motivos };
+    if (motivos.length || !perfil || !empresa || !tipo) return { ...fila, estado: 'error', motivos, campos: [...campos] };
     return {
       ...fila,
       estado: 'lista',
       motivos,
+      campos: [],
       persona: { empresaId: empresa.id, perfil, tipoDocumentoIdentidad: tipo, numeroDocumento: numero, nombres, apellidos },
     };
   });
@@ -232,12 +241,13 @@ const MARCA = 'FF465FFF';
  * Libro de la plantilla: hoja "Personal" (títulos, listas desplegables de
  * perfil, empresa y tipo de documento, número de documento como texto para no
  * perder los ceros de adelante), "Instrucciones" y la hoja oculta "Listas".
- * Con `filas`, las escribe debajo de los títulos con una columna "Motivo" (el
- * Excel de filas con error, para corregirlo y volver a subirlo).
+ * Con `filas`, las escribe debajo de los títulos con una columna "Motivo" y
+ * la celda de cada error pintada de rojo claro (el Excel de filas con error,
+ * para corregirlo y volver a subirlo).
  */
 export async function generarPlantillaCarga(
   empresas: EmpresaCarga[],
-  filas: (FilaCarga & { motivo?: string })[] = [],
+  filas: (FilaCarga & { motivo?: string; campos?: ClaveCarga[] })[] = [],
 ): Promise<Buffer> {
   const libro = new ExcelJS.Workbook();
   libro.creator = 'Control de Accesos TMAM';
@@ -269,6 +279,12 @@ export async function generarPlantillaCarga(
     const fila = hoja.addRow([...COLUMNAS_CARGA.map((c) => f[c.clave]), ...(conMotivo ? [f.motivo ?? ''] : [])]);
     fila.getCell(4).numFmt = '@';
     if (conMotivo) fila.getCell(COLUMNAS_CARGA.length + 1).font = { color: { argb: 'FFD92D20' } };
+    // La celda exacta con el error, en rojo claro (también si está vacía).
+    for (const campo of f.campos ?? []) {
+      const celda = fila.getCell(COLUMNAS_CARGA.findIndex((c) => c.clave === campo) + 1);
+      celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE4E2' } };
+      celda.font = { color: { argb: 'FFB42318' } };
+    }
   }
 
   const ultima = Math.max(MAX_FILAS_CARGA + 1, filas.length + 1);

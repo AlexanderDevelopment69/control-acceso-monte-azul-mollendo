@@ -364,6 +364,8 @@ export interface FilaCargaMasiva {
   /** lista: se registrará; existe: ya está registrado (se omite); error: hay que corregirla. */
   estado: "lista" | "existe" | "error";
   motivos: string[];
+  /** Columnas con error (se pintan en el Excel de filas con error). */
+  campos: ("perfil" | "empresa" | "tipoDocumento" | "numeroDocumento" | "nombres" | "apellidos")[];
   persona?: {
     empresaId: number;
     perfil: Perfil;

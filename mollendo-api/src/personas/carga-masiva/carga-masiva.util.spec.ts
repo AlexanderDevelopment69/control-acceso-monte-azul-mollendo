@@ -65,6 +65,8 @@ describe('revisión de la carga masiva', () => {
     expect(filas[2].motivos).toEqual(['El DNI debe tener 8 dígitos']);
     expect(filas[3].motivos).toEqual(['Perfil desconocido: "Gerente"', 'Faltan los nombres']);
     expect(filas[4].motivos).toEqual(['Tipo de documento desconocido: "Licencia" (DNI, CE o PASAPORTE)']);
+    // La columna de cada error, para pintarla en el Excel.
+    expect(filas.map((f) => f.campos)).toEqual([['empresa'], ['empresa'], ['numeroDocumento'], ['perfil', 'nombres'], ['tipoDocumento']]);
   });
 
   it('ya registrado: se omite; repetido en el archivo: error', () => {
@@ -75,7 +77,8 @@ describe('revisión de la carga masiva', () => {
     );
     expect(filas[0]).toMatchObject({ estado: 'existe', motivos: ['Ya está registrado: Bautista, Amiel'] });
     expect(filas[1].estado).toBe('lista');
-    expect(filas[2]).toMatchObject({ estado: 'error', motivos: ['El documento se repite: ya está en la fila 3'] });
+    expect(filas[2]).toMatchObject({ estado: 'error', motivos: ['El documento se repite: ya está en la fila 3'], campos: ['numeroDocumento'] });
+    expect(filas[0].campos).toEqual([]);
   });
 });
 
@@ -110,13 +113,19 @@ describe('lectura del Excel', () => {
     const vacia = await generarPlantillaCarga(EMPRESAS);
     expect(await leerFilasCarga(vacia)).toEqual([]);
 
-    const errores = await generarPlantillaCarga(EMPRESAS, [{ ...fila(7, { numeroDocumento: '0123' }), motivo: 'El DNI debe tener 8 dígitos' }]);
+    const errores = await generarPlantillaCarga(EMPRESAS, [
+      { ...fila(7, { numeroDocumento: '0123', nombres: '' }), motivo: 'El DNI debe tener 8 dígitos. Faltan los nombres', campos: ['numeroDocumento', 'nombres'] },
+    ]);
     const [leida] = await leerFilasCarga(errores);
-    expect(leida).toMatchObject({ fila: 2, numeroDocumento: '0123', nombres: 'Juan' });
+    expect(leida).toMatchObject({ fila: 2, numeroDocumento: '0123', nombres: '' });
 
     const libro = new ExcelJS.Workbook();
     await libro.xlsx.load(errores as unknown as ArrayBuffer);
-    expect(libro.getWorksheet('Personal')!.getCell('G2').value).toBe('El DNI debe tener 8 dígitos');
-    expect(libro.getWorksheet('Personal')!.getCell('B2').dataValidation).toMatchObject({ type: 'list' });
+    const hoja = libro.getWorksheet('Personal')!;
+    expect(hoja.getCell('G2').value).toBe('El DNI debe tener 8 dígitos. Faltan los nombres');
+    // Pintadas en rojo claro: el número (D) y los nombres vacíos (E); las demás no.
+    const pintada = (ref: string) => (hoja.getCell(ref).fill as ExcelJS.FillPattern | undefined)?.fgColor?.argb === 'FFFEE4E2';
+    expect(['A2', 'B2', 'C2', 'D2', 'E2', 'F2'].map(pintada)).toEqual([false, false, false, true, true, false]);
+    expect(hoja.getCell('B2').dataValidation).toMatchObject({ type: 'list' });
   });
 });
