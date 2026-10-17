@@ -213,9 +213,10 @@ export const SECCIONES: SeccionManual[] = [
             registrada en el sistema”).
           </li>
           <li>
-            <strong>“Registrar N personas”</strong> guarda solo las filas listas. Las filas con error se pueden bajar con{" "}
+            <strong>“Registrar N personas”</strong> guarda las filas listas (las ya registradas se omiten).{" "}
+            <strong>Si alguna fila tiene error, no se registra a nadie</strong>: bájalas con{" "}
             <strong>“Descargar filas con error”</strong> (la misma plantilla con una columna “Motivo” y la celda de cada error
-            pintada de rojo), corregirlas y volver a subir ese archivo.
+            pintada de rojo), corrígelas y vuelve a subir ese archivo.
           </li>
         </ol>
         <Nota>

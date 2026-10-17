@@ -5,6 +5,8 @@ import {
   comandoHabilitar,
   comandosPersona,
   conteoDeRespuesta,
+  esPermisoDePaso,
+  loteDeComandos,
   pinDeDocumento,
   pinsDeRespuestaUsuarios,
   planDeSincronizacion,
@@ -64,3 +66,26 @@ describe('sincronización con lo que tiene el equipo', () => {
     expect(plan.faltantes).toEqual(['22222222']);
   });
 });
+
+describe('entrega de comandos al equipo, por lotes', () => {
+  const cmd = (id: number, comando = `DATA DELETE user Pin=${id}`) => ({ id, comando });
+
+  it('de a 100 como mucho: el G4 Pro descarta lo que pase de 256 por consulta', () => {
+    const pendientes = Array.from({ length: 300 }, (_, i) => cmd(i + 1));
+    expect(loteDeComandos(pendientes).map((c) => c.id)).toEqual(Array.from({ length: 100 }, (_, i) => i + 1));
+  });
+
+  it('con fotos pesadas corta por tamaño, pero siempre entrega al menos uno', () => {
+    const foto = (id: number) => cmd(id, `DATA UPDATE biophoto PIN=${id}	Content=${'x'.repeat(200 * 1024)}`);
+    expect(loteDeComandos([foto(1), foto(2), foto(3), foto(4)]).map((c) => c.id)).toEqual([1, 2]);
+    expect(loteDeComandos([cmd(1, 'x'.repeat(900 * 1024))]).map((c) => c.id)).toEqual([1]);
+  });
+
+  it('los permisos de paso van primero, sin cambiar el orden dentro de cada grupo', () => {
+    const lote = loteDeComandos([cmd(1), cmd(2), cmd(3, comandoHabilitar('48058719')), cmd(4), cmd(5, comandoDeshabilitar('15724705'))]);
+    expect(lote.map((c) => c.id)).toEqual([3, 5, 1, 2, 4]);
+    expect(esPermisoDePaso(comandoHabilitar('48058719'))).toBe(true);
+    expect(esPermisoDePaso('DATA UPDATE user CardNo=	Pin=1')).toBe(false);
+  });
+});
+

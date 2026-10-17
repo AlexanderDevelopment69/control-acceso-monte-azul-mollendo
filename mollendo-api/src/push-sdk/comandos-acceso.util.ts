@@ -101,3 +101,42 @@ export function planDeSincronizacion(pinsEquipo: string[], pinsSistema: Set<stri
     faltantes: [...pinsActivos].filter((pin) => !enEquipo.has(pin)),
   };
 }
+
+/**
+ * Cuántos comandos pendientes se entregan en una consulta del equipo. El G4 Pro
+ * ejecuta como mucho 256 por consulta y descarta el resto sin avisar
+ * (confirmado con el equipo real, 17/oct/2026: de 300 borrados confirmó 256 y
+ * los otros 44 quedaron sin respuesta). Se entregan de a 100 y, con fotos
+ * (cada una pesa decenas de KB), hasta ~512 KB; siempre al menos uno. Los
+ * demás quedan pendientes para la consulta siguiente (unos segundos después).
+ * Los permisos de paso van primero (ver esPermisoDePaso).
+ */
+export const MAX_COMANDOS_POR_ENTREGA = 100;
+export const MAX_BYTES_POR_ENTREGA = 512 * 1024;
+
+/**
+ * Dar o quitar el permiso de paso: va antes que el resto de la cola, para que
+ * quien acaba de pasar su DNI no espere detrás de una carga grande (p. ej. una
+ * carga masiva o una sincronización con fotos).
+ */
+export function esPermisoDePaso(comando: string): boolean {
+  return comando.startsWith('DATA UPDATE userauthorize ') || comando.startsWith('DATA DELETE userauthorize ');
+}
+
+export function loteDeComandos<T extends { comando: string }>(
+  pendientes: T[],
+  maxCantidad = MAX_COMANDOS_POR_ENTREGA,
+  maxBytes = MAX_BYTES_POR_ENTREGA,
+): T[] {
+  const lote: T[] = [];
+  let bytes = 0;
+  // Orden estable: primero los permisos de paso, cada grupo en su orden de llegada.
+  const ordenados = [...pendientes.filter((c) => esPermisoDePaso(c.comando)), ...pendientes.filter((c) => !esPermisoDePaso(c.comando))];
+  for (const c of ordenados) {
+    if (lote.length >= maxCantidad) break;
+    if (lote.length > 0 && bytes + c.comando.length > maxBytes) break;
+    lote.push(c);
+    bytes += c.comando.length;
+  }
+  return lote;
+}

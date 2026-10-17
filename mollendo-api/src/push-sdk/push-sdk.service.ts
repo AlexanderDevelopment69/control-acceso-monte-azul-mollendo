@@ -11,6 +11,9 @@ import {
   comandoHabilitar,
   comandosPersona,
   conteoDeRespuesta,
+  esPermisoDePaso,
+  loteDeComandos,
+  MAX_COMANDOS_POR_ENTREGA,
   pinDeDocumento,
   pinsDeRespuestaUsuarios,
   planDeSincronizacion,
@@ -221,10 +224,21 @@ export class PushSdkService {
     if (!dispositivo) {
       return [];
     }
-    const pendientes = await this.prisma.comandoDispositivo.findMany({
-      where: { dispositivoId: dispositivo.id, estado: 'pendiente' as EstadoComando },
-      orderBy: { id: 'asc' },
-    });
+    // De a un lote (ver loteDeComandos): el equipo descarta lo que pase de 256.
+    // Los permisos de paso pendientes van primero aunque haya una cola grande.
+    const pendiente = { dispositivoId: dispositivo.id, estado: 'pendiente' as EstadoComando };
+    const [permisos, resto] = await Promise.all([
+      this.prisma.comandoDispositivo.findMany({
+        where: { ...pendiente, comando: { startsWith: 'DATA ', contains: ' userauthorize ' } },
+        orderBy: { id: 'asc' },
+        take: MAX_COMANDOS_POR_ENTREGA,
+      }),
+      this.prisma.comandoDispositivo.findMany({ where: pendiente, orderBy: { id: 'asc' }, take: MAX_COMANDOS_POR_ENTREGA }),
+    ]);
+    const vistos = new Set<number>();
+    const pendientes = loteDeComandos(
+      [...permisos.filter((c) => esPermisoDePaso(c.comando)), ...resto].filter((c) => !vistos.has(c.id) && vistos.add(c.id)),
+    );
     if (pendientes.length === 0) {
       return [];
     }

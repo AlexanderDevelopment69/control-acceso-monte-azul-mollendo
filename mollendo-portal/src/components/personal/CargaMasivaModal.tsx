@@ -28,7 +28,8 @@ const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno
 /**
  * Carga masiva de personal desde Excel, en tres pasos: elegir el archivo (con
  * la plantilla para descargar), revisar cada fila sin guardar nada (lista, ya
- * registrada o con error, con su motivo) y registrar las filas listas. Las
+ * registrada o con error, con su motivo) y registrar las filas listas, solo si
+ * ninguna tiene error (las ya registradas se omiten). Las
  * filas con error se pueden descargar en la misma plantilla, con su motivo,
  * para corregirlas y volver a subirlas.
  */
@@ -91,8 +92,10 @@ export function CargaMasivaModal({
       "revisando",
       async () => {
         if (!archivo) return;
-        setRevision(await personasApi.revisarCarga(archivo));
-        setFiltro("todas");
+        const r = await personasApi.revisarCarga(archivo);
+        setRevision(r);
+        // Con errores se muestran primero las filas a corregir.
+        setFiltro(r.resumen.errores > 0 ? "error" : "todas");
       },
       "No se pudo revisar el archivo",
     );
@@ -183,8 +186,14 @@ export function CargaMasivaModal({
         <div className="mt-4">
           <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
             Revisión de <strong className="font-medium text-gray-700 dark:text-gray-300">{archivo?.name}</strong>: todavía no se
-            guardó nada. Se registrarán solo las filas listas.
+            guardó nada.
           </p>
+          {resumen.errores > 0 && (
+            // Con alguna fila con error no se registra a nadie: se corrige el Excel y se vuelve a subir.
+            <ErrorBanner className="mb-4">
+              El archivo tiene errores. Corrígelos y vuelve a subirlo.
+            </ErrorBanner>
+          )}
 
           <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Mostrar">
             {(
@@ -272,12 +281,19 @@ export function CargaMasivaModal({
                 </Button>
               )}
             </div>
-            <Button type="button" size="sm" onClick={() => void registrar()} disabled={!!ocupado || resumen.listas === 0}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void registrar()}
+              disabled={!!ocupado || resumen.errores > 0 || resumen.listas === 0}
+            >
               {ocupado === "registrando"
                 ? "Registrando…"
-                : resumen.listas
-                  ? `Registrar ${plural(resumen.listas, "persona", "personas")}`
-                  : "No hay personas para registrar"}
+                : resumen.errores > 0
+                  ? "Corrige las filas con error"
+                  : resumen.listas
+                    ? `Registrar ${plural(resumen.listas, "persona", "personas")}`
+                    : "No hay personas para registrar"}
             </Button>
           </div>
         </div>

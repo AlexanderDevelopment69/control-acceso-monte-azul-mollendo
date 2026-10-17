@@ -30,7 +30,7 @@ async function revisarArchivo() {
   await userEvent.upload(document.querySelector('input[type="file"]') as HTMLInputElement, excel);
   await userEvent.click(screen.getByRole("button", { name: "Revisar archivo" }));
   expect(api.revisarCarga).toHaveBeenCalledWith(excel);
-  await screen.findByText("Bautista, Amiel");
+  await screen.findByRole("button", { name: /^Todas \(/ });
 }
 
 describe("carga masiva de personal", () => {
@@ -41,15 +41,29 @@ describe("carga masiva de personal", () => {
     expect(guardarArchivo).toHaveBeenCalledWith(expect.any(Blob), "plantilla-carga-personal.xlsx");
   });
 
-  it("revisa, filtra por estado y registra solo las filas listas", async () => {
+  it("con alguna fila con error no deja registrar a nadie", async () => {
+    render(<CargaMasivaModal isOpen onClose={() => {}} onRegistradas={() => {}} />);
+    await revisarArchivo();
+    expect(screen.getByText("El DNI debe tener 8 dígitos")).toBeInTheDocument();
+    expect(screen.getByText("El archivo tiene errores. Corrígelos y vuelve a subirlo.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Corrige las filas con error" })).toBeDisabled();
+
+    // Abre directo en "Con error": solo las filas a corregir.
+    expect(screen.getByRole("button", { name: "Con error (1)" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByText("Bautista, Amiel")).not.toBeInTheDocument();
+    expect(screen.getByText("Rojas, Ana")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Todas (3)" }));
+    expect(screen.getByText("Bautista, Amiel")).toBeInTheDocument();
+    expect(api.registrarCarga).not.toHaveBeenCalled();
+  });
+
+  it("sin errores registra las filas listas y omite las ya registradas", async () => {
+    api.revisarCarga.mockResolvedValue({ filas: FILAS.slice(0, 2), resumen: { total: 2, listas: 1, existentes: 1, errores: 0 } });
     const onRegistradas = vi.fn();
     render(<CargaMasivaModal isOpen onClose={() => {}} onRegistradas={onRegistradas} />);
     await revisarArchivo();
-    expect(screen.getByText("El DNI debe tener 8 dígitos")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "Con error (1)" }));
-    expect(screen.queryByText("Bautista, Amiel")).not.toBeInTheDocument();
-    expect(screen.getByText("Rojas, Ana")).toBeInTheDocument();
+    expect(screen.queryByText(/El archivo tiene errores/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Todas (2)" })).toHaveAttribute("aria-pressed", "true");
 
     await userEvent.click(screen.getByRole("button", { name: "Registrar 1 persona" }));
     expect(api.registrarCarga).toHaveBeenCalledWith([persona]);
