@@ -213,6 +213,17 @@ Un único formulario permite registrar a la persona y sus documentos:
 
 Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la información ya guardada no se duplica al corregir y volver a guardar.
 
+**Carga masiva de personal ("Carga masiva")**
+
+Registra a muchas personas a la vez desde un Excel (hasta 2000 por archivo, 5 MB):
+
+1. **Plantilla:** "Descargar plantilla" entrega un Excel con la hoja "Personal" (columnas Perfil, Empresa, Tipo de documento, Número de documento, Nombres y Apellidos; perfil, empresa —las activas del sistema— y tipo de documento con listas desplegables; el número de documento como texto, para no perder los ceros de adelante) y la hoja "Instrucciones".
+2. **Revisión (no guarda nada):** al subir el archivo, el sistema revisa cada fila con las mismas reglas del registro uno por uno y la marca como **Lista**, **Ya registrada** (el documento ya existe, activo o dado de baja: se omite) o **Con error**, con su motivo: falta un dato, perfil o tipo de documento desconocido, DNI que no tiene 8 dígitos, empresa no registrada o inactiva (se acepta su razón social, sin importar mayúsculas, tildes ni puntos, o su RUC) o documento repetido en el mismo archivo. Las columnas se ubican por su título y las filas vacías se saltan.
+3. **Registro:** "Registrar N personas" guarda solo las filas listas, una por una, igual que el formulario (queda en la auditoría y se envían al terminal facial). Si alguna cambió desde la revisión (por ejemplo, otro usuario la registró), se omite y se informa.
+4. **Filas con error:** "Descargar filas con error" entrega la misma plantilla con esas filas y una columna "Motivo", para corregirlas y volver a subir el archivo.
+
+La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada persona; sin ellos no puede ingresar) y no crea empresas: una empresa que no existe se registra primero, para evitar duplicados por cómo se escribió el nombre.
+
 **Ficha de la persona**
 
 - Datos, empresa y foto ("Cambiar foto"). **Perfil** junto al nombre.
@@ -369,6 +380,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `GET` · `POST /empresas` · `GET` · `PATCH /empresas/:id` | Empresas: listar, registrar, ver y modificar | Administrador |
 | `GET /personas` · `/personas/:id` | Personal con su estado de cumplimiento | Administrador y Vigilancia |
 | `POST /personas` · `PATCH /personas/:id` · `PATCH /personas/:id/estado` | Registrar, modificar, dar de baja o reactivar | Administrador |
+| `GET /personas/carga-masiva/plantilla` · `POST /personas/carga-masiva/revisar` · `POST /personas/carga-masiva` · `POST /personas/carga-masiva/errores` | Carga masiva: plantilla de Excel, revisión del archivo (sin guardar), registro de las filas listas y Excel de filas con error | Administrador |
 | `POST` · `GET /personas/:id/foto` | Subir y ver la foto | Subir: Administrador; ver: ambos |
 | `POST` · `GET /personas/:id/documentos` | Subir un documento (o su renovación) y ver el historial | Subir: Administrador; ver: ambos |
 | `GET /personas/:id/documentos/:documentoId/archivo` | Archivo de una versión del documento (PDF e imagen se abren en el navegador; Word se descarga) | Administrador |

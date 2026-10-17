@@ -12,6 +12,7 @@ import Combobox from "@/components/form/Combobox";
 import { PageHeader } from "@/components/common/PageHeader";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { NuevaPersonaModal } from "@/components/personal/NuevaPersonaModal";
+import { CargaMasivaModal } from "@/components/personal/CargaMasivaModal";
 import { PersonaFicha } from "@/components/personal/PersonaFicha";
 import { motivosCumplimiento } from "@/components/personal/cumplimiento";
 import { OPCIONES_PERFIL, textoPerfil, type Perfil } from "@/lib/perfiles";
@@ -61,6 +62,7 @@ export function PersonalDocumentos() {
     }
   }
   const [modalOpen, setModalOpen] = useState(false);
+  const [cargaMasivaOpen, setCargaMasivaOpen] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [empresaFiltro, setEmpresaFiltro] = useState("todas");
   const [perfilFiltro, setPerfilFiltro] = useState<PerfilFiltro>("todos");
@@ -181,9 +183,14 @@ export function PersonalDocumentos() {
         title="Personal y documentos"
         description="Registra al personal, sube sus documentos y revisa quién puede ingresar hoy."
         actions={
-          <Button size="sm" onClick={() => setModalOpen(true)}>
-            + Nuevo personal
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button size="sm" variant="outline" onClick={() => setCargaMasivaOpen(true)}>
+              Carga masiva
+            </Button>
+            <Button size="sm" onClick={() => setModalOpen(true)}>
+              + Nuevo personal
+            </Button>
+          </div>
         }
       />
 
@@ -441,6 +448,12 @@ export function PersonalDocumentos() {
         </div>
       </div>
 
+
+      <CargaMasivaModal
+        isOpen={cargaMasivaOpen}
+        onClose={() => setCargaMasivaOpen(false)}
+        onRegistradas={() => void recargar()}
+      />
 
       <NuevaPersonaModal
         isOpen={modalOpen}

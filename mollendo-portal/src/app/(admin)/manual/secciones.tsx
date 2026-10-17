@@ -87,7 +87,8 @@ export const SECCIONES: SeccionManual[] = [
             "Filtra quién puede o no puede ingresar hoy.",
             "Elige a una persona para abrir su ficha.",
             <>
-              <strong>“+ Nuevo personal”</strong> registra a alguien con su foto y documentos.
+              <strong>“+ Nuevo personal”</strong> registra a alguien con su foto y documentos;{" "}
+              <strong>“Carga masiva”</strong>, a muchas personas a la vez desde un Excel.
             </>,
             "Ve la foto en grande, súbela o cámbiala: la usa el terminal facial para reconocerlo.",
             <>
@@ -189,6 +190,35 @@ export const SECCIONES: SeccionManual[] = [
         <Nota>
           Los documentos quedan <strong>válidos desde que se cargan</strong>; no hay que esperar ninguna aprobación. Si un
           documento falla al subirse, la persona ya queda registrada: corrige ese documento y vuelve a guardar.
+        </Nota>
+
+        <Subtitulo>Registrar a muchas personas a la vez (carga masiva)</Subtitulo>
+        <p>
+          Con <strong>“Carga masiva”</strong> (junto a “+ Nuevo personal”) se registra al personal desde un Excel:
+        </p>
+        <ol className="list-inside list-decimal space-y-1">
+          <li>
+            <strong>“Descargar plantilla”</strong>: un Excel con las columnas Perfil, Empresa, Tipo de documento, Número de
+            documento, Nombres y Apellidos. Perfil, empresa y tipo de documento se eligen de listas; la hoja
+            “Instrucciones” explica cada columna. La empresa también se puede escribir por su RUC.
+          </li>
+          <li>Llena una fila por persona (hasta 2000 por archivo) y súbela con “Elegir archivo”.</li>
+          <li>
+            <strong>“Revisar archivo”</strong>: el sistema revisa todas las filas <strong>sin guardar nada</strong> y muestra
+            cada una como <strong>Lista</strong>, <strong>Ya registrada</strong> (ese documento ya existe: se omite) o{" "}
+            <strong>Con error</strong>, con el motivo (por ejemplo, “El DNI debe tener 8 dígitos” o “La empresa no está
+            registrada en el sistema”).
+          </li>
+          <li>
+            <strong>“Registrar N personas”</strong> guarda solo las filas listas. Las filas con error se pueden bajar con{" "}
+            <strong>“Descargar filas con error”</strong> (la misma plantilla con una columna “Motivo”), corregirlas y volver a
+            subir ese archivo.
+          </li>
+        </ol>
+        <Nota>
+          La carga masiva registra <strong>los datos de la persona</strong>, sin foto ni documentos: para que pueda ingresar,
+          agrégalos después en su ficha. Si la empresa no está en la lista, regístrala primero con “+ Nuevo personal” → “+
+          Nueva empresa…”: la carga masiva no crea empresas, para evitar duplicados por cómo se escribió el nombre.
         </Nota>
 
         <Subtitulo>Corregir los datos de una persona</Subtitulo>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { guardarArchivo } from "@/lib/descargas";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { empresasApi, reportesApi, type TipoReporte } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
@@ -93,18 +94,6 @@ const REPORTES: OpcionReporte[] = [
   },
 ];
 
-/** Guarda el archivo descargado con el nombre que manda el servidor. */
-function guardar(blob: Blob, nombre: string) {
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement("a");
-  enlace.href = url;
-  enlace.download = nombre;
-  document.body.appendChild(enlace);
-  enlace.click();
-  enlace.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
-
 function Filtro({ etiqueta, children }: { etiqueta: string; children: React.ReactNode }) {
   return (
     <div className="w-full sm:w-56">
@@ -193,7 +182,7 @@ function ReportesContent() {
         ...(tipo === "movimientos" && movimiento && { movimiento }),
         ...(tipo === "movimientos" && resultado && { resultado }),
       });
-      guardar(blob, nombre);
+      guardarArchivo(blob, nombre);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo generar el reporte");
     } finally {

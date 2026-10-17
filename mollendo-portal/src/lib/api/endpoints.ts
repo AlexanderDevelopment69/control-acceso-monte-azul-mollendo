@@ -2,6 +2,9 @@ import { apiRequest } from "./client";
 import { consulta } from "@/lib/paginaServidor";
 import type { Perfil } from "@/lib/perfiles";
 import type {
+  FilaCargaMasiva,
+  ResultadoCargaMasiva,
+  RevisionCargaMasiva,
   AuditoriaEntry,
   Dashboard,
   DocumentoPersona,
@@ -64,6 +67,20 @@ export const personasApi = {
     nombres: string;
     apellidos: string;
   }) => apiRequest<Persona>("/personas", { method: "POST", body: data }),
+  /** Carga masiva: plantilla de Excel para llenar. */
+  plantillaCarga: () => apiRequest<{ blob: Blob; nombre: string }>("/personas/carga-masiva/plantilla", { responseType: "archivo" }),
+  /** Carga masiva: revisa el Excel sin guardar nada. */
+  revisarCarga: (archivo: File) => {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    return apiRequest<RevisionCargaMasiva>("/personas/carga-masiva/revisar", { method: "POST", body: formData, isFormData: true });
+  },
+  /** Carga masiva: registra las filas listas. */
+  registrarCarga: (personas: NonNullable<FilaCargaMasiva["persona"]>[]) =>
+    apiRequest<ResultadoCargaMasiva>("/personas/carga-masiva", { method: "POST", body: { personas } }),
+  /** Carga masiva: Excel con las filas con error y su motivo, para corregirlas. */
+  erroresCarga: (filas: (Omit<FilaCargaMasiva, "estado" | "motivos" | "persona"> & { motivo: string })[]) =>
+    apiRequest<{ blob: Blob; nombre: string }>("/personas/carga-masiva/errores", { method: "POST", body: { filas }, responseType: "archivo" }),
   /** Foto para el reconocimiento facial del terminal (reemplaza la anterior). */
   subirFoto: (id: number, foto: File) => {
     const formData = new FormData();

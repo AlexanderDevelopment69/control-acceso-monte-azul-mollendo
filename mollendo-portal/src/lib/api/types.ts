@@ -347,3 +347,35 @@ export interface EstadoControladorGarita {
     ipLocal?: string | null;
   } | null;
 }
+
+/** Carga masiva de personal: una fila del Excel ya revisada por el servidor. */
+export interface FilaCargaMasiva {
+  fila: number;
+  perfil: string;
+  empresa: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
+  nombres: string;
+  apellidos: string;
+  /** lista: se registrará; existe: ya está registrado (se omite); error: hay que corregirla. */
+  estado: "lista" | "existe" | "error";
+  motivos: string[];
+  persona?: {
+    empresaId: number;
+    perfil: Perfil;
+    tipoDocumentoIdentidad: "DNI" | "CE" | "PASAPORTE";
+    numeroDocumento: string;
+    nombres: string;
+    apellidos: string;
+  };
+}
+
+export interface RevisionCargaMasiva {
+  filas: FilaCargaMasiva[];
+  resumen: { total: number; listas: number; existentes: number; errores: number };
+}
+
+export interface ResultadoCargaMasiva {
+  registradas: number;
+  omitidas: { numeroDocumento: string; motivo: string }[];
+}

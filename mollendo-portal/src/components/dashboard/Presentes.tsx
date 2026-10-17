@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { guardarArchivo } from "@/lib/descargas";
 import type { Socket } from "socket.io-client";
 import { connectEventosSocket } from "@/lib/ws";
 import { panelApi, reportesApi } from "@/lib/api/endpoints";
@@ -42,18 +43,6 @@ function horaIngreso(iso: string): string {
   return hoy
     ? fecha.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })
     : fecha.toLocaleString("es-PE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-}
-
-/** Guarda el archivo descargado con el nombre que manda el servidor. */
-function guardar(blob: Blob, nombre: string) {
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement("a");
-  enlace.href = url;
-  enlace.download = nombre;
-  document.body.appendChild(enlace);
-  enlace.click();
-  enlace.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 /**
@@ -130,7 +119,7 @@ export function Presentes() {
     setDescargando(true);
     try {
       const { blob, nombre } = await reportesApi.descargar("presentes", { formato: "xlsx", ...(perfil !== "todos" && { perfil }) });
-      guardar(blob, nombre);
+      guardarArchivo(blob, nombre);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo descargar el reporte");
     } finally {
