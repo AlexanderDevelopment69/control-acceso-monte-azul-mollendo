@@ -87,11 +87,14 @@ const CAPTURAS = [
     preparar: async (p) => p.locator("::-p-text(Todos los días)").click(),
     alto: 640,
     puntos: [
-      { sel: "::-p-text(Accesos restringidos hoy)", recuadro: ".rounded-xl" },
-      'input[placeholder*="Buscar por nombre o DNI"]',
-      { sel: "button::-p-text(Hoy)", lado: "der" },
-      "::-p-text(Denegado)",
-      "td:last-child ::-p-text(No registrado)",
+      // Los números van en espacios libres, sin tapar contenido.
+      { sel: "::-p-text(Accesos restringidos hoy)", recuadro: ".rounded-xl", lado: "esquina" },
+      // El 2 junto al texto del buscador; el 3 en el espacio libre del buscador, pegado al filtro de fecha.
+      { sel: 'input[placeholder*="Buscar por nombre o DNI"]', lado: "texto-buscador" },
+      { sel: "button::-p-text(Todos los días)", lado: "izq" },
+      { sel: "::-p-text(Denegado)", lado: "der" },
+      // El motivo de la primera fila denegada (siempre dentro de la captura).
+      { sel: "tbody tr td:last-child span", lado: "der" },
     ],
   },
   {
@@ -269,13 +272,14 @@ for (const c of CAPTURAS.filter((c) => !SOLO || SOLO.includes(c.clave))) {
       caja = null;
     }
     if (!caja) throw new Error(`${c.clave}: no se encontró el punto ${i + 1} (${sel})`);
-    const x = lado === "der" ? caja.x + caja.width : lado === "arriba" ? caja.x + caja.width / 2 : caja.x;
-    const y = lado === "arriba" ? caja.y : caja.y + caja.height / 2;
+    const x = lado === "texto-buscador" ? caja.x + caja.width * 0.29 : lado === "dentro-der" || lado === "esquina" ? caja.x + caja.width - 8 : lado === "der" ? caja.x + caja.width : lado === "arriba" ? caja.x + caja.width / 2 : caja.x;
+    const y = lado === "arriba" ? caja.y : lado === "esquina" ? caja.y + caja.height * 0.3 : caja.y + caja.height / 2;
     puntos.push({
       n: i + 1,
       x: +(((x - recorte.x) / recorte.width) * 100).toFixed(2),
       y: +(((y - recorte.y) / recorte.height) * 100).toFixed(2),
-      lado,
+      // "dentro-der" y "esquina": el número queda dentro del recuadro, junto a su borde derecho.
+      lado: lado === "dentro-der" || lado === "esquina" ? "izq" : lado === "texto-buscador" ? "der" : lado,
     });
   }
   const archivo = `${c.clave}.webp`;
