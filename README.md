@@ -16,7 +16,7 @@ Controla el ingreso y la salida del personal por los molinetes de la garita. En 
 
 | Carpeta | Documentos |
 |---|---|
-| `docs/cliente/` | `Documento_Funcional_Control_Accesos_TMAM.md` (qué hace el sistema), `Contingencias_Equipos_Garita.md` (qué pasa si falla un equipo), propuesta técnica y costo y plazo (`.docx`) |
+| `docs/cliente/` | `Documento_Funcional_Control_Accesos_TMAM.md` (qué hace el sistema), `Contingencias_Equipos_Acceso.md` (qué pasa si falla un equipo), propuesta técnica y costo y plazo (`.docx`) |
 | `docs/especificacion/` | Especificación de desarrollo: `_base` (alcance vigente), `_final` (alcance completo, para el futuro) y la primera versión |
 | `docs/despliegue/` | `Registro_Despliegue_MiniPC.md`: guía completa de despliegue, operación, respaldos y equipos |
 | `docs/revisiones/` | Revisiones del código: `Revision_Portal_2026-10-11.md` (sesión, canal en vivo, formularios) |

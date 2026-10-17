@@ -281,7 +281,7 @@ model IngresoPendiente {
 // ---------------------------------------------------------------------
 // PERIODO_VERIFICACION_MANUAL (contingencia por falla del equipo facial)
 // Mientras hay un periodo abierto (terminadoEn null), cada ingreso en regla lo
-// aprueba un vigilante en el Panel. Ver docs/cliente/Contingencias_Equipos_Garita.md, sección 4.
+// aprueba un vigilante en el Panel. Ver docs/cliente/Contingencias_Equipos_Acceso.md, sección 4.
 // ---------------------------------------------------------------------
 model PeriodoVerificacionManual {
   id             Int       @id @default(autoincrement())

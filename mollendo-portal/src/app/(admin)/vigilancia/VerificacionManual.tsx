@@ -10,7 +10,7 @@ import { FotoGuardada } from "@/components/personal/FotoPersonal";
 
 /*
  * Verificación manual (contingencia por falla del equipo facial,
- * docs/cliente/Contingencias_Equipos_Garita.md, sección 4): el DNI y los
+ * docs/cliente/Contingencias_Equipos_Acceso.md, sección 4): el DNI y los
  * documentos se revisan igual; el vigilante compara el rostro con la foto y
  * toma la prueba de alcohol con el alcoholímetro de repuesto.
  */

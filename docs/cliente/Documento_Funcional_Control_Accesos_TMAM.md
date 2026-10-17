@@ -15,7 +15,7 @@ Versión final · 30 de septiembre de 2026
 3. [Usuarios y roles](#3-usuarios-y-roles)
 4. [Funcionalidades](#4-funcionalidades)
 5. [Reglas de negocio](#5-reglas-de-negocio)
-6. [Integración con los equipos de garita](#6-integración-con-los-equipos-de-garita)
+6. [Integración con los equipos del punto de acceso](#6-integración-con-los-equipos-del-punto-de-acceso)
 7. [Modelo de datos](#7-modelo-de-datos)
 8. [Interfaces (API)](#8-interfaces-api)
 9. [Seguridad](#9-seguridad)
@@ -29,7 +29,7 @@ Versión final · 30 de septiembre de 2026
 
 ### 1.1. Propósito del documento
 
-Este documento describe el funcionamiento del Sistema de Control de Accesos desarrollado para el Terminal Monte Azul Mollendo (TMAM): qué hace cada módulo, quién lo usa, las reglas de negocio que aplica, cómo se integra con los equipos de garita y cómo se instala y opera. Está dirigido al cliente, a los usuarios clave (administración y vigilancia) y a quien brinde soporte técnico.
+Este documento describe el funcionamiento del Sistema de Control de Accesos desarrollado para el Terminal Monte Azul Mollendo (TMAM): qué hace cada módulo, quién lo usa, las reglas de negocio que aplica, cómo se integra con los equipos del punto de acceso y cómo se instala y opera. Está dirigido al cliente, a los usuarios clave (administración y vigilancia) y a quien brinde soporte técnico.
 
 ### 1.2. Alcance
 
@@ -42,7 +42,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Validación del ingreso: persona no dada de baja, al menos un documento, ninguno vencido y prueba de alcohol conforme.
 - Panel de vigilancia en tiempo real, Auditoría, Sistema y APIs, y Manual de uso.
 - Dos tipos de cuenta: Administrador y Vigilancia.
-- Instalación en un servidor local (mini PC) en la garita, con operación independiente de internet y respaldos diarios.
+- Instalación en un servidor local (mini PC) en el punto de acceso, con operación independiente de internet y respaldos diarios.
 
 **Desarrollos adicionales al alcance base, solicitados por el cliente:**
 
@@ -62,7 +62,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Activos (vehículos, maquinaria y equipos), operadores y checklists.
 - Sanciones y restricciones con niveles.
 - Credencial digital con QR y colores de fotocheck.
-- Panel de garita avanzado y modo contingencia sin conexión.
+- Panel de vigilancia avanzado y modo contingencia sin conexión.
 - Alertas y notificaciones por correo.
 - Autenticación de doble factor (MFA).
 
@@ -83,13 +83,13 @@ Controlar que solo ingrese al terminal el personal habilitado: registrado, no da
 | Base de datos | PostgreSQL 16. Almacena empresas, personal, documentos, eventos de acceso, usuarios y auditoría. |
 | Almacenamiento de archivos | Documentos (PDF, imágenes, Word) y fotos del personal. |
 | Respaldos | Copia diaria automática de la base de datos y de los archivos. |
-| Equipos de garita | Terminal facial ZKTeco G4 Pro con alcoholímetro DT1700, dos lectores de DNI Syble XB-7705H, dos molinetes ZKTeco TS2000 Plus. |
+| Equipos del punto de acceso | Terminal facial ZKTeco G4 Pro con alcoholímetro DT1700, dos lectores de DNI Syble XB-7705H, dos molinetes ZKTeco TS2000 Plus. |
 
 ### 2.3. Arquitectura
 
 El sistema se ejecuta en un servidor local (**mini PC ubicada junto a los molinetes**), dentro de la red local del terminal, de modo que su operación no depende de la conexión a internet. Cada componente se despliega en un **contenedor Docker**, lo que mantiene los servicios aislados entre sí y del sistema operativo del servidor.
 
-La arquitectura es de tres capas: el **portal web** (presentación), el **backend** (reglas de negocio y API REST) y la **base de datos**. El portal se comunica con el backend por HTTP y recibe los eventos de ingreso y salida en tiempo real por WebSocket. Los equipos de garita envían los eventos al backend por su API, autenticados con una clave de equipo.
+La arquitectura es de tres capas: el **portal web** (presentación), el **backend** (reglas de negocio y API REST) y la **base de datos**. El portal se comunica con el backend por HTTP y recibe los eventos de ingreso y salida en tiempo real por WebSocket. Los equipos del punto de acceso envían los eventos al backend por su API, autenticados con una clave de equipo.
 
 ![Arquitectura de software del sistema](../diagramas/arquitectura.svg)
 
@@ -102,13 +102,13 @@ La arquitectura es de tres capas: el **portal web** (presentación), el **backen
 
 Los contenedores se reinician automáticamente ante una falla y se inician junto con el servidor. Acceso: por la red local (`http://192.168.0.165:3000`) o por Tailscale (`http://100.78.153.33:3000`).
 
-**Modalidad con servidor en la nube.** El sistema también puede instalarse con el portal, el backend y la base de datos en un servidor en la nube. **Es la modalidad en uso desde el 16/10/2026, con un servidor en Azure de TMAM** (portal en **https://accesos.monteazulsur.com.pe**, con certificado de seguridad que se renueva solo). En esa modalidad, la mini PC de la garita trabaja como **controlador**:
+**Modalidad con servidor en la nube.** El sistema también puede instalarse con el portal, el backend y la base de datos en un servidor en la nube. **Es la modalidad en uso desde el 16/10/2026, con un servidor en Azure de TMAM** (portal en **https://accesos.monteazulsur.com.pe**, con certificado de seguridad que se renueva solo). En esa modalidad, la mini PC trabaja como **controlador**:
 
 - lee los DNI y los envía al servidor por internet, con la clave de equipos;
 - recibe del servidor la orden de abrir cada molinete y activa su relé;
 - informa al servidor el estado de los lectores y los relés, visible en "Sistema y APIs" (tarjeta "Controlador").
 
-El terminal facial se conecta directamente al servidor en la nube. La conexión entre la garita y el servidor la inicia la garita, por lo que no se abren puertos en la red del terminal. Si la conexión se interrumpe, se restablece sola. El comportamiento sin conexión se describe en la sección 10.4.
+El terminal facial se conecta directamente al servidor en la nube. La conexión entre el punto de acceso y el servidor la inicia el punto de acceso, por lo que no se abren puertos en la red del terminal. Si la conexión se interrumpe, se restablece sola. El comportamiento sin conexión se describe en la sección 10.4.
 
 ### 2.4. Tecnologías
 
@@ -134,7 +134,7 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 | Rol | Quién es | Qué hace |
 |---|---|---|
 | Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; da de baja o reactiva; consulta el Panel de vigilancia, la Auditoría y el estado del sistema. |
-| Vigilancia | Personal de garita | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos. No puede modificar información. |
+| Vigilancia | Personal de vigilancia | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos. No puede modificar información. |
 
 ### 3.1. Permisos por módulo
 
@@ -228,7 +228,7 @@ La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada pe
 
 - Datos, empresa y foto ("Cambiar foto"). **Perfil** junto al nombre.
 - **Editar datos:** corrige el perfil, la empresa, el tipo y número de documento, los nombres y los apellidos (se valida igual que al registrar: DNI de 8 dígitos y sin repetir). Si cambia el número o el nombre, el terminal facial se actualiza solo (con un número nuevo se borra el anterior y se registra el nuevo con su foto); los ingresos y salidas anteriores conservan el documento con el que se registraron. El cambio queda en la auditoría. Si no tiene foto, se advierte que no podrá identificarse en el terminal.
-- Recuadro de estado: "Puede ingresar hoy (sujeto a la prueba de alcohol en garita)" o "No puede ingresar" con los motivos.
+- Recuadro de estado: "Puede ingresar hoy (sujeto a la prueba de alcohol al ingresar)" o "No puede ingresar" con los motivos.
 - **Documentos actuales:** nombre, vencimiento y estado (Vigente / Vencido), con las acciones:
   - **Ver:** abre el archivo cargado en una pestaña nueva (PDF o imagen); si es Word, lo descarga.
   - **Renovar:** registra una nueva versión del documento (nuevo vencimiento y archivo); la anterior pasa al historial.
@@ -308,13 +308,13 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 ### 4.7. Sistema y APIs (Administrador)
 
 - **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado"), **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas), **equipos** (cada terminal G4 Pro "En línea" o "Desconectado", con su última actividad) y **lectores de DNI** de ingreso y salida ("Cable conectado", "Cable desconectado" o "Sin configurar", con la hora de su última lectura; el estado corresponde al cable de datos, ya que el lector solo envía información al leer un DNI) y **relés de los molinetes** ("Conectado" o "No conectado" para ingreso y salida, con la última apertura). Se actualiza cada 15 segundos.
-- **Aviso de fallas en todo el portal:** cuando algo de esta pantalla está caído (base de datos, respaldos atrasados, controlador de la garita, terminal facial, lectores de DNI o relés), aparece un aviso en la parte superior de cualquier página, **para el administrador y para el vigilante** (que así puede informarlo). Muestra un recuadro por cada tarjeta en falla de Sistema y APIs, en rojo como en esa pantalla, con su estado, qué deja de funcionar (por ejemplo, "Nadie puede ingresar") y la última vez que estuvo en línea. El administrador tiene además un enlace a Sistema y APIs. Se revisa cada 30 segundos y desaparece solo cuando todo vuelve a estar en línea. Se puede contraer; se vuelve a abrir si falla algo distinto.
+- **Aviso de fallas en todo el portal:** cuando algo de esta pantalla está caído (base de datos, respaldos atrasados, controlador, terminal facial, lectores de DNI o relés), aparece un aviso en la parte superior de cualquier página, **para el administrador y para el vigilante** (que así puede informarlo). Muestra un recuadro por cada tarjeta en falla de Sistema y APIs, en rojo como en esa pantalla, con su estado, qué deja de funcionar (por ejemplo, "Nadie puede ingresar") y la última vez que estuvo en línea. El administrador tiene además un enlace a Sistema y APIs. Se revisa cada 30 segundos y desaparece solo cuando todo vuelve a estar en línea. Se puede contraer; se vuelve a abrir si falla algo distinto.
 - **Sincronización con el terminal facial:** un interruptor activa o desactiva la **revisión diaria** y permite elegir su hora (al activarla pide confirmación, porque borra del terminal a quien el sistema no conoce); el resultado de la última (personas agregadas, usuarios borrados, permisos quitados y usuarios del terminal que el sistema no conoce) y los botones **Simular** y **Sincronizar ahora** (con confirmación). La tarjeta del terminal muestra cuántos usuarios y rostros tiene.
 - **Documentación de las APIs de integración** con ejemplos de uso y su estado ("Disponible", "Simulado" o "Por programar"), y enlace a la documentación interactiva (Swagger).
 
 ### 4.8. Manual
 
-Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, reportes, cuenta y contraseña, auditoría y sistema. La introducción incluye un diagrama del recorrido de ingreso y de salida por la garita, y las secciones de uso diario muestran capturas de la pantalla con números que señalan cada parte y, debajo, qué hace cada una; un clic amplía la captura. Se muestra una sección a la vez, elegida en el índice (o con "Anterior" y "Siguiente"); cada sección tiene su propio enlace (por ejemplo `/manual#reportes`).
+Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, reportes, cuenta y contraseña, auditoría y sistema. La introducción incluye un diagrama del recorrido de ingreso y de salida por el punto de acceso, y las secciones de uso diario muestran capturas de la pantalla con números que señalan cada parte y, debajo, qué hace cada una; un clic amplía la captura. Se muestra una sección a la vez, elegida en el índice (o con "Anterior" y "Siguiente"); cada sección tiene su propio enlace (por ejemplo `/manual#reportes`).
 
 ### 4.9. Características generales del portal
 
@@ -350,14 +350,14 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 
 ---
 
-## 6. Integración con los equipos de garita
+## 6. Integración con los equipos del punto de acceso
 
 | Parte | Descripción |
 |---|---|
 | API de ingreso y salida (con clave de equipo) | Aplica las reglas, guarda el evento y lo muestra en tiempo real. |
 | Apertura de los molinetes | Un módulo de relés USB por molinete, conectado al servidor: al autorizar una salida, o un ingreso aprobado por el terminal facial, el sistema activa el relé del molinete durante 1 segundo. |
-| Aviso de ingreso denegado | Un relé adicional (contacto seco) que se activa cada vez que se deniega un ingreso, por cualquier motivo: no registrado, dado de baja, documentos, alcohol o no completó la verificación facial (incluido el rostro no reconocido). Permite conectar una luz, una sirena o un tablero de garita. |
-| Aviso de salida denegada | Otro relé (contacto seco) que se activa cuando se pasa por la salida un DNI no registrado, también si la garita está sin conexión a internet. |
+| Aviso de ingreso denegado | Un relé adicional (contacto seco) que se activa cada vez que se deniega un ingreso, por cualquier motivo: no registrado, dado de baja, documentos, alcohol o no completó la verificación facial (incluido el rostro no reconocido). Permite conectar una luz, una sirena o un tablero de vigilancia. |
+| Aviso de salida denegada | Otro relé (contacto seco) que se activa cuando se pasa por la salida un DNI no registrado, también si el punto de acceso está sin conexión a internet. |
 | Lectores de DNI | Dos lectores de código de barras (ingreso y salida) conectados al servidor por RS232. Leen el código de barras del reverso del DNI; el sistema registra el ingreso o la salida según el lector. |
 | Registro del personal en el terminal facial | Al registrar o editar a una persona, el sistema la carga en el terminal con su número de documento y su nombre; al cargar o cambiar su foto, se la envía y el terminal la usa para reconocerla. Se registran con el número de su documento (DNI, carné de extranjería o pasaporte). Todos los días el sistema revisa el terminal y lo deja igual al registro: borra a quien no está registrado en el sistema y agrega a quien falte. El personal no debe registrarse directamente en el terminal. |
 | Habilitación en el terminal facial | Durante su minuto de espera, solo la persona del DNI tiene permiso de paso en el terminal; se le retira al terminar. |
@@ -458,7 +458,7 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Corte de luz o reinicio | El sistema se inicia automáticamente al encender la mini PC. Los datos guardados se conservan. |
 | Falla del backend | Se reinicia automáticamente. El Panel avisa "El servidor no responde". |
 | Emergencia o corte de luz en los molinetes | Los brazos de los molinetes se liberan automáticamente (función propia del equipo). |
-| Sin conexión a internet (modalidad con servidor en la nube) | La garita detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: la mini PC guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
+| Sin conexión a internet (modalidad con servidor en la nube) | El controlador detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: la mini PC guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
 | Falla del alcoholímetro o del terminal facial | El ingreso no se completa y la persona es denegada; nadie ingresa sin la prueba de alcohol. Las alternativas de contingencia se describen en un documento aparte. |
 
 ---

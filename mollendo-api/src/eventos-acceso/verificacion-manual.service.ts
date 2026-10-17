@@ -11,7 +11,7 @@ export interface EstadoVerificacionManual {
 }
 
 /**
- * Contingencia por falla del equipo facial (docs/cliente/Contingencias_Equipos_Garita.md,
+ * Contingencia por falla del equipo facial (docs/cliente/Contingencias_Equipos_Acceso.md,
  * sección 4): mientras hay un periodo abierto, cada ingreso en regla lo aprueba un
  * vigilante en el Panel (rostro contra la foto y prueba de alcohol con el
  * alcoholímetro de repuesto). La activan y la terminan el vigilante o el
