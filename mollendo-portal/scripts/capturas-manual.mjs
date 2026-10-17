@@ -12,6 +12,8 @@
 //
 // Usa datos de demostración (personas DEMO). Nunca ejecutarlo contra datos reales.
 import fs from "node:fs";
+import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
@@ -33,9 +35,13 @@ const CONTENIDO = { x: 290, y: 77, width: 1150 };
 
 /**
  * Cada captura: ruta, qué hacer antes y los elementos numerados. Un punto es un
- * selector, o { sel, recuadro, lado }: recuadro = selector del contenedor a
- * señalar (closest), lado = "izq" (por defecto), "der" o "arriba", según dónde
- * haya espacio libre para el número.
+ * selector, o { sel, recuadro, lado, texto }: recuadro = selector del contenedor a
+ * señalar (closest); lado = "izq" (por defecto), "der", "arriba" o "abajo", según
+ * dónde haya espacio libre para el número, o dentro del elemento: "esquina"
+ * (arriba a la derecha), "dentro-izq" o "texto-buscador" (después del texto de
+ * ayuda de un buscador); texto = true mide solo el texto del
+ * elemento (una etiqueta ocupa todo el ancho, su texto no). Los números van
+ * dentro de la imagen y en espacios libres, sin tapar contenido.
  */
 const CAPTURAS = [
   {
@@ -43,18 +49,80 @@ const CAPTURAS = [
     ruta: "/",
     preparar: async (p) => p.locator("::-p-text(Apaza Condori, Jorge Luis)").click(),
     completa: true,
+    // Los de la lista van a su derecha, en el espacio entre la lista y la ficha.
     puntos: [
-      'input[placeholder*="Buscar por nombre, DNI o empresa"]',
-      'button[aria-label="Perfil"]',
-      "::-p-text(No pueden)",
-      { sel: "::-p-text(Apaza Condori, Jorge Luis)", recuadro: "button" },
-      "button::-p-text(Carga masiva)",
-      "::-p-text(Nuevo personal)",
+      { sel: 'input[placeholder*="Buscar por nombre, DNI o empresa"]', lado: "der" },
+      { sel: 'button[aria-label="Perfil"]', lado: "der" },
+      { sel: "::-p-text(No pueden)", recuadro: "div:has(> button)", lado: "der" },
+      { sel: "::-p-text(Apaza Condori, Jorge Luis)", recuadro: "button", lado: "der" },
+      { sel: "button::-p-text(Carga masiva)", lado: "abajo" },
+      { sel: "button::-p-text(Nuevo personal)", lado: "abajo" },
       "::-p-text(Cambiar foto)",
-      "::-p-text(Editar datos)",
-      "::-p-text(Puede ingresar hoy)",
-      "button::-p-text(Ver)",
+      { sel: "button::-p-text(Editar datos)", lado: "abajo" },
+      { sel: "::-p-text(Puede ingresar hoy)", texto: true, lado: "der" },
+      "tbody button::-p-text(Ver)",
       "::-p-text(Agregar documento)",
+      { sel: "button::-p-text(Dar de baja)", lado: "abajo" },
+    ],
+  },
+  {
+    // El formulario de Nuevo personal (alto: necesita una ventana más alta).
+    clave: "nuevo-personal",
+    ruta: "/",
+    preparar: async (p) => {
+      await p.setViewport({ width: 1440, height: 1500, deviceScaleFactor: 2 });
+      await p.locator("button::-p-text(Nuevo personal)").click();
+      await p.waitForFunction(() => document.body.innerText.includes("Registrar personal y documentos"));
+    },
+    despues: async (p) => p.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 }),
+    elemento: { sel: "h2::-p-text(Nuevo personal)", recuadro: ".rounded-3xl" },
+    puntos: [
+      { sel: "label::-p-text(Perfil)", texto: true, lado: "der" },
+      { sel: "label::-p-text(Empresa)", texto: true, lado: "der" },
+      { sel: "::-p-text(¿No está?)", texto: true, lado: "der" },
+      { sel: "label::-p-text(Número de documento)", texto: true, lado: "der" },
+      { sel: "p::-p-text(Foto del personal)", texto: true, lado: "der" },
+      { sel: "label::-p-text(Vence el)", texto: true, lado: "der" },
+      { sel: "button::-p-text(Agregar otro documento)", lado: "der" },
+      { sel: "button::-p-text(Registrar personal y documentos)", lado: "dentro-izq" },
+    ],
+  },
+  {
+    clave: "carga-masiva",
+    ruta: "/",
+    preparar: async (p) => {
+      await p.locator("button::-p-text(Carga masiva)").click();
+      await p.waitForFunction(() => document.body.innerText.includes("Revisar archivo"));
+    },
+    elemento: { sel: "button::-p-text(Revisar archivo)", recuadro: ".rounded-3xl" },
+    puntos: [
+      { sel: "::-p-text(Descarga la plantilla de Excel)", recuadro: "ol", lado: "esquina" },
+      { sel: "button::-p-text(Descargar plantilla)", lado: "der" },
+      { sel: "p::-p-text(Excel con el personal)", texto: true, lado: "der" },
+      { sel: "button::-p-text(Revisar archivo)", lado: "arriba" },
+    ],
+  },
+  {
+    // La revisión de un Excel de ejemplo con errores (solo se revisa: no se guarda nada).
+    clave: "carga-revision",
+    ruta: "/",
+    preparar: async (p) => {
+      await p.setViewport({ width: 1440, height: 1200, deviceScaleFactor: 2 });
+      await p.locator("button::-p-text(Carga masiva)").click();
+      await p.waitForFunction(() => document.body.innerText.includes("Revisar archivo"));
+      const entrada = await p.$('input[type="file"]');
+      await entrada.uploadFile(await excelDeEjemplo());
+      await p.locator("button::-p-text(Revisar archivo)").click();
+      await p.waitForFunction(() => document.body.innerText.includes("Descargar filas con error"), { timeout: 15000 });
+    },
+    despues: async (p) => p.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 }),
+    elemento: { sel: "button::-p-text(Elegir otro archivo)", recuadro: ".rounded-3xl" },
+    puntos: [
+      { sel: "::-p-text(El archivo tiene errores)", texto: true, lado: "der" },
+      { sel: "button::-p-text(Con error)", lado: "der" },
+      { sel: "tbody tr td:last-child span.block", texto: true, lado: "der" },
+      { sel: "button::-p-text(Descargar filas con error)", lado: "der" },
+      { sel: "button::-p-text(Corrige las filas con error)", lado: "izq" },
     ],
   },
   {
@@ -62,7 +130,7 @@ const CAPTURAS = [
     ruta: "/empresas",
     alto: 760,
     puntos: [
-      'input[placeholder*="Buscar por razón social"]',
+      { sel: 'input[placeholder*="Buscar por razón social"]', lado: "texto-buscador" },
       'button[aria-label="Estado"]',
       "::-p-text(Personal activo)",
       { sel: "button::-p-text(Desactivar)", lado: "der" },
@@ -74,11 +142,11 @@ const CAPTURAS = [
     ruta: "/dashboard/presentes",
     alto: 1010,
     puntos: [
-      'input[placeholder*="Buscar por nombre, DNI o empresa"]',
+      { sel: 'input[placeholder*="Buscar por nombre, DNI o empresa"]', lado: "texto-buscador" },
       'button[aria-label="Perfil"]',
-      { sel: "button::-p-text(Descargar Excel)", lado: "der" },
+      { sel: "button::-p-text(Descargar Excel)", lado: "arriba" },
       "::-p-text(Tiempo dentro)",
-      "::-p-text(Mostrando)",
+      { sel: "::-p-text(Mostrando)", texto: true, lado: "der" },
     ],
   },
   {
@@ -91,7 +159,7 @@ const CAPTURAS = [
       { sel: "::-p-text(Accesos restringidos hoy)", recuadro: ".rounded-xl", lado: "esquina" },
       // El 2 junto al texto del buscador; el 3 en el espacio libre del buscador, pegado al filtro de fecha.
       { sel: 'input[placeholder*="Buscar por nombre o DNI"]', lado: "texto-buscador" },
-      { sel: "button::-p-text(Todos los días)", lado: "izq" },
+      { sel: 'input[placeholder="Todos los días"]', lado: "izq" },
       { sel: "::-p-text(Denegado)", lado: "der" },
       // El motivo de la primera fila denegada (siempre dentro de la captura).
       { sel: "tbody tr td:last-child span", lado: "der" },
@@ -103,10 +171,10 @@ const CAPTURAS = [
     preparar: async (p) => p.locator("::-p-text(Este mes)").click(),
     alto: 640,
     puntos: [
-      { sel: "button::-p-text(Este mes)", recuadro: "div" },
-      { sel: "::-p-text(Presentes actualmente)", recuadro: ".border" },
-      { sel: "::-p-text(Comparativa de ingresos)", recuadro: ".border" },
-      { sel: "::-p-text(Permanencia mayor)", recuadro: ".border" },
+      { sel: "button::-p-text(Este mes)", recuadro: "div", lado: "der" },
+      { sel: "::-p-text(Presentes actualmente)", recuadro: ".border", lado: "esquina" },
+      { sel: "::-p-text(Comparativa de ingresos)", recuadro: ".border", lado: "esquina" },
+      { sel: "::-p-text(Permanencia mayor)", recuadro: ".border", lado: "arriba" },
     ],
   },
   {
@@ -114,13 +182,13 @@ const CAPTURAS = [
     ruta: "/reportes",
     // Documentos por persona: muestra también las opciones del ZIP (anteriores y fotos).
     preparar: async (p) => p.locator("button ::-p-text(Documentos por persona)").click(),
-    alto: 830,
+    alto: 1000,
     puntos: [
-      { sel: "button ::-p-text(Documentos por persona)", recuadro: "button" },
-      "::-p-text(Empresa)",
-      { sel: "::-p-text(Incluir las fotos del personal)", recuadro: "label", lado: "der" },
-      "::-p-text(Descargar Excel)",
-      { sel: "::-p-text(Descargar con archivos)", lado: "der" },
+      { sel: "button ::-p-text(Documentos por persona)", recuadro: "button", lado: "esquina" },
+      { sel: "label::-p-text(Empresa)", texto: true, lado: "der" },
+      { sel: "::-p-text(Incluir las fotos del personal)", texto: true, lado: "der" },
+      { sel: "button::-p-text(Descargar Excel)", lado: "izq" },
+      { sel: "button::-p-text(Descargar con archivos)", lado: "der" },
     ],
   },
   {
@@ -132,7 +200,7 @@ const CAPTURAS = [
       'button[role="switch"]',
       { sel: "button::-p-text(Simular)", lado: "arriba" },
       { sel: "button::-p-text(Sincronizar ahora)", lado: "arriba" },
-      { sel: "::-p-text(Última:)", recuadro: ".rounded-lg" },
+      { sel: "::-p-text(Última:)", recuadro: ".rounded-lg", lado: "esquina" },
     ],
   },
   {
@@ -141,9 +209,36 @@ const CAPTURAS = [
     conAviso: true,
     alto: 1010,
     puntos: [
-      { sel: "::-p-text(equipos con problemas)", recuadro: "section" },
-      { sel: "::-p-text(Backend (mollendo-api))", recuadro: ".rounded-2xl" },
-      "::-p-text(Equipos de acceso)",
+      { sel: "::-p-text(Revisado)", texto: true, lado: "der" },
+      { sel: "::-p-text(Backend (mollendo-api))", recuadro: ".rounded-2xl", lado: "esquina" },
+      { sel: "::-p-text(Equipos de acceso)", texto: true, lado: "der" },
+    ],
+  },
+  {
+    clave: "auditoria",
+    ruta: "/auditoria",
+    alto: 640,
+    puntos: [
+      { sel: 'input[placeholder*="Buscar por usuario"]', lado: "texto-buscador" },
+      { sel: 'input[placeholder="Desde"]', lado: "izq" },
+      { sel: "th::-p-text(Dato)", texto: true, lado: "der" },
+      { sel: "th::-p-text(Acción)", texto: true, lado: "der" },
+    ],
+  },
+  {
+    clave: "contrasena",
+    ruta: "/vigilancia",
+    preparar: async (p) => {
+      await p.locator("header button::-p-text(Administrador)").click();
+      await p.locator("button::-p-text(Cambiar contraseña)").click();
+      await p.waitForFunction(() => document.body.innerText.includes("Repite la contraseña nueva"));
+    },
+    elemento: { sel: "::-p-text(Repite la contraseña nueva)", recuadro: ".rounded-3xl" },
+    puntos: [
+      { sel: "label::-p-text(Contraseña actual)", texto: true, lado: "der" },
+      { sel: "label::-p-text(Contraseña nueva)", texto: true, lado: "der" },
+      { sel: "label::-p-text(Repite la contraseña nueva)", texto: true, lado: "der" },
+      { sel: 'button[type="submit"]', lado: "arriba" },
     ],
   },
   {
@@ -207,6 +302,31 @@ async function pasarDni(numeroDocumento) {
   });
 }
 
+/**
+ * Excel de ejemplo para la carga masiva: 3 filas listas, 1 ya registrada y 2 con
+ * error. Solo se revisa (la captura no registra a nadie).
+ */
+async function excelDeEjemplo() {
+  const ExcelJS = createRequire(path.join(RAIZ, "..", "mollendo-api", "package.json"))("exceljs");
+  const libro = new ExcelJS.Workbook();
+  const hoja = libro.addWorksheet("Personal");
+  hoja.addRow(["Perfil", "Empresa", "Tipo de documento", "Número de documento", "Nombres", "Apellidos"]);
+  const empresa = "DEMO Transportes del Sur S.A.C.";
+  for (const fila of [
+    ["Contratista", empresa, "DNI", "99095001", "Rosa María", "Quispe Huamán"],
+    ["Conductor", empresa, "DNI", "9909502", "Carlos", "Mamani Flores"],
+    ["Contratista", "Transportes Inventados S.A.C.", "DNI", "99095003", "Luis Alberto", "Ccama Ticona"],
+    ["Conductor", empresa, "DNI", "99010001", "Jorge Luis", "Apaza Condori"],
+    ["Visita", empresa, "DNI", "99095005", "Ana Lucía", "Torres Vela"],
+    ["Contratista", empresa, "DNI", "99095006", "Pedro", "Chávez Rojas"],
+  ]) {
+    hoja.addRow(fila);
+  }
+  const archivo = path.join(os.tmpdir(), "manual-carga-masiva-ejemplo.xlsx");
+  await libro.xlsx.writeFile(archivo);
+  return archivo;
+}
+
 const SOLO = process.env.CAPTURAS?.split(",").map((c) => c.trim()).filter(Boolean);
 
 async function sesion(rol) {
@@ -262,24 +382,55 @@ for (const c of CAPTURAS.filter((c) => !SOLO || SOLO.includes(c.clave))) {
   }
   const puntos = [];
   for (const [i, punto] of c.puntos.entries()) {
-    const { sel, recuadro, lado = "izq" } = typeof punto === "string" ? { sel: punto } : punto;
+    const { sel, recuadro, lado = "izq", texto = false } = typeof punto === "string" ? { sel: punto } : punto;
     // La primera coincidencia visible (puede haber copias ocultas del mismo texto).
     let caja = null;
     for (const el of await pagina.$$(sel)) {
       const objetivo = recuadro ? await el.evaluateHandle((e, r) => e.closest(r) ?? e, recuadro) : el;
       caja = await objetivo.boundingBox();
+      if (caja && texto) {
+        // Solo el texto: la caja de su contenido, en coordenadas de la página (sin desplazar, como boundingBox).
+        caja = await objetivo.evaluate((e) => {
+          const rango = document.createRange();
+          rango.selectNodeContents(e);
+          const b = rango.getBoundingClientRect();
+          return { x: b.x, y: b.y, width: b.width, height: b.height };
+        });
+      }
       if (caja && caja.width > 0 && caja.height > 0) break;
       caja = null;
     }
     if (!caja) throw new Error(`${c.clave}: no se encontró el punto ${i + 1} (${sel})`);
-    const x = lado === "texto-buscador" ? caja.x + caja.width * 0.29 : lado === "dentro-der" || lado === "esquina" ? caja.x + caja.width - 8 : lado === "der" ? caja.x + caja.width : lado === "arriba" ? caja.x + caja.width / 2 : caja.x;
-    const y = lado === "arriba" ? caja.y : lado === "esquina" ? caja.y + caja.height * 0.3 : caja.y + caja.height / 2;
+    // Buscador: después de su texto de ayuda (medido con la letra del campo).
+    const finAyuda =
+      lado === "texto-buscador"
+        ? await pagina.$eval(sel, (e) => {
+            const estilo = getComputedStyle(e);
+            const lienzo = document.createElement("canvas").getContext("2d");
+            lienzo.font = `${estilo.fontWeight} ${estilo.fontSize} ${estilo.fontFamily}`;
+            return parseFloat(estilo.paddingLeft) + lienzo.measureText(e.placeholder).width + 10;
+          })
+        : 0;
+    const x =
+      lado === "texto-buscador"
+        ? caja.x + finAyuda
+        : lado === "esquina"
+          ? caja.x + caja.width - 8
+          : lado === "dentro-izq"
+            ? caja.x + 44
+            : lado === "der"
+              ? caja.x + caja.width
+              : lado === "arriba" || lado === "abajo"
+                ? caja.x + caja.width / 2
+                : caja.x;
+    const y =
+      lado === "arriba" ? caja.y : lado === "abajo" ? caja.y + caja.height : lado === "esquina" ? caja.y + 18 : caja.y + caja.height / 2;
     puntos.push({
       n: i + 1,
       x: +(((x - recorte.x) / recorte.width) * 100).toFixed(2),
       y: +(((y - recorte.y) / recorte.height) * 100).toFixed(2),
-      // "dentro-der" y "esquina": el número queda dentro del recuadro, junto a su borde derecho.
-      lado: lado === "dentro-der" || lado === "esquina" ? "izq" : lado === "texto-buscador" ? "der" : lado,
+      // En la página solo hay cuatro lados: "esquina" y "dentro-izq" quedan a la izquierda del punto; el buscador, a la derecha.
+      lado: lado === "esquina" || lado === "dentro-izq" ? "izq" : lado === "texto-buscador" ? "der" : lado,
     });
   }
   const archivo = `${c.clave}.webp`;
