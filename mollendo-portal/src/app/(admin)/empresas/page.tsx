@@ -166,7 +166,7 @@ function EmpresasContent() {
       />
 
       {aviso && (
-        <ErrorBanner tono="info" className="mb-4">
+        <ErrorBanner tono="exito" className="mb-4">
           {aviso}
         </ErrorBanner>
       )}

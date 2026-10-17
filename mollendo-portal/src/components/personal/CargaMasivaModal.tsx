@@ -143,7 +143,7 @@ export function CargaMasivaModal({
       {resultado ? (
         // Paso 3: resultado del registro.
         <div className="mt-4 space-y-4">
-          <ErrorBanner tono="info">
+          <ErrorBanner tono={resultado.registradas ? "exito" : "aviso"}>
             {resultado.registradas
               ? `Se ${resultado.registradas === 1 ? "registró 1 persona" : `registraron ${resultado.registradas} personas`}.`
               : "No se registró a nadie."}
