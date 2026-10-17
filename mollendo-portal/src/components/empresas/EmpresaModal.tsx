@@ -145,8 +145,8 @@ export function EmpresaModal({
       </h2>
       <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
         {empresa
-          ? "Para corregir errores. El personal de la empresa no cambia."
-          : "Después podrás elegirla al registrar personal, uno por uno o con la carga masiva."}
+          ? "Corrige los datos de la empresa. Su personal no cambia."
+          : "Registra la empresa a la que pertenece el personal."}
       </p>
       {/* Se monta de nuevo cada vez que se abre: siempre con los datos actuales. */}
       {isOpen && <Formulario empresa={empresa} onClose={onClose} onGuardada={onGuardada} onGuardando={setGuardando} />}
