@@ -530,7 +530,7 @@ export const SECCIONES: SeccionManual[] = [
           en la Auditoría. Una visita corregida no suma horas-hombre, porque no pasó por el molinete.
         </p>
         <Nota>
-          Sin internet, el controlador de la garita deja salir con su lista del personal guardada, sin saber quién está
+          Sin internet, el controlador deja salir con su lista del personal guardada, sin saber quién está
           dentro: esas salidas se registran igual cuando vuelve la conexión.
         </Nota>
 
@@ -1078,13 +1078,13 @@ export const SECCIONES: SeccionManual[] = [
               Icono: IconoMolinete,
               boton: "Controlador",
               comillas: false,
-              texto: "El equipo que lee los DNI y abre los molinetes, con su IP en la red de la garita. Si está desconectado, nadie puede ingresar; se puede salir con la lista del personal guardada.",
+              texto: "El equipo que lee los DNI y abre los molinetes, con su IP en la red local. Si está desconectado, nadie puede ingresar; se puede salir con la lista del personal guardada.",
             },
             {
               Icono: IconoRostro,
               boton: "Terminal facial (G4 Pro)",
               comillas: false,
-              texto: "“En línea” o “Desconectado”, con su IP en la red de la garita, su última actividad y cuántas personas y rostros tiene.",
+              texto: "“En línea” o “Desconectado”, con su IP en la red local, su última actividad y cuántas personas y rostros tiene.",
             },
             {
               Icono: IconoDni,
