@@ -400,7 +400,11 @@ export function NuevaPersonaModal({
   const [guardando, setGuardando] = useState(false);
   return (
     <Modal isOpen={isOpen} onClose={onClose} bloqueado={guardando} className="max-w-5xl p-6 sm:p-8">
-      <h2 className="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90">Nuevo personal</h2>
+      <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Nuevo personal</h2>
+      <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+        Registra a la persona con su foto y sus documentos. Podrá ingresar desde que se guarda, si sus documentos están
+        vigentes.
+      </p>
       {/* Se monta de nuevo cada vez que se abre: el formulario siempre empieza vacío. */}
       {isOpen && <Formulario onClose={onClose} onGuardando={setGuardando} {...props} />}
     </Modal>

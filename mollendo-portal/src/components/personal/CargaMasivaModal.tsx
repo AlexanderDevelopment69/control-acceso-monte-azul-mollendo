@@ -136,7 +136,11 @@ export function CargaMasivaModal({
 
   return (
     <Modal isOpen={isOpen} onClose={cerrar} bloqueado={ocupado === "registrando"} className="max-w-5xl p-6 sm:p-8">
-      <h2 className="pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Carga masiva de personal</h2>
+      <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Carga masiva de personal</h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Registra a muchas personas a la vez desde un Excel. La foto y los documentos se agregan después en la ficha de cada
+        una.
+      </p>
 
       {error && <ErrorBanner className="mt-4">{error}</ErrorBanner>}
 
