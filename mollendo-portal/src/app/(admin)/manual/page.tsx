@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useSyncExternalStore } from "react";
+import React, { useEffect, useRef, useSyncExternalStore } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -37,48 +37,64 @@ function ManualContent() {
 
   const siguiente = secciones[indice + 1];
 
+  // En el celular las secciones se deslizan de lado: la elegida queda a la vista.
+  const lista = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = lista.current;
+    const boton = nav?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!nav || !boton || nav.scrollWidth <= nav.clientWidth) return;
+    nav.scrollTo({ left: boton.offsetLeft - (nav.clientWidth - boton.offsetWidth) / 2, behavior: "smooth" });
+  }, [activa?.id]);
+
   return (
     <div>
-      <PageHeader title="Manual" description="Toca los números de cada pantalla para ver qué es y qué hacer." />
+      <PageHeader title="Manual" description="Guía de uso del sistema, dividida por secciones." />
 
-      {/* Secciones: en el celular se deslizan de lado. */}
-      <nav aria-label="Secciones del manual" className="-mx-1 mb-6 overflow-x-auto px-1">
-        <ul className="flex min-w-max gap-1 border-b border-gray-200 dark:border-gray-800">
-          {secciones.map((s) => {
-            const actual = s.id === activa?.id;
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => ir(s.id)}
-                  aria-current={actual ? "page" : undefined}
-                  className={`-mb-px block whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors ${
-                    actual
-                      ? "border-brand-500 font-medium text-brand-500 dark:text-brand-400"
-                      : "border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
-                  }`}
-                >
-                  {s.titulo}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
+        {/* Secciones: en la computadora, la lista de la izquierda; en el celular se deslizan de lado. */}
+        <nav
+          ref={lista}
+          aria-label="Secciones del manual"
+          className="relative -mx-1 overflow-x-auto px-1 lg:sticky lg:top-24 lg:mx-0 lg:overflow-visible lg:rounded-2xl lg:border lg:border-gray-200 lg:bg-white lg:p-4 lg:shadow-theme-xs dark:lg:border-gray-800 dark:lg:bg-white/[0.02]"
+        >
+          <p className="mb-2 hidden px-3 text-xs font-semibold uppercase tracking-wide text-gray-400 lg:block">Secciones</p>
+          <ul className="flex min-w-max gap-1 border-b border-gray-200 lg:min-w-0 lg:flex-col lg:border-0 dark:border-gray-800">
+            {secciones.map((s) => {
+              const actual = s.id === activa?.id;
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => ir(s.id)}
+                    aria-current={actual ? "page" : undefined}
+                    className={`-mb-px block w-full whitespace-nowrap border-b-2 px-3 py-2.5 text-left text-sm transition-colors lg:mb-0 lg:whitespace-normal lg:rounded-lg lg:border-0 ${
+                      actual
+                        ? "border-brand-500 font-medium text-brand-500 lg:bg-brand-50 dark:text-brand-400 dark:lg:bg-brand-500/15"
+                        : "border-transparent text-gray-600 hover:text-gray-800 lg:hover:bg-gray-50 dark:text-gray-400 dark:hover:text-white/90 dark:lg:hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    {s.titulo}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-      {activa && (
-        <section key={activa.id}>
-          <div className="mb-5">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white/90">{activa.titulo}</h2>
-            <p className="mt-1 text-gray-500 dark:text-gray-400">{activa.descripcion}</p>
-          </div>
-          <Recorrido
-            pantallas={activa.pantallas}
-            siguienteSeccion={siguiente?.titulo}
-            onSiguienteSeccion={siguiente ? () => ir(siguiente.id) : undefined}
-          />
-        </section>
-      )}
+        {activa && (
+          <section key={activa.id} className="min-w-0">
+            <div className="mb-5">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white/90">{activa.titulo}</h2>
+              <p className="mt-1 text-gray-500 dark:text-gray-400">{activa.descripcion}</p>
+            </div>
+            <Recorrido
+              pantallas={activa.pantallas}
+              siguienteSeccion={siguiente?.titulo}
+              onSiguienteSeccion={siguiente ? () => ir(siguiente.id) : undefined}
+            />
+          </section>
+        )}
+      </div>
     </div>
   );
 }

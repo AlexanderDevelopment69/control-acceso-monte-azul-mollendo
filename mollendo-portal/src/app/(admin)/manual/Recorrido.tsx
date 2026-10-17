@@ -107,6 +107,15 @@ export function Recorrido({
     marcaActiva.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [pantalla, punto]);
 
+  // La fila de pantallas también se desliza de lado: la actual queda a la vista.
+  const fila = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const f = fila.current;
+    const boton = f?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!f || !boton || f.scrollWidth <= f.clientWidth) return;
+    f.scrollTo({ left: boton.offsetLeft - (f.clientWidth - boton.offsetWidth) / 2, behavior: "smooth" });
+  }, [pantalla]);
+
   const botones = (
     <div className="mt-5 flex items-center justify-between gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
       <button
@@ -124,7 +133,7 @@ export function Recorrido({
   );
 
   const progreso = (
-    <div className="mb-3 flex items-center justify-between text-xs text-gray-400">
+    <div className="mb-3 flex items-center justify-end gap-3 text-xs font-medium text-gray-500 dark:text-gray-400">
       <span>
         {posicion} de {total}
       </span>
@@ -138,7 +147,7 @@ export function Recorrido({
     <div className="space-y-4">
       {/* Pantallas de la sección */}
       {pantallas.length > 1 && (
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
+        <div ref={fila} className="relative -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
           {pantallas.map((x, i) => (
             <button
               key={x.titulo}
@@ -208,10 +217,11 @@ function PantallaConCaptura({
 }) {
   const c = capturas[p.clave];
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
       {/* La pantalla real con sus números */}
-      <div className="overflow-x-auto overflow-y-hidden rounded-2xl border border-gray-200 bg-gray-100 p-4 sm:p-5 lg:sticky lg:top-24 dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="relative mx-auto min-w-[560px] sm:min-w-0" style={{ maxWidth: c.ancho < 700 ? 600 : undefined }}>
+      <div className="overflow-x-auto overflow-y-hidden rounded-2xl border border-gray-200 bg-gray-100 p-4 sm:p-5 xl:sticky xl:top-24 dark:border-gray-800 dark:bg-white/[0.03]">
+        {/* Una captura ancha no se achica de más en el celular: se desliza de lado. Una chica (una ventana) entra entera. */}
+        <div className={`relative mx-auto ${c.ancho < 700 ? "" : "min-w-[560px] sm:min-w-0"}`} style={{ maxWidth: c.ancho < 700 ? 600 : undefined }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- captura estática con números encima */}
           <img src={c.imagen} alt={p.titulo} width={c.ancho} height={c.alto} className="block h-auto w-full rounded-lg shadow-theme-md" />
           {c.puntos.map((m, i) => {
@@ -235,6 +245,7 @@ function PantallaConCaptura({
           })}
         </div>
       </div>
+      {c.ancho >= 700 && <p className="-mt-3 text-center text-xs text-gray-400 sm:hidden">← Desliza la imagen de lado para verla entera →</p>}
 
       {/* Lo que explica el número elegido */}
       <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.02]">
