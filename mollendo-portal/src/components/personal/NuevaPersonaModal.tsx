@@ -304,7 +304,10 @@ function Formulario({
           </fieldset>
 
           <div className="mt-5 border-t border-gray-100 pt-4 dark:border-gray-800">
-            <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Foto del personal</p>
+            <div className="mb-3">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Foto del personal</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Se usa para el reconocimiento facial.</p>
+            </div>
             {fotoSubida ? (
               <p className="text-sm text-success-600 dark:text-success-500">✔ Foto subida.</p>
             ) : (

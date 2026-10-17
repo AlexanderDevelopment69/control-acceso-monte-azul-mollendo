@@ -60,7 +60,7 @@ export function SelectorFoto({ archivo, onChange }: { archivo: File | null; onCh
           {archivo ? "Cambiar foto" : "Elegir foto"}
         </button>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          De frente, con buena luz. JPG, PNG o WEBP, hasta 5 MB. Se usa para el reconocimiento facial.
+          De frente, con buena luz. JPG, PNG o WEBP, hasta 5 MB.
         </p>
         <input
           ref={inputRef}
