@@ -244,7 +244,7 @@ function Formulario({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Seccion numero={1} titulo="Datos del personal">
+        <Seccion numero={1} titulo="Datos del personal" descripcion="Datos de identificación de la persona.">
           <fieldset disabled={bloqueado} className="space-y-4 disabled:opacity-60">
             <div>
               <Label>Perfil</Label>
@@ -265,11 +265,11 @@ function Formulario({
                 options={opcionesEmpresa(empresas, personas, perfil)}
               />
               <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                ¿No está la empresa? Regístrala en{" "}
+                ¿No está? Regístrala en{" "}
                 <Link href="/empresas" target="_blank" className="font-medium text-brand-500 hover:underline">
                   Empresas
-                </Link>{" "}
-                (se abre en otra pestaña) y vuelve aquí: la lista se actualiza sola.
+                </Link>
+                .
               </p>
             </div>
 
@@ -402,8 +402,7 @@ export function NuevaPersonaModal({
     <Modal isOpen={isOpen} onClose={onClose} bloqueado={guardando} className="max-w-5xl p-6 sm:p-8">
       <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Nuevo personal</h2>
       <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-        Registra a la persona con su foto y sus documentos. Podrá ingresar desde que se guarda, si sus documentos están
-        vigentes.
+        Registra a la persona con su foto y sus documentos.
       </p>
       {/* Se monta de nuevo cada vez que se abre: el formulario siempre empieza vacío. */}
       {isOpen && <Formulario onClose={onClose} onGuardando={setGuardando} {...props} />}

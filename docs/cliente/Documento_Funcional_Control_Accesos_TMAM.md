@@ -206,7 +206,7 @@ Pantalla principal del administrador. Muestra a la izquierda la lista del person
 Un único formulario permite registrar a la persona y sus documentos:
 
 1. **Perfil** (obligatorio): personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica a la persona (lista, Dashboard y reportes); el molinete valida a todos por igual.
-2. **Empresa:** se elige de la lista de empresas activas. Si no está, el enlace "¿No está la empresa? Regístrala en Empresas" abre esa vista en otra pestaña (sin perder lo escrito) y, al volver, la lista se actualiza sola. Con el perfil elegido, la lista muestra primero las empresas que ya tienen personal de ese perfil (con cuántos) y después las demás.
+2. **Empresa:** se elige de la lista de empresas activas. Si no está, el enlace "¿No está? Regístrala en Empresas." abre esa vista en otra pestaña (sin perder lo escrito) y, al volver, la lista se actualiza sola. Con el perfil elegido, la lista muestra primero las empresas que ya tienen personal de ese perfil (con cuántos) y después las demás.
 3. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
 4. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona; no es necesario registrar el rostro en el equipo.
 5. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento; no se acepta una fecha ya pasada, porque el documento quedaría vencido al instante) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
