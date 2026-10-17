@@ -53,6 +53,8 @@ export const empresasApi = {
     id: number,
     data: Partial<{ ruc: string; razonSocial: string; correoContacto: string; telefonoContacto: string; estado: "activa" | "inactiva" }>,
   ) => apiRequest<Empresa>(`/empresas/${id}`, { method: "PATCH", body: data }),
+  /** Solo empresas sin personal ni usuarios (creadas por error); las demás se desactivan. */
+  remove: (id: number) => apiRequest<{ id: number; razonSocial: string }>(`/empresas/${id}`, { method: "DELETE" }),
 };
 
 // ---- personas ----

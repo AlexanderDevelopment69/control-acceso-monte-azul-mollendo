@@ -28,7 +28,10 @@ export class EmpresasService {
     return empresa;
   }
 
-  /** Con cuántas personas activas tiene cada una (vista Empresas y aviso al desactivar). */
+  /**
+   * Con cuántas personas activas tiene cada una (vista Empresas y aviso al
+   * desactivar) y si se puede eliminar (sin personas, ni dadas de baja, ni usuarios).
+   */
   async findAll(query: QueryEmpresasDto) {
     const empresas = await this.prisma.empresa.findMany({
       where: {
@@ -40,10 +43,16 @@ export class EmpresasService {
           ],
         }),
       },
-      include: { _count: { select: { personas: { where: { estado: 'activo' } } } } },
+      include: { _count: { select: { personas: true, usuarios: true } } },
       orderBy: { razonSocial: 'asc' },
     });
-    return empresas.map(({ _count, ...empresa }) => ({ ...empresa, personalActivo: _count.personas }));
+    const activos = await this.prisma.persona.groupBy({ by: ['empresaId'], where: { estado: 'activo' }, _count: true });
+    const activosPorEmpresa = new Map(activos.map((a) => [a.empresaId, a._count]));
+    return empresas.map(({ _count, ...empresa }) => ({
+      ...empresa,
+      personalActivo: activosPorEmpresa.get(empresa.id) ?? 0,
+      eliminable: _count.personas === 0 && _count.usuarios === 0,
+    }));
   }
 
   async findOne(id: number) {
@@ -67,5 +76,34 @@ export class EmpresasService {
       accion: 'modificar',
     });
     return empresa;
+  }
+
+  /**
+   * Elimina una empresa sin historial: solo si no tiene ninguna persona (ni
+   * dada de baja) ni usuarios, p. ej. una creada por error. Las demás se
+   * desactivan: su personal, sus documentos y sus ingresos dependen de ella.
+   */
+  async remove(id: number, usuarioId: number) {
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id },
+      include: { _count: { select: { personas: true, usuarios: true } } },
+    });
+    if (!empresa) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+    if (empresa._count.personas > 0) {
+      throw new ConflictException('Tiene personal registrado (activo o dado de baja): se puede desactivar, no eliminar');
+    }
+    if (empresa._count.usuarios > 0) {
+      throw new ConflictException('Tiene usuarios del portal: se puede desactivar, no eliminar');
+    }
+    await this.prisma.empresa.delete({ where: { id } });
+    await this.auditoriaService.registrar({
+      usuarioId,
+      tablaAfectada: 'empresa',
+      registroId: id,
+      accion: 'eliminar',
+    });
+    return { id, razonSocial: empresa.razonSocial };
   }
 }

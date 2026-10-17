@@ -3,7 +3,7 @@ import { validate } from 'class-validator';
 import { CreateEmpresaDto } from './create-empresa.dto.js';
 import { UpdateEmpresaDto } from './update-empresa.dto.js';
 
-const errores = async (clase: typeof CreateEmpresaDto | typeof UpdateEmpresaDto, valor: object) =>
+const errores = async (clase: new () => object, valor: object) =>
   (await validate(plainToInstance(clase, valor))).flatMap((e) => Object.values(e.constraints ?? {}));
 
 const datos = { ruc: '20123456789', razonSocial: 'Estibajes del Sur E.I.R.L.', correoContacto: 'contacto@estibajes.pe' };

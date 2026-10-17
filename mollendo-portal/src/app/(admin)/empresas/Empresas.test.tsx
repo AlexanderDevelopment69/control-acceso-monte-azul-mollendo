@@ -5,7 +5,7 @@ import EmpresasPage from "./page";
 import { cambiosEmpresa, problemaEmpresa } from "@/components/empresas/EmpresaModal";
 import type { Empresa } from "@/lib/api/types";
 
-const api = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), update: vi.fn() }));
+const api = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() }));
 vi.mock("@/lib/api/endpoints", () => ({ empresasApi: api }));
 vi.mock("@/lib/auth/RequireRole", () => ({ RequireRole: ({ children }: { children: React.ReactNode }) => children }));
 // jsdom no trae ResizeObserver (lo usa AltoEstable con una página completa).
@@ -34,13 +34,14 @@ const empresa = (id: number, datos: Partial<Empresa> = {}): Empresa => ({
 
 const EMPRESAS = [
   empresa(1, { razonSocial: "Estibajes del Sur E.I.R.L.", personalActivo: 12 }),
-  empresa(2, { razonSocial: "Transportes Cerrados S.A.C.", estado: "inactiva" }),
+  empresa(2, { razonSocial: "Transportes Cerrados S.A.C.", estado: "inactiva", eliminable: true }),
   empresa(3, { razonSocial: "Agencia José Gálvez S.A.", telefonoContacto: "054-123456", personalActivo: 1 }),
 ];
 
 beforeEach(() => {
   vi.clearAllMocks();
   api.list.mockResolvedValue(EMPRESAS);
+  api.remove.mockResolvedValue({ id: 2, razonSocial: "Transportes Cerrados S.A.C." });
   api.update.mockImplementation(async (id: number, datos: Partial<Empresa>) => ({ ...EMPRESAS.find((e) => e.id === id)!, ...datos }));
 });
 
@@ -84,5 +85,18 @@ describe("vista Empresas", () => {
     expect(api.update).toHaveBeenCalledWith(1, { estado: "inactiva" });
     expect(await screen.findByText("Estibajes del Sur E.I.R.L. quedó inactiva.")).toBeInTheDocument();
     expect(api.list).toHaveBeenCalledTimes(2);
+  });
+
+  it("solo una empresa sin personal ni usuarios se puede eliminar, con confirmación", async () => {
+    render(<EmpresasPage />);
+    await screen.findByText("Estibajes del Sur E.I.R.L.");
+    expect(screen.getAllByRole("button", { name: "Eliminar" })).toHaveLength(1);
+
+    const fila = screen.getByText("Transportes Cerrados S.A.C.").closest("tr")!;
+    await userEvent.click(within(fila).getByRole("button", { name: "Eliminar" }));
+    expect(screen.getByText(/se borra/)).toHaveTextContent("No tiene personal registrado");
+    await userEvent.click(screen.getAllByRole("button", { name: "Eliminar" }).at(-1)!);
+    expect(api.remove).toHaveBeenCalledWith(2);
+    expect(await screen.findByText("Se eliminó Transportes Cerrados S.A.C.")).toBeInTheDocument();
   });
 });

@@ -325,7 +325,8 @@ export const SECCIONES: SeccionManual[] = [
             "Filtra por Todas, Activas o Inactivas.",
             "Cuántas personas activas tiene cada empresa.",
             <>
-              <strong>“Editar”</strong> corrige sus datos; <strong>“Desactivar”</strong> o “Activar” cambia su estado.
+              <strong>“Editar”</strong> corrige sus datos; <strong>“Desactivar”</strong> o “Activar” cambia su estado
+              (“Eliminar” aparece solo si no tiene personal).
             </>,
             <>
               <strong>“+ Nueva empresa”</strong> registra una.
@@ -349,6 +350,13 @@ export const SECCIONES: SeccionManual[] = [
           Su personal <strong>no se da de baja</strong>: si tiene sus documentos al día, sigue pudiendo ingresar. Por eso, al
           desactivar una empresa con personal activo, el sistema avisa cuántas personas son; si ya no deben entrar, dalas de
           baja en Personal y documentos. <strong>“Activar”</strong> la vuelve a mostrar.
+        </p>
+        <Subtitulo>Eliminar una empresa</Subtitulo>
+        <p>
+          <strong>“Eliminar”</strong> aparece solo en las empresas <strong>sin ninguna persona</strong> (ni dada de baja) y
+          sin usuarios del portal: por ejemplo, una registrada por error o con el nombre mal escrito. Pide confirmación, se
+          borra definitivamente y queda en la Auditoría. Las demás no se pueden eliminar, porque su personal, sus documentos
+          y sus ingresos dependen de ella: se <strong>desactivan</strong> (al pasar el mouse sobre “Desactivar” se explica).
         </p>
       </div>
     ),

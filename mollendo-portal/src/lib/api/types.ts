@@ -15,6 +15,8 @@ export interface Empresa {
   actualizadoEn: string;
   /** Personas activas de la empresa (viene en la lista de empresas). */
   personalActivo?: number;
+  /** Sin ninguna persona (ni dada de baja) ni usuarios: se puede eliminar (viene en la lista). */
+  eliminable?: boolean;
 }
 
 export interface TipoDocumento {

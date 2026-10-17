@@ -243,6 +243,7 @@ La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada pe
 - **+ Nueva empresa:** RUC de 11 dígitos (sin repetir), razón social, correo de contacto y teléfono opcional. Es el único lugar donde se registran empresas.
 - **Editar:** corrige RUC (sin repetir), razón social, correo o teléfono; el personal no cambia. Si no se cambió nada, avisa "No cambiaste ningún dato."
 - **Desactivar / Activar** (con confirmación): una empresa inactiva no aparece al registrar o editar personal ni en la plantilla de la carga masiva. **Su personal no se da de baja** y sigue pudiendo ingresar si tiene sus documentos al día; al desactivar una empresa con personal activo se avisa cuántas personas son, para darlas de baja si ya no deben entrar.
+- **Eliminar** (con confirmación): solo para empresas **sin ninguna persona** (ni dada de baja) y sin usuarios del portal, por ejemplo una registrada por error. Se borra definitivamente. Las demás no se pueden eliminar (su personal, documentos e ingresos dependen de ella): se desactivan; al pasar el mouse sobre "Desactivar" se explica.
 - Todo cambio queda en la auditoría.
 
 ### 4.3. Panel de vigilancia (Administrador y Vigilancia)
@@ -385,7 +386,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 |---|---|---|
 | `POST /auth/login` · `/auth/refresh-token` | Iniciar sesión y renovarla | Público |
 | `PATCH /cuenta/password` | Cambiar la propia contraseña | Con sesión |
-| `GET` · `POST /empresas` · `GET` · `PATCH /empresas/:id` | Empresas: listar, registrar, ver y modificar | Administrador |
+| `GET` · `POST /empresas` · `GET` · `PATCH` · `DELETE /empresas/:id` | Empresas: listar (con personal activo y si se puede eliminar), registrar, ver, modificar y eliminar (solo sin personal ni usuarios) | Administrador |
 | `GET /personas` · `/personas/:id` | Personal con su estado de cumplimiento | Administrador y Vigilancia |
 | `POST /personas` · `PATCH /personas/:id` · `PATCH /personas/:id/estado` | Registrar, modificar, dar de baja o reactivar | Administrador |
 | `GET /personas/carga-masiva/plantilla` · `POST /personas/carga-masiva/revisar` · `POST /personas/carga-masiva` · `POST /personas/carga-masiva/errores` | Carga masiva: plantilla de Excel, revisión del archivo (sin guardar), registro de las filas listas y Excel de filas con error | Administrador |

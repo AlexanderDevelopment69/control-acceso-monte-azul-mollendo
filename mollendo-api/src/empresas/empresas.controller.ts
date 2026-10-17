@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { EmpresasService } from './empresas.service.js';
 import { CreateEmpresaDto } from './dto/create-empresa.dto.js';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto.js';
@@ -30,5 +30,11 @@ export class EmpresasController {
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateEmpresaDto, @CurrentUser() user: AuthenticatedUser) {
     return this.empresasService.update(id, dto, user.id);
+  }
+
+  // Solo empresas sin personal ni usuarios (creadas por error); las demás se desactivan.
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
+    return this.empresasService.remove(id, user.id);
   }
 }

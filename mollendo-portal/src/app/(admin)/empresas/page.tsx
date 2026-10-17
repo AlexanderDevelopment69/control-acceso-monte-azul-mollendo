@@ -25,6 +25,9 @@ type FiltroEstado = "todas" | Empresa["estado"];
 
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 
+/** Cierra la frase con punto, sin duplicarlo ("…S.A.C." no queda "…S.A.C.."). */
+const conPunto = (texto: string) => (texto.endsWith(".") ? texto : `${texto}.`);
+
 /** Confirmación de activar o desactivar; al desactivar, avisa cuántas personas activas tiene. */
 function ConfirmarEstado({
   empresa,
@@ -107,6 +110,62 @@ function ConfirmarEstado({
   );
 }
 
+/** Confirmación de eliminar una empresa sin historial (sin personal ni usuarios). */
+function ConfirmarEliminar({
+  empresa,
+  onClose,
+  onEliminada,
+}: {
+  empresa: Empresa | null;
+  onClose: () => void;
+  onEliminada: (razonSocial: string) => void;
+}) {
+  const [eliminando, setEliminando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function confirmar() {
+    if (!empresa) return;
+    setEliminando(true);
+    setError(null);
+    try {
+      await empresasApi.remove(empresa.id);
+      onEliminada(empresa.razonSocial);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo eliminar la empresa");
+    } finally {
+      setEliminando(false);
+    }
+  }
+
+  function cerrar() {
+    setError(null);
+    onClose();
+  }
+
+  return (
+    <Modal isOpen={!!empresa} onClose={cerrar} bloqueado={eliminando} className="max-w-lg p-6 sm:p-8">
+      {empresa && (
+        <>
+          <h2 className="mb-2 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Eliminar empresa</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            ¿Eliminar <strong>{empresa.razonSocial}</strong> (RUC {empresa.ruc})? No tiene personal registrado: se borra
+            definitivamente y queda en la Auditoría.
+          </p>
+          {error && <ErrorBanner className="mt-4">{error}</ErrorBanner>}
+          <div className="mt-6 flex justify-end gap-3">
+            <Button type="button" size="sm" variant="outline" onClick={cerrar} disabled={eliminando}>
+              Cancelar
+            </Button>
+            <Button type="button" size="sm" variant="danger" onClick={() => void confirmar()} disabled={eliminando}>
+              {eliminando ? "Eliminando…" : "Eliminar"}
+            </Button>
+          </div>
+        </>
+      )}
+    </Modal>
+  );
+}
+
 function EmpresasContent() {
   const [empresas, setEmpresas] = useState<Empresa[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -117,11 +176,13 @@ function EmpresasContent() {
   const [nueva, setNueva] = useState(false);
   const [editando, setEditando] = useState<Empresa | null>(null);
   const [cambiandoEstado, setCambiandoEstado] = useState<Empresa | null>(null);
+  const [eliminando, setEliminando] = useState<Empresa | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     try {
-      setEmpresas(await empresasApi.list());
+      // Orden alfabético sin importar mayúsculas ni tildes.
+      setEmpresas((await empresasApi.list()).sort((a, b) => a.razonSocial.localeCompare(b.razonSocial, "es", { sensitivity: "base" })));
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cargar la lista de empresas");
@@ -146,10 +207,11 @@ function EmpresasContent() {
   const enPagina = visibles.slice(desde, desde + POR_PAGINA);
 
   function guardada(texto: string) {
-    setAviso(texto);
+    setAviso(conPunto(texto));
     setNueva(false);
     setEditando(null);
     setCambiandoEstado(null);
+    setEliminando(null);
     void cargar();
   }
 
@@ -255,14 +317,22 @@ function EmpresasContent() {
                           <Button type="button" size="sm" variant="outline" onClick={() => setEditando(e)}>
                             Editar
                           </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={e.estado === "activa" ? "outline-danger" : "outline"}
-                            onClick={() => setCambiandoEstado(e)}
-                          >
-                            {e.estado === "activa" ? "Desactivar" : "Activar"}
-                          </Button>
+                          {/* Con personal o usuarios no se puede eliminar: se explica al pasar el mouse. */}
+                          <span title={e.eliminable ? undefined : "Tiene personal o usuarios registrados: se puede desactivar, no eliminar"}>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={e.estado === "activa" ? "outline-danger" : "outline"}
+                              onClick={() => setCambiandoEstado(e)}
+                            >
+                              {e.estado === "activa" ? "Desactivar" : "Activar"}
+                            </Button>
+                          </span>
+                          {e.eliminable && (
+                            <Button type="button" size="sm" variant="danger" onClick={() => setEliminando(e)}>
+                              Eliminar
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -283,18 +353,23 @@ function EmpresasContent() {
         )}
       </Tarjeta>
 
-      <EmpresaModal isOpen={nueva} onClose={() => setNueva(false)} onGuardada={(e) => guardada(`Se registró ${e.razonSocial}.`)} />
+      <EmpresaModal isOpen={nueva} onClose={() => setNueva(false)} onGuardada={(e) => guardada(`Se registró ${e.razonSocial}`)} />
       <EmpresaModal
         empresa={editando ?? undefined}
         isOpen={!!editando}
         onClose={() => setEditando(null)}
-        onGuardada={(e) => guardada(`Se guardaron los cambios de ${e.razonSocial}.`)}
+        onGuardada={(e) => guardada(`Se guardaron los cambios de ${e.razonSocial}`)}
+      />
+      <ConfirmarEliminar
+        empresa={eliminando}
+        onClose={() => setEliminando(null)}
+        onEliminada={(razonSocial) => guardada(`Se eliminó ${razonSocial}`)}
       />
       <ConfirmarEstado
         empresa={cambiandoEstado}
         onClose={() => setCambiandoEstado(null)}
         onCambiada={() =>
-          guardada(`${cambiandoEstado?.razonSocial} quedó ${cambiandoEstado?.estado === "activa" ? "inactiva" : "activa"}.`)
+          guardada(`${cambiandoEstado?.razonSocial} quedó ${cambiandoEstado?.estado === "activa" ? "inactiva" : "activa"}`)
         }
       />
     </div>
