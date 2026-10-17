@@ -48,6 +48,11 @@ export const empresasApi = {
   },
   create: (data: { ruc: string; razonSocial: string; correoContacto: string; telefonoContacto?: string }) =>
     apiRequest<Empresa>("/empresas", { method: "POST", body: data }),
+  /** Corrige sus datos o la activa / desactiva (solo se envía lo que cambia). */
+  update: (
+    id: number,
+    data: Partial<{ ruc: string; razonSocial: string; correoContacto: string; telefonoContacto: string; estado: "activa" | "inactiva" }>,
+  ) => apiRequest<Empresa>(`/empresas/${id}`, { method: "PATCH", body: data }),
 };
 
 // ---- personas ----

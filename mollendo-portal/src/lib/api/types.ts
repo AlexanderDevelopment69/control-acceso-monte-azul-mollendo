@@ -13,6 +13,8 @@ export interface Empresa {
   contratoVigenciaFin: string | null;
   creadoEn: string;
   actualizadoEn: string;
+  /** Personas activas de la empresa (viene en la lista de empresas). */
+  personalActivo?: number;
 }
 
 export interface TipoDocumento {

@@ -1,6 +1,7 @@
 import PlusIcon from "./plus.svg";
 import CloseIcon from "./close.svg";
 import BoxIcon from "./box.svg";
+import BuildingIcon from "./building.svg";
 import CheckCircleIcon from "./check-circle.svg";
 import AlertIcon from "./alert.svg";
 import InfoIcon from "./info.svg";
@@ -63,6 +64,7 @@ export {
   BoltIcon,
   PlusIcon,
   BoxIcon,
+  BuildingIcon,
   CloseIcon,
   CheckCircleIcon,
   AlertIcon,

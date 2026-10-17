@@ -60,8 +60,8 @@ describe('revisión de la carga masiva', () => {
       [],
     );
     expect(filas.map((f) => f.estado)).toEqual(['error', 'error', 'error', 'error', 'error']);
-    expect(filas[0].motivos).toEqual(['La empresa no está registrada en el sistema: "Empresa Inventada"']);
-    expect(filas[1].motivos).toEqual(['La empresa está inactiva: Transportes Cerrados S.A.C.']);
+    expect(filas[0].motivos).toEqual(['La empresa no está registrada en el sistema (regístrala en Empresas): "Empresa Inventada"']);
+    expect(filas[1].motivos).toEqual(['La empresa está inactiva (se activa en Empresas): Transportes Cerrados S.A.C.']);
     expect(filas[2].motivos).toEqual(['El DNI debe tener 8 dígitos']);
     expect(filas[3].motivos).toEqual(['Perfil desconocido: "Gerente"', 'Faltan los nombres']);
     expect(filas[4].motivos).toEqual(['Tipo de documento desconocido: "Licencia" (DNI, CE o PASAPORTE)']);

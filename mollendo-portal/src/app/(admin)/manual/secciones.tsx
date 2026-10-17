@@ -87,8 +87,10 @@ export const SECCIONES: SeccionManual[] = [
             "Filtra quién puede o no puede ingresar hoy.",
             "Elige a una persona para abrir su ficha.",
             <>
-              <strong>“+ Nuevo personal”</strong> registra a alguien con su foto y documentos;{" "}
-              <strong>“Carga masiva”</strong>, a muchas personas a la vez desde un Excel.
+              <strong>“Carga masiva”</strong> registra a muchas personas a la vez desde un Excel.
+            </>,
+            <>
+              <strong>“+ Nuevo personal”</strong> registra a alguien con su foto y documentos.
             </>,
             "Ve la foto en grande, súbela o cámbiala: la usa el terminal facial para reconocerlo.",
             <>
@@ -147,8 +149,9 @@ export const SECCIONES: SeccionManual[] = [
               texto: (
                 <>
                   Con el perfil elegido, arriba salen las empresas que ya tienen personal de ese perfil (con cuántos) y
-                  después las demás. Elígela de la lista. Si no está, elige <strong>“+ Nueva empresa…”</strong> y escribe su RUC, razón
-                  social y correo ahí mismo.
+                  después las demás. Elígela de la lista. Si no está, regístrala en <strong>Empresas</strong>: el enlace
+                  debajo de la lista la abre en otra pestaña, sin perder lo que ya escribiste, y al volver la lista se
+                  actualiza sola.
                 </>
               ),
             },
@@ -217,8 +220,8 @@ export const SECCIONES: SeccionManual[] = [
         </ol>
         <Nota>
           La carga masiva registra <strong>los datos de la persona</strong>, sin foto ni documentos: para que pueda ingresar,
-          agrégalos después en su ficha. Si la empresa no está en la lista, regístrala primero con “+ Nuevo personal” → “+
-          Nueva empresa…”: la carga masiva no crea empresas, para evitar duplicados por cómo se escribió el nombre.
+          agrégalos después en su ficha. Si la empresa no está en la lista, regístrala primero en <strong>Empresas</strong> y vuelve a
+          descargar la plantilla: la carga masiva no crea empresas, para evitar duplicados por cómo se escribió el nombre.
         </Nota>
 
         <Subtitulo>Corregir los datos de una persona</Subtitulo>
@@ -298,6 +301,54 @@ export const SECCIONES: SeccionManual[] = [
           vencidos; podrán ingresar en cuanto se regularicen) de los <strong>dados de baja</strong>. Los números de cada
           pestaña cuentan solo lo que queda con la empresa y la búsqueda elegidas. Con mucho personal, la lista muestra
           las primeras 100 personas y agrega más a medida que bajas.
+        </p>
+      </div>
+    ),
+  },
+  {
+    id: "empresas",
+    titulo: "Empresas",
+    roles: ["administrador"],
+    contenido: (
+      <div className="space-y-3">
+        <p>
+          En <strong>Empresas</strong> (menú de la izquierda) se registran las empresas del personal, se corrigen sus datos y
+          se activan o desactivan. La tabla muestra la razón social y el RUC, el contacto, cuántas personas activas tiene y
+          su estado. Se busca por razón social o RUC (sin importar tildes) y se filtra por <strong>Activas</strong> o{" "}
+          <strong>Inactivas</strong>; la tabla va de 10 en 10, con páginas. Las empresas se registran solo aquí.
+        </p>
+        <Captura
+          clave="empresas"
+          alt="Vista Empresas con el buscador, el filtro de estado y la tabla de empresas"
+          pasos={[
+            "Busca por razón social o RUC.",
+            "Filtra por Todas, Activas o Inactivas.",
+            "Cuántas personas activas tiene cada empresa.",
+            <>
+              <strong>“Editar”</strong> corrige sus datos; <strong>“Desactivar”</strong> o “Activar” cambia su estado.
+            </>,
+            <>
+              <strong>“+ Nueva empresa”</strong> registra una.
+            </>,
+          ]}
+        />
+        <Subtitulo>Registrar una empresa</Subtitulo>
+        <p>
+          <strong>“+ Nueva empresa”</strong>: RUC (11 dígitos, sin repetirse con otra empresa), razón social, correo de
+          contacto y teléfono (opcional). Desde ese momento se puede elegir al registrar personal y aparece en la plantilla
+          de la carga masiva.
+        </p>
+        <Subtitulo>Corregir sus datos</Subtitulo>
+        <p>
+          <strong>“Editar”</strong> corrige el RUC, la razón social, el correo o el teléfono. El personal de la empresa no
+          cambia. Todo cambio queda en la Auditoría.
+        </p>
+        <Subtitulo>Desactivar o activar</Subtitulo>
+        <p>
+          Una empresa <strong>inactiva</strong> ya no aparece al registrar personal ni en la plantilla de la carga masiva.
+          Su personal <strong>no se da de baja</strong>: si tiene sus documentos al día, sigue pudiendo ingresar. Por eso, al
+          desactivar una empresa con personal activo, el sistema avisa cuántas personas son; si ya no deben entrar, dalas de
+          baja en Personal y documentos. <strong>“Activar”</strong> la vuelve a mostrar.
         </p>
       </div>
     ),
@@ -666,7 +717,7 @@ export const SECCIONES: SeccionManual[] = [
               Icono: IconoUsuarios,
               boton: "Presentes actualmente",
               comillas: false,
-              texto: "Todas las personas que están dentro ahora, sin importar cuándo entraron. Debajo se indica cuántas ingresaron en el periodo y cuántas antes. Al presionarla se abre la vista “Presentes ahora” con la lista de quiénes son (de mayor a menor tiempo dentro, con buscador, filtro por perfil y “Descargar Excel”; se actualiza sola): útil, por ejemplo, en una evacuación. Para regresar, “‹ Dashboard” arriba a la izquierda.",
+              texto: "Todas las personas que están dentro ahora, sin importar cuándo entraron. Debajo se indica cuántas ingresaron en el periodo y cuántas antes. Al presionarla se abre la vista “Presentes ahora” (ver abajo).",
             },
             {
               Icono: IconoRegistrado,
@@ -688,6 +739,26 @@ export const SECCIONES: SeccionManual[] = [
               comillas: false,
               texto: "Personas que ingresaron hace más de 12 horas y no registran salida. Al final de la página está la lista con su tiempo dentro.",
             },
+          ]}
+        />
+
+        <Subtitulo>Presentes ahora</Subtitulo>
+        <p>
+          Al presionar la tarjeta <strong>“Presentes actualmente”</strong> se abre la lista de quiénes están dentro en este
+          momento: útil, por ejemplo, en una evacuación. Se actualiza sola con cada ingreso o salida. Para regresar,{" "}
+          <strong>“‹ Dashboard”</strong> arriba a la izquierda.
+        </p>
+        <Captura
+          clave="presentes"
+          alt="Vista Presentes ahora con el buscador, el filtro de perfil y la lista de quienes están dentro"
+          pasos={[
+            "Busca por nombre, DNI o empresa.",
+            "Filtra por perfil.",
+            <>
+              <strong>“Descargar Excel”</strong>: el reporte “Personal presente” (con el perfil elegido).
+            </>,
+            "De mayor a menor tiempo dentro; en naranja, más de 12 horas.",
+            "De 10 en 10, con páginas.",
           ]}
         />
 
@@ -910,7 +981,7 @@ export const SECCIONES: SeccionManual[] = [
               Icono: IconoCalendario,
               boton: "Filtrar por fechas",
               comillas: false,
-              texto: "Elige “Desde” y “Hasta” para ver solo los cambios de ese periodo.",
+              texto: "Elige “Desde” y “Hasta” para ver solo los cambios de ese periodo. La tabla va de 10 en 10, con páginas.",
             },
           ]}
         />
@@ -1015,7 +1086,7 @@ export const SECCIONES: SeccionManual[] = [
             {
               Icono: IconoVer,
               titulo: "Revisa el resultado",
-              texto: "Cuántas personas agregaría, cuántos usuarios borraría (los que están en el terminal pero no en el sistema) y cuántos permisos quitaría.",
+              texto: "Cuántas personas agregaría, cuántos usuarios borraría (los que están en el terminal pero no en el sistema) y cuántos permisos quitaría. Si no hay nada que cambiar, dice “✔ Todo en orden: el terminal tiene a las mismas personas que el sistema”.",
             },
             {
               Icono: IconoRenovar,

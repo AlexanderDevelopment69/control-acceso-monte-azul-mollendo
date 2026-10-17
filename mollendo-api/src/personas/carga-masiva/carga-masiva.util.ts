@@ -176,8 +176,8 @@ export function revisarFilasCarga(
     else {
       const texto = fila.empresa.replace(/\s+/g, '');
       empresa = /^\d{11}$/.test(texto) ? empresaPorRuc.get(texto) : empresaPorNombre.get(normalizar(fila.empresa));
-      if (!empresa) motivos.push(`La empresa no está registrada en el sistema: "${fila.empresa}"`);
-      else if (empresa.estado !== 'activa') motivos.push(`La empresa está inactiva: ${empresa.razonSocial}`);
+      if (!empresa) motivos.push(`La empresa no está registrada en el sistema (regístrala en Empresas): "${fila.empresa}"`);
+      else if (empresa.estado !== 'activa') motivos.push(`La empresa está inactiva (se activa en Empresas): ${empresa.razonSocial}`);
     }
 
     const tipo = fila.tipoDocumento ? TIPO_POR_TEXTO.get(normalizar(fila.tipoDocumento)) : undefined;
@@ -312,7 +312,7 @@ export async function generarPlantillaCarga(
   instrucciones.addRow(['Ejemplo', 'Contratista | DEMO Servicios Portuarios Islay S.A. | DNI | 01234567 | Juan Carlos | Pérez Rojas']);
   instrucciones.addRow([
     'Empresas',
-    'Si la empresa no aparece en la lista, regístrala primero en el portal (Personal → "+ Nuevo personal" → "+ Nueva empresa…").',
+    'Si la empresa no aparece en la lista, regístrala primero en el portal (menú "Empresas" → "+ Nueva empresa") y vuelve a descargar la plantilla.',
   ]).getCell(2).alignment = { wrapText: true };
 
   return Buffer.from(await libro.xlsx.writeBuffer());

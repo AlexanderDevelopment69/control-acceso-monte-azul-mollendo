@@ -206,7 +206,7 @@ Pantalla principal del administrador. Muestra a la izquierda la lista del person
 Un único formulario permite registrar a la persona y sus documentos:
 
 1. **Perfil** (obligatorio): personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica a la persona (lista, Dashboard y reportes); el molinete valida a todos por igual.
-2. **Empresa:** se elige de la lista o se crea en el mismo formulario ("+ Nueva empresa…": RUC de 11 dígitos, razón social y correo de contacto). Con el perfil elegido, la lista muestra primero las empresas que ya tienen personal de ese perfil (con cuántos) y después las demás.
+2. **Empresa:** se elige de la lista de empresas activas. Si no está, el enlace "¿No está la empresa? Regístrala en Empresas" abre esa vista en otra pestaña (sin perder lo escrito) y, al volver, la lista se actualiza sola. Con el perfil elegido, la lista muestra primero las empresas que ya tienen personal de ese perfil (con cuántos) y después las demás.
 3. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
 4. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona; no es necesario registrar el rostro en el equipo.
 5. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento; no se acepta una fecha ya pasada, porque el documento quedaría vencido al instante) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
@@ -222,7 +222,7 @@ Registra a muchas personas a la vez desde un Excel (hasta 2000 por archivo, 5 MB
 3. **Registro:** "Registrar N personas" guarda solo las filas listas, una por una, igual que el formulario (queda en la auditoría y se envían al terminal facial). Si alguna cambió desde la revisión (por ejemplo, otro usuario la registró), se omite y se informa.
 4. **Filas con error:** "Descargar filas con error" entrega la misma plantilla con esas filas y una columna "Motivo", para corregirlas y volver a subir el archivo.
 
-La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada persona; sin ellos no puede ingresar) y no crea empresas: una empresa que no existe se registra primero, para evitar duplicados por cómo se escribió el nombre.
+La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada persona; sin ellos no puede ingresar) y no crea empresas: una empresa que no existe se registra primero en **Empresas**, para evitar duplicados por cómo se escribió el nombre.
 
 **Ficha de la persona**
 
@@ -236,6 +236,14 @@ La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada pe
   - **+ Agregar documento:** agrega un documento que la persona no tenía.
 - **Historial de documentos:** todas las versiones cargadas, con la marca "Reemplazado" en las anteriores; cada versión se puede ver ("Ver").
 - **Dar de baja / Reactivar:** la persona dada de baja no puede ingresar, sin importar sus documentos (sí puede salir). Al dar de baja se puede escribir el **motivo** (opcional, hasta 300 caracteres); queda registrado con la fecha y se muestra en la ficha, en la lista ("Dado de baja: …") y en el reporte de personal; al reactivar, el motivo se borra. Los dos piden confirmación; al reactivar, si tiene documentos vencidos o ninguno cargado, se avisa que aun así no podrá ingresar hasta regularizarlos. Sus datos, documentos e historial se conservan.
+
+**Empresas (menú "Empresas")**
+
+- Tabla con razón social y RUC, contacto (correo y teléfono), **personal activo** (cuántas personas activas tiene) y estado (Activa / Inactiva); búsqueda por razón social o RUC (sin importar tildes), filtro Todas / Activas / Inactivas y 10 por página.
+- **+ Nueva empresa:** RUC de 11 dígitos (sin repetir), razón social, correo de contacto y teléfono opcional. Es el único lugar donde se registran empresas.
+- **Editar:** corrige RUC (sin repetir), razón social, correo o teléfono; el personal no cambia. Si no se cambió nada, avisa "No cambiaste ningún dato."
+- **Desactivar / Activar** (con confirmación): una empresa inactiva no aparece al registrar o editar personal ni en la plantilla de la carga masiva. **Su personal no se da de baja** y sigue pudiendo ingresar si tiene sus documentos al día; al desactivar una empresa con personal activo se avisa cuántas personas son, para darlas de baja si ya no deben entrar.
+- Todo cambio queda en la auditoría.
 
 ### 4.3. Panel de vigilancia (Administrador y Vigilancia)
 

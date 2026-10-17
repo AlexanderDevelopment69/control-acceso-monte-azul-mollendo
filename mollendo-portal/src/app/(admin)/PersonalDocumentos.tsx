@@ -63,6 +63,10 @@ export function PersonalDocumentos() {
   }
   const [modalOpen, setModalOpen] = useState(false);
   const [cargaMasivaOpen, setCargaMasivaOpen] = useState(false);
+  // Empresas registradas en otra pestaña (vista Empresas) mientras el formulario está abierto.
+  const recargarEmpresas = useCallback(() => {
+    empresasApi.list().then(setEmpresas).catch(() => {}); // si falla, queda la lista anterior
+  }, []);
   const [busqueda, setBusqueda] = useState("");
   const [empresaFiltro, setEmpresaFiltro] = useState("todas");
   const [perfilFiltro, setPerfilFiltro] = useState<PerfilFiltro>("todos");
@@ -459,11 +463,11 @@ export function PersonalDocumentos() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={(persona) => {
-          // Puede haber una empresa nueva, y cambia el ✔/✖.
+          // Cambia el ✔/✖ de la lista.
           void recargar();
-          empresasApi.list().then(setEmpresas).catch(() => {}); // si falla, queda la lista anterior
           elegir(persona.id);
         }}
+        onRecargarEmpresas={recargarEmpresas}
         empresas={empresas}
         personas={personas}
       />

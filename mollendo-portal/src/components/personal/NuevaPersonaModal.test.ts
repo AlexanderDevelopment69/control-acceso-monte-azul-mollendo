@@ -9,12 +9,11 @@ const persona = (empresaId: number, perfil: Persona["perfil"], estado: Persona["
 const EMPRESAS = [empresa(1, "Transportes Norte"), empresa(2, "Agencia Sur"), empresa(3, "Cerrada SAC", "inactiva"), empresa(4, "Botica Centro")];
 
 describe("empresas del formulario según el perfil", () => {
-  it("sin perfil elegido: todas las activas en orden alfabético y la opción de crear una", () => {
+  it("sin perfil elegido: todas las activas en orden alfabético (las nuevas se registran en Empresas)", () => {
     expect(opcionesEmpresa(EMPRESAS, [], "").map((o) => o.label)).toEqual([
       "Agencia Sur",
       "Botica Centro",
       "Transportes Norte",
-      "+ Nueva empresa…",
     ]);
   });
 
@@ -30,7 +29,6 @@ describe("empresas del formulario según el perfil", () => {
       { value: "2", label: "Agencia Sur", detalle: "2", grupo: "Con personal Conductor" },
       { value: "1", label: "Transportes Norte", detalle: "1", grupo: "Con personal Conductor" },
       { value: "4", label: "Botica Centro", grupo: "Otras empresas" },
-      { value: "nueva", label: "+ Nueva empresa…", grupo: "Otras empresas" },
     ]);
   });
 

@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import {
   DocsIcon,
   EyeIcon,
+  BuildingIcon,
   GroupIcon,
   HorizontaLDots,
   InfoIcon,
@@ -27,6 +28,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador"] },
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
+  { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador"] },
   { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
   { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },

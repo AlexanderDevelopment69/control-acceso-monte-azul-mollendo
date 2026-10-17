@@ -28,8 +28,9 @@ export class EmpresasService {
     return empresa;
   }
 
+  /** Con cuántas personas activas tiene cada una (vista Empresas y aviso al desactivar). */
   async findAll(query: QueryEmpresasDto) {
-    return this.prisma.empresa.findMany({
+    const empresas = await this.prisma.empresa.findMany({
       where: {
         estado: query.estado,
         ...(query.busqueda && {
@@ -39,8 +40,10 @@ export class EmpresasService {
           ],
         }),
       },
-      orderBy: { creadoEn: 'desc' },
+      include: { _count: { select: { personas: { where: { estado: 'activo' } } } } },
+      orderBy: { razonSocial: 'asc' },
     });
+    return empresas.map(({ _count, ...empresa }) => ({ ...empresa, personalActivo: _count.personas }));
   }
 
   async findOne(id: number) {
@@ -52,7 +55,10 @@ export class EmpresasService {
   }
 
   async update(id: number, dto: UpdateEmpresaDto, usuarioId: number) {
-    await this.findOne(id);
+    const actual = await this.findOne(id);
+    if (dto.ruc && dto.ruc !== actual.ruc && (await this.prisma.empresa.findUnique({ where: { ruc: dto.ruc } }))) {
+      throw new ConflictException('Ya existe una empresa registrada con ese RUC');
+    }
     const empresa = await this.prisma.empresa.update({ where: { id }, data: dto });
     await this.auditoriaService.registrar({
       usuarioId,

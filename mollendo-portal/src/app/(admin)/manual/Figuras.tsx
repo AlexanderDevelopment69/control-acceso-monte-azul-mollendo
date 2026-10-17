@@ -163,7 +163,7 @@ export function CuentasManual() {
       Icono: IconoAdministrador,
       color: "bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400",
       puntos: [
-        "Registra al personal y su empresa, y sube sus documentos.",
+        "Registra al personal (uno por uno o con carga masiva), sus empresas y sus documentos.",
         "Ve el Dashboard y descarga Reportes en Excel o PDF.",
         "Supervisa el Panel de vigilancia, la Auditoría y el estado del sistema.",
       ],

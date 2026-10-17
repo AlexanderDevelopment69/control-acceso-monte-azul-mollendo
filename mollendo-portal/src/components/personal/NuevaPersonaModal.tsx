@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { documentosApi, empresasApi, personasApi, tiposDocumentoApi } from "@/lib/api/endpoints";
+import Link from "next/link";
+import { documentosApi, personasApi, tiposDocumentoApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { Empresa, Persona } from "@/lib/api/types";
 import { OPCIONES_PERFIL, PERFIL_LABEL, type Perfil } from "@/lib/perfiles";
@@ -23,16 +24,14 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { CloseLineIcon } from "@/icons";
 import { SelectorFoto, validarFoto } from "./FotoPersonal";
 
-const NUEVA_EMPRESA = "nueva";
-
 /**
  * Empresas para el desplegable: con un perfil elegido, primero las que ya
  * tienen personal activo de ese perfil (con cuántos), y después las demás.
+ * Las empresas nuevas se registran en la vista Empresas.
  */
 export function opcionesEmpresa(empresas: Empresa[], personas: Persona[], perfil: Perfil | "") {
   const activas = empresas.filter((e) => e.estado === "activa").sort((a, b) => a.razonSocial.localeCompare(b.razonSocial));
-  const nueva = { value: NUEVA_EMPRESA, label: "+ Nueva empresa…" };
-  if (!perfil) return [...activas.map((e) => ({ value: String(e.id), label: e.razonSocial })), nueva];
+  if (!perfil) return activas.map((e) => ({ value: String(e.id), label: e.razonSocial }));
   const cuantas = new Map<number, number>();
   for (const p of personas) {
     if (p.perfil === perfil && p.estado === "activo") cuantas.set(p.empresaId, (cuantas.get(p.empresaId) ?? 0) + 1);
@@ -43,7 +42,6 @@ export function opcionesEmpresa(empresas: Empresa[], personas: Persona[], perfil
   return [
     ...con.map((e) => ({ value: String(e.id), label: e.razonSocial, detalle: String(cuantas.get(e.id)), grupo: grupoCon })),
     ...sin.map((e) => ({ value: String(e.id), label: e.razonSocial, grupo: con.length ? "Otras empresas" : undefined })),
-    { ...nueva, grupo: con.length ? "Otras empresas" : undefined },
   ];
 }
 
@@ -104,10 +102,13 @@ function Formulario({
   empresas,
   personas,
   onGuardando,
+  onRecargarEmpresas,
 }: {
   onClose: () => void;
   onCreated: (persona: Persona) => void;
   empresas: Empresa[];
+  /** Vuelve a leer las empresas (al volver de registrar una en otra pestaña). */
+  onRecargarEmpresas: () => void;
   /** Para ordenar las empresas según el perfil elegido. */
   personas: Persona[];
   /** Avisa si está guardando: mientras tanto la ventana no se cierra. */
@@ -115,9 +116,6 @@ function Formulario({
 }) {
   const [perfil, setPerfil] = useState<Perfil | "">("");
   const [empresaId, setEmpresaId] = useState("");
-  const [ruc, setRuc] = useState("");
-  const [razonSocial, setRazonSocial] = useState("");
-  const [correoContacto, setCorreoContacto] = useState("");
   const [tipoDocumentoIdentidad, setTipoDocumentoIdentidad] = useState("DNI");
   const [numeroDocumento, setNumeroDocumento] = useState("");
   const [nombres, setNombres] = useState("");
@@ -125,12 +123,15 @@ function Formulario({
   const [filas, setFilas] = useState<FilaDocumento[]>([filaVacia(0)]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [empresaCreada, setEmpresaCreada] = useState<Empresa | null>(null);
   const [personaCreada, setPersonaCreada] = useState<Persona | null>(null);
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoSubida, setFotoSubida] = useState(false);
 
-  const esNuevaEmpresa = empresaId === NUEVA_EMPRESA;
+  // Al volver a esta pestaña (p. ej. después de registrar una empresa en Empresas), la lista se actualiza sola.
+  useEffect(() => {
+    window.addEventListener("focus", onRecargarEmpresas);
+    return () => window.removeEventListener("focus", onRecargarEmpresas);
+  }, [onRecargarEmpresas]);
 
   // La lista de documentos tiene altura máxima con scroll propio; al agregar
   // una fila, bajar hasta ella para que se vea.
@@ -150,10 +151,7 @@ function Formulario({
   function validar(): string | null {
     if (!personaCreada) {
       if (!perfil) return "Elige el perfil del personal";
-      if (!empresaId) return "Elige la empresa (o crea una nueva)";
-      if (esNuevaEmpresa && !empresaCreada && (!ruc || !razonSocial || !correoContacto)) {
-        return "Completa RUC, razón social y correo de la empresa nueva";
-      }
+      if (!empresaId) return "Elige la empresa";
       if (!numeroDocumento || !nombres.trim() || !apellidos.trim()) {
         return "Completa número de documento, nombres y apellidos";
       }
@@ -192,13 +190,8 @@ function Formulario({
     try {
       let persona = personaCreada;
       if (!persona) {
-        let empresa = esNuevaEmpresa ? empresaCreada : null;
-        if (esNuevaEmpresa && !empresa) {
-          empresa = await empresasApi.create({ ruc, razonSocial, correoContacto });
-          setEmpresaCreada(empresa);
-        }
         persona = await personasApi.create({
-          empresaId: empresa ? empresa.id : Number(empresaId),
+          empresaId: Number(empresaId),
           perfil: perfil as Perfil,
           tipoDocumentoIdentidad,
           numeroDocumento,
@@ -271,34 +264,14 @@ function Formulario({
                 placeholder="Selecciona una empresa"
                 options={opcionesEmpresa(empresas, personas, perfil)}
               />
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                ¿No está la empresa? Regístrala en{" "}
+                <Link href="/empresas" target="_blank" className="font-medium text-brand-500 hover:underline">
+                  Empresas
+                </Link>{" "}
+                (se abre en otra pestaña) y vuelve aquí: la lista se actualiza sola.
+              </p>
             </div>
-
-            {esNuevaEmpresa && (
-              <div className="space-y-4 rounded-lg border border-dashed border-gray-300 p-4 dark:border-gray-700">
-                {empresaCreada ? (
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Empresa <strong>{empresaCreada.razonSocial}</strong> ya creada.
-                  </p>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div>
-                        <Label>RUC</Label>
-                        <Input defaultValue={ruc} onChange={(e) => setRuc(e.target.value.trim())} />
-                      </div>
-                      <div>
-                        <Label>Correo de contacto</Label>
-                        <Input type="email" defaultValue={correoContacto} onChange={(e) => setCorreoContacto(e.target.value)} />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Razón social</Label>
-                      <Input defaultValue={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -420,6 +393,7 @@ export function NuevaPersonaModal({
   isOpen: boolean;
   onClose: () => void;
   onCreated: (persona: Persona) => void;
+  onRecargarEmpresas: () => void;
   empresas: Empresa[];
   personas: Persona[];
 }) {
