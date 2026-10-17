@@ -25,6 +25,7 @@ const TABLA_LABEL: Record<string, string> = {
   documento_persona: "Documento",
   tipo_documento: "Tipo de documento",
   usuario: "Usuario",
+  evento_acceso: "Ingreso o salida (corrección manual)",
 };
 const tablaLabel = (tabla: string) => TABLA_LABEL[tabla] ?? tabla;
 

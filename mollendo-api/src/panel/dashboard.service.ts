@@ -111,10 +111,15 @@ export class DashboardService {
           lt: new Date(rango.lt.getTime() + MARGEN_HORAS_HOMBRE_MS),
         },
       },
-      select: { personaId: true, tipoMovimiento: true, fechaHora: true },
+      select: { personaId: true, tipoMovimiento: true, fechaHora: true, correccionManual: true },
     });
     return calcularHorasHombre(
-      movimientos.map((m) => ({ personaId: m.personaId!, tipoMovimiento: m.tipoMovimiento, fechaHora: m.fechaHora })),
+      movimientos.map((m) => ({
+        personaId: m.personaId!,
+        tipoMovimiento: m.tipoMovimiento,
+        fechaHora: m.fechaHora,
+        correccionManual: m.correccionManual,
+      })),
       rango.gte,
       rango.lt,
     );
@@ -262,6 +267,8 @@ export class DashboardService {
         denegadoPorAlcohol: true,
         denegadoSinVerificacion: true,
         denegadoRostroNoCoincide: true,
+        denegadoYaDentro: true,
+        denegadoSinIngreso: true,
       },
     });
     return resumirMovimientos(eventos, dias);

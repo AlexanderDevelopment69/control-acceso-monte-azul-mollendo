@@ -47,8 +47,10 @@ function crearBaseFalsa() {
 
   const prisma = {
     persona: {
-      findUnique: async ({ where }: { where: { tipoDocumentoIdentidad_numeroDocumento: { numeroDocumento: string } } }) =>
-        personas.find((p) => p.numeroDocumento === where.tipoDocumentoIdentidad_numeroDocumento.numeroDocumento) ?? null,
+      findUnique: async ({ where }: { where: { id?: number; tipoDocumentoIdentidad_numeroDocumento?: { numeroDocumento: string } } }) =>
+        personas.find((p) =>
+          where.id !== undefined ? p.id === where.id : p.numeroDocumento === where.tipoDocumentoIdentidad_numeroDocumento!.numeroDocumento,
+        ) ?? null,
     },
     documentoPersona: {
       findMany: async ({ where }: { where: { personaId: number } }) => documentos.filter((d) => d.personaId === where.personaId),
@@ -77,6 +79,11 @@ function crearBaseFalsa() {
         eventos.push(fila);
         return fila;
       },
+      // Último movimiento (antipassback): el más reciente por fecha y, a igual fecha, por id.
+      findFirst: async ({ where }: { where: Record<string, unknown> }) =>
+        eventos
+          .filter((e) => cumple(e, where))
+          .sort((a, b) => (b.fechaHora as Date).getTime() - (a.fechaHora as Date).getTime() || b.id - a.id)[0] ?? null,
     },
     verificacionDispositivo: { update: async () => ({}) },
     $transaction: async (operaciones: Promise<unknown>[]) => Promise.all(operaciones),
@@ -131,6 +138,18 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
     ahora += ms;
     vi.setSystemTime(ahora);
   };
+  /** La persona ya está dentro: un ingreso autorizado de hace una hora. */
+  const yaIngreso = (dni: string) => {
+    const persona = base.personas.find((p) => p.numeroDocumento === dni)!;
+    base.eventos.push({
+      id: 9000 + base.eventos.length,
+      personaId: persona.id,
+      numeroDocumento: dni,
+      tipoMovimiento: 'ingreso',
+      resultado: 'autorizado',
+      fechaHora: new Date(ahora - 3_600_000),
+    });
+  };
   const vencidos = () => (servicio as unknown as { cerrarVencidos: () => Promise<void> }).cerrarVencidos();
   const de = (evento: string) => emitidos.filter((e) => e.evento === evento).map((e) => e.datos);
 
@@ -142,7 +161,12 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
     emitidos = [];
     const eventEmitter = { emit: (evento: string, datos: Record<string, unknown>) => emitidos.push({ evento, datos }) };
     manualActiva = false;
-    servicio = new EventosAccesoService(base.prisma as never, eventEmitter as never, { activa: async () => manualActiva } as never);
+    servicio = new EventosAccesoService(
+      base.prisma as never,
+      eventEmitter as never,
+      { activa: async () => manualActiva } as never,
+      { registrar: async () => undefined } as never,
+    );
   });
 
   afterEach(() => {
@@ -277,23 +301,26 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
   });
 
   describe('Salida (solo DNI, diagrama de salida)', () => {
-    it('persona registrada: salida autorizada y relé de salida, sin pasar por el G4 Pro', async () => {
+    it('persona registrada que ingresó: salida autorizada y relé de salida, sin pasar por el G4 Pro', async () => {
       agregarPersona(base, '11111111');
+      yaIngreso('11111111');
       const r = await salida('11111111');
       expect(r).toMatchObject({ tipoMovimiento: 'salida', resultado: 'autorizado', numeroDocumento: '11111111' });
-      expect(base.eventos).toEqual([expect.objectContaining({ tipoMovimiento: 'salida', resultado: 'autorizado', torniqueteId: 'Salida' })]);
+      expect(base.eventos.at(-1)).toEqual(expect.objectContaining({ tipoMovimiento: 'salida', resultado: 'autorizado', torniqueteId: 'Salida' }));
       expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'salida', torniqueteId: 'Salida' })]);
       expect(de('evento-acceso.registrado')).toHaveLength(1);
       expect(de('g4pro.habilitar')).toHaveLength(0);
       expect(base.pendientes).toHaveLength(0);
     });
 
-    it('dado de baja o con documentos vencidos: igual sale (no se retiene a nadie adentro)', async () => {
+    it('dado de baja o con documentos vencidos: si ingresó, igual sale', async () => {
       agregarPersona(base, '44444444', { baja: true });
       agregarPersona(base, '55555555', { vencido: true });
+      yaIngreso('44444444');
+      yaIngreso('55555555');
       await salida('44444444');
       await salida('55555555');
-      expect(base.eventos.map((e) => e.resultado)).toEqual(['autorizado', 'autorizado']);
+      expect(base.eventos.slice(2).map((e) => e.resultado)).toEqual(['autorizado', 'autorizado']);
       expect(de('molinete.abrir')).toHaveLength(2);
     });
 
@@ -308,11 +335,12 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
     it('una salida no afecta a quien espera en el ingreso', async () => {
       agregarPersona(base, '11111111');
       agregarPersona(base, '22222222');
+      yaIngreso('22222222');
       await ingreso('11111111');
       await salida('22222222');
       expect(base.pendientes[0].consumidoEn).toBeNull();
       await rtlog('0');
-      expect(base.eventos.map((e) => [e.numeroDocumento, e.tipoMovimiento, e.resultado])).toEqual([
+      expect(base.eventos.slice(1).map((e) => [e.numeroDocumento, e.tipoMovimiento, e.resultado])).toEqual([
         ['22222222', 'salida', 'autorizado'],
         ['11111111', 'ingreso', 'autorizado'],
       ]);
@@ -400,6 +428,81 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       await decidir('apto');
       await expect(decidir('apto')).rejects.toThrow(/ya no está esperando/);
       expect(base.eventos).toHaveLength(1);
+    });
+  });
+
+  describe('Antipassback estricto', () => {
+    it('no vuelve a ingresar sin registrar su salida: denegado "ya figura dentro", sin llegar al G4 Pro', async () => {
+      agregarPersona(base, '11111111');
+      yaIngreso('11111111');
+      const r = await ingreso('11111111');
+      expect(r).toMatchObject({ tipoMovimiento: 'ingreso', resultado: 'denegado', motivos: { yaDentro: true } });
+      expect(base.eventos.at(-1)).toMatchObject({ tipoMovimiento: 'ingreso', resultado: 'denegado', denegadoYaDentro: true });
+      expect(base.pendientes).toHaveLength(0);
+      expect(de('g4pro.habilitar')).toHaveLength(0);
+    });
+
+    it('no sale sin un ingreso registrado: denegado "no registra ingreso" y no se abre', async () => {
+      agregarPersona(base, '11111111');
+      const r = await salida('11111111');
+      expect(r).toMatchObject({ tipoMovimiento: 'salida', resultado: 'denegado', motivos: { sinIngreso: true } });
+      expect(base.eventos).toEqual([expect.objectContaining({ tipoMovimiento: 'salida', resultado: 'denegado', denegadoSinIngreso: true })]);
+      expect(de('molinete.abrir')).toHaveLength(0);
+      expect(de('evento-acceso.registrado')).toEqual([expect.objectContaining({ resultado: 'denegado', tipoMovimiento: 'salida' })]);
+    });
+
+    it('tampoco sale dos veces seguidas', async () => {
+      agregarPersona(base, '11111111');
+      yaIngreso('11111111');
+      expect(await salida('11111111')).toMatchObject({ resultado: 'autorizado' });
+      avanzar(60_000);
+      expect(await salida('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinIngreso: true } });
+      expect(de('molinete.abrir')).toHaveLength(1);
+    });
+
+    it('sin conexión, la salida que el controlador ya dejó pasar se registra igual (no puede saber quién está dentro)', async () => {
+      agregarPersona(base, '11111111');
+      const r = await servicio.registrarSalida({
+        tipoDocumentoIdentidad: 'DNI',
+        numeroDocumento: '11111111',
+        torniqueteId: 'Salida',
+        sinConexion: true,
+        fechaHora: new Date(ahora - 60_000).toISOString(),
+      });
+      expect(r).toMatchObject({ resultado: 'autorizado' });
+      expect(de('molinete.abrir')).toHaveLength(0);
+    });
+
+    it('corrección manual: con la salida registrada a mano, vuelve a ingresar (sin abrir el molinete al corregir)', async () => {
+      const id = agregarPersona(base, '11111111');
+      yaIngreso('11111111');
+      const vigilante = { id: 7, correo: 'vigilancia@mollendo.local', rol: 'vigilancia', empresaId: 1 } as never;
+      await servicio.registrarCorreccion({ personaId: id, tipoMovimiento: 'salida', motivo: 'Emergencia: brazos liberados' }, vigilante);
+      expect(base.eventos.at(-1)).toMatchObject({
+        tipoMovimiento: 'salida',
+        resultado: 'autorizado',
+        correccionManual: true,
+        motivoCorreccion: 'Emergencia: brazos liberados',
+        verificadoPorId: 7,
+      });
+      expect(de('molinete.abrir')).toHaveLength(0);
+      avanzar(1000);
+      expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
+    });
+
+    it('corrección manual: con el ingreso registrado a mano, puede salir; y no corrige lo que ya está bien', async () => {
+      const id = agregarPersona(base, '11111111');
+      const admin = { id: 1, correo: 'admin@mollendo.local', rol: 'administrador', empresaId: 1 } as never;
+      await expect(servicio.registrarCorreccion({ personaId: id, tipoMovimiento: 'salida', motivo: 'Prueba' }, admin)).rejects.toThrow(
+        'ya figura fuera',
+      );
+      await servicio.registrarCorreccion({ personaId: id, tipoMovimiento: 'ingreso', motivo: 'Entró sin marcar' }, admin);
+      await expect(servicio.registrarCorreccion({ personaId: id, tipoMovimiento: 'ingreso', motivo: 'Prueba' }, admin)).rejects.toThrow(
+        'ya figura dentro',
+      );
+      avanzar(1000);
+      expect(await salida('11111111')).toMatchObject({ resultado: 'autorizado' });
+      expect(de('molinete.abrir')).toHaveLength(1);
     });
   });
 });

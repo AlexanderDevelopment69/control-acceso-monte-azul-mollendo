@@ -345,7 +345,7 @@
         <li class="p"><div><strong>Pasa su DNI</strong> por el lector de ingreso. <span class="who">Persona</span></div></li>
         <li class="d"><div>El lector envía el número a la <strong>mini PC de la garita</strong> por USB. <span class="who">Lector → mini PC</span></div></li>
         <li class="d"><div>La mini PC envía el DNI al <strong>servidor en la nube</strong>, por internet. <span class="who">Mini PC → servidor</span></div></li>
-        <li class="d"><div>El servidor revisa que esté <strong>registrado, no dado de baja y con documentos al día</strong>. Si algo falla, se deniega aquí y el Panel muestra el motivo. <span class="who">Servidor</span></div></li>
+        <li class="d"><div>El servidor revisa que esté <strong>registrado, no dado de baja, fuera del terminal (antipassback) y con documentos al día</strong>. Si algo falla, se deniega aquí y el Panel muestra el motivo. <span class="who">Servidor</span></div></li>
         <li class="d"><div>Si está en regla, el servidor <strong>habilita a esa persona en el G4 Pro por 60 s</strong>. <span class="who">Servidor → G4 Pro, por internet</span></div></li>
         <li class="p"><div><strong>Se para frente al G4 Pro</strong>, que reconoce su rostro. <span class="who">Persona</span></div></li>
         <li class="p"><div>Recién entonces el G4 Pro le permite <strong>soplar en el alcoholímetro</strong>. <span class="who">Persona</span></div></li>
@@ -361,6 +361,7 @@
           <li>solo pasa el DNI y no va al G4 Pro;</li>
           <li>va al G4 Pro sin haber pasado su DNI;</li>
           <li>no está registrado, está de baja o tiene un documento vencido;</li>
+          <li>ya figura dentro: no registró su salida anterior (antipassback; el vigilante puede registrar su salida manual);</li>
           <li>usa el DNI de otra persona (su rostro no está habilitado);</li>
           <li>no sopla, o el alcoholímetro indica alcohol;</li>
           <li>pasan más de 60 s entre el DNI y el G4 Pro;</li>
@@ -493,7 +494,7 @@
         <li class="p"><div><strong>Pasa su DNI</strong> por el lector de salida. <span class="who">Persona</span></div></li>
         <li class="d"><div>El lector envía el número a la <strong>mini PC de la garita</strong> por USB. <span class="who">Lector → mini PC</span></div></li>
         <li class="d"><div>La mini PC envía el DNI al <strong>servidor en la nube</strong>, por internet. <span class="who">Mini PC → servidor</span></div></li>
-        <li class="d"><div>El servidor revisa que el DNI <strong>esté registrado</strong> y guarda la salida. No se exige haber marcado ingreso. <span class="who">Servidor</span></div></li>
+        <li class="d"><div>El servidor revisa que el DNI <strong>esté registrado</strong> y que tenga <strong>un ingreso registrado</strong> (antipassback), y guarda la salida. <span class="who">Servidor</span></div></li>
         <li class="d"><div>El servidor <strong>ordena a la mini PC abrir</strong> el molinete de salida. <span class="who">Servidor → mini PC</span></div></li>
         <li class="o"><div>La mini PC activa el <strong>relé de salida</strong> (pulso de 1 s) y el molinete se abre para un paso. <span class="who">Relé → molinete, por cable</span></div></li>
         <li class="d"><div>La salida aparece en el <strong>Panel de vigilancia</strong>. <span class="who">Servidor</span></div></li>
@@ -503,6 +504,7 @@
         <ul>
           <li>no pasa su DNI;</li>
           <li>el DNI no está registrado (el Panel lo muestra como «No registrado»);</li>
+          <li>no registra ingreso: su último movimiento es una salida (antipassback; el vigilante puede registrar su ingreso manual);</li>
           <li>no hay internet y la persona no está en la lista del personal guardada en la mini PC.</li>
         </ul>
         <p class="note">En cada caso suena el <strong>aviso de salida denegada</strong> (luz o sirena). Una persona dada de baja sí puede salir: la baja solo bloquea el ingreso.</p>

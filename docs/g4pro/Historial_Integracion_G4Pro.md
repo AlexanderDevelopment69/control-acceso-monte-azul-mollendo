@@ -230,7 +230,7 @@ Ver el diagrama de la sección 2.2.
 
 - El molinete **solo se abre con un DNI registrado**. Sin DNI o con un DNI no registrado, no se abre.
 - Una persona **dada de baja sí puede salir**: la baja solo bloquea el ingreso.
-- **No hay antipassback** en el alcance base: no se exige haber registrado un ingreso.
+- ~~No hay antipassback en el alcance base~~. **Actualizado el 17/10/2026:** el cliente pidió antipassback estricto. Ya no se puede salir sin un ingreso registrado ni ingresar dos veces seguidas; el vigilante corrige los casos reales (por ejemplo, una emergencia con los brazos liberados) con una salida o un ingreso manual. Ver el documento funcional, RN-08a.
 
 ---
 

@@ -5,6 +5,7 @@ import { IngresoDto } from './dto/ingreso.dto.js';
 import { SalidaDto } from './dto/salida.dto.js';
 import { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
 import { ActivarVerificacionManualDto, DecisionManualDto } from './dto/verificacion-manual.dto.js';
+import { CorreccionAntipassbackDto } from './dto/correccion-antipassback.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
@@ -63,6 +64,16 @@ export class EventosAccesoController {
   @Roles('administrador', 'vigilancia')
   decidir(@Param('id', ParseIntPipe) id: number, @Body() dto: DecisionManualDto, @CurrentUser() usuario: AuthenticatedUser) {
     return this.eventosAccesoService.decidirManual(id, dto.decision, usuario);
+  }
+
+  /**
+   * Corrección manual del antipassback: salida de quien figura dentro o
+   * ingreso de quien figura fuera, con motivo. No abre el molinete.
+   */
+  @Post('correccion')
+  @Roles('administrador', 'vigilancia')
+  corregir(@Body() dto: CorreccionAntipassbackDto, @CurrentUser() usuario: AuthenticatedUser) {
+    return this.eventosAccesoService.registrarCorreccion(dto, usuario);
   }
 
   @Get()

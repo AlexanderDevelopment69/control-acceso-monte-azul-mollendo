@@ -124,6 +124,13 @@ export interface EventoAcceso {
   denegadoPorDocumentos: boolean;
   /** Verificación manual: el vigilante indicó que el rostro no es el de la foto. */
   denegadoRostroNoCoincide?: boolean;
+  /** Antipassback: quiso ingresar sin haber registrado su salida. */
+  denegadoYaDentro?: boolean;
+  /** Antipassback: quiso salir sin ingreso registrado. */
+  denegadoSinIngreso?: boolean;
+  /** Movimiento registrado a mano por un vigilante o administrador (no pasó por el molinete). */
+  correccionManual?: boolean;
+  motivoCorreccion?: string | null;
   /** Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio). */
   verificacionManual?: boolean;
   verificadoPor?: { id: number; correo: string } | null;
@@ -171,6 +178,8 @@ export interface Dashboard {
       alcohol: number;
       sinVerificacion: number;
       rostroNoCoincide?: number;
+      yaDentro?: number;
+      sinIngreso?: number;
     };
     tendencia: { dia: string; ingresos: number; denegados: number; salidas: number }[];
   };

@@ -29,6 +29,23 @@ describe('calcularHorasHombre', () => {
     ]);
   });
 
+  it('una visita con ingreso o salida registrados a mano (corrección del antipassback) no suma', () => {
+    const aMano = (m: MovimientoAutorizado): MovimientoAutorizado => ({ ...m, correccionManual: true });
+    const visitas = calcularHorasHombre(
+      [
+        ingreso(1, h(13, 7)),
+        aMano(salida(1, h(14, 9))), // salió en una emergencia: la salida la registró el vigilante
+        aMano(ingreso(2, h(13, 8))), // entró sin marcar: el ingreso lo registró el vigilante
+        salida(2, h(13, 12)),
+        ingreso(3, h(13, 8)),
+        salida(3, h(13, 10)),
+      ],
+      INICIO,
+      FIN,
+    );
+    expect(visitas.map((v) => [v.personaId, horas(v.ms)])).toEqual([[3, 2]]);
+  });
+
   it('el orden de llegada no importa', () => {
     const visitas = calcularHorasHombre([salida(1, h(13, 15)), ingreso(1, h(13, 7))], INICIO, FIN);
     expect(visitas.map((v) => horas(v.ms))).toEqual([8]);

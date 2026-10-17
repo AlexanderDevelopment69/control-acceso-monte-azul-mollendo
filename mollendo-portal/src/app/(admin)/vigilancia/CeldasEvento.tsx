@@ -20,6 +20,7 @@ export function Movimiento({ tipo }: { tipo: string }) {
 export function MotivoDenegacion({
   evento,
   onVerDocumentos,
+  onCorregir,
 }: {
   evento: Pick<
     EventoAcceso,
@@ -30,11 +31,29 @@ export function MotivoDenegacion({
     | "denegadoPorDocumentos"
     | "denegadoSinVerificacion"
     | "denegadoRostroNoCoincide"
+    | "denegadoYaDentro"
+    | "denegadoSinIngreso"
   >;
   onVerDocumentos: () => void;
+  /** Antipassback: abre la corrección manual (registrar la salida o el ingreso que faltan). */
+  onCorregir?: () => void;
 }) {
   if (evento.denegadoNoRegistrado) return <Badge color="error">No registrado</Badge>;
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
+  if (evento.denegadoYaDentro || evento.denegadoSinIngreso) {
+    const texto = evento.denegadoYaDentro ? "Ya figura dentro" : "No registra ingreso";
+    const accion = evento.denegadoYaDentro ? "Registrar salida manual" : "Registrar ingreso manual";
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        <Badge color="error">{texto}</Badge>
+        {onCorregir && (
+          <button type="button" onClick={onCorregir} className="text-xs font-medium text-brand-500 hover:underline">
+            {accion} ›
+          </button>
+        )}
+      </span>
+    );
+  }
   if (evento.denegadoSinVerificacion) {
     // La ⓘ explica qué revisar, para quien lo mira después del aviso de arriba.
     return (
@@ -73,6 +92,20 @@ export function documentoDelEvento(ev: EventoAcceso): string {
   const numero = ev.numeroDocumento ?? ev.persona?.numeroDocumento;
   if (!numero) return "—";
   return tipo && tipo !== "DNI" ? `${tipo} ${numero}` : numero;
+}
+
+/** Movimiento registrado a mano (antipassback): quién lo registró; el motivo, al pasar el mouse. */
+export function MarcaCorreccionManual({
+  evento,
+}: {
+  evento: Pick<EventoAcceso, "correccionManual" | "motivoCorreccion" | "verificadoPor">;
+}) {
+  if (!evento.correccionManual) return null;
+  return (
+    <span title={`Registrado a mano, sin pasar por el molinete. Motivo: ${evento.motivoCorreccion ?? "-"}`} className="cursor-help">
+      <Badge color="warning">Corrección manual{evento.verificadoPor ? ` · ${evento.verificadoPor.correo}` : ""}</Badge>
+    </span>
+  );
 }
 
 /** Verificación manual (equipo facial fuera de servicio): quién aprobó o denegó el ingreso. */

@@ -133,6 +133,7 @@
 1. La persona se identifica en el terminal o molinete de salida.
 2. El sistema registra la salida y abre el molinete.
 3. **No hay antipassback:** no se exige un ingreso previo ni se bloquea un segundo ingreso sin salida.
+   > **Cambio posterior (17/10/2026):** a pedido del cliente se agregó el antipassback estricto, con corrección manual del vigilante. Ver el documento funcional, RN-08a.
 
 **6.4. Visitas**
 No se agendan visitas (decisión del cliente, 2026-09-26). Una visita se registra como cualquier trabajador, con sus documentos, y en garita se valida igual (§6.2).
@@ -263,7 +264,7 @@ CREATE TABLE documento_persona (
 CREATE INDEX ON documento_persona(persona_id);
 CREATE INDEX ON documento_persona(persona_id, tipo_documento_id, version);
 
--- Ingreso / salida. Sin antipassback: la salida siempre es 'autorizado'.
+-- Ingreso / salida. Sin antipassback: la salida siempre es 'autorizado'. (Cambió el 17/10/2026: antipassback estricto, ver el documento funcional RN-08a.)
 -- Un documento no registrado no genera fila (no hay persona a quien
 -- vincularla); solo se informa en la respuesta y en la pantalla de garita.
 CREATE TABLE evento_acceso (

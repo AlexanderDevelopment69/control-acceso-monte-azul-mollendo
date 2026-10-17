@@ -398,8 +398,8 @@ export const SECCIONES: SeccionManual[] = [
               texto: (
                 <>
                   Si el documento <strong>no está registrado</strong>, la persona está <strong>dada de baja</strong>,{" "}
-                  <strong>no tiene documentos</strong> o alguno está <strong>vencido</strong>, se deniega de inmediato y
-                  se muestran los motivos.
+                  <strong>ya figura dentro</strong> (no registró su salida), <strong>no tiene documentos</strong> o alguno
+                  está <strong>vencido</strong>, se deniega de inmediato y se muestran los motivos.
                 </>
               ),
             },
@@ -484,9 +484,55 @@ export const SECCIONES: SeccionManual[] = [
 
         <Subtitulo>La salida</Subtitulo>
         <p>
-          Solo exige un DNI registrado, aunque la persona esté dada de baja o tenga documentos vencidos, y abre el
-          molinete. No se exige haber marcado un ingreso antes.
+          Exige un DNI registrado y <strong>un ingreso registrado antes</strong>; abre el molinete aunque la persona esté
+          dada de baja o tenga documentos vencidos.
         </p>
+
+        <Subtitulo>Antipassback: entrar y salir siempre por el molinete</Subtitulo>
+        <p>
+          Nadie puede <strong>ingresar dos veces seguidas</strong> sin haber registrado su salida, ni{" "}
+          <strong>salir sin haber registrado su ingreso</strong>. En esos casos el molinete no se abre, suena el aviso de
+          denegado y la tabla muestra el motivo:
+        </p>
+        <Acciones
+          items={[
+            {
+              Icono: IconoAviso,
+              boton: "Ya figura dentro",
+              tono: "peligro",
+              comillas: false,
+              texto: (
+                <>
+                  Quiso ingresar, pero no registró su salida anterior. Si de verdad salió (por ejemplo, en una emergencia
+                  con los brazos del molinete liberados), presiona <strong>“Registrar salida manual ›”</strong> junto al
+                  motivo.
+                </>
+              ),
+            },
+            {
+              Icono: IconoAviso,
+              boton: "No registra ingreso",
+              tono: "peligro",
+              comillas: false,
+              texto: (
+                <>
+                  Quiso salir, pero no tiene un ingreso registrado. Si de verdad está dentro (por ejemplo, entró sin
+                  marcar), presiona <strong>“Registrar ingreso manual ›”</strong>.
+                </>
+              ),
+            },
+          ]}
+        />
+        <p>
+          La corrección pide un <strong>motivo</strong> y <strong>no abre el molinete</strong>: después, la persona vuelve a
+          pasar su DNI. La pueden hacer el vigilante y el administrador. Queda en la tabla con la marca{" "}
+          <strong>“Corrección manual”</strong> (el motivo se ve al pasar el mouse), en el reporte de ingresos y salidas y
+          en la Auditoría. Una visita corregida no suma horas-hombre, porque no pasó por el molinete.
+        </p>
+        <Nota>
+          Sin internet, el controlador de la garita deja salir con su lista del personal guardada, sin saber quién está
+          dentro: esas salidas se registran igual cuando vuelve la conexión.
+        </Nota>
 
         <Subtitulo>Avisos</Subtitulo>
         <Acciones
@@ -790,8 +836,8 @@ export const SECCIONES: SeccionManual[] = [
         </p>
         <Nota>
           Todos entran y salen por el molinete. La única excepción es una <strong>emergencia con los brazos del
-          molinete liberados</strong>: quienes salgan así seguirán figurando como presentes hasta su siguiente marcación
-          en el molinete.
+          molinete liberados</strong>: quienes salgan así seguirán figurando como presentes hasta que el vigilante
+          registre su salida manual (Panel de vigilancia, “Ya figura dentro”).
         </Nota>
       </div>
     ),

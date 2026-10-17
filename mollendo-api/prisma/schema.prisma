@@ -228,9 +228,18 @@ model EventoAcceso {
   denegadoSinVerificacion  Boolean                 @default(false) @map("denegado_sin_verificacion")
   /// Verificación manual: el vigilante indicó que el rostro no es el de la foto registrada.
   denegadoRostroNoCoincide Boolean                 @default(false) @map("denegado_rostro_no_coincide")
+  /// Antipassback: quiso ingresar, pero su último movimiento es un ingreso (no registró su salida).
+  denegadoYaDentro         Boolean                 @default(false) @map("denegado_ya_dentro")
+  /// Antipassback: quiso salir, pero no registra ingreso (su último movimiento es una salida, o no tiene).
+  denegadoSinIngreso       Boolean                 @default(false) @map("denegado_sin_ingreso")
   /// Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio), no el G4 Pro.
   verificacionManual       Boolean                 @default(false) @map("verificacion_manual")
-  /// Quién decidió en la verificación manual.
+  /// Movimiento registrado a mano por un vigilante o administrador para corregir el antipassback
+  /// (p. ej. salió en una emergencia con los brazos liberados): no pasó por el molinete.
+  correccionManual         Boolean                 @default(false) @map("correccion_manual")
+  /// Por qué se corrigió (obligatorio en las correcciones manuales).
+  motivoCorreccion         String?                 @map("motivo_correccion") @db.VarChar(300)
+  /// Quién decidió en la verificación manual, o quién registró la corrección manual.
   verificadoPorId          Int?                    @map("verificado_por_id")
   verificadoPor            Usuario?                @relation("VerificadoPor", fields: [verificadoPorId], references: [id], onDelete: SetNull)
   fechaHora                DateTime                @default(now()) @map("fecha_hora")

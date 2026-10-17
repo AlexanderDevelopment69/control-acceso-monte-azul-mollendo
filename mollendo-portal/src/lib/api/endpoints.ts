@@ -155,6 +155,9 @@ export const eventosAccesoApi = {
   /** Decisión del vigilante sobre la persona en su turno. */
   decidir: (id: number, decision: DecisionManual) =>
     apiRequest<{ ok: true }>(`/eventos-acceso/en-espera/${id}/decision`, { method: "POST", body: { decision } }),
+  /** Corrección manual del antipassback: registra la salida o el ingreso de una persona (no abre el molinete). */
+  corregir: (personaId: number, tipoMovimiento: "ingreso" | "salida", motivo: string) =>
+    apiRequest<{ eventoId: number }>("/eventos-acceso/correccion", { method: "POST", body: { personaId, tipoMovimiento, motivo } }),
 };
 
 // ---- reportes ----

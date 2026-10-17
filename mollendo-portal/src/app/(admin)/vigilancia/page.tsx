@@ -22,7 +22,8 @@ import DatePicker from "@/components/form/date-picker";
 import { AlertIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { FilasEnEspera } from "./FilasEnEspera";
-import { documentoDelEvento, MarcaVerificacionManual, MotivoDenegacion, Movimiento } from "./CeldasEvento";
+import { documentoDelEvento, MarcaCorreccionManual, MarcaVerificacionManual, MotivoDenegacion, Movimiento } from "./CeldasEvento";
+import { CorreccionAntipassback } from "./CorreccionAntipassback";
 import { DocumentosModal } from "./DocumentosModal";
 import {
   avisoDesdeHistorial,
@@ -300,6 +301,8 @@ function VigilanciaContent() {
   }, []);
 
   const [personaDocumentos, setPersonaDocumentos] = useState<number | null>(null);
+  /** Movimiento denegado por antipassback que se está corrigiendo. */
+  const [corrigiendo, setCorrigiendo] = useState<EventoAcceso | null>(null);
   const eventos = lista?.datos ?? [];
   // Las esperas son de ahora: van en la primera página, al ver hoy (o todos los
   // días), y siguen la búsqueda por nombre o DNI.
@@ -509,8 +512,13 @@ function VigilanciaContent() {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm">
                       <div className="flex flex-wrap items-center gap-1">
-                        <MotivoDenegacion evento={ev} onVerDocumentos={() => setPersonaDocumentos(ev.personaId)} />
+                        <MotivoDenegacion
+                          evento={ev}
+                          onVerDocumentos={() => setPersonaDocumentos(ev.personaId)}
+                          onCorregir={ev.personaId ? () => setCorrigiendo(ev) : undefined}
+                        />
                         <MarcaVerificacionManual evento={ev} />
+                        <MarcaCorreccionManual evento={ev} />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -523,6 +531,14 @@ function VigilanciaContent() {
       </Tarjeta>
 
       <DocumentosModal personaId={personaDocumentos} onClose={() => setPersonaDocumentos(null)} />
+      <CorreccionAntipassback
+        evento={corrigiendo}
+        onCerrar={() => setCorrigiendo(null)}
+        onCorregido={() => {
+          setCorrigiendo(null);
+          void cargar();
+        }}
+      />
     </div>
   );
 }

@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { documentosActuales } from './validacion-acceso.engine.js';
 import type { IngresoDto } from './dto/ingreso.dto.js';
 import type { SalidaDto } from './dto/salida.dto.js';
 import type { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
+import type { CorreccionAntipassbackDto } from './dto/correccion-antipassback.dto.js';
+import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { Persona, Prisma } from '../generated/prisma/client.js';
 import { paginacion, palabras, rangoDeDias, type Paginado } from '../common/paginacion.js';
 import type { RtlogRecibidoEvent } from '../push-sdk/push-sdk.service.js';
@@ -124,6 +126,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly verificacionManual: VerificacionManualService,
+    private readonly auditoria: AuditoriaService,
   ) {}
 
   onModuleInit() {
@@ -174,6 +177,19 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     return respuesta;
   }
 
+  /**
+   * Antipassback: ¿la persona figura dentro? Sí si su último movimiento
+   * autorizado es un ingreso (por el molinete o por corrección manual).
+   */
+  async figuraDentro(personaId: number): Promise<boolean> {
+    const ultimo = await this.prisma.eventoAcceso.findFirst({
+      where: { personaId, resultado: 'autorizado' },
+      orderBy: [{ fechaHora: 'desc' }, { id: 'desc' }],
+      select: { tipoMovimiento: true },
+    });
+    return ultimo?.tipoMovimiento === 'ingreso';
+  }
+
   /** Última versión de cada documento de la persona, con su vigencia a hoy. Sin aprobación (alcance base). */
   private async getDocumentosActuales(personaId: number) {
     const documentos = await this.prisma.documentoPersona.findMany({
@@ -197,6 +213,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
 
     if (persona.estado !== 'activo') {
       return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoPorBaja: true });
+    }
+
+    // Antipassback estricto: no puede volver a ingresar sin haber registrado su salida.
+    if (await this.figuraDentro(persona.id)) {
+      return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoYaDentro: true });
     }
 
     const documentos = await this.getDocumentosActuales(persona.id);
@@ -238,12 +259,13 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  /** Documento no registrado, dado de baja, sin documentos o con alguno vencido: se deniega aquí mismo, sin llegar al G4 Pro. */
+  /** Dado de baja, ya figura dentro, sin documentos o con alguno vencido: se deniega aquí mismo, sin llegar al G4 Pro. */
   private async registrarIngresoDenegadoInmediato(
     persona: Persona,
     dto: IngresoDto,
     motivos: {
       denegadoPorBaja?: boolean;
+      denegadoYaDentro?: boolean;
       denegadoSinDocumentos?: boolean;
       denegadoPorDocumentos?: boolean;
       documentosVencidos?: string[];
@@ -257,6 +279,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         tipoMovimiento: 'ingreso',
         resultado: 'denegado',
         denegadoPorBaja: motivos.denegadoPorBaja ?? false,
+        denegadoYaDentro: motivos.denegadoYaDentro ?? false,
         denegadoSinDocumentos: motivos.denegadoSinDocumentos ?? false,
         denegadoPorDocumentos: motivos.denegadoPorDocumentos ?? false,
         torniqueteId: dto.torniqueteId,
@@ -272,6 +295,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       numeroDocumento: persona.numeroDocumento,
       motivos: {
         dadoDeBaja: motivos.denegadoPorBaja ?? false,
+        yaDentro: motivos.denegadoYaDentro ?? false,
         sinDocumentos: motivos.denegadoSinDocumentos ?? false,
         documentos: motivos.denegadoPorDocumentos ?? false,
         documentosVencidos: motivos.documentosVencidos ?? [],
@@ -527,14 +551,44 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Salida: sin antipassback; con un documento registrado (aunque esté de baja) se autoriza y abre el molinete.
-   * Con `sinConexion`, el controlador ya la dejó pasar sin internet: se registra con su hora y no se abre.
+   * Salida: con un documento registrado (aunque esté de baja) y un ingreso
+   * registrado antes (antipassback estricto), se autoriza y abre el molinete.
+   * Sin ingreso registrado se deniega: el vigilante lo corrige con un ingreso
+   * manual (ver registrarCorreccion). Con `sinConexion`, el controlador ya la
+   * dejó pasar sin internet (no puede saber quién está dentro): se registra con
+   * su hora, como autorizada, y no se abre.
    */
   async registrarSalida(dto: SalidaDto) {
     const fechaHora = dto.sinConexion ? fechaSinConexion(dto.fechaHora) : undefined;
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
     if (!persona) {
       return this.registrarNoRegistrada(dto, 'salida');
+    }
+
+    // Antipassback estricto: no sale sin un ingreso registrado (no se abre).
+    if (!dto.sinConexion && !(await this.figuraDentro(persona.id))) {
+      const denegado = await this.prisma.eventoAcceso.create({
+        data: {
+          personaId: persona.id,
+          tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
+          numeroDocumento: persona.numeroDocumento,
+          tipoMovimiento: 'salida',
+          resultado: 'denegado',
+          denegadoSinIngreso: true,
+          torniqueteId: dto.torniqueteId,
+        },
+      });
+      const respuesta = {
+        eventoId: denegado.id,
+        tipoMovimiento: denegado.tipoMovimiento,
+        resultado: denegado.resultado,
+        fechaHora: denegado.fechaHora.toISOString(),
+        persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+        numeroDocumento: persona.numeroDocumento,
+        motivos: { sinIngreso: true },
+      };
+      this.eventEmitter.emit('evento-acceso.registrado', respuesta);
+      return respuesta;
     }
 
     const evento = await this.prisma.eventoAcceso.create({
@@ -567,6 +621,51 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       motivos: {},
     };
 
+    this.eventEmitter.emit('evento-acceso.registrado', respuesta);
+    return respuesta;
+  }
+
+  /**
+   * Corrección manual del antipassback (vigilante o administrador): registra
+   * la salida de quien figura dentro (p. ej. salió en una emergencia con los
+   * brazos del molinete liberados) o el ingreso de quien figura fuera (entró
+   * sin marcar). No abre el molinete: después la persona pasa su DNI como
+   * siempre. Queda con el motivo, quién la hizo y en la auditoría; no suma
+   * horas-hombre (no pasó por el molinete).
+   */
+  async registrarCorreccion(dto: CorreccionAntipassbackDto, usuario: AuthenticatedUser) {
+    const persona = await this.prisma.persona.findUnique({ where: { id: dto.personaId } });
+    if (!persona) throw new NotFoundException('Persona no encontrada');
+    const dentro = await this.figuraDentro(persona.id);
+    if (dto.tipoMovimiento === 'salida' && !dentro) {
+      throw new BadRequestException('Esa persona ya figura fuera: no hace falta registrar su salida');
+    }
+    if (dto.tipoMovimiento === 'ingreso' && dentro) {
+      throw new BadRequestException('Esa persona ya figura dentro: no hace falta registrar su ingreso');
+    }
+    const evento = await this.prisma.eventoAcceso.create({
+      data: {
+        personaId: persona.id,
+        tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
+        numeroDocumento: persona.numeroDocumento,
+        tipoMovimiento: dto.tipoMovimiento,
+        resultado: 'autorizado',
+        correccionManual: true,
+        motivoCorreccion: dto.motivo,
+        verificadoPorId: usuario.id,
+      },
+    });
+    await this.auditoria.registrar({ usuarioId: usuario.id, tablaAfectada: 'evento_acceso', registroId: evento.id, accion: 'crear' });
+    const respuesta = {
+      eventoId: evento.id,
+      tipoMovimiento: evento.tipoMovimiento,
+      resultado: evento.resultado,
+      fechaHora: evento.fechaHora.toISOString(),
+      persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+      numeroDocumento: persona.numeroDocumento,
+      motivos: {},
+      correccionManual: true,
+    };
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
     return respuesta;
   }

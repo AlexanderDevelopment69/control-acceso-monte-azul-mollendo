@@ -99,6 +99,8 @@ function motivosEvento(e: {
   denegadoPorAlcohol: boolean;
   denegadoSinVerificacion: boolean;
   denegadoRostroNoCoincide?: boolean;
+  denegadoYaDentro?: boolean;
+  denegadoSinIngreso?: boolean;
 }): string {
   const motivos: string[] = [];
   if (e.denegadoNoRegistrado) motivos.push('No registrado');
@@ -108,6 +110,8 @@ function motivosEvento(e: {
   if (e.denegadoPorAlcohol) motivos.push('Alcohol');
   if (e.denegadoSinVerificacion) motivos.push('No completó rostro y alcohol');
   if (e.denegadoRostroNoCoincide) motivos.push('Rostro no coincide');
+  if (e.denegadoYaDentro) motivos.push('Ya figura dentro');
+  if (e.denegadoSinIngreso) motivos.push('No registra ingreso');
   return motivos.join(', ');
 }
 
@@ -431,8 +435,8 @@ export class ReportesService {
         { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona. "No registrado" si el documento no está en el sistema.' },
         { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
         { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
-        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, o rostro no coincide.' },
-        { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Vacío: verificación normal.' },
+        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, rostro no coincide, ya figura dentro (no registró su salida) o no registra ingreso.' },
+        { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Corrección manual: el movimiento lo registró un vigilante o administrador sin pasar por el molinete (antipassback), con quién y el motivo. Vacío: verificación normal.' },
         { titulo: 'Molinete', ancho: 12, descripcion: 'Molinete por el que pasó.' },
       ],
       filas: eventos.map((e) => [
@@ -446,7 +450,11 @@ export class ReportesService {
         e.persona ? textoPerfil(e.persona.perfil) : null,
         e.resultado === 'denegado' ? motivosEvento(e) || null : null,
         // Rostro y alcohol: los del equipo facial, o los que verificó un vigilante (contingencia).
-        e.verificacionManual ? `Manual (${e.verificadoPor?.correo ?? 'sin decisión'})` : null,
+        e.correccionManual
+          ? `Corrección manual (${e.verificadoPor?.correo ?? '-'}): ${e.motivoCorreccion ?? ''}`
+          : e.verificacionManual
+            ? `Manual (${e.verificadoPor?.correo ?? 'sin decisión'})`
+            : null,
         e.torniqueteId,
       ]),
       resumen: [

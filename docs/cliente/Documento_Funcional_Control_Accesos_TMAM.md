@@ -276,7 +276,7 @@ Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salid
 - **Acceso:** solo el Administrador, desde la opción "Dashboard" del menú.
 - **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo), `GET /panel/dashboard/presentes` (todas las personas dentro ahora) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 12 horas).
 
-Todos entran y salen por el molinete. La única excepción es una emergencia con los brazos del molinete liberados: quienes salgan así seguirán figurando como presentes hasta su siguiente marcación en el molinete.
+Todos entran y salen por el molinete. La única excepción es una emergencia con los brazos del molinete liberados: quienes salgan así seguirán figurando como presentes hasta que el vigilante registre su salida manual (antipassback, RN-08a).
 
 ### 4.5. Reportes (Administrador)
 
@@ -338,7 +338,8 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | RN-05 | De cada documento **cuenta solo la última versión**. Renovar crea una versión nueva y la anterior queda en el historial. |
 | RN-06 | Los documentos **no requieren aprobación**: tienen validez desde su carga. Verificar que correspondan a cada persona es responsabilidad del administrador. |
 | RN-07 | **Eliminar** un documento borra todas sus versiones y archivos. Si era el único, la persona queda "sin documentos" y no puede ingresar. |
-| RN-08 | **Salida:** se autoriza a toda persona registrada, **incluso dada de baja** (para no impedir la salida del personal). No se exige haber registrado un ingreso (sin antipassback). |
+| RN-08 | **Salida:** se autoriza a toda persona registrada, **incluso dada de baja**, siempre que tenga **un ingreso registrado antes** (RN-08a). |
+| RN-08a | **Antipassback estricto** (decisión del cliente, 17/10/2026): no se puede **ingresar** si el último movimiento autorizado de la persona es un ingreso (motivo **"Ya figura dentro"**), ni **salir** si no lo es (motivo **"No registra ingreso"**). En ambos casos no se abre el molinete y suena el aviso de denegado. **Corrección manual:** el vigilante o el administrador, desde el movimiento denegado en el Panel de vigilancia, registra la salida ("Registrar salida manual") o el ingreso ("Registrar ingreso manual") que faltan, con un **motivo obligatorio**; no abre el molinete (después la persona vuelve a pasar su DNI). La corrección queda marcada como "Corrección manual" en la tabla, en el reporte de ingresos y salidas (columna "Verificación", con quién y el motivo) y en la auditoría, y no suma horas-hombre. **Excepción:** sin internet, el controlador deja salir con la lista del personal guardada (no puede saber quién está dentro); esas salidas se registran como autorizadas al volver la conexión. |
 | RN-09 | Un documento de identidad **no registrado** se deniega, tanto en el ingreso como en la salida, y el intento queda en el historial. |
 | RN-10 | **Documento de identidad:** el DNI tiene 8 dígitos; el carné de extranjería y el pasaporte, letras y números. Se guarda sin espacios y en mayúsculas. No puede haber dos personas con el mismo tipo y número. |
 | RN-11 | Los **nombres de documento** no distinguen mayúsculas: "sctr" y "SCTR" son el mismo tipo de documento. |

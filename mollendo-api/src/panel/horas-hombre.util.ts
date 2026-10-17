@@ -5,6 +5,8 @@
  * - Solo cuentan las visitas completas: ingreso y salida por el molinete. Quien
  *   sigue dentro todavía no suma; sus horas cuentan cuando marca la salida.
  * - Una visita que cruza el periodo suma solo las horas que caen dentro de él.
+ * - Una visita con un ingreso o una salida registrados a mano (corrección del
+ *   antipassback) no suma: no pasó por el molinete y su hora no es la real.
  * Funciones puras: el servicio lee los movimientos y arma la respuesta.
  */
 
@@ -12,6 +14,8 @@ export interface MovimientoAutorizado {
   personaId: number;
   tipoMovimiento: 'ingreso' | 'salida';
   fechaHora: Date;
+  /** Registrado a mano por el vigilante (no pasó por el molinete). */
+  correccionManual?: boolean;
 }
 
 export interface VisitaConHoras {
@@ -36,13 +40,15 @@ export function calcularHorasHombre(movimientos: MovimientoAutorizado[], inicio:
   for (const [personaId, propios] of porPersona) {
     propios.sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
     let abierto: Date | null = null;
+    let abiertoAMano = false;
     for (const m of propios) {
       if (m.tipoMovimiento === 'ingreso') {
-        // Dos ingresos seguidos: cuenta desde el último.
+        // Dos ingresos seguidos (antes del antipassback): cuenta desde el último.
         abierto = m.fechaHora;
+        abiertoAMano = !!m.correccionManual;
       } else if (abierto) {
         const ms = Math.min(m.fechaHora.getTime(), fin.getTime()) - Math.max(abierto.getTime(), inicio.getTime());
-        if (ms > 0) visitas.push({ personaId, ingreso: abierto, salida: m.fechaHora, ms });
+        if (ms > 0 && !abiertoAMano && !m.correccionManual) visitas.push({ personaId, ingreso: abierto, salida: m.fechaHora, ms });
         abierto = null;
       }
       // Una salida sin ingreso antes (por ejemplo, entró antes de que se instalara el sistema) no suma.
