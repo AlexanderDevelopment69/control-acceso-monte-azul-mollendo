@@ -17,6 +17,7 @@ import type {
   Paginado,
   Persona,
   PersonaPermanencia,
+  PersonaPresente,
   ResultadoSincronizacionG4,
   ResumenPanel,
   RolUsuario,
@@ -153,6 +154,8 @@ export const panelApi = {
   resumen: () => apiRequest<ResumenPanel>("/panel/resumen"),
   dashboard: (params: { desde?: string; hasta?: string } = {}) =>
     apiRequest<Dashboard>(`/panel/dashboard${consulta(params)}`),
+  /** Todas las personas dentro ahora, de mayor a menor tiempo dentro. */
+  presentes: () => apiRequest<{ generadoEn: string; datos: PersonaPresente[] }>("/panel/dashboard/presentes"),
   permanencia: (params: { pagina?: number; porPagina?: number } = {}) =>
     apiRequest<Paginado<PersonaPermanencia>>(`/panel/dashboard/permanencia${consulta(params)}`),
   estadoSistema: () => apiRequest<EstadoSistema>("/panel/estado-sistema"),

@@ -14,6 +14,7 @@ import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import TarjetaIndicador from "@/components/ui/tarjeta/TarjetaIndicador";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { COLORES, Grafico } from "@/components/dashboard/Grafico";
+import { PresentesModal } from "@/components/dashboard/PresentesModal";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { pieDePagina } from "@/lib/paginaServidor";
@@ -120,6 +121,7 @@ function DashboardContent() {
   const [cargando, setCargando] = useState(true);
   const [paginaPermanencia, setPaginaPermanencia] = useState(1);
   const [permanencia, setPermanencia] = useState<Paginado<PersonaPermanencia> | null>(null);
+  const [verPresentes, setVerPresentes] = useState(false);
 
   const { desde, hasta, rangoValido } = periodoElegido;
 
@@ -217,6 +219,8 @@ function DashboardContent() {
           detalle={detallePresentes(d)}
           icono={<UserIcon />}
           fondoIcono="bg-brand-500"
+          title="Ver quiénes están dentro"
+          onClick={() => setVerPresentes(true)}
         />
         <TarjetaIndicador
           titulo="Ingresos finalizados"
@@ -504,6 +508,7 @@ function DashboardContent() {
           </div>
         )
       )}
+      <PresentesModal isOpen={verPresentes} onClose={() => setVerPresentes(false)} actualizado={d?.generadoEn} />
     </div>
   );
 }

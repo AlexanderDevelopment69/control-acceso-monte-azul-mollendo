@@ -60,6 +60,13 @@ export class PanelController {
     return this.dashboardService.permanencia(query);
   }
 
+  // Todas las personas dentro ahora (lista de "Presentes actualmente" del dashboard).
+  @Get('panel/dashboard/presentes')
+  @Roles('administrador')
+  presentes() {
+    return this.dashboardService.presentes();
+  }
+
   // Estado del servidor (público). En el alcance base no hay modo contingencia;
   // la pantalla de garita lo usa solo para avisar si el servidor no responde.
   @Get('health')

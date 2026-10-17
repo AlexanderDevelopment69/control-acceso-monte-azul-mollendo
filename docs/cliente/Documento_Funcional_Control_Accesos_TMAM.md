@@ -243,7 +243,7 @@ Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salid
 
 | Indicador | Cálculo |
 |---|---|
-| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 12 horas). |
+| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 12 horas).  Al presionar la tarjeta se abre la lista de quiénes son (persona, perfil, empresa, hora de ingreso y tiempo dentro; de mayor a menor permanencia, en naranja más de 12 horas), con buscador, filtro por perfil y descarga en Excel |
 | Ingresos finalizados | Ingresos del periodo que ya registraron su salida. |
 | Total de ingresos | Ingresos autorizados en el periodo. |
 | Permanencia mayor a 12 horas | Personas que ingresaron hace más de 12 horas y no registran salida. |
@@ -254,7 +254,7 @@ Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salid
 - **Lista de permanencia mayor a 12 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
 
 - **Acceso:** solo el Administrador, desde la opción "Dashboard" del menú.
-- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 12 horas).
+- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo), `GET /panel/dashboard/presentes` (todas las personas dentro ahora) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 12 horas).
 
 Todos entran y salen por el molinete. La única excepción es una emergencia con los brazos del molinete liberados: quienes salgan así seguirán figurando como presentes hasta su siguiente marcación en el molinete.
 

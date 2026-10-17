@@ -183,6 +183,43 @@ export class DashboardService {
     return { datos, total: masDe12h.length, pagina, porPagina } satisfies Paginado<(typeof datos)[number]>;
   }
 
+  /**
+   * Todas las personas dentro ahora (último movimiento autorizado = ingreso), de
+   * mayor a menor tiempo dentro, para la lista de "Presentes actualmente". Sin
+   * paginar: la ventana busca y filtra en la pantalla.
+   */
+  async presentes() {
+    const ahora = new Date();
+    const { dentro } = await this.calcularPresenciaActual(ahora);
+    const personas = await this.prisma.persona.findMany({
+      where: { id: { in: dentro.map((d) => d.personaId) } },
+      select: {
+        id: true,
+        nombres: true,
+        apellidos: true,
+        numeroDocumento: true,
+        perfil: true,
+        empresa: { select: { razonSocial: true } },
+      },
+    });
+    const porId = new Map(personas.map((p) => [p.id, p]));
+    const datos = dentro
+      .filter((d) => porId.has(d.personaId))
+      .map((d) => {
+        const p = porId.get(d.personaId)!;
+        return {
+          personaId: p.id,
+          nombres: p.nombres,
+          apellidos: p.apellidos,
+          numeroDocumento: p.numeroDocumento,
+          perfil: p.perfil,
+          empresa: p.empresa.razonSocial,
+          ingreso: d.fechaHora.toISOString(),
+        };
+      });
+    return { generadoEn: ahora.toISOString(), datos };
+  }
+
   /** Visitas del periodo: cada ingreso autorizado de cualquier persona. */
   private async visitas(rango: { gte?: Date; lt?: Date }) {
     const ingresos = await this.prisma.eventoAcceso.findMany({

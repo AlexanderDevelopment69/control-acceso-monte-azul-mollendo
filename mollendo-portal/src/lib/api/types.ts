@@ -175,6 +175,17 @@ export interface Dashboard {
   documentos: { vigentes: number; porVencer: number; vencidos: number; diasAviso: number };
 }
 
+/** Persona dentro del terminal ahora (GET /panel/dashboard/presentes). */
+export interface PersonaPresente {
+  personaId: number;
+  nombres: string;
+  apellidos: string;
+  numeroDocumento: string;
+  perfil: Perfil | null;
+  empresa: string;
+  ingreso: string;
+}
+
 /** Persona con permanencia mayor a 12 horas (GET /panel/dashboard/permanencia, paginado). */
 export interface PersonaPermanencia {
   personaId: number;
