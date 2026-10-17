@@ -636,7 +636,7 @@ export const SECCIONES: SeccionManual[] = [
               Icono: IconoUsuarios,
               boton: "Presentes actualmente",
               comillas: false,
-              texto: "Todas las personas que están dentro ahora, sin importar cuándo entraron. Debajo se indica cuántas ingresaron en el periodo y cuántas antes. Al presionarla se abre la lista de quiénes son (de mayor a menor tiempo dentro, con buscador, filtro por perfil y “Descargar Excel”): útil, por ejemplo, en una evacuación.",
+              texto: "Todas las personas que están dentro ahora, sin importar cuándo entraron. Debajo se indica cuántas ingresaron en el periodo y cuántas antes. Al presionarla se abre la vista “Presentes ahora” con la lista de quiénes son (de mayor a menor tiempo dentro, con buscador, filtro por perfil y “Descargar Excel”; se actualiza sola): útil, por ejemplo, en una evacuación. Para regresar, “‹ Dashboard” arriba a la izquierda.",
             },
             {
               Icono: IconoRegistrado,

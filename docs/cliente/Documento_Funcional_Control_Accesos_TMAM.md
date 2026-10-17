@@ -243,7 +243,7 @@ Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salid
 
 | Indicador | Cálculo |
 |---|---|
-| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 12 horas).  Al presionar la tarjeta se abre la lista de quiénes son (persona, perfil, empresa, hora de ingreso y tiempo dentro; de mayor a menor permanencia, en naranja más de 12 horas), con buscador, filtro por perfil y descarga en Excel |
+| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 12 horas).  Al presionar la tarjeta se abre la vista **Presentes ahora** (`/dashboard/presentes`) con la lista de quiénes son (persona, perfil, empresa, hora de ingreso y tiempo dentro; de mayor a menor permanencia, en naranja más de 12 horas), con buscador, filtro por perfil y descarga en Excel |
 | Ingresos finalizados | Ingresos del periodo que ya registraron su salida. |
 | Total de ingresos | Ingresos autorizados en el periodo. |
 | Permanencia mayor a 12 horas | Personas que ingresaron hace más de 12 horas y no registran salida. |
@@ -283,7 +283,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 ### 4.6. Auditoría (Administrador)
 
 - Registro de solo lectura que indica qué usuario creó, modificó o eliminó cada dato y en qué fecha: personal, empresas, documentos, tipos de documento y usuarios.
-- Búsqueda por usuario o por tipo de dato ("personal", "documento"…) y filtro por rango de fechas ("Desde" / "Hasta"), paginado de 15 registros por página.
+- Búsqueda por usuario o por tipo de dato ("personal", "documento"…) y filtro por rango de fechas ("Desde" / "Hasta"), paginado de 10 registros por página.
 
 ### 4.7. Sistema y APIs (Administrador)
 

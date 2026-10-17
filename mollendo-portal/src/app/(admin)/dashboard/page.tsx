@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
+import { useRouter } from "next/navigation";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { connectEventosSocket } from "@/lib/ws";
 import { panelApi } from "@/lib/api/endpoints";
@@ -14,7 +15,6 @@ import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import TarjetaIndicador from "@/components/ui/tarjeta/TarjetaIndicador";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { COLORES, Grafico } from "@/components/dashboard/Grafico";
-import { PresentesModal } from "@/components/dashboard/PresentesModal";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { pieDePagina } from "@/lib/paginaServidor";
@@ -121,7 +121,7 @@ function DashboardContent() {
   const [cargando, setCargando] = useState(true);
   const [paginaPermanencia, setPaginaPermanencia] = useState(1);
   const [permanencia, setPermanencia] = useState<Paginado<PersonaPermanencia> | null>(null);
-  const [verPresentes, setVerPresentes] = useState(false);
+  const router = useRouter();
 
   const { desde, hasta, rangoValido } = periodoElegido;
 
@@ -220,7 +220,7 @@ function DashboardContent() {
           icono={<UserIcon />}
           fondoIcono="bg-brand-500"
           title="Ver quiénes están dentro"
-          onClick={() => setVerPresentes(true)}
+          onClick={() => router.push("/dashboard/presentes")}
         />
         <TarjetaIndicador
           titulo="Ingresos finalizados"
@@ -508,7 +508,6 @@ function DashboardContent() {
           </div>
         )
       )}
-      <PresentesModal isOpen={verPresentes} onClose={() => setVerPresentes(false)} actualizado={d?.generadoEn} />
     </div>
   );
 }

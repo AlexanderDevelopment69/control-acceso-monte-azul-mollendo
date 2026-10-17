@@ -40,7 +40,8 @@ const AppSidebar: React.FC = () => {
   const { user } = useAuth();
 
   const visibleItems = navItems.filter((item) => (user ? item.roles.includes(user.rol) : false));
-  const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  // También en sus vistas internas (p. ej. /dashboard/presentes resalta "Dashboard").
+  const isActive = useCallback((path: string) => path === pathname || (path !== "/" && pathname.startsWith(`${path}/`)), [pathname]);
 
   // En el celular el menú tapa la página: se cierra al elegir una opción.
   const cerrarEnCelular = () => {

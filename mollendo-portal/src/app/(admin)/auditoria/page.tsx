@@ -34,7 +34,7 @@ const ACCION_COLOR: Record<string, "success" | "warning" | "error" | "info"> = {
   eliminar: "error",
 };
 
-const POR_PAGINA = 15;
+const POR_PAGINA = 10;
 
 function AuditoriaContent() {
   const [lista, setLista] = useState<Paginado<AuditoriaEntry> | null>(null);
