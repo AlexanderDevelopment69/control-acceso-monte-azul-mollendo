@@ -221,6 +221,11 @@
   html.dark {
     color-scheme: dark;
   }
+  /* En el inicio de sesión no hace falta: la página entra en la pantalla y el
+     espacio reservado se vería como una franja al lado de la foto. */
+  html:has(.pagina-acceso) {
+    scrollbar-gutter: auto;
+  }
   /* Barras de desplazamiento delgadas, redondeadas, sin flechas y con el color
      del tema (en toda la página y en las listas con scroll propio).
      Chrome, Edge y Safari: con ::-webkit-scrollbar (permite quitar las flechas
