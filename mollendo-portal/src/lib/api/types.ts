@@ -281,6 +281,8 @@ export interface ResultadoSincronizacionG4 {
   agregadas: number;
   borradas: number;
   permisosQuitados: number;
+  /** Personas con datos cambiados a mano en el equipo (contraseña, administrador…), corregidas. Falta en las anteriores al 18/10/2026. */
+  corregidas?: number;
   usuariosABorrar: string[];
   /** Usuarios y rostros que tenía cada equipo al consultarlo (antes de los cambios). */
   porEquipo: { serialNumber: string; usuarios: number; conRostro: number; sinRostro: string[] }[];

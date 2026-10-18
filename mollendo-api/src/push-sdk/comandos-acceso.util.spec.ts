@@ -11,6 +11,7 @@ import {
   pinsDeRespuestaUsuarios,
   planDeSincronizacion,
   textoCampo,
+  usuariosConDatosDistintos,
 } from './comandos-acceso.util.js';
 
 describe('comandos del protocolo de control de acceso (G4 Pro)', () => {
@@ -89,3 +90,37 @@ describe('entrega de comandos al equipo, por lotes', () => {
   });
 });
 
+
+describe('usuariosConDatosDistintos (sincronización: datos cambiados a mano en el equipo)', () => {
+  const T = '\t';
+  const linea = (campos: Record<string, string>) =>
+    'user ' + Object.entries({ uid: '2', cardno: '', pin: '48058719', password: '', group: '0', starttime: '0', endtime: '0', name: 'Amiel Bautista', privilege: '0', disable: '0', verify: '0', ...campos }).map(([k, v]) => `${k}=${v}`).join(T);
+  const esperadas = new Map([
+    ['48058719', { pin: '48058719', nombres: 'Amiel', apellidos: 'Bautista' }],
+    ['15724705', { pin: '15724705', nombres: 'Fernando', apellidos: 'Herrera Broncales' }],
+  ]);
+
+  it('respuesta real del equipo (18/10): Amiel con contraseña 1234; Fernando correcto (nombre cortado a 24 por el equipo)', () => {
+    const respuesta = [
+      `user uid=2${T}cardno=${T}pin=48058719${T}password=1234${T}group=0${T}starttime=0${T}endtime=0${T}name=Amiel Bautista${T}privilege=0${T}disable=0${T}verify=0`,
+      `user uid=3${T}cardno=${T}pin=15724705${T}password=${T}group=0${T}starttime=0${T}endtime=0${T}name=Fernando Herrera Broncal${T}privilege=0${T}disable=0${T}verify=0`,
+    ].join('\n');
+    expect(usuariosConDatosDistintos(respuesta, esperadas)).toEqual(['48058719']);
+  });
+
+  it('detecta privilegio de administrador, tarjeta, deshabilitado, vigencia y nombre cambiados', () => {
+    const cambios: Record<string, string>[] = [{ privilege: '14' }, { cardno: '123456' }, { disable: '1' }, { starttime: '20261001' }, { endtime: '20261231' }, { name: 'Otro Nombre' }];
+    for (const cambio of cambios) {
+      expect(usuariosConDatosDistintos(linea(cambio), esperadas)).toEqual(['48058719']);
+    }
+  });
+
+  it('con los datos que pone el sistema, no hay nada que corregir (tarjeta vacía o 0 da igual)', () => {
+    expect(usuariosConDatosDistintos(linea({}), esperadas)).toEqual([]);
+    expect(usuariosConDatosDistintos(linea({ cardno: '0' }), esperadas)).toEqual([]);
+  });
+
+  it('solo compara a las personas esperadas (las que no son del sistema las borra el plan)', () => {
+    expect(usuariosConDatosDistintos(linea({ pin: '777', password: '1' }), esperadas)).toEqual([]);
+  });
+});

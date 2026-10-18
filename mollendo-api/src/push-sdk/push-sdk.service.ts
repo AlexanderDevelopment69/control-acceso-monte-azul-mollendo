@@ -17,6 +17,8 @@ import {
   pinDeDocumento,
   pinsDeRespuestaUsuarios,
   planDeSincronizacion,
+  type PersonaParaEquipo,
+  usuariosConDatosDistintos,
 } from './comandos-acceso.util.js';
 import { leerRegistroAsistencia } from './asistencia.util.js';
 
@@ -337,15 +339,26 @@ export class PushSdkService {
    * usuarios que el sistema no conoce (por ejemplo, registrados a mano en el
    * equipo, que tienen paso permanente) y deja los permisos de paso como
    * deben estar: normalmente solo la persona en su turno; en el orden
-   * "facial primero", todo el personal activo (`pinsConPermiso`). Devuelve
-   * los pins que faltan en algún equipo, para registrarlos con foto.
+   * "facial primero", todo el personal activo (`pinsConPermiso`). A quien
+   * está en el equipo con datos cambiados a mano (contraseña, administrador,
+   * tarjeta, nombre…) se le vuelven a poner los del sistema (`datosEsperados`:
+   * el personal activo; no toca su rostro). Devuelve los pins que faltan en
+   * algún equipo, para registrarlos con foto.
    */
-  async limpiarEquipos(pinsSistema: Set<string>, pinsActivos: Set<string>, pinsConPermiso: Set<string>, aplicar = true) {
+  async limpiarEquipos(
+    pinsSistema: Set<string>,
+    pinsActivos: Set<string>,
+    pinsConPermiso: Set<string>,
+    aplicar = true,
+    datosEsperados: Map<string, PersonaParaEquipo> = new Map(),
+  ) {
     const resultado = {
       equipos: 0,
       sinRespuesta: 0,
       borrados: 0,
       permisosQuitados: 0,
+      /** Personas con datos cambiados a mano en el equipo, a las que se les vuelven a poner los del sistema. */
+      corregidos: new Set<string>(),
       faltantes: new Set<string>(),
       sobrantes: new Set<string>(),
       /** Por equipo: usuarios y rostros que tenía al consultarlo (antes de los cambios). */
@@ -381,6 +394,12 @@ export class PushSdkService {
       plan.faltantes.forEach((pin) => resultado.faltantes.add(pin));
       resultado.borrados += plan.sobrantes.length;
       plan.sobrantes.forEach((pin) => resultado.sobrantes.add(pin));
+      const aCorregir = usuariosConDatosDistintos(usuarios, datosEsperados);
+      comandos.push(...aCorregir.flatMap((pin) => comandosPersona(datosEsperados.get(pin)!)));
+      aCorregir.forEach((pin) => resultado.corregidos.add(pin));
+      if (aCorregir.length > 0) {
+        this.logger.warn(`${dispositivo.serialNumber}: datos cambiados a mano en el equipo; se corrigen: ${aCorregir.join(', ')}`);
+      }
 
       const permisos = conteoDeRespuesta((await this.consultar(dispositivo.id, 'DATA COUNT userauthorize')) ?? '', 'userauthorize');
       const conPermiso = pinsEquipo.filter((pin) => pinsConPermiso.has(pin));

@@ -95,7 +95,8 @@ export function SincronizacionG4({
           <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sincronización con el G4 Pro</h2>
           <p className="mt-1 text-xs text-gray-400">
             Deja el terminal igual al sistema: borra a quien no está registrado (por ejemplo, registrado a mano en el
-            equipo), quita permisos de paso sueltos y registra con foto al personal activo que falte.
+            equipo), quita permisos de paso sueltos, registra con foto al personal activo que falte y corrige los datos cambiados a
+            mano en el equipo (contraseña, administrador, tarjeta o nombre).
           </p>
           <div className="mt-3 flex min-h-8 flex-wrap items-center gap-3">
             {!estado ? (
@@ -162,8 +163,15 @@ export function SincronizacionG4({
               <p className="mt-1 text-gray-700 dark:text-gray-300">
                 {ultima.simulacion ? "Agregaría" : "Agregadas"}: <strong>{ultima.agregadas}</strong> ·{" "}
                 {ultima.simulacion ? "Borraría" : "Borrados"}: <strong>{ultima.borradas}</strong> ·{" "}
-                {ultima.simulacion ? "Permisos a quitar" : "Permisos quitados"}: <strong>{ultima.permisosQuitados}</strong>
+                {ultima.simulacion ? "Permisos a quitar" : "Permisos quitados"}: <strong>{ultima.permisosQuitados}</strong> ·{" "}
+                {ultima.simulacion ? "Datos a corregir" : "Datos corregidos"}: <strong>{ultima.corregidas ?? 0}</strong>
               </p>
+              {(ultima.corregidas ?? 0) > 0 && (
+                <p className="mt-1 text-xs text-brand-500 dark:text-brand-400">
+                  Datos cambiados a mano en el equipo (contraseña, administrador, tarjeta o nombre): se vuelven a poner los del
+                  sistema. El rostro no cambia.
+                </p>
+              )}
               {ultima.usuariosABorrar.length > 0 && (
                 <p className="mt-1 text-xs text-brand-500 dark:text-brand-400">
                   En el equipo pero no registradas en el sistema: {personas(ultima.usuariosABorrar.length)}{" "}
@@ -175,7 +183,7 @@ export function SincronizacionG4({
                   Ningún terminal facial conectado a este servidor: no se revisó nada.
                 </p>
               ) : (
-                ultima.agregadas + ultima.borradas + ultima.permisosQuitados === 0 &&
+                ultima.agregadas + ultima.borradas + ultima.permisosQuitados + (ultima.corregidas ?? 0) === 0 &&
                 ultima.equiposSinRespuesta === 0 && (
                   <p className="mt-1 text-xs text-success-600 dark:text-success-500">
                     ✔ Todo en orden: el terminal {ultima.simulacion ? "tiene" : "ya tenía"} a las mismas

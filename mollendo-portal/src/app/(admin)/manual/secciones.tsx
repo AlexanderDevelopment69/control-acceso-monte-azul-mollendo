@@ -959,8 +959,9 @@ export const SECCIONES: SeccionManual[] = [
               <>
                 <p>Actívela para que se sincronice sola cada día y elija la hora. Pide confirmación.</p>
                 <p>
-                  Sincronizar deja el terminal igual al sistema: borra a quien no está registrado, quita permisos sueltos y registra con su
-                  foto al personal activo que falte. Nunca registre personas directamente en el terminal.
+                  Sincronizar deja el terminal igual al sistema: borra a quien no está registrado, quita permisos sueltos, registra con su
+                  foto al personal activo que falte y corrige los datos cambiados a mano en el terminal (contraseña, administrador, tarjeta o
+                  nombre), sin tocar el rostro. Nunca registre personas directamente en el terminal.
                 </p>
               </>
             ),

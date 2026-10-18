@@ -29,6 +29,8 @@ export interface ResultadoSincronizacion {
   agregadas: number;
   borradas: number;
   permisosQuitados: number;
+  /** Personas con datos cambiados a mano en el equipo (contraseña, administrador…), corregidas. */
+  corregidas: number;
   usuariosABorrar: string[];
   porEquipo: { serialNumber: string; usuarios: number; conRostro: number; sinRostro: string[] }[];
 }
@@ -39,6 +41,7 @@ const RESUMEN_VACIO = {
   agregadas: 0,
   borradas: 0,
   permisosQuitados: 0,
+  corregidas: 0,
   usuariosABorrar: [],
   porEquipo: [],
 };
@@ -213,7 +216,10 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
     // Normal: solo la persona en su turno tiene permiso. Facial primero: todo el personal activo.
     const facialPrimero = await leerFacialPrimero(this.prisma);
     const conPermiso = facialPrimero ? activos : new Set(pinEnTurno ? [pinEnTurno] : []);
-    const limpieza = await this.pushSdk.limpiarEquipos(new Set(porPin.keys()), activos, conPermiso, !simular);
+    const datosEsperados = new Map(
+      [...activos].map((pin) => [pin, { pin, nombres: porPin.get(pin)!.nombres, apellidos: porPin.get(pin)!.apellidos }]),
+    );
+    const limpieza = await this.pushSdk.limpiarEquipos(new Set(porPin.keys()), activos, conPermiso, !simular, datosEsperados);
     for (const pin of simular ? [] : limpieza.faltantes) {
       await this.pushSdk.sincronizarPersona(porPin.get(pin)!, { conFoto: true });
       if (facialPrimero) await this.pushSdk.habilitarEnEquipos(pin, true);
@@ -225,6 +231,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
       agregadas: limpieza.faltantes.size,
       borradas: limpieza.borrados,
       permisosQuitados: limpieza.permisosQuitados,
+      corregidas: limpieza.corregidos.size,
       usuariosABorrar: [...limpieza.sobrantes],
       porEquipo: limpieza.porEquipo,
     };

@@ -82,6 +82,38 @@ export function pinsDeRespuestaUsuarios(datos: string): string[] {
   return [...pins];
 }
 
+/**
+ * Personas del sistema que están en el equipo con datos distintos de los que
+ * les pone el sistema (`comandosPersona`): contraseña, privilegio de
+ * administrador, tarjeta, deshabilitada, vigencia o nombre cambiados a mano en
+ * el menú del equipo. Una contraseña, por ejemplo, podría servir para
+ * identificarse sin el rostro. Se comparan solo las que están en `esperadas`.
+ */
+export function usuariosConDatosDistintos(respuestaUsuarios: string, esperadas: Map<string, PersonaParaEquipo>): string[] {
+  const distintos: string[] = [];
+  for (const linea of respuestaUsuarios.split(/\r?\n/)) {
+    const campos: Record<string, string> = {};
+    for (const parte of linea.split('\t')) {
+      const igual = parte.indexOf('=');
+      if (igual > 0) campos[parte.slice(0, igual).replace(/^user\s+/i, '').trim().toLowerCase()] = parte.slice(igual + 1).trim();
+    }
+    const persona = campos.pin ? esperadas.get(campos.pin) : undefined;
+    if (!persona) continue;
+    const sinValor = (v: string | undefined) => !v || v === '0';
+    const nombre = textoCampo(`${persona.nombres} ${persona.apellidos}`).normalize('NFC');
+    const correcto =
+      !campos.password &&
+      sinValor(campos.privilege) &&
+      sinValor(campos.cardno) &&
+      sinValor(campos.disable) &&
+      sinValor(campos.starttime) &&
+      sinValor(campos.endtime) &&
+      (campos.name ?? '').normalize('NFC') === nombre;
+    if (!correcto) distintos.push(campos.pin);
+  }
+  return distintos;
+}
+
 /** Valor de la respuesta a `DATA COUNT <tabla>` (`userauthorize=50` → 50), o null si no se entiende. */
 export function conteoDeRespuesta(datos: string, tabla: string): number | null {
   const valor = new RegExp(`${tabla}=(\\d+)`, 'i').exec(datos)?.[1];
