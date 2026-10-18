@@ -42,11 +42,11 @@ export function SubirDocumentoForm({
     e.preventDefault();
     setError(null);
     if (!nombre.trim()) {
-      setError("Escribe el nombre del documento");
+      setError("Escriba el nombre del documento");
       return;
     }
     if (!archivo) {
-      setError("Adjunta el archivo del documento");
+      setError("Adjunte el archivo del documento");
       return;
     }
     const problemaArchivo = validarArchivoDocumento(archivo);
@@ -56,7 +56,7 @@ export function SubirDocumentoForm({
     }
     // Las fechas AAAA-MM-DD se comparan como texto. Vence hoy sí vale.
     if (fechaVencimiento && fechaVencimiento < hoy()) {
-      setError("La fecha de vencimiento ya pasó: el documento quedaría vencido. Revisa la fecha.");
+      setError("La fecha de vencimiento ya pasó: el documento quedaría vencido. Revise la fecha.");
       return;
     }
     setLoading(true);
@@ -102,7 +102,7 @@ export function SubirDocumentoForm({
           value={fechaVencimiento}
           onChange={setFechaVencimiento}
         />
-        <p className="mt-1 text-xs text-gray-400">Déjalo vacío si el documento no vence.</p>
+        <p className="mt-1 text-xs text-gray-400">Déjelo vacío si el documento no vence.</p>
       </div>
       <div>
         <Label>Archivo</Label>

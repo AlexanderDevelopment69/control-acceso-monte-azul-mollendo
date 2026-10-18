@@ -105,6 +105,8 @@ export interface EventoPeriodo {
   denegadoRostroNoCoincide?: boolean;
   denegadoYaDentro?: boolean;
   denegadoSinIngreso?: boolean;
+  denegadoSinFacial?: boolean;
+  denegadoSinDni?: boolean;
 }
 
 /** Totales, motivos de denegación y serie diaria de los movimientos del periodo. */
@@ -143,7 +145,8 @@ export function resumirMovimientos(eventos: EventoPeriodo[], dias: string[]) {
       if (e.denegadoSinDocumentos) motivos.sinDocumentos++;
       if (e.denegadoPorDocumentos) motivos.documentos++;
       if (e.denegadoPorAlcohol) motivos.alcohol++;
-      if (e.denegadoSinVerificacion) motivos.sinVerificacion++;
+      // En el orden "facial primero", no hacer rostro y alcohol o no pasar el DNI a tiempo también es no completar el ingreso.
+      if (e.denegadoSinVerificacion || e.denegadoSinFacial || e.denegadoSinDni) motivos.sinVerificacion++;
       if (e.denegadoRostroNoCoincide) motivos.rostroNoCoincide++;
       if (e.denegadoYaDentro) motivos.yaDentro++;
       if (e.denegadoSinIngreso) motivos.sinIngreso++;

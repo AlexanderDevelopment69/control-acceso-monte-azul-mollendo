@@ -81,6 +81,10 @@ enum AccionAuditoria {
   crear
   modificar
   eliminar
+  /// Inicio de sesión correcto en el portal.
+  inicio_sesion
+  /// Intento de inicio de sesión rechazado (correo o contraseña incorrectos, o cuenta de baja).
+  inicio_sesion_fallido
 
   @@map("accion_auditoria")
 }
@@ -232,6 +236,13 @@ model EventoAcceso {
   denegadoYaDentro         Boolean                 @default(false) @map("denegado_ya_dentro")
   /// Antipassback: quiso salir, pero no registra ingreso (su último movimiento es una salida, o no tiene).
   denegadoSinIngreso       Boolean                 @default(false) @map("denegado_sin_ingreso")
+  /// Orden "facial primero" (permiso fijo): ingreso con rostro y alcohol aprobados en el G4 Pro y el DNI al final.
+  /// El equipo no dice quién aprobó: no se confirma que quien sopló sea el del DNI (lo compara el vigilante).
+  facialPrimero            Boolean                 @default(false) @map("facial_primero")
+  /// Orden "facial primero": pasó su DNI sin una aprobación de rostro y alcohol en los 20 s anteriores.
+  denegadoSinFacial        Boolean                 @default(false) @map("denegado_sin_facial")
+  /// Orden "facial primero": alguien aprobó rostro y alcohol, pero nadie pasó su DNI a tiempo (sin persona).
+  denegadoSinDni           Boolean                 @default(false) @map("denegado_sin_dni")
   /// Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio), no el G4 Pro.
   verificacionManual       Boolean                 @default(false) @map("verificacion_manual")
   /// Movimiento registrado a mano por un vigilante o administrador para corregir el antipassback
@@ -263,16 +274,20 @@ model EventoAcceso {
 // que manda el rtlog no es confiable, ver VerificacionDispositivo).
 // ---------------------------------------------------------------------
 model IngresoPendiente {
-  id           Int       @id @default(autoincrement())
-  personaId    Int       @map("persona_id")
-  persona      Persona   @relation(fields: [personaId], references: [id], onDelete: Cascade)
-  torniqueteId String?   @map("torniquete_id") @db.VarChar(50)
-  creadoEn     DateTime  @default(now()) @map("creado_en")
-  consumidoEn  DateTime? @map("consumido_en")
+  id                Int       @id @default(autoincrement())
+  personaId         Int       @map("persona_id")
+  persona           Persona   @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  torniqueteId      String?   @map("torniquete_id") @db.VarChar(50)
+  creadoEn          DateTime  @default(now()) @map("creado_en")
+  consumidoEn       DateTime? @map("consumido_en")
   /// Cuándo se le dio permiso de paso en el G4 Pro (null = en cola, esperando que termine la anterior).
-  habilitadoEn DateTime? @map("habilitado_en")
+  habilitadoEn      DateTime? @map("habilitado_en")
   /// Creada durante la verificación manual: la decide un vigilante (no se habilita en el G4 Pro).
-  manual       Boolean   @default(false)
+  manual            Boolean   @default(false)
+  /// Versión con E23 de "facial primero" (17/10/2026, hoy sin uso: rige la de permiso fijo). Se conservan las columnas.
+  facialPrimero     Boolean   @default(false) @map("facial_primero")
+  /// Orden "facial primero": cuándo aprobó rostro y alcohol (desde ahí tiene un minuto para pasar su DNI).
+  alcoholAprobadoEn DateTime? @map("alcohol_aprobado_en")
 
   @@index([personaId, consumidoEn])
   @@map("ingreso_pendiente")
@@ -389,6 +404,10 @@ model Auditoria {
   registroId    Int             @map("registro_id")
   accion        AccionAuditoria
   fechaHora     DateTime        @default(now()) @map("fecha_hora")
+  /// Dirección IP desde donde se hizo (inicios de sesión).
+  ip            String?         @db.VarChar(45)
+  /// Detalle del intento: el correo escrito y por qué se rechazó (inicios de sesión).
+  detalle       String?         @db.VarChar(200)
 
   @@index([tablaAfectada, registroId])
   @@index([fechaHora])
@@ -401,6 +420,21 @@ model Auditoria {
 // reinicie. `resultado` lleva el detalle (equipos, agregadas, borradas,
 // permisos quitados, usuarios a borrar y usuarios/rostros por equipo).
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// AJUSTE_SISTEMA (ajustes que cambia el administrador desde el portal)
+// "orden_ingreso": "dni-primero" (normal) o "facial-primero" (en prueba).
+// ---------------------------------------------------------------------
+model AjusteSistema {
+  id            Int      @id @default(autoincrement())
+  clave         String   @unique @db.VarChar(50)
+  valor         String   @db.VarChar(100)
+  modificadoEn  DateTime @updatedAt @map("modificado_en")
+  /// Correo de quien lo cambió (el detalle queda en la auditoría).
+  modificadoPor String?  @map("modificado_por") @db.VarChar(150)
+
+  @@map("ajuste_sistema")
+}
+
 model SincronizacionG4 {
   id         Int      @id @default(autoincrement())
   fecha      DateTime @default(now())

@@ -21,7 +21,7 @@ interface DatosEmpresa {
 export function problemaEmpresa(d: DatosEmpresa): string | null {
   if (!/^\d{11}$/.test(d.ruc)) return "El RUC debe tener 11 dígitos";
   if (!d.razonSocial.trim()) return "La razón social es obligatoria";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correoContacto.trim())) return "Ingresa un correo válido";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correoContacto.trim())) return "Ingrese un correo válido";
   return null;
 }
 
@@ -92,7 +92,7 @@ function Formulario({
   return (
     <form onSubmit={guardar} className="space-y-4">
       {error && <ErrorBanner>{error}</ErrorBanner>}
-      {sinCambiosAviso && !hayCambios && !error && <ErrorBanner tono="aviso">No cambiaste ningún dato.</ErrorBanner>}
+      {sinCambiosAviso && !hayCambios && !error && <ErrorBanner tono="aviso">No cambió ningún dato.</ErrorBanner>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="empresa-ruc">RUC</Label>
@@ -145,8 +145,8 @@ export function EmpresaModal({
       </h2>
       <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
         {empresa
-          ? "Corrige los datos de la empresa. Su personal no cambia."
-          : "Registra la empresa a la que pertenece el personal."}
+          ? "Corrija los datos de la empresa. Su personal no cambia."
+          : "Registre la empresa a la que pertenece el personal."}
       </p>
       {/* Se monta de nuevo cada vez que se abre: siempre con los datos actuales. */}
       {isOpen && <Formulario empresa={empresa} onClose={onClose} onGuardada={onGuardada} onGuardando={setGuardando} />}

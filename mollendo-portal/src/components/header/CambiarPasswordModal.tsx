@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { authApi } from "@/lib/api/endpoints";
-import { ApiError, setTokens } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
@@ -35,11 +35,15 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
     e.preventDefault();
     setError(null);
     if (!actual) {
-      setError("Escribe tu contraseña actual");
+      setError("Escriba su contraseña actual");
       return;
     }
-    if (nueva.length < 8) {
-      setError("La contraseña nueva debe tener al menos 8 caracteres");
+    if (nueva.length < 10) {
+      setError("La contraseña nueva debe tener al menos 10 caracteres");
+      return;
+    }
+    if (!/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(nueva) || !/\d/.test(nueva)) {
+      setError("La contraseña nueva debe tener letras y números");
       return;
     }
     if (nueva !== confirmacion) {
@@ -48,9 +52,8 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
     }
     setGuardando(true);
     try {
-      const { accessToken, refreshToken } = await authApi.cambiarPassword(actual, nueva);
-      // Esta sesión sigue con los tokens nuevos; las de otros equipos se cierran.
-      setTokens(accessToken, refreshToken);
+      // Esta sesión sigue (el servidor deja cookies nuevas); las de otros equipos se cierran.
+      await authApi.cambiarPassword(actual, nueva);
       setListo(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cambiar la contraseña");
@@ -65,7 +68,7 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
       {listo ? (
         <>
           <p className="mt-4 rounded-lg bg-success-50 px-4 py-3 text-sm text-success-700 dark:bg-success-500/15 dark:text-success-500">
-            Contraseña cambiada. Si tenías la sesión abierta en otro equipo, allí tendrás que volver a ingresar.
+            Contraseña cambiada. Si tenía la sesión abierta en otro equipo, allí tendrá que volver a ingresar.
           </p>
           <div className="mt-6 flex justify-end">
             <Button type="button" onClick={onClose}>
@@ -75,11 +78,11 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
         </>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">La contraseña nueva debe tener al menos 8 caracteres.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Al menos 10 caracteres, con letras y números.</p>
           {error && <ErrorBanner>{error}</ErrorBanner>}
           <CampoPassword id="password-actual" label="Contraseña actual" onChange={setActual} />
           <CampoPassword id="password-nueva" label="Contraseña nueva" onChange={setNueva} />
-          <CampoPassword id="password-confirmacion" label="Repite la contraseña nueva" onChange={setConfirmacion} />
+          <CampoPassword id="password-confirmacion" label="Repita la contraseña nueva" onChange={setConfirmacion} />
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" disabled={guardando} onClick={onClose}>
               Cancelar

@@ -7,6 +7,7 @@ import { AVISO_DE, ReleUsbService } from './rele-usb.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
 import { guardarHoraDiaria, leerHoraDiaria } from './sincronizacion-diaria.js';
+import { leerFacialPrimero, type PermisosFijosEvent } from '../eventos-acceso/modo-ingreso.service.js';
 
 interface PersonaFotoActualizadaEvent {
   personaId: number;
@@ -71,6 +72,17 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
   ) {}
 
+  /** Orden "facial primero": permiso fijo a todo el personal activo (al activarlo) o su retiro (al apagarlo). */
+  @OnEvent('g4pro.permisos-fijos')
+  async permisosFijos(evento: PermisosFijosEvent): Promise<void> {
+    try {
+      const n = await this.pushSdk.permisosEnEquipos(evento.documentos, evento.habilitar);
+      this.logger.log(`G4 Pro: ${evento.habilitar ? 'permiso fijo a' : 'se quita el permiso a'} ${n} persona(s) (facial primero)`);
+    } catch (error) {
+      this.logger.error(`No se pudieron cambiar los permisos fijos: ${(error as Error).message}`);
+    }
+  }
+
   /** Permiso de paso en los G4 Pro mientras la persona espera su ingreso (y su retiro al terminar). */
   @OnEvent('g4pro.habilitar')
   async habilitarEnEquipo(evento: HabilitarEnEquipoEvent): Promise<void> {
@@ -116,7 +128,10 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   private async sincronizar(personaId: number, opciones: { conFoto?: boolean; numeroAnterior?: string }) {
     try {
       const persona = await this.prisma.persona.findUnique({ where: { id: personaId } });
-      if (persona) await this.pushSdk.sincronizarPersona(persona, opciones);
+      if (!persona) return;
+      await this.pushSdk.sincronizarPersona(persona, opciones);
+      // Facial primero: el personal activo tiene permiso fijo; quien se da de baja lo pierde.
+      if (await leerFacialPrimero(this.prisma)) await this.pushSdk.habilitarEnEquipos(persona.numeroDocumento, persona.estado === 'activo');
     } catch (error) {
       this.logger.error(`No se pudo encolar la persona ${personaId} para el G4 Pro: ${(error as Error).message}`);
     }
@@ -194,14 +209,14 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
       where: { consumidoEn: null, habilitadoEn: { gte: new Date(Date.now() - 2 * 60 * 1000) } },
       include: { persona: { select: { numeroDocumento: true } } },
     });
-    const limpieza = await this.pushSdk.limpiarEquipos(
-      new Set(porPin.keys()),
-      activos,
-      enTurno ? pinDeDocumento(enTurno.persona.numeroDocumento) : null,
-      !simular,
-    );
+    const pinEnTurno = enTurno ? pinDeDocumento(enTurno.persona.numeroDocumento) : null;
+    // Normal: solo la persona en su turno tiene permiso. Facial primero: todo el personal activo.
+    const facialPrimero = await leerFacialPrimero(this.prisma);
+    const conPermiso = facialPrimero ? activos : new Set(pinEnTurno ? [pinEnTurno] : []);
+    const limpieza = await this.pushSdk.limpiarEquipos(new Set(porPin.keys()), activos, conPermiso, !simular);
     for (const pin of simular ? [] : limpieza.faltantes) {
       await this.pushSdk.sincronizarPersona(porPin.get(pin)!, { conFoto: true });
+      if (facialPrimero) await this.pushSdk.habilitarEnEquipos(pin, true);
     }
     const resumen = {
       simulacion: simular,

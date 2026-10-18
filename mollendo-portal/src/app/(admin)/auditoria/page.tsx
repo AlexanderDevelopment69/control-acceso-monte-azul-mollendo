@@ -26,6 +26,8 @@ const TABLA_LABEL: Record<string, string> = {
   tipo_documento: "Tipo de documento",
   usuario: "Usuario",
   evento_acceso: "Ingreso o salida (corrección manual)",
+  periodo_verificacion_manual: "Verificación manual",
+  ajuste_sistema: "Orden de ingreso",
 };
 const tablaLabel = (tabla: string) => TABLA_LABEL[tabla] ?? tabla;
 
@@ -33,7 +35,16 @@ const ACCION_COLOR: Record<string, "success" | "warning" | "error" | "info"> = {
   crear: "success",
   modificar: "info",
   eliminar: "error",
+  inicio_sesion: "success",
+  inicio_sesion_fallido: "warning",
 };
+
+const ACCION_LABEL: Record<string, string> = {
+  inicio_sesion: "inicio de sesión",
+  inicio_sesion_fallido: "inicio rechazado",
+};
+
+const esInicioSesion = (accion: string) => accion === "inicio_sesion" || accion === "inicio_sesion_fallido";
 
 const POR_PAGINA = 10;
 
@@ -187,12 +198,23 @@ function AuditoriaContent() {
                       {new Date(entrada.fechaHora).toLocaleString("es-PE")}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {entrada.usuario?.correo ?? "Carga de datos (script)"}
+                      {entrada.usuario?.correo ??
+                        (esInicioSesion(entrada.accion) ? (entrada.detalle?.split(" · ")[0] ?? "—") : "Carga de datos (script)")}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{tablaLabel(entrada.tablaAfectada)}</TableCell>
-                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">#{entrada.registroId}</TableCell>
+                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {esInicioSesion(entrada.accion) ? (
+                        // Inicio de sesión: desde dónde y, si se rechazó, por qué.
+                        <span className="text-xs">
+                          {entrada.ip ? `IP ${entrada.ip}` : "—"}
+                          {entrada.detalle?.includes(" · ") && <span className="block text-gray-500">{entrada.detalle.split(" · ")[1]}</span>}
+                        </span>
+                      ) : (
+                        `#${entrada.registroId}`
+                      )}
+                    </TableCell>
                     <TableCell className="px-5 py-4 text-sm">
-                      <Badge color={ACCION_COLOR[entrada.accion] ?? "light"}>{entrada.accion}</Badge>
+                      <Badge color={ACCION_COLOR[entrada.accion] ?? "light"}>{ACCION_LABEL[entrada.accion] ?? entrada.accion}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}

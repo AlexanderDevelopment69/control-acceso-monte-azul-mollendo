@@ -11,8 +11,8 @@ import { PERFILES, PERFIL_LABEL, type Perfil } from '../perfiles.js';
 export const MAX_FILAS_CARGA = 2000;
 
 export const COLUMNAS_CARGA = [
-  { clave: 'perfil', titulo: 'Perfil', ancho: 28, ayuda: 'Elige de la lista: ' },
-  { clave: 'empresa', titulo: 'Empresa', ancho: 46, ayuda: 'Elige de la lista (empresas activas del sistema) o escribe su RUC.' },
+  { clave: 'perfil', titulo: 'Perfil', ancho: 28, ayuda: 'Elija de la lista: ' },
+  { clave: 'empresa', titulo: 'Empresa', ancho: 46, ayuda: 'Elija de la lista (empresas activas del sistema) o escriba su RUC.' },
   { clave: 'tipoDocumento', titulo: 'Tipo de documento', ancho: 20, ayuda: 'DNI, CE (carné de extranjería) o PASAPORTE.' },
   { clave: 'numeroDocumento', titulo: 'Número de documento', ancho: 22, ayuda: 'Solo letras y números. El DNI tiene 8 dígitos (con los ceros de adelante).' },
   { clave: 'nombres', titulo: 'Nombres', ancho: 28, ayuda: 'Obligatorio.' },
@@ -111,7 +111,7 @@ export async function leerFilasCarga(contenido: Buffer): Promise<FilaCarga[]> {
   try {
     await libro.xlsx.load(contenido as unknown as ArrayBuffer);
   } catch {
-    throw new Error('No se pudo leer el archivo. Debe ser un Excel (.xlsx); usa la plantilla.');
+    throw new Error('No se pudo leer el archivo. Debe ser un Excel (.xlsx); use la plantilla.');
   }
   const hoja = libro.getWorksheet('Personal') ?? libro.worksheets[0];
   if (!hoja) throw new Error('El Excel no tiene hojas.');
@@ -132,7 +132,7 @@ export async function leerFilasCarga(contenido: Buffer): Promise<FilaCarga[]> {
   }
   if (!filaCabecera) {
     const faltan = COLUMNAS_CARGA.map((c) => `"${c.titulo}"`).join(', ');
-    throw new Error(`No se encontró la fila de títulos (${faltan}). Usa la plantilla de carga masiva.`);
+    throw new Error(`No se encontró la fila de títulos (${faltan}). Use la plantilla de carga masiva.`);
   }
 
   const filas: FilaCarga[] = [];
@@ -145,7 +145,7 @@ export async function leerFilasCarga(contenido: Buffer): Promise<FilaCarga[]> {
     if (Object.values(datos).every((v) => !v)) continue;
     filas.push({ fila: f, ...datos });
     if (filas.length > MAX_FILAS_CARGA) {
-      throw new Error(`El archivo tiene más de ${MAX_FILAS_CARGA} personas. Divídelo en varios archivos.`);
+      throw new Error(`El archivo tiene más de ${MAX_FILAS_CARGA} personas. Divídalo en varios archivos.`);
     }
   }
   return filas;
@@ -183,7 +183,7 @@ export function revisarFilasCarga(
     else {
       const texto = fila.empresa.replace(/\s+/g, '');
       empresa = /^\d{11}$/.test(texto) ? empresaPorRuc.get(texto) : empresaPorNombre.get(normalizar(fila.empresa));
-      if (!empresa) marcar('empresa', `La empresa no está registrada en el sistema (regístrala en Empresas): "${fila.empresa}"`);
+      if (!empresa) marcar('empresa', `La empresa no está registrada en el sistema (regístrela en Empresas): "${fila.empresa}"`);
       else if (empresa.estado !== 'activa') marcar('empresa', `La empresa está inactiva (se activa en Empresas): ${empresa.razonSocial}`);
     }
 
@@ -296,7 +296,7 @@ export async function generarPlantillaCarga(
       showErrorMessage: true,
       errorStyle: 'warning',
       errorTitle: titulo,
-      error: 'El valor no está en la lista. Puedes dejarlo, pero el sistema lo revisará al subir el archivo.',
+      error: 'El valor no está en la lista. Puede dejarlo, pero el sistema lo revisará al subir el archivo.',
     }) as ExcelJS.DataValidation;
   for (let f = 2; f <= ultima; f++) {
     hoja.getCell(f, 1).dataValidation = lista(`Listas!$A$1:$A$${perfiles.length}`, 'Perfil');
@@ -309,9 +309,9 @@ export async function generarPlantillaCarga(
   titulo.font = { bold: true, size: 14, color: { argb: MARCA } };
   instrucciones.addRow([]);
   for (const texto of [
-    '1. Llena la hoja "Personal": una fila por persona, desde la fila 2. No cambies los títulos de la fila 1.',
+    '1. Llene la hoja "Personal": una fila por persona, desde la fila 2. No cambie los títulos de la fila 1.',
     `2. Hasta ${MAX_FILAS_CARGA} personas por archivo.`,
-    '3. En el portal: Personal → "Carga masiva" → sube este archivo. El sistema revisa todas las filas antes de guardar.',
+    '3. En el portal: Personal → "Carga masiva" → suba este archivo. El sistema revisa todas las filas antes de guardar.',
     '4. Se registran solo las filas correctas. Las que ya están registradas se omiten y las que tienen errores se pueden descargar para corregirlas.',
     '5. Después de registrarlas, cada persona necesita su foto y sus documentos (en su ficha) para poder ingresar.',
   ]) {
@@ -328,7 +328,7 @@ export async function generarPlantillaCarga(
   instrucciones.addRow(['Ejemplo', 'Contratista | DEMO Servicios Portuarios Islay S.A. | DNI | 01234567 | Juan Carlos | Pérez Rojas']);
   instrucciones.addRow([
     'Empresas',
-    'Si la empresa no aparece en la lista, regístrala primero en el portal (menú "Empresas" → "+ Nueva empresa") y vuelve a descargar la plantilla.',
+    'Si la empresa no aparece en la lista, regístrela primero en el portal (menú "Empresas" → "+ Nueva empresa") y vuelva a descargar la plantilla.',
   ]).getCell(2).alignment = { wrapText: true };
 
   return Buffer.from(await libro.xlsx.writeBuffer());

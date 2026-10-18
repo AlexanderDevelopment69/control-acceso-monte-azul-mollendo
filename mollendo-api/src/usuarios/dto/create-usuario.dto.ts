@@ -1,4 +1,5 @@
-import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsIn, MaxLength } from 'class-validator';
+import { PasswordSegura } from '../../auth/password-segura.decorator.js';
 
 export class CreateUsuarioDto {
   @IsEmail({}, { message: 'Ingrese un correo válido' })
@@ -8,7 +9,6 @@ export class CreateUsuarioDto {
   @IsIn(['administrador', 'vigilancia'], { message: 'El rol debe ser "administrador" o "vigilancia"' })
   rol!: 'administrador' | 'vigilancia';
 
-  @IsString({ message: 'La contraseña debe ser texto' })
-  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
+  @PasswordSegura()
   password!: string;
 }

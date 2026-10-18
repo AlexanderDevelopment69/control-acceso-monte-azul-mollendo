@@ -86,7 +86,7 @@ function ConfirmarEstado({
             <ErrorBanner tono="aviso" className="mt-4">
               Esta empresa tiene {plural(activos, "persona activa", "personas activas")}:{" "}
               {activos === 1 ? "seguirá pudiendo" : "seguirán pudiendo"} ingresar si tiene{activos === 1 ? "" : "n"} sus
-              documentos al día. Si ya no deben entrar, dalas de baja en Personal y documentos.
+              documentos al día. Si ya no deben entrar, delas de baja en Personal y documentos.
             </ErrorBanner>
           )}
           {error && <ErrorBanner className="mt-4">{error}</ErrorBanner>}
@@ -219,7 +219,7 @@ function EmpresasContent() {
     <div>
       <PageHeader
         title="Empresas"
-        description="Empresas del personal: regístralas, corrige sus datos y actívalas o desactívalas."
+        description="Empresas del personal: regístrelas, corrija sus datos y actívelas o desactívelas."
         actions={
           <Button size="sm" onClick={() => setNueva(true)}>
             + Nueva empresa
@@ -293,7 +293,7 @@ function EmpresasContent() {
                 {!cargando && empresas && visibles.length === 0 && (
                   <TableRow>
                     <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>
-                      {empresas.length ? "Sin resultados para esa búsqueda." : "Todavía no hay empresas. Usa “+ Nueva empresa”."}
+                      {empresas.length ? "Sin resultados para esa búsqueda." : "Todavía no hay empresas. Use “+ Nueva empresa”."}
                     </TableCell>
                   </TableRow>
                 )}

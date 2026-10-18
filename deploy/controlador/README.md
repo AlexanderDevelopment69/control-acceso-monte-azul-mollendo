@@ -104,6 +104,25 @@ La lista del personal y las salidas pendientes de enviar están en un volumen y 
 - En el portal de la nube, **Sistema y APIs** → "Controlador: Conectado", con los dos lectores ("Cable conectado") y los relés ("Conectado").
 - Pasar un DNI registrado por la salida: se abre el molinete y la salida aparece en el Panel de vigilancia.
 
+## Configuración de los lectores de DNI (Syble, "2D Barcode Scanner User Manual")
+
+Se configuran escaneando los códigos de su hoja, en este orden, esperando el pitido de cada uno:
+
+| Paso | Código | Para qué |
+|---|---|---|
+| 1 | Factory Default | Solo si hay que empezar de cero (deja el lector en USB-HID) |
+| 2 | **RS232** (Interface) | Obligatorio: sin esto el lector pita pero no envía nada por el cable |
+| 3 | **115200** (Baud Rate) | La velocidad del controlador |
+| 4 | **CR** (Terminator) | Fin de cada lectura |
+| 5 | **Continuous** (Scan Mode) | Lee sin gatillo |
+| 6 | **ON** (Sound Setting) | Pita al leer |
+| 7 | **Enable all 1D barcodes** | |
+| 8 | **Interleaved 2 of 5 → Enable** | El código de barras del DNI; de fábrica viene apagado |
+| 9 | **Enable all 2D barcodes** | El código grande del DNI (el controlador también lo entiende) |
+| 10 | Desconectar y volver a conectar el lector | El cambio a RS232 recién se aplica al reiniciarlo |
+
+Si pita y no llega nada a la mini PC (`docker logs` no muestra "DNI leído"), quedó en USB: repetir 2, 3 y 10.
+
 ## Si algo falla
 
 | Síntoma | Qué hacer |

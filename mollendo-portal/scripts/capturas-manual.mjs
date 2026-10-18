@@ -96,7 +96,7 @@ const CAPTURAS = [
     },
     elemento: { sel: "button::-p-text(Revisar archivo)", recuadro: ".rounded-3xl" },
     puntos: [
-      { sel: "::-p-text(Descarga la plantilla de Excel)", recuadro: "ol", lado: "esquina" },
+      { sel: "::-p-text(Descargue la plantilla de Excel)", recuadro: "ol", lado: "esquina" },
       { sel: "button::-p-text(Descargar plantilla)", lado: "der" },
       { sel: "p::-p-text(Excel con el personal)", texto: true, lado: "der" },
       { sel: "button::-p-text(Revisar archivo)", lado: "arriba" },
@@ -122,7 +122,7 @@ const CAPTURAS = [
       { sel: "button::-p-text(Con error)", lado: "der" },
       { sel: "tbody tr td:last-child span.block", texto: true, lado: "der" },
       { sel: "button::-p-text(Descargar filas con error)", lado: "der" },
-      { sel: "button::-p-text(Corrige las filas con error)", lado: "izq" },
+      { sel: "button::-p-text(Corrija las filas con error)", lado: "izq" },
     ],
   },
   {
@@ -231,13 +231,13 @@ const CAPTURAS = [
     preparar: async (p) => {
       await p.locator("header button::-p-text(Administrador)").click();
       await p.locator("button::-p-text(Cambiar contraseña)").click();
-      await p.waitForFunction(() => document.body.innerText.includes("Repite la contraseña nueva"));
+      await p.waitForFunction(() => document.body.innerText.includes("Repita la contraseña nueva"));
     },
-    elemento: { sel: "::-p-text(Repite la contraseña nueva)", recuadro: ".rounded-3xl" },
+    elemento: { sel: "::-p-text(Repita la contraseña nueva)", recuadro: ".rounded-3xl" },
     puntos: [
       { sel: "label::-p-text(Contraseña actual)", texto: true, lado: "der" },
       { sel: "label::-p-text(Contraseña nueva)", texto: true, lado: "der" },
-      { sel: "label::-p-text(Repite la contraseña nueva)", texto: true, lado: "der" },
+      { sel: "label::-p-text(Repita la contraseña nueva)", texto: true, lado: "der" },
       { sel: 'button[type="submit"]', lado: "arriba" },
     ],
   },
@@ -349,16 +349,14 @@ const navegador = await puppeteer.launch({
 });
 const pagina = await navegador.newPage();
 const { accessToken, refreshToken } = await sesion("ADMIN");
-await pagina.goto(`${PORTAL}/iniciar-sesion`, { waitUntil: "networkidle2" });
-await pagina.evaluate(
-  (a, r) => {
-    localStorage.setItem("mollendo_access_token", a);
-    localStorage.setItem("mollendo_refresh_token", r);
-    localStorage.setItem("theme", "light");
-  },
-  accessToken,
-  refreshToken,
+// La sesión del portal va en las cookies de la API (las mismas que deja el inicio de sesión).
+const { hostname } = new URL(API);
+await pagina.setCookie(
+  { name: "mollendo_sesion", value: accessToken, domain: hostname, path: "/api/v1", httpOnly: true, sameSite: "Strict" },
+  { name: "mollendo_renovacion", value: refreshToken, domain: hostname, path: "/api/v1/auth", httpOnly: true, sameSite: "Strict" },
 );
+await pagina.goto(`${PORTAL}/iniciar-sesion`, { waitUntil: "networkidle2" });
+await pagina.evaluate(() => localStorage.setItem("theme", "light"));
 
 // Con CAPTURAS=…, las demás se conservan tal como están.
 const resultado = SOLO ? JSON.parse(fs.readFileSync(SALIDA_JSON, "utf8")) : {};

@@ -197,7 +197,7 @@ export function Recorrido({
           {botones}
         </div>
       )}
-      {"puntos" in p && <p className="text-center text-xs text-gray-400">Toca los números o usa Siguiente. Los datos son de demostración.</p>}
+      {"puntos" in p && <p className="text-center text-xs text-gray-400">Toque los números o use Siguiente. Los datos son de demostración.</p>}
     </div>
   );
 }
@@ -245,7 +245,7 @@ function PantallaConCaptura({
           })}
         </div>
       </div>
-      {c.ancho >= 700 && <p className="-mt-3 text-center text-xs text-gray-400 sm:hidden">← Desliza la imagen de lado para verla entera →</p>}
+      {c.ancho >= 700 && <p className="-mt-3 text-center text-xs text-gray-400 sm:hidden">← Deslice la imagen de lado para verla entera →</p>}
 
       {/* Lo que explica el número elegido */}
       <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.02]">

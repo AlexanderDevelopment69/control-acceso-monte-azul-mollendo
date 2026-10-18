@@ -269,6 +269,8 @@ export class DashboardService {
         denegadoRostroNoCoincide: true,
         denegadoYaDentro: true,
         denegadoSinIngreso: true,
+        denegadoSinFacial: true,
+        denegadoSinDni: true,
       },
     });
     return resumirMovimientos(eventos, dias);

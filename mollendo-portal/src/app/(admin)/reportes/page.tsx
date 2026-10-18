@@ -192,7 +192,7 @@ function ReportesContent() {
 
   return (
     <div>
-      <PageHeader title="Reportes" description="Descarga la información del sistema en Excel o PDF." />
+      <PageHeader title="Reportes" description="Descargue la información del sistema en Excel o PDF." />
 
       {/* Tipo de reporte */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -365,7 +365,7 @@ function ReportesContent() {
         </div>
 
         {error && <ErrorBanner className="mt-5">{error}</ErrorBanner>}
-        {faltanFechas && <ErrorBanner className="mt-5">Elige las fechas &quot;desde&quot; y &quot;hasta&quot; del periodo.</ErrorBanner>}
+        {faltanFechas && <ErrorBanner className="mt-5">Elija las fechas &quot;desde&quot; y &quot;hasta&quot; del periodo.</ErrorBanner>}
 
         <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-5 dark:border-gray-800 sm:flex-row">
           <Button

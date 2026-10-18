@@ -33,6 +33,8 @@ export function MotivoDenegacion({
     | "denegadoRostroNoCoincide"
     | "denegadoYaDentro"
     | "denegadoSinIngreso"
+    | "denegadoSinFacial"
+    | "denegadoSinDni"
   >;
   onVerDocumentos: () => void;
   /** Antipassback: abre la corrección manual (registrar la salida o el ingreso que faltan). */
@@ -65,6 +67,21 @@ export function MotivoDenegacion({
     );
   }
   if (evento.denegadoRostroNoCoincide) return <Badge color="error">Rostro no coincide</Badge>;
+  // Orden "facial primero" (en prueba).
+  if (evento.denegadoSinFacial) {
+    return (
+      <span title="Pasó su DNI sin haber aprobado rostro y alcohol en el equipo facial en los 20 segundos anteriores" className="cursor-help">
+        <Badge color="error">Sin rostro y alcohol</Badge>
+      </span>
+    );
+  }
+  if (evento.denegadoSinDni) {
+    return (
+      <span title="Alguien aprobó rostro y alcohol, pero nadie pasó su DNI en 20 segundos. Debe empezar otra vez por el equipo facial." className="cursor-help">
+        <Badge color="error">No pasó su DNI a tiempo</Badge>
+      </span>
+    );
+  }
   const motivos: string[] = [];
   if (evento.denegadoSinDocumentos) motivos.push("Sin documentos");
   if (evento.denegadoPorAlcohol) motivos.push("Alcohol");
@@ -104,6 +121,16 @@ export function MarcaCorreccionManual({
   return (
     <span title={`Registrado a mano, sin pasar por el molinete. Motivo: ${evento.motivoCorreccion ?? "-"}`} className="cursor-help">
       <Badge color="warning">Corrección manual{evento.verificadoPor ? ` · ${evento.verificadoPor.correo}` : ""}</Badge>
+    </span>
+  );
+}
+
+/** Orden "facial primero": rostro y alcohol antes del DNI; el equipo no confirma quién sopló. */
+export function MarcaFacialPrimero({ evento }: { evento: Pick<EventoAcceso, "facialPrimero" | "resultado"> }) {
+  if (!evento.facialPrimero || evento.resultado !== "autorizado") return null;
+  return (
+    <span title="Rostro y alcohol en el equipo facial antes del DNI. El equipo no confirma que quien sopló sea la persona del DNI." className="cursor-help">
+      <Badge color="warning">Facial primero</Badge>
     </span>
   );
 }

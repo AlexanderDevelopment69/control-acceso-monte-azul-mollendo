@@ -33,6 +33,24 @@ describe("SignInForm", () => {
     expect(router.push).toHaveBeenCalledWith("/");
   });
 
+  it("con los campos vacíos avisa debajo de cada uno y no envía nada (no gasta intentos)", async () => {
+    render(<SignInForm />);
+    const usuario = userEvent.setup();
+    for (let i = 0; i < 6; i++) await usuario.click(screen.getByRole("button", { name: "Ingresar" }));
+    expect(screen.getByText("Ingrese su correo")).toBeInTheDocument();
+    expect(screen.getByText("Ingrese su contraseña")).toBeInTheDocument();
+    expect(sesion.actual.login).not.toHaveBeenCalled();
+  });
+
+  it("con un correo mal escrito avisa y no envía; el aviso se va al corregirlo", async () => {
+    render(<SignInForm />);
+    await ingresar("admin@mollendo", "Clave-123");
+    expect(screen.getByText("Ingrese un correo válido")).toBeInTheDocument();
+    expect(sesion.actual.login).not.toHaveBeenCalled();
+    await userEvent.setup().type(screen.getByPlaceholderText("correo@empresa.com"), ".pe");
+    expect(screen.queryByText("Ingrese un correo válido")).not.toBeInTheDocument();
+  });
+
   it("si el servidor rechaza, muestra su mensaje y no sale de la pantalla", async () => {
     sesion.actual.login.mockRejectedValueOnce(new ApiError("Credenciales inválidas", 401));
     render(<SignInForm />);

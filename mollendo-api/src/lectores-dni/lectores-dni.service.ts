@@ -5,7 +5,7 @@ import path from 'node:path';
 import tty from 'node:tty';
 import { promisify } from 'node:util';
 import { RegistroLecturas } from './registro-lecturas.js';
-import { extraerDocumento, FiltroRepetidos, SeparadorLineas } from './lector-dni.util.js';
+import { esBinario, extraerDocumento, FiltroRepetidos, SeparadorLineas } from './lector-dni.util.js';
 
 const ejecutar = promisify(execFile);
 
@@ -139,6 +139,8 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
     for (const linea of lector.separador.agregar(pedazo.toString('latin1'))) {
       const documento = extraerDocumento(linea);
       if (!documento) {
+        // La firma binaria que sigue a un código 2D del DNI: no es un error.
+        if (esBinario(linea)) continue;
         // Se anota lo que envió (acotado y sin caracteres de control) para poder adaptar
         // la lectura a otros documentos, como el carné de extranjería (pendiente de probar).
         const contenido = linea.replace(/[^\x20-\x7E]/g, '?').slice(0, 120);

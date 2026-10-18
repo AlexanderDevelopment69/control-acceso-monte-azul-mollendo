@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Header, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Logger, NotFoundException, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { Public } from '../common/decorators/public.decorator.js';
 import { SerieG4Guard } from '../common/guards/serie-g4.guard.js';
 import { PushSdkService } from './push-sdk.service.js';
 import { ipLocalDeRegistro } from './ip-local.util.js';
+import { opcionesAsistencia } from './asistencia.util.js';
 
 /**
  * Endpoints del protocolo ADMS/PUSH que llama el equipo G4 Pro directamente
@@ -16,18 +17,28 @@ import { ipLocalDeRegistro } from './ip-local.util.js';
 @Public()
 @UseGuards(SerieG4Guard)
 export class PushSdkController {
+  private readonly logger = new Logger(PushSdkController.name);
+
   constructor(private readonly pushSdk: PushSdkService) {}
 
   @Post('registry')
   @Header('Content-Type', 'application/push;charset=UTF-8')
   async registry(@Query('SN') sn: string, @Req() req: Request, @Body() body: string) {
     const dispositivo = await this.pushSdk.obtenerOCrearDispositivo(sn, req.ip, ipLocalDeRegistro(body));
+    // Prueba del protocolo de asistencia: como el PushDemo original del proveedor, que no
+    // contesta el registro (ahí el G4 envía ATTLOG con el DNI y el alcohol).
+    if (await this.pushSdk.protocoloAsistencia()) {
+      this.logger.log(`G4 Pro ${sn}: registry sin RegistryCode (prueba del protocolo de asistencia)`);
+      return 'OK';
+    }
     return `RegistryCode=${dispositivo.registryCode}`;
   }
 
   @Post('push')
   @Header('Content-Type', 'application/push;charset=UTF-8')
-  push() {
+  async push() {
+    // Prueba del protocolo de asistencia: el PushDemo original no tenía esta ruta.
+    if (await this.pushSdk.protocoloAsistencia()) throw new NotFoundException();
     return this.pushSdk.respuestaPush();
   }
 
@@ -62,8 +73,15 @@ export class PushSdkController {
 
   @Get('cdata')
   @Header('Content-Type', 'text/plain')
-  async getCdata(@Query('SN') sn: string, @Req() req: Request) {
+  async getCdata(@Query('SN') sn: string, @Query('options') options: string, @Query('DeviceType') deviceType: string, @Req() req: Request) {
     await this.pushSdk.tocarActividad(sn, req.ip);
+    // Opciones del modo asistencia: solo para un equipo de asistencia. Este G4 Pro pide
+    // options=all con DeviceType=acc y, si recibe estas opciones, las vuelve a pedir sin parar y
+    // deja de funcionar (probado el 17/10/2026): a un equipo de control de acceso se le responde OK.
+    if (options === 'all' && (deviceType !== 'acc' || (await this.pushSdk.protocoloAsistencia()))) {
+      this.logger.log(`G4 Pro ${sn}: pide las opciones de asistencia (options=all); se le piden los ATTLOG`);
+      return opcionesAsistencia(sn);
+    }
     return 'OK';
   }
 
@@ -86,6 +104,12 @@ export class PushSdkController {
     }
 
     const tablaNormalizada = (table ?? '').toLowerCase();
+    if (tablaNormalizada === 'attlog') {
+      for (const linea of (body ?? '').split('\n').filter((l) => l.trim().length > 0)) {
+        await this.pushSdk.guardarRegistroAsistencia(sn, linea);
+      }
+      return 'OK';
+    }
     if (tablaNormalizada === 'rtlog' || tablaNormalizada === 'rtstate') {
       const lineas = (body ?? '').split('\n').filter((linea) => linea.trim().length > 0);
       for (const linea of lineas) {

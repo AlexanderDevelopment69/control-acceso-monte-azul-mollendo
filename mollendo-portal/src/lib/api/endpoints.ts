@@ -16,6 +16,7 @@ import type {
   FiltrosLista,
   DecisionManual,
   EstadoVerificacionManual,
+  EstadoModoIngreso,
   IngresoEnEspera,
   Paginado,
   Persona,
@@ -28,16 +29,29 @@ import type {
 } from "./types";
 
 // ---- auth ----
+/** Quien tiene la sesión abierta (la sesión misma viaja en una cookie que el portal no puede leer). */
+export interface UsuarioSesion {
+  id: number;
+  empresaId: number;
+  rol: RolUsuario;
+  correo: string;
+}
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
+  usuario: UsuarioSesion;
 }
 export const authApi = {
+  /** El servidor guarda la sesión en sus cookies; el portal solo recibe quién es el usuario. */
   login: (correo: string, password: string) =>
     apiRequest<LoginResponse>("/auth/login", { method: "POST", body: { correo, password }, skipAuth: true }),
-  /** Devuelve tokens nuevos: los anteriores dejan de valer (se cierran las otras sesiones). */
+  /** Qué cookies de sesión tiene el navegador (no las valida: para no pedir /cuenta sin sesión). */
+  estado: () => apiRequest<{ acceso: boolean; renovacion: boolean }>("/auth/estado", { skipAuth: true }),
+  /** ¿Hay una sesión abierta? (401 si no). */
+  sesion: () => apiRequest<UsuarioSesion>("/cuenta"),
+  /** Borra las cookies de la sesión. */
+  cerrarSesion: () => apiRequest<void>("/auth/cerrar-sesion", { method: "POST", skipAuth: true }),
+  /** La sesión sigue con cookies nuevas; las de otros equipos se cierran. */
   cambiarPassword: (passwordActual: string, passwordNueva: string) =>
-    apiRequest<LoginResponse>("/cuenta/password", { method: "PATCH", body: { passwordActual, passwordNueva } }),
+    apiRequest<unknown>("/cuenta/password", { method: "PATCH", body: { passwordActual, passwordNueva } }),
 };
 
 // ---- empresas ----
@@ -152,6 +166,10 @@ export const eventosAccesoApi = {
     apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual", { method: "POST", body: { motivo } }),
   terminarVerificacionManual: () =>
     apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual", { method: "DELETE" }),
+  /** Orden del ingreso (facial primero, en prueba); solo el administrador lo cambia. */
+  modoIngreso: () => apiRequest<EstadoModoIngreso>("/eventos-acceso/modo-ingreso"),
+  cambiarModoIngreso: (facialPrimero: boolean) =>
+    apiRequest<EstadoModoIngreso>("/eventos-acceso/modo-ingreso", { method: "PUT", body: { facialPrimero } }),
   /** Decisión del vigilante sobre la persona en su turno. */
   decidir: (id: number, decision: DecisionManual) =>
     apiRequest<{ ok: true }>(`/eventos-acceso/en-espera/${id}/decision`, { method: "POST", body: { decision } }),

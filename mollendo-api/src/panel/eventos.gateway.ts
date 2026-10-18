@@ -11,6 +11,7 @@ import type { Server, Socket } from 'socket.io';
 import type { JwtPayload } from '../auth/types/authenticated-user.type.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { emitidoAntesDelCambio, SESIONES_CERRADAS, type SesionesCerradasEvent } from '../auth/sesion.util.js';
+import { COOKIE_ACCESO, leerCookie } from '../auth/cookies-sesion.js';
 
 // Canal en tiempo real para el panel de vigilancia (spec, sección 9.9) —
 // evita que el panel tenga que refrescar para ver ingresos/denegaciones.
@@ -45,7 +46,9 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
    * sesión y vuelve a conectarse, o vuelve al inicio de sesión).
    */
   async handleConnection(client: Socket): Promise<void> {
-    const token = client.handshake.auth?.['token'] ?? client.handshake.query?.['token'];
+    // El portal se conecta con la cookie de la sesión; otros clientes pueden mandar el token.
+    const token =
+      client.handshake.auth?.['token'] ?? client.handshake.query?.['token'] ?? leerCookie(client.handshake.headers.cookie, COOKIE_ACCESO);
     try {
       const payload = this.jwtService.verify<JwtPayload>(String(token), { secret: process.env.JWT_SECRET });
       if (payload.rol !== 'administrador' && payload.rol !== 'vigilancia') {
@@ -95,5 +98,11 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
   @OnEvent('verificacion-manual.cambio')
   handleVerificacionManual(payload: unknown): void {
     this.server.emit('verificacion-manual', payload);
+  }
+
+  // Cambió el orden del ingreso (facial primero, en prueba): los paneles actualizan su franja.
+  @OnEvent('modo-ingreso.cambio')
+  handleModoIngreso(payload: unknown): void {
+    this.server.emit('modo-ingreso', payload);
   }
 }

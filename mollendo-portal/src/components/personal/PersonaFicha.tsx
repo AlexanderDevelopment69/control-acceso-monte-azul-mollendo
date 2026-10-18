@@ -277,7 +277,7 @@ export function PersonaFicha({
         </Modal>
         {!persona.fotoUrl && (
           <div className="mt-4 rounded-lg bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
-            Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Usa “Subir foto”.
+            Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Use “Subir foto”.
           </div>
         )}
         {cumplimiento && (

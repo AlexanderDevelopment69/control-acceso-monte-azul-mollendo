@@ -122,6 +122,8 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
   let ahora: number;
   /** ¿Verificación manual activa? (contingencia por falla del equipo facial). */
   let manualActiva: boolean;
+  /** ¿Orden "facial primero"? */
+  let facialPrimero: boolean;
 
   const ingreso = (dni: string) => servicio.registrarIngreso({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Ingreso' });
   const salida = (dni: string) => servicio.registrarSalida({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Salida' });
@@ -161,11 +163,13 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
     emitidos = [];
     const eventEmitter = { emit: (evento: string, datos: Record<string, unknown>) => emitidos.push({ evento, datos }) };
     manualActiva = false;
+    facialPrimero = false;
     servicio = new EventosAccesoService(
       base.prisma as never,
       eventEmitter as never,
       { activa: async () => manualActiva } as never,
       { registrar: async () => undefined } as never,
+      { facialPrimero: async () => facialPrimero } as never,
     );
   });
 
@@ -503,6 +507,96 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       avanzar(1000);
       expect(await salida('11111111')).toMatchObject({ resultado: 'autorizado' });
       expect(de('molinete.abrir')).toHaveLength(1);
+    });
+  });
+
+  describe('orden "facial primero": permiso fijo, rostro y alcohol, y al final el DNI', () => {
+    beforeEach(() => {
+      facialPrimero = true;
+    });
+
+    it('aprueba y pasa su DNI en 20 s: se abre, marcado "facial primero", sin tocar permisos', async () => {
+      agregarPersona(base, '11111111');
+      await rtlog('0');
+      expect(de('ingreso.en-espera')[0]).toMatchObject({ esperaDni: true, personaId: 0 });
+      expect(await servicio.ingresosEnEspera()).toEqual([expect.objectContaining({ esperaDni: true })]);
+      avanzar(15_000);
+      const r = await ingreso('11111111');
+      expect(r).toMatchObject({ resultado: 'autorizado', facialPrimero: true });
+      expect(base.eventos[0]).toMatchObject({ numeroDocumento: '11111111', resultado: 'autorizado', facialPrimero: true });
+      expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'ingreso' })]);
+      expect(de('ingreso.espera-terminada')).toHaveLength(1);
+      expect(de('g4pro.habilitar')).toHaveLength(0);
+      expect(base.pendientes).toHaveLength(0);
+    });
+
+    it('DNI sin aprobación antes: "Sin rostro y alcohol"', async () => {
+      agregarPersona(base, '11111111');
+      expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
+      expect(base.eventos[0]).toMatchObject({ denegadoSinFacial: true });
+      expect(de('molinete.abrir')).toHaveLength(0);
+    });
+
+    it('nadie pasa su DNI en 20 s: denegado "No pasó su DNI a tiempo" sin persona; el DNI tardío no entra', async () => {
+      agregarPersona(base, '11111111');
+      await rtlog('0');
+      avanzar(21_000);
+      await vencidos();
+      expect(base.eventos[0]).toMatchObject({ resultado: 'denegado', denegadoSinDni: true, facialPrimero: true });
+      expect(base.eventos[0].personaId).toBeUndefined();
+      expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
+    });
+
+    it('dos aprobaciones seguidas sin DNI entre medio: se anulan las dos', async () => {
+      agregarPersona(base, '11111111');
+      await rtlog('0');
+      avanzar(3_000);
+      await rtlog('0');
+      expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
+      expect(de('molinete.abrir')).toHaveLength(0);
+    });
+
+    it('una aprobación sirve para un solo DNI', async () => {
+      agregarPersona(base, '11111111');
+      agregarPersona(base, '22222222');
+      await rtlog('0');
+      expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado' });
+      expect(await ingreso('22222222')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
+    });
+
+    it('no pasa el alcohol: denegado "Alcohol" sin persona (el equipo no dice quién)', async () => {
+      await rtlog('1');
+      expect(base.eventos[0]).toMatchObject({ tipoMovimiento: 'ingreso', resultado: 'denegado', denegadoPorAlcohol: true, facialPrimero: true });
+      expect(de('molinete.abrir')).toHaveLength(0);
+    });
+
+    it('documentos vencidos o ya dentro: no abre, y la aprobación no queda para otro', async () => {
+      agregarPersona(base, '55555555', { vencido: true });
+      agregarPersona(base, '11111111');
+      agregarPersona(base, '22222222');
+      yaIngreso('22222222');
+      await rtlog('0');
+      expect(await ingreso('55555555')).toMatchObject({ resultado: 'denegado', motivos: { documentos: true } });
+      expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
+      await rtlog('0');
+      expect(await ingreso('22222222')).toMatchObject({ resultado: 'denegado', motivos: { yaDentro: true } });
+      expect(de('molinete.abrir')).toHaveLength(0);
+    });
+
+    it('rostro sin permiso fijo (23) o no registrado (27): solo se anotan', async () => {
+      agregarPersona(base, '11111111');
+      await rtlog('23', '11111111');
+      await rtlog('27');
+      expect(base.eventos).toHaveLength(0);
+      expect(de('g4pro.habilitar')).toHaveLength(0);
+      expect(await ingreso('11111111')).toMatchObject({ motivos: { sinFacial: true } });
+    });
+
+    it('con la verificación manual activa, vuelve el orden normal (primero el DNI)', async () => {
+      manualActiva = true;
+      agregarPersona(base, '11111111');
+      expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
+      expect(base.pendientes[0]).toMatchObject({ manual: true });
     });
   });
 });

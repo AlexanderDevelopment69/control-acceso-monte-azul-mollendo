@@ -4,12 +4,17 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { AuthenticatedUser, JwtPayload } from '../types/authenticated-user.type.js';
 import { emitidoAntesDelCambio } from '../sesion.util.js';
+import { COOKIE_ACCESO, leerCookie } from '../cookies-sesion.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly prisma: PrismaService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // El portal manda la sesión en su cookie; otros clientes, en "Authorization: Bearer".
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req: { headers?: { cookie?: string } }) => leerCookie(req?.headers?.cookie, COOKIE_ACCESO),
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET!,
     });

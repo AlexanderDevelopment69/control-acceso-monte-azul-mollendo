@@ -209,7 +209,7 @@ function DashboardContent() {
           </Button>
         </div>
       )}
-      {!rangoValido && <ErrorBanner className="mb-6">Elige las fechas &quot;desde&quot; y &quot;hasta&quot; del periodo.</ErrorBanner>}
+      {!rangoValido && <ErrorBanner className="mb-6">Elija las fechas &quot;desde&quot; y &quot;hasta&quot; del periodo.</ErrorBanner>}
 
       {/* Indicadores principales */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -36,19 +36,31 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async login(dto: LoginDto) {
+  /**
+   * Inicio de sesión. Cada intento queda en la auditoría (correcto o
+   * rechazado, con la IP y, si se rechazó, el correo escrito y el motivo). El
+   * mensaje de rechazo es siempre el mismo: no revela si el correo existe ni
+   * si la cuenta está de baja.
+   */
+  async login(dto: LoginDto, ip?: string) {
     const usuario = await this.prisma.usuario.findUnique({ where: { correo: dto.correo } });
-    if (!usuario) {
-      throw new UnauthorizedException('Correo o contraseña incorrectos');
-    }
-    if (usuario.estadoCuenta !== 'activo') {
-      throw new UnauthorizedException('La cuenta no está activa');
-    }
+    const motivo = !usuario
+      ? 'correo no registrado'
+      : usuario.estadoCuenta !== 'activo'
+        ? 'cuenta de baja'
+        : !(await compare(dto.password, usuario.passwordHash))
+          ? 'contraseña incorrecta'
+          : null;
 
-    const passwordValida = await compare(dto.password, usuario.passwordHash);
-    if (!passwordValida) {
-      throw new UnauthorizedException('Correo o contraseña incorrectos');
-    }
+    await this.auditoriaService.registrar({
+      usuarioId: usuario?.id ?? null,
+      tablaAfectada: 'usuario',
+      registroId: usuario?.id ?? 0,
+      accion: motivo ? 'inicio_sesion_fallido' : 'inicio_sesion',
+      ip: ip?.replace(/^::ffff:/, '').slice(0, 45) ?? null,
+      detalle: motivo ? `${dto.correo.slice(0, 150)} · ${motivo}` : null,
+    });
+    if (motivo || !usuario) throw new UnauthorizedException('Correo o contraseña incorrectos');
 
     const payload: JwtPayload = {
       sub: usuario.id,
@@ -56,7 +68,7 @@ export class AuthService {
       rol: usuario.rol,
       correo: usuario.correo,
     };
-    return this.buildTokens(payload);
+    return { ...this.buildTokens(payload), usuario: { id: usuario.id, empresaId: usuario.empresaId, rol: usuario.rol, correo: usuario.correo } };
   }
 
   /**

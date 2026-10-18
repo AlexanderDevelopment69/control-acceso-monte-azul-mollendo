@@ -13,10 +13,17 @@ export default function InputPassword({
   id,
   placeholder,
   onChange,
+  error = false,
+  required,
+  autoComplete,
 }: {
   id?: string;
   placeholder?: string;
   onChange: (valor: string) => void;
+  /** Borde rojo (el mensaje va fuera, para no mover el ojo). */
+  error?: boolean;
+  required?: boolean;
+  autoComplete?: string;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -26,6 +33,9 @@ export default function InputPassword({
         type={visible ? "text" : "password"}
         placeholder={placeholder}
         className="pr-12"
+        error={error}
+        required={required}
+        autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
       />
       <button

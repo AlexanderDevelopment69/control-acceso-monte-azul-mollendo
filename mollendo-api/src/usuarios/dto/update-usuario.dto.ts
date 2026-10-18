@@ -1,4 +1,5 @@
-import { IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsIn, IsOptional } from 'class-validator';
+import { PasswordSegura } from '../../auth/password-segura.decorator.js';
 
 export class UpdateUsuarioDto {
   @IsOptional()
@@ -7,7 +8,6 @@ export class UpdateUsuarioDto {
 
   // Sin recuperación por correo (alcance base): el administrador restablece la contraseña.
   @IsOptional()
-  @IsString({ message: 'La contraseña debe ser texto' })
-  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
+  @PasswordSegura()
   password?: string;
 }

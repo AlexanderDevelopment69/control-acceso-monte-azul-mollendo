@@ -10,6 +10,9 @@ interface RegistrarAuditoriaParams {
   tablaAfectada: string;
   registroId: number;
   accion: AccionAuditoria;
+  /** Inicios de sesión: IP y detalle del intento. */
+  ip?: string | null;
+  detalle?: string | null;
 }
 
 // Cómo se muestra cada tabla en el portal; la búsqueda también encuentra por estos nombres.

@@ -51,7 +51,7 @@ describe("datos de la empresa", () => {
     expect(problemaEmpresa(ok)).toBeNull();
     expect(problemaEmpresa({ ...ok, ruc: "2012345678" })).toBe("El RUC debe tener 11 dígitos");
     expect(problemaEmpresa({ ...ok, razonSocial: "  " })).toBe("La razón social es obligatoria");
-    expect(problemaEmpresa({ ...ok, correoContacto: "sin-arroba" })).toBe("Ingresa un correo válido");
+    expect(problemaEmpresa({ ...ok, correoContacto: "sin-arroba" })).toBe("Ingrese un correo válido");
   });
 
   it("al editar envía solo lo que cambió", () => {

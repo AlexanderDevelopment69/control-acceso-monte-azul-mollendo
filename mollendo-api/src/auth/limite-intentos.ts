@@ -11,6 +11,19 @@ const correoDe = (req: Record<string, any>) =>
   typeof req.body?.correo === 'string' ? req.body.correo.trim().toLowerCase() : '';
 
 /**
+ * ¿Le falta el correo o la contraseña? Ese envío no puede adivinar ninguna
+ * contraseña (se rechaza por datos incompletos), así que no cuenta como
+ * intento: tocar "Ingresar" con el formulario vacío no bloquea a nadie.
+ */
+export function sinDatosDeIngreso(body: unknown): boolean {
+  const b = (body ?? {}) as { correo?: unknown; password?: unknown };
+  return typeof b.correo !== 'string' || !b.correo.trim() || typeof b.password !== 'string' || !b.password;
+}
+
+const sinDatos = (context: { switchToHttp: () => { getRequest: <T>() => T } }) =>
+  sinDatosDeIngreso(context.switchToHttp().getRequest<{ body?: unknown }>().body);
+
+/**
  * ¿La IP es de la propia máquina o de una red privada? Es lo que se ve cuando
  * el pedido llega reenviado por el portal (Next no manda la IP del usuario):
  * esa IP es la misma para todos, así que no sirve para limitar por IP.
@@ -40,20 +53,21 @@ export function esIpInterna(ip: string | undefined): boolean {
  * X-Forwarded-For (trust proxy en main.ts), los dos límites usan la IP real.
  */
 export const opcionesLimiteIntentos: ThrottlerModuleOptions = {
-  errorMessage: 'Demasiados intentos de inicio de sesión. Espera un minuto y vuelve a intentarlo.',
+  errorMessage: 'Demasiados intentos de inicio de sesión. Espere un minuto y vuelva a intentarlo.',
   throttlers: [
     {
       name: 'cuenta',
       ttl: VENTANA_INTENTOS_MS,
       limit: INTENTOS_POR_CUENTA,
       getTracker: (req) => `${req.ip ?? ''}|${correoDe(req)}`,
+      skipIf: sinDatos,
     },
     {
       name: 'ip',
       ttl: VENTANA_INTENTOS_MS,
       limit: INTENTOS_POR_IP,
       getTracker: (req) => String(req.ip ?? ''),
-      skipIf: (context) => esIpInterna(context.switchToHttp().getRequest<{ ip?: string }>().ip),
+      skipIf: (context) => sinDatos(context) || esIpInterna(context.switchToHttp().getRequest<{ ip?: string }>().ip),
     },
   ],
 };

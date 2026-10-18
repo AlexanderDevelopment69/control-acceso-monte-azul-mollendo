@@ -1,9 +1,15 @@
-import { extraerDocumento, FiltroRepetidos, SeparadorLineas } from './lector-dni.util.js';
+import { esBinario, extraerDocumento, FiltroRepetidos, SeparadorLineas } from './lector-dni.util.js';
 
 describe('extraerDocumento', () => {
   it('toma el número de 8 dígitos que envía el lector', () => {
     expect(extraerDocumento('48058719')).toEqual({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: '48058719' });
     expect(extraerDocumento(' 48058719\u0000')).toEqual({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: '48058719' });
+  });
+
+  it('toma el DNI del código 2D del reverso (2 dígitos, el DNI y los apellidos y nombres)', () => {
+    const linea = '0146534518GUERRERO' + ' '.repeat(32) + 'CHUQUILIN' + ' '.repeat(31) + 'CECY NOEMI' + ' '.repeat(20);
+    expect(extraerDocumento(linea)).toEqual({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: '46534518' });
+    expect(extraerDocumento('0148058719BAUTISTA')).toEqual({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: '48058719' });
   });
 
   it('descarta lo que no es un DNI', () => {
@@ -12,6 +18,16 @@ describe('extraerDocumento', () => {
     expect(extraerDocumento('1234567')).toBeNull();
     expect(extraerDocumento('123456789')).toBeNull();
     expect(extraerDocumento('https://ejemplo.com')).toBeNull();
+    // Otro código de la garita (visto el 17/10/2026): números y letras, sin apellidos.
+    expect(extraerDocumento('2436074906xA16C742F6160F734B9BF2C1CD71F973D6A3')).toBeNull();
+  });
+});
+
+describe('esBinario', () => {
+  it('reconoce la firma binaria del código 2D, no el texto', () => {
+    expect(esBinario('x\u0090\u0091\u0092-\u0093^-Vskb\u0094\u0095sm\u0096' + ' '.repeat(10) + '07q\u0097&.')).toBe(true);
+    expect(esBinario('0146534518GUERRERO                    CHUQUILIN')).toBe(false);
+    expect(esBinario('ü')).toBe(false);
   });
 });
 

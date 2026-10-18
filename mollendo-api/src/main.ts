@@ -63,7 +63,8 @@ ${cuerpo}` : ''}`);
     .map((origen) => origen.trim())
     .filter(Boolean);
   // Content-Disposition: el portal lee el nombre de los reportes que descarga.
-  app.enableCors({ origin: corsOrigins, exposedHeaders: ['Content-Disposition'] });
+  // credentials: el portal manda la sesión en cookies (ver auth/cookies-sesion.ts).
+  app.enableCors({ origin: corsOrigins, credentials: true, exposedHeaders: ['Content-Disposition'] });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );

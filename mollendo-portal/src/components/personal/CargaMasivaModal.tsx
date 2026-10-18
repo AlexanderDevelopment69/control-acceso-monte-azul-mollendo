@@ -142,7 +142,7 @@ export function CargaMasivaModal({
     <Modal isOpen={isOpen} onClose={cerrar} bloqueado={ocupado === "registrando"} className="max-w-5xl p-6 sm:p-8">
       <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Carga masiva de personal</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        Registra a muchas personas a la vez desde un Excel.
+        Registre a muchas personas a la vez desde un Excel.
       </p>
 
       {error && <ErrorBanner className="mt-4">{error}</ErrorBanner>}
@@ -191,7 +191,7 @@ export function CargaMasivaModal({
           {resumen.errores > 0 && (
             // Con alguna fila con error no se registra a nadie: se corrige el Excel y se vuelve a subir.
             <ErrorBanner className="mb-4">
-              El archivo tiene errores. Corrígelos y vuelve a subirlo.
+              El archivo tiene errores. Corríjalos y vuelva a subirlo.
             </ErrorBanner>
           )}
 
@@ -290,7 +290,7 @@ export function CargaMasivaModal({
               {ocupado === "registrando"
                 ? "Registrando…"
                 : resumen.errores > 0
-                  ? "Corrige las filas con error"
+                  ? "Corrija las filas con error"
                   : resumen.listas
                     ? `Registrar ${plural(resumen.listas, "persona", "personas")}`
                     : "No hay personas para registrar"}
@@ -301,12 +301,12 @@ export function CargaMasivaModal({
         // Paso 1: plantilla y archivo.
         <div className="mt-4 space-y-5">
           <ol className="list-inside list-decimal space-y-1 text-sm text-gray-600 dark:text-gray-300">
-            <li>Descarga la plantilla de Excel.</li>
+            <li>Descargue la plantilla de Excel.</li>
             <li>
-              Llena una fila por persona: perfil, empresa, tipo y número de documento, nombres y apellidos (la hoja
+              Llene una fila por persona: perfil, empresa, tipo y número de documento, nombres y apellidos (la hoja
               &quot;Instrucciones&quot; explica cada columna).
             </li>
-            <li>Súbela: el sistema revisa todas las filas y te muestra el resultado antes de guardar.</li>
+            <li>Súbala: el sistema revisa todas las filas y le muestra el resultado antes de guardar.</li>
           </ol>
           <Button
             type="button"

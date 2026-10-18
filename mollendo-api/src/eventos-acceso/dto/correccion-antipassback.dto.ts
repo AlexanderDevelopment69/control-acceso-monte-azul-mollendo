@@ -15,7 +15,7 @@ export class CorreccionAntipassbackDto {
 
   @Transform(recortar)
   @IsString({ message: 'El motivo debe ser texto' })
-  @MinLength(3, { message: 'Escribe el motivo de la corrección' })
+  @MinLength(3, { message: 'Escriba el motivo de la corrección' })
   @MaxLength(300, { message: 'El motivo no puede tener más de 300 caracteres' })
   motivo!: string;
 }

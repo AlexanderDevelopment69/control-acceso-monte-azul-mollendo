@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { EventosAccesoService } from './eventos-acceso.service.js';
 import { VerificacionManualService } from './verificacion-manual.service.js';
+import { ModoIngresoService } from './modo-ingreso.service.js';
 import { IngresoDto } from './dto/ingreso.dto.js';
 import { SalidaDto } from './dto/salida.dto.js';
 import { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
-import { ActivarVerificacionManualDto, DecisionManualDto } from './dto/verificacion-manual.dto.js';
+import { ActivarVerificacionManualDto, CambiarModoIngresoDto, DecisionManualDto } from './dto/verificacion-manual.dto.js';
 import { CorreccionAntipassbackDto } from './dto/correccion-antipassback.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
@@ -17,6 +18,7 @@ export class EventosAccesoController {
   constructor(
     private readonly eventosAccesoService: EventosAccesoService,
     private readonly verificacionManual: VerificacionManualService,
+    private readonly modoIngreso: ModoIngresoService,
   ) {}
 
   @Post('ingreso')
@@ -57,6 +59,19 @@ export class EventosAccesoController {
   @Roles('administrador', 'vigilancia')
   terminarVerificacionManual(@CurrentUser() usuario: AuthenticatedUser) {
     return this.verificacionManual.terminar(usuario);
+  }
+
+  /** Orden del ingreso: primero el DNI (normal) o primero rostro y alcohol (en prueba). */
+  @Get('modo-ingreso')
+  @Roles('administrador', 'vigilancia')
+  modoIngresoEstado() {
+    return this.modoIngreso.estado();
+  }
+
+  @Put('modo-ingreso')
+  @Roles('administrador')
+  cambiarModoIngreso(@Body() dto: CambiarModoIngresoDto, @CurrentUser() usuario: AuthenticatedUser) {
+    return this.modoIngreso.cambiar(dto.facialPrimero, usuario);
   }
 
   /** El vigilante decide sobre la persona en su turno: "apto", "alcohol" o "no-es-la-persona". */

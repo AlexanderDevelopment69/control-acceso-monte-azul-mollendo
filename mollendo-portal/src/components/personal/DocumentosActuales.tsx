@@ -60,7 +60,7 @@ export function DocumentosActuales({
     >
       {actuales.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Todavía no tiene documentos: sin documentos no puede ingresar. Usa “+ Agregar documento”.
+          Todavía no tiene documentos: sin documentos no puede ingresar. Use “+ Agregar documento”.
         </p>
       ) : (
         <>

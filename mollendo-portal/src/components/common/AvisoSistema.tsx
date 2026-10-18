@@ -208,7 +208,7 @@ export function AvisoSistema() {
           </ul>
           {!esAdmin && (
             <p className="border-t border-gray-100 px-4 py-2.5 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400 sm:px-5">
-              Informa al administrador o al soporte técnico.
+              Informe al administrador o al soporte técnico.
             </p>
           )}
         </div>

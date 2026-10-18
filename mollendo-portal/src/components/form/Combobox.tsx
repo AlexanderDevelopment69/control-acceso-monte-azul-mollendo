@@ -35,7 +35,7 @@ export default function Combobox({
   options,
   value,
   onChange,
-  placeholder = "Selecciona una opción",
+  placeholder = "Seleccione una opción",
   buscable,
   className = "",
   compacto = false,

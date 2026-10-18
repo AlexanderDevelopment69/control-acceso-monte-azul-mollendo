@@ -8,13 +8,29 @@
 export type DocumentoLeido = { tipoDocumentoIdentidad: 'DNI'; numeroDocumento: string };
 
 /**
- * Número de DNI de una línea leída: 8 dígitos, ignorando espacios y
- * caracteres de control. Cualquier otra cosa (un código de barras que no sea
- * un DNI, ruido del cable al encender el lector) devuelve null.
+ * Número de DNI de una línea leída, ignorando espacios y caracteres de control:
+ * - el código de barras simple del reverso: los 8 dígitos;
+ * - el código 2D (PDF417) del reverso: 2 dígitos, los 8 del DNI y los
+ *   apellidos y nombres en mayúsculas (`0146534518GUERRERO   CHUQUILIN ...`,
+ *   visto con el equipo real el 17/10/2026). Después llega otra línea con la
+ *   firma en binario, que se descarta (ver esBinario).
+ * Cualquier otra cosa (un código que no sea de un DNI, ruido del cable al
+ * encender el lector) devuelve null.
  */
 export function extraerDocumento(linea: string): DocumentoLeido | null {
   const limpio = linea.replace(/[^\x21-\x7E]/g, '');
-  return /^\d{8}$/.test(limpio) ? { tipoDocumentoIdentidad: 'DNI', numeroDocumento: limpio } : null;
+  if (/^\d{8}$/.test(limpio)) return { tipoDocumentoIdentidad: 'DNI', numeroDocumento: limpio };
+  const codigo2d = /^\d{2}(\d{8})[A-ZÑ]/.exec(linea.trimStart());
+  return codigo2d ? { tipoDocumentoIdentidad: 'DNI', numeroDocumento: codigo2d[1] } : null;
+}
+
+/**
+ * ¿Es la parte binaria de un código 2D (la firma)? Tiene muchos caracteres que
+ * no son texto; no vale la pena anotarla como "lectura que no es un DNI".
+ */
+export function esBinario(linea: string): boolean {
+  const raros = linea.replace(/[\x20-\x7E]/g, '').length;
+  return linea.length > 20 && raros / linea.length > 0.1;
 }
 
 /**

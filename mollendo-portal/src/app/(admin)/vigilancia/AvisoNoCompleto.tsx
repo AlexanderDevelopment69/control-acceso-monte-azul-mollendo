@@ -26,8 +26,11 @@ export interface EventoEnVivo {
   tipoMovimiento?: string;
   resultado?: string;
   fechaHora?: string;
-  persona?: { nombres: string; apellidos: string } | null;
+  persona?: { id?: number; nombres: string; apellidos: string } | null;
   motivos?: { sinVerificacion?: boolean };
+  /** Orden "facial primero": ingreso sin confirmar quién sopló (el Panel muestra la foto para comparar). */
+  facialPrimero?: boolean;
+  tieneFoto?: boolean;
 }
 
 /**

@@ -21,7 +21,7 @@ interface SelectProps {
  */
 const Select: React.FC<SelectProps> = ({
   options,
-  placeholder = "Selecciona una opción",
+  placeholder = "Seleccione una opción",
   onChange,
   className = "",
   defaultValue = "",

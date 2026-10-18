@@ -6,7 +6,15 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { connectEventosSocket } from "@/lib/ws";
 import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
-import type { DecisionManual, EstadoVerificacionManual, EventoAcceso, IngresoEnEspera, Paginado, ResumenPanel } from "@/lib/api/types";
+import type {
+  DecisionManual,
+  EstadoModoIngreso,
+  EstadoVerificacionManual,
+  EventoAcceso,
+  IngresoEnEspera,
+  Paginado,
+  ResumenPanel,
+} from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -22,7 +30,8 @@ import DatePicker from "@/components/form/date-picker";
 import { AlertIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { FilasEnEspera } from "./FilasEnEspera";
-import { documentoDelEvento, MarcaCorreccionManual, MarcaVerificacionManual, MotivoDenegacion, Movimiento } from "./CeldasEvento";
+import { CompararFoto, FranjaFacialPrimero, type IngresoParaComparar } from "./FranjaFacialPrimero";
+import { documentoDelEvento, MarcaCorreccionManual, MarcaFacialPrimero, MarcaVerificacionManual, MotivoDenegacion, Movimiento } from "./CeldasEvento";
 import { CorreccionAntipassback } from "./CorreccionAntipassback";
 import { DocumentosModal } from "./DocumentosModal";
 import {
@@ -143,6 +152,21 @@ function VigilanciaContent() {
   useEffect(() => {
     void cargarManual();
   }, [cargarManual]);
+
+  // Orden "facial primero": la franja avisa al vigilante y, al autorizar, se muestra la foto para comparar.
+  const [modoIngreso, setModoIngreso] = useState<EstadoModoIngreso | null>(null);
+  const [comparar, setComparar] = useState<IngresoParaComparar | null>(null);
+  const cerrarComparar = useCallback(() => setComparar(null), []);
+  const cargarModoIngreso = useCallback(async () => {
+    try {
+      setModoIngreso(await eventosAccesoApi.modoIngreso());
+    } catch {
+      // Sin respuesta: se mantiene lo último conocido.
+    }
+  }, []);
+  useEffect(() => {
+    void cargarModoIngreso();
+  }, [cargarModoIngreso]);
   // El botón "Activar verificación manual" está en la franja roja de fallas (AvisoSistema):
   // desde esta página avisa con un evento; desde otra, trae aquí con ?activarManual=1.
   useEffect(() => {
@@ -228,10 +252,20 @@ function VigilanciaContent() {
         void cargarActual.current();
         void cargarAviso();
         void cargarManual();
+        void cargarModoIngreso();
       });
       socket.on("verificacion-manual", (estado: EstadoVerificacionManual) => setManual(estado));
+      socket.on("modo-ingreso", (estado: EstadoModoIngreso) => setModoIngreso(estado));
       socket.on("evento-acceso", (payload: EventoEnVivo) => {
         setAviso((actual) => siguienteAviso(actual, payload));
+        if (payload.facialPrimero && payload.resultado === "autorizado" && payload.persona?.id) {
+          setComparar({
+            eventoId: payload.eventoId,
+            personaId: payload.persona.id,
+            nombre: `${payload.persona.nombres} ${payload.persona.apellidos}`,
+            tieneFoto: !!payload.tieneFoto,
+          });
+        }
         setUltimo(payload.eventoId);
         if (finResalte.current) clearTimeout(finResalte.current);
         finResalte.current = setTimeout(() => setUltimo(null), RESALTE_MS);
@@ -255,7 +289,7 @@ function VigilanciaContent() {
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
       if (finResalte.current) clearTimeout(finResalte.current);
     };
-  }, [cargarAviso, cargarManual]);
+  }, [cargarAviso, cargarManual, cargarModoIngreso]);
 
   // Respaldo del tiempo real: aunque el canal en vivo falle sin avisar, la
   // tabla, los contadores y las esperas se ponen al día cada minuto.
@@ -346,6 +380,9 @@ function VigilanciaContent() {
         </div>
       )}
 
+      {/* Con la verificación manual activa, el orden es el normal: no se muestra. */}
+      {!manualActiva && <FranjaFacialPrimero estado={modoIngreso} />}
+      <CompararFoto ingreso={comparar} onCerrar={cerrarComparar} />
       {manual && (
         <FranjaVerificacionManual estado={manual} terminando={terminando} onTerminar={() => void terminarManual()} />
       )}
@@ -493,7 +530,7 @@ function VigilanciaContent() {
                           {ev.persona.perfil && <EtiquetaPerfil perfil={ev.persona.perfil} />}
                         </span>
                       ) : (
-                        <span className="text-gray-400">No registrado</span>
+                        <span className="text-gray-400">{ev.facialPrimero ? "Sin identificar" : "No registrado"}</span>
                       )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
@@ -519,6 +556,7 @@ function VigilanciaContent() {
                         />
                         <MarcaVerificacionManual evento={ev} />
                         <MarcaCorreccionManual evento={ev} />
+                        <MarcaFacialPrimero evento={ev} />
                       </div>
                     </TableCell>
                   </TableRow>

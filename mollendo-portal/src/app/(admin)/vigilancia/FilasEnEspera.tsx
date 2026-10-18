@@ -35,7 +35,12 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
           <TableCell className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
             {/* Foto para comparar con quien está frente al terminal facial. */}
             <div className="flex items-center gap-3">
-              <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} tamano="size-12" />
+              {i.esperaDni && !i.personaId ? (
+                // Facial primero: el equipo no dice quién aprobó.
+                <span className="flex size-12 items-center justify-center rounded-full bg-gray-100 text-lg text-gray-400 dark:bg-white/[0.06]">?</span>
+              ) : (
+                <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} tamano="size-12" />
+              )}
               <span>
                 {i.nombres} {i.apellidos}
               </span>
@@ -47,13 +52,15 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
           <TableCell className="px-5 py-4 text-sm">
             <Badge color={i.enCola ? "light" : "success"}>
               <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden />
-              {i.enCola ? "en cola" : "en espera"}
+              {i.enCola ? "en cola" : i.esperaDni ? "pase su DNI" : "en espera"}
             </Badge>
           </TableCell>
           <TableCell className="px-5 py-4 text-sm">
             <div className="flex items-center justify-between gap-3 text-gray-700 dark:text-gray-300">
               <span>
-                {i.manual
+                {i.esperaDni
+                  ? "Falta que pase su DNI (el equipo no dice quién sopló)"
+                  : i.manual
                   ? i.enCola
                     ? "Esperando su turno (verificación manual)"
                     : "Verificación manual: el vigilante decide"
@@ -62,7 +69,7 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
                     : "Esperando rostro y alcohol"}
               </span>
               {i.hasta && (
-                <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400" title="Tiempo para completar el ingreso en el terminal facial">
+                <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400" title={i.esperaDni ? "Tiempo para pasar su DNI" : "Tiempo para completar el ingreso en el terminal facial"}>
                   {tiempoRestante(i.hasta, ahora)}
                 </span>
               )}

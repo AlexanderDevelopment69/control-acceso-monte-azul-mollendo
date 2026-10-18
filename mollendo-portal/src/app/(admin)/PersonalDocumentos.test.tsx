@@ -159,7 +159,7 @@ describe("Personal y documentos", () => {
 
   it("al elegir a una persona se abre su ficha; otro clic la cierra", async () => {
     await montar();
-    expect(screen.getByText("Elige a una persona de la lista para ver y subir sus documentos.")).toBeInTheDocument();
+    expect(screen.getByText("Elija a una persona de la lista para ver y subir sus documentos.")).toBeInTheDocument();
 
     await userEvent.click(screen.getByText("Díaz, Rosa"));
     expect(screen.getByText("Ficha de la persona 3")).toBeInTheDocument();
@@ -169,7 +169,7 @@ describe("Personal y documentos", () => {
 
     await userEvent.click(screen.getByText("Torres, Ana"));
     expect(screen.queryByText(/Ficha de la persona/)).not.toBeInTheDocument();
-    expect(screen.getByText("Elige a una persona de la lista para ver y subir sus documentos.")).toBeInTheDocument();
+    expect(screen.getByText("Elija a una persona de la lista para ver y subir sus documentos.")).toBeInTheDocument();
   });
 
   it("tras un cambio en la ficha, actualiza solo esa fila sin volver a pedir la lista", async () => {
@@ -202,7 +202,7 @@ describe("Personal y documentos", () => {
   it("sin personal registrado: indica cómo empezar", async () => {
     api.personas.mockResolvedValue([]);
     render(<PersonalDocumentos />);
-    expect(await screen.findByText("Todavía no hay personal registrado. Usa “+ Nuevo personal”.")).toBeInTheDocument();
+    expect(await screen.findByText("Todavía no hay personal registrado. Use “+ Nuevo personal”.")).toBeInTheDocument();
   });
 
   it("con muchas personas dibuja la lista por tandas", async () => {

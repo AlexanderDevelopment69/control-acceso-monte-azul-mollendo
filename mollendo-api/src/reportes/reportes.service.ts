@@ -35,7 +35,7 @@ function maxFilas(query: QueryReporteDto): number {
 /** 75556 → "75 556" (sin depender del idioma instalado en el servidor). */
 const miles = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
-function demasiadasFilas(filas: number, maximo: number, sugerencia = 'Acota el periodo o los filtros.') {
+function demasiadasFilas(filas: number, maximo: number, sugerencia = 'Acote el periodo o los filtros.') {
   const formato = maximo === MAX_FILAS_EXCEL ? 'Excel' : 'PDF';
   return new BadRequestException(
     `El reporte tiene ${miles(filas)} filas (máximo ${miles(maximo)} en ${formato}). ${sugerencia}`,
@@ -88,7 +88,13 @@ function filtroPerfil(query: QueryReporteDto): string[] {
 }
 
 const PERFIL_DESCRIPCION = `Cómo se clasifica a la persona: ${PERFILES.map((p) => PERFIL_LABEL[p]).join(', ')}. "${SIN_PERFIL}": registrada antes de que existiera el perfil. Solo clasifica: el molinete valida a todos igual.`;
-const ACCION = { crear: 'Crear', modificar: 'Modificar', eliminar: 'Eliminar' } as const;
+const ACCION = {
+  crear: 'Crear',
+  modificar: 'Modificar',
+  eliminar: 'Eliminar',
+  inicio_sesion: 'Inicio de sesión',
+  inicio_sesion_fallido: 'Inicio de sesión rechazado',
+} as const;
 
 /** Motivos de denegación de un evento, como en el Panel de vigilancia. */
 function motivosEvento(e: {
@@ -101,6 +107,8 @@ function motivosEvento(e: {
   denegadoRostroNoCoincide?: boolean;
   denegadoYaDentro?: boolean;
   denegadoSinIngreso?: boolean;
+  denegadoSinFacial?: boolean;
+  denegadoSinDni?: boolean;
 }): string {
   const motivos: string[] = [];
   if (e.denegadoNoRegistrado) motivos.push('No registrado');
@@ -112,6 +120,8 @@ function motivosEvento(e: {
   if (e.denegadoRostroNoCoincide) motivos.push('Rostro no coincide');
   if (e.denegadoYaDentro) motivos.push('Ya figura dentro');
   if (e.denegadoSinIngreso) motivos.push('No registra ingreso');
+  if (e.denegadoSinFacial) motivos.push('Sin rostro y alcohol');
+  if (e.denegadoSinDni) motivos.push('No pasó su DNI a tiempo');
   return motivos.join(', ');
 }
 
@@ -247,11 +257,11 @@ export class ReportesService {
    */
   async documentosConArchivos(query: QueryReporteDto) {
     const { reporte, archivos } = await this.armarDocumentos(query, true);
-    if (reporte.filas.length > MAX_FILAS_PDF) throw demasiadasFilas(reporte.filas.length, MAX_FILAS_PDF, 'Acota los filtros.');
+    if (reporte.filas.length > MAX_FILAS_PDF) throw demasiadasFilas(reporte.filas.length, MAX_FILAS_PDF, 'Acote los filtros.');
     const peso = archivos.reduce((suma, a) => suma + statSync(a.ruta).size, 0);
     if (peso > MAX_BYTES_ZIP) {
       throw new BadRequestException(
-        `Los archivos suman ${Math.round(peso / 1024 / 1024)} MB (máximo ${MAX_BYTES_ZIP / 1024 / 1024} MB). Filtra por empresa o por estado.`,
+        `Los archivos suman ${Math.round(peso / 1024 / 1024)} MB (máximo ${MAX_BYTES_ZIP / 1024 / 1024} MB). Filtre por empresa o por estado.`,
       );
     }
     return { reporte, archivos };
@@ -361,7 +371,7 @@ export class ReportesService {
           : `Última versión de cada documento. Por vencer: vence en los próximos ${DIAS_AVISO} días.`,
         ...(conArchivos
           ? [
-              `${conFotos ? 'Columnas "Archivo" y "Foto": abren' : 'Columna "Archivo": abre'} el archivo de la carpeta "archivos". Primero descomprime el ZIP (clic derecho → Extraer todo) y abre este Excel desde esa carpeta.`,
+              `${conFotos ? 'Columnas "Archivo" y "Foto": abren' : 'Columna "Archivo": abre'} el archivo de la carpeta "archivos". Primero descomprima el ZIP (clic derecho → Extraer todo) y abra este Excel desde esa carpeta.`,
             ]
           : []),
       ],
@@ -435,8 +445,8 @@ export class ReportesService {
         { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona. "No registrado" si el documento no está en el sistema.' },
         { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
         { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
-        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, rostro no coincide, ya figura dentro (no registró su salida) o no registra ingreso.' },
-        { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Corrección manual: el movimiento lo registró un vigilante o administrador sin pasar por el molinete (antipassback), con quién y el motivo. Vacío: verificación normal.' },
+        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, rostro no coincide, ya figura dentro (no registró su salida), no registra ingreso, sin rostro y alcohol o no pasó su DNI a tiempo (estos dos, solo en el orden "facial primero"; el segundo, y el alcohol en ese orden, quedan sin persona porque el equipo no dice quién sopló).' },
+        { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Corrección manual: el movimiento lo registró un vigilante o administrador sin pasar por el molinete (antipassback), con quién y el motivo. Facial primero: rostro y alcohol antes del DNI; el equipo no confirma que quien sopló sea el del DNI. Vacío: verificación normal.' },
         { titulo: 'Molinete', ancho: 12, descripcion: 'Molinete por el que pasó.' },
       ],
       filas: eventos.map((e) => [
@@ -454,7 +464,9 @@ export class ReportesService {
           ? `Corrección manual (${e.verificadoPor?.correo ?? '-'}): ${e.motivoCorreccion ?? ''}`
           : e.verificacionManual
             ? `Manual (${e.verificadoPor?.correo ?? 'sin decisión'})`
-            : null,
+            : e.facialPrimero
+              ? 'Facial primero (el equipo no confirma quién sopló)'
+              : null,
         e.torniqueteId,
       ]),
       resumen: [
@@ -770,16 +782,20 @@ export class ReportesService {
       columnas: [
         { titulo: 'Fecha y hora', tipo: 'fechaHora', ancho: 16, descripcion: 'Cuándo se hizo el cambio.' },
         { titulo: 'Usuario', ancho: 30, descripcion: 'Correo del usuario que hizo el cambio. "Sistema" si lo hizo el propio sistema.' },
-        { titulo: 'Acción', ancho: 12, descripcion: 'Crear, Modificar o Eliminar.' },
+        { titulo: 'Acción', ancho: 22, descripcion: 'Crear, Modificar, Eliminar, Inicio de sesión o Inicio de sesión rechazado.' },
         { titulo: 'Dato', ancho: 20, descripcion: 'Qué se cambió: personal, empresa, documento, tipo de documento, usuario o verificación manual.' },
         { titulo: 'N° de registro', tipo: 'numero', ancho: 13, descripcion: 'Número interno del dato cambiado, para ubicarlo en el sistema.' },
+        { titulo: 'IP', ancho: 16, descripcion: 'Inicios de sesión: dirección desde donde se intentó.' },
+        { titulo: 'Detalle', ancho: 40, descripcion: 'Inicios de sesión rechazados: el correo escrito y el motivo (correo no registrado, contraseña incorrecta o cuenta de baja).' },
       ],
       filas: registros.map((r) => [
         r.fechaHora,
         r.usuario?.correo ?? 'Sistema',
         ACCION[r.accion],
         TABLA_LABEL[r.tablaAfectada] ?? r.tablaAfectada,
-        r.registroId,
+        r.registroId || null,
+        r.ip,
+        r.detalle,
       ]),
       resumen: [`Total: ${registros.length}`],
     };

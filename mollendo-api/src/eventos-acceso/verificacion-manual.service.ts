@@ -47,7 +47,7 @@ export class VerificacionManualService {
 
   async activar(motivo: string, usuario: AuthenticatedUser): Promise<EstadoVerificacionManual> {
     const texto = motivo.trim();
-    if (texto.length < 3) throw new BadRequestException('Escribe el motivo de la verificación manual');
+    if (texto.length < 3) throw new BadRequestException('Escriba el motivo de la verificación manual');
     if (await this.activa()) throw new BadRequestException('La verificación manual ya está activa');
     const periodo = await this.prisma.periodoVerificacionManual.create({ data: { motivo: texto, activadoPorId: usuario.id } });
     await this.auditoria.registrar({ usuarioId: usuario.id, tablaAfectada: 'periodo_verificacion_manual', registroId: periodo.id, accion: 'crear' });

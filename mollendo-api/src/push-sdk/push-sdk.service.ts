@@ -18,6 +18,7 @@ import {
   pinsDeRespuestaUsuarios,
   planDeSincronizacion,
 } from './comandos-acceso.util.js';
+import { leerRegistroAsistencia } from './asistencia.util.js';
 
 /** Emitido cuando llega un table=rtlog real del equipo (ver EventosAccesoService). */
 export interface RtlogRecibidoEvent {
@@ -113,6 +114,17 @@ export class PushSdkService {
       where: { serialNumber },
       data: { ultimaActividad: new Date(), ...(ipAddress ? { ipAddress } : {}) },
     });
+  }
+
+  /**
+   * Prueba del protocolo de asistencia (17/10/2026): con el ajuste
+   * `protocolo_g4 = asistencia`, el servidor contesta como el PushDemo original
+   * del proveedor (sin RegistryCode ni /iclock/push, con las opciones de
+   * asistencia) para ver si el G4 envía ATTLOG con el DNI. Se activa y se
+   * desactiva en la base de datos, sin volver a subir; luego se reinicia el G4.
+   */
+  async protocoloAsistencia(): Promise<boolean> {
+    return (await this.prisma.ajusteSistema.findUnique({ where: { clave: 'protocolo_g4' } }))?.valor === 'asistencia';
   }
 
   respuestaPush(): string {
@@ -218,6 +230,14 @@ export class PushSdkService {
     return (await this.encolarEnTodos([habilitar ? comandoHabilitar(pin) : comandoDeshabilitar(pin)])) > 0;
   }
 
+  /** Permiso de paso de varias personas a la vez (orden "facial primero"): una sola carga de comandos. */
+  async permisosEnEquipos(documentos: string[], habilitar: boolean): Promise<number> {
+    const pins = documentos.map((d) => pinDeDocumento(d)).filter((pin): pin is string => !!pin);
+    if (pins.length === 0) return 0;
+    await this.encolarEnTodos(pins.map((pin) => (habilitar ? comandoHabilitar(pin) : comandoDeshabilitar(pin))));
+    return pins.length;
+  }
+
   /** Comandos pendientes para el equipo, marcándolos como entregados. */
   async entregarComandosPendientes(serialNumber: string): Promise<string[]> {
     const dispositivo = await this.prisma.dispositivoAcceso.findUnique({ where: { serialNumber } });
@@ -315,11 +335,12 @@ export class PushSdkService {
   /**
    * Deja cada G4 Pro con exactamente el personal del sistema: borra los
    * usuarios que el sistema no conoce (por ejemplo, registrados a mano en el
-   * equipo, que tienen paso permanente) y, si quedaron permisos de paso
-   * sueltos, se los quita a todos salvo a la persona que está en su turno.
-   * Devuelve los pins que faltan en algún equipo, para registrarlos con foto.
+   * equipo, que tienen paso permanente) y deja los permisos de paso como
+   * deben estar: normalmente solo la persona en su turno; en el orden
+   * "facial primero", todo el personal activo (`pinsConPermiso`). Devuelve
+   * los pins que faltan en algún equipo, para registrarlos con foto.
    */
-  async limpiarEquipos(pinsSistema: Set<string>, pinsActivos: Set<string>, pinEnTurno: string | null, aplicar = true) {
+  async limpiarEquipos(pinsSistema: Set<string>, pinsActivos: Set<string>, pinsConPermiso: Set<string>, aplicar = true) {
     const resultado = {
       equipos: 0,
       sinRespuesta: 0,
@@ -362,12 +383,18 @@ export class PushSdkService {
       plan.sobrantes.forEach((pin) => resultado.sobrantes.add(pin));
 
       const permisos = conteoDeRespuesta((await this.consultar(dispositivo.id, 'DATA COUNT userauthorize')) ?? '', 'userauthorize');
-      const esperados = pinEnTurno && pinsEquipo.includes(pinEnTurno) ? 1 : 0;
+      const conPermiso = pinsEquipo.filter((pin) => pinsConPermiso.has(pin));
+      const esperados = conPermiso.length;
       if (permisos !== null && permisos > esperados) {
-        const aQuitar = pinsEquipo.filter((pin) => pin !== pinEnTurno && !plan.sobrantes.includes(pin));
+        const aQuitar = pinsEquipo.filter((pin) => !pinsConPermiso.has(pin) && !plan.sobrantes.includes(pin));
         comandos.push(...aQuitar.map((pin) => comandoDeshabilitar(pin)));
         resultado.permisosQuitados += aQuitar.length;
         this.logger.warn(`${dispositivo.serialNumber}: ${permisos} permisos de paso (se esperaba ${esperados}); se quitan`);
+      }
+      // Facial primero: si faltan permisos fijos, se vuelven a dar.
+      if (permisos !== null && permisos < esperados) {
+        comandos.push(...conPermiso.map((pin) => comandoHabilitar(pin)));
+        this.logger.warn(`${dispositivo.serialNumber}: ${permisos} permisos de paso (se esperaban ${esperados}); se vuelven a dar`);
       }
       if (aplicar && comandos.length > 0) {
         await this.prisma.comandoDispositivo.createMany({ data: comandos.map((comando) => ({ dispositivoId: dispositivo.id, comando })) });
@@ -404,6 +431,36 @@ export class PushSdkService {
       }
     }
     return campos;
+  }
+
+  /**
+   * Modo asistencia (en prueba): guarda un registro de asistencia del equipo
+   * (`table=ATTLOG`), que trae el DNI y el grado de alcohol. Por ahora solo se
+   * guarda y se anota (no decide ningún ingreso); emite 'dispositivo.attlog'.
+   */
+  async guardarRegistroAsistencia(serialNumber: string, linea: string) {
+    const registro = leerRegistroAsistencia(linea);
+    if (!registro) {
+      this.logger.warn(`ATTLOG de ${serialNumber} que no se entiende: "${linea.slice(0, 120)}"`);
+      return;
+    }
+    const dispositivo = await this.obtenerOCrearDispositivo(serialNumber);
+    const hora = new Date(registro.hora.replace(' ', 'T') + '-05:00');
+    const verificacion = await this.prisma.verificacionDispositivo.create({
+      data: {
+        dispositivoId: dispositivo.id,
+        tabla: 'attlog',
+        horaDispositivo: Number.isNaN(hora.getTime()) ? undefined : hora,
+        eventCode: registro.estado?.slice(0, 10),
+        verifyType: registro.verificacion?.slice(0, 10),
+        concentracion: registro.alcohol?.slice(0, 20),
+        crudo: linea,
+      },
+    });
+    this.logger.log(
+      `ATTLOG recibido: sn=${serialNumber} DNI ${registro.pin} ${registro.hora} estado=${registro.estado ?? '-'} verificación=${registro.verificacion ?? '-'} alcohol=${registro.alcohol ?? '-'}`,
+    );
+    this.eventEmitter.emit('dispositivo.attlog', { verificacionId: verificacion.id, serialNumber, ...registro });
   }
 
   /**

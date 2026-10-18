@@ -48,7 +48,7 @@ export const SECCIONES: SeccionManual[] = [
   {
     id: "personal",
     titulo: "Personal y documentos",
-    descripcion: "Registra al personal, su foto y sus documentos, y revisa quién puede ingresar.",
+    descripcion: "Registre al personal, su foto y sus documentos, y revise quién puede ingresar.",
     roles: ["administrador"],
     pantallas: [
       {
@@ -60,8 +60,8 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Buscar",
             texto: (
               <p>
-                Escribe un nombre, DNI o empresa. Con mucho personal, la lista muestra las primeras 100 personas y agrega más a medida que
-                bajas.
+                Escriba un nombre, DNI o empresa. Con mucho personal, la lista muestra las primeras 100 personas y agrega más a medida que
+                baja.
               </p>
             ),
           },
@@ -94,7 +94,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Elegir a una persona",
             texto: (
               <>
-                <p>Abre su ficha a la derecha. En la lista ves un ✔ si puede ingresar o un ✖ con el motivo si no.</p>
+                <p>Abre su ficha a la derecha. En la lista se ve un ✔ si puede ingresar o un ✖ con el motivo si no.</p>
                 <p>
                   El ✔ supone que la prueba de alcohol saldrá bien: el alcohol solo se sabe al momento de ingresar.
                 </p>
@@ -105,7 +105,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Carga masiva",
             texto: (
               <p>
-                Registra a muchas personas a la vez desde un Excel. Se explica paso a paso en las pantallas <b>“Carga masiva”</b> y{" "}
+                Registre a muchas personas a la vez desde un Excel. Se explica paso a paso en las pantallas <b>“Carga masiva”</b> y{" "}
                 <b>“Revisar el Excel”</b>.
               </p>
             ),
@@ -122,7 +122,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "La foto",
             texto: (
               <>
-                <p>Tócala para verla en grande. “Subir foto” o “Cambiar foto” la reemplaza.</p>
+                <p>Tóquela para verla en grande. “Subir foto” o “Cambiar foto” la reemplaza.</p>
                 <p>
                   La usa el terminal facial para reconocer a la persona: el sistema se la envía solo, no hace falta registrar el rostro en
                   el equipo.
@@ -135,11 +135,11 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  Junto al nombre ves su <b>perfil</b>. “Editar datos” corrige el perfil, la empresa, el tipo y número de documento, los
+                  Junto al nombre se ve su <b>perfil</b>. “Editar datos” corrige el perfil, la empresa, el tipo y número de documento, los
                   nombres y los apellidos. El DNI va con 8 dígitos y no puede repetirse. Queda en la Auditoría.
                 </p>
                 <p>
-                  Si cambias el <b>número de documento</b>, desde que guardes la persona debe pasar su documento nuevo por el lector. El
+                  Si cambia el <b>número de documento</b>, desde que guarde la persona debe pasar su documento nuevo por el lector. El
                   terminal facial se actualiza solo; los ingresos anteriores conservan el documento con el que se registraron.
                 </p>
               </>
@@ -194,7 +194,7 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  <b>“Dar de baja”</b> cuando alguien deja de trabajar en el Terminal. Puedes escribir el motivo (opcional) y se confirma.
+                  <b>“Dar de baja”</b> cuando alguien deja de trabajar en el Terminal. Puede escribir el motivo (opcional) y se confirma.
                   Desde ese momento no puede ingresar, sin importar sus documentos; sí puede salir. El motivo y la fecha se ven en su ficha,
                   en la lista y en el reporte de personal.
                 </p>
@@ -233,7 +233,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "¿No está la empresa?",
             texto: (
               <p>
-                El enlace abre <b>Empresas</b> en otra pestaña para registrarla, sin perder lo que ya escribiste. Al volver, la lista se
+                El enlace abre <b>Empresas</b> en otra pestaña para registrarla, sin perder lo que ya escribió. Al volver, la lista se
                 actualiza sola.
               </p>
             ),
@@ -275,7 +275,7 @@ export const SECCIONES: SeccionManual[] = [
               <>
                 <p>Guarda a la persona con su foto y sus documentos. Desde ese momento puede ingresar.</p>
                 <p>
-                  Si un documento falla al subirse, la persona ya queda registrada: corrige ese documento y presiona{" "}
+                  Si un documento falla al subirse, la persona ya queda registrada: corrija ese documento y presione{" "}
                   <b>“Subir documentos pendientes”</b>.
                 </p>
               </>
@@ -292,9 +292,9 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Los pasos",
             texto: (
               <>
-                <p>Descarga la plantilla, llénala con una fila por persona y súbela. El sistema revisa todo antes de guardar.</p>
+                <p>Descargue la plantilla, llénela con una fila por persona y súbala. El sistema revisa todo antes de guardar.</p>
                 <p>
-                  Registra <b>los datos de la persona, sin foto ni documentos</b>: para que pueda ingresar, agrégalos después en su ficha.
+                  Registra <b>los datos de la persona, sin foto ni documentos</b>: para que pueda ingresar, agréguelos después en su ficha.
                 </p>
               </>
             ),
@@ -308,7 +308,7 @@ export const SECCIONES: SeccionManual[] = [
                   tipo de documento se eligen de listas; la hoja “Instrucciones” explica cada columna.
                 </p>
                 <p>
-                  La empresa también se puede escribir por su RUC. Si no está, regístrala primero en <b>Empresas</b> y vuelve a descargar la
+                  La empresa también se puede escribir por su RUC. Si no está, regístrela primero en <b>Empresas</b> y vuelva a descargar la
                   plantilla: la carga masiva no crea empresas.
                 </p>
               </>
@@ -337,7 +337,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "El archivo tiene errores",
             texto: (
               <p>
-                Si <b>alguna fila tiene error, no se registra a nadie</b>. Corrige el Excel y vuelve a subirlo con “Elegir otro archivo”.
+                Si <b>alguna fila tiene error, no se registra a nadie</b>. Corrija el Excel y vuelva a subirlo con “Elegir otro archivo”.
               </p>
             ),
           },
@@ -373,8 +373,8 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Descargar filas con error",
             texto: (
               <p>
-                Baja la misma plantilla solo con esas filas, una columna “Motivo” y <b>la celda de cada error pintada de rojo</b>. Corrígelas y
-                sube ese archivo.
+                Baja la misma plantilla solo con esas filas, una columna “Motivo” y <b>la celda de cada error pintada de rojo</b>. Corríjalas y
+                suba ese archivo.
               </p>
             ),
           },
@@ -382,7 +382,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Registrar",
             texto: (
               <p>
-                Mientras haya errores dice “Corrige las filas con error” y no se puede presionar. Sin errores, dice{" "}
+                Mientras haya errores dice “Corrija las filas con error” y no se puede presionar. Sin errores, dice{" "}
                 <b>“Registrar N personas”</b> y guarda las filas listas.
               </p>
             ),
@@ -394,7 +394,7 @@ export const SECCIONES: SeccionManual[] = [
   {
     id: "empresas",
     titulo: "Empresas",
-    descripcion: "Registra las empresas del personal, corrige sus datos y actívalas o desactívalas.",
+    descripcion: "Registre las empresas del personal, corrija sus datos y actívelas o desactívelas.",
     roles: ["administrador"],
     pantallas: [
       {
@@ -424,7 +424,7 @@ export const SECCIONES: SeccionManual[] = [
                 <p>
                   <b>“Desactivar”</b>: la empresa ya no aparece al registrar personal ni en la plantilla de la carga masiva. Su personal{" "}
                   <b>no se da de baja</b>: si tiene sus documentos al día, sigue pudiendo ingresar. Por eso el sistema avisa cuántas personas
-                  activas tiene; si ya no deben entrar, dalas de baja en Personal y documentos. “Activar” la vuelve a mostrar.
+                  activas tiene; si ya no deben entrar, delas de baja en Personal y documentos. “Activar” la vuelve a mostrar.
                 </p>
                 <p>
                   <b>“Eliminar”</b> aparece solo en empresas <b>sin ninguna persona</b> (ni dada de baja) y sin usuarios del portal, por
@@ -450,12 +450,12 @@ export const SECCIONES: SeccionManual[] = [
   {
     id: "vigilancia",
     titulo: "Panel de vigilancia",
-    descripcion: "Mira en vivo quién entra y sale, por qué alguien no pasó y qué hacer si falla un equipo.",
+    descripcion: "Vea en vivo quién entra y sale, por qué alguien no pasó y qué hacer si falla un equipo.",
     roles: ["vigilancia", "administrador"],
     pantallas: [
       {
         titulo: "El panel",
-        descripcion: "Lo que ves todos los días",
+        descripcion: "Lo que se ve todos los días",
         clave: "vigilancia",
         puntos: [
           {
@@ -469,7 +469,7 @@ export const SECCIONES: SeccionManual[] = [
                 <p className="font-medium text-gray-800 dark:text-white/90">Avisos que pueden aparecer arriba:</p>
                 <Lista>
                   <li>
-                    <b>Rojo:</b> se cayó un equipo (dice cuál, qué deja de funcionar y desde cuándo). Avisa a soporte; desaparece solo
+                    <b>Rojo:</b> se cayó un equipo (dice cuál, qué deja de funcionar y desde cuándo). Avise a soporte; desaparece solo
                     cuando vuelve.
                   </li>
                   <li>
@@ -485,13 +485,13 @@ export const SECCIONES: SeccionManual[] = [
           },
           {
             titulo: "Buscar",
-            texto: <p>Escribe un nombre, apellido o DNI. Busca en todo el historial, no solo en lo que ves.</p>,
+            texto: <p>Escriba un nombre, apellido o DNI. Busca en todo el historial, no solo en lo que se ve.</p>,
           },
           {
             titulo: "Elegir el día",
             texto: (
               <p>
-                Por defecto ves <b>hoy</b>. Con el calendario eliges otro día o “Todos los días”; <b>“Hoy”</b> te devuelve. La tabla va de 10
+                Por defecto se ve <b>hoy</b>. Con el calendario se elige otro día o “Todos los días”; <b>“Hoy”</b> vuelve al día actual. La tabla va de 10
                 en 10.
               </p>
             ),
@@ -508,7 +508,7 @@ export const SECCIONES: SeccionManual[] = [
                     <Badge color="error">Denegado</Badge> no se abrió: al lado está el motivo.
                   </li>
                   <li>
-                    <Badge color="primary">En espera</Badge> pasó su DNI y tiene <b>1 minuto</b> para mirar el terminal y soplar. Ves su
+                    <Badge color="primary">En espera</Badge> pasó su DNI y tiene <b>1 minuto</b> para mirar el terminal y soplar. Se ve su
                     foto para compararla.
                   </li>
                   <li>
@@ -520,7 +520,7 @@ export const SECCIONES: SeccionManual[] = [
                   <b>Para salir</b> solo pasa su DNI por el lector de salida. Debe tener un ingreso registrado antes; puede salir aunque esté
                   dado de baja o con documentos vencidos.
                 </p>
-                <p>Junto al nombre ves su perfil: contratista, conductor, visita…</p>
+                <p>Junto al nombre se ve su perfil: contratista, conductor, visita…</p>
               </>
             ),
           },
@@ -532,7 +532,7 @@ export const SECCIONES: SeccionManual[] = [
                   <Motivo m="No registrado" hacer="Su DNI no está en el sistema. No puede entrar hasta que el administrador lo registre." />
                   <Motivo m="Dado de baja" hacer="No puede entrar. Solo el administrador puede reactivarlo." />
                   <Motivo m="Sin documentos ›" hacer="No tiene documentos registrados. El administrador debe subirlos." />
-                  <Motivo m="Documentos ›" hacer="Tiene un documento vencido. Tócalo para ver cuál; el administrador sube el nuevo." />
+                  <Motivo m="Documentos ›" hacer="Tiene un documento vencido. Tóquelo para ver cuál; el administrador sube el nuevo." />
                   <Motivo m="Alcohol" hacer="Dio positivo en la prueba de alcohol. No puede entrar." />
                   <Motivo m="Rostro no coincide" hacer="En la verificación manual se indicó que no es la persona del DNI. No puede entrar." />
                   <Motivo
@@ -559,11 +559,11 @@ export const SECCIONES: SeccionManual[] = [
                 <p className="mt-3">
                   <b>Corrección manual:</b> pide un motivo y <b>no abre el molinete</b>; después la persona vuelve a pasar su DNI. La hacen el
                   vigilante o el administrador y queda marcada como “Corrección manual” en la tabla, en el reporte y en la Auditoría. Tras una
-                  emergencia con los brazos liberados, registra así la salida de cada uno.
+                  emergencia con los brazos liberados, registre así la salida de cada uno.
                 </p>
                 <p>
-                  <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revisa si el terminal tiene un <b>punto rojo</b>{" "}
-                  (alcoholímetro desconectado) y avisa a soporte. Se cierra con la ✕ o solo, cuando la siguiente persona entra bien.
+                  <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revise si el terminal tiene un <b>punto rojo</b>{" "}
+                  (alcoholímetro desconectado) y avise a soporte. Se cierra con la ✕ o solo, cuando la siguiente persona entra bien.
                 </p>
               </>
             ),
@@ -589,7 +589,7 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  Tócalo, escribe el motivo y presiona <b>“Activar”</b>. Desde ahí <b>tú</b> revisas el rostro y tomas la prueba de alcohol a
+                  Tóquelo, escriba el motivo y presione <b>“Activar”</b>. Desde ahí <b>usted</b> revisa el rostro y toma la prueba de alcohol a
                   todos. El DNI y los documentos se revisan igual que siempre; las salidas no cambian.
                 </p>
                 <p>
@@ -597,8 +597,8 @@ export const SECCIONES: SeccionManual[] = [
                   <b>“Volver a modo normal”</b>.
                 </p>
                 <p>
-                  Cuando el terminal vuelve, el panel te pregunta en verde: <b>“¿Volver a modo normal?”</b>. Si aún no funciona bien, elige{" "}
-                  <b>“Seguir en manual”</b>. No vuelve sola, a propósito, para que siempre sepas en qué modo estás.
+                  Cuando el terminal vuelve, el panel pregunta en verde: <b>“¿Volver a modo normal?”</b>. Si aún no funciona bien, elija{" "}
+                  <b>“Seguir en manual”</b>. No vuelve sola, a propósito, para que siempre sepa en qué modo está.
                 </p>
                 <p>
                   La activan y terminan el vigilante o el administrador. No tiene tiempo máximo. Activarla, terminarla y cada decisión quedan
@@ -619,7 +619,7 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  Tienes <b>2 minutos</b>. Si nadie decide, el ingreso se deniega solo y pasa la siguiente persona; puede volver a pasar su
+                  Tiene <b>2 minutos</b>. Si nadie decide, el ingreso se deniega solo y pasa la siguiente persona; puede volver a pasar su
                   DNI.
                 </p>
                 <p>Si llegan varias, se atienden de una en una, en el orden en que pasaron el DNI.</p>
@@ -639,7 +639,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Qué hacer antes de decidir",
             texto: (
               <p>
-                Compara su rostro con la foto (si no tiene foto, con su DNI) y tómale la prueba con el alcoholímetro de repuesto, a todos sin
+                Compare su rostro con la foto (si no tiene foto, con su DNI) y tómele la prueba con el alcoholímetro de repuesto, a todos sin
                 excepción.
               </p>
             ),
@@ -649,10 +649,10 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  El rostro es el de la foto y el alcohol salió bien. Se abre el molinete y queda marcado como “Manual”, con tu nombre, en la
+                  El rostro es el de la foto y el alcohol salió bien. Se abre el molinete y queda marcado como “Manual”, con su nombre, en la
                   tabla y en el reporte.
                 </p>
-                <p>Si otro vigilante decidió antes, vale la primera decisión y tu ventana se cierra.</p>
+                <p>Si otro vigilante decidió antes, vale la primera decisión y su ventana se cierra.</p>
               </>
             ),
           },
@@ -770,7 +770,7 @@ export const SECCIONES: SeccionManual[] = [
   {
     id: "reportes",
     titulo: "Reportes",
-    descripcion: "Descarga la información del sistema en Excel o PDF.",
+    descripcion: "Descargue la información del sistema en Excel o PDF.",
     roles: ["administrador"],
     pantallas: [
       {
@@ -779,7 +779,7 @@ export const SECCIONES: SeccionManual[] = [
         clave: "reportes",
         puntos: [
           {
-            titulo: "Elige el reporte",
+            titulo: "Elija el reporte",
             texto: (
               <Lista>
                 <li>
@@ -817,7 +817,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Qué incluye el ZIP",
             texto: (
               <p>
-                Solo en Documentos por persona: marca si lleva también los documentos anteriores (los renovados) y las fotos del personal.
+                Solo en Documentos por persona: marque si lleva también los documentos anteriores (los renovados) y las fotos del personal.
               </p>
             ),
           },
@@ -832,7 +832,7 @@ export const SECCIONES: SeccionManual[] = [
                 <li>
                   <b>PDF:</b> en hoja horizontal, con número de página y la leyenda al final. Hasta 20 000 filas.
                 </li>
-                <li>Si pide más filas, acota el periodo o los filtros.</li>
+                <li>Si pide más filas, acote el periodo o los filtros.</li>
               </Lista>
             ),
           },
@@ -842,7 +842,7 @@ export const SECCIONES: SeccionManual[] = [
               <>
                 <p>El Excel con cada archivo, en carpetas por empresa y persona.</p>
                 <p>
-                  <b>Extrae el ZIP</b> (clic derecho → “Extraer todo”) y abre el Excel desde la carpeta extraída: el enlace “Abrir” de cada
+                  <b>Extraiga el ZIP</b> (clic derecho → “Extraer todo”) y abra el Excel desde la carpeta extraída: el enlace “Abrir” de cada
                   fila abre su archivo. Desde dentro del ZIP, sin extraer, los enlaces no funcionan.
                 </p>
               </>
@@ -935,7 +935,7 @@ export const SECCIONES: SeccionManual[] = [
                   <b>Terminal facial (G4 Pro):</b> en línea o no, su última actividad y cuántas personas y rostros tiene.
                 </li>
                 <li>
-                  <b>Lectores de DNI:</b> ingreso y salida, con su última lectura. Si no pita al pasar un DNI, revisa su alimentación.
+                  <b>Lectores de DNI:</b> ingreso y salida, con su última lectura. Si no pita al pasar un DNI, revise su alimentación.
                 </li>
                 <li>
                   <b>Relés:</b> de molinetes y de aviso, con su última apertura o aviso.
@@ -957,10 +957,10 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Revisión diaria",
             texto: (
               <>
-                <p>Actívala para que se sincronice sola cada día y elige la hora. Pide confirmación.</p>
+                <p>Actívela para que se sincronice sola cada día y elija la hora. Pide confirmación.</p>
                 <p>
                   Sincronizar deja el terminal igual al sistema: borra a quien no está registrado, quita permisos sueltos y registra con su
-                  foto al personal activo que falte. Nunca registres personas directamente en el terminal.
+                  foto al personal activo que falte. Nunca registre personas directamente en el terminal.
                 </p>
               </>
             ),
@@ -976,14 +976,14 @@ export const SECCIONES: SeccionManual[] = [
           },
           {
             titulo: "Sincronizar ahora",
-            texto: <p>Aplica los cambios en el terminal (pide confirmación). Usa primero “Simular”.</p>,
+            texto: <p>Aplica los cambios en el terminal (pide confirmación). Use primero “Simular”.</p>,
           },
           {
             titulo: "Última sincronización",
             texto: (
               <p>
                 Cuántas personas se agregaron, cuántos usuarios se borraron y cuántos permisos se quitaron. Si dice{" "}
-                <b>“equipo(s) no respondieron”</b>, el terminal está desconectado: inténtalo cuando diga “En línea”.
+                <b>“equipo(s) no respondieron”</b>, el terminal está desconectado: inténtelo cuando diga “En línea”.
               </p>
             ),
           },
@@ -993,29 +993,29 @@ export const SECCIONES: SeccionManual[] = [
   },
   {
     id: "cuenta",
-    titulo: "Tu cuenta y contraseña",
-    descripcion: "Cambia tu contraseña desde tu nombre, arriba a la derecha.",
+    titulo: "Su cuenta y contraseña",
+    descripcion: "Cambie su contraseña desde su nombre, arriba a la derecha.",
     roles: ["administrador", "vigilancia"],
     pantallas: [
       {
         titulo: "Cambiar contraseña",
-        descripcion: "Desde tu menú",
+        descripcion: "Desde su menú",
         clave: "contrasena",
         puntos: [
           {
             titulo: "Contraseña actual",
-            texto: <p>Toca tu nombre, arriba a la derecha, y elige “Cambiar contraseña”. Escribe la que usas hoy.</p>,
+            texto: <p>Toque su nombre, arriba a la derecha, y elija “Cambiar contraseña”. Escriba la que usa hoy.</p>,
           },
-          { titulo: "Contraseña nueva", texto: <p>Al menos 8 caracteres.</p> },
-          { titulo: "Repítela", texto: <p>Para evitar errores al escribirla.</p> },
+          { titulo: "Contraseña nueva", texto: <p>Al menos 10 caracteres, con letras y números.</p> },
+          { titulo: "Repítala", texto: <p>Para evitar errores al escribirla.</p> },
           {
             titulo: "Cambiar contraseña",
             texto: (
               <>
                 <p>
-                  Tu sesión sigue abierta. Si la tenías abierta en otro equipo, allí tendrás que volver a ingresar. Queda en la Auditoría.
+                  Su sesión sigue abierta. Si la tenía abierta en otro equipo, allí tendrá que volver a ingresar. Queda en la Auditoría.
                 </p>
-                <p>Si olvidaste tu contraseña, no hay recuperación por correo: pide al soporte técnico que la restablezca.</p>
+                <p>Si olvidó su contraseña, no hay recuperación por correo: pida al soporte técnico que la restablezca.</p>
               </>
             ),
           },

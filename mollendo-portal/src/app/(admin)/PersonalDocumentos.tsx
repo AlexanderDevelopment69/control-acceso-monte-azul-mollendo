@@ -185,7 +185,7 @@ export function PersonalDocumentos() {
     <div>
       <PageHeader
         title="Personal y documentos"
-        description="Registra al personal, sube sus documentos y revisa quién puede ingresar hoy."
+        description="Registre al personal, suba sus documentos y revise quién puede ingresar hoy."
         actions={
           <div className="flex flex-wrap gap-3">
             <Button size="sm" variant="outline" onClick={() => setCargaMasivaOpen(true)}>
@@ -326,7 +326,7 @@ export function PersonalDocumentos() {
                 {errorCarga && personas.length === 0
                   ? "No se pudo cargar el personal."
                   : personas.length === 0
-                    ? "Todavía no hay personal registrado. Usa “+ Nuevo personal”."
+                    ? "Todavía no hay personal registrado. Use “+ Nuevo personal”."
                     : "Sin resultados."}
               </li>
             )}
@@ -445,7 +445,7 @@ export function PersonalDocumentos() {
                 ))}
               </div>
               <div className="flex h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400 dark:border-gray-700">
-                Elige a una persona de la lista para ver y subir sus documentos.
+                Elija a una persona de la lista para ver y subir sus documentos.
               </div>
             </div>
           )}

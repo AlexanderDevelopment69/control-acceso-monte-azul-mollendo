@@ -45,8 +45,8 @@ describe("carga masiva de personal", () => {
     render(<CargaMasivaModal isOpen onClose={() => {}} onRegistradas={() => {}} />);
     await revisarArchivo();
     expect(screen.getByText("El DNI debe tener 8 dígitos")).toBeInTheDocument();
-    expect(screen.getByText("El archivo tiene errores. Corrígelos y vuelve a subirlo.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Corrige las filas con error" })).toBeDisabled();
+    expect(screen.getByText("El archivo tiene errores. Corríjalos y vuelva a subirlo.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Corrija las filas con error" })).toBeDisabled();
 
     // Abre directo en "Con error": solo las filas a corregir.
     expect(screen.getByRole("button", { name: "Con error (1)" })).toHaveAttribute("aria-pressed", "true");

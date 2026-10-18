@@ -61,12 +61,12 @@ export function CorreccionAntipassback({
       <p className="text-sm text-gray-600 dark:text-gray-300">
         {registrar === "salida" ? (
           <>
-            <strong>{persona}</strong> figura dentro: no registró su salida. Regístrala solo si de verdad salió (por ejemplo,
+            <strong>{persona}</strong> figura dentro: no registró su salida. Regístrela solo si de verdad salió (por ejemplo,
             en una emergencia con los brazos del molinete liberados).
           </>
         ) : (
           <>
-            <strong>{persona}</strong> no registra ingreso. Regístralo solo si de verdad está dentro (por ejemplo, entró sin
+            <strong>{persona}</strong> no registra ingreso. Regístrelo solo si de verdad está dentro (por ejemplo, entró sin
             marcar).
           </>
         )}

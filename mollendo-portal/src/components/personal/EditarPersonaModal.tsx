@@ -66,8 +66,8 @@ function Formulario({ persona, onClose, onGuardado, onGuardando }: {
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
-    if (!perfil) return setError("Elige el perfil del personal");
-    if (!numero || !nombres.trim() || !apellidos.trim()) return setError("Completa número de documento, nombres y apellidos");
+    if (!perfil) return setError("Elija el perfil del personal");
+    if (!numero || !nombres.trim() || !apellidos.trim()) return setError("Complete número de documento, nombres y apellidos");
     const problema = validarNumeroDocumento(tipo, numero);
     if (problema) return setError(problema);
     setError(null);
@@ -94,16 +94,16 @@ function Formulario({ persona, onClose, onGuardado, onGuardando }: {
   return (
     <form onSubmit={guardar} className="space-y-4">
       {error && <ErrorBanner>{error}</ErrorBanner>}
-      {sinCambiosAviso && !hayCambios && !error && <ErrorBanner tono="aviso">No cambiaste ningún dato.</ErrorBanner>}
+      {sinCambiosAviso && !hayCambios && !error && <ErrorBanner tono="aviso">No cambió ningún dato.</ErrorBanner>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label>Perfil</Label>
-          <Select defaultValue={perfil} onChange={(v) => setPerfil(v as Perfil)} placeholder="Selecciona un perfil" options={OPCIONES_PERFIL} />
+          <Select defaultValue={perfil} onChange={(v) => setPerfil(v as Perfil)} placeholder="Seleccione un perfil" options={OPCIONES_PERFIL} />
         </div>
         <div>
           <Label>Empresa</Label>
           {empresas ? (
-            <Select defaultValue={empresaId} onChange={setEmpresaId} placeholder="Selecciona una empresa" options={opcionesEmpresa} />
+            <Select defaultValue={empresaId} onChange={setEmpresaId} placeholder="Seleccione una empresa" options={opcionesEmpresa} />
           ) : (
             <p className="flex h-11 items-center text-sm text-gray-400">Cargando…</p>
           )}
@@ -135,7 +135,7 @@ function Formulario({ persona, onClose, onGuardado, onGuardando }: {
       </div>
       {cambiaDocumento && (
         <p className="rounded-lg bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
-          Cambias el documento: desde que guardes, la persona debe pasar el <strong>documento nuevo</strong> por el lector. El
+          Cambia el documento: desde que guarde, la persona debe pasar el <strong>documento nuevo</strong> por el lector. El
           terminal facial se actualiza solo. Los ingresos y salidas anteriores conservan el documento con el que se registraron.
         </p>
       )}

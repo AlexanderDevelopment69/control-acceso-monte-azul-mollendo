@@ -48,7 +48,7 @@ export class DocumentosService {
     // Vence hoy sí vale (sigue válido todo el día).
     if (dto.fechaVencimiento && dto.permitirVencido !== 'true' && dto.fechaVencimiento.slice(0, 10) < claveDia(new Date())) {
       throw new BadRequestException(
-        'La fecha de vencimiento ya pasó: el documento quedaría vencido y la persona no podría ingresar. Revisa la fecha.',
+        'La fecha de vencimiento ya pasó: el documento quedaría vencido y la persona no podría ingresar. Revise la fecha.',
       );
     }
     const tipoDocumento = await this.prisma.tipoDocumento.findUnique({ where: { id: dto.tipoDocumentoId } });

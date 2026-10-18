@@ -20,6 +20,7 @@ import {
   TituloSeccion,
 } from "./TarjetasEstado";
 import { SincronizacionG4 } from "./SincronizacionG4";
+import { OrdenIngreso } from "./OrdenIngreso";
 import { ListaApis } from "./ListaApis";
 
 const DOCS_URL = `${API_BASE}/api/docs`;
@@ -161,11 +162,13 @@ function SistemaContent() {
 
       {error && (
         <ErrorBanner className="mb-6">
-          No se pudo contactar al backend — verifica que mollendo-api esté corriendo.
+          No se pudo contactar al backend — verifique que mollendo-api esté corriendo.
         </ErrorBanner>
       )}
 
       <SincronizacionG4 estado={estado?.sincronizacionG4} onTerminada={() => setVersion((v) => v + 1)} />
+
+      <OrdenIngreso />
 
       <TituloSeccion>APIs</TituloSeccion>
       <Tarjeta className="mb-6">

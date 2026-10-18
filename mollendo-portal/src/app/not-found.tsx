@@ -30,7 +30,7 @@ export default function NotFound() {
         />
 
         <p className="mt-10 mb-6 text-base text-gray-700 dark:text-gray-400 sm:text-lg">
-          La dirección que abriste no existe en el portal. Revisa que esté bien escrita.
+          La dirección que abrió no existe en el portal. Revise que esté bien escrita.
         </p>
 
         <Link

@@ -1,18 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useCallback, useState, useSyncExternalStore } from "react";
+import React, { createContext, useContext, useEffect, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authApi } from "@/lib/api/endpoints";
-import { clearTokens, getAccessToken, getRefreshToken, renovarSesion, setTokens, suscribirTokens } from "@/lib/api/client";
-import { decodeJwt, isTokenExpired } from "./decode-jwt";
+import { authApi, type UsuarioSesion } from "@/lib/api/endpoints";
+import { ApiError, renovarSesion, suscribirSesionPerdida } from "@/lib/api/client";
 import type { RolUsuario } from "@/lib/api/types";
 
-interface AuthUser {
-  id: number;
-  empresaId: number;
-  rol: RolUsuario;
-  correo: string;
-}
+type AuthUser = UsuarioSesion;
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -23,72 +17,71 @@ interface AuthContextValue {
 
 const ROLES_VALIDOS: RolUsuario[] = ["administrador", "vigilancia"];
 
+/** Espera antes de volver a preguntar por la sesión si el servidor no responde. */
+const REINTENTO_MS = 5000;
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-/**
- * ¿Es un token del portal que solo está vencido (rol válido) y hay con qué
- * renovarlo? Pasa al volver después de más de 1 hora: la sesión se renueva sola
- * (hasta 7 días) en vez de pedir de nuevo la contraseña.
- */
-function vencidoRenovable(token: string): boolean {
-  const payload = decodeJwt(token);
-  return !!payload && isTokenExpired(payload) && ROLES_VALIDOS.includes(payload.rol) && !!getRefreshToken();
-}
-
-/** Usuario del token, o null si no hay token o no sirve. */
-function usuarioDelToken(token: string | null): AuthUser | null {
-  if (!token) return null;
-  const payload = decodeJwt(token);
-  // Un token con un rol que ya no existe (p. ej. "administracion" o "empresa",
-  // anteriores al alcance base) se descarta para forzar un nuevo login.
-  if (!payload || isTokenExpired(payload) || !ROLES_VALIDOS.includes(payload.rol)) return null;
-  return { id: payload.sub, empresaId: payload.empresaId, rol: payload.rol, correo: payload.correo };
-}
+/** Un usuario con un rol que ya no existe (p. ej. "administracion") no entra: se pide un nuevo login. */
+const valido = (u: AuthUser | null): AuthUser | null => (u && ROLES_VALIDOS.includes(u.rol) ? u : null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
-  // El token vive en localStorage: se lee como fuente externa. En el servidor
-  // (y al hidratar) todavía no se conoce, por eso `undefined` = cargando.
-  const token = useSyncExternalStore<string | null | undefined>(suscribirTokens, getAccessToken, () => undefined);
-  const user = useMemo(() => (token ? usuarioDelToken(token) : null), [token]);
-  const renovable = useMemo(() => !!token && !user && vencidoRenovable(token), [token, user]);
-  // Mientras se renueva, se sigue "cargando": así no se manda al inicio de sesión.
-  const loading = token === undefined || renovable;
-  /** Sube para reintentar la renovación si el servidor no respondió. */
-  const [reintento, setReintento] = useState(0);
+  // La sesión viaja en una cookie que el portal no puede leer: se le pregunta al
+  // servidor quién la tiene. undefined = todavía no se sabe (cargando).
+  const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
 
-  // Token vencido pero renovable: se piden tokens nuevos. Uno que no sirve
-  // (rol antiguo, sin renovación) o una renovación rechazada borran la sesión.
   useEffect(() => {
-    if (!token || user) return;
-    if (!renovable) {
-      clearTokens();
-      return;
-    }
     let activo = true;
     let espera: ReturnType<typeof setTimeout> | undefined;
-    void renovarSesion().then((resultado) => {
-      // Sin conexión: se conserva la sesión y se reintenta en 5 s.
-      if (activo && resultado === "sin-conexion") espera = setTimeout(() => setReintento((n) => n + 1), 5000);
-    });
+    async function cargar() {
+      try {
+        // Sin cookies no hay sesión: no se pregunta (sería un 401 en rojo en la consola).
+        const { acceso, renovacion } = await authApi.estado();
+        if (!acceso && !renovacion) {
+          if (activo) setUser(null);
+          return;
+        }
+        // Venció la de acceso (1 hora) pero queda la de renovación (7 días): se renueva primero.
+        if (!acceso) {
+          const resultado = await renovarSesion();
+          if (resultado === "rechazada") return; // el aviso de sesión perdida deja user en null
+          if (resultado === "sin-conexion") throw new Error("sin conexión");
+        }
+        const usuario = await authApi.sesion();
+        if (activo) setUser(valido(usuario));
+      } catch (err) {
+        if (!activo) return;
+        // Sin sesión o rechazada: al inicio de sesión. Sin conexión: se conserva y se reintenta.
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) setUser(null);
+        else espera = setTimeout(cargar, REINTENTO_MS);
+      }
+    }
+    void cargar();
+    const quitar = suscribirSesionPerdida(() => setUser(null));
     return () => {
       activo = false;
       clearTimeout(espera);
+      quitar();
     };
-  }, [token, user, renovable, reintento]);
+  }, []);
 
   const login = useCallback(async (correo: string, password: string) => {
-    const { accessToken, refreshToken } = await authApi.login(correo, password);
-    setTokens(accessToken, refreshToken);
+    const { usuario } = await authApi.login(correo, password);
+    setUser(valido(usuario));
   }, []);
 
   const logout = useCallback(() => {
-    clearTokens();
+    // Las cookies las borra el servidor; si no responde, igual se sale (y vencen solas).
+    void authApi.cerrarSesion().catch(() => undefined);
+    setUser(null);
     router.push("/iniciar-sesion");
   }, [router]);
 
-  return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user: user ?? null, loading: user === undefined, login, logout }}>{children}</AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {

@@ -133,12 +133,12 @@ export function EstadoIngreso({
                 : persona.estado === "inactivo"
                   ? `Dado de baja${persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}${
                       persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""
-                    }. Para que vuelva a ingresar, usa “Reactivar”.`
+                    }. Para que vuelva a ingresar, use “Reactivar”.`
                   : cumplimiento.sinDocumentos
-                    ? "No tiene documentos cargados. Agrega al menos uno para que pueda ingresar."
+                    ? "No tiene documentos cargados. Agregue al menos uno para que pueda ingresar."
                     : cumplimiento.documentosVencidos.length === 1
-                      ? "1 documento vencido. Renuévalo para que pueda ingresar."
-                      : `${cumplimiento.documentosVencidos.length} documentos vencidos. Renuévalos para que pueda ingresar.`}
+                      ? "1 documento vencido. Renuévelo para que pueda ingresar."
+                      : `${cumplimiento.documentosVencidos.length} documentos vencidos. Renuévelos para que pueda ingresar.`}
             </p>
           </div>
         </div>

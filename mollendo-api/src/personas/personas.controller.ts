@@ -63,7 +63,7 @@ export class PersonasController {
   @Roles('administrador')
   @UseInterceptors(FileInterceptor('archivo', opcionesArchivo(TIPOS_EXCEL, 5 * 1024 * 1024, 'El archivo debe ser un Excel (.xlsx)')))
   revisarCargaMasiva(@UploadedFile() archivo: Express.Multer.File) {
-    if (!archivo) throw new BadRequestException('Elige el Excel con el personal');
+    if (!archivo) throw new BadRequestException('Elija el Excel con el personal');
     return this.cargaMasiva.revisar(archivo.buffer);
   }
 

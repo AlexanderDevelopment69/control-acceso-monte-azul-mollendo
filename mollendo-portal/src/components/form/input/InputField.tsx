@@ -15,6 +15,10 @@ interface InputProps {
   success?: boolean;
   error?: boolean;
   hint?: string; // Optional hint text
+  /** Campo obligatorio: lo anuncia el lector de pantalla (la validación la hace cada formulario). */
+  required?: boolean;
+  /** Para el navegador y los gestores de contraseñas (p. ej. "username", "current-password"). */
+  autoComplete?: string;
 }
 
 const Input: FC<InputProps> = ({
@@ -32,6 +36,8 @@ const Input: FC<InputProps> = ({
   success = false,
   error = false,
   hint,
+  required,
+  autoComplete,
 }) => {
   // Determine input styles based on state (disabled, success, error)
   let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
@@ -61,6 +67,9 @@ const Input: FC<InputProps> = ({
         step={step}
         disabled={disabled}
         className={inputClasses}
+        aria-required={required || undefined}
+        aria-invalid={error || undefined}
+        autoComplete={autoComplete}
       />
 
       {/* Optional Hint Text */}

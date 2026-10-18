@@ -94,7 +94,7 @@ describe("Ficha de la persona", () => {
     );
     const t = within(tarjeta());
     expect(t.getByText("No puede ingresar")).toBeInTheDocument();
-    expect(t.getByText("2 documentos vencidos. Renuévalos para que pueda ingresar.")).toBeInTheDocument();
+    expect(t.getByText("2 documentos vencidos. Renuévelos para que pueda ingresar.")).toBeInTheDocument();
     expect(t.getByText(/^Venció el 15\/3\/2026/)).toBeInTheDocument();
     expect(t.getAllByRole("button", { name: "Renovar" })).toHaveLength(2);
     expect(paso("Documentos")).toContain("2 vencidos");
@@ -104,7 +104,7 @@ describe("Ficha de la persona", () => {
     await montar(
       persona({ documentosVencidos: ["SCTR"] }, { documentosActuales: [doc(1, "SCTR", false, "2026-03-15T00:00:00.000Z")] }),
     );
-    expect(within(tarjeta()).getByText("1 documento vencido. Renuévalo para que pueda ingresar.")).toBeInTheDocument();
+    expect(within(tarjeta()).getByText("1 documento vencido. Renuévelo para que pueda ingresar.")).toBeInTheDocument();
 
     await userEvent.click(within(tarjeta()).getByRole("button", { name: "Renovar" }));
     expect(screen.getByRole("heading", { name: "Renovar documento" })).toBeInTheDocument();
@@ -121,7 +121,7 @@ describe("Ficha de la persona", () => {
 
   it("sin documentos: “Agregar documento” abre la ventana para agregar", async () => {
     await montar(persona({ sinDocumentos: true }, { documentosActuales: [] }));
-    expect(within(tarjeta()).getByText("No tiene documentos cargados. Agrega al menos uno para que pueda ingresar.")).toBeInTheDocument();
+    expect(within(tarjeta()).getByText("No tiene documentos cargados. Agregue al menos uno para que pueda ingresar.")).toBeInTheDocument();
     await userEvent.click(within(tarjeta()).getByRole("button", { name: "Agregar documento" }));
     expect(screen.getByRole("heading", { name: "Agregar documento" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Guardar documento nuevo" })).toBeInTheDocument();
@@ -129,7 +129,7 @@ describe("Ficha de la persona", () => {
 
   it("de baja: muestra el motivo, “Reactivar” y el DNI en falla", async () => {
     await montar(persona({ dadoDeBaja: true }, { estado: "inactivo", motivoBaja: "Renuncia", fechaBaja: null }));
-    expect(within(tarjeta()).getByText("Dado de baja. Motivo: Renuncia. Para que vuelva a ingresar, usa “Reactivar”.")).toBeInTheDocument();
+    expect(within(tarjeta()).getByText("Dado de baja. Motivo: Renuncia. Para que vuelva a ingresar, use “Reactivar”.")).toBeInTheDocument();
     expect(within(tarjeta()).queryByRole("button")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reactivar" })).toBeInTheDocument();
     expect(paso("DNI")).toContain("Dado de baja");
@@ -197,17 +197,17 @@ describe("Ficha de la persona", () => {
     await waitFor(() => expect(within(ventana).queryByText("Cargando…")).not.toBeInTheDocument());
     // Sin cambios: avisa y no envía nada.
     await userEvent.click(guardar);
-    expect(within(ventana).getByText("No cambiaste ningún dato.")).toBeInTheDocument();
+    expect(within(ventana).getByText("No cambió ningún dato.")).toBeInTheDocument();
     expect(api.update).not.toHaveBeenCalled();
 
     const [numero, , apellidos] = within(ventana).getAllByRole("textbox");
     await userEvent.clear(apellidos);
     await userEvent.type(apellidos, "Díaz Pérez");
-    expect(within(ventana).queryByText("No cambiaste ningún dato.")).not.toBeInTheDocument(); // se va al cambiar algo
-    expect(within(ventana).queryByText(/Cambias el documento/)).not.toBeInTheDocument();
+    expect(within(ventana).queryByText("No cambió ningún dato.")).not.toBeInTheDocument(); // se va al cambiar algo
+    expect(within(ventana).queryByText(/Cambia el documento/)).not.toBeInTheDocument();
     await userEvent.clear(numero);
     await userEvent.type(numero, "45678913");
-    expect(within(ventana).getByText(/Cambias el documento/)).toBeInTheDocument();
+    expect(within(ventana).getByText(/Cambia el documento/)).toBeInTheDocument();
 
     await userEvent.click(guardar);
     expect(api.update).toHaveBeenCalledWith(7, { numeroDocumento: "45678913", apellidos: "Díaz Pérez" });

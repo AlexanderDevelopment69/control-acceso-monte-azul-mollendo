@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, apiRequest, getAccessToken, getRefreshToken, renovarSesion, setTokens, suscribirTokens } from "./client";
+import { ApiError, apiRequest, renovarSesion, suscribirSesionPerdida } from "./client";
 
 const API = "http://localhost:3001/api/v1";
 
@@ -17,15 +17,14 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchFalso);
 });
 
-/** Encabezados y cuerpo con que se llamó a fetch la vez `n`. */
+/** Encabezados, cuerpo y credenciales con que se llamó a fetch la vez `n`. */
 function llamada(n: number) {
   const [url, init] = fetchFalso.mock.calls[n] as [string, RequestInit];
-  return { url, metodo: init.method, headers: init.headers as Record<string, string>, cuerpo: init.body };
+  return { url, metodo: init.method, headers: init.headers as Record<string, string>, cuerpo: init.body, credenciales: init.credentials };
 }
 
 describe("apiRequest", () => {
-  it("manda el token de sesión y el cuerpo en JSON", async () => {
-    setTokens("acceso-1", "renovacion-1");
+  it("manda la sesión en las cookies (sin token en la página) y el cuerpo en JSON", async () => {
     fetchFalso.mockResolvedValueOnce(respuesta(200, { id: 5 }));
 
     await expect(apiRequest("/personas", { method: "POST", body: { nombres: "Ana" } })).resolves.toEqual({ id: 5 });
@@ -33,20 +32,13 @@ describe("apiRequest", () => {
     const l = llamada(0);
     expect(l.url).toBe(`${API}/personas`);
     expect(l.metodo).toBe("POST");
-    expect(l.headers.Authorization).toBe("Bearer acceso-1");
+    expect(l.credenciales).toBe("include");
+    expect(l.headers.Authorization).toBeUndefined();
     expect(l.headers["Content-Type"]).toBe("application/json");
     expect(l.cuerpo).toBe('{"nombres":"Ana"}');
   });
 
-  it("con skipAuth no manda el token (rutas públicas)", async () => {
-    setTokens("acceso-1", "renovacion-1");
-    fetchFalso.mockResolvedValueOnce(respuesta(200, { status: "ok" }));
-    await apiRequest("/health", { skipAuth: true });
-    expect(llamada(0).headers.Authorization).toBeUndefined();
-  });
-
   it("FormData se manda tal cual, sin Content-Type (lo pone el navegador)", async () => {
-    setTokens("acceso-1", "renovacion-1");
     fetchFalso.mockResolvedValueOnce(respuesta(200, {}));
     const datos = new FormData();
     await apiRequest("/documentos", { method: "POST", body: datos, isFormData: true });
@@ -54,36 +46,38 @@ describe("apiRequest", () => {
     expect(llamada(0).headers["Content-Type"]).toBeUndefined();
   });
 
-  it("sesión vencida (401): la renueva y repite el pedido con el token nuevo", async () => {
-    setTokens("acceso-viejo", "renovacion-1");
+  it("sesión vencida (401): la renueva con la cookie de renovación y repite el pedido", async () => {
     fetchFalso
       .mockResolvedValueOnce(respuesta(401, { message: "Unauthorized" }))
-      .mockResolvedValueOnce(respuesta(200, { accessToken: "acceso-nuevo", refreshToken: "renovacion-2" }))
+      .mockResolvedValueOnce(respuesta(200, {}))
       .mockResolvedValueOnce(respuesta(200, [{ id: 1 }]));
 
     await expect(apiRequest("/personas")).resolves.toEqual([{ id: 1 }]);
 
     expect(llamada(1).url).toBe(`${API}/auth/refresh-token`);
-    expect(llamada(1).cuerpo).toBe('{"refreshToken":"renovacion-1"}');
-    expect(llamada(2).headers.Authorization).toBe("Bearer acceso-nuevo");
-    expect(getAccessToken()).toBe("acceso-nuevo");
-    expect(getRefreshToken()).toBe("renovacion-2");
+    expect(llamada(1).credenciales).toBe("include");
+    expect(llamada(1).cuerpo).toBeUndefined();
+    expect(llamada(2).url).toBe(`${API}/personas`);
   });
 
-  it("si la renovación es rechazada, borra la sesión y avisa el error", async () => {
-    setTokens("acceso-viejo", "renovacion-vencida");
+  it("si la renovación es rechazada, avisa que se perdió la sesión y el error", async () => {
     const oyente = vi.fn();
-    const quitar = suscribirTokens(oyente);
+    const quitar = suscribirSesionPerdida(oyente);
     fetchFalso
       .mockResolvedValueOnce(respuesta(401, { message: "Unauthorized" }))
       .mockResolvedValueOnce(respuesta(401, { message: "Token inválido" }));
 
     await expect(apiRequest("/personas")).rejects.toMatchObject({ status: 401 });
-
-    expect(getAccessToken()).toBeNull();
-    expect(getRefreshToken()).toBeNull();
     expect(oyente).toHaveBeenCalled(); // el portal se entera y vuelve al inicio de sesión
     quitar();
+  });
+
+  it("con skipAuth (rutas públicas), un 401 no intenta renovar", async () => {
+    fetchFalso.mockResolvedValueOnce(respuesta(401, { message: "Correo o contraseña incorrectos" }));
+    await expect(apiRequest("/auth/login", { method: "POST", body: {}, skipAuth: true })).rejects.toThrow(
+      "Correo o contraseña incorrectos",
+    );
+    expect(fetchFalso).toHaveBeenCalledTimes(1);
   });
 
   it("usa el mensaje del servidor; si son varios, los une", async () => {
@@ -115,31 +109,31 @@ describe("apiRequest", () => {
 });
 
 describe("renovarSesion", () => {
-  it('"renovada": guarda los tokens nuevos', async () => {
-    setTokens("a", "r");
-    fetchFalso.mockResolvedValueOnce(respuesta(200, { accessToken: "a2", refreshToken: "r2" }));
+  it('"renovada": el servidor dejó cookies nuevas', async () => {
+    fetchFalso.mockResolvedValueOnce(respuesta(200, {}));
     await expect(renovarSesion()).resolves.toBe("renovada");
-    expect(getAccessToken()).toBe("a2");
   });
 
-  it('"rechazada": borra la sesión', async () => {
-    setTokens("a", "r");
+  it('"rechazada": avisa que se perdió la sesión', async () => {
+    const oyente = vi.fn();
+    const quitar = suscribirSesionPerdida(oyente);
     fetchFalso.mockResolvedValueOnce(respuesta(401, {}));
     await expect(renovarSesion()).resolves.toBe("rechazada");
-    expect(getAccessToken()).toBeNull();
+    expect(oyente).toHaveBeenCalled();
+    quitar();
   });
 
   it('"sin-conexion": si el servidor no responde, conserva la sesión', async () => {
-    setTokens("a", "r");
+    const oyente = vi.fn();
+    const quitar = suscribirSesionPerdida(oyente);
     fetchFalso.mockRejectedValueOnce(new TypeError("Failed to fetch"));
     await expect(renovarSesion()).resolves.toBe("sin-conexion");
-    expect(getAccessToken()).toBe("a");
+    expect(oyente).not.toHaveBeenCalled();
+    quitar();
   });
 
   it('"sin-conexion" también si el servidor falla (p. ej. 503 mientras se actualiza)', async () => {
-    setTokens("a", "r");
     fetchFalso.mockResolvedValueOnce(respuesta(503, {}));
     await expect(renovarSesion()).resolves.toBe("sin-conexion");
-    expect(getRefreshToken()).toBe("r");
   });
 });

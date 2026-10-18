@@ -150,28 +150,28 @@ function Formulario({
 
   function validar(): string | null {
     if (!personaCreada) {
-      if (!perfil) return "Elige el perfil del personal";
-      if (!empresaId) return "Elige la empresa";
+      if (!perfil) return "Elija el perfil del personal";
+      if (!empresaId) return "Elija la empresa";
       if (!numeroDocumento || !nombres.trim() || !apellidos.trim()) {
-        return "Completa número de documento, nombres y apellidos";
+        return "Complete número de documento, nombres y apellidos";
       }
       const problemaNumero = validarNumeroDocumento(tipoDocumentoIdentidad, numeroDocumento);
       if (problemaNumero) return problemaNumero;
     }
     if (!fotoSubida) {
-      if (!foto) return "Elige la foto del personal (se usa para el reconocimiento facial)";
+      if (!foto) return "Elija la foto del personal (se usa para el reconocimiento facial)";
       const problemaFoto = validarFoto(foto);
       if (problemaFoto) return problemaFoto;
     }
     for (const [i, f] of filas.entries()) {
       if (f.subido) continue;
       const n = filas.length > 1 ? ` ${i + 1}` : "";
-      if (!f.nombre.trim()) return `Documento${n}: escribe su nombre`;
-      if (!f.archivo) return `Documento${n}: adjunta el archivo`;
+      if (!f.nombre.trim()) return `Documento${n}: escriba su nombre`;
+      if (!f.archivo) return `Documento${n}: adjunte el archivo`;
       const problemaArchivo = validarArchivoDocumento(f.archivo);
       if (problemaArchivo) return `Documento${n}: ${problemaArchivo}`;
       if (f.fechaVencimiento && f.fechaVencimiento < hoy()) {
-        return `Documento${n}: la fecha de vencimiento ya pasó (quedaría vencido). Revisa la fecha.`;
+        return `Documento${n}: la fecha de vencimiento ya pasó (quedaría vencido). Revise la fecha.`;
       }
     }
     return null;
@@ -238,8 +238,8 @@ function Formulario({
       {error && <ErrorBanner>{error}</ErrorBanner>}
       {personaCreada && (
         <p className="rounded-lg bg-success-50 px-4 py-3 text-sm text-success-700 dark:bg-success-500/15 dark:text-success-500">
-          Personal <strong>{personaCreada.nombres} {personaCreada.apellidos}</strong> ya registrado. Corrige lo que
-          falló (foto o documento) y vuelve a guardar.
+          Personal <strong>{personaCreada.nombres} {personaCreada.apellidos}</strong> ya registrado. Corrija lo que
+          falló (foto o documento) y vuelva a guardar.
         </p>
       )}
 
@@ -251,7 +251,7 @@ function Formulario({
               <Select
                 defaultValue={perfil}
                 onChange={(v) => setPerfil(v as Perfil)}
-                placeholder="Selecciona un perfil"
+                placeholder="Seleccione un perfil"
                 options={OPCIONES_PERFIL}
               />
             </div>
@@ -261,11 +261,11 @@ function Formulario({
               <Select
                 defaultValue={empresaId}
                 onChange={setEmpresaId}
-                placeholder="Selecciona una empresa"
+                placeholder="Seleccione una empresa"
                 options={opcionesEmpresa(empresas, personas, perfil)}
               />
               <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                ¿No está? Regístrala en{" "}
+                ¿No está? Regístrela en{" "}
                 <Link href="/empresas" target="_blank" className="font-medium text-brand-500 hover:underline">
                   Empresas
                 </Link>
@@ -405,7 +405,7 @@ export function NuevaPersonaModal({
     <Modal isOpen={isOpen} onClose={onClose} bloqueado={guardando} className="max-w-5xl p-6 sm:p-8">
       <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Nuevo personal</h2>
       <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-        Registra a la persona con su foto y sus documentos.
+        Registre a la persona con su foto y sus documentos.
       </p>
       {/* Se monta de nuevo cada vez que se abre: el formulario siempre empieza vacío. */}
       {isOpen && <Formulario onClose={onClose} onGuardando={setGuardando} {...props} />}

@@ -96,6 +96,15 @@ export interface IngresoEnEspera {
   enCola: boolean;
   /** La decide un vigilante (verificación manual, equipo facial fuera de servicio), no el G4 Pro. */
   manual?: boolean;
+  /** Orden "facial primero": alguien aprobó rostro y alcohol (el equipo no dice quién); falta su DNI (`hasta` es el plazo). */
+  esperaDni?: boolean;
+}
+
+/** Orden del ingreso: primero el DNI (normal) o primero rostro y alcohol (en prueba). */
+export interface EstadoModoIngreso {
+  facialPrimero: boolean;
+  desde: string | null;
+  cambiadoPor: string | null;
 }
 
 /** Verificación manual vigente (contingencia por falla del equipo facial). */
@@ -128,6 +137,12 @@ export interface EventoAcceso {
   denegadoYaDentro?: boolean;
   /** Antipassback: quiso salir sin ingreso registrado. */
   denegadoSinIngreso?: boolean;
+  /** Orden "facial primero": pasó su DNI sin una aprobación de rostro y alcohol en los 20 s anteriores. */
+  denegadoSinFacial?: boolean;
+  /** Orden "facial primero": alguien aprobó rostro y alcohol, pero nadie pasó su DNI a tiempo (sin persona). */
+  denegadoSinDni?: boolean;
+  /** Orden "facial primero": rostro y alcohol antes del DNI; el equipo no confirma quién sopló. */
+  facialPrimero?: boolean;
   /** Movimiento registrado a mano por un vigilante o administrador (no pasó por el molinete). */
   correccionManual?: boolean;
   motivoCorreccion?: string | null;
@@ -324,8 +339,11 @@ export interface AuditoriaEntry {
   usuarioId: number | null;
   tablaAfectada: string;
   registroId: number;
-  accion: "crear" | "modificar" | "eliminar";
+  accion: "crear" | "modificar" | "eliminar" | "inicio_sesion" | "inicio_sesion_fallido";
   fechaHora: string;
+  /** Inicios de sesión: IP y, si se rechazó, el correo escrito y el motivo ("correo · motivo"). */
+  ip?: string | null;
+  detalle?: string | null;
   usuario?: { id: number; correo: string; rol: RolUsuario } | null;
 }
 

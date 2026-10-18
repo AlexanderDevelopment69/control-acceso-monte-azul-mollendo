@@ -7,7 +7,7 @@ export class CreatePersonaDto {
   @IsInt({ message: 'La empresa es obligatoria' })
   empresaId!: number;
 
-  @IsIn(PERFILES, { message: 'Elige el perfil de la persona' })
+  @IsIn(PERFILES, { message: 'Elija el perfil de la persona' })
   perfil!: Perfil;
 
   @IsIn(['DNI', 'CE', 'PASAPORTE'], { message: 'El tipo de documento debe ser DNI, CE o PASAPORTE' })

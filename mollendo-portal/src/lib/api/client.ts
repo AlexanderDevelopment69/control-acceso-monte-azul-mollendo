@@ -1,41 +1,31 @@
 import { API_URL } from "@/lib/config";
 
-const ACCESS_TOKEN_KEY = "mollendo_access_token";
-const REFRESH_TOKEN_KEY = "mollendo_refresh_token";
-
-export function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+/**
+ * La sesión viaja en cookies que el navegador guarda y manda solo a la API, y
+ * que el código del portal no puede leer (httpOnly): si alguien lograra
+ * ejecutar código en la página, no podría robarla. Antes se guardaba en
+ * localStorage; esas claves viejas se borran.
+ */
+const CLAVES_ANTIGUAS = ["mollendo_access_token", "mollendo_refresh_token"];
+if (typeof window !== "undefined") {
+  try {
+    CLAVES_ANTIGUAS.forEach((clave) => window.localStorage.removeItem(clave));
+  } catch {
+    // almacenamiento bloqueado: no hay nada que borrar
+  }
 }
 
-export function getRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(REFRESH_TOKEN_KEY);
+// Quien muestra la sesión (AuthContext) se entera cuando se pierde: renovación
+// rechazada (vencida, cuenta dada de baja o contraseña cambiada en otro equipo).
+const oyentesSesion = new Set<() => void>();
+
+export function suscribirSesionPerdida(oyente: () => void): () => void {
+  oyentesSesion.add(oyente);
+  return () => oyentesSesion.delete(oyente);
 }
 
-// Quien muestra la sesión (AuthContext) se entera cuando cambian los tokens:
-// login, renovación, cambio de contraseña o cierre de sesión.
-const oyentesTokens = new Set<() => void>();
-
-export function suscribirTokens(oyente: () => void): () => void {
-  oyentesTokens.add(oyente);
-  return () => oyentesTokens.delete(oyente);
-}
-
-function avisarCambioTokens(): void {
-  oyentesTokens.forEach((oyente) => oyente());
-}
-
-export function setTokens(accessToken: string, refreshToken: string): void {
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  avisarCambioTokens();
-}
-
-export function clearTokens(): void {
-  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
-  window.localStorage.removeItem(REFRESH_TOKEN_KEY);
-  avisarCambioTokens();
+function avisarSesionPerdida(): void {
+  oyentesSesion.forEach((oyente) => oyente());
 }
 
 export class ApiError extends Error {
@@ -51,7 +41,7 @@ interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   isFormData?: boolean;
-  /** No adjunta el Authorization header (endpoints públicos de /auth). */
+  /** Rutas públicas de /auth: un 401 no intenta renovar la sesión. */
   skipAuth?: boolean;
   /**
    * "blob" para archivos (p. ej. la foto del trabajador) en vez de JSON;
@@ -61,39 +51,33 @@ interface RequestOptions {
 }
 
 /**
- * Pide tokens nuevos con el de renovación. null = la sesión ya no vale (vencida,
- * cuenta dada de baja o contraseña cambiada). Si el servidor no responde o
- * falla (p. ej. mientras se reinicia en una actualización), lanza un error: la
- * sesión no se da por cerrada por eso.
+ * Renueva la sesión con la cookie de renovación (el servidor deja cookies
+ * nuevas). false = ya no vale (vencida, cuenta dada de baja o contraseña
+ * cambiada). Si el servidor no responde o falla (p. ej. mientras se reinicia
+ * en una actualización), lanza un error: la sesión no se da por cerrada por eso.
  */
-async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return null;
-
+async function renovarCookies(): Promise<boolean> {
   const res = await fetch(`${API_URL}/auth/refresh-token`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
-    body: JSON.stringify({ refreshToken }),
+    credentials: "include",
+    headers: { "ngrok-skip-browser-warning": "true" },
   });
-  if (res.status === 400 || res.status === 401) return null;
+  if (res.status === 400 || res.status === 401) return false;
   if (!res.ok) throw new Error(`No se pudo renovar la sesión (error ${res.status})`);
-
-  const data = await res.json();
-  setTokens(data.accessToken, data.refreshToken);
-  return data.accessToken as string;
+  return true;
 }
 
 export type ResultadoRenovacion = "renovada" | "rechazada" | "sin-conexion";
 
 /**
- * Renueva la sesión: "renovada" (tokens nuevos guardados), "rechazada" (ya no
- * vale: se borran los tokens y el portal vuelve al inicio de sesión) o
- * "sin-conexion" (el servidor no respondió; los tokens se conservan).
+ * Renueva la sesión: "renovada" (cookies nuevas), "rechazada" (ya no vale: el
+ * portal vuelve al inicio de sesión) o "sin-conexion" (el servidor no
+ * respondió; la sesión se conserva).
  */
 export async function renovarSesion(): Promise<ResultadoRenovacion> {
   try {
-    if (await refreshAccessToken()) return "renovada";
-    clearTokens();
+    if (await renovarCookies()) return "renovada";
+    avisarSesionPerdida();
     return "rechazada";
   } catch {
     return "sin-conexion";
@@ -103,33 +87,32 @@ export async function renovarSesion(): Promise<ResultadoRenovacion> {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, isFormData = false, skipAuth = false, responseType = "json" } = options;
 
-  const doFetch = async (token: string | null) => {
+  const doFetch = async () => {
     // Evita la página de advertencia que ngrok le muestra a un visitante
     // nuevo antes de dejarlo pasar — sin esto, esa página HTML llegaría en
     // vez de la respuesta JSON real cuando la API se expone por un túnel.
     // No tiene efecto si no se está usando ngrok.
     const headers: Record<string, string> = { "ngrok-skip-browser-warning": "true" };
     if (!isFormData && body !== undefined) headers["Content-Type"] = "application/json";
-    if (token) headers["Authorization"] = `Bearer ${token}`;
 
     return fetch(`${API_URL}${path}`, {
       method,
       headers,
+      // La sesión va en las cookies de la API (también al iniciar sesión, para recibirlas).
+      credentials: "include",
       body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
     });
   };
 
-  let token = skipAuth ? null : getAccessToken();
-  let res = await doFetch(token);
+  let res = await doFetch();
 
   if (!skipAuth && res.status === 401) {
-    token = await refreshAccessToken();
-    if (token) {
-      res = await doFetch(token);
+    if (await renovarCookies()) {
+      res = await doFetch();
     } else {
       // Sesión vencida o cerrada (p. ej. se cambió la contraseña en otro
-      // equipo): se borran los tokens y el portal vuelve al inicio de sesión.
-      clearTokens();
+      // equipo): el portal vuelve al inicio de sesión.
+      avisarSesionPerdida();
     }
   }
 

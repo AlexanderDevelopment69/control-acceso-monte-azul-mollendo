@@ -1,26 +1,18 @@
 import { io, type Socket } from "socket.io-client";
-import { getAccessToken, renovarSesion } from "./api/client";
-import { decodeJwt } from "./auth/decode-jwt";
+import { renovarSesion } from "./api/client";
 import { API_BASE } from "./config";
 
 /** Espera antes de reintentar: 2 s, 4 s, 8 s… hasta 30 s. */
 const ESPERA_MAXIMA_MS = 30_000;
 
-/** ¿El token de sesión falta o vence en menos de 30 s? */
-function tokenPorVencer(): boolean {
-  const token = getAccessToken();
-  const payload = token ? decodeJwt(token) : null;
-  return !payload || payload.exp * 1000 < Date.now() + 30_000;
-}
-
 /**
  * Canal en vivo de los ingresos y salidas (Panel de vigilancia y Dashboard).
  *
- * El token se lee en cada conexión, no solo al abrir la página: el de sesión
- * dura 1 hora y el panel queda abierto todo el día. Si el servidor corta o
- * rechaza la conexión (token vencido, reinicio por una actualización, cuenta
- * dada de baja), se renueva la sesión y se vuelve a conectar, con esperas
- * crecientes; si la sesión ya no vale, el portal vuelve al inicio de sesión.
+ * La sesión va en la cookie de la API, que el navegador manda al conectarse. La
+ * de acceso dura 1 hora y el panel queda abierto todo el día: si el servidor
+ * corta o rechaza la conexión (sesión vencida, reinicio por una actualización,
+ * cuenta dada de baja), se renueva la sesión y se vuelve a conectar, con
+ * esperas crecientes; si ya no vale, el portal vuelve al inicio de sesión.
  * `alReconectar` se llama al recuperar la conexión, para recargar lo que llegó
  * mientras estaba cortada.
  */
@@ -31,7 +23,8 @@ export function connectEventosSocket(alReconectar?: () => void): Socket {
     // Sin barra final, porque Next redirige las rutas que terminan en "/".
     path: "/api/v1/socket.io",
     addTrailingSlash: false,
-    auth: (enviar) => enviar({ token: getAccessToken() }),
+    // Con la cookie de la sesión (cuando la API está en otra dirección, como en desarrollo).
+    withCredentials: true,
     transports: ["websocket"],
   });
 
@@ -47,11 +40,10 @@ export function connectEventosSocket(alReconectar?: () => void): Socket {
     espera = setTimeout(async () => {
       espera = null;
       if (cerrado) return;
-      if (tokenPorVencer()) {
-        const resultado = await renovarSesion();
-        if (resultado === "rechazada") return; // sin sesión: el portal vuelve al inicio de sesión
-        if (resultado === "sin-conexion") return reintentar();
-      }
+      // No se puede saber si la cookie venció: se renueva antes de reconectar (es liviano).
+      const resultado = await renovarSesion();
+      if (resultado === "rechazada") return; // sin sesión: el portal vuelve al inicio de sesión
+      if (resultado === "sin-conexion") return reintentar();
       if (!cerrado) socket.connect();
     }, ms);
   }
@@ -72,7 +64,7 @@ export function connectEventosSocket(alReconectar?: () => void): Socket {
       return;
     }
     // Cortado por el servidor: socket.io no reintenta solo. Otros cortes (red,
-    // reinicio) sí los reintenta él, con el token vigente (ver `auth`).
+    // reinicio) sí los reintenta él, con la cookie vigente.
     if (motivo === "io server disconnect") reintentar();
   });
   socket.on("connect_error", () => {

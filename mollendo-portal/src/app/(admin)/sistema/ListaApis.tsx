@@ -179,7 +179,7 @@ export function ListaApis({
     <Tarjeta className="overflow-hidden">
       <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
         <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">APIs de integración (terminal facial ZKTeco con alcoholímetro, lectores de DNI y relés de los molinetes)</h2>
-        <p className="mt-1 text-xs text-gray-400">Haz clic en una fila para ver el detalle de uso.</p>
+        <p className="mt-1 text-xs text-gray-400">Haga clic en una fila para ver el detalle de uso.</p>
       </div>
       <div className="overflow-x-auto">
         <Table>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { esIpInterna } from './limite-intentos.js';
+import { esIpInterna, sinDatosDeIngreso } from './limite-intentos.js';
 
 describe('esIpInterna', () => {
   it('reconoce la propia máquina y las redes privadas (lo que se ve por el portal)', () => {
@@ -12,5 +12,20 @@ describe('esIpInterna', () => {
     for (const ip of ['38.226.245.106', '::ffff:38.226.245.106', '172.32.0.1', '172.15.0.1', '8.8.8.8', '2800:200::1']) {
       expect(esIpInterna(ip)).toBe(false);
     }
+  });
+});
+
+describe('sinDatosDeIngreso', () => {
+  it('sin correo o sin contraseña no cuenta como intento', () => {
+    expect(sinDatosDeIngreso({})).toBe(true);
+    expect(sinDatosDeIngreso(undefined)).toBe(true);
+    expect(sinDatosDeIngreso({ correo: '', password: '' })).toBe(true);
+    expect(sinDatosDeIngreso({ correo: '   ', password: 'x' })).toBe(true);
+    expect(sinDatosDeIngreso({ correo: 'a@b.pe', password: '' })).toBe(true);
+    expect(sinDatosDeIngreso({ correo: 'a@b.pe', password: 123 })).toBe(true);
+  });
+
+  it('con correo y contraseña sí cuenta (aunque la contraseña sea incorrecta)', () => {
+    expect(sinDatosDeIngreso({ correo: 'a@b.pe', password: 'mala' })).toBe(false);
   });
 });
