@@ -62,6 +62,22 @@ export function atendidoPorPuertoDirecto(ruta: string, ipConexion: string | unde
   return !!ipConexion && esIpInterna(ipConexion);
 }
 
+/**
+ * A quien abre el puerto directo en el navegador (por error, con la IP en vez
+ * del dominio) se le manda al portal seguro: el primer origen https de
+ * CORS_ORIGIN. null = no es un navegador abriendo una página, o no hay portal
+ * con HTTPS configurado: se responde "No encontrado".
+ */
+export function portalParaNavegador(metodo: string, accept: string | undefined, origenes = process.env.CORS_ORIGIN): string | null {
+  if (metodo !== 'GET' && metodo !== 'HEAD') return null;
+  if (!(accept ?? '').includes('text/html')) return null;
+  const portal = (origenes ?? '')
+    .split(',')
+    .map((origen) => origen.trim())
+    .find((origen) => origen.startsWith('https://'));
+  return portal ? `${portal.replace(/\/+$/, '')}/` : null;
+}
+
 /** ¿Puede comunicarse este terminal? Sin lista configurada, cualquiera. */
 export function serieAutorizada(sn: unknown): boolean {
   const permitidas = seriesPermitidas();

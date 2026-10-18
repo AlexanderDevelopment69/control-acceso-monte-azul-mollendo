@@ -2,14 +2,14 @@ import './common/zona-horaria.js';
 import { NestFactory } from '@nestjs/core';
 import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { text } from 'express';
+import { text, type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import compression from 'compression';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
 import { SWAGGER_FAVICON } from './common/swagger-favicon.js';
 import { swaggerActivo } from './common/swagger.util.js';
-import { atendidoPorPuertoDirecto, ipsEquipoPermitidas } from './common/seguridad/equipos.util.js';
+import { atendidoPorPuertoDirecto, ipsEquipoPermitidas, portalParaNavegador } from './common/seguridad/equipos.util.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -31,9 +31,12 @@ async function bootstrap() {
   );
 
   // El puerto de la API da a internet solo para el G4 Pro: lo demás que llegue
-  // directo desde internet se rechaza (ver atendidoPorPuertoDirecto).
-  app.use((req: { path: string; socket: { remoteAddress?: string } }, res: { status: (c: number) => { json: (b: unknown) => void } }, next: () => void) => {
+  // directo desde internet se rechaza (ver atendidoPorPuertoDirecto). A un
+  // navegador se lo manda al portal por HTTPS.
+  app.use((req: Request, res: Response, next: NextFunction) => {
     if (atendidoPorPuertoDirecto(req.path, req.socket.remoteAddress)) return next();
+    const portal = portalParaNavegador(req.method, req.headers.accept);
+    if (portal) return res.redirect(302, portal);
     res.status(404).json({ statusCode: 404, message: 'No encontrado' });
   });
   if (ipsEquipoPermitidas().length === 0) {

@@ -4,6 +4,7 @@ import {
   claveEquiposValida,
   ipEquipoAutorizada,
   ipsEquipoPermitidas,
+  portalParaNavegador,
   serieAutorizada,
   seriesPermitidas,
 } from './equipos.util.js';
@@ -88,5 +89,26 @@ describe('atendidoPorPuertoDirecto', () => {
     expect(atendidoPorPuertoDirecto('/api/v1/personas', '::ffff:38.226.245.106')).toBe(false);
     expect(atendidoPorPuertoDirecto('/iclockx', '8.8.8.8')).toBe(false);
     expect(atendidoPorPuertoDirecto('/api/v1/health', undefined)).toBe(false);
+  });
+});
+
+describe('portalParaNavegador', () => {
+  const HTML = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+  const ORIGENES = 'http://localhost:3000, https://accesos.monteazulsur.com.pe';
+
+  it('un navegador que abre una página va al portal por HTTPS', () => {
+    expect(portalParaNavegador('GET', HTML, ORIGENES)).toBe('https://accesos.monteazulsur.com.pe/');
+    expect(portalParaNavegador('HEAD', HTML, 'https://accesos.monteazulsur.com.pe/')).toBe('https://accesos.monteazulsur.com.pe/');
+  });
+
+  it('lo que no es un navegador abriendo una página recibe "No encontrado"', () => {
+    expect(portalParaNavegador('POST', HTML, ORIGENES)).toBeNull();
+    expect(portalParaNavegador('GET', 'application/json', ORIGENES)).toBeNull();
+    expect(portalParaNavegador('GET', undefined, ORIGENES)).toBeNull();
+  });
+
+  it('sin portal con HTTPS configurado, no se redirige', () => {
+    expect(portalParaNavegador('GET', HTML, 'http://localhost:3000')).toBeNull();
+    expect(portalParaNavegador('GET', HTML, undefined)).toBeNull();
   });
 });
