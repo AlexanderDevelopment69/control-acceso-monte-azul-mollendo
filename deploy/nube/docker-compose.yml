@@ -44,6 +44,11 @@ services:
       # Números de serie de los G4 Pro que pueden comunicarse (las rutas /iclock no
       # llevan clave): obligatorio en la nube, porque el puerto 3001 da a internet.
       G4PRO_SN_PERMITIDOS: ${G4PRO_SN_PERMITIDOS:?Falta G4PRO_SN_PERMITIDOS en .env (número de serie del G4 Pro)}
+      # IP pública de la sede desde donde se conecta el G4 Pro (varias, separadas por
+      # coma). El número de serie viaja sin cifrar: con la IP, nadie más puede hacerse
+      # pasar por el equipo. Vacía = cualquier IP (se avisa en el registro al arrancar).
+      # Si la sede cambia de IP, el G4 queda rechazado: ver README ("El G4 dejó de conectarse").
+      G4PRO_IPS_PERMITIDAS: ${G4PRO_IPS_PERMITIDAS:-}
       RESPALDOS_PATH: /app/respaldos
       # Solo para mostrarlos en "Sistema y APIs" (los usa el contenedor backup).
       HORA_RESPALDO: ${HORA_RESPALDO:-00:00}

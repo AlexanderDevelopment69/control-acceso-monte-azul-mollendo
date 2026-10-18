@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, Logger, type CanActivate, type ExecutionContext } from '@nestjs/common';
-import { serieAutorizada } from '../seguridad/equipos.util.js';
+import { ipEquipoAutorizada, limpiarIp, serieAutorizada } from '../seguridad/equipos.util.js';
 
 /**
  * Rutas /iclock del G4 Pro: el protocolo no manda clave, así que solo se
@@ -14,13 +14,18 @@ export class SerieG4Guard implements CanActivate {
   private readonly avisados = new Set<string>();
 
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<{ query: Record<string, unknown>; ip?: string }>();
+    const req = context.switchToHttp().getRequest<{ query: Record<string, unknown>; socket?: { remoteAddress?: string } }>();
     const sn = req.query?.['SN'];
-    if (serieAutorizada(sn)) return true;
-    const clave = `${String(sn)}|${req.ip ?? ''}`;
+    // La IP de la conexión, no la de X-Forwarded-For: esa cabecera la puede escribir cualquiera.
+    const ip = limpiarIp(req.socket?.remoteAddress);
+    const serieOk = serieAutorizada(sn);
+    const ipOk = ipEquipoAutorizada(ip);
+    if (serieOk && ipOk) return true;
+    const clave = `${String(sn)}|${ip}`;
     if (!this.avisados.has(clave) && this.avisados.size < 1000) {
       this.avisados.add(clave);
-      this.logger.warn(`Terminal rechazado: SN=${String(sn ?? '(sin SN)')} desde ${req.ip ?? '?'} (no está en G4PRO_SN_PERMITIDOS)`);
+      const motivo = !serieOk ? 'no está en G4PRO_SN_PERMITIDOS' : 'la IP no está en G4PRO_IPS_PERMITIDAS';
+      this.logger.warn(`Terminal rechazado: SN=${String(sn ?? '(sin SN)')} desde ${ip || '?'} (${motivo})`);
     }
     throw new ForbiddenException('Equipo no autorizado');
   }

@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { esIpInterna } from '../../auth/limite-intentos.js';
 
 /**
  * ¿La clave recibida es la clave de equipos (DEVICE_API_KEY)? Comparación en
@@ -22,6 +23,43 @@ export function seriesPermitidas(): string[] {
     .split(',')
     .map((sn) => sn.trim().toUpperCase())
     .filter(Boolean);
+}
+
+/**
+ * Direcciones IP desde donde se conectan los terminales faciales
+ * (G4PRO_IPS_PERMITIDAS, separadas por coma): la IP pública de la sede. Vacío =
+ * cualquiera. El número de serie solo no basta: viaja sin cifrar (el G4 usa
+ * HTTP) y quien lo conozca podría hacerse pasar por el equipo.
+ */
+export function ipsEquipoPermitidas(): string[] {
+  return (process.env.G4PRO_IPS_PERMITIDAS ?? '')
+    .split(',')
+    .map((ip) => ip.trim())
+    .filter(Boolean);
+}
+
+/** La IP tal como la escribe una persona (sin el prefijo IPv6 de las IPv4: "::ffff:"). */
+export function limpiarIp(ip: string | undefined): string {
+  return (ip ?? '').replace(/^::ffff:/, '');
+}
+
+/** ¿Llega el terminal desde una IP permitida? Sin lista configurada, desde cualquiera. */
+export function ipEquipoAutorizada(ip: string | undefined): boolean {
+  const permitidas = ipsEquipoPermitidas();
+  if (permitidas.length === 0) return true;
+  return permitidas.includes(limpiarIp(ip));
+}
+
+/**
+ * ¿Se atiende este pedido que llegó directo al puerto de la API? El puerto da a
+ * internet solo para el G4 Pro (/iclock, que no sabe usar HTTPS). Lo demás
+ * (inicio de sesión, datos) entra por el proxy HTTPS o desde la red interna
+ * (el proxy, el portal, la propia máquina o la red local de la mini PC): así
+ * nadie puede iniciar sesión ni leer datos sin cifrar.
+ */
+export function atendidoPorPuertoDirecto(ruta: string, ipConexion: string | undefined): boolean {
+  if (ruta === '/iclock' || ruta.startsWith('/iclock/')) return true;
+  return !!ipConexion && esIpInterna(ipConexion);
 }
 
 /** ¿Puede comunicarse este terminal? Sin lista configurada, cualquiera. */

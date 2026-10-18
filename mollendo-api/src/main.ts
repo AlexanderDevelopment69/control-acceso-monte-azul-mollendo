@@ -9,6 +9,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
 import { SWAGGER_FAVICON } from './common/swagger-favicon.js';
 import { swaggerActivo } from './common/swagger.util.js';
+import { atendidoPorPuertoDirecto, ipsEquipoPermitidas } from './common/seguridad/equipos.util.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -28,6 +29,16 @@ async function bootstrap() {
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
+
+  // El puerto de la API da a internet solo para el G4 Pro: lo demás que llegue
+  // directo desde internet se rechaza (ver atendidoPorPuertoDirecto).
+  app.use((req: { path: string; socket: { remoteAddress?: string } }, res: { status: (c: number) => { json: (b: unknown) => void } }, next: () => void) => {
+    if (atendidoPorPuertoDirecto(req.path, req.socket.remoteAddress)) return next();
+    res.status(404).json({ statusCode: 404, message: 'No encontrado' });
+  });
+  if (ipsEquipoPermitidas().length === 0) {
+    new Logger('Seguridad').warn('G4PRO_IPS_PERMITIDAS vacío: el terminal facial se acepta desde cualquier IP (solo con su número de serie)');
+  }
 
   // Respuestas comprimidas (gzip) para quien las acepte: la lista del personal pesa
   // ~430 KB con mil personas y ~20 KB comprimida (se nota con internet lento). Los PDF,

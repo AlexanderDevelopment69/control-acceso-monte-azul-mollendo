@@ -20,7 +20,7 @@ export const APIS_INTEGRACION: ApiIntegracion[] = [
     metodo: "POST",
     descripcion:
       "El G4 Pro se conecta directo a la mini PC con el protocolo PUSH del fabricante, en su variante de control de acceso (ACC). Por ahí recibe las personas (user, con el DNI como número de usuario), su nombre (extuser), su foto (biophoto, que el equipo convierte en el rostro que reconoce) y el permiso de paso mientras esperan su ingreso (userauthorize). Envía cada verificación (rostro + alcohol, table=rtlog), el estado del sensor y del relé (table=rtstate) y las respuestas a las consultas (querydata).",
-    autenticacion: "Ninguna (el equipo no manda ningún token) — las rutas /iclock/* no llevan X-API-Key",
+    autenticacion: "Número de serie (G4PRO_SN_PERMITIDOS) e IP de la sede (G4PRO_IPS_PERMITIDAS): el equipo no manda ningún token — las rutas /iclock/* no llevan X-API-Key",
     tipo: "real",
     headers: ["El equipo no manda Content-Type reconocible; el servidor siempre lee el cuerpo como texto plano"],
     ejemploRequest: `// El equipo se registra una vez y abre sesión:

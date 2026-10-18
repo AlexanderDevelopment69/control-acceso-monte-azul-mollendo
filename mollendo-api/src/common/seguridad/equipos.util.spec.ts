@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { claveEquiposValida, serieAutorizada, seriesPermitidas } from './equipos.util.js';
+import {
+  atendidoPorPuertoDirecto,
+  claveEquiposValida,
+  ipEquipoAutorizada,
+  ipsEquipoPermitidas,
+  serieAutorizada,
+  seriesPermitidas,
+} from './equipos.util.js';
 
 const original = { ...process.env };
 afterEach(() => {
@@ -7,6 +14,8 @@ afterEach(() => {
   process.env.G4PRO_SN_PERMITIDOS = original.G4PRO_SN_PERMITIDOS;
   if (original.DEVICE_API_KEY === undefined) delete process.env.DEVICE_API_KEY;
   if (original.G4PRO_SN_PERMITIDOS === undefined) delete process.env.G4PRO_SN_PERMITIDOS;
+  process.env.G4PRO_IPS_PERMITIDAS = original.G4PRO_IPS_PERMITIDAS;
+  if (original.G4PRO_IPS_PERMITIDAS === undefined) delete process.env.G4PRO_IPS_PERMITIDAS;
 });
 
 describe('claveEquiposValida', () => {
@@ -42,5 +51,42 @@ describe('serieAutorizada', () => {
     expect(serieAutorizada('FALSO999')).toBe(false);
     expect(serieAutorizada(undefined)).toBe(false);
     expect(serieAutorizada(['HSR3263100192'])).toBe(false);
+  });
+});
+
+describe('ipEquipoAutorizada', () => {
+  it('sin lista acepta cualquier IP', () => {
+    delete process.env.G4PRO_IPS_PERMITIDAS;
+    expect(ipsEquipoPermitidas()).toEqual([]);
+    expect(ipEquipoAutorizada('8.8.8.8')).toBe(true);
+  });
+
+  it('con lista acepta solo esas IP (también escritas como IPv6 "::ffff:")', () => {
+    process.env.G4PRO_IPS_PERMITIDAS = ' 190.119.170.73 , 10.0.0.5 ';
+    expect(ipEquipoAutorizada('190.119.170.73')).toBe(true);
+    expect(ipEquipoAutorizada('::ffff:190.119.170.73')).toBe(true);
+    expect(ipEquipoAutorizada('10.0.0.5')).toBe(true);
+    expect(ipEquipoAutorizada('190.119.170.74')).toBe(false);
+    expect(ipEquipoAutorizada(undefined)).toBe(false);
+  });
+});
+
+describe('atendidoPorPuertoDirecto', () => {
+  it('las rutas del G4 Pro se atienden desde cualquier IP (las protege la serie y la IP del equipo)', () => {
+    expect(atendidoPorPuertoDirecto('/iclock/getrequest', '190.119.170.73')).toBe(true);
+    expect(atendidoPorPuertoDirecto('/iclock', '8.8.8.8')).toBe(true);
+  });
+
+  it('el resto, solo desde la red interna (proxy HTTPS, portal, la propia máquina, la red local)', () => {
+    for (const ip of ['172.18.0.5', '::ffff:172.18.0.5', '127.0.0.1', '::1', '192.168.1.20', '10.0.0.8']) {
+      expect(atendidoPorPuertoDirecto('/api/v1/auth/login', ip)).toBe(true);
+    }
+  });
+
+  it('desde internet, sin pasar por HTTPS, se rechaza (no se puede iniciar sesión ni leer datos sin cifrar)', () => {
+    expect(atendidoPorPuertoDirecto('/api/v1/auth/login', '190.119.170.73')).toBe(false);
+    expect(atendidoPorPuertoDirecto('/api/v1/personas', '::ffff:38.226.245.106')).toBe(false);
+    expect(atendidoPorPuertoDirecto('/iclockx', '8.8.8.8')).toBe(false);
+    expect(atendidoPorPuertoDirecto('/api/v1/health', undefined)).toBe(false);
   });
 });

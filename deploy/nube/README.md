@@ -84,7 +84,11 @@ cat .env      # anota ADMIN_SEED_PASSWORD, VIGILANCIA_SEED_PASSWORD y DEVICE_API
 
 > No cambies `DB_PASSWORD` después de este paso: la base la guarda al crearse.
 >
-> `G4PRO_SN_PERMITIDOS` es obligatoria: sin ella `docker compose` no arranca. El servidor solo atiende a esos terminales (las rutas del G4 Pro no llevan clave). Swagger (`/api/docs`) queda apagado; para verlo un momento, `SWAGGER=true` en `.env` y `sudo docker compose up -d`.
+> `G4PRO_SN_PERMITIDOS` es obligatoria: sin ella `docker compose` no arranca. El servidor solo atiende a esos terminales (las rutas del G4 Pro no llevan clave).
+>
+> `G4PRO_IPS_PERMITIDAS`: la IP pública de la sede (desde donde llega el G4 Pro; hoy `190.119.170.73`). Con ella, aunque alguien conozca el número de serie, no puede hacerse pasar por el equipo (pedir los datos del personal o abrir el molinete). Además, el puerto 3001 solo atiende al G4 Pro: el portal y el inicio de sesión van siempre por HTTPS.
+>
+> **El G4 dejó de conectarse** (Sistema y APIs lo muestra desconectado) y en `sudo docker compose logs api | grep "Terminal rechazado"` dice "la IP no está en G4PRO_IPS_PERMITIDAS": la sede cambió de IP. Poner la nueva (la que figura en ese mensaje) en `.env` y `sudo docker compose up -d api`. Para salir del paso, dejarla vacía. Swagger (`/api/docs`) queda apagado; para verlo un momento, `SWAGGER=true` en `.env` y `sudo docker compose up -d`.
 
 **4. Levantar** (la primera vez tarda varios minutos):
 
