@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,8 +42,13 @@ const AppSidebar: React.FC = () => {
   const { user } = useAuth();
 
   const visibleItems = navItems.filter((item) => (user ? item.roles.includes(user.rol) : false));
+  // La opción elegida se marca en el instante del clic, sin esperar a que cargue la
+  // página nueva (como las pestañas): así el fundido acompaña al clic. Vale mientras
+  // se está en la página desde la que se hizo clic; al llegar a la nueva manda la ruta.
+  const [elegida, setElegida] = useState<{ ruta: string; desde: string } | null>(null);
+  const ruta = elegida && elegida.desde === pathname ? elegida.ruta : pathname;
   // También en sus vistas internas (p. ej. /dashboard/presentes resalta "Dashboard").
-  const isActive = useCallback((path: string) => path === pathname || (path !== "/" && pathname.startsWith(`${path}/`)), [pathname]);
+  const isActive = useCallback((path: string) => path === ruta || (path !== "/" && ruta.startsWith(`${path}/`)), [ruta]);
 
   // En el celular el menú tapa la página: se cierra al elegir una opción.
   const cerrarEnCelular = () => {
@@ -57,13 +62,19 @@ const AppSidebar: React.FC = () => {
           {nav.path && (
             <Link
               href={nav.path}
-              onClick={cerrarEnCelular}
-              className={`menu-item group overflow-hidden ${
+              onClick={(e) => {
+                // Clic normal (no "abrir en otra pestaña"): se marca al instante.
+                if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) setElegida({ ruta: nav.path!, desde: pathname });
+                cerrarEnCelular();
+              }}
+              // Fundido del fondo y del color con un solo ritmo (0,3 s, salida suave) para el hover
+              // (al entrar y al salir) y para el cambio de opción activa. Sin movimiento.
+              className={`menu-item group overflow-hidden transition-colors duration-300 ease-out motion-reduce:transition-none ${
                 isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
               }`}
             >
               <span
-                className={`${
+                className={`transition-colors duration-300 ease-out motion-reduce:transition-none ${
                   isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"
                 }`}
               >
