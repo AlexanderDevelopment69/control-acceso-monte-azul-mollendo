@@ -37,14 +37,14 @@ export default function AuthLayout({
             <div className="absolute inset-0 bg-gradient-to-t from-gray-950/90 via-brand-950/60 to-brand-950/40" aria-hidden />
             <div className="relative items-center justify-center flex z-1">
               <div className="flex flex-col items-center max-w-xs">
-                <div className="mb-4 rounded-2xl bg-white p-5 shadow-theme-lg">
-                  <Image
-                    width={260}
-                    height={128}
-                    src="/images/logo/auth-logo-mollendo.png"
-                    alt="Monte Azul Sur"
-                  />
-                </div>
+                {/* Logo con las letras en blanco, directo sobre la foto (sin recuadro). */}
+                <Image
+                  width={260}
+                  height={128}
+                  src="/images/logo/auth-logo-mollendo-oscuro.png"
+                  alt="Monte Azul Sur"
+                  className="mb-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+                />
                 <p className="text-center font-medium text-white drop-shadow">
                   Control de Acceso · Terminal de Mollendo
                 </p>
