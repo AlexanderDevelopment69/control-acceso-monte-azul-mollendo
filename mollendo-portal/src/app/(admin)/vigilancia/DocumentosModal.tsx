@@ -48,9 +48,7 @@ export function DocumentosModal({ personaId, onClose }: { personaId: number | nu
             {persona.empresa && ` · ${persona.empresa.razonSocial}`}
           </p>
           {actuales.length === 0 ? (
-            <p className="rounded-lg bg-error-50 px-4 py-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-500">
-              No tiene ningún documento cargado.
-            </p>
+            <ErrorBanner>No tiene ningún documento cargado.</ErrorBanner>
           ) : (
             <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
               {actuales.map((d) => (

@@ -84,9 +84,7 @@ export function OrdenIngreso() {
                     </span>
                   )}
                 </>
-              ) : (
-                <span className="text-xs text-gray-400">Desactivado: primero el DNI (normal).</span>
-              )}
+              ) : null}
             </>
           )
         )}
@@ -102,10 +100,10 @@ export function OrdenIngreso() {
           <li>Sopla. Si pasa la prueba, tiene <strong>20 segundos</strong> para pasar su DNI.</li>
           <li>Pasa su DNI: se abre el molinete si sus documentos están en regla.</li>
         </ol>
-        <p className="mt-3 rounded-lg bg-warning-50 px-3 py-2 text-sm text-gray-700 dark:bg-warning-500/10 dark:text-gray-300">
+        <ErrorBanner tono="aviso" className="mt-3">
           <strong>Importante:</strong> el equipo facial no dice quién sopló, así que el sistema no puede confirmar que el DNI
           sea de esa persona. El vigilante debe comparar la foto que aparece en el panel con quien pasa el molinete.
-        </p>
+        </ErrorBanner>
         <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
           Se da permiso fijo en el equipo facial a todo el personal activo. Avise al personal y a los vigilantes antes de
           activarlo. Se puede volver al orden normal en cualquier momento.

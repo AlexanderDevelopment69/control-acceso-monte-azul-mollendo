@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import type { EstadoModoIngreso } from "@/lib/api/types";
 import { FotoGuardada } from "@/components/personal/FotoPersonal";
+import { InfoIcon } from "@/icons";
 
 /** Orden "facial primero": el vigilante sabe que el ingreso empieza por el equipo facial y que debe comparar la foto. */
 export function FranjaFacialPrimero({ estado }: { estado: EstadoModoIngreso | null }) {
@@ -8,11 +9,14 @@ export function FranjaFacialPrimero({ estado }: { estado: EstadoModoIngreso | nu
   return (
     <div
       role="status"
-      className="mb-6 rounded-xl border border-warning-300 bg-warning-50 px-4 py-3 text-sm leading-relaxed text-gray-700 dark:border-warning-500/40 dark:bg-warning-500/10 dark:text-gray-300"
+      className="mb-6 flex items-start gap-2.5 rounded-xl border border-warning-300 bg-warning-50 px-4 py-3 text-sm leading-relaxed text-gray-700 dark:border-warning-500/40 dark:bg-warning-500/10 dark:text-gray-300"
     >
-      <span className="font-semibold text-warning-700 dark:text-orange-400">Orden “facial primero”.</span> La persona hace
-      rostro y alcohol en el equipo facial y después pasa su DNI (tiene 20 segundos). El equipo no dice quién sopló:{" "}
-      <strong>compara la foto</strong> que aparece al autorizar con quien pasa el molinete.
+      <InfoIcon className="mt-0.5 size-5 shrink-0 text-warning-600 dark:text-orange-400" aria-hidden />
+      <span>
+        <span className="font-semibold text-warning-700 dark:text-orange-400">Orden “facial primero”.</span> La persona hace
+        rostro y alcohol en el equipo facial y después pasa su DNI (tiene 20 segundos). El equipo no dice quién sopló:{" "}
+        <strong>compare la foto</strong> que aparece al autorizar con quien pasa el molinete.
+      </span>
     </div>
   );
 }

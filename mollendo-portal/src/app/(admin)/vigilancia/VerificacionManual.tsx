@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { FotoGuardada } from "@/components/personal/FotoPersonal";
+import { CheckCircleIcon, InfoIcon } from "@/icons";
 
 /*
  * Verificación manual (contingencia por falla del equipo facial,
@@ -38,7 +39,9 @@ export function FranjaVerificacionManual({
       role="status"
       className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-300 bg-brand-50 px-4 py-3 text-sm dark:border-brand-500/40 dark:bg-brand-500/10"
     >
-      <p className="min-w-0 leading-relaxed text-gray-700 dark:text-gray-300">
+      <p className="flex min-w-0 items-start gap-2.5 leading-relaxed text-gray-700 dark:text-gray-300">
+        <InfoIcon className="mt-0.5 size-5 shrink-0 text-brand-500 dark:text-brand-400" aria-hidden />
+        <span>
         <span className="font-semibold text-brand-600 dark:text-brand-400">Verificación manual activa</span> desde{" "}
         {diaYHora(p.desde)}
         {p.activadaPor && (
@@ -48,6 +51,7 @@ export function FranjaVerificacionManual({
         )}
         .<br />
         Motivo: {p.motivo}
+        </span>
       </p>
       <Button type="button" size="sm" variant="outline" disabled={terminando} onClick={onTerminar}>
         {terminando ? "Volviendo…" : "Volver a modo normal"}
@@ -63,9 +67,12 @@ export function AvisoEquipoVolvio({ terminando, onVolver, onSeguir }: { terminan
       role="status"
       className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success-300 bg-success-50 px-4 py-3 text-sm dark:border-success-500/40 dark:bg-success-500/10"
     >
-      <p className="min-w-0 text-gray-700 dark:text-gray-300">
-        <span className="font-semibold text-success-700 dark:text-success-400">El equipo facial volvió a conectarse.</span> ¿Volver a
-        modo normal?
+      <p className="flex min-w-0 items-start gap-2.5 text-gray-700 dark:text-gray-300">
+        <CheckCircleIcon className="mt-0.5 size-5 shrink-0 text-success-600 dark:text-success-400" aria-hidden />
+        <span>
+          <span className="font-semibold text-success-700 dark:text-success-400">El equipo facial volvió a conectarse.</span> ¿Volver
+          a modo normal?
+        </span>
       </p>
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" disabled={terminando} onClick={onVolver}>
@@ -202,9 +209,9 @@ export function DecisionManualVentana({
                 ✓ Documentos vigentes
               </span>
               {!ingreso.tieneFoto && (
-                <p className="mt-3 rounded-lg bg-warning-50 px-3 py-2 text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
+                <ErrorBanner tono="aviso" className="mt-3">
                   No tiene foto registrada: compare con su DNI.
-                </p>
+                </ErrorBanner>
               )}
               <ol className="mt-3 list-decimal space-y-0.5 pl-5 text-gray-600 dark:text-gray-400">
                 <li>Compare el rostro con la foto.</li>

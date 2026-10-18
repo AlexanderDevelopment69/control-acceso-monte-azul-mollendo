@@ -25,10 +25,10 @@ export function ErrorBanner({
 
   return (
     <div
-      className={`overflow-hidden transition-[max-height,opacity] duration-200 ease-out ${visible ? "max-h-40 opacity-100" : "max-h-0 opacity-0"} ${className}`}
+      className={`overflow-hidden transition-[max-height,opacity] duration-200 ease-out ${visible ? "max-h-[40rem] opacity-100" : "max-h-0 opacity-0"} ${className}`}
     >
       <div
-        className={`flex items-start gap-2 rounded-lg px-4 py-3 text-sm ${
+        className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm ${
           tono === "exito"
             ? "bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-500"
             : tono === "info"
@@ -39,11 +39,11 @@ export function ErrorBanner({
         }`}
       >
         {tono === "exito" ? (
-          <CheckCircleIcon className="mt-0.5 size-4 shrink-0" />
+          <CheckCircleIcon className="size-7 shrink-0" aria-hidden />
         ) : tono === "error" ? (
-          <AlertIcon className="mt-0.5 size-4 shrink-0" />
+          <AlertIcon className="size-7 shrink-0" aria-hidden />
         ) : (
-          <InfoIcon className="mt-0.5 size-4 shrink-0" />
+          <InfoIcon className="size-7 shrink-0" aria-hidden />
         )}
         <span>{children}</span>
       </div>

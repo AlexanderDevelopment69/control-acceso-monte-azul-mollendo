@@ -131,9 +131,7 @@ export function SincronizacionG4({
                     onChange={(v) => void cambiarDiaria(Number(v))}
                     options={Array.from({ length: 24 }, (_, h) => ({ value: String(h), label: `a las ${String(h).padStart(2, "0")}:00` }))}
                   />
-                ) : (
-                  <span className="text-xs text-gray-400">Desactivada: solo se sincroniza a mano.</span>
-                )}
+                ) : null}
               </>
             )}
             {estado?.enCurso && !ejecutando && <Badge color="info">En curso…</Badge>}

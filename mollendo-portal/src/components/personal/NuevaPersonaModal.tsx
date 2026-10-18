@@ -237,10 +237,10 @@ function Formulario({
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <ErrorBanner>{error}</ErrorBanner>}
       {personaCreada && (
-        <p className="rounded-lg bg-success-50 px-4 py-3 text-sm text-success-700 dark:bg-success-500/15 dark:text-success-500">
+        <ErrorBanner tono="exito">
           Personal <strong>{personaCreada.nombres} {personaCreada.apellidos}</strong> ya registrado. Corrija lo que
           falló (foto o documento) y vuelva a guardar.
-        </p>
+        </ErrorBanner>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

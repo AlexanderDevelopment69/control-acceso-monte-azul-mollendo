@@ -129,7 +129,7 @@ function ContenidoEquipo({
   fecha?: string;
 }) {
   if (!datos || !fecha) {
-    return <p className="mt-1 text-xs text-gray-400">Usuarios: sin datos (sincroniza para verlos)</p>;
+    return <p className="mt-1 text-xs text-gray-400">Usuarios: sin datos (sincronice para verlos)</p>;
   }
   return (
     <>

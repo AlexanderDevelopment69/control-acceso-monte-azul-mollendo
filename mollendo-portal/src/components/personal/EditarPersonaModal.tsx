@@ -134,10 +134,10 @@ function Formulario({ persona, onClose, onGuardado, onGuardando }: {
         </div>
       </div>
       {cambiaDocumento && (
-        <p className="rounded-lg bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:bg-warning-500/15 dark:text-orange-400">
+        <ErrorBanner tono="aviso">
           Cambia el documento: desde que guarde, la persona debe pasar el <strong>documento nuevo</strong> por el lector. El
           terminal facial se actualiza solo. Los ingresos y salidas anteriores conservan el documento con el que se registraron.
-        </p>
+        </ErrorBanner>
       )}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" size="sm" variant="outline" disabled={guardando} onClick={onClose}>

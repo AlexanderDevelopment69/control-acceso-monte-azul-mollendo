@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Badge from "@/components/ui/badge/Badge";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { ChevronDownIcon } from "@/icons";
 import { APIS_INTEGRACION, type ApiIntegracion } from "./apisIntegracion";
 import { ComprobandoBadge, Falla } from "./Insignias";
@@ -153,9 +154,7 @@ function FilaApiIntegracion({
                   <CodeBlock title="Ejemplo de respuesta" code={api.ejemploRespuesta} />
                 </div>
 
-                <div className="rounded-lg bg-brand-50 px-4 py-3 text-xs text-brand-600 dark:bg-brand-500/10 dark:text-brand-400">
-                  {api.notas}
-                </div>
+                <ErrorBanner tono="info">{api.notas}</ErrorBanner>
               </div>
             </div>
           </div>

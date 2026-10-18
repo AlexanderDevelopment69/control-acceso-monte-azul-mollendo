@@ -67,9 +67,9 @@ export function CambiarPasswordModal({ isOpen, onClose }: { isOpen: boolean; onC
       <h2 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">Cambiar contraseña</h2>
       {listo ? (
         <>
-          <p className="mt-4 rounded-lg bg-success-50 px-4 py-3 text-sm text-success-700 dark:bg-success-500/15 dark:text-success-500">
+          <ErrorBanner tono="exito" className="mt-4">
             Contraseña cambiada. Si tenía la sesión abierta en otro equipo, allí tendrá que volver a ingresar.
-          </p>
+          </ErrorBanner>
           <div className="mt-6 flex justify-end">
             <Button type="button" onClick={onClose}>
               Cerrar
