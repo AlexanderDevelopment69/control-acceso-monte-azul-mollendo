@@ -745,3 +745,55 @@ docker-compose.prod.yml / deploy.env.example               (sin cambios de códi
 ```
 
 Nada de esto está commiteado todavía.
+
+## 18/10/2026 — Por qué el aprobado llega con `pin=0`: lo pierde el paso del alcoholímetro
+
+Se descartaron, con los registros crudos de Azure (`verificacion_dispositivo.crudo`), las causas de servidor que se sugerían:
+
+- El servidor separa cada envío de `/iclock/cdata` línea por línea y guarda cada línea sin procesar.
+- En cada aprobado llega una sola línea `rtlog` (`event=0 pin=0`), entre dos `rtstate` del relé (`relay=01` y `relay=00`). No hay otra línea con el PIN.
+- El número correlativo `index` de los aprobados va seguido (15 a 19 el 17/10): no se perdió ningún registro.
+- Solo llegan las tablas `rtlog` y `rtstate`. Con el servidor del proveedor (TROK, 17/10) llegó también `pin=0`.
+
+Lectura del G4 (solo consultas, 18/10 07:10):
+
+- Usuario Amiel (`DATA QUERY tablename=user`): `pin=48058719 cardno= password=1234 group=0 starttime=0 endtime=0 privilege=0 disable=0 verify=0`. La contraseña 1234 quedó de la prueba con TROK.
+- `extuser`: `funswitch=0 personalvs=255`. `userauthorize`: vacía (nadie en turno). `timezone`: el equipo no reconoce la tabla (-11).
+- Opciones: `MaskDetectionFunOn=1`, `IRTempDetectionFunOn=0`, `AccessRuleType=1`, `VerifyStyles=9d880600`, `MultiBioDataSupport=0:1:0:0:0:0:0:0:0:1`, `DeviceType=acc`, `MachineType=101`, `FaceFunOn=1`, `~PIN2Width=14`. Ninguna opción con "Alcohol" en el nombre responde.
+- `EventTypes` (eventos soportados): 0-5, 7-11, 21-24, 26-30, 36, 37, 39, 41, 44, 45, 48, 68, 69, 100-102, 200-202, 204-206, 214, 220-224.
+
+Historial completo en Azure (16 a 18/10, 128 eventos `rtlog`):
+
+| Evento | Qué es | Momento | Con PIN | Sin PIN |
+|---|---|---|---|---|
+| 23 | Sin permiso ("Access Denied") | Antes de soplar | 35 | 0 |
+| 0 | Aprobado ("Normal Punch Open") | Después de soplar | 0 | 36 |
+| 1 | Alcohol sobre el umbral | Después de soplar | 0 | 6 |
+| 27 | No registrado | Antes de soplar | — | 51 |
+
+**Conclusión:** todo lo que el G4 informa después de la prueba de alcohol llega sin PIN (aprobado y alcohol alto); lo de antes, con PIN. No depende del registro de la persona ni del servidor. En la tabla oficial de ZKTeco, el evento 0 ("Normal Punch Open") es de una persona identificada con permiso, así que debería traer el PIN: es un comportamiento del firmware con alcoholímetro en modo control de acceso.
+
+**Prueba pendiente, en la sede:** desactivar el alcoholímetro en el menú del G4, hacer una verificación con permiso (sin soplar) y ver si el `event=0` llega con PIN. Si llega, queda demostrado que lo borra el módulo de alcohol. No se puede simular a distancia: el evento lo genera el equipo al ver una cara real, y el alcoholímetro no se puede apagar por comando.
+
+### 18/10/2026 — Los registros guardados en el G4 tampoco tienen el PIN
+
+Se pidió al G4, solo lectura, su tabla de registros guardados (`DATA QUERY tablename=transaction,fielddesc=*,filter=*`; `DATA COUNT transaction` = 37). El G4 ignora el filtro y la API corta el registro a 1000 caracteres, así que la respuesta completa se leyó capturando el tráfico HTTP del puerto 3001 en el servidor (`tcpdump`, sin cambiar nada).
+
+- Aprobados (`eventtype=0`): 14 registros, **todos con `pin=` vacío** y `verified=15`, pero con `Concentration=0.00g/L` (el valor del alcohol sí queda guardado; en el `rtlog` llega `Concentration=0`).
+- No registrados (`eventtype=27`) y puerta abierta (`eventtype=200`): sin PIN, como corresponde.
+- Los `index` 20 a 22 que faltaban en el `rtlog` son `eventtype=200` (puerta abierta).
+- Formato: `transaction index=5 cardno= pin= verified=15 doorid=1 eventtype=0 inoutstate=1 time_second=861214378 maskflag=255 Concentration=0.00g/L SleepTime=- HealthStatus=- PlateNumber=-`.
+
+**Conclusión:** el G4 no guarda la identidad del aprobado ni en su propia memoria. No es un problema de cómo el servidor obtiene los datos: el dato no existe en el equipo. Las pruebas del lado del servidor del 17/10 (opciones de asistencia, hablar como el PushDemo, `SET OPTIONS DeviceType=att`, servidor de TROK) tampoco lo cambiaron, y el G4 se anuncia como `DeviceType=acc` en su primer pedido, antes de cualquier respuesta. Queda la variante del firmware (ACC o ATT), que solo cambia ZKTeco o el distribuidor.
+
+### 18/10/2026 08:10–08:25 — Cambio de tipo de equipo por el puerto 4370: no se puede
+
+Con el G4 libre y autorización del usuario, desde la mini PC (`pyzk` en un contenedor, scripts en `~/prueba-g4/`). Estado guardado antes en `~/prueba-g4/estado-original.json`.
+
+1. `CMD_OPTIONS_WRQ DeviceType=att`: aceptado (código 2000) y leído de vuelta como `att`. `CMD_REFRESHOPTION` no lo reconoce.
+2. Reinicio (`restart` por el 4370): el G4 volvió a anunciarse con `GET /iclock/cdata?...&DeviceType=acc` y siguió con `registry`, `push` y `getrequest`; al leerlo, `DeviceType=acc`. 102 usuarios y 2 rostros intactos.
+3. `~DeviceType=att` (no existía) + `DeviceType=att` + reinicio: igual, vuelve a `acc`. `~DeviceType` queda guardada, pero el equipo la ignora.
+
+A diferencia de `MaskDetectionFunOn`, que se guarda y resiste el reinicio, **el tipo de equipo lo fija el firmware** (variante ACC). Solo ZKTeco o el distribuidor pueden pasarlo a la variante ATT.
+
+Se restauró: `~DeviceType=acc` (para que coincida con el tipo real), `MaskDetectionFunOn=1` (como estaba antes de la prueba de la mañana). Estado final igual al original (`~/prueba-g4/estado-final.json`): `DeviceType=acc`, 102 usuarios, 2 rostros.
