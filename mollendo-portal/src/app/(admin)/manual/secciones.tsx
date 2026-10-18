@@ -983,12 +983,40 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Última sincronización",
             texto: (
               <p>
-                Cuántas personas se agregaron, cuántos usuarios se borraron y cuántos permisos se quitaron. Si dice{" "}
+                Cuántas personas se agregaron, cuántos usuarios se borraron, cuántos permisos se quitaron y a cuántas personas se les
+                corrigieron datos cambiados a mano en el terminal (contraseña, administrador, tarjeta o nombre; el rostro no cambia). Si
+                dice{" "}
                 <b>“equipo(s) no respondieron”</b>, el terminal está desconectado: inténtelo cuando diga “En línea”.
               </p>
             ),
           },
         ],
+      },
+      {
+        titulo: "Orden del ingreso",
+        descripcion: "Normal o facial primero",
+        contenido: (
+          <>
+            <p className="mb-3">
+              En <b>Sistema y APIs</b>, la tarjeta <b>“Orden del ingreso”</b> define en qué orden se hace el ingreso:
+            </p>
+            <Lista>
+              <li>
+                <b>Normal (interruptor apagado):</b> primero el DNI por el lector de ingreso; si está en regla, la persona hace rostro y
+                alcohol en el terminal facial y se abre el molinete.
+              </li>
+              <li>
+                <b>Facial primero (interruptor encendido):</b> primero rostro y alcohol en el terminal facial y, al final, el DNI (tiene
+                20 segundos). Los documentos se revisan con el DNI.
+              </li>
+            </Lista>
+            <p className="mt-3">
+              En “facial primero” el terminal no dice quién sopló: el vigilante compara la foto que aparece en el Panel de vigilancia
+              con quien pasa el molinete. Activarlo pide confirmación y da permiso fijo en el terminal a todo el personal activo;
+              apagarlo vuelve al orden normal.
+            </p>
+          </>
+        ),
       },
     ],
   },

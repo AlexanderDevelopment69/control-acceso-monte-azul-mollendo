@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { integracionesApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { EstadoSincronizacionG4, ResultadoSincronizacionG4 } from "@/lib/api/types";
@@ -42,17 +42,27 @@ export function SincronizacionG4({
   const [barra, setBarra] = useState(false);
   // Revisión diaria: hora a activar (pide confirmación) y si se está guardando el cambio.
   const [confirmarDiaria, setConfirmarDiaria] = useState<number | null>(null);
+  // Solo se bloquea el interruptor mientras se enciende o apaga: al cambiar la hora no
+  // (se atenuaría un instante y parecería que parpadea).
   const [guardandoDiaria, setGuardandoDiaria] = useState(false);
+  // La hora elegida se muestra al instante, sin esperar el estado nuevo del servidor.
+  const [horaElegida, setHoraElegida] = useState<number | null>(null);
   const diariaActiva = !!estado?.diaria.activa;
+  const horaServidor = estado?.diaria.hora ?? null;
+  useEffect(() => {
+    setHoraElegida(null);
+  }, [horaServidor]);
 
-  async function cambiarDiaria(hora: number | null) {
+  async function cambiarDiaria(hora: number | null, soloHora = false) {
     setConfirmarDiaria(null);
-    setGuardandoDiaria(true);
+    if (!soloHora) setGuardandoDiaria(true);
+    if (soloHora) setHoraElegida(hora);
     setError(null);
     try {
       await integracionesApi.sincronizacionDiaria(hora);
       onTerminada();
     } catch (err) {
+      setHoraElegida(null);
       setError(err instanceof ApiError ? err.message : "No se pudo cambiar la revisión diaria");
     } finally {
       setGuardandoDiaria(false);
@@ -82,11 +92,12 @@ export function SincronizacionG4({
   }
 
   return (
-    <Tarjeta className="relative mb-6 overflow-hidden p-5">
-      {/* Barra arriba mientras se consulta al equipo: superpuesta, no mueve la tarjeta. */}
+    // Sin overflow-hidden en la tarjeta: recortaría la lista de la hora de la revisión diaria.
+    <Tarjeta className="relative mb-6 p-5">
+      {/* Barra arriba mientras se consulta al equipo: superpuesta, no mueve la tarjeta (con las esquinas de la tarjeta). */}
       <div
         aria-hidden
-        className={`absolute inset-x-0 top-0 h-1 overflow-hidden bg-brand-100 transition-opacity duration-300 dark:bg-brand-500/20 ${barra ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-x-0 top-0 h-1 overflow-hidden rounded-t-xl bg-brand-100 transition-opacity duration-300 dark:bg-brand-500/20 ${barra ? "opacity-100" : "opacity-0"}`}
       >
         <div className="h-full w-2/5 animate-barra-carga rounded-full bg-brand-500" />
       </div>
@@ -94,9 +105,7 @@ export function SincronizacionG4({
         <div>
           <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Sincronización con el G4 Pro</h2>
           <p className="mt-1 text-xs text-gray-400">
-            Deja el terminal igual al sistema: borra a quien no está registrado (por ejemplo, registrado a mano en el
-            equipo), quita permisos de paso sueltos, registra con foto al personal activo que falte y corrige los datos cambiados a
-            mano en el equipo (contraseña, administrador, tarjeta o nombre).
+            Deja el terminal con las mismas personas y datos que el sistema.
           </p>
           <div className="mt-3 flex min-h-8 flex-wrap items-center gap-3">
             {!estado ? (
@@ -128,8 +137,8 @@ export function SincronizacionG4({
                     className="w-40"
                     aria-label="Hora de la revisión diaria"
                     disabled={guardandoDiaria}
-                    value={String(estado.diaria.hora ?? 0)}
-                    onChange={(v) => void cambiarDiaria(Number(v))}
+                    value={String(horaElegida ?? estado.diaria.hora ?? 0)}
+                    onChange={(v) => void cambiarDiaria(Number(v), true)}
                     options={Array.from({ length: 24 }, (_, h) => ({ value: String(h), label: `a las ${String(h).padStart(2, "0")}:00` }))}
                   />
                 ) : null}

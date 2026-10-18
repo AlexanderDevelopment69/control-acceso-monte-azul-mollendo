@@ -383,30 +383,30 @@
   "sincronizacion": {
     "imagen": "/manual/sincronizacion.webp",
     "ancho": 1124,
-    "alto": 294,
+    "alto": 278,
     "puntos": [
       {
         "n": 1,
         "x": 3.29,
-        "y": 41.16,
+        "y": 37.77,
         "lado": "izq"
       },
       {
         "n": 2,
         "x": 79.78,
-        "y": 12.59,
+        "y": 13.31,
         "lado": "arriba"
       },
       {
         "n": 3,
         "x": 90.37,
-        "y": 12.59,
+        "y": 13.31,
         "lado": "arriba"
       },
       {
         "n": 4,
         "x": 96,
-        "y": 58.16,
+        "y": 55.76,
         "lado": "izq"
       }
     ]
@@ -418,7 +418,7 @@
     "puntos": [
       {
         "n": 1,
-        "x": 32.66,
+        "x": 32.64,
         "y": 5.2,
         "lado": "der"
       },

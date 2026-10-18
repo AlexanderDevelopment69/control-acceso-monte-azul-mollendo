@@ -47,8 +47,7 @@ export function OrdenIngreso() {
     <Tarjeta className="mb-6 p-5">
       <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Orden del ingreso</h2>
       <p className="mt-1 text-xs text-gray-400">
-        Normal: primero el DNI y después rostro y alcohol. Facial primero: rostro y alcohol en el equipo facial y, al final,
-        el DNI (los documentos se revisan con el DNI). El equipo no dice quién sopló: lo compara el vigilante con la foto.
+        Normal: primero el DNI, después rostro y alcohol. Facial primero: rostro y alcohol, y al final el DNI.
       </p>
       <div className="mt-3 flex min-h-8 flex-wrap items-center gap-3">
         {!estado && !error ? (
