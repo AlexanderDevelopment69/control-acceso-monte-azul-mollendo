@@ -51,11 +51,12 @@ function ManualContent() {
       <PageHeader title="Manual" description="Guía de uso del sistema, dividida por secciones." />
 
       <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
-        {/* Secciones: en la computadora, la lista de la izquierda; en el celular se deslizan de lado. */}
+        {/* Secciones: en la computadora, la lista de la izquierda; en el celular se deslizan de lado,
+            sin barras de desplazamiento (la sección cortada al final ya indica que hay más). */}
         <nav
           ref={lista}
           aria-label="Secciones del manual"
-          className="relative -mx-1 overflow-x-auto px-1 lg:sticky lg:top-24 lg:mx-0 lg:overflow-visible lg:rounded-2xl lg:border lg:border-gray-200 lg:bg-white lg:p-4 lg:shadow-theme-xs dark:lg:border-gray-800 dark:lg:bg-white/[0.02]"
+          className="no-scrollbar relative -mx-1 overflow-x-auto overflow-y-hidden px-1 lg:sticky lg:top-24 lg:mx-0 lg:overflow-visible lg:rounded-2xl lg:border lg:border-gray-200 lg:bg-white lg:p-4 lg:shadow-theme-xs dark:lg:border-gray-800 dark:lg:bg-white/[0.02]"
         >
           <p className="mb-2 hidden px-3 text-xs font-semibold uppercase tracking-wide text-gray-400 lg:block">Secciones</p>
           <ul className="flex min-w-max gap-1 border-b border-gray-200 lg:min-w-0 lg:flex-col lg:border-0 dark:border-gray-800">
