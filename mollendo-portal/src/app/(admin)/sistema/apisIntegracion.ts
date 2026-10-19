@@ -15,33 +15,28 @@ export interface ApiIntegracion {
 
 export const APIS_INTEGRACION: ApiIntegracion[] = [
   {
-    nombre: "Terminal ZKTeco G4 Pro + alcoholímetro (protocolo PUSH de control de acceso)",
-    endpoint: "/iclock/registry · /iclock/push · /iclock/getrequest · /iclock/devicecmd · /iclock/cdata · /iclock/querydata",
+    nombre: "Terminal ZKTeco G4 Pro + alcoholímetro (protocolo PUSH, modo asistencia)",
+    endpoint: "/iclock/cdata · /iclock/getrequest · /iclock/devicecmd",
     metodo: "POST",
     descripcion:
-      "El G4 Pro se conecta directo a la mini PC con el protocolo PUSH del fabricante, en su variante de control de acceso (ACC). Por ahí recibe las personas (user, con el DNI como número de usuario), su nombre (extuser), su foto (biophoto, que el equipo convierte en el rostro que reconoce) y el permiso de paso mientras esperan su ingreso (userauthorize). Envía cada verificación (rostro + alcohol, table=rtlog), el estado del sensor y del relé (table=rtstate) y las respuestas a las consultas (querydata).",
+      "El G4 Pro se conecta directo al servidor con el protocolo PUSH del fabricante. Desde el 19/10/2026 está en modo asistencia (ATT), que envía cada prueba con el DNI de quien sopló y el grado de alcohol (table=ATTLOG), también cuando el alcohol sale alto. Por ahí recibe las personas (USERINFO, con el DNI como número de usuario y su nombre) y su foto (biophoto, que el equipo convierte en el rostro que reconoce). En este modo no hay permisos de paso: el equipo verifica a todo su personal y el sistema decide con el DNI y el grado. El servidor detecta solo el modo del equipo (asistencia o control de acceso).",
     autenticacion: "Número de serie (G4PRO_SN_PERMITIDOS) e IP de la sede (G4PRO_IPS_PERMITIDAS): el equipo no manda ningún token — las rutas /iclock/* no llevan X-API-Key",
     tipo: "real",
     headers: ["El equipo no manda Content-Type reconocible; el servidor siempre lee el cuerpo como texto plano"],
-    ejemploRequest: `// El equipo se registra una vez y abre sesión:
-POST /iclock/registry?SN=HSR3263100192
-POST /iclock/push?SN=HSR3263100192
+    ejemploRequest: `// Al conectarse, el equipo anuncia su modo y pide sus opciones:
+GET /iclock/cdata?SN=HSR3263100192&options=all&pushver=2.4.1&DeviceType=att
 
-// Órdenes que la mini PC le deja (las recoge al consultar /iclock/getrequest; campos separados por tabulador):
-DATA UPDATE user CardNo=\tPin=12345678\tPassword=\tGroup=0\tStartTime=0\tEndTime=0\tName=Juan Pérez\tPrivilege=0
-DATA UPDATE extuser Pin=12345678\tFunSwitch=0\tFirstName=Juan\tLastName=Pérez\tPersonalVs=0
+// Órdenes que el servidor le deja (las recoge al consultar /iclock/getrequest; campos separados por tabulador):
+DATA UPDATE USERINFO PIN=12345678\tName=Juan Pérez\tPri=0\tPasswd=\tCard=\tGrp=1\tTZ=0000000100000000\tVerify=-1\tViceCard=
 DATA UPDATE biophoto PIN=12345678\tType=9\tSize=…\tContent=<foto JPG ≤ 20 KB en base64>\tFormat=0\tUrl=\tPostBackTmpFlag=0
-DATA UPDATE userauthorize Pin=12345678\tAuthorizeTimezoneId=1\tAuthorizeDoorId=1   // habilitar
-DATA DELETE userauthorize Pin=12345678\tAuthorizeDoorId=1                           // deshabilitar`,
-    ejemploRespuesta: `// El servidor responde al registro:
-RegistryCode=d6b7cbaab9   // estable, mismo código para el mismo equipo siempre
-
-// Cada verificación (table=rtlog):
-POST /iclock/cdata?SN=HSR3263100192&table=rtlog
-time=2026-10-04 04:02:41\tpin=0\tevent=0\tverifytype=15\tConcentration=0\t...         // permitido
-time=2026-10-04 04:00:37\tpin=12345678\tevent=23\tverifytype=15\tConcentration=0\t... // sin permiso`,
+DATA DELETE USERINFO PIN=12345678
+DATA QUERY USERINFO   // lista de usuarios (responde por table=OPERLOG y table=BIODATA)`,
+    ejemploRespuesta: `// Cada prueba (table=ATTLOG): DNI, hora, estado, verificación (15 = rostro), …, grado de alcohol
+POST /iclock/cdata?SN=HSR3263100192&table=ATTLOG&Stamp=9999
+71988749\t2026-10-19 17:00:20\t255\t15\t0\t0\t0\t255\t0\t0\t6\t0.00g/L\t-\t-\t-       // aprobó
+71988749\t2026-10-19 16:33:26\t255\t15\t0\t0\t0\t255\t0\t0\t9\t0.000595g/L\t-\t-\t-   // alcohol alto`,
     notas:
-      "Probado con el equipo real HSR3263100192 (04/oct/2026). Los comandos de asistencia (USERINFO) no sirven en este equipo: los rechaza con -629. event=0: permitido (llega con pin=0; en el orden normal solo puede ser la persona en su turno, porque se habilita a una sola a la vez; en \"facial primero\" el DNI de quien sopló se lee del rastreo del equipo, /sdcard/ZKTeco/trace/VerifySuccess.txt, con el comando SHELL). event=1: alcohol sobre el umbral del equipo. event=23: rostro reconocido sin permiso, con su DNI. event=27: rostro, huella o tarjeta no registrados. El valor de alcohol no se envía (Concentration=0): el umbral se configura en el propio G4 Pro. RegistryCode y /iclock/push no están en los manuales de ZKTeco, pero sin ellos el equipo no envía datos.",
+      "Probado con el equipo real HSR3263100192 (19/oct/2026). El estado es siempre 255: el sistema decide con el grado (alcohol alto desde 0.0001 g/L, el umbral del equipo; G4PRO_UMBRAL_ALCOHOL). El aviso llega 10-12 s después del soplido (15-17 s con alcohol alto). Las marcaciones repetidas se ignoran y las de más de 2 minutos (enviadas al volver la conexión) se guardan sin decidir nada. En modo control de acceso (ACC) el equipo usa /iclock/registry, /iclock/push y table=rtlog, y el aprobado llega sin DNI (pin=0).",
   },
   {
     nombre: "Lectores de DNI (Syble XB-7705H)",
@@ -65,7 +60,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/eventos-acceso/ingreso",
     metodo: "POST",
     descripcion:
-      "Fase 1: solo el DNI (lo usan los lectores; también se puede llamar con la clave de equipo). Si la persona no está registrada, está de baja, no tiene documentos o tiene alguno vencido, se deniega aquí mismo. Si está en regla, queda \"en espera\": se la habilita en el G4 Pro por 1 minuto (o queda en cola si otra persona está en su turno; se habilita a una a la vez). El resultado llega del G4 Pro (table=rtlog): permitido → ingreso autorizado y relé de ingreso; sin resultado en 1 minuto → denegado \"No completó rostro y alcohol\".",
+      "El DNI del ingreso (lo usan los lectores; también se puede llamar con la clave de equipo). Si la persona no está registrada, está de baja, ya figura dentro, no tiene documentos o tiene alguno vencido, se deniega aquí mismo. Si está en regla, se junta con la prueba de rostro y alcohol del G4 Pro de esa misma persona, según el orden del ingreso (Sistema y APIs → Orden del ingreso). Normal: vale la prueba hecha después del DNI; queda \"en espera\" 1 minuto y, sin prueba, \"No completó rostro y alcohol\". Facial primero: vale la prueba hecha antes del DNI; tiene 15 s desde que el Panel muestra \"pase su DNI\"; si el DNI llega antes que el aviso del G4, espera en silencio hasta 8 s; sin prueba previa, \"DNI antes del facial\". Aprobado → ingreso autorizado y relé de ingreso; alcohol alto → denegado \"Alcohol\" con su nombre.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -82,7 +77,10 @@ DNI leído en ingreso: pendiente_verificacion`,
   "mensaje": "Documentos en regla. Esperando el resultado del equipo (rostro + alcoholímetro)."
 }
 
-// 201 Created — denegado de inmediato (documentos, baja)
+// 201 Created — facial primero, ya aprobó rostro y alcohol: autorizado
+{ "eventoId": 187, "tipoMovimiento": "ingreso", "resultado": "autorizado", "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" }, "numeroDocumento": "12345678", "motivos": {}, "facialPrimero": true, "dniQueSoplo": "12345678" }
+
+// 201 Created — denegado de inmediato (documentos, baja, ya dentro)
 {
   "eventoId": 43,
   "tipoMovimiento": "ingreso",
@@ -97,14 +95,14 @@ DNI leído en ingreso: pendiente_verificacion`,
 
 // 401 — X-API-Key inválida o ausente`,
     notas:
-      "Si la misma persona vuelve a pasar el DNI mientras espera, mantiene su lugar. En cola puede esperar hasta 3 minutos. Las esperas vencidas se revisan cada 5 segundos. event=1 del G4 Pro: denegado por alcohol (confirmado). Cualquier otro código desconocido también se deniega por alcohol: ante la duda, no se abre.",
+      "Varias personas pueden estar en proceso a la vez: cada prueba del G4 trae el DNI de quien sopló. Vale la primera prueba de cada pase: volver a soplar en los 20 s siguientes no cambia el resultado (sin bloqueo después). La hora de la prueba es la del G4 (difiere 1-2 s de la del servidor). Con la verificación manual activa decide el vigilante. Si la misma persona vuelve a pasar el DNI mientras espera, mantiene su espera.",
   },
   {
     nombre: "Salida",
     endpoint: "/eventos-acceso/salida",
     metodo: "POST",
     descripcion:
-      "Registro de salida: con un documento registrado (aunque la persona esté dada de baja o tenga documentos vencidos) se autoriza y se activa el relé de salida.",
+      "Registro de salida: con un documento registrado (aunque la persona esté dada de baja o tenga documentos vencidos) y un ingreso registrado antes, se autoriza y se activa el relé de salida.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -126,14 +124,14 @@ DNI leído en ingreso: pendiente_verificacion`,
 // 201 Created — documento no registrado: no se abre y queda en el historial
 { "eventoId": 46, "resultado": "denegado", "persona": null, "numeroDocumento": "99999999", "motivos": { "personaNoRegistrada": true } }`,
     notas:
-      "Sin antipassback (alcance base): no se exige un ingreso previo ni se bloquea un segundo ingreso sin salida. Solo se deniega si el documento no está registrado.",
+      "Antipassback estricto: sin un ingreso registrado se deniega (\"No registra ingreso\") y no se abre. Si el controlador estaba sin internet, deja salir y la registra después con su hora.",
   },
   {
     nombre: "Ingresos en espera (Panel de vigilancia)",
     endpoint: "/eventos-acceso/en-espera",
     metodo: "GET",
     descripcion:
-      "DNI en regla que esperan el rostro y el alcohol del G4 Pro (en su turno o en cola), para mostrarlos en el Panel. En tiempo real se avisan por WebSocket (/ws/eventos): ingreso-en-espera y ingreso-espera-terminada.",
+      "Lo que el Panel muestra mientras se completa un ingreso: en el orden normal, los DNI en regla que esperan su prueba de rostro y alcohol (1 minuto); en \"facial primero\", las aprobaciones del G4 Pro que esperan el DNI de quien sopló (\"Aprobó … pase su DNI\", con su foto, 15 s). En tiempo real se avisan por WebSocket (/ws/eventos): ingreso-en-espera y ingreso-espera-terminada.",
     autenticacion: "JWT (Administrador / Vigilancia)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>"],
@@ -143,8 +141,12 @@ DNI leído en ingreso: pendiente_verificacion`,
   "id": 12, "personaId": 41, "nombres": "Juan", "apellidos": "Pérez", "numeroDocumento": "12345678",
   "empresa": "Empresa S.A.C.", "tieneFoto": true, "torniqueteId": "Ingreso",
   "desde": "2026-10-04T09:02:19.000Z", "hasta": "2026-10-04T09:03:19.000Z", "enCola": false
+},
+{ // facial primero: aprobó y falta su DNI (id negativo: no es una espera de la base)
+  "id": -905, "personaId": 41, "nombres": "Aprobó Juan Pérez", "apellidos": "", "numeroDocumento": "12345678",
+  "tieneFoto": true, "desde": "2026-10-19T22:52:47.000Z", "hasta": "2026-10-19T22:53:02.000Z", "esperaDni": true, "enCola": false
 }]`,
-    notas: "enCola = true: otra persona está en su turno; entonces hasta es null y no corre el minuto todavía.",
+    notas: "En \"facial primero\", un DNI que espera en silencio el aviso del G4 (hasta 8 s) no aparece en la lista. enCola solo se usa con el G4 en modo control de acceso (se habilita a una persona a la vez).",
   },
   {
     nombre: "Comando molinete (relés USB)",
@@ -169,7 +171,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/personas · /personas/:id/foto · /integraciones/g4pro/sincronizar",
     metodo: "POST",
     descripcion:
-      "Al registrar o editar a una persona, el backend la carga en el G4 Pro con su DNI y su nombre, sin permiso de paso. Al subir su foto, se la envía convertida (JPG ≤ 20 KB) y el equipo la convierte en el rostro que reconoce: no hace falta registrar rostros a mano en el equipo. POST /integraciones/g4pro/sincronizar (solo Administrador; también todos los días a medianoche) deja el equipo igual al sistema: borra a quien el sistema no conoce (registrados a mano en el equipo), quita permisos de paso sueltos, registra con foto al personal activo que falta y vuelve a poner los datos del sistema a quien tenga datos cambiados a mano en el equipo (contraseña, administrador, tarjeta o nombre; el rostro no cambia). Con ?simular=true solo informa qué haría. También desde la tarjeta \"Sincronización con el G4 Pro\" de esta página.",
+      "Al registrar o editar a una persona, el backend la carga en el G4 Pro con su DNI y su nombre (USERINFO en modo asistencia). Al subir su foto, se la envía convertida (JPG ≤ 20 KB) y el equipo la convierte en el rostro que reconoce: no hace falta registrar rostros a mano en el equipo. POST /integraciones/g4pro/sincronizar (solo Administrador; también a diario si se activa la revisión diaria) deja el equipo igual al sistema: consulta sus usuarios (DATA QUERY USERINFO), borra a quien el sistema no conoce (registrados a mano en el equipo), registra con foto al personal activo que falta y vuelve a poner los datos del sistema a quien tenga datos cambiados a mano en el equipo (contraseña, administrador, tarjeta o nombre; el rostro no cambia). Con ?simular=true solo informa qué haría. También desde la tarjeta \"Sincronización con el G4 Pro\" de esta página.",
     autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: multipart/form-data (para la foto)"],
@@ -182,8 +184,9 @@ POST /integraciones/g4pro/sincronizar`,
 Persona 12345678 encolada para 1 equipo(s), con foto
 
 // POST /integraciones/g4pro/sincronizar → 201
-{ "simulacion": false, "equipos": 1, "agregadas": 16, "borradas": 1, "permisosQuitados": 1, "usuariosABorrar": ["777"] }`,
+{ "simulacion": false, "equipos": 1, "agregadas": 0, "borradas": 1, "permisosQuitados": 0, "corregidas": 0, "usuariosABorrar": ["1"],
+  "porEquipo": [{ "serialNumber": "HSR3263100192", "usuarios": 2, "conRostro": 2, "sinRostro": [] }] }`,
     notas:
-      "Se registran con su número de documento (DNI, carné de extranjería o pasaporte: el equipo acepta letras, hasta 24 caracteres); los lectores, por ahora, solo reconocen el DNI. Si se cambia el número de documento, se borra el usuario anterior del equipo. La foto debe ser de frente, con buena luz y el rostro centrado. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
+      "Se registran con su número de documento (DNI, carné de extranjería o pasaporte: el equipo acepta letras, hasta 24 caracteres); los lectores, por ahora, solo reconocen el DNI. Si se cambia el número de documento, se borra el usuario anterior del equipo. En modo asistencia no hay permisos de paso (permisosQuitados siempre 0). La foto debe ser de frente, con buena luz y el rostro centrado. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
   },
 ];

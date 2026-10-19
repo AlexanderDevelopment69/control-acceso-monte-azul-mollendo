@@ -508,12 +508,12 @@ export const SECCIONES: SeccionManual[] = [
                     <Badge color="error">Denegado</Badge> no se abrió: al lado está el motivo.
                   </li>
                   <li>
-                    <Badge color="primary">En espera</Badge> pasó su DNI y tiene <b>1 minuto</b> para mirar el terminal y soplar. Se ve su
-                    foto para compararla.
+                    <Badge color="primary">En espera</Badge> pasó su DNI y tiene <b>1 minuto</b> para hacer rostro y alcohol en el terminal
+                    (orden normal).
                   </li>
                   <li>
-                    <Badge color="light">En cola</Badge> otra persona está usando el terminal. Se atienden de una en una, en el orden en
-                    que pasaron el DNI.
+                    <Badge color="success">Pase su DNI</Badge> aprobó rostro y alcohol y tiene <b>15 segundos</b> para pasar su DNI (orden
+                    “facial primero”). Se ve su foto.
                   </li>
                 </ul>
                 <p className="mt-3">
@@ -533,11 +533,22 @@ export const SECCIONES: SeccionManual[] = [
                   <Motivo m="Dado de baja" hacer="No puede entrar. Solo el administrador puede reactivarlo." />
                   <Motivo m="Sin documentos ›" hacer="No tiene documentos registrados. El administrador debe subirlos." />
                   <Motivo m="Documentos ›" hacer="Tiene un documento vencido. Tóquelo para ver cuál; el administrador sube el nuevo." />
-                  <Motivo m="Alcohol" hacer="Dio positivo en la prueba de alcohol. No puede entrar." />
+                  <Motivo
+                    m="Alcohol"
+                    hacer="Dio positivo en la prueba de alcohol. No puede entrar. Queda con su nombre aunque no haya pasado su DNI."
+                  />
                   <Motivo m="Rostro no coincide" hacer="En la verificación manual se indicó que no es la persona del DNI. No puede entrar." />
                   <Motivo
                     m="No completó rostro y alcohol"
                     hacer="No terminó en 1 minuto (o, en verificación manual, nadie decidió en 2). Puede pasar su DNI otra vez."
+                  />
+                  <Motivo
+                    m="DNI antes del facial"
+                    hacer="En “facial primero”, pasó su DNI sin haber hecho antes rostro y alcohol. Debe empezar por el terminal facial."
+                  />
+                  <Motivo
+                    m="No pasó su DNI a tiempo"
+                    hacer="En “facial primero”, aprobó rostro y alcohol, pero no pasó su DNI en los 15 segundos. Debe empezar otra vez."
                   />
                   <Motivo m="Ya figura dentro" hacer="Figura que ya entró y no marcó su salida." />
                   <Motivo m="No registra ingreso" hacer="Quiere salir, pero no figura que haya entrado." />
@@ -940,9 +951,9 @@ export const SECCIONES: SeccionManual[] = [
               <>
                 <p>Actívela para que se sincronice sola cada día y elija la hora. Pide confirmación.</p>
                 <p>
-                  Sincronizar deja el terminal igual al sistema: borra a quien no está registrado, quita permisos sueltos, registra con su
-                  foto al personal activo que falte y corrige los datos cambiados a mano en el terminal (contraseña, administrador, tarjeta o
-                  nombre), sin tocar el rostro. Nunca registre personas directamente en el terminal.
+                  Sincronizar deja el terminal igual al sistema: borra a quien no está registrado, registra con su foto al personal activo que
+                  falte y corrige los datos cambiados a mano en el terminal (contraseña, administrador, tarjeta o nombre), sin tocar el
+                  rostro. Nunca registre personas directamente en el terminal.
                 </p>
               </>
             ),
@@ -964,7 +975,8 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Última sincronización",
             texto: (
               <p>
-                Cuántas personas se agregaron, cuántos usuarios se borraron, cuántos permisos se quitaron y a cuántas personas se les
+                Cuántas personas se agregaron, cuántos usuarios se borraron, cuántos permisos se quitaron (solo con el terminal en modo
+                control de acceso; en asistencia siempre es 0) y a cuántas personas se les
                 corrigieron datos cambiados a mano en el terminal (contraseña, administrador, tarjeta o nombre; el rostro no cambia). Si
                 dice{" "}
                 <b>“equipo(s) no respondieron”</b>, el terminal está desconectado: inténtelo cuando diga “En línea”.
@@ -987,13 +999,14 @@ export const SECCIONES: SeccionManual[] = [
                 alcohol en el terminal facial y se abre el molinete.
               </li>
               <li>
-                <b>Facial primero (interruptor encendido):</b> primero rostro y alcohol en el terminal facial y, al final, el DNI (tiene
-                20 segundos). Los documentos se revisan con el DNI.
+                <b>Facial primero (interruptor encendido):</b> primero rostro y alcohol en el terminal facial; cuando el terminal dice
+                “correcto”, pasa su DNI (tiene 15 segundos desde que el Panel muestra “pase su DNI”). Los documentos se revisan con el DNI.
               </li>
             </Lista>
             <p className="mt-3">
-              En “facial primero”, si el DNI no es de quien sopló, no se abre el molinete (“No es quien sopló”). Activarlo pide confirmación y da permiso fijo en el terminal a todo el personal activo;
-              apagarlo vuelve al orden normal.
+              En “facial primero”, si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (“DNI antes del facial”). En los dos
+              órdenes vale la primera prueba de alcohol: volver a soplar enseguida no cambia el resultado. Si da alcohol, queda denegado con
+              su nombre aunque no pase el DNI.
             </p>
           </>
         ),

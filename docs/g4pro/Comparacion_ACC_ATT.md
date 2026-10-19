@@ -110,15 +110,34 @@ Por indicación del soporte, se cambió en el equipo: menú *firmware type setti
 - La columna 11 es un correlativo de marcación (1, 2, 3).
 - Llega con `Stamp=9999` y unos **10 a 15 s** después de la verificación.
 
-**API adaptado (desplegado el 19/10, 14:40):**
-- **La variante se detecta sola** (`push-sdk/protocolo-g4.ts`, ajuste `protocolo_g4` = `asistencia`/`acceso`): por el `DeviceType` del `options=all` y por la llegada de un `ATTLOG`. `/iclock/registry` y `/iclock/push` ya no dependen del ajuste.
-- **Registro de personas** en el formato de la variante (`USERINFO`; foto con el mismo `biophoto`). En asistencia no se envían permisos de paso. La sincronización completa reenvía al personal activo (con fotos solo en la manual).
-- **Ingreso** (`EventosAccesoService.registrarIngresoAsistencia` y `resultadoAsistencia`): el DNI y la prueba se juntan por persona, con varias a la vez. Aprueba si el grado es menor que el umbral (`G4PRO_UMBRAL_ALCOHOL`, por defecto 0.0001 g/L, el `AlcoholVolume` del equipo). **El orden lo manda el ajuste "Orden del ingreso"** (15:47), comparando la hora de la prueba (la del G4) con la del DNI, con 5 s de tolerancia:
-  - **Normal**: vale solo la prueba hecha después del DNI (espera de 1 minuto). Una prueba aprobada sin DNI previo no vale.
-  - **Facial primero**: vale solo la prueba hecha antes del DNI. La aprobación espera su DNI 20 s. Un DNI sin prueba suya se deniega en el momento ("Sin rostro y alcohol", sin cuenta regresiva; pedido de TMAM 19/10 16:50). Si sí sopló y la prueba llega después (10-15 s de demora), queda como aprobación y con volver a pasar el DNI entra.
-  - Margen entre relojes: 0 s (medido: el G4 y el servidor difieren en 1-2 s).
-  - En los dos órdenes, el alcohol alto queda denegado con su nombre.
-- Los `ATTLOG` repetidos se ignoran, y los de más de 2 minutos se guardan sin decidir nada.
+**API adaptado al modo asistencia** (19/10/2026, primera versión a las 14:40; reglas finales a las 17:38). Checklist de pruebas en `Checklist_Pruebas_Asistencia.md`.
+
+**Equipo y registro de personas**
+- **El servidor detecta solo el modo del equipo** (`push-sdk/protocolo-g4.ts`, ajuste `protocolo_g4` = `asistencia`/`acceso`): por el `DeviceType` del `options=all` y por la llegada de un `ATTLOG`. Las respuestas a `/iclock/registry` y `/iclock/push` ya no dependen del ajuste.
+- **Personas** con `DATA UPDATE USERINFO PIN=…` (`asistencia.util.ts`). La foto va con el mismo `biophoto` que en ACC y el borrado con `DATA DELETE USERINFO PIN=…`. En ATT no hay permisos de paso: el G4 verifica a todo su personal y decide el sistema.
+- **Sincronización:** `DATA QUERY USERINFO`. El G4 responde por `table=OPERLOG` (`USER PIN=…`, `BIOPHOTO`) y `table=BIODATA` (plantillas `Type=9`). Solo se guardan los números y los datos de cada usuario; las plantillas y las fotos se descartan. Con eso se reusa el plan de ACC: borra a los que el sistema no conoce, corrige los datos cambiados a mano y carga a quien falte. "Permisos quitados" queda siempre en 0. La tarjeta del equipo muestra cómo queda después de la sincronización.
+
+**Decisión del ingreso** (`EventosAccesoService.registrarIngresoAsistencia` y `resultadoAsistencia`)
+- El DNI y la prueba se juntan **por persona** (el `ATTLOG` trae el DNI), con varias personas a la vez. Aprueba si el grado es menor que el umbral (`G4PRO_UMBRAL_ALCOHOL`, por defecto 0.0001 g/L, el `AlcoholVolume` del equipo); sin grado legible, no aprueba.
+- **Demora del aviso del G4** (medida el 19/10): 10-12 s después de terminar la prueba con 0.00; 15-17 s con alcohol alto. La hora del G4 y la del servidor difieren en 1-2 s. Se compara siempre la hora de la prueba (la del G4) con la del DNI, sin margen.
+- **Orden normal** (interruptor "Facial primero" apagado): vale solo la prueba hecha **después** del DNI. El DNI queda en espera 1 minuto, con cuenta regresiva en el Panel; luego, "No completó rostro y alcohol". Una prueba aprobada sin DNI previo no vale.
+- **Facial primero:** vale solo la prueba hecha **antes** del DNI.
+  - Hay **15 s** para pasar el DNI desde que aparece "pase su DNI" en el Panel, es decir, desde que llega el aviso del G4, unos 25 s desde el "correcto" (`PLAZO_DNI_DESDE_AVISO_MS`, 17:57). Contados desde el "correcto" quedaban 5 s en el Panel y no alcanzaban: en la garita se tardó 14 y 18 s. La fila "Aprobó … pase su DNI" muestra la foto de quien sopló. Si no pasa el DNI a tiempo: "No pasó su DNI a tiempo".
+  - Si el DNI llega antes que el aviso del G4, espera **en silencio hasta 8 s** (`ESPERA_PRUEBA_EN_CAMINO_MS`), sin mostrarse en el Panel. Si llega su prueba con 0.00, entra.
+  - Si pasa el DNI sin una prueba suya, o fuera de plazo: **"DNI antes del facial"** (`denegado_sin_facial`). Sin cuenta regresiva, por pedido de TMAM.
+- **Alcohol alto:** queda denegado **con su nombre** en los dos órdenes, aunque no pase el DNI, y suena el aviso. En facial primero, si pasa el DNI en el minuto siguiente, se le responde con el mismo rechazo, sin otra fila.
+- **Vale la primera marcación del pase** (`MISMO_PASE_MS`, 20 s): volver a soplar enseguida no cambia el resultado; luego, un soplido nuevo es otro intento. **No hay bloqueo** después de un positivo, por decisión de TMAM. Un intento nuevo con alcohol alto anula lo que la persona haya aprobado antes.
+- Los `ATTLOG` repetidos se ignoran. Los de más de 2 minutos (enviados al volver la conexión) se guardan pero no deciden nada.
+- Con la verificación manual activa, el G4 no decide: decide el vigilante.
+
+**Panel (portal)**
+- Motivo "DNI antes del facial" (antes "Sin rostro y alcohol").
+- Se quitaron los enlaces de corrección manual del antipassback ("Registrar salida/ingreso manual"), por pedido de TMAM. La corrección sigue en el API, sin pantalla.
+- Textos de "Facial primero" (aviso del Panel, confirmación y manual): 15 s desde que aparece "pase su DNI".
+
+**Garita (19/10)**
+- El puerto USB 9 de la mini PC reconocía el adaptador del lector, pero no le pasaba los datos. Se resolvió cambiando el adaptador de entrada a otro puerto.
+- El lector a veces envía `71988749 JOSE VILCHEZ` (número y nombre), un formato que el sistema ignora. Falta confirmar qué documento lo produce.
 
 ## 4. Conclusión
 
@@ -129,6 +148,4 @@ Por indicación del soporte, se cambió en el equipo: menú *firmware type setti
 
   En todos los casos el G4 vuelve a `acc` al reiniciar. Se restauró todo como estaba.
 - **Con ACC**, el orden "DNI primero" funciona bien: el sistema sabe quién es porque habilita a una persona a la vez. "Facial primero" funciona, pero sin confirmar quién sopló; el vigilante compara la foto.
-- **Paso siguiente:** pedir a ZKTeco o al distribuidor que pase el HSR3263100192 a la variante **ATT**, como el HSR3241200002. Hay que confirmar con ellos dos cosas:
-  - si el cambio borra los usuarios (se vuelven a cargar desde el portal);
-  - cómo informa ATT un alcohol alto.
+- **Resuelto el 19/10/2026:** por indicación del soporte, el equipo se pasó a ATT desde su propio menú (*firmware type settings* → Attendance; borró sus usuarios, que se recargaron desde el portal). En ATT, cada prueba llega con el DNI y el grado, también el alcohol alto (sección 3 quater).

@@ -96,8 +96,9 @@ export function OrdenIngreso() {
         <p className="text-sm text-gray-600 dark:text-gray-300">Desde ahora, el ingreso será así:</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300">
           <li>Rostro y prueba de alcohol en el equipo facial.</li>
-          <li>Si pasa, tiene <strong>20 segundos</strong> para pasar su DNI.</li>
+          <li>Cuando el equipo dice “correcto”, pasa su DNI: tiene <strong>15 segundos</strong> desde que el Panel muestra “pase su DNI”.</li>
           <li>Se abre el molinete si el DNI es de quien sopló y sus documentos están en regla.</li>
+          <li>Si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (“DNI antes del facial”).</li>
         </ol>
         <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
           Avise al personal antes de activarlo. Puede volver al orden normal cuando quiera.
