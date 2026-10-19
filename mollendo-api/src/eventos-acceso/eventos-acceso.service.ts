@@ -9,7 +9,9 @@ import type { CorreccionAntipassbackDto } from './dto/correccion-antipassback.dt
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { Persona, Prisma } from '../generated/prisma/client.js';
 import { paginacion, palabras, rangoDeDias, type Paginado } from '../common/paginacion.js';
-import type { RtlogRecibidoEvent } from '../push-sdk/push-sdk.service.js';
+import type { AttlogRecibidoEvent, RtlogRecibidoEvent } from '../push-sdk/push-sdk.service.js';
+import { leerModoAsistencia } from '../push-sdk/protocolo-g4.js';
+import { alcoholConforme } from '../push-sdk/asistencia.util.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 import { VerificacionManualService } from './verificacion-manual.service.js';
 import { ModoIngresoService } from './modo-ingreso.service.js';
@@ -60,6 +62,25 @@ const VENTANA_DNI_FACIAL_PRIMERO_MS = 20 * 1000;
  * se sigue como antes, sin confirmar quién sopló.
  */
 const ESPERA_QUIEN_APROBO_MS = 6 * 1000;
+
+/**
+ * G4 Pro en asistencia: si alguien dio alcohol alto y enseguida pasa su DNI,
+ * se le responde con ese rechazo (no queda esperando otra prueba).
+ */
+const RECHAZO_ALCOHOL_RECIENTE_MS = 60 * 1000;
+
+/**
+ * G4 Pro en asistencia, orden "facial primero": si el DNI llega antes que el
+ * resultado de la prueba que la persona hizo antes (llega 10-15 s tarde), se
+ * lo espera hasta esto. Pasado ese tiempo, "Sin rostro y alcohol".
+ */
+const ESPERA_PRUEBA_PREVIA_MS = 25 * 1000;
+
+/**
+ * Diferencia aceptada entre la hora del G4 Pro (la de la prueba) y la del
+ * servidor (la del DNI) al decidir si la prueba fue antes o después del DNI.
+ */
+const TOLERANCIA_RELOJ_MS = 5 * 1000;
 
 /** Pedido a la integración del G4 Pro: quién aprobó el rtlog de esta hora (responde por emitAsync). */
 export interface QuienAproboEvent {
@@ -182,6 +203,10 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   private cola: Promise<unknown> = Promise.resolve();
   /** Orden "facial primero": las aprobaciones del G4 Pro que esperan su DNI (cada una con sus 20 s). */
   private aprobaciones: AprobacionSinDni[] = [];
+  /** G4 Pro en asistencia: último alcohol alto de cada DNI (para responder a su DNI, ver RECHAZO_ALCOHOL_RECIENTE_MS). */
+  private rechazosAlcohol = new Map<string, { en: number; eventoId: number }>();
+  /** G4 Pro en asistencia, "facial primero": esperas de DNI que aguardan una prueba hecha antes del DNI (ver ESPERA_PRUEBA_PREVIA_MS). */
+  private esperasPruebaPrevia = new Set<number>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -273,35 +298,18 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       return this.registrarNoRegistrada(dto, 'ingreso');
     }
 
-    // Con la verificación manual activa, el orden es siempre el normal (decide el vigilante).
+    // Con la verificación manual activa, decide el vigilante: ni el G4 Pro ni el orden "facial primero".
+    const manual = await this.verificacionManual.activa();
+    if (!manual && (await leerModoAsistencia(this.prisma))) {
+      return this.enSerie(() => this.registrarIngresoAsistencia(persona, dto));
+    }
     if (await this.facialPrimeroVigente()) {
       return this.enSerie(() => this.registrarDniAlFinal(persona, dto));
     }
 
-    if (persona.estado !== 'activo') {
-      return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoPorBaja: true });
-    }
+    const denegado = await this.denegarSiNoCorresponde(persona, dto);
+    if (denegado) return denegado;
 
-    // Antipassback estricto: no puede volver a ingresar sin haber registrado su salida.
-    if (await this.figuraDentro(persona.id)) {
-      return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoYaDentro: true });
-    }
-
-    const documentos = await this.getDocumentosActuales(persona.id);
-    const documentosVencidos = documentos.filter((d) => !d.vigente).map((d) => d.nombre);
-    const denegadoSinDocumentos = documentos.length === 0;
-    const denegadoPorDocumentos = documentosVencidos.length > 0;
-
-    if (denegadoSinDocumentos || denegadoPorDocumentos) {
-      return this.registrarIngresoDenegadoInmediato(persona, dto, {
-        denegadoSinDocumentos,
-        denegadoPorDocumentos,
-        documentosVencidos,
-      });
-    }
-
-    // Con la verificación manual activa, la decide un vigilante y no se usa el G4 Pro.
-    const manual = await this.verificacionManual.activa();
     await this.enSerie(async () => {
       // Si ya está esperando (volvió a pasar el DNI), se mantiene su lugar.
       const abierto = (
@@ -324,6 +332,27 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         ? 'Documentos en regla. Verificación manual: el vigilante compara el rostro y toma la prueba de alcohol.'
         : 'Documentos en regla. Esperando el resultado del equipo (rostro + alcoholímetro).',
     };
+  }
+
+  /**
+   * Revisiones del DNI antes de dejarlo ingresar: dado de baja, ya figura
+   * dentro (antipassback estricto: no puede volver a ingresar sin haber
+   * registrado su salida), sin documentos o con alguno vencido. Devuelve el
+   * ingreso denegado, o null si está en regla.
+   */
+  private async denegarSiNoCorresponde(persona: Persona, dto: IngresoDto) {
+    if (persona.estado !== 'activo') return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoPorBaja: true });
+    if (await this.figuraDentro(persona.id)) return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoYaDentro: true });
+    const documentos = await this.getDocumentosActuales(persona.id);
+    const documentosVencidos = documentos.filter((d) => !d.vigente).map((d) => d.nombre);
+    if (documentos.length === 0 || documentosVencidos.length > 0) {
+      return this.registrarIngresoDenegadoInmediato(persona, dto, {
+        denegadoSinDocumentos: documentos.length === 0,
+        denegadoPorDocumentos: documentosVencidos.length > 0,
+        documentosVencidos,
+      });
+    }
+    return null;
   }
 
   /** ¿Rige el orden "facial primero"? (con la verificación manual activa, no). */
@@ -388,17 +417,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     // La aprobación de esta persona se usa con su DNI, entre o no: no queda para otro.
     if (eleccion.tipo === 'usar') this.soltarAprobacion(eleccion.aprobacion);
 
-    if (persona.estado !== 'activo') return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoPorBaja: true });
-    if (await this.figuraDentro(persona.id)) return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoYaDentro: true });
-    const documentos = await this.getDocumentosActuales(persona.id);
-    const documentosVencidos = documentos.filter((d) => !d.vigente).map((d) => d.nombre);
-    if (documentos.length === 0 || documentosVencidos.length > 0) {
-      return this.registrarIngresoDenegadoInmediato(persona, dto, {
-        denegadoSinDocumentos: documentos.length === 0,
-        denegadoPorDocumentos: documentosVencidos.length > 0,
-        documentosVencidos,
-      });
-    }
+    const denegado = await this.denegarSiNoCorresponde(persona, dto);
+    if (denegado) return denegado;
     if (eleccion.tipo === 'ninguna') return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoSinFacial: true });
     if (eleccion.tipo === 'otra-persona') {
       const { quien } = eleccion;
@@ -407,7 +427,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     }
     const { aprobacion: aprobada, quien } = eleccion;
     if (!quien) this.logger.warn(`Facial primero: el G4 Pro no dijo a tiempo quién sopló; DNI ${persona.numeroDocumento} sin confirmar`);
+    return this.autorizarConAprobacion(persona, dto, aprobada, quien);
+  }
 
+  /** Rostro y alcohol aprobados antes del DNI (ya revisado): ingreso autorizado y se abre el molinete. */
+  private async autorizarConAprobacion(persona: Persona, dto: IngresoDto, aprobada: AprobacionSinDni, quien: PaseExitoso | null) {
     const evento = await this.prisma.eventoAcceso.create({
       data: {
         personaId: persona.id,
@@ -437,6 +461,150 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     };
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
     return respuesta;
+  }
+
+  /**
+   * G4 Pro en asistencia (desde el 19/10/2026, ver protocolo-g4.ts): el
+   * equipo dice quién hizo rostro y alcohol, cuánto dio y a qué hora
+   * (`ATTLOG`), así que el DNI y la prueba se juntan por persona y con varias
+   * personas a la vez (no hace falta habilitar a una sola). El orden lo manda
+   * el ajuste "Orden del ingreso":
+   * - **Normal**: vale solo la prueba hecha después del DNI. Queda en espera
+   *   (su minuto) hasta que llegue (resultadoAsistencia).
+   * - **Facial primero**: vale solo la prueba hecha antes del DNI, con el DNI
+   *   en los 20 s siguientes. Si ya llegó y aprobó, se autoriza; si dio
+   *   alcohol alto, se le responde con ese rechazo; si todavía no llegó (llega
+   *   10-15 s después del soplido), se la espera ESPERA_PRUEBA_PREVIA_MS.
+   */
+  private async registrarIngresoAsistencia(persona: Persona, dto: IngresoDto) {
+    const facialPrimero = await this.modoIngreso.facialPrimero();
+    const pin = pinDeDocumento(persona.numeroDocumento);
+    const aprobacion = facialPrimero
+      ? this.aprobacionesVigentes()
+          .filter((a) => a.quienSabido?.pin === pin)
+          .pop()
+      : undefined;
+    if (aprobacion) this.soltarAprobacion(aprobacion);
+
+    const denegado = await this.denegarSiNoCorresponde(persona, dto);
+    if (denegado) return denegado;
+    if (aprobacion) return this.autorizarConAprobacion(persona, dto, aprobacion, aprobacion.quienSabido ?? null);
+
+    const rechazo = facialPrimero && pin ? this.rechazosAlcohol.get(pin) : undefined;
+    if (rechazo && Date.now() - rechazo.en <= RECHAZO_ALCOHOL_RECIENTE_MS) {
+      // El rechazo ya quedó registrado (y sonó el aviso) al llegar la prueba: no se repite.
+      this.rechazosAlcohol.delete(pin!);
+      return {
+        eventoId: rechazo.eventoId,
+        tipoMovimiento: 'ingreso' as const,
+        resultado: 'denegado' as const,
+        persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+        numeroDocumento: persona.numeroDocumento,
+        motivos: { alcohol: true },
+      };
+    }
+
+    // Si ya está esperando (volvió a pasar el DNI), sigue la misma espera.
+    const abierta = await this.esperaAbiertaDe(persona.id);
+    if (!abierta) {
+      const pendiente = await this.prisma.ingresoPendiente.create({
+        data: { personaId: persona.id, torniqueteId: dto.torniqueteId, manual: false, habilitadoEn: new Date() },
+        include: CON_PERSONA,
+      });
+      if (facialPrimero) this.esperasPruebaPrevia.add(pendiente.id);
+      this.eventEmitter.emit('ingreso.en-espera', this.enEsperaAsistencia(pendiente));
+    }
+    return {
+      estado: 'pendiente_verificacion' as const,
+      persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+      numeroDocumento: persona.numeroDocumento,
+      mensaje: 'Documentos en regla. Esperando el resultado del equipo (rostro + alcoholímetro).',
+    };
+  }
+
+  /** La espera para el Panel; en "facial primero" con su plazo corto (ESPERA_PRUEBA_PREVIA_MS). */
+  private enEsperaAsistencia(pendiente: PendienteConPersona): IngresoEnEspera {
+    const fila = aEnEspera(pendiente);
+    if (!this.esperasPruebaPrevia.has(pendiente.id) || !pendiente.habilitadoEn) return fila;
+    return { ...fila, hasta: new Date(pendiente.habilitadoEn.getTime() + ESPERA_PRUEBA_PREVIA_MS).toISOString() };
+  }
+
+  /**
+   * ¿La prueba vale para esta espera? En "facial primero" (esperasPruebaPrevia)
+   * debe ser de antes del DNI; en el orden normal, de después. Sin la hora
+   * del equipo, vale.
+   */
+  private pruebaValePara(espera: { id: number; habilitadoEn: Date | null }, horaPrueba: Date | null): boolean {
+    if (!horaPrueba || !espera.habilitadoEn) return true;
+    const diferencia = horaPrueba.getTime() - espera.habilitadoEn.getTime();
+    return this.esperasPruebaPrevia.has(espera.id) ? diferencia <= TOLERANCIA_RELOJ_MS : diferencia >= -TOLERANCIA_RELOJ_MS;
+  }
+
+  /** La espera de esta persona que sigue abierta (G4 Pro en asistencia: cada una tiene la suya). */
+  private async esperaAbiertaDe(personaId: number) {
+    const abiertas = await this.prisma.ingresoPendiente.findMany({
+      where: { personaId, consumidoEn: null, manual: false, ...this.filtroAbiertos() },
+      include: { persona: true },
+    });
+    return abiertas.find((p) => p.habilitadoEn && this.sigueAbierta(p)) ?? null;
+  }
+
+  /**
+   * G4 Pro en asistencia: llegó la prueba de una persona (`ATTLOG`: su DNI,
+   * el grado de alcohol y la hora). El equipo marca todas igual (estado 255):
+   * aprueba si el grado está bajo el umbral (alcoholConforme).
+   * - Si su DNI la está esperando y la prueba vale en ese orden
+   *   (pruebaValePara): se cierra la espera (ingresa, o se deniega por alcohol).
+   * - Si no: con alcohol alto, ingreso denegado con su nombre (en los dos
+   *   órdenes). Si aprobó: en "facial primero" la aprobación espera su DNI
+   *   20 s; en el normal no vale (hace falta pasar antes el DNI): solo se anota.
+   * Con la verificación manual activa decide el vigilante: solo se anota.
+   */
+  @OnEvent('dispositivo.attlog')
+  async resultadoAsistencia(evento: AttlogRecibidoEvent): Promise<void> {
+    await this.enSerie(async () => {
+      const aprobado = alcoholConforme(evento.alcohol);
+      if (await this.verificacionManual.activa()) {
+        this.logger.warn(`G4 Pro: prueba del DNI ${evento.pin} (${evento.alcohol ?? 'sin grado'}) durante la verificación manual; no se usa`);
+        return;
+      }
+      const persona = await this.prisma.persona.findFirst({ where: { numeroDocumento: evento.pin } });
+      if (!persona) {
+        this.logger.warn(`G4 Pro: prueba del DNI ${evento.pin}, que no está en el sistema; no se usa`);
+        return;
+      }
+      this.logger.log(`G4 Pro: DNI ${evento.pin} ${aprobado ? 'aprobó' : 'NO aprobó'} rostro y alcohol (${evento.alcohol ?? 'sin grado'})`);
+      const fechaHora = evento.horaDispositivo ?? undefined;
+
+      const espera = await this.esperaAbiertaDe(persona.id);
+      if (espera && this.pruebaValePara(espera, evento.horaDispositivo)) {
+        await this.cerrarEspera(espera, { autorizado: aprobado, denegadoPorAlcohol: !aprobado, fechaHora }, evento.verificacionId);
+        return;
+      }
+      if (espera) this.logger.warn(`G4 Pro: la prueba del DNI ${evento.pin} no es del orden del ingreso vigente; no cierra su espera`);
+      if (!aprobado) {
+        const eventoId = await this.registrarSinPersona({ denegadoPorAlcohol: true, dniQueSoplo: evento.pin, fechaHora }, evento.verificacionId);
+        this.rechazosAlcohol.set(evento.pin, { en: Date.now(), eventoId });
+        return;
+      }
+      this.rechazosAlcohol.delete(evento.pin);
+      if (!(await this.modoIngreso.facialPrimero())) {
+        this.logger.warn(`G4 Pro: el DNI ${evento.pin} hizo rostro y alcohol sin pasar antes su DNI (orden normal); no vale`);
+        return;
+      }
+      const quien: PaseExitoso = { hora: evento.horaDispositivo ?? new Date(), pin: evento.pin, nombre: `${persona.nombres} ${persona.apellidos}` };
+      // La misma persona volvió a aprobar: vale solo la última.
+      for (const anterior of this.aprobaciones.filter((a) => a.quienSabido?.pin === evento.pin)) this.soltarAprobacion(anterior);
+      const aprobacion: AprobacionSinDni = {
+        id: -evento.verificacionId,
+        en: Date.now(),
+        verificacionId: evento.verificacionId,
+        quien: Promise.resolve(quien),
+        quienSabido: quien,
+      };
+      this.aprobaciones.push(aprobacion);
+      this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
+    });
   }
 
   /**
@@ -514,11 +682,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Orden "facial primero": denegado sin persona (no pasó el alcohol, o nadie pasó su DNI a tiempo). */
+  /** Orden "facial primero": denegado sin DNI (no pasó el alcohol, o nadie pasó su DNI a tiempo). Devuelve el id del evento. */
   private async registrarSinPersona(
     motivos: { denegadoPorAlcohol?: boolean; denegadoSinDni?: boolean; fechaHora?: Date; dniQueSoplo?: string },
     verificacionId?: number,
-  ) {
+  ): Promise<number> {
     // Si el G4 Pro dijo quién sopló (y no pasó su DNI a tiempo), el rechazo queda con su nombre.
     const persona = motivos.dniQueSoplo ? await this.findPersonaPorDocumento('DNI', motivos.dniQueSoplo) : null;
     const evento = await this.prisma.eventoAcceso.create({
@@ -548,6 +716,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       motivos: { alcohol: !!motivos.denegadoPorAlcohol, sinDni: !!motivos.denegadoSinDni },
       facialPrimero: true,
     });
+    return evento.id;
   }
 
   /** Dado de baja, ya figura dentro, sin documentos, con alguno vencido o (facial primero) sin aprobación: se deniega aquí mismo. */
@@ -678,6 +847,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       denegadoPorAlcohol?: boolean;
       denegadoSinVerificacion?: boolean;
       denegadoRostroNoCoincide?: boolean;
+      /** G4 Pro en asistencia, "facial primero": no llegó una prueba hecha antes del DNI. */
+      denegadoSinFacial?: boolean;
       fechaHora?: Date;
       /** Verificación manual: el vigilante que decidió. */
       verificadoPor?: AuthenticatedUser;
@@ -694,6 +865,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         denegadoPorAlcohol: resultado.denegadoPorAlcohol ?? false,
         denegadoSinVerificacion: resultado.denegadoSinVerificacion ?? false,
         denegadoRostroNoCoincide: resultado.denegadoRostroNoCoincide ?? false,
+        denegadoSinFacial: resultado.denegadoSinFacial ?? false,
         verificacionManual: pendiente.manual,
         verificadoPorId: resultado.verificadoPor?.id,
         torniqueteId: pendiente.torniqueteId ?? undefined,
@@ -706,6 +878,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         ? [this.prisma.verificacionDispositivo.update({ where: { id: verificacionId }, data: { eventoAccesoId: eventoAcceso.id } })]
         : []),
     ]);
+    this.esperasPruebaPrevia.delete(pendiente.id);
     if (pendiente.habilitadoEn && !pendiente.manual) {
       this.eventEmitter.emit('g4pro.habilitar', {
         numeroDocumento: pendiente.persona.numeroDocumento,
@@ -730,6 +903,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         alcohol: !!resultado.denegadoPorAlcohol,
         sinVerificacion: !!resultado.denegadoSinVerificacion,
         rostroNoCoincide: !!resultado.denegadoRostroNoCoincide,
+        sinFacial: !!resultado.denegadoSinFacial,
       },
       verificacionManual: pendiente.manual,
       verificadoPor: resultado.verificadoPor?.correo ?? null,
@@ -813,6 +987,16 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`Facial primero: ${quien ? `el DNI ${quien.pin}` : 'nadie'} no pasó su DNI en 20 s después de aprobar`);
       await this.registrarSinPersona({ denegadoSinDni: true, dniQueSoplo: quien?.pin }, vencida.verificacionId);
     }
+    // G4 Pro en asistencia, facial primero: DNI sin una prueba hecha antes (ver ESPERA_PRUEBA_PREVIA_MS).
+    for (const id of [...this.esperasPruebaPrevia]) {
+      const espera = await this.prisma.ingresoPendiente.findFirst({ where: { id, consumidoEn: null }, include: { persona: true } });
+      if (!espera) {
+        this.esperasPruebaPrevia.delete(id);
+      } else if (espera.habilitadoEn && ahora - espera.habilitadoEn.getTime() > ESPERA_PRUEBA_PREVIA_MS) {
+        this.logger.log(`Facial primero: el DNI ${espera.persona.numeroDocumento} no hizo rostro y alcohol antes de pasar su DNI`);
+        await this.cerrarEspera(espera, { autorizado: false, denegadoSinFacial: true });
+      }
+    }
     const vencidas = (
       await this.prisma.ingresoPendiente.findMany({
         where: {
@@ -843,7 +1027,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       include: CON_PERSONA,
     });
     const aprobaciones = this.aprobacionesVigentes().reverse().map(aprobacionEnEspera);
-    return [...aprobaciones, ...pendientes.filter((p) => this.sigueAbierta(p)).map(aEnEspera)];
+    return [...aprobaciones, ...pendientes.filter((p) => this.sigueAbierta(p)).map((p) => this.enEsperaAsistencia(p))];
   }
 
   /**

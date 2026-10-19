@@ -324,6 +324,8 @@ Investigación del 19/10 (equipo + protocolo oficial + software ZKTeco + interne
 > 3. En su software ZKBioSecurity, el evento muestra a la persona: ¿cómo obtiene el ID en una verificación con alcohol — del `pin` del evento, o de la **foto de captura** (`ATTPHOTO`, cuyo nombre sería `<fecha>-<DNI>.jpg`)?
 > 4. ¿El equipo sube la captura de cada verificación con el **DNI** en el nombre? ¿Qué opción la activa (`SaveBioPhotoFunOn`, `TransFlag`…)?
 > 5. ¿El **resultado del alcohol** (grado) se puede recibir por el protocolo asociado al usuario? Hoy el `rtlog` manda `Concentration=0` (solo el log interno guarda el valor real).
+> 6. Cuando una persona **falla la prueba de alcohol** (`event=1`), ¿cómo saber **qué usuario** fue? El equipo lo reconoce por el rostro antes del soplido, pero no lo anota en el `rtlog` ni en `VerifySuccess.txt` (solo registra los éxitos).
+> 7. El equipo tiene configurada la nube de ZKTeco (`ufo.zkclouds.com`, servicio `com.zkteco.biocv.edk.iot.service`). ¿Qué envía ahí? ¿Los accesos con el usuario y el grado de alcohol? ¿Hay forma de recibirlos nosotros (API o reenvío)?
 
 **Dónde está el flujo del alcohol (revisado 19/10, por `SHELL strings` sobre los `base.vdex`):** no en `com.zkteco.android.core` ni en `com.zkteco.android.accesscontrol` (solo tienen `AlcoholDetectionFun`/`AlcoholVolume`), sino en el **launcher** `com.zktechnology.android.launcher` (paquete `com.zktechnology.android.alcohol`: `onStartAlcoholDetect`, `completeAlcoholDetected`, `onFinishAlcoholResultHandler`, `mShouldWaitAlcoholDetect`, `addAttLog concentration:`). El launcher escribe en el logcat mensajes con el usuario (`UserPin=%s, success=%s, capturePicValue=%s`, `userPin->`, `mUserPin=`, `User_PIN=`), legibles por `SHELL logcat -d` → ver sección 10.5.
 
@@ -333,8 +335,57 @@ Investigación del 19/10 (equipo + protocolo oficial + software ZKTeco + interne
 
 ### 10.7. Pendientes de probar (al volver) — estado 19/10/2026
 
-- **Prueba clave: `ATTPHOTO` con DNI** (sección 10.5). **Armado:** receptor desplegado, `SaveBioPhotoFunOn=1` en el G4, `PUSH_SDK_DEPURAR=true` en Azure. **Falta:** un pase real de una persona registrada (Amiel/48058719 o Fernando/15724705) con **rostro + soplido completo**. Al pasar, leer el log: `Captura (ATTPHOTO) recibida: … dniDerivado=<DNI>`.
-- **Opcional:** ver la desconexión rápida de la mini PC (`docker pause`/`unpause` del contenedor `mollendo-controlador-controlador-1`); el portal debe marcar "Desconectado" en ~18–33 s. Ya desplegado y verificado; es solo confirmación visual.
-- **Limpieza tras la prueba:** `SET OPTION SaveBioPhotoFunOn=0` + `RELOAD OPTIONS`, y `PUSH_SDK_DEPURAR=false` (+ `docker compose up -d api`).
+**Una sola sesión en la sede, con "Facial primero" activado** (Sistema y APIs → Orden del ingreso), avisando enseguida al terminar (antes de reiniciar el G4):
+
+1. **Amiel sopla y pasa su DNI** → debe entrar con la marca "Facial primero" verde; en el log de la API: `Facial primero: aprobó el DNI 48058719`.
+2. **Amiel sopla y Fernando pasa su DNI** → "No es quien sopló".
+3. **Amiel sopla, Fernando sopla detrás, y pasan su DNI en cualquier orden** → entran los dos (varias aprobaciones a la vez).
+4. **Fernando sopla con alcohol** (buche de enjuague bucal con alcohol) → rechazo por alcohol. Es para el hueco 2 (sección 10.8): ver si la foto del rechazo trae su DNI (`ls /sdcard/ZKTeco/data/capture/bad`) y consultar enseguida la tabla `transaction` por si guarda el rechazo con el usuario. **Revisarlo el mismo día**: el G4 borra sus fotos cada noche a las 02:46.
+5. Con esos mismos pases: ¿llegó `Captura (ATTPHOTO) recibida: … dniDerivado=<DNI>` al log? (sección 10.5) y leer el logcat (sección 10.5).
+
+- **Ya probado (19/10):** la desconexión rápida de la mini PC (`docker pause`: "Desconectado" a los ~19 s sin reporte).
+- **Limpieza tras la prueba:** `SET OPTION SaveBioPhotoFunOn=0` + `RELOAD OPTIONS`, y `PUSH_SDK_DEPURAR=false` (+ `docker compose up -d api`). La confirmación de quién sopló **no** depende de la depuración.
+
+### 10.8. Qué datos da el G4 y dónde (guía para pruebas futuras, 19/10/2026)
+
+**El G4 siempre sabe quién es** (reconoce el rostro antes del soplido). Lo que cambia es si lo **cuenta** y dónde:
+
+| Resultado en el G4 | ¿DNI? | ¿Medición de alcohol? |
+|---|---|---|
+| **"Acceso ilegal" (`event=23`)**: rostro reconocido **sin permiso** en el equipo (p. ej. de baja; o en el antiguo proceso B, antes de recibir el permiso) | **Sí**, en el aviso (`rtlog`, `pin=<DNI>`), aunque haya soplado | No (`Concentration=0`) |
+| **"Verificación exitosa" (`event=0`)** | En el aviso **no** (`pin=0`); **sí** en `VerifySuccess.txt` | En `Verify.txt`, sin DNI |
+| **Alcohol alto (`event=1`)** | **No, en ningún lado** (hueco 2) | En `Verify.txt`, sin DNI |
+| **Rostro no registrado (`event=27`)** | No (no es nadie registrado) | No sopla |
+
+En "Facial primero" todo el personal activo tiene permiso, así que nunca sale "Acceso ilegal": sale éxito o alcohol alto. El `rtlog` manda **siempre** `Concentration=0`: el valor medido solo está en `Verify.txt`.
+
+**Los dos archivos de rastreo** (carpeta `/sdcard/ZKTeco/trace/`, sin cifrar, se leen con `SHELL`):
+
+| Archivo | Qué anota | Datos de cada línea |
+|---|---|---|
+| **`VerifySuccess.txt`** (~8 KB) | **Solo los pases exitosos**, una línea por pase | Fecha, hora, **DNI y nombre**: `2026-10-17 18:48:41 446:userPin->15724705; userName->Fernando Herrera Broncales:` |
+| **`Verify.txt`** (~47 MB) | **Todos los pasos** de todos los intentos (diario interno del programa de pantalla) | Fecha, hora y una frase técnica por paso. **Sin DNI.** La única línea útil es la del alcoholímetro: `onUsbDetectNotifyResult result:R+TRESULT,<grado>,5,<resultado>` (resultado `0` = pasó, `2` = rechazado) |
+
+Ejemplo de `Verify.txt` (pase de Fernando, 17/10): `18:48:19 onUser` (reconoció un rostro) → `onStartAlcoholDetect` (pide soplar) → `18:48:33 R+TRESULT,0.000,5,0` (midió 0,000) → `18:48:40 onRecord` → `18:48:41 验证成功 可以开门` ("verificación exitosa, puede abrir"). Rechazo de Fernando del 16/10: `18:20:54 onUser` → `18:21:23 R+TRESULT,2.500,5,2` (midió 2,5) → `18:21:33 onRecord`, sin DNI en ninguna línea. Si la persona no sopla, el G4 espera ~15 s y vuelve a empezar sin avisar (`cleanData`/`onWait`).
+
+**Dónde más se buscó el DNI de un rechazo por alcohol (19/10, sin resultado):** todos los archivos de `/sdcard/ZKTeco/trace/` (solo `DataBase.txt` anota `addAccAttLog`, sin DNI), `/sdcard/EDK/`, el logcat de Android (el launcher no anota el usuario ahí), la tabla interna `transaction` (18/10: los rechazos por alcohol no se guardan), los datos del launcher (`/data/data/com.zktechnology.android.launcher`, sin bases), las carpetas `/sdcard/ZKTeco/data/{push,temp,photo}` (vacías) y las copias de respaldo `/sdcard/ZKTeco/data/databases/ZKBackupDatabases{1,2}/ZKDB.db` (**cifradas**, como la original; no se intenta descifrarlas).
+
+**Inventario completo (19/10, segunda pasada):** se buscaron los archivos modificados en el minuto de una verificación (`find / -mmin`, solo cambió `DataBase.txt`) y se listaron los datos de todos los programas de ZKTeco. La comparación del rostro se guarda en **`ZKDB.db` y `ZKEXTDB.db`, ambas cifradas** (también sus copias de respaldo); `ZKSystem.db` y los `shared_prefs` solo tienen configuración; los programas del MCU/alcoholímetro y de tarjetas no dan acceso (otro UID). **No queda nada legible por revisar.** Hallazgo: el servicio `com.zkteco.biocv.edk.iot.service` está configurado con la nube de ZKTeco (`wss://ufo.zkclouds.com`, con credenciales del equipo en su `shared_prefs`; no copiarlas): podría estar enviando ahí los registros con el usuario (pregunta para el proveedor).
+
+**Corrección del 18/10:** "los rechazos por alcohol no se guardan en la tabla `transaction`" no está comprobado: esa consulta fue posterior al reinicio del registro del G4 (17/10 ~17:50) y desde entonces no hubo ningún `event=1`. Repetir `DATA QUERY tablename=transaction,fielddesc=*,filter=*` justo después del paso 4 de la sección 10.7.
+
+**PISTA FUERTE (19/10): "Security Mode" del G4.** El manual (G4 Pro ACC v1.2, sección 10.14 *Security Setting*) dice que el modo seguro sirve para *"hide the user's personal information to prevent leakage during user verification"*. Nuestro G4 lo tiene **encendido**: `ClearPhoto.txt` anota cada noche `安全模式, 开始清除照片` ("modo seguro, comenzando a borrar fotos") desde el 22/09. Explicaría el `pin=0` en los pases verificados (y el borrado nocturno de fotos), y que los demás equipos ACC del monitor de TROK sí manden el usuario. **Sin comprobar.** Pasos: (1) leer la opción en `OPTION_INFO` por `SHELL` (nombre a confirmar: buscar `Security`/`Privacy`); (2) si está activa, apagarla en el G4: Menú → System Settings → Security Setting → Security Mode OFF (decisión del cliente: cambia la configuración); (3) un pase y ver si llega `pin=<DNI>`, y si el `event=1` también. Descartado el 19/10: que dependa del largo del número de usuario (el 17/10 un usuario con número `1` también llegó con `pin=0`; el manual admite 1 a 9 dígitos). Manual 10.3.1 *Camera Mode*: opción "Save after failed verification" (foto en los rechazos, para el hueco 2).
+
+**Pantalla "Security Setting" (manual, imagen de la pág. 88; el texto del manual no la describe):** 5 interruptores: **Security Mode**, **Standalone communication**, **Verify masked user ID** (ocultar el número de usuario al verificar), **Verify masked personnel name** (ocultar el nombre al verificar; explicaría el "..." en "¡Verificación Exitosa!") y Enable ADB network debug. "Verify masked user ID" es la candidata directa del `pin=0`. **Dato en contra:** `OPTION_INFO` tiene `HidePinFunOn=0`; no se sabe si es el mismo interruptor (los nombres internos suelen diferir). Ver en el equipo y probar apagando "Verify masked user ID", "Verify masked personnel name" y, si hace falta, "Security Mode" (anotar cómo estaban para poder volver).
+
+**Qué hace el Security Mode en otros equipos ZKTeco** (manuales IN710 y RevFace15): al verificar, muestra el número de usuario con asteriscos en pantalla, permite trabajar sin conexión y tiene opciones para ocultar el nombre. No se encontró si también lo oculta en lo que se envía al servidor. Coincide con lo visto en la sede: el aviso "¡Verificación Exitosa!" mostraba el nombre como "..." (sección 8).
+
+**Cambio de modo acceso ↔ asistencia (documento ZKTeco "Diferencia Modo Acceso y Modo Asistencia en equipos Visible Light", ene/2023):** se hace en el menú del equipo, *Sistema → "Tipo de dispositivo"*. Si el equipo no tiene ese menú, **el soporte técnico activa los parámetros por conexión remota** (por eso `DeviceType=att` por PUSH o por el puerto 4370 volvía a `acc`, 17-18/10). **Al cambiar se borran los usuarios y los eventos del equipo** (se vuelven a cargar con "Sincronizar ahora"). En asistencia sigue controlando la puerta; se pierden "salida de alarma" y "vinculaciones" (no se usan).
+
+**Próximos pasos (19/10):** (1) en la sede, fotos de las pantallas *Security Setting* y *Sistema → Tipo de dispositivo*; (2) probar primero apagar el Security Mode + un pase (no borra nada, reversible); (3) si no basta, pedir al soporte el cambio a asistencia. Cuando el G4 se reconecte: leer por `SHELL` el estado del Security Mode y buscar en `OPTION_INFO` el parámetro que habilita "Tipo de dispositivo".
+
+**Fotos de captura:** el G4 las guarda en `/sdcard/ZKTeco/data/capture/pass` (pasó) y **`capture/bad` (falló)**, solo con `SaveBioPhotoFunOn=1` (activado el 19/10 03:13) y **las borra cada noche a las 02:46** ("modo seguro", ver `ClearPhoto.txt`). Por eso el rechazo de Fernando del 16/10 no dejó foto. **Única pista viva para el hueco 2:** si el nombre de la foto de un rechazo trae el DNI (`<fecha>-<DNI>.jpg`, como dice el protocolo). Se prueba con el paso 4 de la sección 10.7.
+
+**Opciones si la foto tampoco trae el DNI:** (a) preguntar al proveedor del firmware OCM (agregar a la consulta de la sección 10.6: "¿cómo saber qué usuario falló la prueba de alcohol?"); (b) aceptar que en "Facial primero" el rechazo por alcohol queda sin nombre (en el orden normal sí queda con nombre, porque el DNI se pasa antes). **Mejora opcional, independiente:** guardar la medición real de cada pase leyendo la línea `R+TRESULT` de `Verify.txt` por la hora (como se hace con `VerifySuccess.txt`); por su tamaño, leer solo el final (`tail`).
 
 **Detección de desconexión (ya aplicado):** G4 Pro a 20 s (`UMBRAL_EN_LINEA_PORTAL_MS` en `push-sdk.service.ts`); controlador/lectores/relés a ~18 s (`estado()` en `controlador.gateway.ts`) con el controlador reportando cada 5 s (`ESTADO_CADA_MS` en `controlador.service.ts`). La sincronización sigue en 2 min.

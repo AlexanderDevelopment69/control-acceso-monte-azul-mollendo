@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, Logger, NotFoundException, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Logger, Post, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import { Public } from '../common/decorators/public.decorator.js';
 import { SerieG4Guard } from '../common/guards/serie-g4.guard.js';
@@ -26,20 +26,13 @@ export class PushSdkController {
   @Header('Content-Type', 'application/push;charset=UTF-8')
   async registry(@Query('SN') sn: string, @Req() req: Request, @Body() body: string) {
     const dispositivo = await this.pushSdk.obtenerOCrearDispositivo(sn, req.ip, ipLocalDeRegistro(body));
-    // Prueba del protocolo de asistencia: como el PushDemo original del proveedor, que no
-    // contesta el registro (ahí el G4 envía ATTLOG con el DNI y el alcohol).
-    if (await this.pushSdk.protocoloAsistencia()) {
-      this.logger.log(`G4 Pro ${sn}: registry sin RegistryCode (prueba del protocolo de asistencia)`);
-      return 'OK';
-    }
+    // Solo lo llama la variante de control de acceso (la de asistencia no se registra).
     return `RegistryCode=${dispositivo.registryCode}`;
   }
 
   @Post('push')
   @Header('Content-Type', 'application/push;charset=UTF-8')
-  async push() {
-    // Prueba del protocolo de asistencia: el PushDemo original no tenía esta ruta.
-    if (await this.pushSdk.protocoloAsistencia()) throw new NotFoundException();
+  push() {
     return this.pushSdk.respuestaPush();
   }
 
@@ -84,14 +77,16 @@ export class PushSdkController {
   @Header('Content-Type', 'text/plain')
   async getCdata(@Query('SN') sn: string, @Query('options') options: string, @Query('DeviceType') deviceType: string, @Req() req: Request) {
     await this.pushSdk.tocarActividad(sn, req.ip);
-    // Opciones del modo asistencia: solo para un equipo de asistencia. Este G4 Pro pide
-    // options=all con DeviceType=acc y, si recibe estas opciones, las vuelve a pedir sin parar y
-    // deja de funcionar (probado el 17/10/2026): a un equipo de control de acceso se le responde OK.
-    if (options === 'all' && (deviceType !== 'acc' || (await this.pushSdk.protocoloAsistencia()))) {
-      this.logger.log(`G4 Pro ${sn}: pide las opciones de asistencia (options=all); se le piden los ATTLOG`);
-      return opcionesAsistencia(sn);
-    }
-    return 'OK';
+    if (options !== 'all') return 'OK';
+    // Al conectarse, el equipo anuncia su variante (ver protocolo-g4.ts).
+    const asistencia = deviceType !== 'acc';
+    await this.pushSdk.anotarVariante(sn, asistencia);
+    // Opciones del modo asistencia: solo para un equipo de asistencia. En control de acceso, el
+    // G4 Pro pide options=all con DeviceType=acc y, si recibe estas opciones, las vuelve a pedir
+    // sin parar y deja de funcionar (probado el 17/10/2026): se le responde OK.
+    if (!asistencia) return 'OK';
+    this.logger.log(`G4 Pro ${sn}: pide las opciones de asistencia (options=all); se le piden los ATTLOG`);
+    return opcionesAsistencia(sn);
   }
 
   @Post('cdata')
@@ -114,6 +109,13 @@ export class PushSdkController {
     }
 
     const tablaNormalizada = (table ?? '').toLowerCase();
+
+    // Variante de asistencia: usuarios del equipo, en respuesta a DATA QUERY USERINFO (ver guardarOperlog).
+    // Los rostros llegan aparte, por table=BIODATA.
+    if (tablaNormalizada === 'operlog' || tablaNormalizada === 'biodata') {
+      this.pushSdk.guardarOperlog(sn, body ?? '');
+      return 'OK';
+    }
 
     // Captura de la verificación (snapshot) que sube el equipo de luz visible:
     // `table=tabledata&tablename=ATTPHOTO`. El nombre del archivo trae el DNI

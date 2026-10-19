@@ -20,9 +20,31 @@ import {
   type PersonaParaEquipo,
   usuariosConDatosDistintos,
 } from './comandos-acceso.util.js';
-import { leerRegistroAsistencia } from './asistencia.util.js';
+import { comandoBorrarPersonaAsistencia, comandoPersonaAsistencia, leerRegistroAsistencia, usuarioComoControlDeAcceso } from './asistencia.util.js';
+import { guardarModoAsistencia, leerModoAsistencia } from './protocolo-g4.js';
 import { leerSnapshot } from './attphoto.util.js';
 import { COMANDO_VERIFY_SUCCESS, leerVerifySuccess, paseDelRtlog, type PaseExitoso } from './verify-success.util.js';
+
+/**
+ * Emitido cuando llega un registro de asistencia (`table=ATTLOG`) reciente:
+ * quién se verificó y cuánto alcohol dio (ver EventosAccesoService).
+ */
+export interface AttlogRecibidoEvent {
+  verificacionId: number;
+  serialNumber: string;
+  /** DNI (número de usuario en el equipo). */
+  pin: string;
+  horaDispositivo: Date | null;
+  /** Grado de alcohol como lo envía el equipo ("0.000951g/L"), o null. */
+  alcohol: string | null;
+}
+
+/**
+ * Un registro de asistencia más viejo que esto (el equipo los reenvía al
+ * volver la conexión) se guarda, pero no decide ningún ingreso: la persona ya
+ * no está frente al molinete. Normalmente llega a los 10-15 s.
+ */
+const ATTLOG_RECIENTE_MS = 2 * 60 * 1000;
 
 /** Emitido cuando llega un table=rtlog real del equipo (ver EventosAccesoService). */
 export interface RtlogRecibidoEvent {
@@ -128,15 +150,16 @@ export class PushSdkService {
     });
   }
 
-  /**
-   * Prueba del protocolo de asistencia (17/10/2026): con el ajuste
-   * `protocolo_g4 = asistencia`, el servidor contesta como el PushDemo original
-   * del proveedor (sin RegistryCode ni /iclock/push, con las opciones de
-   * asistencia) para ver si el G4 envía ATTLOG con el DNI. Se activa y se
-   * desactiva en la base de datos, sin volver a subir; luego se reinicia el G4.
-   */
-  async protocoloAsistencia(): Promise<boolean> {
-    return (await this.prisma.ajusteSistema.findUnique({ where: { clave: 'protocolo_g4' } }))?.valor === 'asistencia';
+  /** ¿El G4 Pro está en la variante de asistencia? (ver protocolo-g4.ts). */
+  modoAsistencia(): Promise<boolean> {
+    return leerModoAsistencia(this.prisma);
+  }
+
+  /** El equipo anunció su variante (al pedir sus opciones o al enviar un ATTLOG). */
+  async anotarVariante(serialNumber: string, asistencia: boolean) {
+    if (await guardarModoAsistencia(this.prisma, asistencia)) {
+      this.logger.warn(`G4 Pro ${serialNumber}: ahora está en la variante de ${asistencia ? 'asistencia (ATT)' : 'control de acceso (ACC)'}`);
+    }
   }
 
   respuestaPush(): string {
@@ -192,12 +215,13 @@ export class PushSdkService {
   }
 
   /**
-   * Registra (o actualiza) a la persona en los G4 Pro con el protocolo de
-   * control de acceso: su número de documento como Pin, su nombre y, si se
-   * indica, su foto (el equipo la convierte en el rostro que reconoce).
-   * **No le da permiso de paso**: eso se hace solo mientras espera su ingreso
-   * (habilitar/deshabilitar). Si cambió su número de documento, se borra el
-   * usuario anterior del equipo. Probado con el equipo real (04/oct/2026).
+   * Registra (o actualiza) a la persona en los G4 Pro: su número de documento
+   * como Pin, su nombre y, si se indica, su foto (el equipo la convierte en el
+   * rostro que reconoce). Con el formato de la variante del equipo: control de
+   * acceso (`user`, probado el 04/oct/2026) o asistencia (`USERINFO`, probado
+   * el 19/10/2026). En control de acceso **no le da permiso de paso**: eso se
+   * hace solo mientras espera su ingreso (habilitar/deshabilitar). Si cambió
+   * su número de documento, se borra el usuario anterior del equipo.
    */
   async sincronizarPersona(
     persona: { numeroDocumento: string; nombres: string; apellidos: string; fotoUrl: string | null },
@@ -208,10 +232,14 @@ export class PushSdkService {
       this.logger.warn(`No se registra en el G4 Pro el documento ${persona.numeroDocumento}: solo se admiten números (DNI)`);
       return;
     }
+    const asistencia = await this.modoAsistencia();
     const comandos: string[] = [];
     const pinAnterior = opciones.numeroAnterior ? pinDeDocumento(opciones.numeroAnterior) : null;
-    if (pinAnterior && pinAnterior !== pin) comandos.push(...comandosBorrarPersona(pinAnterior));
-    comandos.push(...comandosPersona({ pin, nombres: persona.nombres, apellidos: persona.apellidos }));
+    if (pinAnterior && pinAnterior !== pin) {
+      comandos.push(...(asistencia ? [comandoBorrarPersonaAsistencia(pinAnterior)] : comandosBorrarPersona(pinAnterior)));
+    }
+    const datos = { pin, nombres: persona.nombres, apellidos: persona.apellidos };
+    comandos.push(...(asistencia ? [comandoPersonaAsistencia(datos)] : comandosPersona(datos)));
     // Con número nuevo hay que volver a mandar la foto (el usuario anterior se borró con su rostro).
     const mandarFoto = (opciones.conFoto || (pinAnterior !== null && pinAnterior !== pin)) && !!persona.fotoUrl;
     if (mandarFoto) {
@@ -232,20 +260,25 @@ export class PushSdkService {
   /** Borra a la persona de los G4 Pro (con su rostro y sus permisos). */
   async borrarPersonaDeEquipos(numeroDocumento: string): Promise<void> {
     const pin = pinDeDocumento(numeroDocumento);
-    if (pin) await this.encolarEnTodos(comandosBorrarPersona(pin));
+    if (!pin) return;
+    await this.encolarEnTodos((await this.modoAsistencia()) ? [comandoBorrarPersonaAsistencia(pin)] : comandosBorrarPersona(pin));
   }
 
-  /** Permiso de paso en los G4 Pro (habilitar) o su retiro (deshabilitar). */
+  /**
+   * Permiso de paso en los G4 Pro (habilitar) o su retiro (deshabilitar). En
+   * la variante de asistencia no existe (el equipo verifica a todo su personal
+   * y el sistema decide con el DNI que envía): no se hace nada.
+   */
   async habilitarEnEquipos(numeroDocumento: string, habilitar: boolean): Promise<boolean> {
     const pin = pinDeDocumento(numeroDocumento);
-    if (!pin) return false;
+    if (!pin || (await this.modoAsistencia())) return false;
     return (await this.encolarEnTodos([habilitar ? comandoHabilitar(pin) : comandoDeshabilitar(pin)])) > 0;
   }
 
   /** Permiso de paso de varias personas a la vez (orden "facial primero"): una sola carga de comandos. */
   async permisosEnEquipos(documentos: string[], habilitar: boolean): Promise<number> {
     const pins = documentos.map((d) => pinDeDocumento(d)).filter((pin): pin is string => !!pin);
-    if (pins.length === 0) return 0;
+    if (pins.length === 0 || (await this.modoAsistencia())) return 0;
     await this.encolarEnTodos(pins.map((pin) => (habilitar ? comandoHabilitar(pin) : comandoDeshabilitar(pin))));
     return pins.length;
   }
@@ -402,7 +435,11 @@ export class PushSdkService {
         resultado.sinRespuesta++;
         continue;
       }
-      const usuarios = await this.consultar(dispositivo.id, 'DATA QUERY tablename=user,fielddesc=*,filter=*');
+      const asistencia = await this.modoAsistencia();
+      const deAsistencia = asistencia ? await this.consultarUsuariosAsistencia(dispositivo) : null;
+      const usuarios = asistencia
+        ? (deAsistencia?.usuarios ?? null)
+        : await this.consultar(dispositivo.id, 'DATA QUERY tablename=user,fielddesc=*,filter=*');
       if (usuarios === null) {
         resultado.sinRespuesta++;
         continue;
@@ -411,27 +448,40 @@ export class PushSdkService {
       const pinsEquipo = pinsDeRespuestaUsuarios(usuarios);
       // Rostros: se listan (el DATA COUNT biodata de este firmware da 0 aunque existan).
       const rostros = new Set(
-        pinsDeRespuestaUsuarios((await this.consultar(dispositivo.id, 'DATA QUERY tablename=biodata,fielddesc=*,filter=*')) ?? ''),
+        pinsDeRespuestaUsuarios(
+          (asistencia
+            ? deAsistencia?.rostros
+            : await this.consultar(dispositivo.id, 'DATA QUERY tablename=biodata,fielddesc=*,filter=*')) ?? '',
+        ),
       );
+      const plan = planDeSincronizacion(pinsEquipo, pinsSistema, pinsActivos);
+      // Cómo queda el equipo: sin los que se borran (los que faltan se cuentan en la próxima revisión).
+      const quedan = aplicar ? pinsEquipo.filter((pin) => !plan.sobrantes.includes(pin)) : pinsEquipo;
       resultado.porEquipo.push({
         serialNumber: dispositivo.serialNumber,
-        usuarios: pinsEquipo.length,
-        conRostro: pinsEquipo.filter((pin) => rostros.has(pin)).length,
-        sinRostro: pinsEquipo.filter((pin) => !rostros.has(pin)),
+        usuarios: quedan.length,
+        conRostro: quedan.filter((pin) => rostros.has(pin)).length,
+        sinRostro: quedan.filter((pin) => !rostros.has(pin)),
       });
-      const plan = planDeSincronizacion(pinsEquipo, pinsSistema, pinsActivos);
-      const comandos = plan.sobrantes.flatMap((pin) => comandosBorrarPersona(pin));
+      const comandos = plan.sobrantes.flatMap((pin) => (asistencia ? [comandoBorrarPersonaAsistencia(pin)] : comandosBorrarPersona(pin)));
       plan.faltantes.forEach((pin) => resultado.faltantes.add(pin));
       resultado.borrados += plan.sobrantes.length;
       plan.sobrantes.forEach((pin) => resultado.sobrantes.add(pin));
       const aCorregir = usuariosConDatosDistintos(usuarios, datosEsperados);
-      comandos.push(...aCorregir.flatMap((pin) => comandosPersona(datosEsperados.get(pin)!)));
+      comandos.push(
+        ...aCorregir.flatMap((pin) =>
+          asistencia ? [comandoPersonaAsistencia(datosEsperados.get(pin)!)] : comandosPersona(datosEsperados.get(pin)!),
+        ),
+      );
       aCorregir.forEach((pin) => resultado.corregidos.add(pin));
       if (aCorregir.length > 0) {
         this.logger.warn(`${dispositivo.serialNumber}: datos cambiados a mano en el equipo; se corrigen: ${aCorregir.join(', ')}`);
       }
 
-      const permisos = conteoDeRespuesta((await this.consultar(dispositivo.id, 'DATA COUNT userauthorize')) ?? '', 'userauthorize');
+      // En asistencia no hay permisos de paso.
+      const permisos = asistencia
+        ? null
+        : conteoDeRespuesta((await this.consultar(dispositivo.id, 'DATA COUNT userauthorize')) ?? '', 'userauthorize');
       const conPermiso = pinsEquipo.filter((pin) => pinsConPermiso.has(pin));
       const esperados = conPermiso.length;
       if (permisos !== null && permisos > esperados) {
@@ -453,6 +503,51 @@ export class PushSdkService {
       }
     }
     return resultado;
+  }
+
+  /**
+   * Variante de asistencia: lo que el equipo envía mientras responde a
+   * `DATA QUERY USERINFO` (por `table=OPERLOG`: una línea `USER PIN=…` por
+   * usuario, `BIODATA Pin=…` por plantilla y `BIOPHOTO` con las fotos;
+   * confirmado el 19/10/2026). Solo se juntan los números de usuario y sus
+   * datos; las plantillas y las fotos se descartan.
+   */
+  private readonly consultasUsuarios = new Map<string, { usuarios: string[]; rostros: string[] }>();
+
+  guardarOperlog(serialNumber: string, cuerpo: string) {
+    const consulta = this.consultasUsuarios.get(serialNumber);
+    if (!consulta) return;
+    for (const linea of cuerpo.split(/\r?\n/)) {
+      const usuario = /^USER\s+(.*)$/i.exec(linea);
+      if (usuario) consulta.usuarios.push(usuarioComoControlDeAcceso(usuario[1]));
+      const rostro = /^BIODATA\s+Pin=([^\t]+)\t.*\bType=9\b/i.exec(linea);
+      if (rostro) consulta.rostros.push(`pin=${rostro[1]}`);
+    }
+  }
+
+  /**
+   * Usuarios y rostros del equipo en la variante de asistencia, en el mismo
+   * formato que las respuestas del control de acceso (para usar las mismas
+   * funciones de comandos-acceso.util.ts). null si no responde a tiempo.
+   */
+  private async consultarUsuariosAsistencia(dispositivo: { id: number; serialNumber: string }, esperaMs = 60_000) {
+    const consulta = { usuarios: [] as string[], rostros: [] as string[] };
+    this.consultasUsuarios.set(dispositivo.serialNumber, consulta);
+    try {
+      const { id } = await this.prisma.comandoDispositivo.create({ data: { dispositivoId: dispositivo.id, comando: 'DATA QUERY USERINFO' } });
+      const hasta = Date.now() + esperaMs;
+      while (Date.now() < hasta) {
+        // Los usuarios llegan antes de que el equipo confirme el comando.
+        if ((await this.prisma.comandoDispositivo.findUnique({ where: { id }, select: { estado: true } }))?.estado === 'confirmado') {
+          return { usuarios: consulta.usuarios.join('\n'), rostros: consulta.rostros.join('\n') };
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      this.logger.warn(`${dispositivo.serialNumber} no respondió a "DATA QUERY USERINFO" en ${esperaMs / 1000} s`);
+      return null;
+    } finally {
+      this.consultasUsuarios.delete(dispositivo.serialNumber);
+    }
   }
 
   async confirmarComando(serialNumber: string, comandoId: number, returnCode: number) {
@@ -483,9 +578,10 @@ export class PushSdkService {
   }
 
   /**
-   * Modo asistencia (en prueba): guarda un registro de asistencia del equipo
-   * (`table=ATTLOG`), que trae el DNI y el grado de alcohol. Por ahora solo se
-   * guarda y se anota (no decide ningún ingreso); emite 'dispositivo.attlog'.
+   * Variante de asistencia: guarda un registro del equipo (`table=ATTLOG`),
+   * que trae el DNI y el grado de alcohol, y emite 'dispositivo.attlog' para
+   * que EventosAccesoService decida el ingreso. Uno repetido (el equipo
+   * reenvía si no recibió la respuesta) se ignora; uno viejo solo se guarda.
    */
   async guardarRegistroAsistencia(serialNumber: string, linea: string) {
     const registro = leerRegistroAsistencia(linea);
@@ -494,12 +590,22 @@ export class PushSdkService {
       return;
     }
     const dispositivo = await this.obtenerOCrearDispositivo(serialNumber);
+    await this.anotarVariante(serialNumber, true);
+    const repetido = await this.prisma.verificacionDispositivo.findFirst({
+      where: { dispositivoId: dispositivo.id, tabla: 'attlog', crudo: linea },
+      select: { id: true },
+    });
+    if (repetido) {
+      this.logger.log(`ATTLOG repetido de ${serialNumber} (DNI ${registro.pin} ${registro.hora}); se ignora`);
+      return;
+    }
     const hora = new Date(registro.hora.replace(' ', 'T') + '-05:00');
+    const horaValida = Number.isNaN(hora.getTime()) ? null : hora;
     const verificacion = await this.prisma.verificacionDispositivo.create({
       data: {
         dispositivoId: dispositivo.id,
         tabla: 'attlog',
-        horaDispositivo: Number.isNaN(hora.getTime()) ? undefined : hora,
+        horaDispositivo: horaValida ?? undefined,
         eventCode: registro.estado?.slice(0, 10),
         verifyType: registro.verificacion?.slice(0, 10),
         concentracion: registro.alcohol?.slice(0, 20),
@@ -509,7 +615,17 @@ export class PushSdkService {
     this.logger.log(
       `ATTLOG recibido: sn=${serialNumber} DNI ${registro.pin} ${registro.hora} estado=${registro.estado ?? '-'} verificación=${registro.verificacion ?? '-'} alcohol=${registro.alcohol ?? '-'}`,
     );
-    this.eventEmitter.emit('dispositivo.attlog', { verificacionId: verificacion.id, serialNumber, ...registro });
+    if (horaValida && Date.now() - horaValida.getTime() > ATTLOG_RECIENTE_MS) {
+      this.logger.warn(`ATTLOG atrasado (DNI ${registro.pin} ${registro.hora}): se guarda, pero no decide ningún ingreso`);
+      return;
+    }
+    this.eventEmitter.emit('dispositivo.attlog', {
+      verificacionId: verificacion.id,
+      serialNumber,
+      pin: registro.pin,
+      horaDispositivo: horaValida,
+      alcohol: registro.alcohol,
+    } satisfies AttlogRecibidoEvent);
   }
 
   /**
