@@ -7,7 +7,7 @@ import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   DocsIcon,
-  EyeIcon,
+  EyeLineIcon,
   BuildingIcon,
   GroupIcon,
   HorizontaLDots,
@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
   { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador"] },
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
   { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador"] },
-  { icon: <EyeIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
+  { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
   { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },
   { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador"] },
@@ -56,7 +56,7 @@ const AppSidebar: React.FC = () => {
   };
 
   const renderMenuItems = (items: NavItem[]) => (
-    <ul className="flex flex-col gap-4">
+    <ul className="flex flex-col gap-1">
       {items.map((nav) => (
         <li key={nav.name}>
           {nav.path && (
@@ -74,7 +74,7 @@ const AppSidebar: React.FC = () => {
               }`}
             >
               <span
-                className={`transition-colors duration-300 ease-out motion-reduce:transition-none ${
+                className={`flex size-6 shrink-0 items-center justify-center transition-colors duration-300 ease-out motion-reduce:transition-none ${
                   isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"
                 }`}
               >
@@ -139,7 +139,7 @@ const AppSidebar: React.FC = () => {
                   !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? "Menú" : <HorizontaLDots />}
+                {isExpanded || isHovered || isMobileOpen ? "Menú" : <HorizontaLDots className="size-5" />}
               </h2>
               {renderMenuItems(visibleItems)}
             </div>

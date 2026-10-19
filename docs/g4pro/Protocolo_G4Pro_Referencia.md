@@ -187,3 +187,129 @@ sudo docker compose logs --since 2m api | grep "Respuesta de"
 ```
 
 Para los campos separados por tabulador, usar `E'…\t…'` en el texto del comando.
+
+---
+
+## 10. Investigación del `pin=0` en el éxito (19/10/2026)
+
+**Problema:** en la verificación exitosa (`event=0`), el `rtlog` llega con `pin=0`: el firmware no dice quién pasó. El sistema lo resuelve teniendo **una sola persona habilitada a la vez**. Se investigó a fondo si el número se puede recuperar de algún modo.
+
+**Conclusión:** el equipo **no atribuye al usuario** en el evento de éxito, en ningún lugar — ni en el `rtlog` en vivo, ni en su log interno (`transaction`/`ACC_ATT_LOG`), que también trae `pin` vacío en los éxitos. Sí lo trae en `event=23` (reconocido sin permiso). No es un error de registro: los rostros están bien ligados al DNI (`biodata.pin` = DNI, verificado). Es comportamiento del firmware.
+
+### 10.1. Diagnóstico por el propio protocolo PUSH (sin adb)
+
+El protocolo de comandos permite inspeccionar el equipo sin red local ni adb, encolando comandos como cualquier otro (ver sección 9):
+
+| Comando | Qué hace |
+|---|---|
+| `SHELL <cmd>` | Ejecuta un comando de sistema en el equipo (Android) y devuelve la salida en `Content=`. Corre como `uid=1000(system)`. **Solo lectura**: no modificar. |
+| `SET OPTION <Key>=<Value>` | Fija una opción del equipo (persiste en `ZKSystem.db`). No saca al equipo de modo ACC. |
+| `RELOAD OPTIONS` | Recarga la configuración. |
+| `GetFile <ruta>` | El equipo sube un archivo suyo al servidor. |
+
+La salida de cada comando se ve en el log de la API con `PUSH_SDK_DEPURAR=true` (`devicecmd` con `Content=`).
+
+### 10.2. Lo que se halló en el equipo
+
+- **App principal:** `com.zkteco.android.core`. Bases en `…/databases/`: `ZKDB.db` (usuarios, plantillas, accesos) **está cifrada** (`Error: file is not a database`), `ZKEXTDB.db`, y **`ZKSystem.db` (config, NO cifrada)**.
+- **`ZKSystem.db` → tabla `OPTION_INFO`** `(Option_Name, Option_Value, …)`: toda la config del equipo. Valores relevantes: `SimpleEventType=1`, `EventTypes=BF0FE07D…`, `realTimeEventFlagOne=4294967295`, `realTimeEventFlagTwo=0`, `AttPhotoFunOn=1`, `BioPhotoFun=1`, `UserPicURLFunOn=1`, **`SaveBioPhotoFunOn=0`**, `HidePinFunOn=0`.
+- **`SimpleEventType` se probó en 0 y se revirtió a 1 (19/10):** el cambio por `SET OPTION` funciona, pero **no es el arreglo** — el esquema (`pushconfig/acc.tabledesc.xml`) muestra que el `rtlog` (`VIRTUAL_ACC_ATT_LOG`) y el log guardado (`ACC_ATT_LOG`) **ya tienen un campo `pin`**; el firmware simplemente no lo llena en el éxito. No depende del formato. **Dejar `SimpleEventType` en 1** (0 arriesga que el parser de producción no entienda el `rtlog`).
+- **Config del alcoholímetro:** no está en `OPTION_INFO`; el servicio del MCU (`com.zkteco.edk.mcu.service`, por donde entra el DT1700) es **inaccesible** (otro UID, `Permission denied`). El umbral vive en el MCU/DT1700 y en el menú del equipo, **no es remoto**.
+- El protocolo **oficial de asistencia** (`storage/doc-equipos/PROTOCOLO_PUSH.txt`) **no documenta** los eventos ACC (`EventTypes`, `realTimeEventFlag`, códigos 0/23/27): eso es del protocolo ACC, que tiene ZKTeco.
+
+### 10.3. Única vía viva para recuperar la identidad: foto de la captura
+
+El protocolo define que, en equipos de luz visible, el equipo puede subir la foto de cada verificación y **ese registro lleva el DNI**:
+- `ATTPHOTO` (11.3): `PIN=<fecha>-<DNI>.jpg` (el DNI va en el nombre del archivo).
+- `BIOPHOTO` (11.15): `BIOPHOTO PIN=<DNI> FileName=… Type=10 Content=<jpg>`.
+
+Se activa con `TransFlag` incluyendo `AttPhoto`/`BioPhoto` (y `SaveBioPhotoFunOn=1`). **Receptor ya programado (19/10, sin desplegar):** `postCdata` atiende `table=tabledata&tablename=ATTPHOTO`, lo lee con `attphoto.util.ts` (`leerSnapshot`/`pinDeNombreSnapshot`), **no guarda la foto** (biométrico), extrae el DNI del nombre (`<fecha>-<dni>.jpg`), lo guarda en `verificacion_dispositivo` (`tabla='attphoto'`, solo metadatos) y responde `ATTPHOTO=<n>`. Falta: (1) **desplegar**; (2) `SET OPTION SaveBioPhotoFunOn=1` para que el equipo suba la captura; (3) **un pase real** (rostro + soplido) para confirmar si la captura del éxito trae el DNI o `-0.jpg`. Riesgo a sopesar: sube una captura de rostro por cada ingreso (biométrico → almacenamiento/privacidad).
+
+> **Modo asistencia no sirve en este ACC:** el firmware solo manda datos reales si `/iclock/registry` responde `RegistryCode=…`; en modo asistencia responde `OK` y el equipo queda mudo (probado 19/10). El `AttPhoto` se agregó a `TransFlag` en `mollendo-api/src/push-sdk/asistencia.util.ts` (sin desplegar) por si se retoma esa vía con el proveedor.
+
+### 10.4. Documento oficial del protocolo de acceso y códigos de evento (Apéndice 2)
+
+El protocolo que usa este equipo es el **"Security PUSH Communication Protocol"** de ZKTeco (control de acceso), distinto del de asistencia. Copia en `docs/equipos/LECTOR CON RFACIAL/SDK ZKTeco Security PUSH Protocol-20200325/` (texto en `mollendo-api/storage/doc-equipos/PROTOCOLO_PUSH_SECURITY.txt`). Confirma el layout del `rtlog` (sección 10.2: `time, pin, cardno, eventaddr, event, inoutstatus, verifytype, index`; **`pin` = "the user ID"**) y trae la tabla de eventos (Apéndice 2) y de modos de verificación (Apéndice 3).
+
+**Códigos de evento (Apéndice 2), 0-19/200-253 = normal, 20-99 = error, 100-199 = alarma:**
+
+| event | Significado oficial |
+|---|---|
+| **0** | La puerta se abre normalmente **tras la verificación** (= éxito). *0, 14 y 17 se fusionan.* |
+| 1 | Verificación en periodo de apertura normal |
+| **23** | **Acceso no autorizado** (reconocido sin permiso) — aquí el equipo **sí** manda el DNI en `pin` |
+| **27** | **Usuario no registrado** (fusiona 27, 30, 34) |
+| 232 | **"Passed the verification"** — **descartado (19/10):** el `EventTypes` del equipo (`BF0FE07DB032010030000000700000000000000000000000007740F001000000`) **no lo soporta** (tampoco 14, 17 ni 231). Eventos soportados: 0-5, 7-11, 21-24, 26-30, 36, 37, 39, 41, 44, 45, 48, 68, 69, 100-102, 200-202, 204-206, 214, 220-224 |
+
+`verifytype` (Apéndice 3): **15 = Face**, 1 = huella, 4 = tarjeta, 2 = User ID.
+
+**`SimpleEventType` = "event merging"** (fusiona 0/14/17, etc.) — **no controla el `pin`**; cambiarlo no arregla el `pin=0` (probado 19/10 y revertido). El `pin` lo llena el firmware según el evento: en 23 va el DNI, en 0 (éxito) va 0.
+
+**Alcohol:** el **protocolo estándar** no menciona el alcoholímetro, pero la **firmware OEM (OCM) sí expone su configuración** en `OPTION_INFO` (`ZKSystem.db`), legible y modificable por `SET OPTION`/SHELL (corrección del 19/10):
+- `AlcoholDetectionFun=1` — detección de alcohol activa.
+- **`AlcoholVolume=0.0001` — el umbral de embriaguez** (el "Umbral" del menú; unidad por confirmar con el proveedor, probablemente g/L). Se cambia con `SET OPTION AlcoholVolume=<valor>`.
+
+El **resultado medido** por persona sigue sin llegar por el protocolo (`rtlog` manda `Concentration=0`; el log interno `transaction` guarda el valor real, ej. `0.00g/L`).
+
+### 10.5. Procedimiento de prueba del `ATTPHOTO` (día de la prueba)
+
+Objetivo: ver si la captura que sube el equipo en la verificación trae el DNI en el nombre (`<fecha>-<dni>.jpg`), y así recuperar quién pasó pese al `rtlog` con `pin=0`.
+
+**Preparación (ya hecha el 19/10, dejar así hasta la prueba):**
+1. Receptor `ATTPHOTO` desplegado en la nube (`postCdata` + `attphoto.util.ts`).
+2. `SET OPTION SaveBioPhotoFunOn=1` + `RELOAD OPTIONS` en el equipo (que suba la captura).
+3. `PUSH_SDK_DEPURAR=true` en el `.env` de la nube (para ver el POST en el log).
+
+**El día de la prueba:**
+1. Una persona **registrada** (ej. DNI 48058719 o 15724705) hace un **ingreso completo**: pasa su DNI, el G4 reconoce el rostro, y **sopla en el DT1700 hasta que dé resultado** (sin soplido completo el equipo **no** envía nada).
+2. Leer el log de la API y buscar la línea `Captura (ATTPHOTO) recibida: … dniDerivado=…`:
+   ```bash
+   sudo docker compose logs api --since 5m | grep -iE "ATTPHOTO|Captura|rtlog"
+   ```
+3. Interpretar:
+   - `dniDerivado=<DNI real>` → **resuelto**; falta solo programar la correlación captura↔ingreso por horario.
+   - `dniDerivado=(no identificado)` (nombre `-0.jpg`) → el equipo tampoco identifica en la captura; descartar la vía.
+   - **No llega `ATTPHOTO`** → el equipo no subió captura; revisar otros ajustes (`AttPhotoFunOn`, `TransFlag`) o consultar al proveedor.
+
+**Al terminar la prueba (limpieza):**
+```bash
+# Revertir la subida de captura en el equipo:
+sudo docker compose exec -T db psql -U mollendo -d mollendo_control_acceso -c \
+  "INSERT INTO comando_dispositivo (dispositivo_id, comando) SELECT id, 'SET OPTION SaveBioPhotoFunOn=0' FROM dispositivo_acceso;"
+sudo docker compose exec -T db psql -U mollendo -d mollendo_control_acceso -c \
+  "INSERT INTO comando_dispositivo (dispositivo_id, comando) SELECT id, 'RELOAD OPTIONS' FROM dispositivo_acceso;"
+# Apagar la depuración:
+sed -i 's/^PUSH_SDK_DEPURAR=.*/PUSH_SDK_DEPURAR=false/' .env && sudo docker compose up -d api
+```
+
+> **Nota de privacidad/almacenamiento:** el receptor **no guarda la foto** (solo metadatos del nombre); si se decide persistir capturas de rostro, es una decisión aparte por ser biométrico.
+
+### 10.6. Por qué el `pin=0` es anómalo, y consulta al proveedor
+
+Investigación del 19/10 (equipo + protocolo oficial + software ZKTeco + internet):
+
+- **La identidad SÍ es obtenible en principio.** El software de ZKTeco (ZKBioSecurity / ZKBio CVSecurity) **muestra la persona en cada evento de acceso**, y su API de terceros expone las transacciones **indexadas por PIN** (`transaction/monitor`, `transaction/person/{pin}`). Es decir: en una verificación estándar el equipo entrega el usuario. **Nuestro `pin=0` en el éxito es la anomalía, no la norma.**
+- **No es la autorización temporal.** Se observó `pin=0` incluso con permiso **permanente** (el usuario manual con `userauthorize=50`). Así que el problema no es el flujo de habilitar/deshabilitar.
+- **Sospechoso principal: la firmware OEM del alcohol.** El firmware es **`4.1.109-OCM-…`** (**OCM = OEM Customized**, build a medida para la integración del DT1700). El G4 **siempre** exige el soplido para completar la verificación (sin DT1700 no manda `rtlog`), así que no se puede aislar una verificación "solo rostro". El evento de apertura tras el alcohol probablemente se emite por una vía (linkage/OEM) que **no adjunta el usuario**.
+- **No hay config pública que lo cambie:** `SimpleEventType` es solo fusión de eventos; el alcohol no figura en el protocolo oficial; el servicio del MCU es inaccesible.
+
+**Consulta para el proveedor (quien hizo la personalización OCM):**
+
+> Equipo: G4 Pro, serie `HSR3263100192`, firmware `4.1.109-OCM-4101-3`, con alcoholímetro DT1700, integrado por **protocolo PUSH de control de acceso** (servidor propio, no ZKBioSecurity).
+> 1. En una verificación **exitosa** (`event=0`, tras rostro + soplido), el `rtlog` y la tabla `transaction` del equipo traen el campo `pin` en **0**, no el ID del usuario. En `event=23` (reconocido sin permiso) **sí** llega el DNI. ¿Por qué el éxito no lleva el usuario? ¿Es por la firmware OCM / el flujo del alcohol?
+> 2. ¿Qué **opción** del equipo (`SET OPTION …`) hace que el `event=0` lleve el `pin`? Probamos `SimpleEventType` (0 y 1) sin efecto.
+> 3. En su software ZKBioSecurity, el evento muestra a la persona: ¿cómo obtiene el ID en una verificación con alcohol — del `pin` del evento, o de la **foto de captura** (`ATTPHOTO`, cuyo nombre sería `<fecha>-<DNI>.jpg`)?
+> 4. ¿El equipo sube la captura de cada verificación con el **DNI** en el nombre? ¿Qué opción la activa (`SaveBioPhotoFunOn`, `TransFlag`…)?
+> 5. ¿El **resultado del alcohol** (grado) se puede recibir por el protocolo asociado al usuario? Hoy el `rtlog` manda `Concentration=0` (solo el log interno guarda el valor real).
+
+**Registros internos (revisado 19/10):** el campo `index` del `rtlog` (número de registro del equipo) sube de 1 en 1 y cada pase genera **un solo** registro: el éxito no viene acompañado de otro registro oculto con el usuario. Hay algunos saltos sueltos (registros que no llegaron al servidor, causa sin confirmar), pero en la mayoría de los pases el éxito lleva el número siguiente al `event=23` previo, sin nada en medio.
+
+**Dos caminos vivos** (no excluyentes): (a) la prueba del `ATTPHOTO` ya armada (sección 10.5); (b) esta consulta al proveedor, que probablemente da la respuesta definitiva por ser firmware a medida.
+
+### 10.7. Pendientes de probar (al volver) — estado 19/10/2026
+
+- **Prueba clave: `ATTPHOTO` con DNI** (sección 10.5). **Armado:** receptor desplegado, `SaveBioPhotoFunOn=1` en el G4, `PUSH_SDK_DEPURAR=true` en Azure. **Falta:** un pase real de una persona registrada (Amiel/48058719 o Fernando/15724705) con **rostro + soplido completo**. Al pasar, leer el log: `Captura (ATTPHOTO) recibida: … dniDerivado=<DNI>`.
+- **Opcional:** ver la desconexión rápida de la mini PC (`docker pause`/`unpause` del contenedor `mollendo-controlador-controlador-1`); el portal debe marcar "Desconectado" en ~18–33 s. Ya desplegado y verificado; es solo confirmación visual.
+- **Limpieza tras la prueba:** `SET OPTION SaveBioPhotoFunOn=0` + `RELOAD OPTIONS`, y `PUSH_SDK_DEPURAR=false` (+ `docker compose up -d api`).
+
+**Detección de desconexión (ya aplicado):** G4 Pro a 20 s (`UMBRAL_EN_LINEA_PORTAL_MS` en `push-sdk.service.ts`); controlador/lectores/relés a ~18 s (`estado()` en `controlador.gateway.ts`) con el controlador reportando cada 5 s (`ESTADO_CADA_MS` en `controlador.service.ts`). La sincronización sigue en 2 min.

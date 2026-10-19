@@ -3,7 +3,7 @@ import CloseIcon from "./close.svg";
 import BoxIcon from "./box.svg";
 import BuildingIcon from "./building.svg";
 import CheckCircleIcon from "./check-circle.svg";
-import AlertIcon from "./alert.svg";
+import AlertCircleIcon from "./alert-circle.svg";
 import InfoIcon from "./info.svg";
 import ErrorIcon from "./info-hexa.svg";
 import BoltIcon from "./bolt.svg";
@@ -35,6 +35,7 @@ import UserIcon from "./user-line.svg";
 import CalenderIcon from "./calender-line.svg";
 import EyeIcon from "./eye.svg";
 import EyeCloseIcon from "./eye-close.svg";
+import EyeLineIcon from "./eye-line.svg";
 import TimeIcon from "./time.svg";
 import CopyIcon from "./copy.svg";
 import ChevronLeftIcon from "./chevron-left.svg";
@@ -67,7 +68,7 @@ export {
   BuildingIcon,
   CloseIcon,
   CheckCircleIcon,
-  AlertIcon,
+  AlertCircleIcon,
   InfoIcon,
   ErrorIcon,
   ArrowUpIcon,
@@ -92,6 +93,7 @@ export {
   CalenderIcon,
   EyeIcon,
   EyeCloseIcon,
+  EyeLineIcon,
   TimeIcon,
   CopyIcon,
   ChevronLeftIcon,

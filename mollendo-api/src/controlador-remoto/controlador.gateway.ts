@@ -122,14 +122,24 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
   /** Para "Sistema y APIs": el controlador conectado (el más reciente) y lo que informó. */
   estado() {
     const conexion = [...this.conexiones.values()].sort((a, b) => b.desde.localeCompare(a.desde))[0] ?? null;
+    // El controlador informa su estado cada ~5 s. Si el socket sigue en memoria
+    // pero dejó de reportar (p. ej. la mini PC perdió luz), socket.io tarda ~45 s
+    // en darlo por caído; acá lo marcamos "Desconectado" a los ~18 s por la
+    // frescura del último reporte, sin tocar la conexión (la orden de abrir
+    // molinete no se ve afectada). Se cuenta desde el último reporte o, si recién
+    // se conectó y aún no reportó, desde que se conectó.
+    const UMBRAL_REPORTE_MS = 18 * 1000;
+    const referencia = conexion?.ultimoReporte ?? conexion?.desde ?? null;
+    const fresco = !!conexion && !!referencia && Date.now() - new Date(referencia).getTime() < UMBRAL_REPORTE_MS;
     return {
       remoto: molinetesRemotos(),
-      conectado: !!conexion,
+      conectado: fresco,
       desde: conexion?.desde ?? null,
       direccion: conexion?.direccion ?? null,
       ultimoReporte: conexion?.ultimoReporte ?? this.ultimoConocido?.cuando ?? null,
-      // Desconectado: lo último que informó, con lectores y relés como no conectados.
-      estado: conexion?.estado ?? (this.ultimoConocido ? comoDesconectado(this.ultimoConocido.estado) : null),
+      // Fresco: lo que informó. Caído o sin reportar hace rato: lo último conocido
+      // con lectores y relés como no conectados.
+      estado: fresco ? conexion!.estado : this.ultimoConocido ? comoDesconectado(this.ultimoConocido.estado) : null,
     };
   }
 }

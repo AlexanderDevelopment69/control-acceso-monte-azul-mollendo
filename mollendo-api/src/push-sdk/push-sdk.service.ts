@@ -21,6 +21,7 @@ import {
   usuariosConDatosDistintos,
 } from './comandos-acceso.util.js';
 import { leerRegistroAsistencia } from './asistencia.util.js';
+import { leerSnapshot } from './attphoto.util.js';
 
 /** Emitido cuando llega un table=rtlog real del equipo (ver EventosAccesoService). */
 export interface RtlogRecibidoEvent {
@@ -49,6 +50,14 @@ export interface EstadoDispositivo {
  * defecto la librería de referencia con la que se probó el protocolo.
  */
 const UMBRAL_EN_LINEA_MS = 2 * 60 * 1000;
+
+/**
+ * Umbral más corto SOLO para el estado que muestra el portal (Sistema y APIs):
+ * como el equipo llama cada ~2 s, con 20 s (≈10 llamadas) se ve "Desconectado"
+ * pronto si se apaga, sin falsas alarmas por un microcorte. La sincronización
+ * sigue usando el de 2 min (no conviene descartar un equipo apenas se atrasa).
+ */
+const UMBRAL_EN_LINEA_PORTAL_MS = 20 * 1000;
 
 /**
  * Protocolo ADMS/PUSH real del equipo ZKTeco G4 Pro, implementado a partir de
@@ -152,7 +161,7 @@ export class PushSdkService {
     const ahora = Date.now();
     return dispositivos.map((d) => ({
       serialNumber: d.serialNumber,
-      enLinea: !!d.ultimaActividad && ahora - d.ultimaActividad.getTime() < UMBRAL_EN_LINEA_MS,
+      enLinea: !!d.ultimaActividad && ahora - d.ultimaActividad.getTime() < UMBRAL_EN_LINEA_PORTAL_MS,
       ultimaActividad: d.ultimaActividad?.toISOString() ?? null,
       ipAddress: d.ipAddress,
       ipLocal: d.ipLocal,
@@ -518,5 +527,27 @@ export class PushSdkService {
         pin: campos.pin ?? null,
       } satisfies RtlogRecibidoEvent);
     }
+  }
+
+  /**
+   * Guarda la captura (`snapshot`) que el equipo de luz visible sube en cada
+   * verificación (`table=tabledata&tablename=ATTPHOTO`, ver `attphoto.util.ts`).
+   * **No guarda la foto** (biométrico): solo el nombre del archivo, la serie y
+   * el tamaño, y el DNI que viene en el nombre (`<fecha>-<dni>.jpg`). Sirve para
+   * ver si la captura del éxito trae el número de la persona, que el `rtlog`
+   * manda en 0. Devuelve si pudo leer el registro.
+   */
+  async guardarSnapshot(serialNumber: string, linea: string): Promise<boolean> {
+    const snap = leerSnapshot(linea);
+    if (!snap) return false;
+    const dispositivo = await this.obtenerOCrearDispositivo(serialNumber);
+    const meta = `pin=${snap.nombreArchivo}\tsn=${snap.serie ?? ''}\tsize=${snap.tamano ?? ''}\tdniDerivado=${snap.pinDerivado ?? ''}`;
+    await this.prisma.verificacionDispositivo.create({
+      data: { dispositivoId: dispositivo.id, tabla: 'attphoto', crudo: meta },
+    });
+    this.logger.log(
+      `Captura (ATTPHOTO) recibida: sn=${serialNumber} archivo=${snap.nombreArchivo} dniDerivado=${snap.pinDerivado ?? '(no identificado)'} size=${snap.tamano ?? ''}`,
+    );
+    return true;
   }
 }

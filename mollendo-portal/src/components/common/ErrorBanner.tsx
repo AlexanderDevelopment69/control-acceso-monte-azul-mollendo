@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlertIcon, CheckCircleIcon, InfoIcon } from "@/icons";
+import { AlertCircleIcon, CheckCircleIcon, InfoIcon } from "@/icons";
 
 /** Recuadro de error (rojo); con tono "exito" (verde, algo se guardó bien), "info" (azul) o "aviso" (ámbar). */
 export function ErrorBanner({
@@ -41,7 +41,7 @@ export function ErrorBanner({
         {tono === "exito" ? (
           <CheckCircleIcon className="size-7 shrink-0" aria-hidden />
         ) : tono === "error" ? (
-          <AlertIcon className="size-7 shrink-0" aria-hidden />
+          <AlertCircleIcon className="size-7 shrink-0" aria-hidden />
         ) : (
           <InfoIcon className="size-7 shrink-0" aria-hidden />
         )}

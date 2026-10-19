@@ -27,7 +27,7 @@ import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import DatePicker from "@/components/form/date-picker";
-import { AlertIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
+import { AlertCircleIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { FilasEnEspera } from "./FilasEnEspera";
 import { CompararFoto, FranjaFacialPrimero, type IngresoParaComparar } from "./FranjaFacialPrimero";
@@ -411,7 +411,7 @@ function VigilanciaContent() {
           titulo="Prueba de alcohol test positivo hoy"
           valor={resumen?.alcoholNoConformeHoy ?? null}
           colorValor="text-warning-500"
-          icono={<AlertIcon />}
+          icono={<AlertCircleIcon />}
           fondoIcono="bg-warning-500"
           detalle="Ingresos denegados por la prueba de alcohol"
         />

@@ -6,7 +6,7 @@ import Button from "@/components/ui/button/Button";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ApiError } from "@/lib/api/client";
-import { AlertIcon } from "@/icons";
+import { AlertCircleIcon } from "@/icons";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -26,7 +26,7 @@ function AvisoCampo({ id, texto }: { id: string; texto?: string }) {
   if (!texto) return null;
   return (
     <p id={id} role="alert" className="mt-1.5 flex items-center gap-1.5 text-xs text-error-500">
-      <AlertIcon className="size-3.5 shrink-0" />
+      <AlertCircleIcon className="size-3.5 shrink-0" />
       {texto}
     </p>
   );

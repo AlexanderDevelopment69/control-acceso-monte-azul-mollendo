@@ -5,6 +5,7 @@ describe('opcionesAsistencia', () => {
     const o = opcionesAsistencia('HSR3263100192');
     expect(o.split('\n')[0]).toBe('GET OPTION FROM: HSR3263100192');
     expect(o).toContain('TransFlag=TransData AttLog');
+    expect(o).toContain('AttPhoto');
     expect(o).toContain('Realtime=1');
     expect(o).toContain('ATTLOGStamp=0');
   });

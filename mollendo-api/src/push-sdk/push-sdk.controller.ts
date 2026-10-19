@@ -91,6 +91,7 @@ export class PushSdkController {
     @Query('SN') sn: string,
     @Query('table') table: string,
     @Query('type') type: string,
+    @Query('tablename') tablename: string,
     @Body() body: string,
     @Req() req: Request,
   ) {
@@ -104,6 +105,20 @@ export class PushSdkController {
     }
 
     const tablaNormalizada = (table ?? '').toLowerCase();
+
+    // Captura de la verificación (snapshot) que sube el equipo de luz visible:
+    // `table=tabledata&tablename=ATTPHOTO`. El nombre del archivo trae el DNI
+    // (`<fecha>-<dni>.jpg`), la única vía para saber quién pasó cuando el rtlog
+    // llega con pin=0 (ver Security PUSH, sección 10.9). El equipo espera
+    // "ATTPHOTO=<n procesados>" como respuesta.
+    if (tablaNormalizada === 'tabledata' && (tablename ?? '').toLowerCase() === 'attphoto') {
+      let procesados = 0;
+      for (const linea of (body ?? '').split('\n').filter((l) => l.trim().length > 0)) {
+        if (await this.pushSdk.guardarSnapshot(sn, linea)) procesados++;
+      }
+      return `ATTPHOTO=${procesados}`;
+    }
+
     if (tablaNormalizada === 'attlog') {
       for (const linea of (body ?? '').split('\n').filter((l) => l.trim().length > 0)) {
         await this.pushSdk.guardarRegistroAsistencia(sn, linea);

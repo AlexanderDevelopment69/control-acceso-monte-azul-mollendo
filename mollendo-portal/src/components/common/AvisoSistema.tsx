@@ -8,7 +8,7 @@ import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { AvisoSistema as Aviso } from "@/lib/api/types";
 import {
-  AlertIcon,
+  AlertCircleIcon,
   BellIcon,
   BoltIcon,
   BoxCubeIcon,
@@ -33,7 +33,7 @@ const ICONO: Record<Aviso["tipo"], React.ComponentType<{ className?: string }>> 
   lector: DocsIcon,
   rele: BoltIcon,
   aviso: BellIcon,
-  servidor: AlertIcon,
+  servidor: AlertCircleIcon,
 };
 
 const SIN_SERVIDOR: Aviso = {

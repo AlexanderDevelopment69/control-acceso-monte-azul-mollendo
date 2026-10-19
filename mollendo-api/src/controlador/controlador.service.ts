@@ -11,7 +11,7 @@ import { RegistroLecturas, type ResultadoLectura } from '../lectores-dni/registr
 import { ipLocalDelEquipo } from './ip-local.util.js';
 
 /** Cada cuánto se informa al servidor el estado de los lectores y relés. */
-const ESTADO_CADA_MS = 15_000;
+const ESTADO_CADA_MS = 5_000;
 /** Cada cuánto se renueva la lista del personal para las salidas sin conexión. */
 const LISTA_PERSONAL_CADA_MS = 10 * 60_000;
 /** Cuánto se espera al servidor antes de considerar que no hay conexión. */

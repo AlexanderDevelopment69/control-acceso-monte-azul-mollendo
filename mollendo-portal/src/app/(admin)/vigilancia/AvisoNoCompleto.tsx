@@ -1,6 +1,6 @@
 import React from "react";
 import type { EventoAcceso } from "@/lib/api/types";
-import { AlertIcon } from "@/icons";
+import { AlertCircleIcon } from "@/icons";
 
 /** Qué revisar cuando alguien no completa rostro y alcohol (contingencias, sección 3.2). */
 export const PISTA_NO_COMPLETO =
@@ -85,7 +85,7 @@ export function AvisoNoCompletoBanner({
       role="status"
       className="mb-6 flex items-start gap-3 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 text-sm dark:border-warning-500/30 dark:bg-warning-500/10"
     >
-      <AlertIcon className="mt-0.5 size-5 shrink-0 text-warning-600 dark:text-orange-400" aria-hidden />
+      <AlertCircleIcon className="mt-0.5 size-5 shrink-0 text-warning-600 dark:text-orange-400" aria-hidden />
       <p className="min-w-0 flex-1 leading-relaxed text-gray-700 dark:text-gray-300">
         <span className="font-semibold text-warning-700 dark:text-orange-400">
           {aviso.persona} no completó rostro y alcohol ({hora}).
