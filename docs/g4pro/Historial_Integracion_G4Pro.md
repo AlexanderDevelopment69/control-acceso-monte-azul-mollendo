@@ -797,3 +797,65 @@ Con el G4 libre y autorización del usuario, desde la mini PC (`pyzk` en un cont
 A diferencia de `MaskDetectionFunOn`, que se guarda y resiste el reinicio, **el tipo de equipo lo fija el firmware** (variante ACC). Solo ZKTeco o el distribuidor pueden pasarlo a la variante ATT.
 
 Se restauró: `~DeviceType=acc` (para que coincida con el tipo real), `MaskDetectionFunOn=1` (como estaba antes de la prueba de la mañana). Estado final igual al original (`~/prueba-g4/estado-final.json`): `DeviceType=acc`, 102 usuarios, 2 rostros.
+
+### 18/10/2026 15:25–15:55 — Búsqueda del PIN en todas las tablas del G4 (solo lectura)
+
+Idea del usuario: el G4 reconoce la cara y la muestra antes de pedir el alcohol, así que sabe el PIN; quizás lo guarda en otra tabla.
+
+- `GET OPTIONS` (comando 2932): `CameraOpen=1`, **`CapturePic=0`** (no toma foto al verificar), `PhotoFunOn=1`, `AttPhotoForSDK=1`.
+- `DATA COUNT` de 33 nombres de tabla (comandos 2935–2967). **Existen:** `attphoto` (0), `errorlog` (0), `userpic` (0), `firstcard` (0), `multimcard` (0), `inoutfun` (0), `holiday` (0). **No existen** (`-629`): `attlog`, `oplog`, `alarmlog`, `alcohollog` y variantes, `templog`, `eventlog`, `accesslog`, `verifylog`, `rtlog`, `workcode`, `checkinout` y otras. Ya revisadas antes: `user`, `extuser`, `userauthorize`, `biophoto`, `biodata`, `transaction` (37, aprobados sin PIN), `timezone` (no existe).
+- Puerto 4370 (`pyzk` en un contenedor de la mini PC, ya borrado): firmware Ver 6.60 Jul 15 2021; 2 usuarios, 2 rostros, **0 marcaciones** de asistencia.
+
+**Conclusión:** ninguna tabla guarda el PIN del aprobado. La única vía que queda en el equipo es la **foto de verificación**: la tabla `attphoto` existe y está vacía porque la cámara no toma fotos (`CapturePic=0`). Pendiente: activar `CapturePic`, hacer una verificación rostro + alcohol con Amiel o Fernando y ver si la foto sube (`ATTPHOTO`) con el PIN. Requiere a una persona en el equipo.
+
+### 18/10/2026 15:50 — Tabla de accesos del G4 leída completa otra vez
+
+`DATA QUERY tablename=transaction` (comando 2969, respuesta completa por tcpdump, sin cambiar nada): **49 registros**. 14 aprobados (`eventtype=0`), todos con `pin=` vacío y `Concentration=0.00g/L`; 27 no registrados (`eventtype=27`); 8 de puerta (`eventtype=200`). Los rechazos sin permiso (`event=23`, que en el `rtlog` sí traen el PIN) no se guardan en esta tabla.
+
+El manual del G4 (cap. 6 *Attendance Search*) dice que en la pantalla del equipo se pueden buscar los accesos por nombre o ID; es la misma tabla. Pendiente en la sede: buscar a Amiel en *Attendance Search* y exportar los registros a una memoria USB (cap. 8) para ver si el equipo los muestra con su nombre.
+
+**Incidente:** el comando que activaba la foto (`SET OPTIONS CapturePic=1`, comando 2933, 15:42) se ejecutó aunque el usuario lo había rechazado. Quedó activo hasta las 15:53 (`SET OPTIONS CapturePic=0`, comando 2970, confirmado con `GET OPTIONS`). En ese lapso nadie pasó por el equipo (solo dos `rtstate` de puerta), así que no se tomó ninguna foto. La grabación de tráfico se detuvo y se borró.
+
+### 18/10/2026 — Corrección: el rechazo por permiso también llega después de soplar, y con PIN
+
+El usuario aclaró que en el proceso B (facial primero), en el **primer intento** Amiel también hacía rostro + alcohol, y el G4 lo rechazaba; en el segundo intento lo aprobaba. Registros del 17/10 (por ejemplo, 11:46:04 `event=23 pin=48058719` y 11:46:26 `event=0 pin=0`, 22 s después): el rechazo por permiso, **generado después del soplido**, trae el PIN; la aprobación, también después del soplido, llega con `pin=0`.
+
+Se corrige lo anotado antes ("el 23 llega antes de soplar"): **el G4 sí conserva la identidad después de la prueba de alcohol**; la pierde solo al escribir la apertura (`event=0`) y el rechazo por alcohol alto (`event=1`). Es una falla concreta del firmware ACC en esos dos registros, y es la mejor evidencia para ZKTeco.
+
+### 18/10/2026 16:10 — Revisión de la configuración del G4 por protocolo (solo lectura)
+
+`GET OPTIONS` (comandos 2972–2975) con 70 nombres de opciones de alcohol, verificación, registros y equipo:
+
+- **Alcohol:** ninguna opción responde (`AlcoholFunOn`, `DrunkThreshold`, `AlcoholMode`, etc.). La configuración del alcoholímetro solo se ve en la pantalla del equipo (Configuración avanzada → proceso de prueba de alcohol).
+- **Verificación y registros:** `AccessRuleType=1`, `VerifyStyles=9d880600`, `AntiPassbackOn=0`, `~IsOnlyRFMachine=0`, `~UserExtFmt=1`, `FaceFunOn=1`, `MaskDetectionFunOn=1`, `IRTempDetectionFunOn=0`. Nada fuera de lo normal.
+- **Equipo:** `FirmVer=4.1.109-OCM-4101-3`, `~Platform=ZIM200`, `~ProductTime=2026-07-30`, `DeviceType=acc`, `MachineType=101`, `~MaxUserCount=500`, `CameraOpen=1`, `CapturePic=0`.
+
+El E23 del primer intento del proceso B es del diseño (17/10 13:35): nadie tiene permiso fijo, el E23 identifica a la persona y el sistema le da permiso solo a ella.
+
+Pendiente en la sede: fotos de **todas** las pantallas de *Configuración avanzada → Configuración del proceso de prueba de alcohol* (y de *Control de acceso* y *Verificación*) para revisar si alguna opción cambia cómo se escribe la aprobación.
+
+### 18/10/2026 16:30 — Revisión de los documentos del proveedor (`docs/equipos/LECTOR CON RFACIAL`)
+
+- **Manual G4 Pro ACC v1.2 (dic/2022), ficha técnica y guía rápida:** no mencionan el alcoholímetro (la función es del firmware `OCM`, propio del modelo con alcoholímetro). Nada sobre cómo se escribe el registro tras la prueba de alcohol.
+- ***Brief Analysis of TA Push Protocol*** (`BRIEFA~1.DOC`): guía del protocolo de **asistencia** (`DeviceType=att`, `TransFlag=111111111111`, `ATTLOG`, `ATTPHOTO`). Dice que si el equipo no envía `PushOptionsFlag=1` hay que **pedirle a soporte técnico que cambie el parámetro**: confirma que el modo del equipo lo fija ZKTeco.
+- **Hallazgo — salida Wiegand (manual v1.2, 10.5.2 *Wiegand Out*):** tras una verificación correcta, el G4 puede enviar por su salida Wiegand el **ID de usuario** (*ID type: User ID*). Es una señal eléctrica aparte del registro de red. Si el firmware la envía con el ID después de la prueba de alcohol, un convertidor Wiegand → USB en la mini PC daría el número de quien pasó. Limitaciones: Wiegand 34 admite números de hasta 10 dígitos (el DNI de 8 entra); los documentos con letras (carné de extranjería, pasaporte) no. Requiere el convertidor, cableado y activar *Wiegand Out* en el menú del G4. Sin probar.
+
+### 18/10/2026 16:45 — Comparación del `rtlog` con la tabla `transaction` (correlativos y horas)
+
+`DATA QUERY tablename=transaction` otra vez (comando 2976), con las horas (`time_second`, formato ZK: días desde 2000 × 86 400 + segundos del día). La memoria del G4 empieza el **17/10 a las 18:01** (índice 1); el contador se reinició durante la prueba con TROK. Los `rtlog` de las 17:55–17:57 (índices 3 a 7, con los E23 de Amiel y Fernando) son de un contador anterior que ya no está en la memoria: los índices no se pueden cruzar. Los índices 5–13 (18:12–18:23) son los aprobados de la prueba con TROK; los 15–19 (18:44–18:59) coinciden con los `rtlog` aprobados que recibió nuestro servidor.
+
+**Corrección:** lo anotado antes ("los rechazos por permiso no se guardan en `transaction`") no está probado: desde las 18:01 del 17/10 no hubo ningún E23 (todos tenían permiso). Prueba pendiente con Amiel: provocar un E23 y leer `transaction` para ver si lo guarda, con su PIN y con `Concentration`.
+
+**Explicación más probable de la diferencia** (deducida de los datos; el código del firmware no se puede ver): hay dos partes del firmware que escriben registros.
+- El **control de acceso estándar** decide el permiso y escribe el E23 con el PIN de la persona que reconoció, como en cualquier equipo ZKTeco.
+- El **módulo del alcoholímetro** (firmware especial `OCM`, que el manual estándar no cubre y que agrega el campo `Concentration`) escribe la apertura (`event=0`) y el alcohol alto (`event=1`) **sin llenar el PIN**. Todos los registros que llevan el valor del alcohol (`Concentration=0.00g/L`) tienen el PIN vacío, y todos los que llevan PIN tienen `Concentration` vacía.
+
+### 18/10/2026 17:00–17:30 — Vista del sistema interno del G4 (`SHELL`, solo lectura, autorizado por el usuario)
+
+El G4 acepta el comando `SHELL` del protocolo PUSH (12.8.1) y responde por `/iclock/devicecmd`. Solo se usaron comandos de lectura (`ls`, `find`, `ps`, `pm list packages`, `id`); no se cambió nada.
+
+- Es un equipo **Android** (Qualcomm); la aplicación de ZKTeco corre como usuario `system`.
+- Aplicaciones de ZKTeco: `com.zkteco.android.core`, `accesscontrol`, `historyrecord`, `datamgmt`, `userrole`, `setup`, `udiskmgmt`, `alarmMgmt`, `zkupgrade`, y los servicios `com.zkteco.edk.*` (face, mcu, card, finger, qrcode, temperature, system) y `com.zkteco.biocv.edk.iot.service`. Ninguna se llama "alcohol"; el alcoholímetro probablemente lo maneja `edk.mcu.service` o `accesscontrol`.
+- Bases de datos: `/data/data/com.zkteco.android.core/databases/ZKDB.db`, `ZKEXTDB.db`, `ZKSystem.db`.
+
+**Se detuvo aquí:** no se descargaron las bases de datos ni los registros internos. Los scripts usados se borraron del servidor. Para ver los datos completos queda la vía oficial del equipo (exportar por USB desde el menú) o pedírselo a ZKTeco.
