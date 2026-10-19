@@ -124,14 +124,16 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
   let manualActiva: boolean;
   /** ¿Orden "facial primero"? */
   let facialPrimero: boolean;
+  /** Lo que responde el G4 Pro a "¿quién aprobó?" (rastreo VerifySuccess.txt). */
+  let quienSoplo: Promise<unknown>;
 
   const ingreso = (dni: string) => servicio.registrarIngreso({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Ingreso' });
   const salida = (dni: string) => servicio.registrarSalida({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Salida' });
-  const rtlog = (eventCode: string, pin = '0') =>
+  const rtlog = (eventCode: string, pin = '0', horaDispositivo: Date | null = null) =>
     servicio.correlacionarVerificacionDispositivo({
       verificacionId: 1,
       serialNumber: 'HSR3263100192',
-      horaDispositivo: null,
+      horaDispositivo,
       eventCode,
       concentracion: '0',
       pin,
@@ -161,7 +163,14 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
     vi.setSystemTime(ahora);
     base = crearBaseFalsa();
     emitidos = [];
-    const eventEmitter = { emit: (evento: string, datos: Record<string, unknown>) => emitidos.push({ evento, datos }) };
+    quienSoplo = Promise.resolve(null);
+    const eventEmitter = {
+      emit: (evento: string, datos: Record<string, unknown>) => emitidos.push({ evento, datos }),
+      emitAsync: async (evento: string, datos: Record<string, unknown>) => {
+        emitidos.push({ evento, datos });
+        return evento === 'g4pro.quien-aprobo' ? [await quienSoplo] : [];
+      },
+    };
     manualActiva = false;
     facialPrimero = false;
     servicio = new EventosAccesoService(
@@ -590,6 +599,75 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       expect(base.eventos).toHaveLength(0);
       expect(de('g4pro.habilitar')).toHaveLength(0);
       expect(await ingreso('11111111')).toMatchObject({ motivos: { sinFacial: true } });
+    });
+
+    describe('quién sopló (rastreo del G4 Pro)', () => {
+      const hora = new Date('2026-10-05T07:00:00');
+      const pase = (pin: string) => ({ hora, pin, nombre: `Persona ${pin} Prueba` });
+      /** Deja que se resuelvan las promesas pendientes. */
+      const esperar = () => new Promise((r) => setImmediate(r));
+
+      it('sopló el mismo del DNI: se abre y queda confirmado', async () => {
+        agregarPersona(base, '11111111');
+        quienSoplo = Promise.resolve(pase('11111111'));
+        await rtlog('0', '0', hora);
+        await esperar();
+        expect(de('g4pro.quien-aprobo')).toEqual([{ serialNumber: 'HSR3263100192', horaDispositivo: hora }]);
+        // El Panel pasa a mostrar quién aprobó.
+        expect(de('ingreso.en-espera').at(-1)).toMatchObject({ esperaDni: true, nombres: 'Aprobó Persona 11111111 Prueba', numeroDocumento: '11111111' });
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado', dniQueSoplo: '11111111' });
+        expect(base.eventos[0]).toMatchObject({ resultado: 'autorizado', facialPrimero: true, dniQueSoplo: '11111111' });
+        expect(de('molinete.abrir')).toHaveLength(1);
+      });
+
+      it('sopló otra persona: denegado "No es quien sopló", no se abre', async () => {
+        agregarPersona(base, '11111111');
+        agregarPersona(base, '22222222');
+        quienSoplo = Promise.resolve(pase('22222222'));
+        await rtlog('0', '0', hora);
+        await esperar();
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { noEsQuienSoplo: true }, dniQueSoplo: '22222222' });
+        expect(base.eventos[0]).toMatchObject({
+          numeroDocumento: '11111111',
+          denegadoNoEsQuienSoplo: true,
+          dniQueSoplo: '22222222',
+          facialPrimero: true,
+        });
+        expect(de('molinete.abrir')).toHaveLength(0);
+        // La aprobación se gastó: tampoco sirve para el que sopló.
+        expect(await ingreso('22222222')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
+      });
+
+      it('no se pudo saber quién sopló: se abre como antes, sin confirmar', async () => {
+        agregarPersona(base, '11111111');
+        await rtlog('0', '0', hora);
+        await esperar();
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado' });
+        expect(base.eventos[0]).toMatchObject({ resultado: 'autorizado', dniQueSoplo: null });
+      });
+
+      it('el DNI llega antes de saber quién sopló: espera la respuesta del equipo', async () => {
+        agregarPersona(base, '11111111');
+        agregarPersona(base, '22222222');
+        let responder!: (v: unknown) => void;
+        quienSoplo = new Promise((r) => (responder = r));
+        await rtlog('0', '0', hora);
+        const resultado = ingreso('11111111');
+        setTimeout(() => responder(pase('22222222')), 50);
+        expect(await resultado).toMatchObject({ resultado: 'denegado', motivos: { noEsQuienSoplo: true } });
+      });
+
+      it('el equipo tarda más de 6 s en decirlo: se abre sin confirmar', async () => {
+        vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+        vi.setSystemTime(ahora);
+        agregarPersona(base, '11111111');
+        quienSoplo = new Promise(() => undefined);
+        await rtlog('0', '0', hora);
+        const resultado = ingreso('11111111');
+        await vi.advanceTimersByTimeAsync(6_000);
+        expect(await resultado).toMatchObject({ resultado: 'autorizado' });
+        expect(base.eventos[0]).toMatchObject({ dniQueSoplo: null });
+      });
     });
 
     it('con la verificación manual activa, vuelve el orden normal (primero el DNI)', async () => {

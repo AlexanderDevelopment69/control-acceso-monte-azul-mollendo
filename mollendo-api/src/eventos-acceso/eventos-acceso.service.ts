@@ -13,6 +13,8 @@ import type { RtlogRecibidoEvent } from '../push-sdk/push-sdk.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 import { VerificacionManualService } from './verificacion-manual.service.js';
 import { ModoIngresoService } from './modo-ingreso.service.js';
+import type { PaseExitoso } from '../push-sdk/verify-success.util.js';
+import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
 
 /** Payload del evento interno que ordena abrir el molinete (lo atiende IntegracionesModule). */
 export interface AbrirMolineteEvent {
@@ -52,6 +54,19 @@ const ESPERA_MAXIMA_EN_COLA_MS = 3 * VENTANA_INGRESO_PENDIENTE_MS;
  */
 const VENTANA_DNI_FACIAL_PRIMERO_MS = 20 * 1000;
 
+/**
+ * Orden "facial primero": si el DNI llega antes de saber quién aprobó (se lee
+ * del G4 Pro, tarda unos segundos), se espera hasta esto. Pasado ese tiempo
+ * se sigue como antes, sin confirmar quién sopló.
+ */
+const ESPERA_QUIEN_APROBO_MS = 6 * 1000;
+
+/** Pedido a la integración del G4 Pro: quién aprobó el rtlog de esta hora (responde por emitAsync). */
+export interface QuienAproboEvent {
+  serialNumber: string;
+  horaDispositivo: Date;
+}
+
 /** Decisión del vigilante en la verificación manual. */
 export type DecisionManual = 'apto' | 'alcohol' | 'no-es-la-persona';
 
@@ -85,13 +100,18 @@ export interface IngresoEnEspera {
 
 /**
  * Orden "facial primero": la aprobación del G4 Pro que espera un DNI. El
- * equipo no dice quién aprobó (manda `pin=0`), así que no tiene persona.
+ * `rtlog` no dice quién aprobó (manda `pin=0`); se averigua aparte en el
+ * archivo de rastreo del equipo (`quien`, ver verify-success.util.ts).
  */
 interface AprobacionSinDni {
   /** Para el Panel (negativo: no es una espera de la base). */
   id: number;
   en: number;
   verificacionId: number;
+  /** Quién aprobó, cuando se sepa (null: no se pudo saber). */
+  quien: Promise<PaseExitoso | null>;
+  /** Lo mismo, ya resuelto (undefined: todavía se está leyendo). */
+  quienSabido?: PaseExitoso | null;
 }
 
 /** La aprobación como fila del Panel ("Aprobó rostro y alcohol: falta que pase su DNI"). */
@@ -99,9 +119,9 @@ function aprobacionEnEspera(a: AprobacionSinDni): IngresoEnEspera {
   return {
     id: a.id,
     personaId: 0,
-    nombres: 'Aprobó rostro y alcohol',
+    nombres: a.quienSabido ? `Aprobó ${a.quienSabido.nombre}` : 'Aprobó rostro y alcohol',
     apellidos: '',
-    numeroDocumento: '—',
+    numeroDocumento: a.quienSabido?.pin ?? '—',
     empresa: null,
     tieneFoto: false,
     torniqueteId: null,
@@ -327,11 +347,12 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    * Orden "facial primero" (pedido de TMAM, 17/10/2026): todo el personal
    * activo tiene permiso fijo en el G4 Pro, así que hace rostro y alcohol sin
    * pasar antes el DNI. El DNI llega al final y usa la aprobación de los
-   * últimos 20 s. **El equipo no dice quién aprobó**: no se puede confirmar
-   * que quien sopló sea el del DNI (lo aceptó el cliente). Por eso hay una
-   * sola aprobación a la vez, solo 20 s y el Panel muestra la foto del DNI
-   * para que el vigilante la compare. Baja, antipassback y documentos se
-   * revisan aquí, con el DNI.
+   * últimos 20 s. El `rtlog` no dice quién aprobó, pero el G4 Pro lo anota en
+   * su archivo de rastreo: si se sabe quién sopló y **no es el del DNI**, se
+   * deniega ("No es quien sopló"); si no se pudo saber, se sigue como antes
+   * (sin confirmar, lo compara el vigilante con la foto). Por eso sigue
+   * habiendo una sola aprobación a la vez y solo 20 s. Baja, antipassback y
+   * documentos se revisan aquí, con el DNI.
    */
   private async registrarDniAlFinal(persona: Persona, dto: IngresoDto) {
     const aprobada = this.aprobacionVigente();
@@ -351,6 +372,12 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     }
     if (!aprobada) return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoSinFacial: true });
 
+    const quien = await this.quienAproboConLimite(aprobada);
+    if (quien && quien.pin !== pinDeDocumento(persona.numeroDocumento)) {
+      this.logger.warn(`Facial primero: sopló el DNI ${quien.pin} (${quien.nombre}) y pasó el DNI ${persona.numeroDocumento}; se deniega`);
+      return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoNoEsQuienSoplo: true, dniQueSoplo: quien.pin });
+    }
+
     const evento = await this.prisma.eventoAcceso.create({
       data: {
         personaId: persona.id,
@@ -359,6 +386,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         tipoMovimiento: 'ingreso',
         resultado: 'autorizado',
         facialPrimero: true,
+        dniQueSoplo: quien?.pin ?? null,
         torniqueteId: dto.torniqueteId,
       },
     });
@@ -374,6 +402,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       motivos: {},
       // El Panel muestra su foto para que el vigilante la compare con quien pasa el molinete.
       facialPrimero: true,
+      dniQueSoplo: evento.dniQueSoplo,
       tieneFoto: !!persona.fotoUrl,
     };
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
@@ -404,13 +433,56 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         this.soltarAprobacion();
         return;
       }
-      this.aprobacion = { id: -evento.verificacionId, en: Date.now(), verificacionId: evento.verificacionId };
-      this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(this.aprobacion));
+      const aprobacion: AprobacionSinDni = {
+        id: -evento.verificacionId,
+        en: Date.now(),
+        verificacionId: evento.verificacionId,
+        quien: this.preguntarQuienAprobo(evento),
+      };
+      this.aprobacion = aprobacion;
+      this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
       this.logger.log('Facial primero: rostro y alcohol aprobados; esperando el DNI (20 s)');
+      // Sin esperar (no se detiene a los demás): al saberse, el Panel muestra quién sopló.
+      void aprobacion.quien.then((quien) => {
+        aprobacion.quienSabido = quien;
+        if (quien) this.logger.log(`Facial primero: aprobó el DNI ${quien.pin} (${quien.nombre})`);
+        if (quien && this.aprobacion === aprobacion) this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
+      });
       return;
     }
     if (codigo !== '1') this.logger.warn(`G4 Pro: código desconocido event=${codigo}; se deniega por alcohol`);
     await this.registrarSinPersona({ denegadoPorAlcohol: true, fechaHora: evento.horaDispositivo ?? undefined }, evento.verificacionId);
+  }
+
+  /** Le pregunta a la integración del G4 Pro quién aprobó (null si no se puede saber; nunca falla). */
+  private async preguntarQuienAprobo(evento: RtlogRecibidoEvent): Promise<PaseExitoso | null> {
+    if (!evento.horaDispositivo) return null;
+    try {
+      const respuestas: unknown[] = await this.eventEmitter.emitAsync('g4pro.quien-aprobo', {
+        serialNumber: evento.serialNumber,
+        horaDispositivo: evento.horaDispositivo,
+      } satisfies QuienAproboEvent);
+      return (respuestas.find((r) => r) as PaseExitoso | undefined) ?? null;
+    } catch (error) {
+      this.logger.error(`Facial primero: no se pudo preguntar quién aprobó: ${(error as Error).message}`);
+      return null;
+    }
+  }
+
+  /** Quién aprobó, esperando a lo sumo ESPERA_QUIEN_APROBO_MS si todavía se está leyendo del equipo. */
+  private async quienAproboConLimite(aprobada: AprobacionSinDni): Promise<PaseExitoso | null> {
+    if (aprobada.quienSabido !== undefined) return aprobada.quienSabido;
+    let limite: NodeJS.Timeout | undefined;
+    const tarde = new Promise<null>((r) => (limite = setTimeout(() => r(null), ESPERA_QUIEN_APROBO_MS)));
+    try {
+      const quien = await Promise.race([aprobada.quien, tarde]);
+      if (quien === null && aprobada.quienSabido === undefined) {
+        this.logger.warn('Facial primero: el G4 Pro no dijo a tiempo quién sopló; se sigue sin confirmar');
+      }
+      return quien;
+    } finally {
+      clearTimeout(limite);
+    }
   }
 
   /** Orden "facial primero": denegado sin persona (no pasó el alcohol, o nadie pasó su DNI a tiempo). */
@@ -451,6 +523,9 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       denegadoPorDocumentos?: boolean;
       documentosVencidos?: string[];
       denegadoSinFacial?: boolean;
+      /** Facial primero: el G4 Pro dice que sopló otra persona (su DNI). */
+      denegadoNoEsQuienSoplo?: boolean;
+      dniQueSoplo?: string;
     },
   ) {
     const evento = await this.prisma.eventoAcceso.create({
@@ -465,6 +540,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         denegadoSinDocumentos: motivos.denegadoSinDocumentos ?? false,
         denegadoPorDocumentos: motivos.denegadoPorDocumentos ?? false,
         denegadoSinFacial: motivos.denegadoSinFacial ?? false,
+        denegadoNoEsQuienSoplo: motivos.denegadoNoEsQuienSoplo ?? false,
+        ...(motivos.denegadoNoEsQuienSoplo ? { facialPrimero: true, dniQueSoplo: motivos.dniQueSoplo ?? null } : {}),
         torniqueteId: dto.torniqueteId,
       },
     });
@@ -483,7 +560,9 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         documentos: motivos.denegadoPorDocumentos ?? false,
         documentosVencidos: motivos.documentosVencidos ?? [],
         sinFacial: motivos.denegadoSinFacial ?? false,
+        noEsQuienSoplo: motivos.denegadoNoEsQuienSoplo ?? false,
       },
+      ...(motivos.denegadoNoEsQuienSoplo ? { dniQueSoplo: motivos.dniQueSoplo ?? null } : {}),
     };
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
     return respuesta;

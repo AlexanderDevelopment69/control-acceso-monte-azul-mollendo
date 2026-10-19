@@ -22,6 +22,7 @@ import {
 } from './comandos-acceso.util.js';
 import { leerRegistroAsistencia } from './asistencia.util.js';
 import { leerSnapshot } from './attphoto.util.js';
+import { COMANDO_VERIFY_SUCCESS, leerVerifySuccess, paseDelRtlog, type PaseExitoso } from './verify-success.util.js';
 
 /** Emitido cuando llega un table=rtlog real del equipo (ver EventosAccesoService). */
 export interface RtlogRecibidoEvent {
@@ -340,6 +341,26 @@ export class PushSdkService {
       await new Promise((r) => setTimeout(r, 1000));
     }
     this.logger.warn(`El equipo no respondió a "${comando}" en ${esperaMs / 1000} s`);
+    return null;
+  }
+
+  /**
+   * Quién aprobó rostro y alcohol en el `rtlog` de la hora indicada (que llega
+   * con `pin=0`): se lee del archivo de rastreo del equipo (ver
+   * verify-success.util.ts). La línea se escribe ~1 s después del rtlog, así
+   * que se reintenta unas veces. null si no se pudo saber (equipo sin
+   * responder, sin la línea o con dos personas en el mismo momento).
+   */
+  async quienAprobo(serialNumber: string, horaRtlog: Date, intentos = 3): Promise<PaseExitoso | null> {
+    const dispositivo = await this.prisma.dispositivoAcceso.findUnique({ where: { serialNumber } });
+    if (!dispositivo) return null;
+    for (let intento = 1; intento <= intentos; intento++) {
+      const salida = await this.consultar(dispositivo.id, COMANDO_VERIFY_SUCCESS, 6_000);
+      const pase = salida === null ? null : paseDelRtlog(leerVerifySuccess(salida), horaRtlog);
+      if (pase) return pase;
+      if (intento < intentos) await new Promise((r) => setTimeout(r, 1_000));
+    }
+    this.logger.warn(`No se pudo saber quién aprobó el rtlog de las ${horaRtlog.toISOString()} (${serialNumber})`);
     return null;
   }
 

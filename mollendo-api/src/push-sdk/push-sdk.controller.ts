@@ -5,6 +5,7 @@ import { SerieG4Guard } from '../common/guards/serie-g4.guard.js';
 import { PushSdkService } from './push-sdk.service.js';
 import { ipLocalDeRegistro } from './ip-local.util.js';
 import { opcionesAsistencia } from './asistencia.util.js';
+import { respuestaShell } from './verify-success.util.js';
 
 /**
  * Endpoints del protocolo ADMS/PUSH que llama el equipo G4 Pro directamente
@@ -55,6 +56,14 @@ export class PushSdkController {
   @Header('Content-Type', 'text/plain')
   async devicecmd(@Query('SN') sn: string, @Body() body: string) {
     // La respuesta a INFO trae los datos del equipo, uno por línea (entre ellos "IPAddress=").
+    // La salida de un SHELL (p. ej. quién aprobó, ver verify-success.util.ts) va en varias líneas
+    // después de "Content=": se guarda como respuesta del comando, para quien la espera.
+    const shell = respuestaShell(body ?? '');
+    if (shell) {
+      this.pushSdk.guardarRespuestaConsulta(sn, shell.id, 'shell', 'shell', shell.salida);
+      await this.pushSdk.confirmarComando(sn, shell.id, Number(/^Return=(-?\d+)/m.exec(body)?.[1] ?? 0));
+      return 'OK';
+    }
     const ipLocal = ipLocalDeRegistro(body);
     if (ipLocal) await this.pushSdk.guardarIpLocal(sn, ipLocal);
     // Si el equipo recibió varios comandos juntos, confirma todos en el mismo

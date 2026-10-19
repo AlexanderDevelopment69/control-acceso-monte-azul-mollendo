@@ -96,7 +96,7 @@ export interface IngresoEnEspera {
   enCola: boolean;
   /** La decide un vigilante (verificación manual, equipo facial fuera de servicio), no el G4 Pro. */
   manual?: boolean;
-  /** Orden "facial primero": alguien aprobó rostro y alcohol (el equipo no dice quién); falta su DNI (`hasta` es el plazo). */
+  /** Orden "facial primero": alguien aprobó rostro y alcohol (quién, si ya se sabe, va en nombres y numeroDocumento); falta su DNI (`hasta` es el plazo). */
   esperaDni?: boolean;
 }
 
@@ -141,8 +141,12 @@ export interface EventoAcceso {
   denegadoSinFacial?: boolean;
   /** Orden "facial primero": alguien aprobó rostro y alcohol, pero nadie pasó su DNI a tiempo (sin persona). */
   denegadoSinDni?: boolean;
-  /** Orden "facial primero": rostro y alcohol antes del DNI; el equipo no confirma quién sopló. */
+  /** Orden "facial primero": rostro y alcohol antes del DNI. */
   facialPrimero?: boolean;
+  /** Orden "facial primero": DNI de quien sopló según el equipo (null: no se pudo confirmar). */
+  dniQueSoplo?: string | null;
+  /** Orden "facial primero": el equipo dice que sopló otra persona que la del DNI. */
+  denegadoNoEsQuienSoplo?: boolean;
   /** Movimiento registrado a mano por un vigilante o administrador (no pasó por el molinete). */
   correccionManual?: boolean;
   motivoCorreccion?: string | null;

@@ -217,7 +217,23 @@ La salida de cada comando se ve en el log de la API con `PUSH_SDK_DEPURAR=true` 
 - **Config del alcoholímetro:** no está en `OPTION_INFO`; el servicio del MCU (`com.zkteco.edk.mcu.service`, por donde entra el DT1700) es **inaccesible** (otro UID, `Permission denied`). El umbral vive en el MCU/DT1700 y en el menú del equipo, **no es remoto**.
 - El protocolo **oficial de asistencia** (`storage/doc-equipos/PROTOCOLO_PUSH.txt`) **no documenta** los eventos ACC (`EventTypes`, `realTimeEventFlag`, códigos 0/23/27): eso es del protocolo ACC, que tiene ZKTeco.
 
-### 10.3. Única vía viva para recuperar la identidad: foto de la captura
+### 10.2 bis. HALLAZGO (19/10): el equipo SÍ guarda quién pasó — `VerifySuccess.txt`
+
+El launcher escribe un archivo de rastreo **sin cifrar** con cada verificación exitosa: **`/sdcard/ZKTeco/trace/VerifySuccess.txt`**, una línea por pase:
+
+```
+2026-10-17 18:48:41 446:userPin->15724705; userName->Fernando Herrera Broncales:
+```
+
+Coincide 1 a 1 con los `event=0` (diferencia < 1 s: `rtlog` 18:48:40 ↔ traza 18:48:41; 18:59:59 ↔ 19:00:00) y con `coreServiceOpenDoor.txt` (`openDoor <hora>`). Se lee por el protocolo con `SHELL tail -n 3 /sdcard/ZKTeco/trace/VerifySuccess.txt`. **Es decir: el firmware sabe quién pasó; solo no lo pone en el `rtlog`.**
+
+Otros archivos de la misma carpeta: `Verify.txt` (≈47 MB, detalle de cada verificación), `coreServiceOpenDoor.txt`, `VerifyException.txt`, `DataBase.txt`. Fotos de captura en `/sdcard/ZKTeco/data/capture/{pass,bad}` (vacías al 19/10). En la traza también aparecen pases de un usuario de prueba `userPin->1` (17/10 18:12–18:27) que no llegaron al servidor: explican el salto de `index` 7→15.
+
+Cautelas: es un archivo de **rastreo** (no un dato del protocolo): el firmware podría rotarlo o cambiar su formato en una actualización; depende del comando `SHELL`, no documentado.
+
+**Uso en el orden "facial primero" (subido a Azure el 19/10 08:58; falta un pase real con el modo activado):** con cada `event=0`, la API encola `SHELL tail -n 5 …/VerifySuccess.txt` (`verify-success.util.ts`, `PushSdkService.quienAprobo`, hasta 3 intentos) y toma la línea escrita **desde el segundo del rtlog hasta 10 s después** (nunca antes: una anterior es del pase previo). La salida del `SHELL` llega por `/iclock/devicecmd` (`Content=`) y se guarda como respuesta del comando. Al pasar el DNI: si el equipo dijo quién sopló y **no es el del DNI**, se deniega (`denegado_no_es_quien_soplo`, "No es quien sopló"); si coincide, se autoriza con `dni_que_soplo`; si el equipo no lo dijo en 6 s, se autoriza como antes, sin confirmar. Simulación local con un G4 falso: 5/5 (mismo DNI, otro DNI, DNI al instante, línea tardía, equipo sin responder).
+
+### 10.3. Otra vía para recuperar la identidad: foto de la captura
 
 El protocolo define que, en equipos de luz visible, el equipo puede subir la foto de cada verificación y **ese registro lleva el DNI**:
 - `ATTPHOTO` (11.3): `PIN=<fecha>-<DNI>.jpg` (el DNI va en el nombre del archivo).
@@ -266,6 +282,13 @@ Objetivo: ver si la captura que sube el equipo en la verificación trae el DNI e
    ```bash
    sudo docker compose logs api --since 5m | grep -iE "ATTPHOTO|Captura|rtlog"
    ```
+   **Y en el mismo momento** (el registro de Android del equipo se pierde al reiniciarlo), encolar la lectura del registro del launcher, que muestra el usuario en cada paso del pase:
+   ```sql
+   INSERT INTO comando_dispositivo (dispositivo_id, comando) SELECT id,
+   'SHELL logcat -d -v time | grep -iE ''addAttLog|UserPin=|User_PIN|userPin->|mUserPin|onFinishAlcohol|completeAlcohol|stateAlcohol'' | tail -80'
+   FROM dispositivo_acceso;
+   ```
+   Si `UserPin=`/`mUserPin=` trae el DNI pero `addAttLog` lo deja vacío, el firmware lo pierde al guardar el registro tras el soplido (dato concreto para el proveedor).
 3. Interpretar:
    - `dniDerivado=<DNI real>` → **resuelto**; falta solo programar la correlación captura↔ingreso por horario.
    - `dniDerivado=(no identificado)` (nombre `-0.jpg`) → el equipo tampoco identifica en la captura; descartar la vía.
@@ -301,6 +324,8 @@ Investigación del 19/10 (equipo + protocolo oficial + software ZKTeco + interne
 > 3. En su software ZKBioSecurity, el evento muestra a la persona: ¿cómo obtiene el ID en una verificación con alcohol — del `pin` del evento, o de la **foto de captura** (`ATTPHOTO`, cuyo nombre sería `<fecha>-<DNI>.jpg`)?
 > 4. ¿El equipo sube la captura de cada verificación con el **DNI** en el nombre? ¿Qué opción la activa (`SaveBioPhotoFunOn`, `TransFlag`…)?
 > 5. ¿El **resultado del alcohol** (grado) se puede recibir por el protocolo asociado al usuario? Hoy el `rtlog` manda `Concentration=0` (solo el log interno guarda el valor real).
+
+**Dónde está el flujo del alcohol (revisado 19/10, por `SHELL strings` sobre los `base.vdex`):** no en `com.zkteco.android.core` ni en `com.zkteco.android.accesscontrol` (solo tienen `AlcoholDetectionFun`/`AlcoholVolume`), sino en el **launcher** `com.zktechnology.android.launcher` (paquete `com.zktechnology.android.alcohol`: `onStartAlcoholDetect`, `completeAlcoholDetected`, `onFinishAlcoholResultHandler`, `mShouldWaitAlcoholDetect`, `addAttLog concentration:`). El launcher escribe en el logcat mensajes con el usuario (`UserPin=%s, success=%s, capturePicValue=%s`, `userPin->`, `mUserPin=`, `User_PIN=`), legibles por `SHELL logcat -d` → ver sección 10.5.
 
 **Registros internos (revisado 19/10):** el campo `index` del `rtlog` (número de registro del equipo) sube de 1 en 1 y cada pase genera **un solo** registro: el éxito no viene acompañado de otro registro oculto con el usuario. Hay algunos saltos sueltos (registros que no llegaron al servidor, causa sin confirmar), pero en la mayoría de los pases el éxito lleva el número siguiente al `event=23` previo, sin nada en medio.
 

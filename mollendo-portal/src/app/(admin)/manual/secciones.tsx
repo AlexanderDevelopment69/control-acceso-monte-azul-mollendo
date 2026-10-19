@@ -1011,8 +1011,7 @@ export const SECCIONES: SeccionManual[] = [
               </li>
             </Lista>
             <p className="mt-3">
-              En “facial primero” el terminal no dice quién sopló: el vigilante compara la foto que aparece en el Panel de vigilancia
-              con quien pasa el molinete. Activarlo pide confirmación y da permiso fijo en el terminal a todo el personal activo;
+              En “facial primero”, si el DNI no es de quien sopló, no se abre el molinete (“No es quien sopló”). Activarlo pide confirmación y da permiso fijo en el terminal a todo el personal activo;
               apagarlo vuelve al orden normal.
             </p>
           </>

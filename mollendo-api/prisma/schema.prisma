@@ -237,8 +237,13 @@ model EventoAcceso {
   /// Antipassback: quiso salir, pero no registra ingreso (su último movimiento es una salida, o no tiene).
   denegadoSinIngreso       Boolean                 @default(false) @map("denegado_sin_ingreso")
   /// Orden "facial primero" (permiso fijo): ingreso con rostro y alcohol aprobados en el G4 Pro y el DNI al final.
-  /// El equipo no dice quién aprobó: no se confirma que quien sopló sea el del DNI (lo compara el vigilante).
+  /// El rtlog no dice quién aprobó; se lee del rastreo del equipo (dniQueSoplo). Si no se pudo, lo compara el vigilante.
   facialPrimero            Boolean                 @default(false) @map("facial_primero")
+  /// Orden "facial primero": DNI de quien aprobó rostro y alcohol, según el rastreo del G4 Pro (VerifySuccess.txt).
+  /// null: no se pudo saber (ingreso sin confirmar).
+  dniQueSoplo              String?                 @map("dni_que_soplo") @db.VarChar(24)
+  /// Orden "facial primero": el G4 Pro dice que sopló otra persona (dniQueSoplo) que la del DNI.
+  denegadoNoEsQuienSoplo   Boolean                 @default(false) @map("denegado_no_es_quien_soplo")
   /// Orden "facial primero": pasó su DNI sin una aprobación de rostro y alcohol en los 20 s anteriores.
   denegadoSinFacial        Boolean                 @default(false) @map("denegado_sin_facial")
   /// Orden "facial primero": alguien aprobó rostro y alcohol, pero nadie pasó su DNI a tiempo (sin persona).

@@ -109,6 +109,7 @@ function motivosEvento(e: {
   denegadoSinIngreso?: boolean;
   denegadoSinFacial?: boolean;
   denegadoSinDni?: boolean;
+  denegadoNoEsQuienSoplo?: boolean;
 }): string {
   const motivos: string[] = [];
   if (e.denegadoNoRegistrado) motivos.push('No registrado');
@@ -122,6 +123,7 @@ function motivosEvento(e: {
   if (e.denegadoSinIngreso) motivos.push('No registra ingreso');
   if (e.denegadoSinFacial) motivos.push('Sin rostro y alcohol');
   if (e.denegadoSinDni) motivos.push('No pasó su DNI a tiempo');
+  if (e.denegadoNoEsQuienSoplo) motivos.push('No es quien sopló');
   return motivos.join(', ');
 }
 
@@ -465,7 +467,9 @@ export class ReportesService {
           : e.verificacionManual
             ? `Manual (${e.verificadoPor?.correo ?? 'sin decisión'})`
             : e.facialPrimero
-              ? 'Facial primero (el equipo no confirma quién sopló)'
+              ? e.dniQueSoplo
+                ? `Facial primero (sopló el DNI ${e.dniQueSoplo})`
+                : 'Facial primero (sin confirmar quién sopló)'
               : null,
         e.torniqueteId,
       ]),

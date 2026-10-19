@@ -36,7 +36,7 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
             {/* Foto para comparar con quien está frente al terminal facial. */}
             <div className="flex items-center gap-3">
               {i.esperaDni && !i.personaId ? (
-                // Facial primero: el equipo no dice quién aprobó.
+                // Facial primero: la aprobación no es de una espera con persona (quién sopló va en el nombre, si se sabe).
                 <span className="flex size-12 items-center justify-center rounded-full bg-gray-100 text-lg text-gray-400 dark:bg-white/[0.06]">?</span>
               ) : (
                 <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} tamano="size-12" />
@@ -59,7 +59,9 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
             <div className="flex items-center justify-between gap-3 text-gray-700 dark:text-gray-300">
               <span>
                 {i.esperaDni
-                  ? "Falta que pase su DNI (el equipo no dice quién sopló)"
+                  ? i.numeroDocumento !== "—"
+                    ? "Falta que pase su DNI"
+                    : "Falta que pase su DNI (consultando quién sopló)"
                   : i.manual
                   ? i.enCola
                     ? "Esperando su turno (verificación manual)"

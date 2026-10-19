@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import type { AbrirMolineteEvent, HabilitarEnEquipoEvent } from '../eventos-acceso/eventos-acceso.service.js';
+import type { AbrirMolineteEvent, HabilitarEnEquipoEvent, QuienAproboEvent } from '../eventos-acceso/eventos-acceso.service.js';
+import type { PaseExitoso } from '../push-sdk/verify-success.util.js';
 import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { AVISO_DE, ReleUsbService } from './rele-usb.service.js';
@@ -83,6 +84,20 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`G4 Pro: ${evento.habilitar ? 'permiso fijo a' : 'se quita el permiso a'} ${n} persona(s) (facial primero)`);
     } catch (error) {
       this.logger.error(`No se pudieron cambiar los permisos fijos: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Orden "facial primero": quién aprobó rostro y alcohol (el rtlog llega con
+   * pin=0). Se responde por `emitAsync`; null si no se pudo saber.
+   */
+  @OnEvent('g4pro.quien-aprobo')
+  async quienAprobo(evento: QuienAproboEvent): Promise<PaseExitoso | null> {
+    try {
+      return await this.pushSdk.quienAprobo(evento.serialNumber, evento.horaDispositivo);
+    } catch (error) {
+      this.logger.error(`No se pudo leer quién aprobó en el G4 Pro: ${(error as Error).message}`);
+      return null;
     }
   }
 

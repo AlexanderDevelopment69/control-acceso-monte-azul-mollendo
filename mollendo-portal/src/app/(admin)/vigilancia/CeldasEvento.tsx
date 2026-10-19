@@ -35,6 +35,8 @@ export function MotivoDenegacion({
     | "denegadoSinIngreso"
     | "denegadoSinFacial"
     | "denegadoSinDni"
+    | "denegadoNoEsQuienSoplo"
+    | "dniQueSoplo"
   >;
   onVerDocumentos: () => void;
   /** Antipassback: abre la corrección manual (registrar la salida o el ingreso que faltan). */
@@ -72,6 +74,16 @@ export function MotivoDenegacion({
     return (
       <span title="Pasó su DNI sin haber aprobado rostro y alcohol en el equipo facial en los 20 segundos anteriores" className="cursor-help">
         <Badge color="error">Sin rostro y alcohol</Badge>
+      </span>
+    );
+  }
+  if (evento.denegadoNoEsQuienSoplo) {
+    return (
+      <span
+        title={`El equipo facial indica que sopló otra persona${evento.dniQueSoplo ? ` (DNI ${evento.dniQueSoplo})` : ""}, no la del DNI que se pasó.`}
+        className="cursor-help"
+      >
+        <Badge color="error">No es quien sopló</Badge>
       </span>
     );
   }
@@ -125,12 +137,19 @@ export function MarcaCorreccionManual({
   );
 }
 
-/** Orden "facial primero": rostro y alcohol antes del DNI; el equipo no confirma quién sopló. */
-export function MarcaFacialPrimero({ evento }: { evento: Pick<EventoAcceso, "facialPrimero" | "resultado"> }) {
+/** Orden "facial primero": rostro y alcohol antes del DNI; confirmado si el equipo dijo quién sopló. */
+export function MarcaFacialPrimero({ evento }: { evento: Pick<EventoAcceso, "facialPrimero" | "resultado" | "dniQueSoplo"> }) {
   if (!evento.facialPrimero || evento.resultado !== "autorizado") return null;
+  if (evento.dniQueSoplo) {
+    return (
+      <span title="Rostro y alcohol en el equipo facial antes del DNI. El equipo confirmó que sopló la persona del DNI." className="cursor-help">
+        <Badge color="success">Facial primero</Badge>
+      </span>
+    );
+  }
   return (
-    <span title="Rostro y alcohol en el equipo facial antes del DNI. El equipo no confirma que quien sopló sea la persona del DNI." className="cursor-help">
-      <Badge color="warning">Facial primero</Badge>
+    <span title="Rostro y alcohol en el equipo facial antes del DNI. No se pudo confirmar que quien sopló sea la persona del DNI." className="cursor-help">
+      <Badge color="warning">Facial primero · sin confirmar</Badge>
     </span>
   );
 }

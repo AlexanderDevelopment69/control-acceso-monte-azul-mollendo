@@ -28,8 +28,10 @@ export interface EventoEnVivo {
   fechaHora?: string;
   persona?: { id?: number; nombres: string; apellidos: string } | null;
   motivos?: { sinVerificacion?: boolean };
-  /** Orden "facial primero": ingreso sin confirmar quién sopló (el Panel muestra la foto para comparar). */
+  /** Orden "facial primero": rostro y alcohol antes del DNI (el Panel muestra la foto para comparar). */
   facialPrimero?: boolean;
+  /** Facial primero: DNI de quien sopló según el equipo (null: no se pudo confirmar). */
+  dniQueSoplo?: string | null;
   tieneFoto?: boolean;
 }
 

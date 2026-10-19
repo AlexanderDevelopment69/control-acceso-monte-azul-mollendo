@@ -95,17 +95,12 @@ export function OrdenIngreso() {
         <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Activar “Facial primero”</h2>
         <p className="text-sm text-gray-600 dark:text-gray-300">Desde ahora, el ingreso será así:</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300">
-          <li>La persona se pone frente al equipo facial: la reconoce y le pide soplar.</li>
-          <li>Sopla. Si pasa la prueba, tiene <strong>20 segundos</strong> para pasar su DNI.</li>
-          <li>Pasa su DNI: se abre el molinete si sus documentos están en regla.</li>
+          <li>Rostro y prueba de alcohol en el equipo facial.</li>
+          <li>Si pasa, tiene <strong>20 segundos</strong> para pasar su DNI.</li>
+          <li>Se abre el molinete si el DNI es de quien sopló y sus documentos están en regla.</li>
         </ol>
-        <ErrorBanner tono="aviso" className="mt-3">
-          <strong>Importante:</strong> el equipo facial no dice quién sopló, así que el sistema no puede confirmar que el DNI
-          sea de esa persona. El vigilante debe comparar la foto que aparece en el panel con quien pasa el molinete.
-        </ErrorBanner>
         <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
-          Se da permiso fijo en el equipo facial a todo el personal activo. Avise al personal y a los vigilantes antes de
-          activarlo. Se puede volver al orden normal en cualquier momento.
+          Avise al personal antes de activarlo. Puede volver al orden normal cuando quiera.
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={() => setConfirmar(false)}>

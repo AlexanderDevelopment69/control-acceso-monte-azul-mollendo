@@ -107,6 +107,7 @@ export interface EventoPeriodo {
   denegadoSinIngreso?: boolean;
   denegadoSinFacial?: boolean;
   denegadoSinDni?: boolean;
+  denegadoNoEsQuienSoplo?: boolean;
 }
 
 /** Totales, motivos de denegación y serie diaria de los movimientos del periodo. */
@@ -147,7 +148,8 @@ export function resumirMovimientos(eventos: EventoPeriodo[], dias: string[]) {
       if (e.denegadoPorAlcohol) motivos.alcohol++;
       // En el orden "facial primero", no hacer rostro y alcohol o no pasar el DNI a tiempo también es no completar el ingreso.
       if (e.denegadoSinVerificacion || e.denegadoSinFacial || e.denegadoSinDni) motivos.sinVerificacion++;
-      if (e.denegadoRostroNoCoincide) motivos.rostroNoCoincide++;
+      // Facial primero: sopló otra persona que la del DNI (el rostro no es el de quien pasó el DNI).
+      if (e.denegadoRostroNoCoincide || e.denegadoNoEsQuienSoplo) motivos.rostroNoCoincide++;
       if (e.denegadoYaDentro) motivos.yaDentro++;
       if (e.denegadoSinIngreso) motivos.sinIngreso++;
     }
