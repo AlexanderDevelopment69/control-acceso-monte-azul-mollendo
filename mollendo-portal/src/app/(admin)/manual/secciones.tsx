@@ -539,28 +539,9 @@ export const SECCIONES: SeccionManual[] = [
                     m="No completó rostro y alcohol"
                     hacer="No terminó en 1 minuto (o, en verificación manual, nadie decidió en 2). Puede pasar su DNI otra vez."
                   />
-                  <Motivo
-                    m="Ya figura dentro"
-                    hacer={
-                      <>
-                        Figura que ya entró y no marcó su salida. Si salió sin marcar: <b>“Registrar salida manual ›”</b>.
-                      </>
-                    }
-                  />
-                  <Motivo
-                    m="No registra ingreso"
-                    hacer={
-                      <>
-                        Quiere salir, pero no figura que haya entrado. Si entró sin marcar: <b>“Registrar ingreso manual ›”</b>.
-                      </>
-                    }
-                  />
+                  <Motivo m="Ya figura dentro" hacer="Figura que ya entró y no marcó su salida." />
+                  <Motivo m="No registra ingreso" hacer="Quiere salir, pero no figura que haya entrado." />
                 </ul>
-                <p className="mt-3">
-                  <b>Corrección manual:</b> pide un motivo y <b>no abre el molinete</b>; después la persona vuelve a pasar su DNI. La hacen el
-                  vigilante o el administrador y queda marcada como “Corrección manual” en la tabla, en el reporte y en la Auditoría. Tras una
-                  emergencia con los brazos liberados, registre así la salida de cada uno.
-                </p>
                 <p>
                   <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revise si el terminal tiene un <b>punto rojo</b>{" "}
                   (alcoholímetro desconectado) y avise a soporte. Se cierra con la ✕ o solo, cuando la siguiente persona entra bien.

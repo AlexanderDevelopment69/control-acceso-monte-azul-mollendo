@@ -115,7 +115,8 @@ Por indicación del soporte, se cambió en el equipo: menú *firmware type setti
 - **Registro de personas** en el formato de la variante (`USERINFO`; foto con el mismo `biophoto`). En asistencia no se envían permisos de paso. La sincronización completa reenvía al personal activo (con fotos solo en la manual).
 - **Ingreso** (`EventosAccesoService.registrarIngresoAsistencia` y `resultadoAsistencia`): el DNI y la prueba se juntan por persona, con varias a la vez. Aprueba si el grado es menor que el umbral (`G4PRO_UMBRAL_ALCOHOL`, por defecto 0.0001 g/L, el `AlcoholVolume` del equipo). **El orden lo manda el ajuste "Orden del ingreso"** (15:47), comparando la hora de la prueba (la del G4) con la del DNI, con 5 s de tolerancia:
   - **Normal**: vale solo la prueba hecha después del DNI (espera de 1 minuto). Una prueba aprobada sin DNI previo no vale.
-  - **Facial primero**: vale solo la prueba hecha antes del DNI. La aprobación espera su DNI 20 s. Si el DNI llega antes que el resultado (10-15 s de demora), se lo espera 25 s; si no llega una prueba previa, el motivo es "Sin rostro y alcohol".
+  - **Facial primero**: vale solo la prueba hecha antes del DNI. La aprobación espera su DNI 20 s. Un DNI sin prueba suya se deniega en el momento ("Sin rostro y alcohol", sin cuenta regresiva; pedido de TMAM 19/10 16:50). Si sí sopló y la prueba llega después (10-15 s de demora), queda como aprobación y con volver a pasar el DNI entra.
+  - Margen entre relojes: 0 s (medido: el G4 y el servidor difieren en 1-2 s).
   - En los dos órdenes, el alcohol alto queda denegado con su nombre.
 - Los `ATTLOG` repetidos se ignoran, y los de más de 2 minutos se guardan sin decidir nada.
 

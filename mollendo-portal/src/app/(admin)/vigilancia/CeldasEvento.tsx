@@ -20,7 +20,6 @@ export function Movimiento({ tipo }: { tipo: string }) {
 export function MotivoDenegacion({
   evento,
   onVerDocumentos,
-  onCorregir,
 }: {
   evento: Pick<
     EventoAcceso,
@@ -39,25 +38,11 @@ export function MotivoDenegacion({
     | "dniQueSoplo"
   >;
   onVerDocumentos: () => void;
-  /** Antipassback: abre la corrección manual (registrar la salida o el ingreso que faltan). */
-  onCorregir?: () => void;
 }) {
   if (evento.denegadoNoRegistrado) return <Badge color="error">No registrado</Badge>;
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
-  if (evento.denegadoYaDentro || evento.denegadoSinIngreso) {
-    const texto = evento.denegadoYaDentro ? "Ya figura dentro" : "No registra ingreso";
-    const accion = evento.denegadoYaDentro ? "Registrar salida manual" : "Registrar ingreso manual";
-    return (
-      <span className="inline-flex flex-wrap items-center gap-1.5">
-        <Badge color="error">{texto}</Badge>
-        {onCorregir && (
-          <button type="button" onClick={onCorregir} className="text-xs font-medium text-brand-500 hover:underline">
-            {accion} ›
-          </button>
-        )}
-      </span>
-    );
-  }
+  if (evento.denegadoYaDentro) return <Badge color="error">Ya figura dentro</Badge>;
+  if (evento.denegadoSinIngreso) return <Badge color="error">No registra ingreso</Badge>;
   if (evento.denegadoSinVerificacion) {
     // La ⓘ explica qué revisar, para quien lo mira después del aviso de arriba.
     return (
@@ -72,8 +57,8 @@ export function MotivoDenegacion({
   // Orden "facial primero" (en prueba).
   if (evento.denegadoSinFacial) {
     return (
-      <span title="Pasó su DNI sin haber aprobado rostro y alcohol en el equipo facial en los 20 segundos anteriores" className="cursor-help">
-        <Badge color="error">Sin rostro y alcohol</Badge>
+      <span title="Facial primero: pasó su DNI sin haber hecho antes rostro y alcohol en el equipo facial" className="cursor-help">
+        <Badge color="error">DNI antes del facial</Badge>
       </span>
     );
   }

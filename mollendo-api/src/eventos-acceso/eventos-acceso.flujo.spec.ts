@@ -847,43 +847,45 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(de('molinete.abrir')).toHaveLength(1);
       });
 
-      it('el DNI llega antes que el resultado de su prueba (hecha antes): lo espera y abre', async () => {
+      it('va primero al DNI sin rostro y alcohol: denegado en el momento, sin espera ni cuenta regresiva', async () => {
+        agregarPersona(base, '11111111');
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
+        expect(base.eventos[0]).toMatchObject({ numeroDocumento: '11111111', denegadoSinFacial: true });
+        expect(base.pendientes).toHaveLength(0);
+        expect(de('ingreso.en-espera')).toHaveLength(0);
+        expect(de('molinete.abrir')).toHaveLength(0);
+      });
+
+      it('sopló y pasó el DNI antes de que llegue su prueba: denegado; al llegar, "pase su DNI" y con el DNI entra', async () => {
         agregarPersona(base, '11111111');
         const soplo = new Date(ahora - 2_000);
-        expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
-        expect(de('ingreso.en-espera')[0].hasta).toBe(new Date(ahora + 25_000).toISOString());
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
         avanzar(10_000);
         await attlog('11111111', '0.00g/L', soplo);
-        expect(base.eventos[0]).toMatchObject({ numeroDocumento: '11111111', resultado: 'autorizado' });
+        expect(de('ingreso.en-espera')[0]).toMatchObject({ esperaDni: true, numeroDocumento: '11111111' });
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado' });
+        expect(de('molinete.abrir')).toHaveLength(1);
       });
 
-      it('el DNI llega antes y su prueba previa da alcohol alto: denegado por alcohol', async () => {
-        agregarPersona(base, '11111111');
-        const soplo = new Date(ahora - 2_000);
-        await ingreso('11111111');
-        avanzar(10_000);
-        await attlog('11111111', '0.000753g/L', soplo);
-        expect(base.eventos[0]).toMatchObject({ resultado: 'denegado', denegadoPorAlcohol: true });
-      });
-
-      it('primero el DNI y después rostro y alcohol: no vale para ese DNI; a los 25 s "Sin rostro y alcohol"', async () => {
+      it('primero el DNI y después da alcohol alto: "Sin rostro y alcohol" y "Alcohol" con su nombre', async () => {
         agregarPersona(base, '11111111');
         await ingreso('11111111');
         avanzar(10_000);
-        await attlog('11111111');
+        await attlog('11111111', '0.000595g/L');
+        expect(base.eventos).toEqual([
+          expect.objectContaining({ denegadoSinFacial: true }),
+          expect.objectContaining({ numeroDocumento: '11111111', denegadoPorAlcohol: true }),
+        ]);
         expect(de('molinete.abrir')).toHaveLength(0);
-        avanzar(16_000);
-        await vencidos();
-        expect(base.eventos[0]).toMatchObject({ numeroDocumento: '11111111', resultado: 'denegado', denegadoSinFacial: true });
       });
 
-      it('la aprobación de otra persona no sirve: el DNI espera su propia prueba', async () => {
+      it('la aprobación de otra persona no sirve: su DNI se deniega; el dueño entra con el suyo', async () => {
         agregarPersona(base, '11111111');
         agregarPersona(base, '22222222');
         await attlog('22222222');
-        expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
-        expect(de('molinete.abrir')).toHaveLength(0);
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
         expect(await ingreso('22222222')).toMatchObject({ resultado: 'autorizado' });
+        expect(de('molinete.abrir')).toHaveLength(1);
       });
 
       it('alcohol alto sin DNI: denegado con su nombre; si pasa el DNI enseguida, se le responde ese rechazo', async () => {
