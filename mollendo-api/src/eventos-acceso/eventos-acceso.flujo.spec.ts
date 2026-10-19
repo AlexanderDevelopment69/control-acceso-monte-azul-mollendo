@@ -556,7 +556,7 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
     });
 
-    it('dos aprobaciones seguidas sin DNI entre medio: se anulan las dos', async () => {
+    it('dos aprobaciones sin saber de quién son (el equipo no lo dijo): no se puede elegir', async () => {
       agregarPersona(base, '11111111');
       await rtlog('0');
       avanzar(3_000);
@@ -634,8 +634,59 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
           facialPrimero: true,
         });
         expect(de('molinete.abrir')).toHaveLength(0);
-        // La aprobación se gastó: tampoco sirve para el que sopló.
-        expect(await ingreso('22222222')).toMatchObject({ resultado: 'denegado', motivos: { sinFacial: true } });
+        // La aprobación es de quien sopló: sigue esperando su DNI.
+        expect(await ingreso('22222222')).toMatchObject({ resultado: 'autorizado', dniQueSoplo: '22222222' });
+      });
+
+      it('dos personas soplan seguidas: cada una entra con su DNI, en cualquier orden', async () => {
+        agregarPersona(base, '11111111');
+        agregarPersona(base, '22222222');
+        quienSoplo = Promise.resolve(pase('11111111'));
+        await rtlog('0', '0', hora);
+        await esperar();
+        avanzar(3_000);
+        quienSoplo = Promise.resolve(pase('22222222'));
+        await servicio.correlacionarVerificacionDispositivo({
+          verificacionId: 2,
+          serialNumber: 'HSR3263100192',
+          horaDispositivo: hora,
+          eventCode: '0',
+          concentracion: '0',
+          pin: '0',
+        });
+        await esperar();
+        expect(await servicio.ingresosEnEspera()).toHaveLength(2);
+        // Pasa primero el segundo que sopló.
+        expect(await ingreso('22222222')).toMatchObject({ resultado: 'autorizado', dniQueSoplo: '22222222' });
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado', dniQueSoplo: '11111111' });
+        expect(de('molinete.abrir')).toHaveLength(2);
+        expect(await servicio.ingresosEnEspera()).toHaveLength(0);
+      });
+
+      it('la misma persona sopla dos veces: vale solo la última', async () => {
+        agregarPersona(base, '11111111');
+        quienSoplo = Promise.resolve(pase('11111111'));
+        await rtlog('0', '0', hora);
+        await esperar();
+        avanzar(5_000);
+        await rtlog('0', '0', hora);
+        await esperar();
+        expect(await servicio.ingresosEnEspera()).toHaveLength(1);
+        expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado' });
+        // No queda una aprobación vieja que venza como "No pasó su DNI a tiempo".
+        avanzar(21_000);
+        await vencidos();
+        expect(base.eventos.filter((e) => e.denegadoSinDni)).toHaveLength(0);
+      });
+
+      it('sopló y no pasó su DNI a tiempo: el rechazo queda con su nombre', async () => {
+        const id = agregarPersona(base, '11111111');
+        quienSoplo = Promise.resolve(pase('11111111'));
+        await rtlog('0', '0', hora);
+        await esperar();
+        avanzar(21_000);
+        await vencidos();
+        expect(base.eventos[0]).toMatchObject({ denegadoSinDni: true, personaId: id, numeroDocumento: '11111111', dniQueSoplo: '11111111' });
       });
 
       it('no se pudo saber quién sopló: se abre como antes, sin confirmar', async () => {

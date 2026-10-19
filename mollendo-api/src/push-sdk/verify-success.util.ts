@@ -34,12 +34,15 @@ export function leerVerifySuccess(texto: string): PaseExitoso[] {
   return pases;
 }
 
-/** Hasta cuánto después del rtlog puede estar la línea del mismo pase. */
-const DESPUES_MS = 10_000;
+/**
+ * Hasta cuánto después del rtlog puede estar la línea del mismo pase. Corto
+ * para no tomar la del pase siguiente (rostro y alcohol tardan más que esto).
+ */
+const DESPUES_MS = 5_000;
 
 /**
  * El pase que corresponde al `rtlog` de la hora indicada: la línea escrita
- * desde ese segundo hasta 10 s después. Nunca antes: el equipo la escribe
+ * desde ese segundo hasta 5 s después. Nunca antes: el equipo la escribe
  * después de mandar el rtlog (17:36:13 → 17:36:13.843, 18:48:40 →
  * 18:48:41.446), y una línea anterior es del pase anterior. Si hay líneas de
  * **personas distintas** en ese rango, no se puede saber cuál fue: null.

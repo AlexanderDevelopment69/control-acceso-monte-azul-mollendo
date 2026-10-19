@@ -180,8 +180,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   private revision: NodeJS.Timeout | null = null;
   /** Las operaciones sobre las esperas se hacen de a una, para no habilitar a dos personas a la vez. */
   private cola: Promise<unknown> = Promise.resolve();
-  /** Orden "facial primero": la aprobación del G4 Pro que espera su DNI (a lo sumo una). */
-  private aprobacion: AprobacionSinDni | null = null;
+  /** Orden "facial primero": las aprobaciones del G4 Pro que esperan su DNI (cada una con sus 20 s). */
+  private aprobaciones: AprobacionSinDni[] = [];
 
   constructor(
     private readonly prisma: PrismaService,
@@ -331,16 +331,46 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     return (await this.modoIngreso.facialPrimero()) && !(await this.verificacionManual.activa());
   }
 
-  /** La aprobación que espera su DNI, si sigue dentro de sus 20 s. */
-  private aprobacionVigente(ahora = Date.now()): AprobacionSinDni | null {
-    return this.aprobacion && ahora - this.aprobacion.en <= VENTANA_DNI_FACIAL_PRIMERO_MS ? this.aprobacion : null;
+  /** Las aprobaciones que esperan su DNI y siguen dentro de sus 20 s. */
+  private aprobacionesVigentes(ahora = Date.now()): AprobacionSinDni[] {
+    return this.aprobaciones.filter((a) => ahora - a.en <= VENTANA_DNI_FACIAL_PRIMERO_MS);
   }
 
-  /** Quita la aprobación (usada, vencida o anulada) del Panel. */
-  private soltarAprobacion() {
-    if (!this.aprobacion) return;
-    this.eventEmitter.emit('ingreso.espera-terminada', { id: this.aprobacion.id });
-    this.aprobacion = null;
+  /** Quita una aprobación (usada, vencida o repetida) de la espera y del Panel. */
+  private soltarAprobacion(aprobacion: AprobacionSinDni) {
+    if (!this.aprobaciones.includes(aprobacion)) return;
+    this.aprobaciones = this.aprobaciones.filter((a) => a !== aprobacion);
+    this.eventEmitter.emit('ingreso.espera-terminada', { id: aprobacion.id });
+  }
+
+  /**
+   * Orden "facial primero": la aprobación que usa este DNI. Primero se espera
+   * (a lo sumo ESPERA_QUIEN_APROBO_MS) a saber quién sopló en cada una.
+   * - La de **esta persona**: se usa (confirmada).
+   * - Si no hay ninguna suya y **una sola** no se sabe de quién es: se usa sin
+   *   confirmar (el equipo no lo dijo a tiempo; como antes).
+   * - Si todas son de **otras personas**: "No es quien sopló" (no se gasta
+   *   ninguna: siguen esperando a sus dueños).
+   * - Si hay varias sin saber de quién son: no se puede elegir (sin aprobación).
+   */
+  private async aprobacionPara(pin: string | null): Promise<
+    | { tipo: 'usar'; aprobacion: AprobacionSinDni; quien: PaseExitoso | null }
+    | { tipo: 'otra-persona'; quien: PaseExitoso }
+    | { tipo: 'ninguna' }
+  > {
+    const vigentes = this.aprobacionesVigentes();
+    if (vigentes.length === 0) return { tipo: 'ninguna' };
+    await this.esperarQuienAprobo(vigentes);
+    const propias = vigentes.filter((a) => a.quienSabido && a.quienSabido.pin === pin);
+    if (propias.length > 0) {
+      const aprobacion = propias[propias.length - 1];
+      return { tipo: 'usar', aprobacion, quien: aprobacion.quienSabido! };
+    }
+    const desconocidas = vigentes.filter((a) => !a.quienSabido);
+    if (desconocidas.length === 1) return { tipo: 'usar', aprobacion: desconocidas[0], quien: null };
+    if (desconocidas.length === 0) return { tipo: 'otra-persona', quien: vigentes[vigentes.length - 1].quienSabido! };
+    this.logger.warn(`Facial primero: ${desconocidas.length} aprobaciones sin saber de quién son; no se puede elegir`);
+    return { tipo: 'ninguna' };
   }
 
   /**
@@ -348,16 +378,15 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    * activo tiene permiso fijo en el G4 Pro, así que hace rostro y alcohol sin
    * pasar antes el DNI. El DNI llega al final y usa la aprobación de los
    * últimos 20 s. El `rtlog` no dice quién aprobó, pero el G4 Pro lo anota en
-   * su archivo de rastreo: si se sabe quién sopló y **no es el del DNI**, se
-   * deniega ("No es quien sopló"); si no se pudo saber, se sigue como antes
-   * (sin confirmar, lo compara el vigilante con la foto). Por eso sigue
-   * habiendo una sola aprobación a la vez y solo 20 s. Baja, antipassback y
+   * su archivo de rastreo: cada aprobación queda ligada a quien sopló, así
+   * que varias personas pueden estar esperando a la vez (aprobacionPara). Si
+   * sopló otra persona se deniega ("No es quien sopló"). Baja, antipassback y
    * documentos se revisan aquí, con el DNI.
    */
   private async registrarDniAlFinal(persona: Persona, dto: IngresoDto) {
-    const aprobada = this.aprobacionVigente();
-    // La aprobación se usa con este DNI, entre o no: no queda para otro.
-    this.soltarAprobacion();
+    const eleccion = await this.aprobacionPara(pinDeDocumento(persona.numeroDocumento));
+    // La aprobación de esta persona se usa con su DNI, entre o no: no queda para otro.
+    if (eleccion.tipo === 'usar') this.soltarAprobacion(eleccion.aprobacion);
 
     if (persona.estado !== 'activo') return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoPorBaja: true });
     if (await this.figuraDentro(persona.id)) return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoYaDentro: true });
@@ -370,13 +399,14 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         documentosVencidos,
       });
     }
-    if (!aprobada) return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoSinFacial: true });
-
-    const quien = await this.quienAproboConLimite(aprobada);
-    if (quien && quien.pin !== pinDeDocumento(persona.numeroDocumento)) {
+    if (eleccion.tipo === 'ninguna') return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoSinFacial: true });
+    if (eleccion.tipo === 'otra-persona') {
+      const { quien } = eleccion;
       this.logger.warn(`Facial primero: sopló el DNI ${quien.pin} (${quien.nombre}) y pasó el DNI ${persona.numeroDocumento}; se deniega`);
       return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoNoEsQuienSoplo: true, dniQueSoplo: quien.pin });
     }
+    const { aprobacion: aprobada, quien } = eleccion;
+    if (!quien) this.logger.warn(`Facial primero: el G4 Pro no dijo a tiempo quién sopló; DNI ${persona.numeroDocumento} sin confirmar`);
 
     const evento = await this.prisma.eventoAcceso.create({
       data: {
@@ -411,10 +441,10 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Orden "facial primero": resultado del G4 Pro sin nadie habilitado por su
-   * DNI. `event=0`: alguien aprobó; queda esperando su DNI 20 s. Si ya había
-   * otra aprobación esperando, se anulan las dos (nadie guarda aprobaciones
-   * para otro). Otro código: no pasó el alcohol (no se sabe quién: queda sin
-   * persona). `event=23` (sin permiso fijo, p. ej. recién registrado) y
+   * DNI. `event=0`: alguien aprobó; queda esperando su DNI 20 s, junto a las
+   * de otras personas (se averigua quién sopló en cada una). Si la misma
+   * persona vuelve a aprobar, queda solo la última. Otro código: no pasó el
+   * alcohol (no se sabe quién: queda sin persona). `event=23` (sin permiso fijo, p. ej. recién registrado) y
    * `event=27` (rostro no registrado) solo se anotan.
    */
   private async resultadoFacialPrimero(evento: RtlogRecibidoEvent) {
@@ -428,25 +458,25 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       return;
     }
     if (codigo === '0') {
-      if (this.aprobacionVigente()) {
-        this.logger.warn('Facial primero: dos aprobaciones seguidas sin DNI entre medio; se anulan las dos');
-        this.soltarAprobacion();
-        return;
-      }
       const aprobacion: AprobacionSinDni = {
         id: -evento.verificacionId,
         en: Date.now(),
         verificacionId: evento.verificacionId,
         quien: this.preguntarQuienAprobo(evento),
       };
-      this.aprobacion = aprobacion;
+      this.aprobaciones.push(aprobacion);
       this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
       this.logger.log('Facial primero: rostro y alcohol aprobados; esperando el DNI (20 s)');
       // Sin esperar (no se detiene a los demás): al saberse, el Panel muestra quién sopló.
       void aprobacion.quien.then((quien) => {
         aprobacion.quienSabido = quien;
-        if (quien) this.logger.log(`Facial primero: aprobó el DNI ${quien.pin} (${quien.nombre})`);
-        if (quien && this.aprobacion === aprobacion) this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
+        if (!quien || !this.aprobaciones.includes(aprobacion)) return;
+        this.logger.log(`Facial primero: aprobó el DNI ${quien.pin} (${quien.nombre})`);
+        // La misma persona volvió a soplar: vale solo la última aprobación.
+        for (const anterior of this.aprobaciones.filter((a) => a !== aprobacion && a.quienSabido?.pin === quien.pin)) {
+          this.soltarAprobacion(anterior);
+        }
+        this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
       });
       return;
     }
@@ -469,24 +499,28 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Quién aprobó, esperando a lo sumo ESPERA_QUIEN_APROBO_MS si todavía se está leyendo del equipo. */
-  private async quienAproboConLimite(aprobada: AprobacionSinDni): Promise<PaseExitoso | null> {
-    if (aprobada.quienSabido !== undefined) return aprobada.quienSabido;
+  /** Espera a saber quién sopló en estas aprobaciones, a lo sumo ESPERA_QUIEN_APROBO_MS (las que no, quedan sin saber). */
+  private async esperarQuienAprobo(aprobaciones: AprobacionSinDni[]): Promise<void> {
+    const pendientes = aprobaciones.filter((a) => a.quienSabido === undefined);
+    if (pendientes.length === 0) return;
     let limite: NodeJS.Timeout | undefined;
-    const tarde = new Promise<null>((r) => (limite = setTimeout(() => r(null), ESPERA_QUIEN_APROBO_MS)));
+    const tarde = new Promise<void>((r) => (limite = setTimeout(r, ESPERA_QUIEN_APROBO_MS)));
     try {
-      const quien = await Promise.race([aprobada.quien, tarde]);
-      if (quien === null && aprobada.quienSabido === undefined) {
-        this.logger.warn('Facial primero: el G4 Pro no dijo a tiempo quién sopló; se sigue sin confirmar');
-      }
-      return quien;
+      await Promise.race([Promise.all(pendientes.map((a) => a.quien)), tarde]);
+      // Deja correr el .then que anota quienSabido en cada una.
+      await Promise.resolve();
     } finally {
       clearTimeout(limite);
     }
   }
 
   /** Orden "facial primero": denegado sin persona (no pasó el alcohol, o nadie pasó su DNI a tiempo). */
-  private async registrarSinPersona(motivos: { denegadoPorAlcohol?: boolean; denegadoSinDni?: boolean; fechaHora?: Date }, verificacionId?: number) {
+  private async registrarSinPersona(
+    motivos: { denegadoPorAlcohol?: boolean; denegadoSinDni?: boolean; fechaHora?: Date; dniQueSoplo?: string },
+    verificacionId?: number,
+  ) {
+    // Si el G4 Pro dijo quién sopló (y no pasó su DNI a tiempo), el rechazo queda con su nombre.
+    const persona = motivos.dniQueSoplo ? await this.findPersonaPorDocumento('DNI', motivos.dniQueSoplo) : null;
     const evento = await this.prisma.eventoAcceso.create({
       data: {
         tipoMovimiento: 'ingreso',
@@ -494,6 +528,10 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         denegadoPorAlcohol: motivos.denegadoPorAlcohol ?? false,
         denegadoSinDni: motivos.denegadoSinDni ?? false,
         facialPrimero: true,
+        ...(motivos.dniQueSoplo ? { dniQueSoplo: motivos.dniQueSoplo } : {}),
+        ...(persona
+          ? { personaId: persona.id, tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad, numeroDocumento: persona.numeroDocumento }
+          : {}),
         ...(motivos.fechaHora ? { fechaHora: motivos.fechaHora } : {}),
       },
     });
@@ -505,8 +543,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       tipoMovimiento: evento.tipoMovimiento,
       resultado: evento.resultado,
       fechaHora: evento.fechaHora.toISOString(),
-      persona: null,
-      numeroDocumento: null,
+      persona: persona ? { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos } : null,
+      numeroDocumento: persona?.numeroDocumento ?? null,
       motivos: { alcohol: !!motivos.denegadoPorAlcohol, sinDni: !!motivos.denegadoSinDni },
       facialPrimero: true,
     });
@@ -767,12 +805,13 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    */
   private async cerrarVencidos(): Promise<void> {
     const ahora = Date.now();
-    // Facial primero: alguien aprobó y nadie pasó su DNI en 20 s.
-    if (this.aprobacion && !this.aprobacionVigente(ahora)) {
-      const { verificacionId } = this.aprobacion;
-      this.soltarAprobacion();
-      this.logger.log('Facial primero: nadie pasó su DNI en 20 s después de aprobar');
-      await this.registrarSinPersona({ denegadoSinDni: true }, verificacionId);
+    // Facial primero: aprobaciones cuyo dueño no pasó su DNI en 20 s.
+    const vigentes = this.aprobacionesVigentes(ahora);
+    for (const vencida of this.aprobaciones.filter((a) => !vigentes.includes(a))) {
+      this.soltarAprobacion(vencida);
+      const quien = vencida.quienSabido ?? null;
+      this.logger.log(`Facial primero: ${quien ? `el DNI ${quien.pin}` : 'nadie'} no pasó su DNI en 20 s después de aprobar`);
+      await this.registrarSinPersona({ denegadoSinDni: true, dniQueSoplo: quien?.pin }, vencida.verificacionId);
     }
     const vencidas = (
       await this.prisma.ingresoPendiente.findMany({
@@ -803,8 +842,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       orderBy: { creadoEn: 'desc' },
       include: CON_PERSONA,
     });
-    const aprobacion = this.aprobacionVigente();
-    return [...(aprobacion ? [aprobacionEnEspera(aprobacion)] : []), ...pendientes.filter((p) => this.sigueAbierta(p)).map(aEnEspera)];
+    const aprobaciones = this.aprobacionesVigentes().reverse().map(aprobacionEnEspera);
+    return [...aprobaciones, ...pendientes.filter((p) => this.sigueAbierta(p)).map(aEnEspera)];
   }
 
   /**

@@ -276,7 +276,11 @@ function VigilanciaContent() {
       socket.on("ingreso-en-espera", (ingreso: IngresoEnEspera) => {
         setAhora(Date.now());
         // Llega también cuando una persona en cola pasa a su turno: se reemplaza su fila.
-        setEnEspera((actuales) => [ingreso, ...actuales.filter((i) => i.id !== ingreso.id && i.personaId !== ingreso.personaId)]);
+        // Las aprobaciones de "facial primero" no tienen persona (personaId 0): solo se reemplaza la misma.
+        setEnEspera((actuales) => [
+          ingreso,
+          ...actuales.filter((i) => i.id !== ingreso.id && (ingreso.personaId === 0 || i.personaId !== ingreso.personaId)),
+        ]);
       });
       socket.on("ingreso-espera-terminada", ({ id }: { id: number }) => {
         setEnEspera((actuales) => actuales.filter((i) => i.id !== id));
