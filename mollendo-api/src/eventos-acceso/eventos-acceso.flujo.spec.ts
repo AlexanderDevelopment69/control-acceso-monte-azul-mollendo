@@ -841,7 +841,7 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       it('la prueba llega y después el DNI (en 20 s): abre con quien sopló', async () => {
         agregarPersona(base, '11111111');
         await attlog('11111111');
-        expect(de('ingreso.en-espera')[0]).toMatchObject({ nombres: 'Aprobó Persona 11111111 Prueba', esperaDni: true });
+        expect(de('ingreso.en-espera')[0]).toMatchObject({ nombres: 'Aprobó Persona 11111111 Prueba', esperaDni: true, personaId: 100 });
         avanzar(5_000);
         expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado', dniQueSoplo: '11111111' });
         expect(de('molinete.abrir')).toHaveLength(1);

@@ -129,18 +129,20 @@ interface AprobacionSinDni {
   quien: Promise<PaseExitoso | null>;
   /** Lo mismo, ya resuelto (undefined: todavía se está leyendo). */
   quienSabido?: PaseExitoso | null;
+  /** G4 Pro en asistencia: la persona del sistema que sopló (para su foto en el Panel). */
+  persona?: { id: number; tieneFoto: boolean };
 }
 
 /** La aprobación como fila del Panel ("Aprobó rostro y alcohol: falta que pase su DNI"). */
 function aprobacionEnEspera(a: AprobacionSinDni): IngresoEnEspera {
   return {
     id: a.id,
-    personaId: 0,
+    personaId: a.persona?.id ?? 0,
     nombres: a.quienSabido ? `Aprobó ${a.quienSabido.nombre}` : 'Aprobó rostro y alcohol',
     apellidos: '',
     numeroDocumento: a.quienSabido?.pin ?? '—',
     empresa: null,
-    tieneFoto: false,
+    tieneFoto: a.persona?.tieneFoto ?? false,
     torniqueteId: null,
     desde: new Date(a.en).toISOString(),
     hasta: new Date(a.en + VENTANA_DNI_FACIAL_PRIMERO_MS).toISOString(),
@@ -590,6 +592,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         verificacionId: evento.verificacionId,
         quien: Promise.resolve(quien),
         quienSabido: quien,
+        persona: { id: persona.id, tieneFoto: !!persona.fotoUrl },
       };
       this.aprobaciones.push(aprobacion);
       this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
