@@ -62,10 +62,9 @@ describe("Monitor del G4 Pro", () => {
     expect(within(otra).getByText(/Alcohol ·/)).toBeInTheDocument();
   });
 
-  it("formatos: grado con espacio y la fecha solo si no es de hoy", () => {
+  it("formatos: grado con espacio y la hora siempre con el día", () => {
     expect(grado("0.000951g/L")).toBe("0.000951 g/L");
-    const hoy = new Date("2026-10-20T15:00:00");
-    expect(horaCorta("2026-10-20T13:05:09", hoy)).toBe("13:05:09");
-    expect(horaCorta("2026-10-19T18:27:00", hoy)).toBe("19/10 18:27:00");
+    expect(horaCorta("2026-10-20T13:05:09")).toBe("20/10 13:05:09");
+    expect(horaCorta("2026-10-19T18:27:00")).toBe("19/10 18:27:00");
   });
 });

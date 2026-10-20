@@ -22,13 +22,10 @@ const RECARGA_RESPALDO_MS = 60_000;
 /** Demora del aviso del G4 que ya se marca (lo normal medido: 10 a 12 s). */
 const DEMORA_ALTA_S = 15;
 
-/** "18:27:00", o "19/10 18:27:00" si no es de hoy. */
-export function horaCorta(iso: string, hoy = new Date()): string {
+/** "20/10 18:27:00": siempre con el día, también las de hoy. */
+export function horaCorta(iso: string): string {
   const fecha = new Date(iso);
-  const hora = fecha.toLocaleTimeString("es-PE", { hour12: false });
-  return fecha.toDateString() === hoy.toDateString()
-    ? hora
-    : `${fecha.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit" })} ${hora}`;
+  return `${fecha.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit" })} ${fecha.toLocaleTimeString("es-PE", { hour12: false })}`;
 }
 
 /** "0.00g/L" → "0.00 g/L". */
