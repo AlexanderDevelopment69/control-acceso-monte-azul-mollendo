@@ -1,0 +1,312 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Flujo de ingreso Mollendo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  /* Layout: una columna de lectura; cada forma es un recorrido horizontal de pasos (se apila en el teléfono), seguido de sus desvíos y su línea de tiempo. Oscuro primero. */
+  :root {
+    --fondo: #12161c; --capa: #1a2029; --capa2: #222a36; --linea: #2d3644;
+    --tinta: #e9edf3; --suave: #a1acbc; --tenue: #717d8f;
+    --azul: #6aa6f0; --azul-f: #1c3150;
+    --verde: #4cc98a; --verde-f: #15372a;
+    --ambar: #f0b45a; --ambar-f: #3b2c15;
+    --rojo: #f07a7a; --rojo-f: #3e1d21;
+    --display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+    --texto: "Barlow", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --fondo: #f3f5f8; --capa: #ffffff; --capa2: #eef2f7; --linea: #d9dfe8;
+      --tinta: #18202b; --suave: #4f5b6c; --tenue: #7a8596;
+      --azul: #2563c9; --azul-f: #e1ebfa; --verde: #18864c; --verde-f: #e1f4e9;
+      --ambar: #a86a12; --ambar-f: #fbf0dc; --rojo: #c23737; --rojo-f: #fbe5e5;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --fondo: #f3f5f8; --capa: #ffffff; --capa2: #eef2f7; --linea: #d9dfe8;
+    --tinta: #18202b; --suave: #4f5b6c; --tenue: #7a8596;
+    --azul: #2563c9; --azul-f: #e1ebfa; --verde: #18864c; --verde-f: #e1f4e9;
+    --ambar: #a86a12; --ambar-f: #fbf0dc; --rojo: #c23737; --rojo-f: #fbe5e5;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--fondo); color: var(--tinta); font: 400 15px/1.55 var(--texto);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .pagina { max-width: 1120px; margin: 0 auto; padding-block: 36px 56px; display: flex; flex-direction: column; gap: 44px; }
+  .sobre { font: 600 12px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--azul); }
+  h1 { font: 700 clamp(30px, 5vw, 44px)/1.05 var(--display); margin: 6px 0 10px; text-wrap: balance; }
+  h2 { font: 700 26px/1.1 var(--display); margin: 2px 0 6px; text-wrap: balance; }
+  h3 { font: 700 18px/1.2 var(--display); margin: 0 0 10px; }
+  .intro { color: var(--suave); max-width: 68ch; margin: 0; }
+  .elegir { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .elegir a { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--tinta); background: var(--capa); border: 1px solid var(--linea); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 14px; }
+  .elegir a:hover, .elegir a:focus-visible { border-color: var(--azul); outline: none; }
+  .punto { width: 9px; height: 9px; border-radius: 50%; }
+
+  /* Cada forma */
+  .forma { display: flex; flex-direction: column; gap: 18px; scroll-margin-top: 16px; }
+  .cabeza { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 20px; }
+  .etiqueta { font: 600 12px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--suave); }
+  .chip { display: inline-block; border-radius: 999px; padding: 3px 11px; font: 600 12.5px var(--texto); }
+  .interruptor { display: inline-flex; align-items: center; gap: 9px; color: var(--suave); font-size: 13.5px; }
+  .sw { width: 34px; height: 20px; border-radius: 999px; background: var(--linea); position: relative; flex: none; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--tenue); }
+  .sw.on { background: var(--azul); }
+  .sw.on::after { left: 17px; background: #fff; }
+
+  /* Recorrido de pasos */
+  .recorrido { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: var(--capa); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; }
+  .paso { position: relative; padding: 18px 18px 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .paso + .paso { border-left: 1px solid var(--linea); }
+  .paso + .paso::before { content: ""; position: absolute; left: -9px; top: 36px; width: 16px; height: 16px; background: var(--capa); border-top: 1px solid var(--linea); border-right: 1px solid var(--linea); transform: rotate(45deg); }
+  .ico { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--azul-f); color: var(--azul); position: relative; }
+  .ico svg { width: 23px; height: 23px; }
+  .ico .n { position: absolute; top: -5px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--azul); color: var(--capa); display: grid; place-items: center; font: 700 12px var(--display); }
+  .paso.fin .ico { background: var(--verde-f); color: var(--verde); }
+  .paso.fin .ico .n { background: var(--verde); }
+  .paso b { font: 700 17px/1.2 var(--display); }
+  .paso p { margin: 0; color: var(--suave); font-size: 14px; }
+  .tiempo { align-self: flex-start; font: 600 12px var(--mono); border-radius: 6px; padding: 2px 7px; background: var(--ambar-f); color: var(--ambar); }
+  .pantalla { margin-top: 2px; border: 1px dashed var(--linea); border-radius: 8px; padding: 7px 9px; font-size: 12.5px; color: var(--suave); }
+  .pantalla strong { color: var(--tinta); font-weight: 600; }
+
+  /* Desvíos */
+  .desvios { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .desvio { background: var(--capa); border: 1px solid var(--linea); border-radius: 12px; padding: 14px 15px; display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px; align-content: start; }
+  .desvio .marca { grid-row: span 3; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; }
+  .desvio .marca svg { width: 19px; height: 19px; }
+  .desvio .si { font-size: 13px; color: var(--suave); }
+  .desvio .que { font-weight: 600; }
+  .desvio .motivo { justify-self: start; margin-top: 4px; font: 600 12px var(--texto); border-radius: 6px; padding: 2px 8px; }
+  .rojo .marca, .rojo .motivo { background: var(--rojo-f); color: var(--rojo); }
+  .ambar .marca, .ambar .motivo { background: var(--ambar-f); color: var(--ambar); }
+  .verde .marca, .verde .motivo { background: var(--verde-f); color: var(--verde); }
+
+  /* Línea de tiempo */
+  .tiempos { background: var(--capa); border: 1px solid var(--linea); border-radius: 14px; padding: 16px 18px 8px; }
+  .tiempos .lienzo { overflow-x: auto; }
+  .tiempos svg { display: block; width: 100%; min-width: 560px; height: auto; }
+  .tiempos text { font-family: var(--texto); }
+  .leyenda { color: var(--tenue); font-size: 12.5px; margin: 4px 0 0; }
+
+  /* Reglas comunes */
+  .reglas { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+  .regla { background: var(--capa); border: 1px solid var(--linea); border-radius: 12px; padding: 14px 15px; display: grid; grid-template-columns: 28px 1fr; gap: 10px; }
+  .regla svg { width: 22px; height: 22px; color: var(--azul); }
+  .regla b { display: block; font-weight: 600; }
+  .regla span { color: var(--suave); font-size: 14px; }
+  .pie { color: var(--tenue); font-size: 12.5px; border-top: 1px solid var(--linea); padding-top: 14px; }
+
+  @media (max-width: 760px) {
+    .recorrido { grid-template-columns: minmax(0, 1fr); }
+    .paso + .paso { border-left: 0; border-top: 1px solid var(--linea); }
+    .paso + .paso::before { left: 32px; top: -9px; transform: rotate(135deg); }
+  }
+  @media (prefers-reduced-motion: no-preference) { .elegir a { transition: border-color .15s; } }
+
+  @page { size: A4 landscape; margin: 0; }
+  @media print {
+    html, body { background: var(--fondo); } body { padding: 9mm 10mm; }
+    .pagina { padding-block: 0; gap: 16px; max-width: none; }
+    .elegir { display: none; }
+    .forma { break-before: page; gap: 12px; }
+    #documento { break-before: auto; padding-top: 0; }
+    #prueba, #reglas { padding-top: 9mm; }
+    .reglas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .recorrido, .desvio, .tiempos, .regla { break-inside: avoid; }
+  }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-dni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h4M14 13h3"/></symbol>
+    <symbol id="i-rostro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="10.5" r="2.5"/><path d="M8.5 16.5c.8-1.3 2-2 3.5-2s2.7.7 3.5 2"/></symbol>
+    <symbol id="i-soplo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a2.5 2.5 0 1 0-2.5-2.5M3 12h15a2.5 2.5 0 1 1-2.5 2.5M3 16h7a2 2 0 1 1-2 2"/></symbol>
+    <symbol id="i-molinete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M18 4v16M6 12h12"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+    <symbol id="i-reloj" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-flechas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-usuarios" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5"/><circle cx="17" cy="9" r="2.3"/><path d="M16.5 14.6c2.2.2 3.8 1.6 4.5 4"/></symbol>
+    <symbol id="i-repetir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/></symbol>
+    <symbol id="i-salida" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></symbol>
+    <symbol id="i-mano" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M5 20c1-4 3.8-6 7-6s6 2 7 6"/></symbol>
+    <symbol id="i-campana" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+  </defs>
+</svg>
+
+</head><body><main class="pagina">
+  <header>
+    <div class="sobre">Terminal de Mollendo · Control de accesos</div>
+    <h1>Cómo se ingresa</h1>
+    <p class="intro">El ingreso usa el lector de DNI, el equipo facial con alcoholímetro (G4 Pro) y el molinete. Hay dos formas de ingresar y en cada momento rige una sola. En las dos, el sistema sabe quién sopló y cuánto alcohol dio. Los tiempos son los medidos con el equipo real.</p>
+    <nav class="elegir" aria-label="Formas de ingreso">
+      <a href="#documento"><span class="punto" style="background:var(--verde)"></span>DNI → Facial → Molinete</a>
+      <a href="#prueba"><span class="punto" style="background:var(--azul)"></span>Facial → DNI → Molinete</a>
+      <a href="#reglas"><span class="punto" style="background:var(--ambar)"></span>Reglas de las dos</a>
+    </nav>
+  </header>
+
+  <!-- FORMA 1 -->
+  <section class="forma" id="documento">
+    <div class="cabeza">
+      <div>
+        <div class="etiqueta">Forma 1</div>
+        <h2>DNI → Facial → Molinete</h2>
+        <span class="chip" style="background:var(--verde-f);color:var(--verde)">Recomendada · los documentos se revisan antes de soplar</span>
+      </div>
+    </div>
+
+    <ol class="recorrido" aria-label="Pasos de la forma 1">
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-dni"/></svg><span class="n">1</span></span>
+        <b>Pasa su DNI</b>
+        <p>Por el lector de ingreso. El sistema revisa documentos, baja y si ya figura dentro.</p>
+        <span class="tiempo">~2 s</span>
+        <div class="pantalla">Panel: <strong>en espera</strong>, con cuenta de 60 s</div>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-rostro"/></svg><span class="n">2</span></span>
+        <b>Mira al G4</b>
+        <p>El equipo reconoce su rostro.</p>
+        <span class="tiempo">rostro y soplido: 5-15 s · máximo 1 min</span>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-soplo"/></svg><span class="n">3</span></span>
+        <b>Sopla</b>
+        <p>El G4 mide el alcohol y envía al sistema su DNI y el grado.</p>
+        <span class="tiempo">el G4 avisa en ~10 s</span>
+      </li>
+      <li class="paso fin">
+        <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
+        <b>Se abre el molinete</b>
+        <p>Con 0.00 g/L. Pasa y queda registrado su ingreso.</p>
+        <span class="tiempo">~10 s después de soplar</span>
+        <div class="pantalla">Panel: <strong>Autorizado</strong></div>
+      </li>
+    </ol>
+
+    <h3>Si algo no sale así</h3>
+    <div class="desvios">
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-soplo"/></svg></span><span class="si">Si sopla y da alcohol</span><span class="que">No se abre y suena el aviso.</span><span class="motivo">Alcohol</span></div>
+      <div class="desvio ambar"><span class="marca"><svg><use href="#i-reloj"/></svg></span><span class="si">Si no sopla en 1 minuto</span><span class="que">Se cierra su espera. Puede pasar su DNI otra vez.</span><span class="motivo">No completó rostro y alcohol</span></div>
+      <div class="desvio ambar"><span class="marca"><svg><use href="#i-flechas"/></svg></span><span class="si">Si sopla antes de pasar su DNI</span><span class="que">Esa prueba no cuenta: pasa su DNI y vuelve a soplar.</span><span class="motivo">Sin efecto</span></div>
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-doc"/></svg></span><span class="si">Si tiene documentos vencidos o está de baja</span><span class="que">Se deniega al pasar el DNI, sin llegar a soplar.</span><span class="motivo">Documentos · Dado de baja</span></div>
+    </div>
+
+    <div class="tiempos" aria-label="Línea de tiempo de la forma 1">
+      <h3>Tiempos medidos con el equipo real</h3>
+      <div class="lienzo">
+        <svg viewBox="0 0 760 110" role="img" aria-label="DNI en 0 s, soplido hacia los 6 s, apertura hacia los 16 s">
+          <g fill="var(--tenue)" font-size="11" text-anchor="middle">
+            <text x="40" y="14">0 s</text><text x="176" y="14">5 s</text><text x="312" y="14">10 s</text><text x="448" y="14">15 s</text><text x="584" y="14">20 s</text><text x="720" y="14">25 s</text>
+          </g>
+          <g stroke="var(--linea)" stroke-width="1"><line x1="40" y1="22" x2="40" y2="96"/><line x1="176" y1="22" x2="176" y2="96"/><line x1="312" y1="22" x2="312" y2="96"/><line x1="448" y1="22" x2="448" y2="96"/><line x1="584" y1="22" x2="584" y2="96"/><line x1="720" y1="22" x2="720" y2="96"/></g>
+          <rect x="40" y="52" width="680" height="6" rx="3" fill="var(--capa2)"/>
+          <rect x="40" y="52" width="163" height="6" rx="3" fill="var(--azul)" opacity=".55"/>
+          <rect x="203" y="52" width="272" height="6" rx="3" fill="var(--verde)" opacity=".55"/>
+          <circle cx="40" cy="55" r="8" fill="var(--azul)"/><text x="40" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="middle">DNI</text>
+          <circle cx="203" cy="55" r="8" fill="var(--azul)"/><text x="203" y="40" fill="var(--tinta)" font-size="12.5" text-anchor="middle">Sopla</text>
+          <circle cx="475" cy="55" r="8" fill="var(--verde)"/><text x="475" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="middle">Se abre</text>
+          <text x="339" y="84" fill="var(--tenue)" font-size="11" text-anchor="middle">aviso del G4 ~10 s</text>
+        </svg>
+      </div>
+      <p class="leyenda">La espera de unos 10 s entre el soplido y la apertura la pone el G4 al enviar su aviso.</p>
+    </div>
+  </section>
+
+  <!-- FORMA 2 -->
+  <section class="forma" id="prueba">
+    <div class="cabeza">
+      <div>
+        <div class="etiqueta">Forma 2</div>
+        <h2>Facial → DNI → Molinete</h2>
+        <span class="chip" style="background:var(--azul-f);color:var(--azul)">Más fluida · el DNI va al final</span>
+      </div>
+    </div>
+
+    <ol class="recorrido" aria-label="Pasos de la forma 2">
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-rostro"/></svg><span class="n">1</span></span>
+        <b>Mira al G4</b>
+        <p>Todo el personal registrado puede hacer la prueba sin pasar antes el DNI.</p>
+        <span class="tiempo">rostro y soplido: 5-15 s</span>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-soplo"/></svg><span class="n">2</span></span>
+        <b>Sopla</b>
+        <p>El equipo dice <strong>“correcto”</strong> y envía al sistema su DNI y el grado.</p>
+        <span class="tiempo">el Panel lo muestra en ~10 s</span>
+        <div class="pantalla">Panel: <strong>Aprobó [nombre] · pase su DNI</strong>, con su foto</div>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-dni"/></svg><span class="n">3</span></span>
+        <b>Pasa su DNI</b>
+        <p>Puede pasarlo apenas oye “correcto”: el sistema espera el aviso del G4. Aquí se revisan los documentos.</p>
+        <span class="tiempo">máximo 15 s desde “pase su DNI”</span>
+      </li>
+      <li class="paso fin">
+        <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
+        <b>Se abre el molinete</b>
+        <p>Solo si el DNI es de quien sopló y sus documentos están en regla.</p>
+        <span class="tiempo">al pasar el DNI</span>
+        <div class="pantalla">Panel: <strong>Autorizado · Facial primero</strong></div>
+      </li>
+    </ol>
+
+    <h3>Si algo no sale así</h3>
+    <div class="desvios">
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-soplo"/></svg></span><span class="si">Si sopla y da alcohol</span><span class="que">Se deniega con su nombre aunque no pase su DNI, y suena el aviso.</span><span class="motivo">Alcohol</span></div>
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-flechas"/></svg></span><span class="si">Si pasa el DNI sin haber soplado antes</span><span class="que">No se abre. Debe empezar por el equipo facial.</span><span class="motivo">DNI antes del facial</span></div>
+      <div class="desvio ambar"><span class="marca"><svg><use href="#i-reloj"/></svg></span><span class="si">Si sopla y no pasa su DNI a tiempo</span><span class="que">Vence la aprobación. Debe empezar otra vez.</span><span class="motivo">No pasó su DNI a tiempo</span></div>
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-usuarios"/></svg></span><span class="si">Si sopla uno y pasa el DNI otro</span><span class="que">No se abre: la prueba solo sirve para el DNI de quien sopló.</span><span class="motivo">DNI antes del facial</span></div>
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-doc"/></svg></span><span class="si">Si tiene documentos vencidos o está de baja</span><span class="que">Se deniega al pasar el DNI, después de soplar.</span><span class="motivo">Documentos · Dado de baja</span></div>
+    </div>
+
+    <div class="tiempos" aria-label="Línea de tiempo de la forma 2">
+      <h3>Tiempos medidos con el equipo real</h3>
+      <div class="lienzo">
+        <svg viewBox="0 0 760 110" role="img" aria-label="Correcto en 0 s, DNI hacia los 7 s, apertura a los 10 s, fin del plazo a los 25 s">
+          <g fill="var(--tenue)" font-size="11" text-anchor="middle">
+            <text x="40" y="14">0 s</text><text x="176" y="14">5 s</text><text x="312" y="14">10 s</text><text x="448" y="14">15 s</text><text x="584" y="14">20 s</text><text x="720" y="14">25 s</text>
+          </g>
+          <g stroke="var(--linea)" stroke-width="1"><line x1="40" y1="22" x2="40" y2="96"/><line x1="176" y1="22" x2="176" y2="96"/><line x1="312" y1="22" x2="312" y2="96"/><line x1="448" y1="22" x2="448" y2="96"/><line x1="584" y1="22" x2="584" y2="96"/><line x1="720" y1="22" x2="720" y2="96"/></g>
+          <rect x="40" y="52" width="680" height="6" rx="3" fill="var(--capa2)"/>
+          <rect x="40" y="52" width="272" height="6" rx="3" fill="var(--azul)" opacity=".55"/>
+          <rect x="312" y="52" width="408" height="6" rx="3" fill="var(--ambar)" opacity=".45"/>
+          <circle cx="40" cy="55" r="8" fill="var(--azul)"/><text x="40" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="middle">“Correcto”</text>
+          <circle cx="230" cy="55" r="8" fill="var(--azul)"/><text x="230" y="40" fill="var(--tinta)" font-size="12.5" text-anchor="middle">Pasa su DNI</text>
+          <circle cx="312" cy="55" r="8" fill="var(--verde)"/><text x="312" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="middle">Se abre</text>
+          <text x="312" y="98" fill="var(--tenue)" font-size="11" text-anchor="middle">llega el aviso del G4</text>
+          <circle cx="720" cy="55" r="8" fill="var(--ambar)"/><text x="706" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="end">Fin del plazo</text>
+          <text x="516" y="40" fill="var(--tenue)" font-size="11" text-anchor="middle">15 s visibles en el Panel</text>
+        </svg>
+      </div>
+      <p class="leyenda">Si el DNI llega antes que el aviso del G4, el sistema lo espera unos segundos en silencio y abre cuando llega.</p>
+    </div>
+  </section>
+
+  <!-- REGLAS -->
+  <section class="forma" id="reglas">
+    <div>
+      <div class="etiqueta">En las dos formas</div>
+      <h2>Reglas que no cambian</h2>
+    </div>
+    <div class="reglas">
+      <div class="regla"><svg><use href="#i-campana"/></svg><div><b>Alcohol desde 0.0001 g/L</b><span>Se deniega con su nombre y el grado, y suena el aviso. Es el mismo límite del G4.</span></div></div>
+      <div class="regla"><svg><use href="#i-repetir"/></svg><div><b>Vale la primera prueba</b><span>Volver a soplar en los 20 s siguientes no cambia el resultado. Después puede intentar otra vez.</span></div></div>
+      <div class="regla"><svg><use href="#i-usuarios"/></svg><div><b>Varias personas a la vez</b><span>Cada prueba trae el DNI de quien sopló, así que los pases no se cruzan.</span></div></div>
+      <div class="regla"><svg><use href="#i-doc"/></svg><div><b>Documentos, baja y antipassback</b><span>Se revisan siempre con el DNI. Quien figura dentro no puede volver a ingresar sin salir.</span></div></div>
+      <div class="regla"><svg><use href="#i-salida"/></svg><div><b>Salida</b><span>Pasa su DNI por el lector de salida. Debe tener un ingreso registrado.</span></div></div>
+      <div class="regla"><svg><use href="#i-mano"/></svg><div><b>Si falla el equipo facial</b><span>El vigilante activa la verificación manual y decide cada ingreso desde el Panel.</span></div></div>
+    </div>
+  </section>
+
+  <p class="pie">Tiempos medidos con el G4 Pro HSR3263100192 el 19/10/2026: el aviso del equipo llega 10-12 s después del soplido (15-17 s con alcohol alto).</p>
+</main>
+</body></html>
