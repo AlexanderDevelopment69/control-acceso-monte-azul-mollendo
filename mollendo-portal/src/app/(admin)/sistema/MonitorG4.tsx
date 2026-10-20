@@ -22,10 +22,15 @@ const RECARGA_RESPALDO_MS = 60_000;
 /** Demora del aviso del G4 que ya se marca (lo normal medido: 10 a 12 s). */
 const DEMORA_ALTA_S = 15;
 
-/** "20/10 18:27:00": siempre con el día, también las de hoy. */
-export function horaCorta(iso: string): string {
+/**
+ * "20/10 18:27:00". Con `dia` (el de la prueba), solo "18:27:00" si es el mismo
+ * día: la llegada y el ingreso son segundos después y no repiten la fecha.
+ */
+export function horaCorta(iso: string, dia?: string | null): string {
   const fecha = new Date(iso);
-  return `${fecha.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit" })} ${fecha.toLocaleTimeString("es-PE", { hour12: false })}`;
+  const hora = fecha.toLocaleTimeString("es-PE", { hour12: false });
+  if (dia && new Date(dia).toDateString() === fecha.toDateString()) return hora;
+  return `${fecha.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit" })} ${hora}`;
 }
 
 /** "0.00g/L" → "0.00 g/L". */
@@ -45,7 +50,7 @@ function FilaMarcacion({ m }: { m: MarcacionG4 }) {
         {m.numero !== null && <span className="block text-xs text-gray-400">N.º {m.numero}</span>}
       </TableCell>
       <TableCell className={`${celda} whitespace-nowrap`}>
-        <span className="tabular-nums">{horaCorta(m.llegada)}</span>
+        <span className="tabular-nums">{horaCorta(m.llegada, m.horaPrueba)}</span>
         {m.demoraSegundos !== null && (
           <span
             className={`block text-xs ${m.demoraSegundos > DEMORA_ALTA_S ? "text-warning-600 dark:text-orange-400" : "text-gray-400"}`}
@@ -83,7 +88,7 @@ function FilaMarcacion({ m }: { m: MarcacionG4 }) {
             </Badge>
             <span className="block pt-1 text-xs text-gray-400">
               {m.ingreso.motivo ? `${m.ingreso.motivo} · ` : ""}
-              {horaCorta(m.ingreso.fechaHora)}
+              {horaCorta(m.ingreso.fechaHora, m.horaPrueba)}
             </span>
           </>
         ) : (
