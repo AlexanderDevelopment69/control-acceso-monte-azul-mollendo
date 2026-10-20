@@ -67,7 +67,7 @@ const AppHeader: React.FC = () => {
           </button>
 
           <Link href="/" className="flex items-center gap-2.5 lg:hidden">
-            <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={81} height={28} />
+            <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={81} height={28} loading="eager" />
             <span className="text-base font-semibold leading-tight text-gray-800 dark:text-white/90">
               Control de Acceso
               <span className="block text-xs font-normal text-gray-400">Terminal de Mollendo</span>

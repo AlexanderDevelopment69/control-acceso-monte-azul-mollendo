@@ -119,14 +119,14 @@ const AppSidebar: React.FC = () => {
         <Link href="/" onClick={cerrarEnCelular} className="flex h-11 items-center overflow-hidden">
           {isExpanded || isHovered || isMobileOpen ? (
             <span className="flex items-center gap-3 whitespace-nowrap">
-              <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={81} height={28} />
+              <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={81} height={28} loading="eager" />
               <span className="text-lg font-semibold leading-tight text-gray-800 dark:text-white/90">
                 Control de Acceso
                 <span className="block text-xs font-normal text-gray-400">Terminal de Mollendo</span>
               </span>
             </span>
           ) : (
-            <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={46} height={16} />
+            <Image src="/images/logo/marca-monteazul.png" alt="Monte Azul" width={46} height={16} loading="eager" />
           )}
         </Link>
       </div>

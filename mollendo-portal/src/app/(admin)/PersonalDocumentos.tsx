@@ -393,8 +393,9 @@ export function PersonalDocumentos() {
           ) : (
             // Sin nadie elegido: contadores (al presionarlos filtran la lista) y la indicación.
             // En el celular no se muestra: la lista ya ocupa la pantalla.
-            <div className="hidden space-y-5 lg:block">
-              <div className="grid grid-cols-3 gap-4">
+            <div className="@container hidden space-y-5 lg:block">
+              {/* Según el ancho de esta columna (no de la pantalla): angosta, una debajo de otra; con espacio, las tres en fila. */}
+              <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-3">
                 {(
                   [
                     {
@@ -444,7 +445,7 @@ export function PersonalDocumentos() {
                   />
                 ))}
               </div>
-              <div className="flex h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400 dark:border-gray-700">
+              <div className="flex h-60 items-center justify-center rounded-xl border border-dashed border-gray-300 px-6 text-center text-sm text-gray-400 dark:border-gray-700">
                 Elija a una persona de la lista para ver y subir sus documentos.
               </div>
             </div>

@@ -32,6 +32,9 @@ export function TableSearch({
         defaultValue={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        // Con nombre (Chrome avisa en "Issues" de los campos sin id ni name) y sin el autocompletado del navegador.
+        name="busqueda"
+        autoComplete="off"
         className="pl-11"
       />
     </div>

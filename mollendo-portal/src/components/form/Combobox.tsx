@@ -163,6 +163,8 @@ export default function Combobox({
               }}
               placeholder="Buscar…"
               aria-label="Buscar en la lista"
+              name={`${id}-buscar`}
+              autoComplete="off"
               className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:bg-white focus:outline-hidden dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
             />
           </div>
