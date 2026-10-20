@@ -26,13 +26,16 @@ export const APIS_INTEGRACION: ApiIntegracion[] = [
     ejemploRequest: `// Al conectarse, el equipo anuncia su modo y pide sus opciones:
 GET /iclock/cdata?SN=HSR3263100192&options=all&pushver=2.4.1&DeviceType=att
 
-// Órdenes que el servidor le deja (las recoge al consultar /iclock/getrequest; campos separados por tabulador):
+// Órdenes que el servidor le deja: las recoge al consultar /iclock/getrequest
+// (campos separados por tabulador)
 DATA UPDATE USERINFO PIN=12345678\tName=Juan Pérez\tPri=0\tPasswd=\tCard=\tGrp=1\tTZ=0000000100000000\tVerify=-1\tViceCard=
 DATA UPDATE biophoto PIN=12345678\tType=9\tSize=…\tContent=<foto JPG ≤ 20 KB en base64>\tFormat=0\tUrl=\tPostBackTmpFlag=0
 DATA DELETE USERINFO PIN=12345678
 DATA QUERY USERINFO   // lista de usuarios (responde por table=OPERLOG y table=BIODATA)`,
-    ejemploRespuesta: `// Cada prueba (table=ATTLOG): DNI, hora, estado (255), verificación (15 = rostro), código de trabajo, 2 reservados,
-// mascarilla (255 = apagada), temperatura, temperatura convertida, N.º de marcación, grado de alcohol, 3 campos sin uso
+    ejemploRespuesta: `// Cada prueba (table=ATTLOG), campos separados por tabulador:
+// DNI, hora, estado (255), verificación (15 = rostro), código de trabajo,
+// 2 reservados, mascarilla (255 = apagada), temperatura, temperatura convertida,
+// N.º de marcación, grado de alcohol y 3 campos sin uso
 POST /iclock/cdata?SN=HSR3263100192&table=ATTLOG&Stamp=9999
 71988749\t2026-10-19 17:00:20\t255\t15\t0\t0\t0\t255\t0\t0\t6\t0.00g/L\t-\t-\t-       // aprobó
 71988749\t2026-10-19 16:33:26\t255\t15\t0\t0\t0\t255\t0\t0\t9\t0.000595g/L\t-\t-\t-   // alcohol alto`,
@@ -79,7 +82,16 @@ DNI leído en ingreso: pendiente_verificacion`,
 }
 
 // 201 Created — facial primero, ya aprobó rostro y alcohol: autorizado
-{ "eventoId": 187, "tipoMovimiento": "ingreso", "resultado": "autorizado", "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" }, "numeroDocumento": "12345678", "motivos": {}, "facialPrimero": true, "dniQueSoplo": "12345678" }
+{
+  "eventoId": 187,
+  "tipoMovimiento": "ingreso",
+  "resultado": "autorizado",
+  "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" },
+  "numeroDocumento": "12345678",
+  "motivos": {},
+  "facialPrimero": true,
+  "dniQueSoplo": "12345678"
+}
 
 // 201 Created — denegado de inmediato (documentos, baja, ya dentro)
 {
@@ -88,11 +100,22 @@ DNI leído en ingreso: pendiente_verificacion`,
   "resultado": "denegado",
   "persona": { "id": 2, "nombres": "Ana", "apellidos": "Torres" },
   "numeroDocumento": "87654321",
-  "motivos": { "dadoDeBaja": false, "sinDocumentos": false, "documentos": true, "documentosVencidos": ["SCTR"] }
+  "motivos": {
+    "dadoDeBaja": false,
+    "sinDocumentos": false,
+    "documentos": true,
+    "documentosVencidos": ["SCTR"]
+  }
 }
 
 // 201 Created — documento no registrado (queda en el historial sin persona)
-{ "eventoId": 45, "resultado": "denegado", "persona": null, "numeroDocumento": "99999999", "motivos": { "personaNoRegistrada": true } }
+{
+  "eventoId": 45,
+  "resultado": "denegado",
+  "persona": null,
+  "numeroDocumento": "99999999",
+  "motivos": { "personaNoRegistrada": true }
+}
 
 // 401 — X-API-Key inválida o ausente`,
     notas:
@@ -123,7 +146,13 @@ DNI leído en ingreso: pendiente_verificacion`,
 }
 
 // 201 Created — documento no registrado: no se abre y queda en el historial
-{ "eventoId": 46, "resultado": "denegado", "persona": null, "numeroDocumento": "99999999", "motivos": { "personaNoRegistrada": true } }`,
+{
+  "eventoId": 46,
+  "resultado": "denegado",
+  "persona": null,
+  "numeroDocumento": "99999999",
+  "motivos": { "personaNoRegistrada": true }
+}`,
     notas:
       "Antipassback estricto: sin un ingreso registrado se deniega (\"No registra ingreso\") y no se abre. Si el controlador estaba sin internet, deja salir y la registra después con su hora.",
   },
@@ -138,15 +167,34 @@ DNI leído en ingreso: pendiente_verificacion`,
     headers: ["Authorization: Bearer <token>"],
     ejemploRequest: `GET /eventos-acceso/en-espera`,
     ejemploRespuesta: `// 200 OK
-[{
-  "id": 12, "personaId": 41, "nombres": "Juan", "apellidos": "Pérez", "numeroDocumento": "12345678",
-  "empresa": "Empresa S.A.C.", "tieneFoto": true, "torniqueteId": "Ingreso",
-  "desde": "2026-10-04T09:02:19.000Z", "hasta": "2026-10-04T09:03:19.000Z", "enCola": false
-},
-{ // facial primero: aprobó y falta su DNI (id negativo: no es una espera de la base)
-  "id": -905, "personaId": 41, "nombres": "Aprobó Juan Pérez", "apellidos": "", "numeroDocumento": "12345678",
-  "tieneFoto": true, "desde": "2026-10-19T22:52:47.000Z", "hasta": "2026-10-19T22:53:02.000Z", "esperaDni": true, "enCola": false
-}]`,
+[
+  {
+    "id": 12,
+    "personaId": 41,
+    "nombres": "Juan",
+    "apellidos": "Pérez",
+    "numeroDocumento": "12345678",
+    "empresa": "Empresa S.A.C.",
+    "tieneFoto": true,
+    "torniqueteId": "Ingreso",
+    "desde": "2026-10-04T09:02:19.000Z",
+    "hasta": "2026-10-04T09:03:19.000Z",
+    "enCola": false
+  },
+  // facial primero: aprobó y falta su DNI (id negativo: no es una espera de la base)
+  {
+    "id": -905,
+    "personaId": 41,
+    "nombres": "Aprobó Juan Pérez",
+    "apellidos": "",
+    "numeroDocumento": "12345678",
+    "tieneFoto": true,
+    "desde": "2026-10-19T22:52:47.000Z",
+    "hasta": "2026-10-19T22:53:02.000Z",
+    "esperaDni": true,
+    "enCola": false
+  }
+]`,
     notas: "En \"facial primero\", un DNI que espera en silencio el aviso del G4 (hasta 8 s) no aparece en la lista. enCola solo se usa con el G4 en modo control de acceso (se habilita a una persona a la vez).",
   },
   {
@@ -185,8 +233,23 @@ POST /integraciones/g4pro/sincronizar`,
 Persona 12345678 encolada para 1 equipo(s), con foto
 
 // POST /integraciones/g4pro/sincronizar → 201
-{ "simulacion": false, "equipos": 1, "agregadas": 0, "borradas": 1, "permisosQuitados": 0, "corregidas": 0, "usuariosABorrar": ["1"],
-  "porEquipo": [{ "serialNumber": "HSR3263100192", "usuarios": 2, "conRostro": 2, "sinRostro": [] }] }`,
+{
+  "simulacion": false,
+  "equipos": 1,
+  "agregadas": 0,
+  "borradas": 1,
+  "permisosQuitados": 0,
+  "corregidas": 0,
+  "usuariosABorrar": ["1"],
+  "porEquipo": [
+    {
+      "serialNumber": "HSR3263100192",
+      "usuarios": 2,
+      "conRostro": 2,
+      "sinRostro": []
+    }
+  ]
+}`,
     notas:
       "Se registran con su número de documento (DNI, carné de extranjería o pasaporte: el equipo acepta letras, hasta 24 caracteres); los lectores, por ahora, solo reconocen el DNI. Si se cambia el número de documento, se borra el usuario anterior del equipo. En modo asistencia no hay permisos de paso (permisosQuitados siempre 0). La foto debe ser de frente, con buena luz y el rostro centrado. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
   },
@@ -201,11 +264,33 @@ Persona 12345678 encolada para 1 equipo(s), con foto
     headers: ["Authorization: Bearer <token>"],
     ejemploRequest: `GET /integraciones/g4pro/marcaciones`,
     ejemploRespuesta: `// 200
-[{ "id": 30, "serialNumber": "HSR3263100192", "numero": 28, "faltanAntes": 0, "dni": "71988749",
-   "persona": { "id": 7, "nombres": "Jose", "apellidos": "Vilchez", "tieneFoto": true },
-   "horaPrueba": "2026-10-19T23:27:00.000Z", "llegada": "2026-10-19T23:27:02.000Z", "demoraSegundos": 2,
-   "alcohol": "0.00g/L", "aprobado": true, "decision": "Aprobó: \"pase su DNI\" (15 s)",
-   "ingreso": { "id": 500, "resultado": "autorizado", "motivo": "", "fechaHora": "2026-10-19T23:27:04.000Z" } }]`,
+[
+  {
+    "id": 30,
+    "serialNumber": "HSR3263100192",
+    "numero": 28,
+    "faltanAntes": 0,
+    "dni": "71988749",
+    "persona": {
+      "id": 7,
+      "nombres": "Jose",
+      "apellidos": "Vilchez",
+      "tieneFoto": true
+    },
+    "horaPrueba": "2026-10-19T23:27:00.000Z",
+    "llegada": "2026-10-19T23:27:02.000Z",
+    "demoraSegundos": 2,
+    "alcohol": "0.00g/L",
+    "aprobado": true,
+    "decision": "Aprobó: \"pase su DNI\" (15 s)",
+    "ingreso": {
+      "id": 500,
+      "resultado": "autorizado",
+      "motivo": "",
+      "fechaHora": "2026-10-19T23:27:04.000Z"
+    }
+  }
+]`,
     notas:
       "faltanAntes > 0: el número de marcación saltó, es decir, hubo pruebas que no llegaron al servidor. decision queda vacía en las pruebas de antes del 20/10/2026. Solo lectura: no cambia nada en el equipo.",
   },
@@ -219,9 +304,15 @@ Persona 12345678 encolada para 1 equipo(s), con foto
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
     ejemploRequest: `PUT /eventos-acceso/modo-ingreso
-{ "facialPrimero": true }`,
+{
+  "facialPrimero": true
+}`,
     ejemploRespuesta: `// 200
-{ "facialPrimero": true, "desde": "2026-10-20T08:36:57.000Z", "cambiadoPor": "admin@mollendo.local" }`,
+{
+  "facialPrimero": true,
+  "desde": "2026-10-20T08:36:57.000Z",
+  "cambiadoPor": "admin@mollendo.local"
+}`,
     notas:
       "El cambio rige al instante, sin reiniciar nada; los paneles abiertos lo reciben por el canal en vivo (evento modo-ingreso). desde y cambiadoPor son los del último cambio, en cualquiera de los dos sentidos.",
   },
@@ -235,10 +326,27 @@ Persona 12345678 encolada para 1 equipo(s), con foto
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
     ejemploRequest: `PUT /integraciones/g4pro/sincronizacion-diaria
-{ "hora": 0 }      // a las 00:00 · { "hora": null } la desactiva`,
+
+// Activarla a las 00:00 (hora de 0 a 23)
+{
+  "hora": 0
+}
+
+// Desactivarla
+{
+  "hora": null
+}`,
     ejemploRespuesta: `// 200
-{ "diaria": { "activa": true, "hora": 0, "desde": "2026-10-20T08:45:00.000Z", "cambiadoPor": "admin@mollendo.local" },
-  "enCurso": false, "ultima": { … } }`,
+{
+  "diaria": {
+    "activa": true,
+    "hora": 0,
+    "desde": "2026-10-20T08:45:00.000Z",
+    "cambiadoPor": "admin@mollendo.local"
+  },
+  "enCurso": false,
+  "ultima": { … }
+}`,
     notas:
       "Se guarda en el servidor (sobrevive a los reinicios). Si nunca se cambió desde el portal, vale G4PRO_HORA_SINCRONIZACION del .env. desde y cambiadoPor faltan si no se ha cambiado desde el 20/10/2026.",
   },

@@ -949,7 +949,10 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Revisión diaria",
             texto: (
               <>
-                <p>Actívela para que se sincronice sola cada día y elija la hora. Pide confirmación.</p>
+                <p>
+                  Actívela para que se sincronice sola cada día y elija la hora. Pide confirmación. Encendida muestra “Activo”, desde cuándo y
+                  quién la cambió.
+                </p>
                 <p>
                   Sincronizar deja el terminal igual al sistema: borra a quien no está registrado, registra con su foto al personal activo que
                   falte y corrige los datos cambiados a mano en el terminal (contraseña, administrador, tarjeta o nombre), sin tocar el
@@ -991,7 +994,9 @@ export const SECCIONES: SeccionManual[] = [
         contenido: (
           <>
             <p className="mb-3">
-              En <b>Sistema y APIs</b>, la tarjeta <b>“Orden del ingreso”</b> tiene dos interruptores; rige uno solo (al encender uno, el otro se apaga):
+              En <b>Sistema y APIs</b>, la tarjeta <b>“Orden del ingreso”</b> tiene dos interruptores; rige uno solo (al encender uno, el otro se
+              apaga). Cambiar de orden pide confirmación y muestra los pasos del orden nuevo; el que rige dice “Activo”, desde cuándo y quién
+              lo activó:
             </p>
             <Lista>
               <li>
