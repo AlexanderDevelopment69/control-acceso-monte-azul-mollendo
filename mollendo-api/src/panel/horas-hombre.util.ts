@@ -34,7 +34,11 @@ export interface VisitaConHoras {
  */
 export function calcularHorasHombre(movimientos: MovimientoAutorizado[], inicio: Date, fin: Date) {
   const porPersona = new Map<number, MovimientoAutorizado[]>();
-  for (const m of movimientos) porPersona.set(m.personaId, [...(porPersona.get(m.personaId) ?? []), m]);
+  for (const m of movimientos) {
+    const propios = porPersona.get(m.personaId);
+    if (propios) propios.push(m);
+    else porPersona.set(m.personaId, [m]);
+  }
 
   const visitas: VisitaConHoras[] = [];
   for (const [personaId, propios] of porPersona) {

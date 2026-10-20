@@ -1,10 +1,9 @@
 import {
   calcularPresencia,
-  calcularVisitas,
   clasificarDocumentos,
   diasDelRango,
   resumirMovimientos,
-  type EventoPeriodo,
+  type GrupoMovimientos,
 } from './dashboard.util.js';
 
 const hora = (dia: number, h: number) => new Date(2026, 8, dia, h);
@@ -49,49 +48,38 @@ describe('calcularPresencia', () => {
   });
 });
 
-describe('calcularVisitas', () => {
-  it('una visita está finalizada si hay una salida después de su ingreso', () => {
-    const r = calcularVisitas(
-      [
-        { personaId: 1, fechaHora: hora(30, 8) },
-        { personaId: 2, fechaHora: hora(30, 9) },
-        { personaId: 1, fechaHora: hora(30, 14) },
-      ],
-      [
-        { personaId: 1, fechaHora: hora(30, 12) },
-        { personaId: 2, fechaHora: hora(30, 7) }, // anterior al ingreso: no la finaliza
-      ],
-    );
-    expect(r).toEqual({ total: 3, finalizadas: 1, presentes: 2 });
-  });
-});
-
 describe('resumirMovimientos', () => {
-  const evento = (e: Partial<EventoPeriodo>): EventoPeriodo => ({
+  const grupo = (g: Partial<GrupoMovimientos>): GrupoMovimientos => ({
+    dia: '2026-09-30',
     tipoMovimiento: 'ingreso',
     resultado: 'autorizado',
-    fechaHora: hora(30, 8),
-    denegadoNoRegistrado: false,
-    denegadoPorBaja: false,
-    denegadoSinDocumentos: false,
-    denegadoPorDocumentos: false,
-    denegadoPorAlcohol: false,
-    denegadoSinVerificacion: false,
-    ...e,
+    cantidad: 1,
+    noRegistrado: 0,
+    dadoDeBaja: 0,
+    sinDocumentos: 0,
+    documentos: 0,
+    alcohol: 0,
+    sinVerificacion: 0,
+    rostroNoCoincide: 0,
+    yaDentro: 0,
+    sinIngreso: 0,
+    ...g,
   });
 
   it('suma totales, motivos y la serie por día', () => {
     const r = resumirMovimientos(
       [
-        evento({}),
-        evento({ fechaHora: hora(29, 8) }),
-        evento({ resultado: 'denegado', denegadoPorAlcohol: true, denegadoPorDocumentos: true }),
-        evento({ resultado: 'denegado', denegadoNoRegistrado: true }),
-        evento({ tipoMovimiento: 'salida', fechaHora: hora(30, 18) }),
+        grupo({}),
+        grupo({ dia: '2026-09-29' }),
+        // Dos denegados el 30: uno por alcohol y documentos, otro no registrado.
+        grupo({ resultado: 'denegado', cantidad: 2, alcohol: 1, documentos: 1, noRegistrado: 1 }),
+        grupo({ tipoMovimiento: 'salida' }),
+        // De otro día fuera del periodo: cuenta en los totales, no en la serie.
+        grupo({ dia: '2026-10-01', tipoMovimiento: 'salida', resultado: 'denegado', sinIngreso: 1 }),
       ],
       ['2026-09-29', '2026-09-30'],
     );
-    expect(r.totales).toEqual({ ingresosAutorizados: 2, ingresosDenegados: 2, salidasAutorizadas: 1, salidasDenegadas: 0 });
+    expect(r.totales).toEqual({ ingresosAutorizados: 2, ingresosDenegados: 2, salidasAutorizadas: 1, salidasDenegadas: 1 });
     expect(r.motivos).toEqual({
       noRegistrado: 1,
       dadoDeBaja: 0,
@@ -101,7 +89,7 @@ describe('resumirMovimientos', () => {
       sinVerificacion: 0,
       rostroNoCoincide: 0,
       yaDentro: 0,
-      sinIngreso: 0,
+      sinIngreso: 1,
     });
     expect(r.tendencia).toEqual([
       { dia: '2026-09-29', ingresos: 1, denegados: 0, salidas: 0 },

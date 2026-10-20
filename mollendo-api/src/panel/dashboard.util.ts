@@ -64,95 +64,65 @@ export function calcularPresencia(ultimos: UltimoMovimiento[], ahora: Date) {
 }
 
 // ---------------------------------------------------------------------------
-// Visitas del periodo
-// ---------------------------------------------------------------------------
-
-export interface Movimiento {
-  personaId: number;
-  fechaHora: Date;
-}
-
-/**
- * Cada ingreso autorizado del periodo es una visita. Está finalizada si esa
- * persona registró una salida autorizada después del ingreso; si no, la visita
- * sigue presente.
- */
-export function calcularVisitas(ingresos: Movimiento[], salidas: Movimiento[]) {
-  const salidasPorPersona = new Map<number, number[]>();
-  for (const s of salidas) {
-    salidasPorPersona.set(s.personaId, [...(salidasPorPersona.get(s.personaId) ?? []), s.fechaHora.getTime()]);
-  }
-  const finalizadas = ingresos.filter((i) =>
-    (salidasPorPersona.get(i.personaId) ?? []).some((t) => t > i.fechaHora.getTime()),
-  ).length;
-  return { total: ingresos.length, finalizadas, presentes: ingresos.length - finalizadas };
-}
-
-// ---------------------------------------------------------------------------
 // Ingresos y salidas del periodo
 // ---------------------------------------------------------------------------
 
-export interface EventoPeriodo {
+/**
+ * Movimientos del periodo ya contados en la base de datos: cuántos hubo por
+ * día, tipo y resultado, y cuántos de ellos tienen cada motivo de denegación.
+ */
+export interface GrupoMovimientos {
+  /** Día local, AAAA-MM-DD. */
+  dia: string;
   tipoMovimiento: 'ingreso' | 'salida';
   resultado: 'autorizado' | 'denegado';
-  fechaHora: Date;
-  denegadoNoRegistrado: boolean;
-  denegadoPorBaja: boolean;
-  denegadoSinDocumentos: boolean;
-  denegadoPorDocumentos: boolean;
-  denegadoPorAlcohol: boolean;
-  denegadoSinVerificacion: boolean;
-  denegadoRostroNoCoincide?: boolean;
-  denegadoYaDentro?: boolean;
-  denegadoSinIngreso?: boolean;
-  denegadoSinFacial?: boolean;
-  denegadoSinDni?: boolean;
-  denegadoNoEsQuienSoplo?: boolean;
+  cantidad: number;
+  noRegistrado: number;
+  dadoDeBaja: number;
+  sinDocumentos: number;
+  documentos: number;
+  alcohol: number;
+  /** No completó rostro y alcohol (también, en "facial primero", sin rostro y alcohol o sin DNI a tiempo). */
+  sinVerificacion: number;
+  /** Rostro no coincide (también, en "facial primero", sopló otra persona que la del DNI). */
+  rostroNoCoincide: number;
+  yaDentro: number;
+  sinIngreso: number;
 }
 
+const MOTIVOS = [
+  'noRegistrado',
+  'dadoDeBaja',
+  'sinDocumentos',
+  'documentos',
+  'alcohol',
+  'sinVerificacion',
+  'rostroNoCoincide',
+  'yaDentro',
+  'sinIngreso',
+] as const;
+
 /** Totales, motivos de denegación y serie diaria de los movimientos del periodo. */
-export function resumirMovimientos(eventos: EventoPeriodo[], dias: string[]) {
+export function resumirMovimientos(grupos: GrupoMovimientos[], dias: string[]) {
   const porDia = new Map(dias.map((dia) => [dia, { dia, ingresos: 0, denegados: 0, salidas: 0 }]));
   const totales = { ingresosAutorizados: 0, ingresosDenegados: 0, salidasAutorizadas: 0, salidasDenegadas: 0 };
-  const motivos = {
-    noRegistrado: 0,
-    dadoDeBaja: 0,
-    sinDocumentos: 0,
-    documentos: 0,
-    alcohol: 0,
-    sinVerificacion: 0,
-    rostroNoCoincide: 0,
-    yaDentro: 0,
-    sinIngreso: 0,
-  };
+  const motivos = Object.fromEntries(MOTIVOS.map((m) => [m, 0])) as Record<(typeof MOTIVOS)[number], number>;
 
-  for (const e of eventos) {
-    const fila = porDia.get(claveDia(e.fechaHora));
-    const autorizado = e.resultado === 'autorizado';
-    if (e.tipoMovimiento === 'ingreso') {
-      if (autorizado) totales.ingresosAutorizados++;
-      else totales.ingresosDenegados++;
-    } else if (autorizado) totales.salidasAutorizadas++;
-    else totales.salidasDenegadas++;
+  for (const g of grupos) {
+    const fila = porDia.get(g.dia);
+    const autorizado = g.resultado === 'autorizado';
+    if (g.tipoMovimiento === 'ingreso') {
+      if (autorizado) totales.ingresosAutorizados += g.cantidad;
+      else totales.ingresosDenegados += g.cantidad;
+    } else if (autorizado) totales.salidasAutorizadas += g.cantidad;
+    else totales.salidasDenegadas += g.cantidad;
 
     if (fila) {
-      if (!autorizado) fila.denegados++;
-      else if (e.tipoMovimiento === 'ingreso') fila.ingresos++;
-      else fila.salidas++;
+      if (!autorizado) fila.denegados += g.cantidad;
+      else if (g.tipoMovimiento === 'ingreso') fila.ingresos += g.cantidad;
+      else fila.salidas += g.cantidad;
     }
-    if (!autorizado) {
-      if (e.denegadoNoRegistrado) motivos.noRegistrado++;
-      if (e.denegadoPorBaja) motivos.dadoDeBaja++;
-      if (e.denegadoSinDocumentos) motivos.sinDocumentos++;
-      if (e.denegadoPorDocumentos) motivos.documentos++;
-      if (e.denegadoPorAlcohol) motivos.alcohol++;
-      // En el orden "facial primero", no hacer rostro y alcohol o no pasar el DNI a tiempo también es no completar el ingreso.
-      if (e.denegadoSinVerificacion || e.denegadoSinFacial || e.denegadoSinDni) motivos.sinVerificacion++;
-      // Facial primero: sopló otra persona que la del DNI (el rostro no es el de quien pasó el DNI).
-      if (e.denegadoRostroNoCoincide || e.denegadoNoEsQuienSoplo) motivos.rostroNoCoincide++;
-      if (e.denegadoYaDentro) motivos.yaDentro++;
-      if (e.denegadoSinIngreso) motivos.sinIngreso++;
-    }
+    if (!autorizado) for (const m of MOTIVOS) motivos[m] += g[m];
   }
   return { totales, motivos, tendencia: [...porDia.values()] };
 }

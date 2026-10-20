@@ -6,11 +6,11 @@ import { ultimasVersiones } from '../eventos-acceso/validacion-acceso.engine.js'
 import type { QueryDashboardDto } from './dto/query-dashboard.dto.js';
 import {
   calcularPresencia,
-  calcularVisitas,
   clasificarDocumentos,
   claveDia,
   diasDelRango,
   resumirMovimientos,
+  type GrupoMovimientos,
 } from './dashboard.util.js';
 import { calcularHorasHombre, horasDecimales } from './horas-hombre.util.js';
 import { PERFIL_LABEL, PERFILES, SIN_PERFIL } from '../personas/perfiles.js';
@@ -46,10 +46,10 @@ export class DashboardService {
 
     const [presencia, visitas, horasHombre, porPerfil, movimientos, personal, porEmpresa, documentos] = await Promise.all([
       this.presencia(ahora),
-      this.visitas(rango),
+      this.visitas(rango as { gte: Date; lt: Date }),
       this.horasHombre(rango as { gte: Date; lt: Date }),
       this.ingresosPorPerfil(rango),
-      this.movimientos(rango, dias),
+      this.movimientos(rango as { gte: Date; lt: Date }, dias),
       this.personal(),
       this.personalPorEmpresa(),
       this.documentos(ahora),
@@ -70,17 +70,23 @@ export class DashboardService {
   }
 
   /**
-   * Último movimiento autorizado de cada persona, por fecha y hora (el id solo
-   * desempata). Se buscan solo los ids en SQL y los datos con Prisma, para que
-   * las fechas se lean igual que en el resto del sistema.
+   * Último movimiento autorizado de cada persona (por fecha y hora; el id solo
+   * desempata): quiénes están dentro ahora (también lo usan los reportes). Se
+   * busca persona por persona con el índice (persona_id, fecha_hora), sin
+   * recorrer todo el historial: con un año de movimientos simulado (1,15
+   * millones), 14 ms en vez de 900. Se buscan solo los ids en SQL y los datos
+   * con Prisma, para que las fechas se lean igual que en el resto del sistema.
    */
-  /** Último movimiento autorizado de cada persona: quiénes están dentro ahora (también lo usan los reportes). */
   async calcularPresenciaActual(ahora: Date) {
     const ultimos = await this.prisma.$queryRaw<{ id: number }[]>`
-      SELECT DISTINCT ON (persona_id) id
-      FROM evento_acceso
-      WHERE resultado = 'autorizado' AND persona_id IS NOT NULL
-      ORDER BY persona_id, fecha_hora DESC, id DESC`;
+      SELECT e.id
+      FROM persona p
+      CROSS JOIN LATERAL (
+        SELECT id FROM evento_acceso
+        WHERE persona_id = p.id AND resultado = 'autorizado'
+        ORDER BY fecha_hora DESC, id DESC
+        LIMIT 1
+      ) e`;
     const eventos = await this.prisma.eventoAcceso.findMany({
       where: { id: { in: ultimos.map((u) => u.id) } },
       select: { personaId: true, tipoMovimiento: true, fechaHora: true },
@@ -125,27 +131,53 @@ export class DashboardService {
     );
   }
 
-  /** Horas-hombre del periodo por empresa, de mayor a menor (las primeras MAX_EMPRESAS y "Otras"), para el gráfico. */
+  /**
+   * Horas-hombre del periodo por empresa, de mayor a menor (las primeras
+   * MAX_EMPRESAS y "Otras"), para el gráfico. Se calculan en la base de datos
+   * con la misma regla que calcularHorasHombre (que usa el reporte, con su
+   * detalle): cada ingreso con el movimiento siguiente de la persona si es una
+   * salida, sin correcciones manuales, recortado al periodo, con los
+   * movimientos de 7 días antes y después. Así un año no trae un millón de
+   * filas a la API (con un año simulado, 8 s → menos de 1 s).
+   */
   private async horasHombre(rango: { gte: Date; lt: Date }) {
-    const visitas = await this.calcularHorasHombre(rango);
-    const personas = await this.prisma.persona.findMany({
-      where: { id: { in: [...new Set(visitas.map((v) => v.personaId))] } },
-      select: { id: true, empresa: { select: { razonSocial: true } } },
-    });
-    const empresaDe = new Map(personas.map((p) => [p.id, p.empresa.razonSocial]));
-    const msPorEmpresa = new Map<string, number>();
-    for (const v of visitas) {
-      const empresa = empresaDe.get(v.personaId) ?? '—';
-      msPorEmpresa.set(empresa, (msPorEmpresa.get(empresa) ?? 0) + v.ms);
-    }
-    const ordenadas = [...msPorEmpresa.entries()]
-      .map(([empresa, ms]) => ({ empresa, ms }))
+    const desde = new Date(rango.gte.getTime() - MARGEN_HORAS_HOMBRE_MS).toISOString();
+    const hasta = new Date(rango.lt.getTime() + MARGEN_HORAS_HOMBRE_MS).toISOString();
+    const inicio = rango.gte.toISOString();
+    const fin = rango.lt.toISOString();
+    const filas = await this.prisma.$queryRaw<{ empresa: string; visitas: number; ms: number }[]>`
+      WITH movimientos AS (
+        SELECT persona_id, tipo_movimiento, fecha_hora, correccion_manual,
+          LEAD(tipo_movimiento) OVER siguiente AS siguiente_tipo,
+          LEAD(fecha_hora) OVER siguiente AS siguiente_hora,
+          LEAD(correccion_manual) OVER siguiente AS siguiente_a_mano
+        FROM evento_acceso
+        WHERE resultado = 'autorizado' AND persona_id IS NOT NULL
+          AND fecha_hora >= (${desde}::timestamptz AT TIME ZONE 'UTC')
+          AND fecha_hora < (${hasta}::timestamptz AT TIME ZONE 'UTC')
+        WINDOW siguiente AS (PARTITION BY persona_id ORDER BY fecha_hora, id)
+      ),
+      visitas AS (
+        SELECT persona_id,
+          EXTRACT(EPOCH FROM LEAST(siguiente_hora, ${fin}::timestamptz AT TIME ZONE 'UTC')
+            - GREATEST(fecha_hora, ${inicio}::timestamptz AT TIME ZONE 'UTC')) * 1000 AS ms
+        FROM movimientos
+        WHERE tipo_movimiento = 'ingreso' AND siguiente_tipo = 'salida' AND NOT correccion_manual AND NOT siguiente_a_mano
+      )
+      SELECT e.razon_social AS empresa, count(*)::int AS visitas, sum(v.ms)::float8 AS ms
+      FROM visitas v
+      JOIN persona p ON p.id = v.persona_id
+      JOIN empresa e ON e.id = p.empresa_id
+      WHERE v.ms > 0
+      GROUP BY e.razon_social`;
+    const ordenadas = filas
+      .map((f) => ({ empresa: f.empresa, ms: f.ms }))
       .sort((a, b) => b.ms - a.ms || a.empresa.localeCompare(b.empresa));
     const otras = ordenadas.slice(MAX_EMPRESAS).reduce((suma, e) => suma + e.ms, 0);
     const porEmpresa = [...ordenadas.slice(0, MAX_EMPRESAS), ...(otras > 0 ? [{ empresa: 'Otras', ms: otras }] : [])];
     return {
-      horas: horasDecimales(visitas.reduce((suma, v) => suma + v.ms, 0)),
-      visitas: visitas.length,
+      horas: horasDecimales(filas.reduce((suma, f) => suma + f.ms, 0)),
+      visitas: filas.reduce((suma, f) => suma + f.visitas, 0),
       porEmpresa: porEmpresa.map((e) => ({ empresa: e.empresa, horas: horasDecimales(e.ms) })),
     };
   }
@@ -225,56 +257,58 @@ export class DashboardService {
     return { generadoEn: ahora.toISOString(), datos };
   }
 
-  /** Visitas del periodo: cada ingreso autorizado de cualquier persona. */
-  private async visitas(rango: { gte?: Date; lt?: Date }) {
-    const ingresos = await this.prisma.eventoAcceso.findMany({
-      where: {
-        tipoMovimiento: 'ingreso',
-        resultado: 'autorizado',
-        fechaHora: rango,
-        personaId: { not: null },
-      },
-      select: { personaId: true, fechaHora: true },
-    });
-    const salidas = ingresos.length
-      ? await this.prisma.eventoAcceso.findMany({
-          where: {
-            tipoMovimiento: 'salida',
-            resultado: 'autorizado',
-            fechaHora: { gte: rango.gte },
-            personaId: { in: [...new Set(ingresos.map((i) => i.personaId!))] },
-          },
-          select: { personaId: true, fechaHora: true },
-        })
-      : [];
-    return calcularVisitas(
-      ingresos.map((i) => ({ personaId: i.personaId!, fechaHora: i.fechaHora })),
-      salidas.map((s) => ({ personaId: s.personaId!, fechaHora: s.fechaHora })),
-    );
+  /**
+   * Visitas del periodo: cada ingreso autorizado de cualquier persona. Está
+   * finalizada si la persona registró una salida autorizada después; basta su
+   * última salida. Se cuenta en la base de datos (con un año, 3 s → menos de 1 s).
+   */
+  private async visitas(rango: { gte: Date; lt: Date }) {
+    const [r] = await this.prisma.$queryRaw<{ total: number; finalizadas: number }[]>`
+      WITH ultima_salida AS (
+        SELECT persona_id, max(fecha_hora) AS hora
+        FROM evento_acceso
+        WHERE tipo_movimiento = 'salida' AND resultado = 'autorizado' AND persona_id IS NOT NULL
+          AND fecha_hora >= (${rango.gte.toISOString()}::timestamptz AT TIME ZONE 'UTC')
+        GROUP BY persona_id
+      )
+      SELECT count(*)::int AS total, count(*) FILTER (WHERE s.hora > i.fecha_hora)::int AS finalizadas
+      FROM evento_acceso i
+      LEFT JOIN ultima_salida s USING (persona_id)
+      WHERE i.tipo_movimiento = 'ingreso' AND i.resultado = 'autorizado' AND i.persona_id IS NOT NULL
+        AND i.fecha_hora >= (${rango.gte.toISOString()}::timestamptz AT TIME ZONE 'UTC')
+        AND i.fecha_hora < (${rango.lt.toISOString()}::timestamptz AT TIME ZONE 'UTC')`;
+    return { total: r.total, finalizadas: r.finalizadas, presentes: r.total - r.finalizadas };
   }
 
-  private async movimientos(rango: { gte?: Date; lt?: Date }, dias: string[]) {
-    const eventos = await this.prisma.eventoAcceso.findMany({
-      where: { fechaHora: rango },
-      select: {
-        tipoMovimiento: true,
-        resultado: true,
-        fechaHora: true,
-        denegadoNoRegistrado: true,
-        denegadoPorBaja: true,
-        denegadoSinDocumentos: true,
-        denegadoPorDocumentos: true,
-        denegadoPorAlcohol: true,
-        denegadoSinVerificacion: true,
-        denegadoRostroNoCoincide: true,
-        denegadoYaDentro: true,
-        denegadoSinIngreso: true,
-        denegadoSinFacial: true,
-        denegadoSinDni: true,
-        denegadoNoEsQuienSoplo: true,
-      },
-    });
-    return resumirMovimientos(eventos, dias);
+  /**
+   * Los movimientos del periodo se cuentan en la base de datos (por día local,
+   * tipo, resultado y motivo): con un año de datos no se traen un millón de filas.
+   * Las fechas se guardan en UTC; el día es el de la zona del servidor (Lima).
+   */
+  private async movimientos(rango: { gte: Date; lt: Date }, dias: string[]) {
+    const zona = process.env.TZ ?? 'America/Lima';
+    const grupos = await this.prisma.$queryRaw<GrupoMovimientos[]>`
+      SELECT
+        to_char((fecha_hora AT TIME ZONE 'UTC') AT TIME ZONE ${zona}, 'YYYY-MM-DD') AS dia,
+        tipo_movimiento::text AS "tipoMovimiento",
+        resultado::text AS resultado,
+        count(*)::int AS cantidad,
+        count(*) FILTER (WHERE denegado_no_registrado)::int AS "noRegistrado",
+        count(*) FILTER (WHERE denegado_por_baja)::int AS "dadoDeBaja",
+        count(*) FILTER (WHERE denegado_sin_documentos)::int AS "sinDocumentos",
+        count(*) FILTER (WHERE denegado_por_documentos)::int AS documentos,
+        count(*) FILTER (WHERE denegado_por_alcohol)::int AS alcohol,
+        -- En "facial primero", no hacer rostro y alcohol o no pasar el DNI a tiempo también es no completar el ingreso.
+        count(*) FILTER (WHERE denegado_sin_verificacion OR denegado_sin_facial OR denegado_sin_dni)::int AS "sinVerificacion",
+        -- Facial primero: sopló otra persona que la del DNI (el rostro no es el de quien pasó el DNI).
+        count(*) FILTER (WHERE denegado_rostro_no_coincide OR denegado_no_es_quien_soplo)::int AS "rostroNoCoincide",
+        count(*) FILTER (WHERE denegado_ya_dentro)::int AS "yaDentro",
+        count(*) FILTER (WHERE denegado_sin_ingreso)::int AS "sinIngreso"
+      FROM evento_acceso
+      WHERE fecha_hora >= (${rango.gte.toISOString()}::timestamptz AT TIME ZONE 'UTC')
+        AND fecha_hora < (${rango.lt.toISOString()}::timestamptz AT TIME ZONE 'UTC')
+      GROUP BY 1, 2, 3`;
+    return resumirMovimientos(grupos, dias);
   }
 
   /**
@@ -339,7 +373,9 @@ export class DashboardService {
     });
     const porPersona = new Map<number, typeof documentos>();
     for (const doc of documentos) {
-      porPersona.set(doc.personaId, [...(porPersona.get(doc.personaId) ?? []), doc]);
+      const propios = porPersona.get(doc.personaId);
+      if (propios) propios.push(doc);
+      else porPersona.set(doc.personaId, [doc]);
     }
     const actuales = [...porPersona.values()].flatMap((docs) => [...ultimasVersiones(docs).values()]);
     return clasificarDocumentos(
