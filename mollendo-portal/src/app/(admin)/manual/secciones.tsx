@@ -1022,9 +1022,8 @@ export const SECCIONES: SeccionManual[] = [
         contenido: (
           <>
             <p className="mb-3">
-              En <b>Sistema y APIs</b>, la tarjeta <b>“Monitor del G4 Pro”</b> muestra cada prueba de rostro y alcohol que manda el
-              terminal facial, la más reciente arriba. Se actualiza sola. Cerrada muestra solo la última prueba; haga clic en ella para
-              ver la lista.
+              En <b>Sistema y APIs</b>, la tarjeta <b>“Monitor del G4 Pro”</b> tiene el botón <b>Abrir monitor</b>: abre una página con cada
+              prueba de rostro y alcohol que manda el terminal facial, la más reciente arriba. Se actualiza sola (“En vivo”).
             </p>
             <Lista>
               <li>

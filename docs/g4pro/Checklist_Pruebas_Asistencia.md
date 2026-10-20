@@ -135,7 +135,7 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 | 6.3 | Historial filtrado por DNI o nombre | Muestra los pases de esa persona con el motivo correcto | [ ] |
 | 6.4 | Reporte de horas-hombre | Cuenta el tiempo entre ingreso y salida autorizados | [ ] |
 | 6.5 | Panel abierto en dos pantallas | Las dos ven las filas en vivo al mismo tiempo | [ ] |
-| 6.6 | Monitor del G4 Pro (Sistema y APIs) con una prueba nueva | Aparece sola en segundos: persona, grado, demora, qué hizo el sistema y el ingreso | [ ] |
+| 6.6 | Monitor del G4 Pro (Sistema y APIs → Abrir monitor) con una prueba nueva | Aparece sola en segundos: persona, grado, demora, qué hizo el sistema y el ingreso | [ ] |
 
 ---
 

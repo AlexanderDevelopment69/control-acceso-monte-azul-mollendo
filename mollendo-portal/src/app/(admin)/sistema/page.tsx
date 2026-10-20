@@ -22,7 +22,7 @@ import {
 import { SincronizacionG4 } from "./SincronizacionG4";
 import { OrdenIngreso } from "./OrdenIngreso";
 import { ListaApis } from "./ListaApis";
-import { MonitorG4 } from "./MonitorG4";
+import { TarjetaMonitorG4 } from "./MonitorG4";
 
 const DOCS_URL = `${API_BASE}/api/docs`;
 
@@ -171,7 +171,7 @@ function SistemaContent() {
 
       <OrdenIngreso />
 
-      <MonitorG4 />
+      <TarjetaMonitorG4 />
 
       <TituloSeccion>APIs</TituloSeccion>
       <Tarjeta className="mb-6">

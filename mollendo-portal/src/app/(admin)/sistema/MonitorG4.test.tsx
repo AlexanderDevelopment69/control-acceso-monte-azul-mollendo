@@ -1,8 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { MarcacionG4 } from "@/lib/api/types";
-import { grado, horaCorta, MonitorG4 } from "./MonitorG4";
+import { grado, horaCorta, MonitorG4, TarjetaMonitorG4 } from "./MonitorG4";
 
 vi.mock("@/components/personal/FotoPersonal", () => ({ FotoGuardada: () => <div>foto</div> }));
 vi.mock("@/lib/ws", () => ({ connectEventosSocket: () => ({ on: vi.fn(), disconnect: vi.fn() }) }));
@@ -42,25 +41,13 @@ vi.mock("@/lib/api/endpoints", () => ({
 }));
 
 describe("Monitor del G4 Pro", () => {
-  beforeEach(() => localStorage.clear());
-
-  it("empieza cerrado: solo la última prueba; al hacer clic se abre y lo recuerda", async () => {
-    render(<MonitorG4 />);
-    const boton = screen.getByRole("button", { name: /Monitor del G4 Pro/ });
-    expect(boton).toHaveAttribute("aria-expanded", "false");
-    expect(await within(boton).findByText(/Última prueba:/)).toHaveTextContent("Jose Vilchez");
-    expect(within(boton).getByText("0.00 g/L")).toBeInTheDocument();
-    expect(within(boton).getByText("Autorizado")).toBeInTheDocument();
+  it("la tarjeta de Sistema lleva a la página del monitor, sin la tabla", () => {
+    render(<TarjetaMonitorG4 />);
+    expect(screen.getByRole("link", { name: /Abrir monitor/ })).toHaveAttribute("href", "/sistema/monitor");
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
-
-    await userEvent.click(boton);
-    expect(boton).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("table")).toBeInTheDocument();
-    expect(localStorage.getItem("monitorG4Abierto")).toBe("1");
   });
 
-  it("abierto muestra cada prueba: persona, grado, decisión, ingreso, demora y las que no llegaron", async () => {
-    localStorage.setItem("monitorG4Abierto", "1");
+  it("la página muestra cada prueba: persona, grado, decisión, ingreso, demora y las que no llegaron", async () => {
     render(<MonitorG4 />);
     const fila = (await screen.findByText("Jose Vilchez")).closest("tr")!;
     expect(within(fila).getByText("0.00 g/L")).toBeInTheDocument();

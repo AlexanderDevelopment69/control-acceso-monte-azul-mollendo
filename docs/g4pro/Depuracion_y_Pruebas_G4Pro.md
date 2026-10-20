@@ -11,7 +11,7 @@ Equipo actual: **G4 Pro HSR3263100192**, en modo **asistencia (ATT)** desde el 1
 | | Monitor del G4 Pro (portal) | Depuración (`PUSH_SDK_DEPURAR`) |
 |---|---|---|
 | Para qué | El día a día y las pruebas en la garita | Investigar: ver el mensaje **completo** del equipo |
-| Dónde | Portal → **Sistema y APIs** → tarjeta "Monitor del G4 Pro" | Registro (log) del contenedor de la API, en el servidor |
+| Dónde | Portal → **Sistema y APIs** → "Monitor del G4 Pro" → **Abrir monitor** (`/sistema/monitor`) | Registro (log) del contenedor de la API, en el servidor |
 | Qué muestra | Cada prueba: hora, N.º de marcación, demora, persona, grado, qué hizo el sistema y el ingreso | Todo lo que llega a `/iclock` (pruebas, opciones, usuarios, respuestas a comandos) tal cual |
 | Hay que tocar el servidor | No | Sí (encender, reiniciar la API, leer el log, apagar) |
 | Estado normal | Siempre disponible | **Apagada** (`false`) |
@@ -22,7 +22,7 @@ Equipo actual: **G4 Pro HSR3263100192**, en modo **asistencia (ATT)** desde el 1
 
 ## 2. Monitor del G4 Pro (portal)
 
-En **Sistema y APIs**, debajo de "Orden del ingreso". Cerrado muestra solo la última prueba; con un clic se despliega la lista (las 30 últimas). Cada navegador recuerda si lo dejó abierto. Se actualiza solo (en vivo por el socket; si se corta, cada minuto).
+En **Sistema y APIs**, debajo de "Orden del ingreso". La tarjeta tiene el botón **Abrir monitor**, que lleva a su página (`/sistema/monitor`) con las 30 últimas pruebas. Se actualiza solo (en vivo por el socket; si se corta, cada minuto).
 
 | Columna | Qué es |
 |---|---|
