@@ -49,7 +49,7 @@ export function connectEventosSocket(alReconectar?: () => void): Socket {
   }
 
   socket.on("connect", () => {
-    if (conectadoAntes) alReconectar?.();
+    if (conectadoAntes && !cerrado) alReconectar?.();
     conectadoAntes = true;
     // Las esperas vuelven a empezar de 2 s solo si la conexión se mantiene.
     if (estable) clearTimeout(estable);
@@ -70,5 +70,18 @@ export function connectEventosSocket(alReconectar?: () => void): Socket {
   socket.on("connect_error", () => {
     if (!socket.active) reintentar();
   });
+
+  // Al cambiar de vista mientras la conexión todavía se abre, cortarla a la mitad deja en la
+  // consola "WebSocket is closed before the connection is established". Se cierra apenas se abra
+  // (o falle); mientras tanto no se reintenta.
+  const desconectar = socket.disconnect.bind(socket);
+  socket.disconnect = () => {
+    if (socket.connected || !socket.active) return desconectar();
+    cerrado = true;
+    if (espera) clearTimeout(espera);
+    socket.once("connect", () => desconectar());
+    socket.once("connect_error", () => desconectar());
+    return socket;
+  };
   return socket;
 }
