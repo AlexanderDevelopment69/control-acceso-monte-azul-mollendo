@@ -480,7 +480,8 @@ function DashboardContent() {
               {!permanencia || permanencia.total === 0 ? (
                 <SinDatos texto="Nadie lleva más de 12 horas dentro." />
               ) : (
-                <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+                // Con poco espacio, el documento va bajo el nombre y el ingreso en dos líneas: cabe sin cortarse.
+                <div className="@container overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
                   <AltoEstable
                     paginaCompleta={permanencia.datos.length === POR_PAGINA_PERMANENCIA}
                     variasPaginas={permanencia.total > POR_PAGINA_PERMANENCIA}
@@ -489,7 +490,11 @@ function DashboardContent() {
                       <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                         <TableRow>
                           {["Persona", "Documento", "Empresa", "Ingreso", "Tiempo dentro"].map((c) => (
-                            <TableCell key={c} isHeader className="px-4 py-3 text-start text-xs font-medium text-gray-500">
+                            <TableCell
+                              key={c}
+                              isHeader
+                              className={`${c === "Documento" ? "hidden @5xl:table-cell " : ""}px-4 py-3 text-start text-xs font-medium text-gray-500`}
+                            >
                               {c}
                             </TableCell>
                           ))}
@@ -500,11 +505,17 @@ function DashboardContent() {
                           <TableRow key={p.personaId}>
                             <TableCell className="px-4 py-3 text-sm text-gray-800 dark:text-white/90">
                               {p.nombres} {p.apellidos}
+                              <span className="block text-xs text-gray-500 @5xl:hidden dark:text-gray-400">{p.numeroDocumento}</span>
                             </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.numeroDocumento}</TableCell>
+                            <TableCell className="hidden px-4 py-3 text-sm text-gray-600 @5xl:table-cell dark:text-gray-300">
+                              {p.numeroDocumento}
+                            </TableCell>
                             <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.empresa}</TableCell>
                             <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                              {new Date(p.ingreso).toLocaleString("es-PE")}
+                              {new Date(p.ingreso).toLocaleDateString("es-PE")}
+                              <span className="block @5xl:inline @5xl:before:content-[',_'] text-gray-500 dark:text-gray-400">
+                                {new Date(p.ingreso).toLocaleTimeString("es-PE")}
+                              </span>
                             </TableCell>
                             <TableCell className="px-4 py-3 text-sm font-medium text-warning-600 dark:text-orange-400">
                               {tiempoDentro(p.ingreso, d.generadoEn)}

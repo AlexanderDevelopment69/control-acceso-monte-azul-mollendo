@@ -31,7 +31,7 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
           <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
             {new Date(i.desde).toLocaleTimeString("es-PE")}
           </TableCell>
-          <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{i.numeroDocumento}</TableCell>
+          <TableCell className="hidden @5xl:table-cell px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{i.numeroDocumento}</TableCell>
           <TableCell className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
             {/* Foto para comparar con quien está frente al terminal facial. */}
             <div className="flex items-center gap-3">
@@ -43,6 +43,10 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
               )}
               <span>
                 {i.nombres} {i.apellidos}
+                {/* Con poco espacio la columna DNI se oculta: el DNI va bajo el nombre. */}
+                {i.numeroDocumento && i.numeroDocumento !== "—" && (
+                  <span className="block text-xs text-gray-500 @5xl:hidden dark:text-gray-400">DNI {i.numeroDocumento}</span>
+                )}
               </span>
             </div>
           </TableCell>

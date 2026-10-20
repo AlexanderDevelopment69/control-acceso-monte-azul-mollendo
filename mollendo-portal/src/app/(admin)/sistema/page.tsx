@@ -35,7 +35,10 @@ function SistemaContent() {
   // Con controlador, la tarjeta de avisos se muestra siempre (aunque esté desconectado).
   const hayAvisos = !!(estado?.controladorGarita?.remoto || estado?.releMolinetes?.avisoIngreso || estado?.releMolinetes?.avisoSalida);
   const tarjetasEquipos = 3 + (estado?.controladorGarita?.remoto ? 1 : 0) + (hayAvisos ? 1 : 0);
-  const columnasEquipos = { 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "lg:grid-cols-5" }[tarjetasEquipos] ?? "lg:grid-cols-3";
+  // Según el ancho del contenido (no de la pantalla: el menú lateral ocupa parte): todas en una fila solo si caben.
+  const columnasEquipos =
+    { 3: "@3xl:grid-cols-3", 4: "@3xl:grid-cols-3 @4xl:grid-cols-4", 5: "@3xl:grid-cols-3 @5xl:grid-cols-5" }[tarjetasEquipos] ??
+    "@3xl:grid-cols-3";
   // Se incrementa para recargar el estado al terminar una sincronización.
   const [version, setVersion] = useState(0);
 
@@ -64,7 +67,7 @@ function SistemaContent() {
   }, [version]);
 
   return (
-    <div>
+    <div className="@container">
       <PageHeader
         title="Sistema y APIs"
         description="Estado del backend, la base de datos y las integraciones externas."
@@ -79,8 +82,8 @@ function SistemaContent() {
 
       {/* Las tarjetas se agrupan: el servidor (4) y los equipos de garita (3), con la sincronización del G4 Pro debajo. */}
       <TituloSeccion>Servidor</TituloSeccion>
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
-        <StatusCard className="lg:col-span-3" icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+      <div className="mb-8 grid grid-cols-1 gap-4 @lg:grid-cols-2 @4xl:grid-cols-4">
+        <StatusCard icon={<CheckCircleIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Backend (mollendo-api)</p>
           <div className="mt-2">
             {comprobando ? <ComprobandoBadge /> : <EstadoBadge ok={!error && !!estado} />}
@@ -92,7 +95,7 @@ function SistemaContent() {
           )}
         </StatusCard>
 
-        <StatusCard className="lg:col-span-3" icon={<BoxCubeIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard icon={<BoxCubeIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Base de datos</p>
           <div className="mt-2">
             {comprobando ? <ComprobandoBadge /> : <EstadoBadge ok={estado?.baseDeDatos.estado === "up"} />}
@@ -100,7 +103,7 @@ function SistemaContent() {
           {estado && <p className="mt-2 text-xs text-gray-400">Latencia: {estado.baseDeDatos.latenciaMs} ms</p>}
         </StatusCard>
 
-        <StatusCard className="lg:col-span-3" icon={<LockIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard icon={<LockIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Clave de equipos físicos</p>
           <div className="mt-2">
             {comprobando ? (
@@ -122,14 +125,14 @@ function SistemaContent() {
             ))}
         </StatusCard>
 
-        <StatusCard className="lg:col-span-3" icon={<FolderIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+        <StatusCard icon={<FolderIcon className="text-gray-800 size-6 dark:text-white/90" />}>
           <p className="text-sm text-gray-500 dark:text-gray-400">Respaldos</p>
           <RespaldosEstado comprobando={comprobando} respaldos={estado?.respaldos} ahora={estado?.api.fecha} />
         </StatusCard>
       </div>
 
       <TituloSeccion>Equipos de acceso</TituloSeccion>
-      <div className={`mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 ${columnasEquipos}`}>
+      <div className={`mb-4 grid grid-cols-1 gap-4 @lg:grid-cols-2 ${columnasEquipos}`}>
         {estado?.controladorGarita?.remoto && (
           <StatusCard icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}>
             <p className="text-sm text-gray-500 dark:text-gray-400">Controlador</p>

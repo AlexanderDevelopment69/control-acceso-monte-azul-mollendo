@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 
 type SidebarContextType = {
   isExpanded: boolean;
@@ -33,6 +33,8 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  // Si la pantalla era mediana (menos de 1280 px) en la última medición.
+  const eraMediana = useRef<boolean | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -41,6 +43,14 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsMobile(mobile);
       if (!mobile) {
         setIsMobileOpen(false);
+      }
+      // Pantalla mediana (1024 a 1279 px, o con la consola del navegador abierta): el menú empieza
+      // cerrado, solo íconos, para que las tablas y tarjetas tengan espacio; se abre con el botón o
+      // al pasar el mouse. Solo al cruzar el límite: si la persona lo abre o cierra, se respeta.
+      const mediana = window.innerWidth < 1280;
+      if (eraMediana.current !== mediana) {
+        eraMediana.current = mediana;
+        setIsExpanded(!mediana);
       }
     };
 

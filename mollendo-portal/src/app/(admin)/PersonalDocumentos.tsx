@@ -209,7 +209,7 @@ export function PersonalDocumentos() {
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         {/* Lista */}
-        <Tarjeta className="lg:sticky lg:top-24 lg:w-96 lg:shrink-0">
+        <Tarjeta className="lg:sticky lg:top-24 lg:w-80 lg:shrink-0 2xl:w-96">
           <div className="space-y-3 border-b border-gray-100 p-4 dark:border-gray-800">
             <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre, DNI o empresa…" />
             <Combobox

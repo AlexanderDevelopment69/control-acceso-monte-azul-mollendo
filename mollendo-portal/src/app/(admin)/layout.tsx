@@ -14,7 +14,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const { isExpanded, isMobileOpen } = useSidebar();
 
   // ApexCharts se carga apenas el navegador queda libre, para que el Dashboard no espere su carga.
   useEffect(() => {
@@ -26,12 +26,9 @@ export default function AdminLayout({
     return () => cancelIdleCallback(id);
   }, []);
 
-  // Dynamic class for main content margin based on sidebar state
-  const mainContentMargin = isMobileOpen
-    ? "ml-0"
-    : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+  // Margen del contenido según el menú. Cerrado y con el mouse encima, el menú se abre por encima
+  // del contenido, sin empujarlo (la tabla no salta).
+  const mainContentMargin = isMobileOpen ? "ml-0" : isExpanded ? "lg:ml-[290px]" : "lg:ml-[90px]";
 
   return (
     <RequireRole roles={["administrador", "vigilancia"]}>
@@ -40,9 +37,8 @@ export default function AdminLayout({
         <AppSidebar />
         <Backdrop />
         {/* Main Content Area */}
-        <div
-          className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
-        >
+        {/* min-w-0: sin él, una tabla ancha ensancha toda la página (desde 1280 px) en vez de desplazarse en su recuadro. */}
+        <div className={`min-w-0 flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}>
           {/* Header */}
           <AppHeader />
           {/* Page Content */}

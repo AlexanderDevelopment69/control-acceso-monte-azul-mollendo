@@ -60,6 +60,13 @@ const REVISION_EQUIPO_MS = 30_000;
 const RECARGA_RESPALDO_MS = 60_000;
 const POR_PAGINA = 10;
 
+/** Con poco espacio la columna DNI se oculta: el DNI va bajo el nombre. */
+function DniAngosto({ ev }: { ev: EventoAcceso }) {
+  const documento = documentoDelEvento(ev);
+  if (documento === "—") return null;
+  return <span className="block basis-full text-xs text-gray-500 @5xl:hidden dark:text-gray-400">DNI {documento}</span>;
+}
+
 function VigilanciaContent() {
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
   const [lista, setLista] = useState<Paginado<EventoAcceso> | null>(null);
@@ -480,15 +487,17 @@ function VigilanciaContent() {
         </div>
       </div>
 
-      <Tarjeta className="overflow-hidden">
-        {/* Una línea por celda: en el celular la tabla se desliza hacia los lados. */}
-        <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+      <Tarjeta className="@container overflow-hidden">
+        {/* Una línea por celda: en el celular la tabla se desliza hacia los lados. Con poco espacio
+            (pantalla mediana, o el menú abierto), celdas más angostas y el DNI bajo el nombre: así
+            caben el resultado y el motivo, que es lo que más se mira. */}
+        <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap [&_td]:px-3 [&_th]:px-3 @5xl:[&_td]:px-5 @5xl:[&_th]:px-5">
           <AltoEstable paginaCompleta={eventos.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
                   <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Hora</TableCell>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">DNI</TableCell>
+                  <TableCell isHeader className="hidden @5xl:table-cell px-5 py-3 text-start text-xs font-medium text-gray-500">DNI</TableCell>
                   <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Persona</TableCell>
                   <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Movimiento</TableCell>
                   <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Resultado</TableCell>
@@ -518,9 +527,17 @@ function VigilanciaContent() {
                     className={`transition-colors duration-700 ${ev.id === ultimo ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
                   >
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {dia ? new Date(ev.fechaHora).toLocaleTimeString("es-PE") : new Date(ev.fechaHora).toLocaleString("es-PE")}
+                      {dia ? (
+                        new Date(ev.fechaHora).toLocaleTimeString("es-PE")
+                      ) : (
+                        // Todos los días: la fecha arriba y la hora abajo (más angosta que en una línea).
+                        <>
+                          {new Date(ev.fechaHora).toLocaleDateString("es-PE")}
+                          <span className="block text-gray-500 dark:text-gray-400">{new Date(ev.fechaHora).toLocaleTimeString("es-PE")}</span>
+                        </>
+                      )}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <TableCell className="hidden @5xl:table-cell px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {documentoDelEvento(ev)}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
@@ -531,12 +548,16 @@ function VigilanciaContent() {
                             {ev.persona.nombres} {ev.persona.apellidos}
                             {/* Solo si tiene perfil: al vigilante no le sirve ver "Sin perfil". */}
                             {ev.persona.perfil && <EtiquetaPerfil perfil={ev.persona.perfil} />}
+                            <DniAngosto ev={ev} />
                           </span>
                         </span>
                       ) : (
                         <span className="flex items-center gap-3">
                           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800">?</span>
-                          <span className="text-gray-400">{ev.facialPrimero ? "Sin identificar" : "No registrado"}</span>
+                          <span className="text-gray-400">
+                            {ev.facialPrimero ? "Sin identificar" : "No registrado"}
+                            <DniAngosto ev={ev} />
+                          </span>
                         </span>
                       )}
                     </TableCell>
