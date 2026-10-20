@@ -4,6 +4,8 @@ import { MonitorG4Service } from './monitor-g4.service.js';
 import { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { SincronizacionDiariaDto } from './dto/sincronizacion-diaria.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 
 @Controller('integraciones')
 export class IntegracionesController {
@@ -35,7 +37,7 @@ export class IntegracionesController {
   /** Activa (hora 0..23) o desactiva (null) la sincronización diaria; se guarda en el servidor. */
   @Put('g4pro/sincronizacion-diaria')
   @Roles('administrador')
-  cambiarSincronizacionDiaria(@Body() dto: SincronizacionDiariaDto) {
-    return this.integracionesService.cambiarDiaria(dto.hora ?? null);
+  cambiarSincronizacionDiaria(@Body() dto: SincronizacionDiariaDto, @CurrentUser() usuario: AuthenticatedUser) {
+    return this.integracionesService.cambiarDiaria(dto.hora ?? null, usuario.correo);
   }
 }

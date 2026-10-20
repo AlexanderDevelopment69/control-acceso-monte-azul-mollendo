@@ -142,6 +142,13 @@ export function SincronizacionG4({
                     options={Array.from({ length: 24 }, (_, h) => ({ value: String(h), label: `a las ${String(h).padStart(2, "0")}:00` }))}
                   />
                 ) : null}
+                {diariaActiva && <Badge color="success">Activo</Badge>}
+                {diariaActiva && estado.diaria.desde && (
+                  <span className="text-xs text-gray-400">
+                    desde {new Date(estado.diaria.desde).toLocaleString("es-PE")}
+                    {estado.diaria.cambiadoPor && ` · ${estado.diaria.cambiadoPor}`}
+                  </span>
+                )}
               </>
             )}
             {estado?.enCurso && !ejecutando && <Badge color="info">En curso…</Badge>}

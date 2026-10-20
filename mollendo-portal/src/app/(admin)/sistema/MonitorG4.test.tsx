@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MarcacionG4 } from "@/lib/api/types";
 import { grado, horaCorta, MonitorG4 } from "./MonitorG4";
 
@@ -41,7 +42,25 @@ vi.mock("@/lib/api/endpoints", () => ({
 }));
 
 describe("Monitor del G4 Pro", () => {
-  it("muestra cada prueba: persona, grado, decisión, ingreso, demora y las que no llegaron", async () => {
+  beforeEach(() => localStorage.clear());
+
+  it("empieza cerrado: solo la última prueba; al hacer clic se abre y lo recuerda", async () => {
+    render(<MonitorG4 />);
+    const boton = screen.getByRole("button", { name: /Monitor del G4 Pro/ });
+    expect(boton).toHaveAttribute("aria-expanded", "false");
+    expect(await within(boton).findByText(/Última prueba:/)).toHaveTextContent("Jose Vilchez");
+    expect(within(boton).getByText("0.00 g/L")).toBeInTheDocument();
+    expect(within(boton).getByText("Autorizado")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    await userEvent.click(boton);
+    expect(boton).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(localStorage.getItem("monitorG4Abierto")).toBe("1");
+  });
+
+  it("abierto muestra cada prueba: persona, grado, decisión, ingreso, demora y las que no llegaron", async () => {
+    localStorage.setItem("monitorG4Abierto", "1");
     render(<MonitorG4 />);
     const fila = (await screen.findByText("Jose Vilchez")).closest("tr")!;
     expect(within(fila).getByText("0.00 g/L")).toBeInTheDocument();

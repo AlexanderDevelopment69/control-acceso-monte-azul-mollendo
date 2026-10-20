@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { guardarHoraDiaria, horaDeTexto, leerHoraDiaria } from './sincronizacion-diaria.js';
+import { guardarHoraDiaria, horaDeTexto, leerCambioDiaria, leerHoraDiaria } from './sincronizacion-diaria.js';
 
 const archivo = path.join(path.dirname(process.env.DOCUMENTOS_STORAGE_PATH!), 'sincronizacion-diaria.json');
 
@@ -25,6 +25,14 @@ describe('hora de la sincronización diaria', () => {
     expect(leerHoraDiaria()).toBe(5);
     guardarHoraDiaria(null);
     expect(leerHoraDiaria()).toBeNull();
+  });
+
+  it('guarda cuándo y quién la cambió', () => {
+    expect(leerCambioDiaria()).toEqual({ desde: null, cambiadoPor: null });
+    guardarHoraDiaria(0, 'admin@mollendo.local');
+    const { desde, cambiadoPor } = leerCambioDiaria();
+    expect(cambiadoPor).toBe('admin@mollendo.local');
+    expect(Date.now() - new Date(desde!).getTime()).toBeLessThan(5000);
   });
 
   it('solo acepta horas de 0 a 23', () => {

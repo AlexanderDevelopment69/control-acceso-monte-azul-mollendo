@@ -2,8 +2,8 @@
 
 Pruebas en la garita con el G4 Pro **HSR3263100192** en modo asistencia (ATT). El modo se elige en **Sistema y APIs → Orden del ingreso**:
 
-- **Modo 1 (Normal):** interruptor "Facial primero" apagado. Primero el DNI y después rostro y alcohol.
-- **Modo 2 (Facial primero):** interruptor encendido. Primero rostro y alcohol y después el DNI.
+- **Modo 1 (Normal):** interruptor "DNI → Facial + Alcohol → Molinete" encendido. Primero el DNI y después rostro y alcohol.
+- **Modo 2 (Facial primero):** interruptor "Facial + Alcohol → DNI → Molinete" encendido. Primero rostro y alcohol y después el DNI.
 
 **Reglas que valen en los dos modos:**
 
@@ -34,7 +34,7 @@ Personas de prueba:
 
 ## MODO 1: Normal (primero el DNI)
 
-Interruptor "Facial primero" **apagado**.
+Interruptor "DNI → Facial + Alcohol → Molinete" **encendido**.
 
 | # | Prueba | Qué debe pasar | Pasa |
 |---|---|---|---|
@@ -57,7 +57,7 @@ Interruptor "Facial primero" **apagado**.
 
 ## MODO 2: Facial primero (primero rostro y alcohol)
 
-Interruptor "Facial primero" **encendido**.
+Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 
 | # | Prueba | Qué debe pasar | Pasa |
 |---|---|---|---|

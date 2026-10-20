@@ -314,7 +314,8 @@ export interface MarcacionG4 {
 }
 
 export interface EstadoSincronizacionG4 {
-  diaria: { activa: boolean; hora: number | null };
+  /** desde y cambiadoPor: último cambio en el portal (faltan si nunca se cambió desde el 20/10/2026). */
+  diaria: { activa: boolean; hora: number | null; desde?: string | null; cambiadoPor?: string | null };
   enCurso: boolean;
   ultima: ResultadoSincronizacionG4 | null;
 }

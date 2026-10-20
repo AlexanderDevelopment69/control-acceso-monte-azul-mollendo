@@ -991,15 +991,15 @@ export const SECCIONES: SeccionManual[] = [
         contenido: (
           <>
             <p className="mb-3">
-              En <b>Sistema y APIs</b>, la tarjeta <b>“Orden del ingreso”</b> define en qué orden se hace el ingreso:
+              En <b>Sistema y APIs</b>, la tarjeta <b>“Orden del ingreso”</b> tiene dos interruptores; rige uno solo (al encender uno, el otro se apaga):
             </p>
             <Lista>
               <li>
-                <b>Normal (interruptor apagado):</b> primero el DNI por el lector de ingreso; si está en regla, la persona hace rostro y
+                <b>DNI → Facial + Alcohol → Molinete (normal):</b> primero el DNI por el lector de ingreso; si está en regla, la persona hace rostro y
                 alcohol en el terminal facial y se abre el molinete.
               </li>
               <li>
-                <b>Facial primero (interruptor encendido):</b> primero rostro y alcohol en el terminal facial; cuando el terminal dice
+                <b>Facial + Alcohol → DNI → Molinete (facial primero):</b> primero rostro y alcohol en el terminal facial; cuando el terminal dice
                 “correcto”, pasa su DNI (tiene 15 segundos desde que el Panel muestra “pase su DNI”). Los documentos se revisan con el DNI.
               </li>
             </Lista>
@@ -1018,7 +1018,8 @@ export const SECCIONES: SeccionManual[] = [
           <>
             <p className="mb-3">
               En <b>Sistema y APIs</b>, la tarjeta <b>“Monitor del G4 Pro”</b> muestra cada prueba de rostro y alcohol que manda el
-              terminal facial, la más reciente arriba. Se actualiza sola.
+              terminal facial, la más reciente arriba. Se actualiza sola. Cerrada muestra solo la última prueba; haga clic en ella para
+              ver la lista.
             </p>
             <Lista>
               <li>

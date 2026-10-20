@@ -24,7 +24,17 @@ export function leerHoraDiaria(): number | null {
   }
 }
 
-export function guardarHoraDiaria(hora: number | null): void {
+/** Cuándo y quién la cambió por última vez en el portal (null si nunca se cambió, o antes del 20/10/2026). */
+export function leerCambioDiaria(): { desde: string | null; cambiadoPor: string | null } {
+  try {
+    const { desde, cambiadoPor } = JSON.parse(fs.readFileSync(archivo(), 'utf8')) as { desde?: string; cambiadoPor?: string };
+    return { desde: desde ?? null, cambiadoPor: cambiadoPor ?? null };
+  } catch {
+    return { desde: null, cambiadoPor: null };
+  }
+}
+
+export function guardarHoraDiaria(hora: number | null, cambiadoPor?: string): void {
   fs.mkdirSync(path.dirname(archivo()), { recursive: true });
-  fs.writeFileSync(archivo(), JSON.stringify({ hora }));
+  fs.writeFileSync(archivo(), JSON.stringify({ hora, desde: new Date().toISOString(), cambiadoPor: cambiadoPor ?? null }));
 }

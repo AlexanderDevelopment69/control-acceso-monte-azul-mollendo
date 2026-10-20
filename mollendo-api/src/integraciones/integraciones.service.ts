@@ -7,7 +7,7 @@ import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { AVISO_DE, ReleUsbService } from './rele-usb.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
-import { guardarHoraDiaria, leerHoraDiaria } from './sincronizacion-diaria.js';
+import { guardarHoraDiaria, leerCambioDiaria, leerHoraDiaria } from './sincronizacion-diaria.js';
 import { leerFacialPrimero, type PermisosFijosEvent } from '../eventos-acceso/modo-ingreso.service.js';
 
 interface PersonaFotoActualizadaEvent {
@@ -184,7 +184,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   /** Estado de la sincronización para "Sistema y APIs" (la última se lee de la base de datos). */
   async estadoSincronizacion() {
     return {
-      diaria: { activa: this.horaDiaria !== null, hora: this.horaDiaria },
+      diaria: { activa: this.horaDiaria !== null, hora: this.horaDiaria, ...leerCambioDiaria() },
       enCurso: this.enCurso,
       ultima: await this.ultimaGuardada(),
     };
@@ -259,8 +259,8 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Activa (hora 0..23, hora de Lima) o desactiva (null) la sincronización diaria, desde "Sistema y APIs". */
-  async cambiarDiaria(hora: number | null) {
-    guardarHoraDiaria(hora);
+  async cambiarDiaria(hora: number | null, cambiadoPor?: string) {
+    guardarHoraDiaria(hora, cambiadoPor);
     this.programarDiaria(hora);
     return this.estadoSincronizacion();
   }
