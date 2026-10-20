@@ -78,6 +78,31 @@ export function SelectorFoto({ archivo, onChange }: { archivo: File | null; onCh
 }
 
 /**
+ * Fotos ya descargadas en esta sesión, por persona y versión: la misma persona
+ * en varias filas (Monitor del G4 Pro, Panel) se descarga una sola vez y
+ * aparece enseguida al cambiar de página.
+ */
+const fotos = new Map<string, Promise<string>>();
+const fotosListas = new Map<string, string>();
+
+function cargarFoto(personaId: number, version?: string | null): Promise<string> {
+  const clave = `${personaId}:${version ?? ""}`;
+  let foto = fotos.get(clave);
+  if (!foto) {
+    // Una foto nueva (otra versión) reemplaza la que se guardó sin versión.
+    if (version) fotos.delete(`${personaId}:`);
+    foto = personasApi.foto(personaId).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      fotosListas.set(clave, url);
+      return url;
+    });
+    foto.catch(() => fotos.delete(clave)); // si falló, se vuelve a intentar la próxima vez
+    fotos.set(clave, foto);
+  }
+  return foto;
+}
+
+/**
  * Foto guardada de un trabajador (ficha). La descarga con el token de sesión,
  * porque el endpoint está protegido y un <img src> no puede mandar el header.
  * `version` cambia cuando se sube una foto nueva, para volver a descargarla.
@@ -93,23 +118,16 @@ export function FotoGuardada({
   version?: string | null;
   tamano?: string;
 }) {
-  const [src, setSrc] = useState<string | null>(null);
+  const [src, setSrc] = useState<string | null>(() => fotosListas.get(`${personaId}:${version ?? ""}`) ?? null);
 
   useEffect(() => {
     if (!tieneFoto) return;
-    let url: string | null = null;
     let activo = true;
-    personasApi
-      .foto(personaId)
-      .then((blob) => {
-        if (!activo) return;
-        url = URL.createObjectURL(blob);
-        setSrc(url);
-      })
+    cargarFoto(personaId, version)
+      .then((url) => activo && setSrc(url))
       .catch(() => activo && setSrc(null));
     return () => {
       activo = false;
-      if (url) URL.revokeObjectURL(url);
     };
   }, [personaId, tieneFoto, version]);
 
