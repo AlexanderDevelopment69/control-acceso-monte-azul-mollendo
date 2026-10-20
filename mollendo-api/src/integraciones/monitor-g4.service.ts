@@ -70,7 +70,8 @@ export class MonitorG4Service {
           : null,
         horaPrueba: f.horaDispositivo?.toISOString() ?? null,
         llegada: f.creadoEn.toISOString(),
-        demoraSegundos: f.horaDispositivo ? Math.round((f.creadoEn.getTime() - f.horaDispositivo.getTime()) / 1000) : null,
+        // Segundos enteros, como se ven las horas (la llegada trae milésimas): 18:24:26 → 18:24:37,6 son 11 s.
+        demoraSegundos: f.horaDispositivo ? Math.floor((f.creadoEn.getTime() - f.horaDispositivo.getTime()) / 1000) : null,
         alcohol: registro?.alcohol ?? null,
         aprobado: registro?.alcohol ? alcoholConforme(registro.alcohol) : null,
         decision: f.decision,
