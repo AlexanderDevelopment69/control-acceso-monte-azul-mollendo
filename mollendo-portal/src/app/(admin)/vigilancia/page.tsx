@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import type { Socket } from "socket.io-client";
 import { RequireRole } from "@/lib/auth/RequireRole";
-import { connectEventosSocket } from "@/lib/ws";
+import { escucharEventos } from "@/lib/ws";
 import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type {
@@ -245,52 +244,51 @@ function VigilanciaContent() {
   const recargaPendiente = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finResalte = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    let socket: Socket | undefined;
-    try {
-      // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
-      socket = connectEventosSocket(() => {
+    // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
+    const dejarDeEscuchar = escucharEventos(
+      {
+        "verificacion-manual": (estado: EstadoVerificacionManual) => setManual(estado),
+        "modo-ingreso": (estado: EstadoModoIngreso) => setModoIngreso(estado),
+        "evento-acceso": (payload: EventoEnVivo) => {
+          setAviso((actual) => siguienteAviso(actual, payload));
+          if (payload.facialPrimero && payload.resultado === "autorizado" && payload.persona?.id) {
+            setComparar({
+              eventoId: payload.eventoId,
+              personaId: payload.persona.id,
+              nombre: `${payload.persona.nombres} ${payload.persona.apellidos}`,
+              tieneFoto: !!payload.tieneFoto,
+              fotoVersion: payload.fotoVersion,
+            });
+          }
+          setUltimo(payload.eventoId);
+          if (finResalte.current) clearTimeout(finResalte.current);
+          finResalte.current = setTimeout(() => setUltimo(null), RESALTE_MS);
+          if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
+          recargaPendiente.current = setTimeout(() => void cargarActual.current(), 500);
+        },
+        // DNI en regla: aparece al instante; si la misma persona vuelve a pasar el DNI, queda la última.
+        "ingreso-en-espera": (ingreso: IngresoEnEspera) => {
+          setAhora(Date.now());
+          // Llega también cuando una persona en cola pasa a su turno: se reemplaza su fila.
+          // Las aprobaciones de "facial primero" no tienen persona (personaId 0): solo se reemplaza la misma.
+          setEnEspera((actuales) => [
+            ingreso,
+            ...actuales.filter((i) => i.id !== ingreso.id && (ingreso.personaId === 0 || i.personaId !== ingreso.personaId)),
+          ]);
+        },
+        "ingreso-espera-terminada": ({ id }: { id: number }) => {
+          setEnEspera((actuales) => actuales.filter((i) => i.id !== id));
+        },
+      },
+      () => {
         void cargarActual.current();
         void cargarAviso();
         void cargarManual();
         void cargarModoIngreso();
-      });
-      socket.on("verificacion-manual", (estado: EstadoVerificacionManual) => setManual(estado));
-      socket.on("modo-ingreso", (estado: EstadoModoIngreso) => setModoIngreso(estado));
-      socket.on("evento-acceso", (payload: EventoEnVivo) => {
-        setAviso((actual) => siguienteAviso(actual, payload));
-        if (payload.facialPrimero && payload.resultado === "autorizado" && payload.persona?.id) {
-          setComparar({
-            eventoId: payload.eventoId,
-            personaId: payload.persona.id,
-            nombre: `${payload.persona.nombres} ${payload.persona.apellidos}`,
-            tieneFoto: !!payload.tieneFoto,
-            fotoVersion: payload.fotoVersion,
-          });
-        }
-        setUltimo(payload.eventoId);
-        if (finResalte.current) clearTimeout(finResalte.current);
-        finResalte.current = setTimeout(() => setUltimo(null), RESALTE_MS);
-        if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
-        recargaPendiente.current = setTimeout(() => void cargarActual.current(), 500);
-      });
-      // DNI en regla: aparece al instante; si la misma persona vuelve a pasar el DNI, queda la última.
-      socket.on("ingreso-en-espera", (ingreso: IngresoEnEspera) => {
-        setAhora(Date.now());
-        // Llega también cuando una persona en cola pasa a su turno: se reemplaza su fila.
-        // Las aprobaciones de "facial primero" no tienen persona (personaId 0): solo se reemplaza la misma.
-        setEnEspera((actuales) => [
-          ingreso,
-          ...actuales.filter((i) => i.id !== ingreso.id && (ingreso.personaId === 0 || i.personaId !== ingreso.personaId)),
-        ]);
-      });
-      socket.on("ingreso-espera-terminada", ({ id }: { id: number }) => {
-        setEnEspera((actuales) => actuales.filter((i) => i.id !== id));
-      });
-    } catch {
-      // el panel sigue funcionando sin tiempo real si el socket falla
-    }
+      },
+    );
     return () => {
-      socket?.disconnect();
+      dejarDeEscuchar();
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
       if (finResalte.current) clearTimeout(finResalte.current);
     };

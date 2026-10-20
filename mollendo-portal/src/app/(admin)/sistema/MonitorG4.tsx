@@ -2,9 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { Socket } from "socket.io-client";
 import { integracionesApi } from "@/lib/api/endpoints";
-import { connectEventosSocket } from "@/lib/ws";
+import { canalConectado, escucharEventos } from "@/lib/ws";
 import type { MarcacionG4, Paginado } from "@/lib/api/types";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import { useDiferido } from "@/lib/useDiferido";
@@ -132,28 +131,28 @@ function EnVivoBadge({ enVivo }: { enVivo: boolean }) {
 
 /** Canal en vivo: si está conectado, y `alLlegar` con cada prueba nueva (o al reconectar). */
 function useCanalG4(alLlegar?: () => void) {
-  const [enVivo, setEnVivo] = useState(false);
+  // Si otra vista ya abrió el canal, se sabe enseguida si está conectado.
+  const [enVivo, setEnVivo] = useState(canalConectado);
   const aviso = useRef(alLlegar);
   useEffect(() => {
     aviso.current = alLlegar;
   });
   useEffect(() => {
-    let socket: Socket | undefined;
     let recarga: ReturnType<typeof setTimeout> | null = null;
-    try {
-      socket = connectEventosSocket(() => aviso.current?.());
-      socket.on("connect", () => setEnVivo(true));
-      socket.on("disconnect", () => setEnVivo(false));
-      // Una prueba trae varios avisos seguidos (llega, se decide, termina en un ingreso): una sola recarga.
-      socket.on("g4-marcacion", () => {
-        if (recarga) clearTimeout(recarga);
-        recarga = setTimeout(() => aviso.current?.(), 400);
-      });
-    } catch {
-      // sin tiempo real, se pone al día cada minuto
-    }
+    const dejarDeEscuchar = escucharEventos(
+      {
+        connect: () => setEnVivo(true),
+        disconnect: () => setEnVivo(false),
+        // Una prueba trae varios avisos seguidos (llega, se decide, termina en un ingreso): una sola recarga.
+        "g4-marcacion": () => {
+          if (recarga) clearTimeout(recarga);
+          recarga = setTimeout(() => aviso.current?.(), 400);
+        },
+      },
+      () => aviso.current?.(),
+    );
     return () => {
-      socket?.disconnect();
+      dejarDeEscuchar();
       if (recarga) clearTimeout(recarga);
     };
   }, []);

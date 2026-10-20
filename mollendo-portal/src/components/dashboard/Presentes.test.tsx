@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Presentes, tiempoDentro } from "./Presentes";
 
 const api = vi.hoisted(() => ({ presentes: vi.fn(), descargar: vi.fn() }));
-vi.mock("@/lib/ws", () => ({ connectEventosSocket: () => ({ on: vi.fn(), disconnect: vi.fn() }) }));
+vi.mock("@/lib/ws", () => ({ escucharEventos: () => () => {}, canalConectado: () => false }));
 vi.mock("@/lib/api/endpoints", () => ({
   panelApi: { presentes: api.presentes },
   reportesApi: { descargar: api.descargar },

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { authApi, type UsuarioSesion } from "@/lib/api/endpoints";
 import { ApiError, renovarSesion, suscribirSesionPerdida } from "@/lib/api/client";
 import type { RolUsuario } from "@/lib/api/types";
+import { cerrarCanal } from "@/lib/ws";
 
 type AuthUser = UsuarioSesion;
 
@@ -66,6 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       quitar();
     };
   }, []);
+
+  // El canal en vivo se abrió con la sesión de este usuario: al salir (o al cambiar de usuario) se
+  // cierra, y la próxima vista lo abre con la sesión nueva.
+  const usuarioId = user?.id;
+  useEffect(() => () => cerrarCanal(), [usuarioId]);
 
   const login = useCallback(async (correo: string, password: string) => {
     const { usuario } = await authApi.login(correo, password);

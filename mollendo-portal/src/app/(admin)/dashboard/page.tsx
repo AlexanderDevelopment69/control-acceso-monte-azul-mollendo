@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import type { Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 import { RequireRole } from "@/lib/auth/RequireRole";
-import { connectEventosSocket } from "@/lib/ws";
+import { escucharEventos } from "@/lib/ws";
 import { panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { Dashboard, Paginado, PersonaPermanencia } from "@/lib/api/types";
@@ -157,7 +156,6 @@ function DashboardContent() {
     cargarActual.current = cargar;
   }, [cargar]);
   useEffect(() => {
-    let socket: Socket | undefined;
     let pendiente: ReturnType<typeof setTimeout> | null = null;
     let ultimaRecarga = Date.now();
     const recargar = () => {
@@ -165,20 +163,20 @@ function DashboardContent() {
       ultimaRecarga = Date.now();
       void cargarActual.current();
     };
-    try {
-      // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
-      socket = connectEventosSocket(recargar);
-      socket.on("evento-acceso", () => {
-        if (pendiente) return; // ya hay una recarga programada: la incluye
-        const espera = Math.max(1000, ultimaRecarga + RECARGA_MINIMA_MS - Date.now());
-        pendiente = setTimeout(recargar, espera);
-      });
-    } catch {
-      // sin tiempo real, se actualiza cada minuto
-    }
+    // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
+    const dejarDeEscuchar = escucharEventos(
+      {
+        "evento-acceso": () => {
+          if (pendiente) return; // ya hay una recarga programada: la incluye
+          const espera = Math.max(1000, ultimaRecarga + RECARGA_MINIMA_MS - Date.now());
+          pendiente = setTimeout(recargar, espera);
+        },
+      },
+      recargar,
+    );
     const intervalo = setInterval(recargar, 60_000);
     return () => {
-      socket?.disconnect();
+      dejarDeEscuchar();
       if (pendiente) clearTimeout(pendiente);
       clearInterval(intervalo);
     };

@@ -520,7 +520,7 @@ export const SECCIONES: SeccionManual[] = [
                   <b>Para salir</b> solo pasa su DNI por el lector de salida. Debe tener un ingreso registrado antes; puede salir aunque esté
                   dado de baja o con documentos vencidos.
                 </p>
-                <p>Junto al nombre se ve su perfil: contratista, conductor, visita…</p>
+                <p>Junto al nombre se ven su foto y su perfil: contratista, conductor, visita…</p>
               </>
             ),
           },

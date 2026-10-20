@@ -2,8 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { guardarArchivo } from "@/lib/descargas";
-import type { Socket } from "socket.io-client";
-import { connectEventosSocket } from "@/lib/ws";
+import { escucharEventos } from "@/lib/ws";
 import { panelApi, reportesApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { PersonaPresente } from "@/lib/api/types";
@@ -73,7 +72,6 @@ export function Presentes() {
   }, []);
 
   useEffect(() => {
-    let socket: Socket | undefined;
     let pendiente: ReturnType<typeof setTimeout> | null = null;
     let ultimaRecarga = Date.now();
     const recargar = () => {
@@ -82,19 +80,19 @@ export function Presentes() {
       void cargar();
     };
     recargar();
-    try {
-      // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
-      socket = connectEventosSocket(recargar);
-      socket.on("evento-acceso", () => {
-        if (pendiente) return; // ya hay una recarga programada: la incluye
-        pendiente = setTimeout(recargar, Math.max(500, ultimaRecarga + RECARGA_MINIMA_MS - Date.now()));
-      });
-    } catch {
-      // sin tiempo real, se actualiza cada minuto
-    }
+    // Al recuperar la conexión, recarga lo que llegó mientras estaba cortada.
+    const dejarDeEscuchar = escucharEventos(
+      {
+        "evento-acceso": () => {
+          if (pendiente) return; // ya hay una recarga programada: la incluye
+          pendiente = setTimeout(recargar, Math.max(500, ultimaRecarga + RECARGA_MINIMA_MS - Date.now()));
+        },
+      },
+      recargar,
+    );
     const intervalo = setInterval(recargar, 60_000);
     return () => {
-      socket?.disconnect();
+      dejarDeEscuchar();
       if (pendiente) clearTimeout(pendiente);
       clearInterval(intervalo);
     };

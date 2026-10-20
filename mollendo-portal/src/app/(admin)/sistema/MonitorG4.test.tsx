@@ -5,7 +5,7 @@ import { hoy } from "@/lib/paginaServidor";
 import { grado, horaCorta, MonitorG4, TarjetaMonitorG4 } from "./MonitorG4";
 
 vi.mock("@/components/personal/FotoPersonal", () => ({ FotoGuardada: () => <div>foto</div> }));
-vi.mock("@/lib/ws", () => ({ connectEventosSocket: () => ({ on: vi.fn(), disconnect: vi.fn() }) }));
+vi.mock("@/lib/ws", () => ({ escucharEventos: () => () => {}, canalConectado: () => false }));
 
 const APROBO: MarcacionG4 = {
   id: 30,

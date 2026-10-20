@@ -176,6 +176,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     "numeroDocumento": "12345678",
     "empresa": "Empresa S.A.C.",
     "tieneFoto": true,
+    "fotoVersion": "foto-3f2a9c1e.jpg",
     "torniqueteId": "Ingreso",
     "desde": "2026-10-04T09:02:19.000Z",
     "hasta": "2026-10-04T09:03:19.000Z",
@@ -189,13 +190,14 @@ DNI leído en ingreso: pendiente_verificacion`,
     "apellidos": "",
     "numeroDocumento": "12345678",
     "tieneFoto": true,
+    "fotoVersion": "foto-3f2a9c1e.jpg",
     "desde": "2026-10-19T22:52:47.000Z",
     "hasta": "2026-10-19T22:53:02.000Z",
     "esperaDni": true,
     "enCola": false
   }
 ]`,
-    notas: "En \"facial primero\", un DNI que espera en silencio el aviso del G4 (hasta 8 s) no aparece en la lista. enCola solo se usa con el G4 en modo control de acceso (se habilita a una persona a la vez).",
+    notas: "fotoVersion cambia con cada foto nueva: el Panel la usa para no mostrar una foto vieja. La foto se pide aparte (GET /personas/:id/foto, con ?miniatura=1 la reducida de 160 px para las listas). En \"facial primero\", un DNI que espera en silencio el aviso del G4 (hasta 8 s) no aparece en la lista. enCola solo se usa con el G4 en modo control de acceso (se habilita a una persona a la vez).",
   },
   {
     nombre: "Comando molinete (relés USB)",
@@ -276,7 +278,8 @@ Persona 12345678 encolada para 1 equipo(s), con foto
         "id": 7,
         "nombres": "Jose",
         "apellidos": "Vilchez",
-        "tieneFoto": true
+        "tieneFoto": true,
+        "fotoVersion": "foto-3f2a9c1e.jpg"
       },
       "horaPrueba": "2026-10-19T23:27:00.000Z",
       "llegada": "2026-10-19T23:27:02.000Z",
