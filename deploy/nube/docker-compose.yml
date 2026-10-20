@@ -5,8 +5,18 @@
 #   docker compose up -d --build
 name: mollendo
 
+# Registro (docker logs) de cada servicio: hasta 3 archivos de 10 MB; el más
+# viejo se borra solo, así el registro nunca llena el disco.
+x-registro: &registro
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
   db:
+    <<: *registro
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -23,6 +33,7 @@ services:
       retries: 10
 
   api:
+    <<: *registro
     build: ../../mollendo-api
     restart: unless-stopped
     depends_on:
@@ -73,6 +84,7 @@ services:
       - "3001:3001" # equipos (ingreso/salida con X-API-Key) y Swagger
 
   portal:
+    <<: *registro
     build: ../../mollendo-portal
     restart: unless-stopped
     depends_on:
@@ -86,6 +98,7 @@ services:
   # Caddy saca y renueva solo. Reenvía /api/v1 a la API y lo demás al portal.
   # Ver Caddyfile.
   caddy:
+    <<: *registro
     image: caddy:2.10-alpine
     restart: unless-stopped
     depends_on:
@@ -107,6 +120,7 @@ services:
   # días (por defecto 14).
   # Ver deploy/comun/respaldo.sh.
   backup:
+    <<: *registro
     image: postgres:16-alpine
     restart: unless-stopped
     depends_on:
@@ -130,6 +144,7 @@ services:
   #   Ver enlace: docker compose logs muestra | grep trycloudflare
   #   Apagar:   docker compose --profile muestra rm -sf muestra
   muestra:
+    <<: *registro
     image: cloudflare/cloudflared:latest
     profiles: ["muestra"]
     restart: "no"

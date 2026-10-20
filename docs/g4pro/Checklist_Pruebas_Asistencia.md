@@ -14,6 +14,8 @@ Pruebas en la garita con el G4 Pro **HSR3263100192** en modo asistencia (ATT). E
 
 Marque `[x]` cuando la prueba pase. Anote la hora y lo que vio si algo sale distinto.
 
+Cómo seguir cada prueba (Monitor del G4 Pro, depuración, comandos al equipo y consultas): `Depuracion_y_Pruebas_G4Pro.md`.
+
 Personas de prueba:
 
 - **Jose Vilchez**, DNI 71988749 (vigilante)

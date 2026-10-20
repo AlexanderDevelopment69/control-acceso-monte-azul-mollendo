@@ -2,7 +2,7 @@
 export interface ApiIntegracion {
   nombre: string;
   endpoint: string;
-  metodo: "POST" | "GET" | "RS232" | "USB";
+  metodo: "POST" | "GET" | "PUT" | "GET · PUT" | "RS232" | "USB";
   descripcion: string;
   autenticacion: string;
   /** real: funciona hoy · mock: simulado (solo queda en el log) · pendiente: por programar. */
@@ -31,12 +31,13 @@ DATA UPDATE USERINFO PIN=12345678\tName=Juan Pérez\tPri=0\tPasswd=\tCard=\tGrp=
 DATA UPDATE biophoto PIN=12345678\tType=9\tSize=…\tContent=<foto JPG ≤ 20 KB en base64>\tFormat=0\tUrl=\tPostBackTmpFlag=0
 DATA DELETE USERINFO PIN=12345678
 DATA QUERY USERINFO   // lista de usuarios (responde por table=OPERLOG y table=BIODATA)`,
-    ejemploRespuesta: `// Cada prueba (table=ATTLOG): DNI, hora, estado, verificación (15 = rostro), …, grado de alcohol
+    ejemploRespuesta: `// Cada prueba (table=ATTLOG): DNI, hora, estado (255), verificación (15 = rostro), código de trabajo, 2 reservados,
+// mascarilla (255 = apagada), temperatura, temperatura convertida, N.º de marcación, grado de alcohol, 3 campos sin uso
 POST /iclock/cdata?SN=HSR3263100192&table=ATTLOG&Stamp=9999
 71988749\t2026-10-19 17:00:20\t255\t15\t0\t0\t0\t255\t0\t0\t6\t0.00g/L\t-\t-\t-       // aprobó
 71988749\t2026-10-19 16:33:26\t255\t15\t0\t0\t0\t255\t0\t0\t9\t0.000595g/L\t-\t-\t-   // alcohol alto`,
     notas:
-      "Probado con el equipo real HSR3263100192 (19/oct/2026). El estado es siempre 255: el sistema decide con el grado (alcohol alto desde 0.0001 g/L, el umbral del equipo; G4PRO_UMBRAL_ALCOHOL). El aviso llega 10-12 s después del soplido (15-17 s con alcohol alto). Las marcaciones repetidas se ignoran y las de más de 2 minutos (enviadas al volver la conexión) se guardan sin decidir nada. En modo control de acceso (ACC) el equipo usa /iclock/registry, /iclock/push y table=rtlog, y el aprobado llega sin DNI (pin=0).",
+      "Probado con el equipo real HSR3263100192 (19/oct/2026). El estado es siempre 255: el sistema decide con el grado (alcohol alto desde 0.0001 g/L, el umbral del equipo; G4PRO_UMBRAL_ALCOHOL). El aviso llega 10-12 s después del soplido (15-17 s con alcohol alto). Las marcaciones repetidas se ignoran y las de más de 2 minutos (enviadas al volver la conexión) se guardan sin decidir nada. El N.º de marcación sube de uno en uno: el Monitor del G4 Pro avisa si falta alguno. Para ver los mensajes crudos del equipo, PUSH_SDK_DEPURAR=true en el .env del servidor (apagado por defecto; ver docs/g4pro/Depuracion_y_Pruebas_G4Pro.md). En modo control de acceso (ACC) el equipo usa /iclock/registry, /iclock/push y table=rtlog, y el aprobado llega sin DNI (pin=0).",
   },
   {
     nombre: "Lectores de DNI (Syble XB-7705H)",
@@ -188,5 +189,57 @@ Persona 12345678 encolada para 1 equipo(s), con foto
   "porEquipo": [{ "serialNumber": "HSR3263100192", "usuarios": 2, "conRostro": 2, "sinRostro": [] }] }`,
     notas:
       "Se registran con su número de documento (DNI, carné de extranjería o pasaporte: el equipo acepta letras, hasta 24 caracteres); los lectores, por ahora, solo reconocen el DNI. Si se cambia el número de documento, se borra el usuario anterior del equipo. En modo asistencia no hay permisos de paso (permisosQuitados siempre 0). La foto debe ser de frente, con buena luz y el rostro centrado. Vigilancia puede ver la foto (GET /personas/:id/foto) pero no subirla.",
+  },
+  {
+    nombre: "Monitor del G4 Pro",
+    endpoint: "/integraciones/g4pro/marcaciones",
+    metodo: "GET",
+    descripcion:
+      "Las 30 últimas pruebas de rostro y alcohol que mandó el G4 Pro, la más reciente primero: hora del soplido y N.º de marcación, cuándo llegó y la demora, persona, grado, qué hizo el sistema con la prueba y el ingreso en que terminó. Lo usa la tarjeta \"Monitor del G4 Pro\" de esta página, que se actualiza al instante con el evento g4-marcacion del canal en vivo (/ws/eventos).",
+    autenticacion: "JWT (Administrador)",
+    tipo: "real",
+    headers: ["Authorization: Bearer <token>"],
+    ejemploRequest: `GET /integraciones/g4pro/marcaciones`,
+    ejemploRespuesta: `// 200
+[{ "id": 30, "serialNumber": "HSR3263100192", "numero": 28, "faltanAntes": 0, "dni": "71988749",
+   "persona": { "id": 7, "nombres": "Jose", "apellidos": "Vilchez", "tieneFoto": true },
+   "horaPrueba": "2026-10-19T23:27:00.000Z", "llegada": "2026-10-19T23:27:02.000Z", "demoraSegundos": 2,
+   "alcohol": "0.00g/L", "aprobado": true, "decision": "Aprobó: \"pase su DNI\" (15 s)",
+   "ingreso": { "id": 500, "resultado": "autorizado", "motivo": "", "fechaHora": "2026-10-19T23:27:04.000Z" } }]`,
+    notas:
+      "faltanAntes > 0: el número de marcación saltó, es decir, hubo pruebas que no llegaron al servidor. decision queda vacía en las pruebas de antes del 20/10/2026. Solo lectura: no cambia nada en el equipo.",
+  },
+  {
+    nombre: "Orden del ingreso",
+    endpoint: "/eventos-acceso/modo-ingreso",
+    metodo: "GET · PUT",
+    descripcion:
+      "Qué orden rige: \"DNI → Facial + Alcohol → Molinete\" (facialPrimero: false) o \"Facial + Alcohol → DNI → Molinete\" (facialPrimero: true). GET lo consulta (también el Panel de vigilancia); PUT lo cambia (solo Administrador; queda en la auditoría con quién y cuándo). Es la tarjeta \"Orden del ingreso\" de esta página.",
+    autenticacion: "JWT (GET: Administrador / Vigilancia · PUT: Administrador)",
+    tipo: "real",
+    headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
+    ejemploRequest: `PUT /eventos-acceso/modo-ingreso
+{ "facialPrimero": true }`,
+    ejemploRespuesta: `// 200
+{ "facialPrimero": true, "desde": "2026-10-20T08:36:57.000Z", "cambiadoPor": "admin@mollendo.local" }`,
+    notas:
+      "El cambio rige al instante, sin reiniciar nada; los paneles abiertos lo reciben por el canal en vivo (evento modo-ingreso). desde y cambiadoPor son los del último cambio, en cualquiera de los dos sentidos.",
+  },
+  {
+    nombre: "Revisión diaria del G4 Pro",
+    endpoint: "/integraciones/g4pro/sincronizacion-diaria",
+    metodo: "PUT",
+    descripcion:
+      "Activa la sincronización automática con el G4 Pro una vez al día, a la hora elegida (0 a 23, hora de Lima), o la desactiva (null). Es el interruptor \"Revisión diaria\" de la tarjeta \"Sincronización con el G4 Pro\". El estado (activa, hora, desde y cambiadoPor) viene en GET /panel/estado-sistema, en sincronizacionG4.diaria.",
+    autenticacion: "JWT (Administrador)",
+    tipo: "real",
+    headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
+    ejemploRequest: `PUT /integraciones/g4pro/sincronizacion-diaria
+{ "hora": 0 }      // a las 00:00 · { "hora": null } la desactiva`,
+    ejemploRespuesta: `// 200
+{ "diaria": { "activa": true, "hora": 0, "desde": "2026-10-20T08:45:00.000Z", "cambiadoPor": "admin@mollendo.local" },
+  "enCurso": false, "ultima": { … } }`,
+    notas:
+      "Se guarda en el servidor (sobrevive a los reinicios). Si nunca se cambió desde el portal, vale G4PRO_HORA_SINCRONIZACION del .env. desde y cambiadoPor faltan si no se ha cambiado desde el 20/10/2026.",
   },
 ];
