@@ -163,6 +163,8 @@ export interface EventoAcceso {
     tipoDocumentoIdentidad: "DNI" | "CE" | "PASAPORTE";
     numeroDocumento: string;
     perfil?: Perfil | null;
+    /** Tiene foto guardada (miniatura del Panel). */
+    tieneFoto?: boolean;
   };
 }
 

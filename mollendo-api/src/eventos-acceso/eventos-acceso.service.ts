@@ -1271,7 +1271,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         ],
       })),
     };
-    const [datos, total] = await Promise.all([
+    const [filas, total] = await Promise.all([
       this.prisma.eventoAcceso.findMany({
         where,
         include: {
@@ -1284,6 +1284,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
               tipoDocumentoIdentidad: true,
               numeroDocumento: true,
               perfil: true,
+              fotoUrl: true,
             },
           },
           verificadoPor: { select: { id: true, correo: true } },
@@ -1294,6 +1295,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       }),
       this.prisma.eventoAcceso.count({ where }),
     ]);
-    return { datos, total, pagina, porPagina } satisfies Paginado<(typeof datos)[number]>;
+    // La miniatura del Panel: solo si tiene foto, sin mandar la ruta del archivo.
+    const conFoto = filas.map(({ persona, ...evento }) => ({
+      ...evento,
+      persona: persona && (({ fotoUrl, ...p }) => ({ ...p, tieneFoto: !!fotoUrl }))(persona),
+    }));
+    return { datos: conFoto, total, pagina, porPagina } satisfies Paginado<(typeof conFoto)[number]>;
   }
 }

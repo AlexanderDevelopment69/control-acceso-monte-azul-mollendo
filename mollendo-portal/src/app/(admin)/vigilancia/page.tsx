@@ -47,6 +47,7 @@ import {
   FranjaVerificacionManual,
 } from "./VerificacionManual";
 import { EtiquetaPerfil } from "@/components/personal/EtiquetaPerfil";
+import { FotoGuardada } from "@/components/personal/FotoPersonal";
 
 // Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
 const RESALTE_MS = 8000;
@@ -525,13 +526,19 @@ function VigilanciaContent() {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {ev.persona ? (
-                        <span className="flex flex-wrap items-center gap-2">
-                          {ev.persona.nombres} {ev.persona.apellidos}
-                          {/* Solo si tiene perfil: al vigilante no le sirve ver "Sin perfil". */}
-                          {ev.persona.perfil && <EtiquetaPerfil perfil={ev.persona.perfil} />}
+                        <span className="flex items-center gap-3">
+                          <FotoGuardada personaId={ev.persona.id} tieneFoto={!!ev.persona.tieneFoto} tamano="size-10" />
+                          <span className="flex flex-wrap items-center gap-2">
+                            {ev.persona.nombres} {ev.persona.apellidos}
+                            {/* Solo si tiene perfil: al vigilante no le sirve ver "Sin perfil". */}
+                            {ev.persona.perfil && <EtiquetaPerfil perfil={ev.persona.perfil} />}
+                          </span>
                         </span>
                       ) : (
-                        <span className="text-gray-400">{ev.facialPrimero ? "Sin identificar" : "No registrado"}</span>
+                        <span className="flex items-center gap-3">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800">?</span>
+                          <span className="text-gray-400">{ev.facialPrimero ? "Sin identificar" : "No registrado"}</span>
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
