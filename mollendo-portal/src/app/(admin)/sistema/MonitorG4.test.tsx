@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { MarcacionG4 } from "@/lib/api/types";
+import { hoy } from "@/lib/paginaServidor";
 import { grado, horaCorta, MonitorG4, TarjetaMonitorG4 } from "./MonitorG4";
 
 vi.mock("@/components/personal/FotoPersonal", () => ({ FotoGuardada: () => <div>foto</div> }));
@@ -36,8 +37,15 @@ const ALCOHOL: MarcacionG4 = {
   ingreso: { id: 499, resultado: "denegado", motivo: "Alcohol", fechaHora: "2026-10-19T23:20:00.000Z" },
 };
 
+const { pedidos } = vi.hoisted(() => ({ pedidos: [] as object[] }));
+
 vi.mock("@/lib/api/endpoints", () => ({
-  integracionesApi: { marcacionesG4: () => Promise.resolve([APROBO, ALCOHOL]) },
+  integracionesApi: {
+    marcacionesG4: (filtros: object) => {
+      pedidos.push(filtros);
+      return Promise.resolve({ datos: [APROBO, ALCOHOL], total: 2, pagina: 1, porPagina: 20 });
+    },
+  },
 }));
 
 describe("Monitor del G4 Pro", () => {
@@ -45,6 +53,14 @@ describe("Monitor del G4 Pro", () => {
     render(<TarjetaMonitorG4 />);
     expect(screen.getByRole("link", { name: /Abrir monitor/ })).toHaveAttribute("href", "/sistema/monitor");
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("la página empieza en hoy, de a 10 pruebas, con el total abajo", async () => {
+    render(<MonitorG4 />);
+    await screen.findByText("Jose Vilchez");
+    expect(pedidos.at(-1)).toMatchObject({ pagina: 1, porPagina: 10, busqueda: "", desde: hoy(), hasta: hoy() });
+    expect(screen.getByPlaceholderText("Buscar por nombre o DNI…")).toBeInTheDocument();
+    expect(screen.getByText(/Mostrando 1 a 2 de 2/)).toBeInTheDocument();
   });
 
   it("la página muestra cada prueba: persona, grado, decisión, ingreso, demora y las que no llegaron", async () => {

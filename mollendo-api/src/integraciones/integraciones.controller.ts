@@ -4,6 +4,7 @@ import { MonitorG4Service } from './monitor-g4.service.js';
 import { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { SincronizacionDiariaDto } from './dto/sincronizacion-diaria.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
+import { ListaPaginadaDto } from '../common/paginacion.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 
@@ -14,11 +15,11 @@ export class IntegracionesController {
     private readonly monitorG4: MonitorG4Service,
   ) {}
 
-  /** Monitor del G4 Pro: las últimas pruebas de rostro y alcohol y qué hizo el sistema con cada una. */
+  /** Monitor del G4 Pro: las pruebas de rostro y alcohol y qué hizo el sistema con cada una (por día, búsqueda y página). */
   @Get('g4pro/marcaciones')
   @Roles('administrador')
-  marcacionesG4Pro() {
-    return this.monitorG4.ultimas();
+  marcacionesG4Pro(@Query() query: ListaPaginadaDto) {
+    return this.monitorG4.listar(query);
   }
 
   @Post('torniquete/comando')

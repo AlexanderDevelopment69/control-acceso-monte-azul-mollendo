@@ -868,7 +868,7 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(de('molinete.abrir')).toHaveLength(1);
       });
 
-      it('va primero al DNI sin rostro y alcohol: sin cuenta regresiva; a los 8 s "Sin prueba facial"', async () => {
+      it('va primero al DNI sin rostro y alcohol: sin cuenta regresiva; a los 8 s "DNI antes del facial"', async () => {
         agregarPersona(base, '11111111');
         expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
         expect(de('ingreso.en-espera')).toHaveLength(0);
@@ -906,7 +906,7 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado' });
       });
 
-      it('pasa el DNI 16 s después de aparecer "pase su DNI": fuera de plazo, "Sin prueba facial"', async () => {
+      it('pasa el DNI 16 s después de aparecer "pase su DNI": fuera de plazo, "DNI antes del facial"', async () => {
         agregarPersona(base, '11111111');
         const correcto = new Date(ahora);
         avanzar(11_000);

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { MonitorG4Service } from './monitor-g4.service.js';
 
 const T = '\t';
@@ -38,8 +39,14 @@ describe('Monitor del G4 Pro', () => {
       fila(29, '99999999', '2026-10-19T18:20:00', '2026-10-19T18:20:16', 25, '0.000379g/L'),
       fila(28, '71988749', '2026-10-19T18:10:00', '2026-10-19T18:10:11', 24, '0.00g/L'),
     ];
+    // La página trae las dos más nuevas; la anterior del equipo (la 24) se pide aparte para ver si faltan.
+    const findMany = vi.fn().mockResolvedValue(filas.slice(0, 2));
     const prisma = {
-      verificacionDispositivo: { findMany: () => Promise.resolve(filas) },
+      verificacionDispositivo: {
+        findMany,
+        count: () => Promise.resolve(3),
+        findFirst: () => Promise.resolve(filas[2]),
+      },
       persona: {
         findMany: () =>
           Promise.resolve([{ id: 7, numeroDocumento: '71988749', nombres: 'Jose', apellidos: 'Vilchez', fotoUrl: 'x.jpg' }]),
@@ -47,8 +54,11 @@ describe('Monitor del G4 Pro', () => {
     };
     const monitor = new MonitorG4Service(prisma as never);
 
-    const [ultima, conAlcohol] = await monitor.ultimas(2);
+    const pagina = await monitor.listar({ porPagina: 2, desde: '2026-10-19', hasta: '2026-10-19' });
+    const [ultima, conAlcohol] = pagina.datos;
 
+    expect(pagina).toMatchObject({ total: 3, pagina: 1, porPagina: 2 });
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ skip: 0, take: 2 }));
     expect(ultima).toMatchObject({
       numero: 28,
       faltanAntes: 2, // llegaron la 25 y la 28: faltan la 26 y la 27
@@ -60,7 +70,27 @@ describe('Monitor del G4 Pro', () => {
       decision: 'Aprobó: "pase su DNI" (15 s)',
       ingreso: { id: 500, resultado: 'autorizado', motivo: '' },
     });
-    // DNI que no está en el sistema; la anterior (24) es la de una más, que no se muestra.
+    // DNI que no está en el sistema; su anterior (24) es de la página siguiente: no falta ninguna.
     expect(conAlcohol).toMatchObject({ numero: 25, faltanAntes: 0, persona: null, demoraSegundos: 16, aprobado: false, ingreso: null });
+  });
+
+  it('con una búsqueda por nombre filtra por el DNI de esas personas y no marca pruebas faltantes', async () => {
+    const findMany = vi.fn().mockResolvedValue([fila(30, '71988749', '2026-10-19T18:27:00', '2026-10-19T18:27:02', 28, '0.00g/L')]);
+    const findFirst = vi.fn();
+    const prisma = {
+      verificacionDispositivo: { findMany, count: () => Promise.resolve(1), findFirst },
+      persona: {
+        findMany: () =>
+          Promise.resolve([{ id: 7, numeroDocumento: '71988749', nombres: 'Jose', apellidos: 'Vilchez', fotoUrl: null }]),
+      },
+    };
+    const monitor = new MonitorG4Service(prisma as never);
+
+    const { datos } = await monitor.listar({ busqueda: 'vilchez' });
+
+    const where = findMany.mock.calls[0][0].where;
+    expect(where.AND).toEqual([{ OR: [{ crudo: { startsWith: 'vilchez' } }, { crudo: { startsWith: '71988749\t' } }] }]);
+    expect(findFirst).not.toHaveBeenCalled();
+    expect(datos[0]).toMatchObject({ faltanAntes: 0, persona: { nombres: 'Jose' } });
   });
 });

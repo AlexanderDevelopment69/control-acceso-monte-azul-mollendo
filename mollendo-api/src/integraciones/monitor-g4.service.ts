@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '../generated/prisma/client.js';
+import { ListaPaginadaDto, paginacion, Paginado, palabras, rangoDeDias } from '../common/paginacion.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { alcoholConforme, leerRegistroAsistencia } from '../push-sdk/asistencia.util.js';
 import { motivosEvento } from '../reportes/reportes.service.js';
@@ -28,35 +30,68 @@ export interface MarcacionG4 {
 }
 
 /**
- * Monitor en vivo del G4 Pro en asistencia: las últimas pruebas que mandó
- * (`ATTLOG`), con quién la hizo, cuánto tardó en llegar, el grado y qué hizo
- * el sistema con ella. Reemplaza leer el log de la API con la depuración.
+ * Monitor del G4 Pro en asistencia: las pruebas que mandó (`ATTLOG`), con
+ * quién la hizo, cuánto tardó en llegar, el grado y qué hizo el sistema con
+ * ella. Por día y por página, como el Panel; la más reciente primero.
  */
 @Injectable()
 export class MonitorG4Service {
   constructor(private readonly prisma: PrismaService) {}
 
-  async ultimas(limite = 30): Promise<MarcacionG4[]> {
-    // Una de más, para saber si falta alguna antes de la más antigua que se muestra.
-    const filas = await this.prisma.verificacionDispositivo.findMany({
-      where: { tabla: 'attlog' },
-      orderBy: { id: 'desc' },
-      take: limite + 1,
-      include: { dispositivo: { select: { serialNumber: true } }, eventoAcceso: true },
-    });
-    const registros = filas.map((f) => leerRegistroAsistencia(f.crudo));
-    const dnis = [...new Set(registros.map((r) => r?.pin).filter((p): p is string => !!p))];
+  async listar(query: ListaPaginadaDto): Promise<Paginado<MarcacionG4>> {
+    const { pagina, porPagina, skip, take } = paginacion(query);
+    const buscadas = palabras(query.busqueda);
+    // El DNI va al comienzo de la línea del equipo; por nombre, se busca el DNI de las personas que coinciden.
+    const filtros = await Promise.all(
+      buscadas.map(async (palabra) => {
+        const personas = await this.prisma.persona.findMany({
+          where: {
+            OR: [
+              { nombres: { contains: palabra, mode: 'insensitive' } },
+              { apellidos: { contains: palabra, mode: 'insensitive' } },
+            ],
+          },
+          select: { numeroDocumento: true },
+          take: 200,
+        });
+        return {
+          OR: [{ crudo: { startsWith: palabra } }, ...personas.map((p) => ({ crudo: { startsWith: `${p.numeroDocumento}	` } }))],
+        };
+      }),
+    );
+    const where: Prisma.VerificacionDispositivoWhereInput = {
+      tabla: 'attlog',
+      creadoEn: rangoDeDias(query.desde, query.hasta),
+      AND: filtros,
+    };
+    const [filas, total] = await Promise.all([
+      this.prisma.verificacionDispositivo.findMany({
+        where,
+        orderBy: { id: 'desc' },
+        skip,
+        take,
+        include: { dispositivo: { select: { serialNumber: true } }, eventoAcceso: true },
+      }),
+      this.prisma.verificacionDispositivo.count({ where }),
+    ]);
+
+    // Pruebas que no llegaron: se compara cada número con la prueba anterior del mismo equipo, aunque
+    // sea de otra página u otro día. Con una búsqueda no se marca (las de otras personas no se ven).
+    const anteriores = buscadas.length ? [] : await this.anterioresPorEquipo(filas);
+    const lineas = [...filas, ...anteriores];
+    const registros = new Map(lineas.map((f) => [f.id, leerRegistroAsistencia(f.crudo)]));
+    const dnis = [...new Set([...registros.values()].map((r) => r?.pin).filter((p): p is string => !!p))];
     const personas = await this.prisma.persona.findMany({
       where: { numeroDocumento: { in: dnis } },
       select: { id: true, numeroDocumento: true, nombres: true, apellidos: true, fotoUrl: true },
     });
     const porDni = new Map(personas.map((p) => [p.numeroDocumento, p]));
 
-    return filas.slice(0, limite).map((f, i) => {
-      const registro = registros[i];
+    const datos = filas.map((f, i) => {
+      const registro = registros.get(f.id);
       const persona = registro ? porDni.get(registro.pin) : undefined;
-      const anterior = filas.slice(i + 1).findIndex((o) => o.dispositivoId === f.dispositivoId);
-      const numeroAnterior = anterior >= 0 ? (registros[i + 1 + anterior]?.numero ?? null) : null;
+      const previa = buscadas.length ? undefined : lineas.slice(i + 1).find((o) => o.dispositivoId === f.dispositivoId);
+      const numeroAnterior = previa ? (registros.get(previa.id)?.numero ?? null) : null;
       const numero = registro?.numero ?? null;
       const evento = f.eventoAcceso;
       return {
@@ -80,5 +115,22 @@ export class MonitorG4Service {
           : null,
       };
     });
+    return { datos, total, pagina, porPagina };
+  }
+
+  /** Por cada equipo de la página, su prueba anterior a la más antigua que se muestra. */
+  private async anterioresPorEquipo(filas: { id: number; dispositivoId: number }[]) {
+    const masAntigua = new Map<number, number>();
+    for (const f of filas) masAntigua.set(f.dispositivoId, f.id); // vienen de la más nueva a la más antigua
+    const anteriores = await Promise.all(
+      [...masAntigua].map(([dispositivoId, id]) =>
+        this.prisma.verificacionDispositivo.findFirst({
+          where: { tabla: 'attlog', dispositivoId, id: { lt: id } },
+          orderBy: { id: 'desc' },
+          select: { id: true, dispositivoId: true, crudo: true },
+        }),
+      ),
+    );
+    return anteriores.filter((a) => a !== null);
   }
 }

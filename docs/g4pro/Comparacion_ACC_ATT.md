@@ -151,14 +151,14 @@ Por indicación del soporte, se cambió en el equipo: menú *firmware type setti
 - **Facial primero:** vale solo la prueba hecha **antes** del DNI.
   - Hay **15 s** para pasar el DNI desde que aparece "pase su DNI" en el Panel, es decir, desde que llega el aviso del G4, unos 25 s desde el "correcto" (`PLAZO_DNI_DESDE_AVISO_MS`, 17:57). Contados desde el "correcto" quedaban 5 s en el Panel y no alcanzaban: en la garita se tardó 14 y 18 s. La fila "Aprobó … pase su DNI" muestra la foto de quien sopló. Si no pasa el DNI a tiempo: "No pasó su DNI a tiempo".
   - Si el DNI llega antes que el aviso del G4, espera **en silencio hasta 8 s** (`ESPERA_PRUEBA_EN_CAMINO_MS`), sin mostrarse en el Panel. Si llega su prueba con 0.00, entra.
-  - Si pasa el DNI sin una prueba suya, o fuera de plazo: **"Sin prueba facial"** (`denegado_sin_facial`). Sin cuenta regresiva, por pedido de TMAM.
+  - Si pasa el DNI sin una prueba suya, o fuera de plazo: **"DNI antes del facial"** (`denegado_sin_facial`). Sin cuenta regresiva, por pedido de TMAM.
 - **Alcohol alto:** queda denegado **con su nombre** en los dos órdenes, aunque no pase el DNI, y suena el aviso. En facial primero, si pasa el DNI en el minuto siguiente, se le responde con el mismo rechazo, sin otra fila.
 - **Vale la primera marcación del pase** (`MISMO_PASE_MS`, 20 s): volver a soplar enseguida no cambia el resultado; luego, un soplido nuevo es otro intento. **No hay bloqueo** después de un positivo, por decisión de TMAM. Un intento nuevo con alcohol alto anula lo que la persona haya aprobado antes.
 - Los `ATTLOG` repetidos se ignoran. Los de más de 2 minutos (enviados al volver la conexión) se guardan pero no deciden nada.
 - Con la verificación manual activa, el G4 no decide: decide el vigilante.
 
 **Panel (portal)**
-- Motivo "Sin prueba facial" (antes "DNI antes del facial" y, antes, "Sin rostro y alcohol").
+- Motivo "DNI antes del facial" (antes "Sin rostro y alcohol").
 - Se quitaron los enlaces de corrección manual del antipassback ("Registrar salida/ingreso manual"), por pedido de TMAM. La corrección sigue en el API, sin pantalla.
 - Textos de "Facial primero" (aviso del Panel, confirmación y manual): 15 s desde que aparece "pase su DNI".
 

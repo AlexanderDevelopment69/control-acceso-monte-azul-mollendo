@@ -5,8 +5,15 @@ import Link from "next/link";
 import type { Socket } from "socket.io-client";
 import { integracionesApi } from "@/lib/api/endpoints";
 import { connectEventosSocket } from "@/lib/ws";
-import type { MarcacionG4 } from "@/lib/api/types";
+import type { MarcacionG4, Paginado } from "@/lib/api/types";
+import { hoy, pieDePagina } from "@/lib/paginaServidor";
+import { useDiferido } from "@/lib/useDiferido";
 import Badge from "@/components/ui/badge/Badge";
+import Button from "@/components/ui/button/Button";
+import DatePicker from "@/components/form/date-picker";
+import { AltoEstable } from "@/components/tables/AltoEstable";
+import { TableFooter } from "@/components/tables/TableFooter";
+import { TableSearch } from "@/components/tables/TableSearch";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,8 +22,8 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { ArrowRightIcon } from "@/icons";
 import { ComprobandoBadge } from "./Insignias";
 
-/** Filas que se ven sin desplegar. */
-const VISIBLES = 10;
+/** Pruebas por página (como el Panel de vigilancia). */
+const POR_PAGINA = 10;
 /** Respaldo del tiempo real: aunque el canal en vivo falle, se pone al día cada minuto. */
 const RECARGA_RESPALDO_MS = 60_000;
 /** Demora del aviso del G4 que ya se marca (lo normal medido: 10 a 12 s). */
@@ -181,25 +188,38 @@ export function TarjetaMonitorG4() {
 }
 
 /**
- * Monitor en vivo del G4 Pro (página propia): cada prueba de rostro y alcohol
- * que manda el equipo, con quién la hizo, cuánto tardó en llegar, el grado y
- * qué hizo el sistema con ella (y el ingreso en que terminó). Se actualiza al
- * instante.
+ * Monitor del G4 Pro (página propia): cada prueba de rostro y alcohol que
+ * manda el equipo, con quién la hizo, cuánto tardó en llegar, el grado y qué
+ * hizo el sistema con ella (y el ingreso en que terminó). Como el Panel: por
+ * día (empieza en hoy), con búsqueda y por páginas; hoy se actualiza al
+ * instante con cada prueba nueva.
  */
 export function MonitorG4() {
-  const [marcaciones, setMarcaciones] = useState<MarcacionG4[] | null>(null);
+  const [lista, setLista] = useState<Paginado<MarcacionG4> | null>(null);
   const [error, setError] = useState(false);
-  const [todas, setTodas] = useState(false);
+  const [pagina, setPagina] = useState(1);
+  const [busqueda, setBusqueda] = useState("");
+  const busquedaDiferida = useDiferido(busqueda.trim());
+  const [dia, setDia] = useState(hoy);
   const [version, setVersion] = useState(0);
-  const enVivo = useCanalG4(() => setVersion((v) => v + 1));
+  // Las pruebas nuevas solo cambian la lista de hoy (o la de todos los días).
+  const conPruebasNuevas = !dia || dia === hoy();
+  const enVivo = useCanalG4(() => {
+    if (conPruebasNuevas) setVersion((v) => v + 1);
+  });
 
   useEffect(() => {
     let activo = true;
     integracionesApi
-      .marcacionesG4()
-      .then((lista) => {
+      .marcacionesG4({ pagina, porPagina: POR_PAGINA, busqueda: busquedaDiferida, desde: dia, hasta: dia })
+      .then((l) => {
         if (!activo) return;
-        setMarcaciones(lista);
+        // Si la página quedó fuera del total (p. ej. tras filtrar), vuelve a la primera.
+        if (l.datos.length === 0 && l.total > 0 && pagina > 1) {
+          setPagina(1);
+          return;
+        }
+        setLista(l);
         setError(false);
       })
       .catch(() => {
@@ -208,33 +228,70 @@ export function MonitorG4() {
     return () => {
       activo = false;
     };
-  }, [version]);
+  }, [pagina, busquedaDiferida, dia, version]);
 
   useEffect(() => {
+    if (!conPruebasNuevas) return;
     const intervalo = setInterval(() => setVersion((v) => v + 1), RECARGA_RESPALDO_MS);
     return () => clearInterval(intervalo);
-  }, []);
+  }, [conPruebasNuevas]);
 
-  const visibles = marcaciones ? (todas ? marcaciones : marcaciones.slice(0, VISIBLES)) : [];
+  const marcaciones = lista?.datos ?? [];
+  const pie = pieDePagina(lista);
+  const esHoy = dia === hoy();
+  const sinPruebas = busquedaDiferida
+    ? "Sin resultados para esa búsqueda."
+    : !dia
+      ? "Todavía no llegó ninguna prueba."
+      : esHoy
+        ? "Todavía no hay pruebas hoy."
+        : "Sin pruebas ese día.";
+
+  function cambiarDia(valor: string) {
+    setDia(valor);
+    setPagina(1);
+  }
 
   return (
     <>
       <PageHeader
         title="Monitor del G4 Pro"
-        description="Cada prueba de rostro y alcohol que manda el equipo y qué hizo el sistema con ella. Se actualiza sola."
-        actions={marcaciones ? <EnVivoBadge enVivo={enVivo} /> : undefined}
+        description="Cada prueba de rostro y alcohol que manda el equipo y qué hizo el sistema con ella. Hoy se actualiza sola."
+        actions={lista && conPruebasNuevas ? <EnVivoBadge enVivo={enVivo} /> : undefined}
       />
       {error && <ErrorBanner className="mb-6">No se pudo consultar las pruebas del G4 Pro.</ErrorBanner>}
-      <Tarjeta className="overflow-hidden">
-        {!marcaciones && !error && (
-          <div className="px-5 py-4">
-            <ComprobandoBadge />
-          </div>
-        )}
-        {marcaciones?.length === 0 && <p className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">Todavía no llegó ninguna prueba.</p>}
 
-        {visibles.length > 0 && (
-          <div className="overflow-x-auto">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="sm:flex-1">
+          <TableSearch
+            value={busqueda}
+            onChange={(v) => {
+              setBusqueda(v);
+              setPagina(1);
+            }}
+            placeholder="Buscar por nombre o DNI…"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1 sm:w-44 sm:flex-none">
+            <DatePicker id="dia-monitor-g4" placeholder="Todos los días" max={hoy()} value={dia} onChange={cambiarDia} />
+          </div>
+          {!esHoy && (
+            <Button type="button" variant="outline" size="sm" onClick={() => cambiarDia(hoy())}>
+              Hoy
+            </Button>
+          )}
+          {dia && (
+            <Button type="button" variant="outline" size="sm" onClick={() => cambiarDia("")}>
+              Todos los días
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <Tarjeta className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <AltoEstable paginaCompleta={marcaciones.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
@@ -247,7 +304,21 @@ export function MonitorG4() {
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {visibles.map((m) => (
+                {!lista && !error && (
+                  <TableRow>
+                    <TableCell className="px-5 py-4" colSpan={6}>
+                      <ComprobandoBadge />
+                    </TableCell>
+                  </TableRow>
+                )}
+                {lista && marcaciones.length === 0 && (
+                  <TableRow>
+                    <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={6}>
+                      {sinPruebas}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {marcaciones.map((m) => (
                   <React.Fragment key={m.id}>
                     <FilaMarcacion m={m} />
                     {m.faltanAntes > 0 && <FilaFaltantes m={m} />}
@@ -255,20 +326,9 @@ export function MonitorG4() {
                 ))}
               </TableBody>
             </Table>
-          </div>
-        )}
-
-        {marcaciones && marcaciones.length > VISIBLES && (
-          <div className="border-t border-gray-100 px-5 py-3 dark:border-gray-800">
-            <button
-              type="button"
-              onClick={() => setTodas((t) => !t)}
-              className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
-            >
-              {todas ? "Ver menos" : `Ver las ${marcaciones.length} últimas`}
-            </button>
-          </div>
-        )}
+          </AltoEstable>
+        </div>
+        {lista && <TableFooter {...pie} onPageChange={setPagina} />}
       </Tarjeta>
     </>
   );

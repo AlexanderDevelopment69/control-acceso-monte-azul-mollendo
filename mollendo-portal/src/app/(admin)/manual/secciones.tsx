@@ -543,7 +543,7 @@ export const SECCIONES: SeccionManual[] = [
                     hacer="No terminó en 1 minuto (o, en verificación manual, nadie decidió en 2). Puede pasar su DNI otra vez."
                   />
                   <Motivo
-                    m="Sin prueba facial"
+                    m="DNI antes del facial"
                     hacer="En “facial primero”, pasó su DNI sin haber hecho antes rostro y alcohol. Debe empezar por el terminal facial."
                   />
                   <Motivo
@@ -1009,7 +1009,7 @@ export const SECCIONES: SeccionManual[] = [
               </li>
             </Lista>
             <p className="mt-3">
-              En “facial primero”, si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (“Sin prueba facial”). En los dos
+              En “facial primero”, si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (“DNI antes del facial”). En los dos
               órdenes vale la primera prueba de alcohol: volver a soplar enseguida no cambia el resultado. Si da alcohol, queda denegado con
               su nombre aunque no pase el DNI.
             </p>
@@ -1023,7 +1023,8 @@ export const SECCIONES: SeccionManual[] = [
           <>
             <p className="mb-3">
               En <b>Sistema y APIs</b>, la tarjeta <b>“Monitor del G4 Pro”</b> tiene el botón <b>Abrir monitor</b>: abre una página con cada
-              prueba de rostro y alcohol que manda el terminal facial, la más reciente arriba. Se actualiza sola (“En vivo”).
+              prueba de rostro y alcohol que manda el terminal facial, la más reciente arriba. Como el Panel, empieza en el día de hoy
+              (puede elegir otro día o “Todos los días”), busca por nombre o DNI y muestra 10 por página. Hoy se actualiza sola (“En vivo”).
             </p>
             <Lista>
               <li>

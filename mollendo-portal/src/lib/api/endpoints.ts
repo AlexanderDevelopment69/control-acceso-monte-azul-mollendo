@@ -225,7 +225,8 @@ export const integracionesApi = {
       body: { hora },
     }),
   /** Monitor del G4 Pro: las últimas pruebas de rostro y alcohol, la más reciente primero. */
-  marcacionesG4: () => apiRequest<MarcacionG4[]>("/integraciones/g4pro/marcaciones"),
+  marcacionesG4: (params: FiltrosLista = {}) =>
+    apiRequest<Paginado<MarcacionG4>>(`/integraciones/g4pro/marcaciones${consulta({ ...params })}`),
 };
 
 // ---- auditoria ----

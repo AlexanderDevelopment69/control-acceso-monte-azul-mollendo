@@ -22,7 +22,7 @@ Equipo actual: **G4 Pro HSR3263100192**, en modo **asistencia (ATT)** desde el 1
 
 ## 2. Monitor del G4 Pro (portal)
 
-En **Sistema y APIs**, debajo de "Orden del ingreso". La tarjeta tiene el botón **Abrir monitor**, que lleva a su página (`/sistema/monitor`) con las 30 últimas pruebas. Se actualiza solo (en vivo por el socket; si se corta, cada minuto).
+En **Sistema y APIs**, debajo de "Orden del ingreso". La tarjeta tiene el botón **Abrir monitor**, que lleva a su página (`/sistema/monitor`). Como el Panel: empieza en hoy (se puede elegir otro día o "Todos los días"), busca por nombre o DNI y muestra 10 por página. Se actualiza solo (en vivo por el socket; si se corta, cada minuto).
 
 | Columna | Qué es |
 |---|---|
@@ -53,7 +53,7 @@ En **Sistema y APIs**, debajo de "Orden del ingreso". La tarjeta tiene el botón
 
 Las pruebas de antes del 20/10/2026 no tienen decisión (se ve "—"), pero sí el ingreso.
 
-API detrás del monitor: `GET /api/v1/integraciones/g4pro/marcaciones` (rol administrador). Aviso en vivo: evento `g4-marcacion` del socket `/ws/eventos`.
+API detrás del monitor: `GET /api/v1/integraciones/g4pro/marcaciones?pagina=1&porPagina=10&desde=AAAA-MM-DD&hasta=AAAA-MM-DD&busqueda=…` (rol administrador). Aviso en vivo: evento `g4-marcacion` del socket `/ws/eventos`.
 
 ---
 

@@ -58,7 +58,7 @@ export function MotivoDenegacion({
   if (evento.denegadoSinFacial) {
     return (
       <span title="Facial primero: pasó su DNI sin haber hecho antes rostro y alcohol en el equipo facial" className="cursor-help">
-        <Badge color="error">Sin prueba facial</Badge>
+        <Badge color="error">DNI antes del facial</Badge>
       </span>
     );
   }

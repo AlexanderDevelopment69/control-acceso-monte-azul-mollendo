@@ -64,7 +64,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/eventos-acceso/ingreso",
     metodo: "POST",
     descripcion:
-      "El DNI del ingreso (lo usan los lectores; también se puede llamar con la clave de equipo). Si la persona no está registrada, está de baja, ya figura dentro, no tiene documentos o tiene alguno vencido, se deniega aquí mismo. Si está en regla, se junta con la prueba de rostro y alcohol del G4 Pro de esa misma persona, según el orden del ingreso (Sistema y APIs → Orden del ingreso). Normal: vale la prueba hecha después del DNI; queda \"en espera\" 1 minuto y, sin prueba, \"No completó rostro y alcohol\". Facial primero: vale la prueba hecha antes del DNI; tiene 15 s desde que el Panel muestra \"pase su DNI\"; si el DNI llega antes que el aviso del G4, espera en silencio hasta 8 s; sin prueba previa, \"Sin prueba facial\". Aprobado → ingreso autorizado y relé de ingreso; alcohol alto → denegado \"Alcohol\" con su nombre.",
+      "El DNI del ingreso (lo usan los lectores; también se puede llamar con la clave de equipo). Si la persona no está registrada, está de baja, ya figura dentro, no tiene documentos o tiene alguno vencido, se deniega aquí mismo. Si está en regla, se junta con la prueba de rostro y alcohol del G4 Pro de esa misma persona, según el orden del ingreso (Sistema y APIs → Orden del ingreso). Normal: vale la prueba hecha después del DNI; queda \"en espera\" 1 minuto y, sin prueba, \"No completó rostro y alcohol\". Facial primero: vale la prueba hecha antes del DNI; tiene 15 s desde que el Panel muestra \"pase su DNI\"; si el DNI llega antes que el aviso del G4, espera en silencio hasta 8 s; sin prueba previa, \"DNI antes del facial\". Aprobado → ingreso autorizado y relé de ingreso; alcohol alto → denegado \"Alcohol\" con su nombre.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -258,41 +258,46 @@ Persona 12345678 encolada para 1 equipo(s), con foto
     endpoint: "/integraciones/g4pro/marcaciones",
     metodo: "GET",
     descripcion:
-      "Las 30 últimas pruebas de rostro y alcohol que mandó el G4 Pro, la más reciente primero: hora del soplido y N.º de marcación, cuándo llegó y la demora, persona, grado, qué hizo el sistema con la prueba y el ingreso en que terminó. Lo usa la tarjeta \"Monitor del G4 Pro\" de esta página, que se actualiza al instante con el evento g4-marcacion del canal en vivo (/ws/eventos).",
+      "Las pruebas de rostro y alcohol que mandó el G4 Pro, por páginas y la más reciente primero (como el Panel: pagina, porPagina hasta 100, busqueda por nombre o DNI, desde/hasta AAAA-MM-DD según la llegada): hora del soplido y N.º de marcación, cuándo llegó y la demora, persona, grado, qué hizo el sistema con la prueba y el ingreso en que terminó. Lo usa la página \"Monitor del G4 Pro\" (botón Abrir monitor de esta página), que con el día de hoy se actualiza al instante con el evento g4-marcacion del canal en vivo (/ws/eventos).",
     autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>"],
-    ejemploRequest: `GET /integraciones/g4pro/marcaciones`,
+    ejemploRequest: `GET /integraciones/g4pro/marcaciones?pagina=1&porPagina=10&desde=2026-10-19&hasta=2026-10-19`,
     ejemploRespuesta: `// 200
-[
-  {
-    "id": 30,
-    "serialNumber": "HSR3263100192",
-    "numero": 28,
-    "faltanAntes": 0,
-    "dni": "71988749",
-    "persona": {
-      "id": 7,
-      "nombres": "Jose",
-      "apellidos": "Vilchez",
-      "tieneFoto": true
-    },
-    "horaPrueba": "2026-10-19T23:27:00.000Z",
-    "llegada": "2026-10-19T23:27:02.000Z",
-    "demoraSegundos": 2,
-    "alcohol": "0.00g/L",
-    "aprobado": true,
-    "decision": "Aprobó: \"pase su DNI\" (15 s)",
-    "ingreso": {
-      "id": 500,
-      "resultado": "autorizado",
-      "motivo": "",
-      "fechaHora": "2026-10-19T23:27:04.000Z"
+{
+  "datos": [
+    {
+      "id": 30,
+      "serialNumber": "HSR3263100192",
+      "numero": 28,
+      "faltanAntes": 0,
+      "dni": "71988749",
+      "persona": {
+        "id": 7,
+        "nombres": "Jose",
+        "apellidos": "Vilchez",
+        "tieneFoto": true
+      },
+      "horaPrueba": "2026-10-19T23:27:00.000Z",
+      "llegada": "2026-10-19T23:27:02.000Z",
+      "demoraSegundos": 2,
+      "alcohol": "0.00g/L",
+      "aprobado": true,
+      "decision": "Aprobó: \"pase su DNI\" (15 s)",
+      "ingreso": {
+        "id": 500,
+        "resultado": "autorizado",
+        "motivo": "",
+        "fechaHora": "2026-10-19T23:27:04.000Z"
+      }
     }
-  }
-]`,
+  ],
+  "total": 9,
+  "pagina": 1,
+  "porPagina": 10
+}`,
     notas:
-      "faltanAntes > 0: el número de marcación saltó, es decir, hubo pruebas que no llegaron al servidor. decision queda vacía en las pruebas de antes del 20/10/2026. Solo lectura: no cambia nada en el equipo.",
+      "faltanAntes > 0: el número de marcación saltó, es decir, hubo pruebas que no llegaron al servidor (se compara con la prueba anterior del equipo aunque esté en otra página; con una búsqueda no se marca). decision queda vacía en las pruebas de antes del 20/10/2026. Solo lectura: no cambia nada en el equipo.",
   },
   {
     nombre: "Orden del ingreso",
