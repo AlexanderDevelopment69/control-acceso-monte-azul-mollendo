@@ -69,7 +69,7 @@ function FilaMarcacion({ m }: { m: MarcacionG4 }) {
       <TableCell className={celda}>
         <div className="flex items-center gap-3">
           {m.persona ? (
-            <FotoGuardada personaId={m.persona.id} tieneFoto={m.persona.tieneFoto} tamano="size-10" />
+            <FotoGuardada personaId={m.persona.id} tieneFoto={m.persona.tieneFoto} tamano="size-10" miniatura />
           ) : (
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-white/[0.06]">?</span>
           )}

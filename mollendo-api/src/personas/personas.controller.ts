@@ -16,6 +16,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Express, Response } from 'express';
 import { fotosMulterOptions } from './fotos-storage.util.js';
+import { miniaturaFoto } from './miniatura-foto.util.js';
 import { opcionesArchivo } from '../common/archivos-persona.util.js';
 import { CargaMasivaService } from './carga-masiva/carga-masiva.service.js';
 import { FilasConErrorDto, RegistrarCargaMasivaDto } from './carga-masiva/carga-masiva.dto.js';
@@ -130,7 +131,14 @@ export class PersonasController {
 
   @Get(':id/foto')
   @Roles('administrador', 'vigilancia')
-  async verFoto(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
-    res.sendFile(await this.personasService.rutaFoto(id));
+  async verFoto(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('miniatura') miniatura: string | undefined,
+    @Res() res: Response,
+  ) {
+    const ruta = await this.personasService.rutaFoto(id);
+    // ?miniatura=1: reducida (160 px) para las listas; sin él, la foto como se subió.
+    if (miniatura === '1') res.type('image/jpeg').send(await miniaturaFoto(ruta));
+    else res.sendFile(ruta);
   }
 }

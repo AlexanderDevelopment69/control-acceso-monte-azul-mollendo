@@ -39,7 +39,7 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
                 // Facial primero: la aprobación no es de una espera con persona (quién sopló va en el nombre, si se sabe).
                 <span className="flex size-12 items-center justify-center rounded-full bg-gray-100 text-lg text-gray-400 dark:bg-white/[0.06]">?</span>
               ) : (
-                <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} tamano="size-12" />
+                <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} tamano="size-12" miniatura />
               )}
               <span>
                 {i.nombres} {i.apellidos}

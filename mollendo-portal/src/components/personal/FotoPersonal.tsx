@@ -78,27 +78,47 @@ export function SelectorFoto({ archivo, onChange }: { archivo: File | null; onCh
 }
 
 /**
- * Fotos ya descargadas en esta sesión, por persona y versión: la misma persona
- * en varias filas (Monitor del G4 Pro, Panel) se descarga una sola vez y
- * aparece enseguida al cambiar de página.
+ * Fotos ya descargadas en esta sesión, por persona, versión y tamaño: la misma
+ * persona en varias filas (Monitor del G4 Pro, Panel) se descarga una sola vez
+ * y aparece enseguida al cambiar de página. Se guardan las últimas
+ * FOTOS_EN_MEMORIA: el Panel queda abierto todo el día.
  */
+const FOTOS_EN_MEMORIA = 150;
 const fotos = new Map<string, Promise<string>>();
 const fotosListas = new Map<string, string>();
 
-function cargarFoto(personaId: number, version?: string | null): Promise<string> {
-  const clave = `${personaId}:${version ?? ""}`;
+const claveFoto = (personaId: number, version: string | null | undefined, miniatura: boolean) =>
+  `${personaId}:${version ?? ""}:${miniatura ? "min" : ""}`;
+
+function olvidarFoto(clave: string) {
+  fotos.delete(clave);
+  const url = fotosListas.get(clave);
+  if (url) URL.revokeObjectURL(url);
+  fotosListas.delete(clave);
+}
+
+function cargarFoto(personaId: number, version: string | null | undefined, miniatura: boolean): Promise<string> {
+  const clave = claveFoto(personaId, version, miniatura);
   let foto = fotos.get(clave);
-  if (!foto) {
-    // Una foto nueva (otra versión) reemplaza la que se guardó sin versión.
-    if (version) fotos.delete(`${personaId}:`);
-    foto = personasApi.foto(personaId).then((blob) => {
-      const url = URL.createObjectURL(blob);
-      fotosListas.set(clave, url);
-      return url;
-    });
-    foto.catch(() => fotos.delete(clave)); // si falló, se vuelve a intentar la próxima vez
+  if (foto) {
+    // La más usada pasa al final: se olvidan primero las que hace más tiempo no se ven.
+    fotos.delete(clave);
     fotos.set(clave, foto);
+    return foto;
   }
+  // Una foto nueva (otra versión) reemplaza la que se guardó sin versión.
+  if (version) {
+    olvidarFoto(claveFoto(personaId, null, false));
+    olvidarFoto(claveFoto(personaId, null, true));
+  }
+  foto = personasApi.foto(personaId, miniatura).then((blob) => {
+    const url = URL.createObjectURL(blob);
+    fotosListas.set(clave, url);
+    return url;
+  });
+  foto.catch(() => fotos.delete(clave)); // si falló, se vuelve a intentar la próxima vez
+  fotos.set(clave, foto);
+  if (fotos.size > FOTOS_EN_MEMORIA) olvidarFoto(fotos.keys().next().value!);
   return foto;
 }
 
@@ -106,30 +126,33 @@ function cargarFoto(personaId: number, version?: string | null): Promise<string>
  * Foto guardada de un trabajador (ficha). La descarga con el token de sesión,
  * porque el endpoint está protegido y un <img src> no puede mandar el header.
  * `version` cambia cuando se sube una foto nueva, para volver a descargarla.
+ * `miniatura`: la pide reducida (160 px), para los recuadros chicos de las listas.
  */
 export function FotoGuardada({
   personaId,
   tieneFoto,
   version,
   tamano = "size-20",
+  miniatura = false,
 }: {
   personaId: number;
   tieneFoto: boolean;
   version?: string | null;
   tamano?: string;
+  miniatura?: boolean;
 }) {
-  const [src, setSrc] = useState<string | null>(() => fotosListas.get(`${personaId}:${version ?? ""}`) ?? null);
+  const [src, setSrc] = useState<string | null>(() => fotosListas.get(claveFoto(personaId, version, miniatura)) ?? null);
 
   useEffect(() => {
     if (!tieneFoto) return;
     let activo = true;
-    cargarFoto(personaId, version)
+    cargarFoto(personaId, version, miniatura)
       .then((url) => activo && setSrc(url))
       .catch(() => activo && setSrc(null));
     return () => {
       activo = false;
     };
-  }, [personaId, tieneFoto, version]);
+  }, [personaId, tieneFoto, version, miniatura]);
 
   return <Marco src={tieneFoto ? src : null} tamano={tamano} alt="Foto del personal" />;
 }

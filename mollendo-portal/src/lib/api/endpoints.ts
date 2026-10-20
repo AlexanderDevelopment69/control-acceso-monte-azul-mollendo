@@ -109,7 +109,9 @@ export const personasApi = {
     formData.append("foto", foto);
     return apiRequest<Persona>(`/personas/${id}/foto`, { method: "POST", body: formData, isFormData: true });
   },
-  foto: (id: number) => apiRequest<Blob>(`/personas/${id}/foto`, { responseType: "blob" }),
+  /** La foto como se subió, o reducida (160 px) para las listas. */
+  foto: (id: number, miniatura = false) =>
+    apiRequest<Blob>(`/personas/${id}/foto${miniatura ? "?miniatura=1" : ""}`, { responseType: "blob" }),
   /** Corrige los datos de la persona (solo se envía lo que cambió). */
   update: (
     id: number,
