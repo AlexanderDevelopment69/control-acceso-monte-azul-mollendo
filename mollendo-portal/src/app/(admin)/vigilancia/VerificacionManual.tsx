@@ -193,7 +193,7 @@ export function DecisionManualVentana({
             </p>
           )}
           <div className="grid gap-5 sm:grid-cols-[auto_1fr]">
-            <FotoGuardada personaId={ingreso.personaId} tieneFoto={ingreso.tieneFoto} tamano="size-40" />
+            <FotoGuardada personaId={ingreso.personaId} tieneFoto={ingreso.tieneFoto} version={ingreso.fotoVersion} tamano="size-40" />
             <div className="min-w-0 text-sm">
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
                 <dt className="text-gray-500 dark:text-gray-400">Nombre</dt>

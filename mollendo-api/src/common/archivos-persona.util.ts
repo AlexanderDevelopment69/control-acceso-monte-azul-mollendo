@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { extname, join } from 'node:path';
+import { basename, extname, join } from 'node:path';
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { BadRequestException, Logger } from '@nestjs/common';
 import { memoryStorage } from 'multer';
@@ -51,4 +51,12 @@ export function borrarArchivo(ruta: string | null | undefined): void {
   } catch (error) {
     logger.warn(`No se pudo borrar el archivo ${ruta}: ${String(error)}`);
   }
+}
+
+/**
+ * Versión de la foto para el portal: el nombre del archivo, que cambia con cada
+ * foto nueva (sin la carpeta). Así una pantalla abierta pide la foto nueva.
+ */
+export function versionFoto(ruta: string | null | undefined): string | null {
+  return ruta ? basename(ruta) : null;
 }

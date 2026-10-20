@@ -27,6 +27,7 @@ export interface IngresoParaComparar {
   personaId: number;
   nombre: string;
   tieneFoto: boolean;
+  fotoVersion?: string | null;
 }
 
 /** Cuánto se muestra la foto para comparar. */
@@ -49,7 +50,7 @@ export function CompararFoto({ ingreso, onCerrar }: { ingreso: IngresoParaCompar
       role="alert"
       className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-brand-300 bg-brand-50 px-4 py-3 text-sm dark:border-brand-500/40 dark:bg-brand-500/10"
     >
-      <FotoGuardada personaId={ingreso.personaId} tieneFoto={ingreso.tieneFoto} tamano="size-20" miniatura />
+      <FotoGuardada personaId={ingreso.personaId} tieneFoto={ingreso.tieneFoto} version={ingreso.fotoVersion} tamano="size-20" miniatura />
       <p className="min-w-0 flex-1 leading-relaxed text-gray-700 dark:text-gray-300">
         <span className="font-semibold text-brand-600 dark:text-brand-400">Ingresó {ingreso.nombre}.</span>
       </p>

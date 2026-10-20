@@ -33,6 +33,7 @@ export interface EventoEnVivo {
   /** Facial primero: DNI de quien sopló según el equipo (null: no se pudo confirmar). */
   dniQueSoplo?: string | null;
   tieneFoto?: boolean;
+  fotoVersion?: string | null;
 }
 
 /**

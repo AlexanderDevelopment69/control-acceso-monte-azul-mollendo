@@ -264,6 +264,7 @@ function VigilanciaContent() {
             personaId: payload.persona.id,
             nombre: `${payload.persona.nombres} ${payload.persona.apellidos}`,
             tieneFoto: !!payload.tieneFoto,
+            fotoVersion: payload.fotoVersion,
           });
         }
         setUltimo(payload.eventoId);
@@ -527,7 +528,7 @@ function VigilanciaContent() {
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {ev.persona ? (
                         <span className="flex items-center gap-3">
-                          <FotoGuardada personaId={ev.persona.id} tieneFoto={!!ev.persona.tieneFoto} tamano="size-10" miniatura />
+                          <FotoGuardada personaId={ev.persona.id} tieneFoto={!!ev.persona.tieneFoto} version={ev.persona.fotoVersion} tamano="size-10" miniatura />
                           <span className="flex flex-wrap items-center gap-2">
                             {ev.persona.nombres} {ev.persona.apellidos}
                             {/* Solo si tiene perfil: al vigilante no le sirve ver "Sin perfil". */}

@@ -4,6 +4,7 @@ import { ListaPaginadaDto, paginacion, Paginado, palabras, rangoDeDias } from '.
 import { PrismaService } from '../prisma/prisma.service.js';
 import { alcoholConforme, leerRegistroAsistencia } from '../push-sdk/asistencia.util.js';
 import { motivosEvento } from '../reportes/reportes.service.js';
+import { versionFoto } from '../common/archivos-persona.util.js';
 
 /** Una prueba del G4 Pro (rostro y alcohol) para el monitor de Sistema y APIs. */
 export interface MarcacionG4 {
@@ -14,7 +15,7 @@ export interface MarcacionG4 {
   /** Pruebas que no llegaron entre la anterior y esta (salto en el número). */
   faltanAntes: number;
   dni: string | null;
-  persona: { id: number; nombres: string; apellidos: string; tieneFoto: boolean } | null;
+  persona: { id: number; nombres: string; apellidos: string; tieneFoto: boolean; fotoVersion: string | null } | null;
   /** Hora de la prueba según el reloj del equipo. */
   horaPrueba: string | null;
   /** Hora en que llegó al servidor. */
@@ -101,7 +102,7 @@ export class MonitorG4Service {
         faltanAntes: numero !== null && numeroAnterior !== null && numero > numeroAnterior + 1 ? numero - numeroAnterior - 1 : 0,
         dni: registro?.pin ?? null,
         persona: persona
-          ? { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos, tieneFoto: !!persona.fotoUrl }
+          ? { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos, tieneFoto: !!persona.fotoUrl, fotoVersion: versionFoto(persona.fotoUrl) }
           : null,
         horaPrueba: f.horaDispositivo?.toISOString() ?? null,
         llegada: f.creadoEn.toISOString(),

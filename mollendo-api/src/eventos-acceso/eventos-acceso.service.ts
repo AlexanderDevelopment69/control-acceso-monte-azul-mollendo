@@ -17,6 +17,7 @@ import { VerificacionManualService } from './verificacion-manual.service.js';
 import { ModoIngresoService } from './modo-ingreso.service.js';
 import type { PaseExitoso } from '../push-sdk/verify-success.util.js';
 import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
+import { versionFoto } from '../common/archivos-persona.util.js';
 
 /** Payload del evento interno que ordena abrir el molinete (lo atiende IntegracionesModule). */
 export interface AbrirMolineteEvent {
@@ -132,6 +133,8 @@ export interface IngresoEnEspera {
   empresa: string | null;
   /** Para mostrar su foto en el Panel (el vigilante la compara con quien está frente al terminal). */
   tieneFoto: boolean;
+  /** Cambia con cada foto nueva (ver versionFoto). */
+  fotoVersion: string | null;
   torniqueteId: string | null;
   desde: string;
   hasta: string | null;
@@ -159,7 +162,7 @@ interface AprobacionSinDni {
   /** Lo mismo, ya resuelto (undefined: todavía se está leyendo). */
   quienSabido?: PaseExitoso | null;
   /** G4 Pro en asistencia: la persona del sistema que sopló (para su foto en el Panel). */
-  persona?: { id: number; tieneFoto: boolean };
+  persona?: { id: number; tieneFoto: boolean; fotoVersion: string | null };
 }
 
 /** La aprobación como fila del Panel ("Aprobó rostro y alcohol: falta que pase su DNI"). */
@@ -172,6 +175,7 @@ function aprobacionEnEspera(a: AprobacionSinDni): IngresoEnEspera {
     numeroDocumento: a.quienSabido?.pin ?? '—',
     empresa: null,
     tieneFoto: a.persona?.tieneFoto ?? false,
+    fotoVersion: a.persona?.fotoVersion ?? null,
     torniqueteId: null,
     desde: new Date(a.en).toISOString(),
     hasta: new Date(a.vence).toISOString(),
@@ -194,6 +198,7 @@ function aEnEspera(pendiente: PendienteConPersona): IngresoEnEspera {
     numeroDocumento: pendiente.persona.numeroDocumento,
     empresa: pendiente.persona.empresa?.razonSocial ?? null,
     tieneFoto: !!pendiente.persona.fotoUrl,
+    fotoVersion: versionFoto(pendiente.persona.fotoUrl),
     torniqueteId: pendiente.torniqueteId,
     desde: (pendiente.habilitadoEn ?? pendiente.creadoEn).toISOString(),
     hasta: pendiente.habilitadoEn ? new Date(pendiente.habilitadoEn.getTime() + ventanaDe(pendiente)).toISOString() : null,
@@ -496,6 +501,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       facialPrimero: true,
       dniQueSoplo: evento.dniQueSoplo,
       tieneFoto: !!persona.fotoUrl,
+      fotoVersion: versionFoto(persona.fotoUrl),
     };
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
     return respuesta;
@@ -676,7 +682,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         verificacionId: evento.verificacionId,
         quien: Promise.resolve(quien),
         quienSabido: quien,
-        persona: { id: persona.id, tieneFoto: !!persona.fotoUrl },
+        persona: { id: persona.id, tieneFoto: !!persona.fotoUrl, fotoVersion: versionFoto(persona.fotoUrl) },
       };
       // Su DNI ya está esperando (lo pasó antes de que llegara el aviso): si lo pasó después del
       // "correcto" y dentro del plazo, entra ya.
@@ -1298,7 +1304,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     // La miniatura del Panel: solo si tiene foto, sin mandar la ruta del archivo.
     const conFoto = filas.map(({ persona, ...evento }) => ({
       ...evento,
-      persona: persona && (({ fotoUrl, ...p }) => ({ ...p, tieneFoto: !!fotoUrl }))(persona),
+      persona: persona && (({ fotoUrl, ...p }) => ({ ...p, tieneFoto: !!fotoUrl, fotoVersion: versionFoto(fotoUrl) }))(persona),
     }));
     return { datos: conFoto, total, pagina, porPagina } satisfies Paginado<(typeof conFoto)[number]>;
   }

@@ -90,6 +90,8 @@ export interface IngresoEnEspera {
   empresa: string | null;
   /** Si tiene foto: se muestra para que el vigilante la compare con quien está frente al terminal. */
   tieneFoto: boolean;
+  /** Cambia con cada foto nueva: una pantalla abierta pide la foto nueva. */
+  fotoVersion?: string | null;
   torniqueteId: string | null;
   desde: string;
   hasta: string | null;
@@ -165,6 +167,7 @@ export interface EventoAcceso {
     perfil?: Perfil | null;
     /** Tiene foto guardada (miniatura del Panel). */
     tieneFoto?: boolean;
+    fotoVersion?: string | null;
   };
 }
 
@@ -303,7 +306,7 @@ export interface MarcacionG4 {
   /** Pruebas que no llegaron entre la anterior y esta. */
   faltanAntes: number;
   dni: string | null;
-  persona: { id: number; nombres: string; apellidos: string; tieneFoto: boolean } | null;
+  persona: { id: number; nombres: string; apellidos: string; tieneFoto: boolean; fotoVersion?: string | null } | null;
   /** Hora de la prueba según el reloj del equipo. */
   horaPrueba: string | null;
   /** Hora en que llegó al servidor. */
