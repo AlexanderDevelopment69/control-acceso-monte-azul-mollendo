@@ -28,6 +28,19 @@ describe('leerRegistroAsistencia', () => {
       estado: '255',
       verificacion: '15',
       alcohol: '0.00g/L',
+      numero: null,
+    });
+  });
+
+  it('lee el número de la marcación del G4 Pro real (campo 11)', () => {
+    const linea = ['71988749', '2026-10-19 18:27:00', '255', '15', '0', '0', '0', '255', '0', '0', '28', '0.00g/L', '-', '-', '-'].join('\t');
+    expect(leerRegistroAsistencia(linea)).toEqual({
+      pin: '71988749',
+      hora: '2026-10-19 18:27:00',
+      estado: '255',
+      verificacion: '15',
+      alcohol: '0.00g/L',
+      numero: 28,
     });
   });
 

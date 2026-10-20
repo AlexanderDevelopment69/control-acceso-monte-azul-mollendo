@@ -100,6 +100,12 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
     this.server.emit('verificacion-manual', payload);
   }
 
+  // Llegó (o se decidió) una prueba del G4 Pro: el monitor de Sistema y APIs la vuelve a pedir.
+  @OnEvent('g4.marcacion')
+  handleMarcacionG4(payload: { id: number }): void {
+    this.server.emit('g4-marcacion', payload);
+  }
+
   // Cambió el orden del ingreso (facial primero, en prueba): los paneles actualizan su franja.
   @OnEvent('modo-ingreso.cambio')
   handleModoIngreso(payload: unknown): void {

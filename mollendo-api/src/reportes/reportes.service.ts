@@ -97,7 +97,7 @@ const ACCION = {
 } as const;
 
 /** Motivos de denegación de un evento, como en el Panel de vigilancia. */
-function motivosEvento(e: {
+export function motivosEvento(e: {
   denegadoNoRegistrado: boolean;
   denegadoPorBaja: boolean;
   denegadoSinDocumentos: boolean;

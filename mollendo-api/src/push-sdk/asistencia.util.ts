@@ -53,20 +53,29 @@ export interface RegistroAsistencia {
   verificacion: string | null;
   /** Grado de alcohol que midió ("0.00g/L"), si viene. */
   alcohol: string | null;
+  /** Número de la marcación en el equipo (campo 11): sube de uno en uno; un salto es una prueba que no llegó. */
+  numero: number | null;
 }
 
 /**
  * Lee una línea de `table=ATTLOG`: campos separados por tabulador, en el
- * orden del protocolo (PIN, fecha y hora, estado, tipo de verificación, ...).
- * El grado de alcohol viene en uno de los campos siguientes, terminado en
- * "g/L". Devuelve null si la línea no tiene un PIN y una fecha válidos.
+ * orden del protocolo de asistencia (sección 11.2): PIN, fecha y hora, estado
+ * (255: sin tecla de estado), verificación (15: rostro), código de trabajo,
+ * dos reservados, mascarilla (255: detección apagada), temperatura y
+ * temperatura convertida. Después, propios del G4 Pro con alcoholímetro
+ * (vistos el 19/10/2026): el número de la marcación (donde el protocolo pone
+ * TimeOffset) y el grado de alcohol ("0.00g/L"); SleepTime, HealthStatus y
+ * PlateNumber llegan vacíos ("-"). Detalle en docs/g4pro/Comparacion_ACC_ATT.md
+ * 2 bis. El grado se busca por su "g/L". Devuelve null si la línea no tiene un
+ * PIN y una fecha válidos.
  */
 export function leerRegistroAsistencia(linea: string): RegistroAsistencia | null {
   const campos = linea.split('\t').map((c) => c.trim());
   const [pin, hora, estado, verificacion] = campos;
   if (!pin || !/^[A-Z0-9]{1,24}$/i.test(pin) || !hora || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(hora)) return null;
   const alcohol = campos.slice(4).find((c) => /g\/L$/i.test(c)) ?? null;
-  return { pin, hora, estado: estado || null, verificacion: verificacion || null, alcohol };
+  const numero = alcohol && /^\d+$/.test(campos[10] ?? '') ? Number(campos[10]) : null;
+  return { pin, hora, estado: estado || null, verificacion: verificacion || null, alcohol, numero };
 }
 
 /**

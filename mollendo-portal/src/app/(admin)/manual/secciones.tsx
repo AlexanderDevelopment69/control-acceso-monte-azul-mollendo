@@ -1011,6 +1011,37 @@ export const SECCIONES: SeccionManual[] = [
           </>
         ),
       },
+      {
+        titulo: "Monitor del G4 Pro",
+        descripcion: "Cada prueba del terminal, en vivo",
+        contenido: (
+          <>
+            <p className="mb-3">
+              En <b>Sistema y APIs</b>, la tarjeta <b>“Monitor del G4 Pro”</b> muestra cada prueba de rostro y alcohol que manda el
+              terminal facial, la más reciente arriba. Se actualiza sola.
+            </p>
+            <Lista>
+              <li>
+                <b>Prueba:</b> hora del soplido según el terminal y su número de marcación.
+              </li>
+              <li>
+                <b>Llegó:</b> cuándo llegó al sistema y cuántos segundos después del soplido (lo normal es 10 a 12; si pasa de 15, se
+                marca).
+              </li>
+              <li>
+                <b>Persona</b> y <b>Alcohol:</b> quién sopló y cuánto dio (verde, bien; rojo, alcohol).
+              </li>
+              <li>
+                <b>Qué hizo el sistema</b> e <b>Ingreso:</b> cómo se usó la prueba y en qué ingreso terminó.
+              </li>
+            </Lista>
+            <p className="mt-3">
+              Si aparece <b>“No llegó la prueba N.º …”</b>, el terminal hizo una prueba que no llegó al sistema: revise la conexión del
+              terminal.
+            </p>
+          </>
+        ),
+      },
     ],
   },
   {

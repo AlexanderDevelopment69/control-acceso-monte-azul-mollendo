@@ -292,6 +292,27 @@ export interface ResultadoSincronizacionG4 {
   porEquipo: { serialNumber: string; usuarios: number; conRostro: number; sinRostro: string[] }[];
 }
 
+/** Una prueba de rostro y alcohol del G4 Pro y qué hizo el sistema con ella (monitor de Sistema y APIs). */
+export interface MarcacionG4 {
+  id: number;
+  serialNumber: string;
+  /** Número de la marcación en el equipo (sube de uno en uno). */
+  numero: number | null;
+  /** Pruebas que no llegaron entre la anterior y esta. */
+  faltanAntes: number;
+  dni: string | null;
+  persona: { id: number; nombres: string; apellidos: string; tieneFoto: boolean } | null;
+  /** Hora de la prueba según el reloj del equipo. */
+  horaPrueba: string | null;
+  /** Hora en que llegó al servidor. */
+  llegada: string;
+  demoraSegundos: number | null;
+  alcohol: string | null;
+  aprobado: boolean | null;
+  decision: string | null;
+  ingreso: { id: number; resultado: "autorizado" | "denegado"; motivo: string; fechaHora: string } | null;
+}
+
 export interface EstadoSincronizacionG4 {
   diaria: { activa: boolean; hora: number | null };
   enCurso: boolean;

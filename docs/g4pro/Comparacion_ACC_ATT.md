@@ -27,7 +27,7 @@ Los dos tienen el mismo firmware (4.1.109-OCM-4101-3, Push Ver 2.0.38-20220623, 
 | Resultado | `event=0` (apto) | `eventtype=0` | `Status=255` (marcación) |
 | Cómo verificó | `verifytype=15` (rostro) | `verified=15` | `Verify=15` (rostro) |
 | **Valor de alcohol** | **`Concentration=0`** (no lo envía) | **`Concentration=0.00g/L`** | **`0.00g/L`** |
-| Mascarilla | `maskflag=255` | `maskflag=255` | `MaskFlag=0` |
+| Mascarilla | `maskflag=255` | `maskflag=255` | `255` (campo 8) |
 | Temperatura | `temperature=0` | — | `Temperature=0` |
 | Otros | `cardno=0`, `eventaddr=1` (puerta), `index` (correlativo) | `doorid=1`, `index` | `Workcode=0`, reservados en 0 |
 
@@ -40,6 +40,33 @@ ATT:               44943297  2026-09-28 13:03:31  255  15  0  0  0  0  0  0    0
 ```
 
 Formato oficial del ATTLOG (protocolo de asistencia de ZKTeco, 2026-04-22, sección 11.2): `Pin, Time, Status, Verify, Workcode, Reserved1, Reserved2, MaskFlag, Temperature, ConvTemperature, TimeOffset`. Este equipo agrega al final `Concentration` (alcohol), `SleepTime`, `HealthStatus` y `PlateNumber`.
+
+### 2 bis. Los 15 campos del ATTLOG, uno por uno (confirmado el 20/10/2026)
+
+Se compararon las **28 marcaciones reales** del 19/10 (Amiel y el vigilante, aprobadas y con alcohol) con el manual oficial (`mollendo-api/storage/doc-equipos/PROTOCOLO_PUSH.txt`, sección 11.2 y anexo 7) y con el `rtlog` que el mismo G4 mandaba en ACC, que trae los mismos datos **con nombre** (`... index=413 ... maskflag=255 temperature=0 convtemperature=0 Concentration=0 SleepTime=0 HealthStatus=0 PlateNumber=0`, ver `Protocolo_G4Pro_Referencia.md` 6.1). Línea real:
+
+```
+71988749  2026-10-19 18:27:00  255  15  0  0  0  255  0  0  28  0.00g/L  -  -  -
+```
+
+| # | Valor | Qué es | Fuente |
+|---|---|---|---|
+| 1 | `71988749` | PIN: el DNI de quien verificó | Manual |
+| 2 | `2026-10-19 18:27:00` | Hora de la verificación (reloj del G4) | Manual |
+| 3 | `255` | Estado de marcación (entrada/salida/descanso…). 255 = ninguna tecla de estado: el G4 no la pide | Manual; 255 = convención ZKTeco (en las 28, siempre 255) |
+| 4 | `15` | Forma de verificación: **15 = rostro** | Manual, anexo 7 |
+| 5 | `0` | Código de trabajo (no se usa) | Manual |
+| 6, 7 | `0`, `0` | Reservados | Manual |
+| 8 | `255` | Mascarilla (0 sin, 1 con); 255 = detección apagada, igual que `maskflag=255` del `rtlog` | Manual + `rtlog` |
+| 9 | `0` | Temperatura (el equipo no tiene sensor) | Manual |
+| 10 | `0` | Temperatura convertida (°C/°F) | Manual |
+| 11 | `1`…`28` | Número de la marcación en el equipo: sube de 1 en 1 sin saltos desde el cambio a ATT. El manual pone aquí `TimeOffset` (diferencia con UTC, sería −18000 en Perú); el G4 pone su correlativo, como el `index=` del `rtlog` | Datos reales (28 de 28) |
+| 12 | `0.00g/L` | `Concentration`: grado de alcohol (0.00 en los aprobados; 0.000158 a 0.000951 en los enjuagues) | `rtlog` + datos reales |
+| 13 | `-` | `SleepTime` (función de fatiga, no se usa) | Mismo orden que el `rtlog` |
+| 14 | `-` | `HealthStatus` (estado de salud, no se usa) | Mismo orden que el `rtlog` |
+| 15 | `-` | `PlateNumber` (placa de vehículo, no se usa) | Mismo orden que el `rtlog` |
+
+El sistema decide solo con 1 (DNI), 2 (hora) y 12 (grado). El 11 se usa en el monitor del G4 (Sistema y APIs) para avisar si falta una marcación. En internet no hay más detalle: las librerías ADMS públicas leen solo los 5 primeros campos ([s0x90/zkteco-adms](https://github.com/s0x90/zkteco-adms), [skylinebiz/adms](https://github.com/skylinebiz/adms)) y ninguna fuente pública documenta el alcohol en ATTLOG.
 
 ## 3. Resumen
 

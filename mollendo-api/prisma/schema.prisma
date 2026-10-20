@@ -390,6 +390,8 @@ model VerificacionDispositivo {
   verifyType      String?           @map("verify_type") @db.VarChar(10)
   concentracion   String?           @db.VarChar(20)
   crudo           String            @db.Text
+  // Qué hizo el sistema con la prueba (monitor del G4 Pro en Sistema y APIs).
+  decision        String?           @db.VarChar(200)
   eventoAccesoId  Int?              @map("evento_acceso_id")
   eventoAcceso    EventoAcceso?     @relation(fields: [eventoAccesoId], references: [id], onDelete: SetNull)
   creadoEn        DateTime          @default(now()) @map("creado_en")

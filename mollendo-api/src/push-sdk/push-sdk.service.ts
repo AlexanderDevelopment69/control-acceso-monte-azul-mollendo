@@ -617,8 +617,14 @@ export class PushSdkService {
     );
     if (horaValida && Date.now() - horaValida.getTime() > ATTLOG_RECIENTE_MS) {
       this.logger.warn(`ATTLOG atrasado (DNI ${registro.pin} ${registro.hora}): se guarda, pero no decide ningún ingreso`);
+      await this.prisma.verificacionDispositivo.update({
+        where: { id: verificacion.id },
+        data: { decision: 'Llegó con más de 2 min de atraso: solo se guarda' },
+      });
+      this.eventEmitter.emit('g4.marcacion', { id: verificacion.id });
       return;
     }
+    this.eventEmitter.emit('g4.marcacion', { id: verificacion.id });
     this.eventEmitter.emit('dispositivo.attlog', {
       verificacionId: verificacion.id,
       serialNumber,

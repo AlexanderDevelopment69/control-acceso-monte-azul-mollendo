@@ -18,6 +18,7 @@ import type {
   EstadoVerificacionManual,
   EstadoModoIngreso,
   IngresoEnEspera,
+  MarcacionG4,
   Paginado,
   Persona,
   PersonaPermanencia,
@@ -223,6 +224,8 @@ export const integracionesApi = {
       method: "PUT",
       body: { hora },
     }),
+  /** Monitor del G4 Pro: las últimas pruebas de rostro y alcohol, la más reciente primero. */
+  marcacionesG4: () => apiRequest<MarcacionG4[]>("/integraciones/g4pro/marcaciones"),
 };
 
 // ---- auditoria ----

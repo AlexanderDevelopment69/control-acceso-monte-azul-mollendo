@@ -22,6 +22,7 @@ import {
 import { SincronizacionG4 } from "./SincronizacionG4";
 import { OrdenIngreso } from "./OrdenIngreso";
 import { ListaApis } from "./ListaApis";
+import { MonitorG4 } from "./MonitorG4";
 
 const DOCS_URL = `${API_BASE}/api/docs`;
 
@@ -169,6 +170,8 @@ function SistemaContent() {
       <SincronizacionG4 estado={estado?.sincronizacionG4} onTerminada={() => setVersion((v) => v + 1)} />
 
       <OrdenIngreso />
+
+      <MonitorG4 />
 
       <TituloSeccion>APIs</TituloSeccion>
       <Tarjeta className="mb-6">

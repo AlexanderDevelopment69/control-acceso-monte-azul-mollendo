@@ -394,6 +394,15 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     return this.aprobaciones.filter((a) => ahora <= a.vence);
   }
 
+  /**
+   * Monitor del G4 Pro (Sistema y APIs): anota qué hizo el sistema con la
+   * prueba y/o el ingreso en que terminó, y avisa a las pantallas abiertas.
+   */
+  private async anotarPrueba(verificacionId: number, datos: { decision?: string; eventoAccesoId?: number }) {
+    await this.prisma.verificacionDispositivo.update({ where: { id: verificacionId }, data: datos });
+    this.eventEmitter.emit('g4.marcacion', { id: verificacionId });
+  }
+
   /** Quita una aprobación (usada, vencida o repetida) de la espera y del Panel. */
   private soltarAprobacion(aprobacion: AprobacionSinDni) {
     if (!this.aprobaciones.includes(aprobacion)) return;
@@ -473,7 +482,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         torniqueteId: dto.torniqueteId,
       },
     });
-    await this.prisma.verificacionDispositivo.update({ where: { id: aprobada.verificacionId }, data: { eventoAccesoId: evento.id } });
+    await this.anotarPrueba(aprobada.verificacionId, { eventoAccesoId: evento.id });
     this.eventEmitter.emit('molinete.abrir', { torniqueteId: dto.torniqueteId, eventoId: evento.id, tipoMovimiento: 'ingreso' } satisfies AbrirMolineteEvent);
     const respuesta = {
       eventoId: evento.id,
@@ -518,7 +527,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     if (aprobacion) this.soltarAprobacion(aprobacion);
 
     const denegado = await this.denegarSiNoCorresponde(persona, dto);
-    if (denegado) return denegado;
+    if (denegado) {
+      // Su prueba aprobada se usó con este DNI, que se denegó (p. ej. ya figura dentro).
+      if (aprobacion) await this.anotarPrueba(aprobacion.verificacionId, { eventoAccesoId: denegado.eventoId });
+      return denegado;
+    }
     if (aprobacion) return this.autorizarConAprobacion(persona, dto, aprobacion, aprobacion.quienSabido ?? null);
 
     const rechazo = facialPrimero && pin ? this.rechazosAlcohol.get(pin) : undefined;
@@ -596,13 +609,16 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   async resultadoAsistencia(evento: AttlogRecibidoEvent): Promise<void> {
     await this.enSerie(async () => {
       const aprobado = alcoholConforme(evento.alcohol);
+      const anotar = (decision: string) => this.anotarPrueba(evento.verificacionId, { decision });
       if (await this.verificacionManual.activa()) {
         this.logger.warn(`G4 Pro: prueba del DNI ${evento.pin} (${evento.alcohol ?? 'sin grado'}) durante la verificación manual; no se usa`);
+        await anotar('Verificación manual activa: decide el vigilante, la prueba no se usa');
         return;
       }
       const persona = await this.prisma.persona.findFirst({ where: { numeroDocumento: evento.pin } });
       if (!persona) {
         this.logger.warn(`G4 Pro: prueba del DNI ${evento.pin}, que no está en el sistema; no se usa`);
+        await anotar('DNI que no está en el sistema: no se usa');
         return;
       }
       // Vale solo la primera marcación del pase: si vuelve a soplar enseguida, se ignora. Se anota la
@@ -612,6 +628,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       const primera = this.primerasMarcaciones.get(evento.pin);
       if (primera !== undefined && hora >= primera && hora - primera <= MISMO_PASE_MS) {
         this.logger.warn(`G4 Pro: el DNI ${evento.pin} volvió a soplar (${evento.alcohol ?? 'sin grado'}); vale la primera marcación, esta se ignora`);
+        await anotar('Volvió a soplar en el mismo pase: vale la primera prueba, esta se ignora');
         return;
       }
       const cuenta = () => this.primerasMarcaciones.set(evento.pin, hora);
@@ -621,12 +638,14 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       const espera = await this.esperaAbiertaDe(persona.id);
       if (espera && this.pruebaValePara(espera, evento.horaDispositivo)) {
         cuenta();
+        await anotar(aprobado ? 'Prueba después de su DNI: cierra su espera' : 'Alcohol alto después de su DNI: cierra su espera');
         await this.cerrarEspera(espera, { autorizado: aprobado, denegadoPorAlcohol: !aprobado, fechaHora }, evento.verificacionId);
         return;
       }
       if (espera) this.logger.warn(`G4 Pro: la prueba del DNI ${evento.pin} es de antes de pasar su DNI (orden normal); no cierra su espera`);
       if (!aprobado) {
         cuenta();
+        await anotar('Alcohol alto: denegado con su nombre');
         // Un intento nuevo con alcohol anula lo que haya aprobado antes.
         for (const anterior of this.aprobaciones.filter((a) => a.quienSabido?.pin === evento.pin)) this.soltarAprobacion(anterior);
         const eventoId = await this.registrarSinPersona({ denegadoPorAlcohol: true, dniQueSoplo: evento.pin, fechaHora }, evento.verificacionId);
@@ -638,6 +657,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       this.rechazosAlcohol.delete(evento.pin);
       if (!(await this.modoIngreso.facialPrimero())) {
         this.logger.warn(`G4 Pro: el DNI ${evento.pin} hizo rostro y alcohol sin pasar antes su DNI (orden normal); no vale`);
+        await anotar(
+          espera
+            ? 'Orden normal: prueba de antes de pasar su DNI, no vale (su espera sigue)'
+            : 'Orden normal: sopló sin pasar antes su DNI, no vale',
+        );
         return;
       }
       cuenta();
@@ -659,10 +683,13 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       const dni = this.dniEsperandoPrueba.get(evento.pin);
       if (dni && dni.en >= hora - TOLERANCIA_RELOJ_MS && dni.en <= aprobacion.vence) {
         this.dniEsperandoPrueba.delete(evento.pin);
+        await anotar('Aprobó; su DNI ya estaba pasado y esperando');
         const denegado = await this.denegarSiNoCorresponde(dni.persona, dni.dto);
-        if (!denegado) await this.autorizarConAprobacion(dni.persona, dni.dto, aprobacion, quien);
+        if (denegado) await this.anotarPrueba(evento.verificacionId, { eventoAccesoId: denegado.eventoId });
+        else await this.autorizarConAprobacion(dni.persona, dni.dto, aprobacion, quien);
         return;
       }
+      await anotar('Aprobó: "pase su DNI" (15 s)');
       this.aprobaciones.push(aprobacion);
       this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
     });
@@ -765,9 +792,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         ...(motivos.fechaHora ? { fechaHora: motivos.fechaHora } : {}),
       },
     });
-    if (verificacionId) {
-      await this.prisma.verificacionDispositivo.update({ where: { id: verificacionId }, data: { eventoAccesoId: evento.id } });
-    }
+    if (verificacionId) await this.anotarPrueba(verificacionId, { eventoAccesoId: evento.id });
     this.eventEmitter.emit('evento-acceso.registrado', {
       eventoId: evento.id,
       tipoMovimiento: evento.tipoMovimiento,
@@ -937,6 +962,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         ? [this.prisma.verificacionDispositivo.update({ where: { id: verificacionId }, data: { eventoAccesoId: eventoAcceso.id } })]
         : []),
     ]);
+    if (verificacionId) this.eventEmitter.emit('g4.marcacion', { id: verificacionId });
     if (pendiente.habilitadoEn && !pendiente.manual) {
       this.eventEmitter.emit('g4pro.habilitar', {
         numeroDocumento: pendiente.persona.numeroDocumento,

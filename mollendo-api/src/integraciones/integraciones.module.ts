@@ -4,11 +4,12 @@ import { IntegracionesService } from './integraciones.service.js';
 import { PushSdkModule } from '../push-sdk/push-sdk.module.js';
 import { ReleUsbService } from './rele-usb.service.js';
 import { LimpiezaRegistrosService } from './limpieza-registros.service.js';
+import { MonitorG4Service } from './monitor-g4.service.js';
 
 @Module({
   imports: [PushSdkModule],
   controllers: [IntegracionesController],
-  providers: [IntegracionesService, ReleUsbService, LimpiezaRegistrosService],
+  providers: [IntegracionesService, ReleUsbService, LimpiezaRegistrosService, MonitorG4Service],
   exports: [ReleUsbService, IntegracionesService],
 })
 export class IntegracionesModule {}
