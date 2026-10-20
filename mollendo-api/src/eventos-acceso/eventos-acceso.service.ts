@@ -83,7 +83,7 @@ const PLAZO_DNI_DESDE_AVISO_MS = 15 * 1000;
  * servidor 10-12 s después del "correcto" (medido el 19/10/2026), y la persona
  * suele pasar el DNI antes. Un DNI sin aprobación espera en silencio (sin
  * mostrarse en el Panel) hasta esto a que llegue su prueba, hecha antes del
- * DNI; si no llega, "DNI antes del facial".
+ * DNI; si no llega, "Sin prueba facial".
  */
 const ESPERA_PRUEBA_EN_CAMINO_MS = 8 * 1000;
 
@@ -514,7 +514,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    *   le responde con ese rechazo; si no hay prueba suya, espera en silencio
    *   (sin cuenta regresiva, pedido de TMAM) ESPERA_PRUEBA_EN_CAMINO_MS a que
    *   llegue (el aviso del G4 tarda 10-12 s): si es de antes del DNI y aprobó,
-   *   entra; si no, "DNI antes del facial".
+   *   entra; si no, "Sin prueba facial".
    */
   private async registrarIngresoAsistencia(persona: Persona, dto: IngresoDto) {
     const facialPrimero = await this.modoIngreso.facialPrimero();

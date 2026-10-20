@@ -67,15 +67,15 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 | 2.2 | "Correcto" y el DNI **enseguida** (antes de que aparezca la fila) | Espera en silencio unos segundos y **autorizado**, sin ningún rechazo | [ ] |
 | 2.3 | Rostro y soplido con alcohol alto | **Denegado "Alcohol"** con su nombre, sin pasar el DNI; suena el aviso | [x] |
 | 2.4 | Alcohol alto y enseguida el DNI | Se le responde con el mismo rechazo; no se crea otra fila | [x] |
-| 2.5 | DNI **sin** haber hecho rostro y alcohol | Nada en el Panel (sin cuenta regresiva); **a los 8 s, "DNI antes del facial"** | [x] |
-| 2.6 | DNI primero y después rostro y soplido con 0.00 | El DNI: "DNI antes del facial"; la prueba queda como "pase su DNI"; con el DNI otra vez, entra | [x] |
+| 2.5 | DNI **sin** haber hecho rostro y alcohol | Nada en el Panel (sin cuenta regresiva); **a los 8 s, "Sin prueba facial"** | [x] |
+| 2.6 | DNI primero y después rostro y soplido con 0.00 | El DNI: "Sin prueba facial"; la prueba queda como "pase su DNI"; con el DNI otra vez, entra | [x] |
 | 2.7 | DNI primero y después soplido con alcohol alto | **"Alcohol"** con su nombre (una sola fila) | [ ] |
-| 2.8 | DNI **16 s o más** después de aparecer "pase su DNI" | Fuera de plazo: **"DNI antes del facial"** (y "No pasó su DNI a tiempo" por la aprobación vencida) | [ ] |
+| 2.8 | DNI **16 s o más** después de aparecer "pase su DNI" | Fuera de plazo: **"Sin prueba facial"** (y "No pasó su DNI a tiempo" por la aprobación vencida) | [ ] |
 | 2.9 | Aprueba y **no** pasa su DNI en los 15 s de la cuenta | **Denegado "No pasó su DNI a tiempo"** con su nombre. Visto el 19/10 a las 17:52, pero con el plazo anterior; repetir | [ ] |
 | 2.10 | Dos soplidos seguidos: bien y después alto | Vale el primero: con el DNI, **autorizado** | [ ] |
 | 2.11 | Dos soplidos seguidos: alto y después bien | Vale el primero: **"Alcohol"**; con el DNI, se le responde el rechazo | [ ] |
 | 2.12 | Alcohol alto y, pasados 20 s, otro soplido con 0.00 y el DNI | Otro intento, sin bloqueo: **autorizado** | [ ] |
-| 2.13 | Aprueba Jose y pasa el DNI de Fernando | A Fernando, a los 8 s: **"DNI antes del facial"**; Jose entra con su DNI | [ ] |
+| 2.13 | Aprueba Jose y pasa el DNI de Fernando | A Fernando, a los 8 s: **"Sin prueba facial"**; Jose entra con su DNI | [ ] |
 | 2.14 | Dos personas: las dos soplan y después cada una pasa su DNI | Cada una entra con su DNI, en cualquier orden | [ ] |
 | 2.15 | Aprueba y pasa el DNI estando "dentro" | **Denegado "Ya figura dentro"** | [x] |
 | 2.16 | Salida | **Autorizada**, igual que en el modo 1 | [x] |
@@ -89,7 +89,7 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 | 3.1 | Cambiar de modo 1 a modo 2 y volver | Cada modo se aplica desde el cambio, sin reiniciar nada | [ ] |
 | 3.2 | Persona registrada a mano en el G4 (no está en el sistema) | Su prueba no se usa; "Sincronizar ahora" la borra del equipo | [x] |
 | 3.3 | Verificación manual activa | El G4 no decide: decide el vigilante en el Panel | [ ] |
-| 3.4 | Reporte de ingresos (Excel) | Aparecen los motivos: Alcohol, DNI antes del facial, No pasó su DNI a tiempo, No completó rostro y alcohol | [ ] |
+| 3.4 | Reporte de ingresos (Excel) | Aparecen los motivos: Alcohol, Sin prueba facial, No pasó su DNI a tiempo, No completó rostro y alcohol | [ ] |
 | 3.5 | Persona de baja o con documentos vencidos que aprueba | Denegado por baja o por documentos al pasar el DNI | [ ] |
 
 ---

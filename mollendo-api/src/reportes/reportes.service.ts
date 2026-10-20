@@ -121,7 +121,7 @@ export function motivosEvento(e: {
   if (e.denegadoRostroNoCoincide) motivos.push('Rostro no coincide');
   if (e.denegadoYaDentro) motivos.push('Ya figura dentro');
   if (e.denegadoSinIngreso) motivos.push('No registra ingreso');
-  if (e.denegadoSinFacial) motivos.push('DNI antes del facial');
+  if (e.denegadoSinFacial) motivos.push('Sin prueba facial');
   if (e.denegadoSinDni) motivos.push('No pasó su DNI a tiempo');
   if (e.denegadoNoEsQuienSoplo) motivos.push('No es quien sopló');
   return motivos.join(', ');

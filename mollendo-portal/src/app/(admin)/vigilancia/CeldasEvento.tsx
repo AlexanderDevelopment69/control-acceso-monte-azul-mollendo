@@ -58,7 +58,7 @@ export function MotivoDenegacion({
   if (evento.denegadoSinFacial) {
     return (
       <span title="Facial primero: pasó su DNI sin haber hecho antes rostro y alcohol en el equipo facial" className="cursor-help">
-        <Badge color="error">DNI antes del facial</Badge>
+        <Badge color="error">Sin prueba facial</Badge>
       </span>
     );
   }
@@ -122,16 +122,12 @@ export function MarcaCorreccionManual({
   );
 }
 
-/** Orden "facial primero": rostro y alcohol antes del DNI; confirmado si el equipo dijo quién sopló. */
+/**
+ * Orden "facial primero": solo se marca el ingreso autorizado sin confirmar quién sopló.
+ * El confirmado no lleva marca: un ingreso autorizado no tiene motivo.
+ */
 export function MarcaFacialPrimero({ evento }: { evento: Pick<EventoAcceso, "facialPrimero" | "resultado" | "dniQueSoplo"> }) {
-  if (!evento.facialPrimero || evento.resultado !== "autorizado") return null;
-  if (evento.dniQueSoplo) {
-    return (
-      <span title="Rostro y alcohol en el equipo facial antes del DNI. El equipo confirmó que sopló la persona del DNI." className="cursor-help">
-        <Badge color="success">Facial primero</Badge>
-      </span>
-    );
-  }
+  if (!evento.facialPrimero || evento.resultado !== "autorizado" || evento.dniQueSoplo) return null;
   return (
     <span title="Rostro y alcohol en el equipo facial antes del DNI. No se pudo confirmar que quien sopló sea la persona del DNI." className="cursor-help">
       <Badge color="warning">Facial primero · sin confirmar</Badge>

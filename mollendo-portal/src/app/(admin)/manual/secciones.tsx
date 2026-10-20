@@ -543,7 +543,7 @@ export const SECCIONES: SeccionManual[] = [
                     hacer="No terminó en 1 minuto (o, en verificación manual, nadie decidió en 2). Puede pasar su DNI otra vez."
                   />
                   <Motivo
-                    m="DNI antes del facial"
+                    m="Sin prueba facial"
                     hacer="En “facial primero”, pasó su DNI sin haber hecho antes rostro y alcohol. Debe empezar por el terminal facial."
                   />
                   <Motivo
@@ -1009,7 +1009,7 @@ export const SECCIONES: SeccionManual[] = [
               </li>
             </Lista>
             <p className="mt-3">
-              En “facial primero”, si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (“DNI antes del facial”). En los dos
+              En “facial primero”, si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (“Sin prueba facial”). En los dos
               órdenes vale la primera prueba de alcohol: volver a soplar enseguida no cambia el resultado. Si da alcohol, queda denegado con
               su nombre aunque no pase el DNI.
             </p>
