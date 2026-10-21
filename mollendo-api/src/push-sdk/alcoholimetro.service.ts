@@ -17,7 +17,17 @@ const ESPERA_RESPUESTA_MS = 20 * 1000;
  * responde un número (2 si está, 0 si no). Una sola orden: con varias separadas
  * por ";" el equipo solo devuelve la salida de la última.
  */
-export const COMANDO_ALCOHOLIMETRO = 'SHELL cat /sys/bus/usb/devices/*/uevent | grep -c PRODUCT=1a86/7523/';
+export const COMANDO_ALCOHOLIMETRO = comandoAlcoholimetro('1a86/7523');
+
+/**
+ * La orden para ese fabricante/producto. ALCOHOLIMETRO_USB solo sirve para
+ * simular una desconexión (p. ej. ffff/0000, que no existe); si no tiene la
+ * forma xxxx/xxxx se usa el real.
+ */
+export function comandoAlcoholimetro(usb = process.env.ALCOHOLIMETRO_USB): string {
+  const producto = usb && /^[0-9a-f]{4}\/[0-9a-f]{4}$/i.test(usb) ? usb.toLowerCase() : '1a86/7523';
+  return `SHELL cat /sys/bus/usb/devices/*/uevent | grep -c PRODUCT=${producto}/`;
+}
 
 /** Lo que se sabe del alcoholímetro de un equipo facial. */
 export interface EstadoAlcoholimetro {
@@ -47,6 +57,7 @@ export class AlcoholimetroService implements OnModuleInit, OnModuleDestroy {
   private readonly estados = new Map<string, EstadoAlcoholimetro>();
   private revision: ReturnType<typeof setInterval> | null = null;
   private revisando = false;
+  private readonly comando = comandoAlcoholimetro();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -54,6 +65,7 @@ export class AlcoholimetroService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit() {
+    if (this.comando !== COMANDO_ALCOHOLIMETRO) this.logger.warn(`Simulación: se busca el USB ${process.env.ALCOHOLIMETRO_USB} en vez del alcoholímetro`);
     this.revision = setInterval(() => void this.revisar(), REVISION_MS);
   }
 
@@ -74,7 +86,7 @@ export class AlcoholimetroService implements OnModuleInit, OnModuleDestroy {
       const enLinea = new Set((await this.pushSdk.listarEstadoDispositivos()).filter((d) => d.enLinea).map((d) => d.serialNumber));
       const equipos = await this.prisma.dispositivoAcceso.findMany({ select: { id: true, serialNumber: true } });
       for (const equipo of equipos.filter((e) => enLinea.has(e.serialNumber))) {
-        const respuesta = await this.pushSdk.consultar(equipo.id, COMANDO_ALCOHOLIMETRO, ESPERA_RESPUESTA_MS, { silencioso: true, temporal: true });
+        const respuesta = await this.pushSdk.consultar(equipo.id, this.comando, ESPERA_RESPUESTA_MS, { silencioso: true, temporal: true });
         const conectado = respuesta === null ? null : alcoholimetroEnRespuesta(respuesta);
         if (conectado === null) continue;
         const antes = this.estado(equipo.serialNumber);

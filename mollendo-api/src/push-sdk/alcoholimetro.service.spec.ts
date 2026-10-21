@@ -1,4 +1,4 @@
-import { AlcoholimetroService, COMANDO_ALCOHOLIMETRO, alcoholimetroEnRespuesta } from './alcoholimetro.service.js';
+import { AlcoholimetroService, COMANDO_ALCOHOLIMETRO, alcoholimetroEnRespuesta, comandoAlcoholimetro } from './alcoholimetro.service.js';
 
 describe('Alcoholímetro del equipo facial', () => {
   it('la respuesta del equipo dice si está conectado (sin el número no se sabe)', () => {
@@ -9,6 +9,12 @@ describe('Alcoholímetro del equipo facial', () => {
     expect(COMANDO_ALCOHOLIMETRO).toContain('PRODUCT=1a86/7523/');
     // Una sola orden: con varias separadas por ";" el equipo solo devuelve la última.
     expect(COMANDO_ALCOHOLIMETRO).not.toContain(';');
+  });
+
+  it('ALCOHOLIMETRO_USB simula otro USB, solo con la forma xxxx/xxxx', () => {
+    expect(comandoAlcoholimetro(undefined)).toBe(COMANDO_ALCOHOLIMETRO);
+    expect(comandoAlcoholimetro('FFFF/0000')).toContain('PRODUCT=ffff/0000/');
+    expect(comandoAlcoholimetro('1a86/7523; reboot')).toBe(COMANDO_ALCOHOLIMETRO);
   });
 
   it('pregunta solo a los equipos en línea; sin respuesta queda como estaba', async () => {

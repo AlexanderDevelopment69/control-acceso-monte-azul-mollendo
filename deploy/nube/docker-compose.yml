@@ -55,6 +55,8 @@ services:
       # Números de serie de los G4 Pro que pueden comunicarse (las rutas /iclock no
       # llevan clave): obligatorio en la nube, porque el puerto 3001 da a internet.
       G4PRO_SN_PERMITIDOS: ${G4PRO_SN_PERMITIDOS:?Falta G4PRO_SN_PERMITIDOS en .env (número de serie del G4 Pro)}
+      # Solo para simular el alcoholímetro desconectado (p. ej. ffff/0000); vacío: el real.
+      ALCOHOLIMETRO_USB: ${ALCOHOLIMETRO_USB:-}
       # IP pública de la sede desde donde se conecta el G4 Pro (varias, separadas por
       # coma). El número de serie viaja sin cifrar: con la IP, nadie más puede hacerse
       # pasar por el equipo. Vacía = cualquier IP (se avisa en el registro al arrancar).
