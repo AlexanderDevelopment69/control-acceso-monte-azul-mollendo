@@ -460,6 +460,8 @@ export interface TarjetaContingencia {
   creadaEn: string;
   codigoCambiadoEn: string;
   ultimoUso: string | null;
+  /** Nunca se usó: se puede eliminar (la usada se desactiva). */
+  eliminable: boolean;
 }
 
 /** Cada vez que se pasó una tarjeta por un lector, aceptada o no. */

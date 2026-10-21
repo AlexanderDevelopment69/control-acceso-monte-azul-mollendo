@@ -200,6 +200,8 @@ export const tarjetasContingenciaApi = {
   crear: (venceEl: string | null) => apiRequest<TarjetaContingencia>("/tarjetas-contingencia", { method: "POST", body: { venceEl } }),
   actualizar: (id: number, cambios: { activa?: boolean; venceEl?: string | null }) =>
     apiRequest<TarjetaContingencia>(`/tarjetas-contingencia/${id}`, { method: "PATCH", body: cambios }),
+  /** Solo si nunca se usó. */
+  eliminar: (id: number) => apiRequest<{ ok: true }>(`/tarjetas-contingencia/${id}`, { method: "DELETE" }),
   cambiarCodigo: (id: number) => apiRequest<TarjetaContingencia>(`/tarjetas-contingencia/${id}/cambiar-codigo`, { method: "POST" }),
   /** El QR (SVG) para imprimir la tarjeta. */
   qr: async (id: number) => (await apiRequest<Blob>(`/tarjetas-contingencia/${id}/qr`, { responseType: "blob" })).text(),

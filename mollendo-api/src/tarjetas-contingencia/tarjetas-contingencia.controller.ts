@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { TarjetasContingenciaService } from './tarjetas-contingencia.service.js';
 import { ActualizarTarjetaDto, CrearTarjetaDto, QueryUsosTarjetaDto } from './dto/tarjeta-contingencia.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
@@ -39,6 +39,13 @@ export class TarjetasContingenciaController {
   @Roles('administrador')
   cambiarCodigo(@Param('id', ParseIntPipe) id: number, @CurrentUser() usuario: AuthenticatedUser) {
     return this.tarjetas.cambiarCodigo(id, usuario.id);
+  }
+
+  /** Solo si nunca se usó; si no, se desactiva. */
+  @Delete(':id')
+  @Roles('administrador')
+  eliminar(@Param('id', ParseIntPipe) id: number, @CurrentUser() usuario: AuthenticatedUser) {
+    return this.tarjetas.eliminar(id, usuario.id);
   }
 
   /** El QR para imprimir (solo el administrador: quien lo tiene, tiene la tarjeta). */

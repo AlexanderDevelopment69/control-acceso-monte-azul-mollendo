@@ -188,7 +188,7 @@ DNI leído en ingreso: pendiente_verificacion`,
   "mensaje": "Nadie eligió al trabajador en el Panel (\"Salida sin DNI\")"
 }`,
     notas:
-      "Las tarjetas las maneja el administrador en Contingencias → Tarjetas de contingencia, en el menú (GET/POST /tarjetas-contingencia, PATCH /tarjetas-contingencia/:id, POST /tarjetas-contingencia/:id/cambiar-codigo y GET /tarjetas-contingencia/:id/qr para imprimir); el vigilante solo las ve, con sus usos (GET /tarjetas-contingencia/usos). El código va solo en el QR: la API no lo devuelve. Sin internet, el controlador no la manda y suena el aviso. Con la verificación manual activa o en el orden normal, la tarjeta no sirve.",
+      "Las tarjetas las maneja el administrador en Contingencias → Tarjetas de contingencia, en el menú (GET/POST /tarjetas-contingencia, PATCH y DELETE /tarjetas-contingencia/:id (eliminar, solo si nunca se usó), POST /tarjetas-contingencia/:id/cambiar-codigo y GET /tarjetas-contingencia/:id/qr para imprimir); el vigilante solo las ve, con sus usos (GET /tarjetas-contingencia/usos). El código va solo en el QR: la API no lo devuelve. Sin internet, el controlador no la manda y suena el aviso. Con la verificación manual activa o en el orden normal, la tarjeta no sirve.",
   },
   {
     nombre: "Salida sin DNI (Panel de vigilancia)",

@@ -18,10 +18,10 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
-import { LockIcon } from "@/icons";
+import { LockIcon, TrashBinIcon } from "@/icons";
 import { Movimiento } from "../../vigilancia/CeldasEvento";
 import { diaVisible, htmlTarjeta } from "./imprimir";
-import { Carrusel } from "./Carrusel";
+import { PaginasTarjetas } from "./PaginasTarjetas";
 
 const POR_PAGINA = 10;
 
@@ -100,33 +100,61 @@ function TarjetaVisual({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 sm:max-w-sm">
-      <dl className="grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <dt className="text-xs text-gray-500 dark:text-gray-400">Último uso</dt>
-          <dd className="text-gray-800 dark:text-white/90">{tarjeta.ultimoUso ? fechaYHora(tarjeta.ultimoUso) : "Sin usar"}</dd>
+        <div className="flex items-start gap-3">
+          <dl className="grid flex-1 grid-cols-2 gap-3 text-sm">
+            <div>
+              <dt className="text-xs text-gray-500 dark:text-gray-400">Último uso</dt>
+              <dd className="text-gray-800 dark:text-white/90">
+                {tarjeta.ultimoUso ? (
+                  // El día arriba y la hora abajo, para que no se parta "p. m.".
+                  <>
+                    {new Date(tarjeta.ultimoUso).toLocaleDateString("es-PE")}
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(tarjeta.ultimoUso).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </>
+                ) : (
+                  "Sin usar"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-500 dark:text-gray-400">Código del</dt>
+              <dd className="text-gray-800 dark:text-white/90">{new Date(tarjeta.codigoCambiadoEn).toLocaleDateString("es-PE")}</dd>
+            </div>
+          </dl>
+          {esAdministrador && (
+            // Solo una tarjeta que nunca se usó: la usada se desactiva, para conservar su historial.
+            <span title={tarjeta.eliminable ? "Eliminar tarjeta" : "Ya se usó: desactívela para conservar su historial"}>
+              <button
+                type="button"
+                aria-label="Eliminar tarjeta"
+                disabled={!tarjeta.eliminable}
+                onClick={() => onAccion("eliminar")}
+                className="flex size-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:hover:bg-error-500/10"
+              >
+                <TrashBinIcon className="size-4" />
+              </button>
+            </span>
+          )}
         </div>
-        <div>
-          <dt className="text-xs text-gray-500 dark:text-gray-400">Código del</dt>
-          <dd className="text-gray-800 dark:text-white/90">{new Date(tarjeta.codigoCambiadoEn).toLocaleDateString("es-PE")}</dd>
-        </div>
-      </dl>
 
-      {esAdministrador && (
-        <div className="grid grid-cols-2 gap-2 [&_button]:w-full [&_button]:px-3">
-          <Button type="button" size="sm" onClick={onImprimir}>
-            Imprimir
-          </Button>
-          <Button type="button" size="sm" variant="outline" onClick={onVencimiento}>
-            Vencimiento
-          </Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => onAccion("cambiar-codigo")}>
-            Cambiar código
-          </Button>
-          <Button type="button" size="sm" variant={tarjeta.activa ? "outline-danger" : "outline"} onClick={() => onAccion(tarjeta.activa ? "desactivar" : "activar")}>
-            {tarjeta.activa ? "Desactivar" : "Activar"}
-          </Button>
-        </div>
-      )}
+        {esAdministrador && (
+          <div className="grid grid-cols-2 gap-2 [&_button]:w-full [&_button]:px-3">
+            <Button type="button" size="sm" onClick={onImprimir}>
+              Imprimir
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={onVencimiento}>
+              Vencimiento
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => onAccion("cambiar-codigo")}>
+              Cambiar código
+            </Button>
+            <Button type="button" size="sm" variant={tarjeta.activa ? "outline-danger" : "outline"} onClick={() => onAccion(tarjeta.activa ? "desactivar" : "activar")}>
+              {tarjeta.activa ? "Desactivar" : "Activar"}
+            </Button>
+          </div>
+        )}
       </div>
     </Tarjeta>
   );
@@ -204,7 +232,7 @@ function VencimientoModal({
   );
 }
 
-type Confirmacion = { tarjeta: TarjetaContingencia; accion: "desactivar" | "activar" | "cambiar-codigo" };
+type Confirmacion = { tarjeta: TarjetaContingencia; accion: "desactivar" | "activar" | "cambiar-codigo" | "eliminar" };
 
 /** Confirmación de desactivar, activar o cambiar el código (la tarjeta impresa deja de servir). */
 function ConfirmarAccion({
@@ -238,7 +266,9 @@ function ConfirmarAccion({
     onCerrar();
   }
 
-  const titulo = accion === "cambiar-codigo" ? "Cambiar el código" : accion === "desactivar" ? "Desactivar tarjeta" : "Activar tarjeta";
+  const titulo = { "cambiar-codigo": "Cambiar el código", desactivar: "Desactivar tarjeta", activar: "Activar tarjeta", eliminar: "Eliminar tarjeta" }[
+    accion ?? "activar"
+  ];
   return (
     <Modal isOpen={!!confirmacion} onClose={cerrar} bloqueado={guardando} className="max-w-lg p-6 sm:p-8">
       {t && (
@@ -254,6 +284,12 @@ function ConfirmarAccion({
             {accion === "desactivar" && (
               <>
                 ¿Desactivar la <strong>{t.nombre}</strong>? Dejará de servir hasta que la vuelva a activar.
+              </>
+            )}
+            {accion === "eliminar" && (
+              <>
+                ¿Eliminar la <strong>{t.nombre}</strong>? Nunca se usó: se borra definitivamente y queda en la Auditoría. Si ya la
+                imprimió, deje de usarla.
               </>
             )}
             {accion === "activar" && (
@@ -274,7 +310,9 @@ function ConfirmarAccion({
               onClick={() => void confirmar()}
               disabled={guardando}
             >
-              {guardando ? "Guardando…" : accion === "cambiar-codigo" ? "Cambiar código" : accion === "desactivar" ? "Desactivar" : "Activar"}
+              {guardando
+                ? "Guardando…"
+                : { "cambiar-codigo": "Cambiar código", desactivar: "Desactivar", activar: "Activar", eliminar: "Eliminar" }[accion ?? "activar"]}
             </Button>
           </div>
         </>
@@ -346,7 +384,10 @@ function TarjetasContent() {
   async function confirmarAccion() {
     if (!confirmacion) return;
     const { tarjeta, accion } = confirmacion;
-    if (accion === "cambiar-codigo") {
+    if (accion === "eliminar") {
+      await tarjetasContingenciaApi.eliminar(tarjeta.id);
+      listo(`Se eliminó la ${tarjeta.nombre.toLowerCase()}.`);
+    } else if (accion === "cambiar-codigo") {
       await tarjetasContingenciaApi.cambiarCodigo(tarjeta.id);
       listo(`Se cambió el código de la ${tarjeta.nombre.toLowerCase()}. Imprímala otra vez: la anterior ya no sirve.`);
     } else {
@@ -394,7 +435,7 @@ function TarjetasContent() {
       )}
       {!!tarjetas?.length && (
         <div className="mb-8">
-          <Carrusel anchoElemento="44rem">
+          <PaginasTarjetas>
             {tarjetas.map((t) => (
               <TarjetaVisual
                 key={t.id}
@@ -405,7 +446,7 @@ function TarjetasContent() {
                 onAccion={(accion) => setConfirmacion({ tarjeta: t, accion })}
               />
             ))}
-          </Carrusel>
+          </PaginasTarjetas>
         </div>
       )}
 

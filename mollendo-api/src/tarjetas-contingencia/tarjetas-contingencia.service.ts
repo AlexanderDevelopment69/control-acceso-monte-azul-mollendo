@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import QRCode from 'qrcode';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
@@ -19,6 +19,8 @@ export interface TarjetaVista {
   creadaEn: string;
   codigoCambiadoEn: string;
   ultimoUso: string | null;
+  /** Nunca se pasó por un lector: se puede eliminar (si no, se desactiva, para conservar su historial). */
+  eliminable: boolean;
 }
 
 /** Resultado de revisar una tarjeta pasada por el lector. */
@@ -62,6 +64,7 @@ export class TarjetasContingenciaService {
       creadaEn: t.creadaEn.toISOString(),
       codigoCambiadoEn: t.codigoCambiadoEn.toISOString(),
       ultimoUso: ultimoUso?.toISOString() ?? null,
+      eliminable: !ultimoUso,
     };
   }
 
@@ -103,6 +106,23 @@ export class TarjetasContingenciaService {
     });
     await this.auditoria.registrar({ usuarioId, tablaAfectada: 'tarjeta_contingencia', registroId: id, accion: 'modificar' });
     return this.vista(tarjeta, null);
+  }
+
+  /**
+   * Eliminar una tarjeta que nunca se usó (p. ej. creada de más o de prueba).
+   * Si ya se pasó por un lector, se desactiva: así sus usos y los ingresos y
+   * salidas hechos con ella siguen diciendo con qué tarjeta fueron.
+   */
+  async eliminar(id: number, usuarioId: number): Promise<{ ok: true }> {
+    await this.buscar(id);
+    const [usos, eventos] = await Promise.all([
+      this.prisma.usoTarjetaContingencia.count({ where: { tarjetaId: id } }),
+      this.prisma.eventoAcceso.count({ where: { tarjetaContingenciaId: id } }),
+    ]);
+    if (usos + eventos > 0) throw new BadRequestException('Esta tarjeta ya se usó: desactívela para conservar su historial');
+    await this.prisma.tarjetaContingencia.delete({ where: { id } });
+    await this.auditoria.registrar({ usuarioId, tablaAfectada: 'tarjeta_contingencia', registroId: id, accion: 'eliminar' });
+    return { ok: true };
   }
 
   /** El QR de la tarjeta (SVG) para imprimirla. */

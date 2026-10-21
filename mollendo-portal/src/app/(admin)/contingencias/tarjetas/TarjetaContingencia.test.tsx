@@ -15,6 +15,7 @@ const tarjeta: TarjetaContingencia = {
   creadaEn: "2026-10-20T15:00:00.000Z",
   codigoCambiadoEn: "2026-10-20T15:00:00.000Z",
   ultimoUso: null,
+  eliminable: true,
 };
 
 describe("tarjeta de contingencia", () => {
