@@ -722,7 +722,7 @@ Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube 
 
 - Es el **mismo programa** (`mollendo-api`, misma imagen de Docker) arrancado en modo controlador: `node dist/controlador/main.js` (`src/controlador/`). Usa el mismo código de lectores de DNI y relés.
 - Cada DNI leído se manda con la clave de equipos a `POST /api/v1/eventos-acceso/ingreso|salida` del servidor.
-- La mini PC abre un **canal permanente hacia el servidor** (socket.io, `/ws/controlador`, validado con `DEVICE_API_KEY`): por ahí recibe "abrir el molinete de ingreso/salida" e informa cada 15 s el estado de lectores y relés (se ve en "Sistema y APIs" → "Controlador"). Lo abre la garita hacia afuera: **no hay que abrir puertos en la red del terminal**. Si se corta, se reconecta solo.
+- La mini PC abre un **canal permanente hacia el servidor** (socket.io, `/ws/controlador`, validado con `DEVICE_API_KEY`): por ahí recibe "abrir el molinete de ingreso/salida" e informa cada 5 s el estado de lectores y relés (se ve en "Sistema y APIs" → "Controlador"). Lo abre la garita hacia afuera: **no hay que abrir puertos en la red del terminal**. Si se corta, se reconecta solo.
 - En el servidor, `MOLINETES_REMOTOS=true` en `.env`: la orden de abrir va al controlador (no a un relé local).
 - **Sin internet (opción B):** nadie puede entrar; **sí salir**. El controlador guarda la **lista del personal** (documentos de todo el personal registrado, `GET /api/v1/controlador/lista-personal`, se renueva cada 10 min y queda en disco) y deja salir a quien está en él. Esas salidas se guardan y, al volver la conexión, se envían con su hora (`sinConexion: true`, `fechaHora`) sin volver a abrir el molinete.
 

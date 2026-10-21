@@ -115,15 +115,18 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 | # | Prueba | Qué debe pasar | Pasa |
 |---|---|---|---|
 | 5.1 | Persona que no está registrada se para frente al G4 | No pasa nada en el Panel; si pasa un DNI no registrado: **"No registrado"** | [ ] |
-| 5.2 | Desconectar el G4 de la red (o apagarlo) | Sistema y APIs lo marca **desconectado** en unos 20 s; nadie entra (no hay prueba) | [ ] |
+| 5.2 | Desconectar el G4 de la red (o apagarlo) | Sistema y APIs y la franja roja lo marcan **desconectado** en unos 20 s, a la vez; nadie entra (no hay prueba); queda en la Auditoría ("equipos"). Probado el 21/10 reiniciándolo por el protocolo (08:56 y 09:11): 1 min 10-20 s sin conexión | [x] |
 | 5.3 | Volver a conectar el G4 | Se reconecta solo; las pruebas hechas sin conexión llegan tarde, se guardan y **no abren** nada (más de 2 min) | [ ] |
 | 5.4 | Cortar internet de la garita (mini PC sin conexión) | Ingreso: **no se permite**, con aviso. Salida: se deja salir y se registra al volver | [ ] |
 | 5.5 | Volver internet | El controlador se reconecta solo y sube las salidas pendientes | [ ] |
 | 5.6 | Pasar el DNI dos veces seguidas (doble lectura) | Una sola fila (las lecturas repetidas de menos de 3 s se ignoran) | [ ] |
-| 5.7 | Desconectar el lector de DNI de la entrada | Sistema y APIs lo muestra desconectado; al volver a conectarlo, se reabre solo | [ ] |
+| 5.7 | Desconectar el lector de DNI de la entrada | Sistema y APIs lo muestra desconectado, el Panel muestra la franja "sin lector" (ingreso solo con rostro y alcohol) y queda en la Auditoría; al volver a conectarlo, se reabre solo. El 21/10 se simuló desde la mini PC (sin tocar cables): falta desconectar el cable de verdad | [ ] |
 | 5.8 | Reinicio del sistema (actualización) en medio de un pase | Quien estaba esperando pierde el pase y debe repetirlo; nadie entra sin prueba | [ ] |
 | 5.9 | Hora del G4 | Sigue igual a la del servidor (diferencia de 1-2 s); si se desajusta, avisar | [ ] |
 | 5.10 | Alcoholímetro desconectado del G4 | El equipo no deja hacer la prueba: nadie entra | [ ] |
+| 5.11 | Desconectar el lector de DNI de la salida | Franja "sin lector" con "Ir a Presentes ahora"; en Presentes ahora, "Salida" abre la salida (con confirmación) y queda "Salida sin lector" en el Panel y en la Auditoría | [ ] |
+| 5.12 | Tarjeta de contingencia impresa | El lector Syble lee el QR: aparece en la lista de usos; con una aprobación esperando, entra a nombre de quien sopló. Después, "Cambiar código" de la tarjeta 1 (se leyó con un celular) | [ ] |
+| 5.13 | Un ingreso y una salida con DNI | Entran y salen normal: confirma la corrección del 21/10 (desde el 20/10 ~20:07 la API rechazaba todo DNI del lector) | [ ] |
 
 ---
 

@@ -36,7 +36,7 @@ Sin problemas graves conocidos. Lo que cubre:
 | Datos de entrada | Validados en la API; sin inyección SQL (consultas parametrizadas) ni HTML inyectable en el portal |
 | Navegador | Cabeceras de seguridad; el portal no se puede mostrar dentro de otro sitio |
 | Librerías | Sin vulnerabilidades conocidas en lo que se instala en el servidor |
-| Trazabilidad | Auditoría de todos los cambios y de los inicios de sesión |
+| Trazabilidad | Auditoría de todos los cambios y de los inicios de sesión; desde el 21/10/2026 también de las aperturas del molinete sin DNI (por la API o "Salida sin lector"), la salida sin DNI, la sincronización con el equipo facial, las descargas de reportes, los archivos de documentos abiertos y cada desconexión y vuelta de los equipos |
 
 **Límites conocidos** (ningún sistema es 100 % seguro):
 
