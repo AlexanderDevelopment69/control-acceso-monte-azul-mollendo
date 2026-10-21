@@ -1440,6 +1440,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     const ingreso: IngresoDto = {
       tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
       numeroDocumento: persona.numeroDocumento,
+      torniqueteId: 'Ingreso',
       sinLector: true,
     };
     this.logger.log(`Sin lector de DNI de ingreso: ingreso de ${persona.numeroDocumento} (identificado por rostro)`);
@@ -1468,6 +1469,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       const respuesta = await this.registrarSalida({
         tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
         numeroDocumento: persona.numeroDocumento,
+        torniqueteId: 'Salida',
         verificadoPorId: usuario.id,
         sinLector: true,
       });

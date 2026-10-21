@@ -22,8 +22,9 @@ export class IntegracionesController {
     return this.monitorG4.listar(query);
   }
 
+  // Abre sin DNI (queda en la Auditoría): solo el administrador, para una emergencia o para probar un molinete.
   @Post('torniquete/comando')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador')
   enviarComandoTorniquete(@Body() dto: TorniqueteComandoDto, @CurrentUser() usuario: AuthenticatedUser) {
     return this.integracionesService.enviarComandoTorniquete(dto, usuario.id);
   }

@@ -426,7 +426,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `DELETE /personas/:id/documentos/:tipoDocumentoId` | Eliminar un documento con todas sus versiones | Administrador |
 | `GET` · `POST /tipos-documento` | Nombres de documento | Crear: Administrador |
 | `POST /eventos-acceso/ingreso` · `/salida` | Registrar un ingreso o una salida | Equipos (`X-API-Key`) |
-| `POST /integraciones/torniquete/comando` | Orden manual de apertura de un molinete (`ingreso` o `salida`): activa su relé durante 1 segundo | Administrador y Vigilancia |
+| `POST /integraciones/torniquete/comando` | Orden manual de apertura de un molinete (`ingreso` o `salida`), sin DNI: con el servidor en la nube va al controlador (PC); queda en la Auditoría | Administrador |
 | `POST /integraciones/g4pro/sincronizar` | Deja el terminal facial igual al sistema: borra a quien el sistema no conoce, quita permisos sueltos y registra con foto al personal activo que falta (también se ejecuta todos los días a medianoche) | Administrador |
 | `GET /eventos-acceso/en-espera` | Ingresos en curso para el Panel: DNI esperando su prueba o aprobaciones esperando el DNI | Administrador y Vigilancia |
 | `GET` · `PUT /eventos-acceso/modo-ingreso` | Orden del ingreso activo y cambiarlo | Ver: ambos; cambiar: Administrador |

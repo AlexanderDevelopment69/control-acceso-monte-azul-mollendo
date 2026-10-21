@@ -109,7 +109,7 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     try {
       return await this.enviar<ResultadoLectura>('POST', '/eventos-acceso/ingreso', dto);
     } catch (error) {
-      if (!(error instanceof SinConexion)) throw error;
+      if (!(error instanceof SinConexion)) return this.rechazoDelServidor('ingreso', `DNI ${dto.numeroDocumento}`, error);
       // Opción B: sin conexión no se puede entrar (el servidor y el G4 Pro deciden el ingreso).
       this.logger.warn(`Ingreso de ${dto.numeroDocumento} no permitido: sin conexión con el servidor`);
       await this.releUsb.pulso('avisoIngreso');
@@ -127,7 +127,7 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
       }
       return respuesta;
     } catch (error) {
-      if (!(error instanceof SinConexion)) throw error;
+      if (!(error instanceof SinConexion)) return this.rechazoDelServidor('salida', `DNI ${dto.numeroDocumento}`, error);
       return this.salidaSinConexion(dto);
     }
   }
@@ -137,11 +137,23 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     try {
       return await this.enviar<ResultadoLectura>('POST', '/eventos-acceso/tarjeta', dto);
     } catch (error) {
-      if (!(error instanceof SinConexion)) throw error;
+      if (!(error instanceof SinConexion)) return this.rechazoDelServidor(dto.tipoMovimiento, 'tarjeta de contingencia', error);
       this.logger.warn(`Tarjeta de contingencia en ${dto.tipoMovimiento}: sin conexión con el servidor, no se abre`);
       await this.releUsb.pulso(dto.tipoMovimiento === 'ingreso' ? 'avisoIngreso' : 'avisoSalida');
       return { resultado: 'denegado (sin conexión)' };
     }
+  }
+
+  /**
+   * El servidor respondió, pero rechazó la lectura con un error (no es falta de
+   * conexión ni un "denegado" normal: p. ej. un error del sistema o la clave de
+   * equipos cambiada). No se abre; suena el aviso de denegado de esa puerta para
+   * que el vigilante sepa que algo anda mal, y queda en el registro.
+   */
+  private async rechazoDelServidor(tipoMovimiento: 'ingreso' | 'salida', que: string, error: unknown): Promise<ResultadoLectura> {
+    this.logger.error(`El servidor rechazó la lectura (${que} en ${tipoMovimiento}): ${(error as Error).message}`);
+    await this.releUsb.pulso(tipoMovimiento === 'ingreso' ? 'avisoIngreso' : 'avisoSalida');
+    return { resultado: 'rechazado por el servidor' };
   }
 
   /** Sin conexión: sale quien está en la lista del personal; la salida se guarda para enviarla después. */

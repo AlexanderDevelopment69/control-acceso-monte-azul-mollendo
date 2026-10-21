@@ -7,6 +7,7 @@ import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { AVISO_DE, ReleUsbService } from './rele-usb.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
+import { ControladorGateway, molinetesRemotos } from '../controlador-remoto/controlador.gateway.js';
 import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
 import { guardarHoraDiaria, leerCambioDiaria, leerHoraDiaria } from './sincronizacion-diaria.js';
 import { leerFacialPrimero, type PermisosFijosEvent } from '../eventos-acceso/modo-ingreso.service.js';
@@ -76,6 +77,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
     private readonly releUsb: ReleUsbService,
     private readonly prisma: PrismaService,
     private readonly auditoria: AuditoriaService,
+    private readonly controlador: ControladorGateway,
   ) {}
 
   /** Orden "facial primero": permiso fijo a todo el personal activo (al activarlo) o su retiro (al apagarlo). */
@@ -322,8 +324,10 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Orden manual: "abrir" da un pulso en el relé del molinete ("ingreso" o
-   * "salida"; también "Ingreso"/"Salida", como los nombra el lector). El
-   * molinete se cierra solo después del paso, así que "cerrar" no hace nada.
+   * "salida"; también "Ingreso"/"Salida", como los nombra el lector). Con el
+   * servidor en la nube va al controlador (mini PC), como cualquier apertura;
+   * sin él conectado no se abre. El molinete se cierra solo después del paso,
+   * así que "cerrar" no hace nada.
    */
   async enviarComandoTorniquete(dto: TorniqueteComandoDto, usuarioId?: number): Promise<{ enviado: boolean }> {
     const molinete = dto.torniqueteId.trim().toLowerCase();
@@ -331,14 +335,20 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (sin acción)`);
       return { enviado: false };
     }
-    const enviado = await this.releUsb.pulso(molinete);
+    let enviado: boolean;
+    if (molinetesRemotos()) {
+      enviado = this.controlador.estado().conectado;
+      if (enviado) this.controlador.abrirMolinete({ tipoMovimiento: molinete, eventoId: 0, torniqueteId: dto.torniqueteId });
+    } else {
+      enviado = await this.releUsb.pulso(molinete);
+    }
     // Abre sin DNI: queda en la Auditoría con quién lo pidió.
     await this.auditoria.registrar({
       usuarioId: usuarioId ?? null,
       tablaAfectada: 'molinete',
       registroId: 0,
       accion: 'apertura',
-      detalle: `Molinete de ${molinete} abierto a mano (por la API)${enviado ? '' : ': el relé no respondió'}`,
+      detalle: `Molinete de ${molinete} abierto a mano (por la API)${enviado ? '' : molinetesRemotos() ? ': el controlador no está conectado' : ': el relé no respondió'}`,
     });
     return { enviado };
   }

@@ -44,6 +44,15 @@ describe('Controlador', () => {
     fs.rmSync(carpeta, { recursive: true, force: true });
   });
 
+  it('el servidor rechaza la lectura con un error: no se abre y suena el aviso de esa puerta', async () => {
+    hayInternet = true;
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ message: ['property x should not exist'] }), { status: 400 })) as unknown as typeof fetch;
+    expect(await servicio.registrarIngreso(dni('11111111'))).toEqual({ resultado: 'rechazado por el servidor' });
+    expect(await servicio.registrarSalida(dni('11111111'))).toEqual({ resultado: 'rechazado por el servidor' });
+    expect(pulsos).toEqual(['avisoIngreso', 'avisoSalida']);
+  });
+
   it('sin conexión no deja entrar (y da el aviso de ingreso denegado)', async () => {
     const r = await servicio.registrarIngreso(dni('11111111'));
     expect(r.estado).toContain('sin conexión');

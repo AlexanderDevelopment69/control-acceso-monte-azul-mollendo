@@ -302,18 +302,18 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/integraciones/torniquete/comando",
     metodo: "POST",
     descripcion:
-      "Abre un molinete con un pulso de 1 segundo en su relé (módulos USB DCTTECH, uno por molinete). El backend lo hace solo en cada salida autorizada y en cada ingreso que el G4 Pro aprueba; también se puede llamar a mano para probar un relé.",
-    autenticacion: "JWT (Administrador / Vigilancia)",
+      "Abre un molinete a mano, sin DNI: para una emergencia o para probar un molinete. Con el servidor en la nube la orden va al controlador (mini PC), como cualquier apertura; sin el controlador conectado no se abre (enviado: false).",
+    autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Content-Type: application/json", "Authorization: Bearer <token>"],
     ejemploRequest: `{
   "torniqueteId": "ingreso",
   "comando": "abrir"
 }`,
-    ejemploRespuesta: `// 200 OK — relé activado (false si el módulo no está conectado)
+    ejemploRespuesta: `// 201 Created — orden enviada (false si el controlador o el relé no están conectados)
 { "enviado": true }`,
     notas:
-      "torniqueteId: \"ingreso\" o \"salida\". Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). \"cerrar\" no hace nada: el molinete se cierra solo después del paso. Cada apertura queda en la Auditoría (\"apertura manual\", con quién). Con el servidor en la nube, esta orden usa los relés del servidor (no hay), así que no abre el molinete real: los abre el controlador (mini PC).",
+      "torniqueteId: \"ingreso\" o \"salida\". Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). \"cerrar\" no hace nada: el molinete se cierra solo después del paso. Cada apertura queda en la Auditoría (\"apertura manual\", con quién). En la mini PC como servidor local, da el pulso directo en su relé.",
   },
   {
     nombre: "Registro de personas y rostros en el G4 Pro (saliente)",

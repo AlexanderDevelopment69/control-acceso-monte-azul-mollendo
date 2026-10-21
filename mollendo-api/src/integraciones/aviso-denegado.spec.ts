@@ -18,7 +18,7 @@ describe('Aviso de ingreso y salida denegados', () => {
     process.env.MOLINETES_REMOTOS = 'false';
     const pulsos: string[] = [];
     const releUsb = { pulso: async (r: string) => (pulsos.push(r), true) };
-    const servicio = new IntegracionesService({} as never, releUsb as never, {} as never, { registrar: async () => undefined } as never);
+    const servicio = new IntegracionesService({} as never, releUsb as never, {} as never, { registrar: async () => undefined } as never, {} as never);
     await servicio.avisarDenegado(evento);
     expect(pulsos).toEqual(avisa);
   });
@@ -26,7 +26,7 @@ describe('Aviso de ingreso y salida denegados', () => {
   it('con controlador, el servidor no usa relés propios: le manda el aviso al controlador', async () => {
     process.env.MOLINETES_REMOTOS = 'true';
     const pulsos: string[] = [];
-    const servicio = new IntegracionesService({} as never, { pulso: async (r: string) => (pulsos.push(r), true) } as never, {} as never, { registrar: async () => undefined } as never);
+    const servicio = new IntegracionesService({} as never, { pulso: async (r: string) => (pulsos.push(r), true) } as never, {} as never, { registrar: async () => undefined } as never, {} as never);
     await servicio.avisarDenegado({ tipoMovimiento: 'ingreso', resultado: 'denegado' });
     expect(pulsos).toEqual([]);
 
