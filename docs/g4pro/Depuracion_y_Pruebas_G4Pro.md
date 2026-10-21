@@ -39,11 +39,12 @@ En **Sistema y APIs**, debajo de "Orden del ingreso". La tarjeta tiene el botón
 
 | Texto | Cuándo |
 |---|---|
-| Prueba después de su DNI: cierra su espera | Orden normal: la persona pasó su DNI y aprobó |
-| Alcohol alto después de su DNI: cierra su espera | Orden normal: pasó su DNI y dio alcohol |
+| Prueba después de su DNI: cierra su espera | Orden DNI → Facial + Alcohol: la persona pasó su DNI y aprobó |
+| Alcohol alto después de su DNI: cierra su espera | Orden DNI → Facial + Alcohol: pasó su DNI y dio alcohol |
 | Alcohol alto: denegado con su nombre | Dio alcohol sin espera abierta (en los dos órdenes) |
-| Orden normal: sopló sin pasar antes su DNI, no vale | Orden normal, sin DNI previo |
-| Orden normal: prueba de antes de pasar su DNI, no vale (su espera sigue) | Orden normal: la prueba es de antes del DNI |
+| Orden DNI → Facial + Alcohol: sopló sin pasar antes su DNI, no vale | Sin DNI previo |
+| Orden DNI → Facial + Alcohol: sopló después de su minuto, no vale | Sopló pasado el minuto |
+| Orden DNI → Facial + Alcohol: prueba de antes de pasar su DNI, no vale (su espera sigue) | La prueba es de antes del DNI |
 | Aprobó: "pase su DNI" (30 s) | Facial primero: aprobó y queda esperando su DNI |
 | Aprobó; su DNI ya estaba pasado y esperando | Facial primero: pasó el DNI antes de que llegara el aviso del G4 |
 | Volvió a soplar en el mismo pase: vale la primera prueba, esta se ignora | Segundo soplido dentro de 20 s |

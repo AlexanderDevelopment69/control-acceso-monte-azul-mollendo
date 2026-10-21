@@ -723,10 +723,10 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(`G4 Pro: el DNI ${evento.pin} hizo rostro y alcohol sin pasar antes su DNI (orden normal); no vale`);
         await anotar(
           tarde
-            ? 'Orden normal: sopló después de su minuto, no vale'
+            ? 'Orden DNI → Facial + Alcohol: sopló después de su minuto, no vale'
             : espera
-              ? 'Orden normal: prueba de antes de pasar su DNI, no vale (su espera sigue)'
-              : 'Orden normal: sopló sin pasar antes su DNI, no vale',
+              ? 'Orden DNI → Facial + Alcohol: prueba de antes de pasar su DNI, no vale (su espera sigue)'
+              : 'Orden DNI → Facial + Alcohol: sopló sin pasar antes su DNI, no vale',
         );
         return;
       }

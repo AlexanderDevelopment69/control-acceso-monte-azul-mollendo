@@ -45,7 +45,7 @@ describe('avisosDelSistema', () => {
     e.lectoresDni.ingreso = { configurado: false, conectado: false, ultimaLectura: null };
     e.lectoresDni.salida.conectado = false;
     expect(avisosDelSistema(e).map((a) => [a.equipo, a.estado, a.impacto])).toEqual([
-      ['Lectores de DNI', 'Desconectado: salida', 'No se leen DNI en la salida'],
+      ['Lectores de DNI', 'Desconectado: salida', 'No se leen DNI en la salida. Contingencia «sin lector» activa'],
     ]);
   });
 

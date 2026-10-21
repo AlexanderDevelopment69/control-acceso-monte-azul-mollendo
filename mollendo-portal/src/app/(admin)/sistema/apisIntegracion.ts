@@ -2,7 +2,7 @@
 export interface ApiIntegracion {
   nombre: string;
   endpoint: string;
-  metodo: "POST" | "GET" | "PUT" | "GET · PUT" | "RS232" | "USB";
+  metodo: "POST" | "GET" | "PUT" | "GET · PUT" | "GET · POST" | "GET · POST · DELETE" | "RS232" | "USB";
   descripcion: string;
   autenticacion: string;
   /** real: funciona hoy · mock: simulado (solo queda en el log) · pendiente: por programar. */
@@ -188,7 +188,7 @@ DNI leído en ingreso: pendiente_verificacion`,
   "mensaje": "Nadie eligió al personal en el Panel (\"Salida sin DNI\")"
 }`,
     notas:
-      "Las tarjetas las maneja el administrador en Contingencias → Tarjetas de contingencia, en el menú (GET/POST /tarjetas-contingencia, PATCH y DELETE /tarjetas-contingencia/:id (eliminar, solo si nunca se usó), POST /tarjetas-contingencia/:id/cambiar-codigo y GET /tarjetas-contingencia/:id/qr para imprimir); el vigilante solo las ve, con sus usos (GET /tarjetas-contingencia/usos). El código va solo en el QR: la API no lo devuelve. Sin internet, el controlador no la manda y suena el aviso. Con la verificación manual activa o en el orden normal, la tarjeta no sirve.",
+      "Las tarjetas las maneja el administrador en Contingencias → Tarjetas de contingencia, en el menú (GET/POST /tarjetas-contingencia, PATCH y DELETE /tarjetas-contingencia/:id (eliminar, solo si nunca se usó), POST /tarjetas-contingencia/:id/cambiar-codigo y GET /tarjetas-contingencia/:id/qr para imprimir); solo el administrador las ve y las administra (también sus usos: GET /tarjetas-contingencia/usos). El código va solo en el QR: la API no lo devuelve. Sin internet, el controlador no la manda y suena el aviso. Con la verificación manual activa o en el orden normal, la tarjeta no sirve.",
   },
   {
     nombre: "Salida sin DNI (Panel de vigilancia)",
@@ -211,7 +211,48 @@ DNI leído en ingreso: pendiente_verificacion`,
 }
 
 // 400 — Esa persona figura fuera: no tiene una salida pendiente`,
-    notas: "La salida queda con la tarjeta y con quién eligió al personal (\"Tarjeta de contingencia · correo\" en el Panel).",
+    notas:
+      "La salida queda con la tarjeta y con quién eligió al personal (\"Tarjeta de contingencia · correo\" en el Panel). Elegir y cancelar quedan en la Auditoría.",
+  },
+  {
+    nombre: "Contingencia «sin lector» (lector de DNI desconectado)",
+    endpoint: "/eventos-acceso/sin-lector · /eventos-acceso/salida-sin-lector",
+    metodo: "GET · POST",
+    descripcion:
+      "Con el lector de DNI de una puerta desconectado y el controlador en línea, la contingencia se activa sola. GET dice qué puertas están sin lector. Ingreso (facial primero): quien aprueba rostro y alcohol entra sin pasar el DNI. Salida: POST abre la salida de quien figura dentro (lo usa \"Salida\" en Presentes ahora); solo con el lector de salida desconectado. En tiempo real se avisa por WebSocket (/ws/eventos): sin-lector.",
+    autenticacion: "JWT (Administrador / Vigilancia)",
+    tipo: "real",
+    headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
+    ejemploRequest: `// POST /eventos-acceso/salida-sin-lector
+{ "personaId": 41 }`,
+    ejemploRespuesta: `// GET /eventos-acceso/sin-lector
+{ "ingreso": false, "salida": true }
+
+// POST → 201 Created
+{ "eventoId": 1532, "tipoMovimiento": "salida", "resultado": "autorizado", "numeroDocumento": "12345678" }
+
+// 400 — El lector de salida ya está conectado: la persona pasa su DNI`,
+    notas:
+      "Queda marcado en el Panel (\"Sin lector de DNI: identificado por rostro\" / \"Salida sin lector · correo\"), en el reporte de ingresos y salidas y, la salida, en la Auditoría (\"apertura manual\"). Termina sola al volver el lector.",
+  },
+  {
+    nombre: "Verificación manual (equipo facial fuera de servicio)",
+    endpoint: "/eventos-acceso/verificacion-manual · /eventos-acceso/en-espera/:id/decision",
+    metodo: "GET · POST · DELETE",
+    descripcion:
+      "La activan el vigilante o el administrador desde el Panel (POST, con motivo obligatorio) y la terminan con DELETE; GET dice si está activa. Mientras tanto, cada DNI en regla queda esperando la decisión del vigilante (2 minutos): POST /eventos-acceso/en-espera/:id/decision con \"apto\", \"alcohol\" o \"no-es-la-persona\". En tiempo real: verificacion-manual.",
+    autenticacion: "JWT (Administrador / Vigilancia)",
+    tipo: "real",
+    headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
+    ejemploRequest: `// POST /eventos-acceso/verificacion-manual
+{ "motivo": "Terminal facial desconectado" }
+
+// POST /eventos-acceso/en-espera/77/decision
+{ "decision": "apto" }`,
+    ejemploRespuesta: `// GET /eventos-acceso/verificacion-manual
+{ "activa": true, "periodo": { "id": 7, "motivo": "Terminal facial desconectado", "desde": "2026-10-21T12:54:54.135Z", "activadaPor": "vigilante@empresa.com" } }`,
+    notas:
+      "El ingreso queda marcado \"Manual\" con quién decidió, en el Panel y en el reporte. Activarla y terminarla quedan en la Auditoría. Con la verificación manual activa, la prueba del equipo facial y la tarjeta de contingencia no se usan.",
   },
   {
     nombre: "Ingresos en espera (Panel de vigilancia)",
@@ -272,7 +313,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     ejemploRespuesta: `// 200 OK — relé activado (false si el módulo no está conectado)
 { "enviado": true }`,
     notas:
-      "torniqueteId: \"ingreso\" o \"salida\". Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). \"cerrar\" no hace nada: el molinete se cierra solo después del paso.",
+      "torniqueteId: \"ingreso\" o \"salida\". Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). \"cerrar\" no hace nada: el molinete se cierra solo después del paso. Cada apertura queda en la Auditoría (\"apertura manual\", con quién). Con el servidor en la nube, esta orden usa los relés del servidor (no hay), así que no abre el molinete real: los abre el controlador (mini PC).",
   },
   {
     nombre: "Registro de personas y rostros en el G4 Pro (saliente)",
