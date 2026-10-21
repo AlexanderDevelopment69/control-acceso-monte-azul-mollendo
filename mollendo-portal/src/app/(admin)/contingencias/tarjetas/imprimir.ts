@@ -51,6 +51,14 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string): string
   .uso { margin-top: 0.8mm; font-size: 2.2mm; color: rgba(255, 255, 255, 0.7); max-width: 40mm; }
   .qr { flex: none; width: 25mm; height: 25mm; padding: 1.2mm; border-radius: 2mm; background: #fff; }
   .qr svg { display: block; width: 100%; height: 100%; }
+  /* En la vista previa del portal: centrada y achicada para caber en el recuadro, sin barras.
+     Al imprimir, tamaño real. */
+  @media screen {
+    html, body { height: 100%; overflow: hidden; }
+    body { padding: 0; align-items: center; }
+    .corte { flex: none; transform-origin: center; }
+  }
+  @media print { .corte { transform: none !important; } }
 </style>
 </head>
 <body>
@@ -72,6 +80,16 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string): string
       </div>
     </div>
   </div>
+  <script>
+    function ajustar() {
+      var c = document.querySelector(".corte");
+      c.style.transform = "";
+      var escala = Math.min(1, (innerWidth - 24) / c.offsetWidth, (innerHeight - 24) / c.offsetHeight);
+      c.style.transform = "scale(" + escala + ")";
+    }
+    addEventListener("resize", ajustar);
+    ajustar();
+  </script>
 </body>
 </html>`;
 }
