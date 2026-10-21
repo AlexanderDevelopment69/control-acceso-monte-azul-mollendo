@@ -21,6 +21,7 @@ import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import { LockIcon } from "@/icons";
 import { Movimiento } from "../../vigilancia/CeldasEvento";
 import { diaVisible, htmlTarjeta } from "./imprimir";
+import { Carrusel } from "./Carrusel";
 
 const POR_PAGINA = 10;
 
@@ -392,17 +393,19 @@ function TarjetasContent() {
         </div>
       )}
       {!!tarjetas?.length && (
-        <div className="mb-8 grid grid-cols-[repeat(auto-fill,minmax(min(100%,37rem),44rem))] gap-5">
-          {tarjetas.map((t) => (
-            <TarjetaVisual
-              key={t.id}
-              tarjeta={t}
-              esAdministrador={esAdministrador}
-              onImprimir={() => void imprimir(t)}
-              onVencimiento={() => setVencimiento(t)}
-              onAccion={(accion) => setConfirmacion({ tarjeta: t, accion })}
-            />
-          ))}
+        <div className="mb-8">
+          <Carrusel anchoElemento="44rem">
+            {tarjetas.map((t) => (
+              <TarjetaVisual
+                key={t.id}
+                tarjeta={t}
+                esAdministrador={esAdministrador}
+                onImprimir={() => void imprimir(t)}
+                onVencimiento={() => setVencimiento(t)}
+                onAccion={(accion) => setConfirmacion({ tarjeta: t, accion })}
+              />
+            ))}
+          </Carrusel>
         </div>
       )}
 
