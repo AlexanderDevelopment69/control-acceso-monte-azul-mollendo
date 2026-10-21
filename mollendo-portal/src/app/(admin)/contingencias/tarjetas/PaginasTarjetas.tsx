@@ -9,18 +9,33 @@ const ANCHO_MAXIMO = 704;
 const SEPARACION = 20;
 /** Lo que ocupa cada flecha a los costados (botón + espacio). */
 const FLECHA = 52;
+/** Desde cuántos píxeles un gesto es arrastre (y no un clic), y cuánto hay que arrastrar para cambiar de página. */
+const UMBRAL_ARRASTRE = 6;
+const UMBRAL_CAMBIO = 60;
 
 /**
  * Carrusel de tarjetas: tantas a la vista como entran completas (1 en el
  * celular, 2 o 3 en una pantalla), con flechas a los costados y, abajo al
  * centro, un punto por página y "1–2 de 9 tarjetas". Al cambiar de página
- * las tarjetas se deslizan; en el celular también se desliza con el dedo.
+ * las tarjetas se deslizan. También se arrastran con el mouse o con el dedo:
+ * siguen al gesto y, al soltar, pasan de página o vuelven a su lugar.
  */
-export function PaginasTarjetas({ children }: { children: React.ReactNode[] }) {
+export function PaginasTarjetas({
+  children,
+  mostrar,
+}: {
+  children: React.ReactNode[];
+  /** Llevar el carrusel hasta esta tarjeta (p. ej. la recién creada); `clave` distingue un pedido de otro. */
+  mostrar?: { indice: number; clave: number } | null;
+}) {
   const caja = useRef<HTMLDivElement>(null);
   const [ancho, setAncho] = useState(0);
   const [pagina, setPagina] = useState(0);
-  const toque = useRef<number | null>(null);
+  // Arrastre en curso: dónde empezó y cuánto se movió (null: no se arrastra).
+  const inicio = useRef<{ x: number; id: number } | null>(null);
+  const [arrastre, setArrastre] = useState<number | null>(null);
+  // Si hubo arrastre, el clic que llega al soltar no debe activar un botón de la tarjeta.
+  const huboArrastre = useRef(false);
   const total = children.length;
 
   useEffect(() => {
@@ -45,6 +60,35 @@ export function PaginasTarjetas({ children }: { children: React.ReactNode[] }) {
 
   const ir = (destino: number) => setPagina(Math.max(0, Math.min(paginas - 1, destino)));
 
+  // Pedido de mostrar una tarjeta: se va a su página (una sola vez por pedido, ya medido el ancho).
+  const [mostrada, setMostrada] = useState<number | null>(null);
+  if (mostrar && ancho > 0 && mostrar.clave !== mostrada) {
+    setMostrada(mostrar.clave);
+    setPagina(Math.floor(mostrar.indice / porPagina));
+  }
+
+  function empezar(e: React.PointerEvent<HTMLDivElement>) {
+    if (paginas < 2 || (e.pointerType === "mouse" && e.button !== 0)) return;
+    inicio.current = { x: e.clientX, id: e.pointerId };
+    huboArrastre.current = false;
+  }
+  function mover(e: React.PointerEvent<HTMLDivElement>) {
+    if (!inicio.current || inicio.current.id !== e.pointerId) return;
+    const dx = e.clientX - inicio.current.x;
+    if (arrastre === null && Math.abs(dx) < UMBRAL_ARRASTRE) return;
+    if (arrastre === null) e.currentTarget.setPointerCapture(e.pointerId);
+    huboArrastre.current = true;
+    // En los extremos se mueve menos, como un resorte.
+    const borde = (dx > 0 && actual === 0) || (dx < 0 && actual >= paginas - 1);
+    setArrastre(borde ? dx / 3 : dx);
+  }
+  function soltar() {
+    if (!inicio.current) return;
+    inicio.current = null;
+    if (arrastre !== null && Math.abs(arrastre) > UMBRAL_CAMBIO) ir(actual + (arrastre < 0 ? 1 : -1));
+    setArrastre(null);
+  }
+
   const flecha = (sentido: 1 | -1) => (
     <button
       type="button"
@@ -63,19 +107,25 @@ export function PaginasTarjetas({ children }: { children: React.ReactNode[] }) {
         <div className="flex items-center justify-center gap-3">
           {conFlechas && paginas > 1 && flecha(-1)}
           <div
-            className="overflow-hidden"
+            // touch-pan-y: en el celular, el gesto vertical sigue moviendo la página.
+            className={`touch-pan-y overflow-hidden ${paginas > 1 ? (arrastre !== null ? "cursor-grabbing select-none" : "cursor-grab") : ""}`}
             style={{ width: porPagina * anchoTarjeta + (porPagina - 1) * SEPARACION }}
-            onTouchStart={(e) => (toque.current = e.touches[0].clientX)}
-            onTouchEnd={(e) => {
-              if (toque.current === null) return;
-              const recorrido = e.changedTouches[0].clientX - toque.current;
-              toque.current = null;
-              if (Math.abs(recorrido) > 50) ir(actual + (recorrido < 0 ? 1 : -1));
+            onPointerDown={empezar}
+            onPointerMove={mover}
+            onPointerUp={soltar}
+            onPointerCancel={soltar}
+            onClickCapture={(e) => {
+              if (huboArrastre.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                huboArrastre.current = false;
+              }
             }}
+            onDragStart={(e) => e.preventDefault()}
           >
             <div
-              className="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
-              style={{ gap: SEPARACION, transform: `translateX(-${desde * (anchoTarjeta + SEPARACION)}px)` }}
+              className={`flex ${arrastre !== null ? "" : "transition-transform duration-500 ease-out motion-reduce:transition-none"}`}
+              style={{ gap: SEPARACION, transform: `translateX(${-desde * (anchoTarjeta + SEPARACION) + (arrastre ?? 0)}px)` }}
             >
               {children.map((hijo, i) => (
                 <div

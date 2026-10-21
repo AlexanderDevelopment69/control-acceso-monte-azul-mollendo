@@ -57,9 +57,12 @@ function TarjetaVisual({
   onImprimir,
   onVencimiento,
   onAccion,
+  resaltada = false,
 }: {
   tarjeta: TarjetaContingencia;
   esAdministrador: boolean;
+  /** Recién creada: se marca unos segundos para encontrarla. */
+  resaltada?: boolean;
   onImprimir: () => void;
   onVencimiento: () => void;
   onAccion: (accion: Confirmacion["accion"]) => void;
@@ -67,7 +70,12 @@ function TarjetaVisual({
   const estado = estadoDe(tarjeta);
   return (
     // El carné a la izquierda; los datos y los botones al costado (en el celular, debajo).
-    <Tarjeta className="flex flex-col gap-4 overflow-hidden p-4 sm:flex-row">
+    <Tarjeta
+      className={`flex flex-col gap-4 overflow-hidden p-4 transition-shadow duration-500 sm:flex-row ${
+        // Por dentro: el carrusel recorta lo que sobresale.
+        resaltada ? "ring-2 ring-inset ring-brand-500" : ""
+      }`}
+    >
       <div
         className={`relative flex aspect-[85.6/54] w-full shrink-0 flex-col self-start sm:w-80 justify-between overflow-hidden rounded-xl p-5 text-white shadow-md ${
           estado.sirve ? "bg-gradient-to-br from-brand-500 to-brand-800" : "bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-600 dark:to-gray-800"
@@ -330,6 +338,8 @@ function TarjetasContent() {
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [nueva, setNueva] = useState(false);
+  // La recién creada: el carrusel va hasta ella y queda marcada unos segundos.
+  const [creada, setCreada] = useState<number | null>(null);
   const [vencimiento, setVencimiento] = useState<TarjetaContingencia | null>(null);
   const [confirmacion, setConfirmacion] = useState<Confirmacion | null>(null);
 
@@ -435,11 +445,18 @@ function TarjetasContent() {
       )}
       {!!tarjetas?.length && (
         <div className="mb-8">
-          <PaginasTarjetas>
+          <PaginasTarjetas
+            mostrar={
+              creada !== null && tarjetas.some((t) => t.id === creada)
+                ? { indice: tarjetas.findIndex((t) => t.id === creada), clave: creada }
+                : null
+            }
+          >
             {tarjetas.map((t) => (
               <TarjetaVisual
                 key={t.id}
                 tarjeta={t}
+                resaltada={t.id === creada}
                 esAdministrador={esAdministrador}
                 onImprimir={() => void imprimir(t)}
                 onVencimiento={() => setVencimiento(t)}
@@ -518,6 +535,8 @@ function TarjetasContent() {
         onGuardar={async (venceEl) => {
           const t = await tarjetasContingenciaApi.crear(venceEl);
           listo(`Se creó la ${t.nombre.toLowerCase()}. Use “Imprimir” y entréguela al vigilante.`);
+          setCreada(t.id);
+          setTimeout(() => setCreada((actual) => (actual === t.id ? null : actual)), 4000);
         }}
       />
       <VencimientoModal
