@@ -1,5 +1,8 @@
+"use client";
+
 // Figuras del manual: las cuentas del sistema y el recorrido de ingreso y salida.
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { eventosAccesoApi } from "@/lib/api/endpoints";
 
 type PropsIcono = { className?: string };
 const trazo = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round" } as const;
@@ -167,17 +170,45 @@ function Paso({
   );
 }
 
-/** El recorrido de ingreso y el de salida, paso a paso. */
+/**
+ * El recorrido de ingreso y el de salida, paso a paso. El ingreso, en el orden
+ * que está activo (Sistema y APIs → Orden del ingreso): "facial primero" o el
+ * normal. Mientras no se sabe (o sin respuesta), "facial primero", el que se usa.
+ */
 export function RecorridoAcceso() {
+  const [facialPrimero, setFacialPrimero] = useState(true);
+  useEffect(() => {
+    let activo = true;
+    eventosAccesoApi
+      .modoIngreso()
+      .then((m) => activo && setFacialPrimero(m.facialPrimero))
+      .catch(() => {
+        // Sin respuesta: queda "facial primero".
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
   return (
     <div className="my-2 space-y-6 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
       <div>
         <p className="mb-4 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">Ingreso</p>
         <ol className="flex flex-col md:flex-row md:gap-2">
-          <Paso n={1} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso" />
-          <Paso n={2} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" />
-          <Paso n={3} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el terminal facial lo reconoce" />
-          <Paso n={4} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro" />
+          {facialPrimero ? (
+            <>
+              <Paso n={1} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el equipo facial lo reconoce" />
+              <Paso n={2} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro; el equipo dice “correcto”" />
+              <Paso n={3} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso, en 30 segundos" />
+              <Paso n={4} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" />
+            </>
+          ) : (
+            <>
+              <Paso n={1} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso" />
+              <Paso n={2} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" />
+              <Paso n={3} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el equipo facial lo reconoce" />
+              <Paso n={4} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro" />
+            </>
+          )}
           <Paso n={5} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" final exito />
         </ol>
       </div>

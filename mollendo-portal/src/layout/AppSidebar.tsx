@@ -34,10 +34,12 @@ const navItems: NavItem[] = [
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
   { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador"] },
   { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
+  // El administrador llega desde el Dashboard; el vigilante la tiene en el menú.
+  { icon: <GroupIcon />, name: "Presentes ahora", path: "/dashboard/presentes", roles: ["vigilancia"] },
   {
     icon: <LockLineIcon />,
     name: "Contingencias",
-    roles: ["administrador", "vigilancia"],
+    roles: ["administrador"],
     subItems: [{ name: "Tarjetas de contingencia", path: "/contingencias/tarjetas" }],
   },
   { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },

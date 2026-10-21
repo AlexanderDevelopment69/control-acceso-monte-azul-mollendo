@@ -14,7 +14,7 @@ export function FranjaFacialPrimero({ estado }: { estado: EstadoModoIngreso | nu
       <InfoIcon className="mt-0.5 size-5 shrink-0 text-warning-600 dark:text-orange-400" aria-hidden />
       <span>
         <span className="font-semibold text-warning-700 dark:text-orange-400">Orden “facial primero”.</span> La persona hace
-        rostro y alcohol en el equipo facial y, cuando el equipo dice “correcto”, pasa su DNI (tiene 15 segundos desde que
+        rostro y alcohol en el equipo facial y, cuando el equipo dice “correcto”, pasa su DNI (tiene 30 segundos desde que
         aparece “pase su DNI”). Si pasa el DNI sin haber hecho antes rostro y alcohol, no se abre el molinete.
       </span>
     </div>

@@ -512,7 +512,7 @@ export const SECCIONES: SeccionManual[] = [
                     (orden normal).
                   </li>
                   <li>
-                    <Badge color="success">Pase su DNI</Badge> aprobó rostro y alcohol y tiene <b>15 segundos</b> para pasar su DNI (orden
+                    <Badge color="success">Pase su DNI</Badge> aprobó rostro y alcohol y tiene <b>30 segundos</b> para pasar su DNI (orden
                     “facial primero”). Se ve su foto.
                   </li>
                 </ul>
@@ -548,7 +548,7 @@ export const SECCIONES: SeccionManual[] = [
                   />
                   <Motivo
                     m="No pasó su DNI a tiempo"
-                    hacer="En “facial primero”, aprobó rostro y alcohol, pero no pasó su DNI en los 15 segundos. Debe empezar otra vez."
+                    hacer="En “facial primero”, aprobó rostro y alcohol, pero no pasó su DNI en los 30 segundos. Debe empezar otra vez."
                   />
                   <Motivo m="Ya figura dentro" hacer="Figura que ya entró y no marcó su salida." />
                   <Motivo m="No registra ingreso" hacer="Quiere salir, pero no figura que haya entrado." />
@@ -578,7 +578,7 @@ export const SECCIONES: SeccionManual[] = [
                 Hace rostro y alcohol. En el panel aparece <Badge color="success">Pase su DNI</Badge> con su nombre y su foto.
               </li>
               <li>
-                En esos <b>15 segundos</b>, el vigilante pasa la tarjeta por el lector de ingreso. Se abre el molinete y queda a nombre del
+                En esos <b>30 segundos</b>, el vigilante pasa la tarjeta por el lector de ingreso. Se abre el molinete y queda a nombre del
                 personal, con la marca <Badge color="warning">Tarjeta de contingencia</Badge>.
               </li>
             </Lista>
@@ -601,8 +601,8 @@ export const SECCIONES: SeccionManual[] = [
             </p>
             <p>
               <b>Administrador:</b> ahí mismo crea la tarjeta (“No vence” o hasta un día), la imprime, la desactiva o la elimina (solo si nunca se usó). Si se pierde o alguien le
-              toma una foto, use <b>“Cambiar código”</b>: la impresa queda anulada y debe imprimirse de nuevo. El vigilante solo ve las tarjetas y sus
-              usos.
+              toma una foto, use <b>“Cambiar código”</b>: la impresa queda anulada y debe imprimirse de nuevo. Solo el administrador las ve y las
+              administra en el portal.
             </p>
           </>
         ),
@@ -1050,7 +1050,7 @@ export const SECCIONES: SeccionManual[] = [
               </li>
               <li>
                 <b>Facial + Alcohol → DNI → Molinete (facial primero):</b> primero rostro y alcohol en el terminal facial; cuando el terminal dice
-                “correcto”, pasa su DNI (tiene 15 segundos desde que el Panel muestra “pase su DNI”). Los documentos se revisan con el DNI.
+                “correcto”, pasa su DNI (tiene 30 segundos desde que el Panel muestra “pase su DNI”). Los documentos se revisan con el DNI.
               </li>
             </Lista>
             <p className="mt-3">

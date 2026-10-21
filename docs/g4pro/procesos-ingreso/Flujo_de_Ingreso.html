@@ -248,7 +248,7 @@
         <span class="ico"><svg><use href="#i-dni"/></svg><span class="n">3</span></span>
         <b>Pasa su DNI</b>
         <p>Puede pasarlo apenas oye “correcto”: el sistema espera el aviso del G4. Aquí se revisan los documentos.</p>
-        <span class="tiempo">máximo 15 s desde “pase su DNI”</span>
+        <span class="tiempo">máximo 30 s desde “pase su DNI”</span>
       </li>
       <li class="paso fin">
         <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
@@ -271,20 +271,20 @@
     <div class="tiempos" aria-label="Línea de tiempo de la forma 2">
       <h3>Tiempos medidos con el equipo real</h3>
       <div class="lienzo">
-        <svg viewBox="0 0 760 110" role="img" aria-label="Correcto en 0 s, DNI hacia los 7 s, apertura a los 10 s, fin del plazo a los 25 s">
+        <svg viewBox="0 0 760 110" role="img" aria-label="Correcto en 0 s, DNI hacia los 7 s, apertura a los 10 s, fin del plazo a los 40 s">
           <g fill="var(--tenue)" font-size="11" text-anchor="middle">
-            <text x="40" y="14">0 s</text><text x="176" y="14">5 s</text><text x="312" y="14">10 s</text><text x="448" y="14">15 s</text><text x="584" y="14">20 s</text><text x="720" y="14">25 s</text>
+            <text x="40" y="14">0 s</text><text x="210" y="14">10 s</text><text x="380" y="14">20 s</text><text x="550" y="14">30 s</text><text x="720" y="14">40 s</text>
           </g>
-          <g stroke="var(--linea)" stroke-width="1"><line x1="40" y1="22" x2="40" y2="96"/><line x1="176" y1="22" x2="176" y2="96"/><line x1="312" y1="22" x2="312" y2="96"/><line x1="448" y1="22" x2="448" y2="96"/><line x1="584" y1="22" x2="584" y2="96"/><line x1="720" y1="22" x2="720" y2="96"/></g>
+          <g stroke="var(--linea)" stroke-width="1"><line x1="40" y1="22" x2="40" y2="96"/><line x1="210" y1="22" x2="210" y2="96"/><line x1="380" y1="22" x2="380" y2="96"/><line x1="550" y1="22" x2="550" y2="96"/><line x1="720" y1="22" x2="720" y2="96"/></g>
           <rect x="40" y="52" width="680" height="6" rx="3" fill="var(--capa2)"/>
-          <rect x="40" y="52" width="272" height="6" rx="3" fill="var(--azul)" opacity=".55"/>
-          <rect x="312" y="52" width="408" height="6" rx="3" fill="var(--ambar)" opacity=".45"/>
+          <rect x="40" y="52" width="170" height="6" rx="3" fill="var(--azul)" opacity=".55"/>
+          <rect x="210" y="52" width="510" height="6" rx="3" fill="var(--ambar)" opacity=".45"/>
           <circle cx="40" cy="55" r="8" fill="var(--azul)"/><text x="40" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="middle">“Correcto”</text>
-          <circle cx="230" cy="55" r="8" fill="var(--azul)"/><text x="230" y="40" fill="var(--tinta)" font-size="12.5" text-anchor="middle">Pasa su DNI</text>
-          <circle cx="312" cy="55" r="8" fill="var(--verde)"/><text x="312" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="middle">Se abre</text>
-          <text x="312" y="98" fill="var(--tenue)" font-size="11" text-anchor="middle">llega el aviso del G4</text>
+          <circle cx="159" cy="55" r="8" fill="var(--azul)"/><text x="159" y="40" fill="var(--tinta)" font-size="12.5" text-anchor="middle">Pasa su DNI</text>
+          <circle cx="210" cy="55" r="8" fill="var(--verde)"/><text x="210" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="middle">Se abre</text>
+          <text x="210" y="98" fill="var(--tenue)" font-size="11" text-anchor="middle">llega el aviso del G4</text>
           <circle cx="720" cy="55" r="8" fill="var(--ambar)"/><text x="706" y="84" fill="var(--tinta)" font-size="12.5" text-anchor="end">Fin del plazo</text>
-          <text x="516" y="40" fill="var(--tenue)" font-size="11" text-anchor="middle">15 s visibles en el Panel</text>
+          <text x="465" y="40" fill="var(--tenue)" font-size="11" text-anchor="middle">30 s visibles en el Panel</text>
         </svg>
       </div>
       <p class="leyenda">Si el DNI llega antes que el aviso del G4, el sistema lo espera unos segundos en silencio y abre cuando llega.</p>

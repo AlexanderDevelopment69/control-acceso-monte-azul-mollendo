@@ -19,7 +19,7 @@ const APROBO: MarcacionG4 = {
   demoraSegundos: 2,
   alcohol: "0.00g/L",
   aprobado: true,
-  decision: 'Aprobó: "pase su DNI" (15 s)',
+  decision: 'Aprobó: "pase su DNI" (30 s)',
   ingreso: { id: 500, resultado: "autorizado", motivo: "", fechaHora: "2026-10-19T23:27:04.000Z" },
 };
 
@@ -67,7 +67,7 @@ describe("Monitor del G4 Pro", () => {
     render(<MonitorG4 />);
     const fila = (await screen.findByText("Jose Vilchez")).closest("tr")!;
     expect(within(fila).getByText("0.00 g/L")).toBeInTheDocument();
-    expect(within(fila).getByText('Aprobó: "pase su DNI" (15 s)')).toBeInTheDocument();
+    expect(within(fila).getByText('Aprobó: "pase su DNI" (30 s)')).toBeInTheDocument();
     expect(within(fila).getByText("Autorizado")).toBeInTheDocument();
     expect(within(fila).getByText("2 s después")).toBeInTheDocument();
     expect(screen.getByText(/No llegaron 2 pruebas \(N\.º 26 a 27\)/)).toBeInTheDocument();

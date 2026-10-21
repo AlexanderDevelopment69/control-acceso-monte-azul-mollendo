@@ -79,9 +79,10 @@ const RECHAZO_ALCOHOL_RECIENTE_MS = 60 * 1000;
  * que aparece "pase su DNI" en el Panel (llega el aviso del G4, 10-12 s
  * después del "correcto"), la persona tiene esto para pasar su DNI. Contado
  * desde el "correcto" quedaban 5 s en el Panel y no alcanzaba (probado: 14 y
- * 18 s del "correcto" al DNI).
+ * 18 s del "correcto" al DNI). Eran 15 s; desde el 21/10/2026, 30 s (pedido de
+ * TMAM: con varias personas esperando, cada aprobación es de quien sopló).
  */
-const PLAZO_DNI_DESDE_AVISO_MS = 15 * 1000;
+const PLAZO_DNI_DESDE_AVISO_MS = 30 * 1000;
 
 /**
  * G4 Pro en asistencia, "facial primero": el aviso de la prueba llega al
@@ -709,7 +710,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       const aprobacion: AprobacionSinDni = {
         id: -evento.verificacionId,
         en: Date.now(),
-        // 15 s desde que llega el aviso (cuando aparece "pase su DNI" en el Panel).
+        // PLAZO_DNI_DESDE_AVISO_MS desde que llega el aviso (cuando aparece "pase su DNI" en el Panel).
         vence: Date.now() + PLAZO_DNI_DESDE_AVISO_MS,
         verificacionId: evento.verificacionId,
         quien: Promise.resolve(quien),
@@ -743,7 +744,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         await this.ingresoSinLector(persona, aprobacion, quien);
         return;
       }
-      await anotar('Aprobó: "pase su DNI" (15 s)');
+      await anotar(`Aprobó: "pase su DNI" (${PLAZO_DNI_DESDE_AVISO_MS / 1000} s)`);
       this.aprobaciones.push(aprobacion);
       this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
     });

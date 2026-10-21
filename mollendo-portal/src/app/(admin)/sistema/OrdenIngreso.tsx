@@ -30,7 +30,7 @@ const ORDENES = {
     pasos: [
       "Rostro y prueba de alcohol en el equipo facial.",
       <>
-        Cuando el equipo dice “correcto”, pasa su DNI: tiene <strong>15 segundos</strong> desde que el Panel muestra “pase su DNI”.
+        Cuando el equipo dice “correcto”, pasa su DNI: tiene <strong>30 segundos</strong> desde que el Panel muestra “pase su DNI”.
       </>,
       "Se abre el molinete si el DNI es de quien sopló y sus documentos están en regla.",
       "Si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (“DNI antes del facial”).",

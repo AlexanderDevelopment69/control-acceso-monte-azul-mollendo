@@ -44,7 +44,7 @@ En **Sistema y APIs**, debajo de "Orden del ingreso". La tarjeta tiene el botón
 | Alcohol alto: denegado con su nombre | Dio alcohol sin espera abierta (en los dos órdenes) |
 | Orden normal: sopló sin pasar antes su DNI, no vale | Orden normal, sin DNI previo |
 | Orden normal: prueba de antes de pasar su DNI, no vale (su espera sigue) | Orden normal: la prueba es de antes del DNI |
-| Aprobó: "pase su DNI" (15 s) | Facial primero: aprobó y queda esperando su DNI |
+| Aprobó: "pase su DNI" (30 s) | Facial primero: aprobó y queda esperando su DNI |
 | Aprobó; su DNI ya estaba pasado y esperando | Facial primero: pasó el DNI antes de que llegara el aviso del G4 |
 | Volvió a soplar en el mismo pase: vale la primera prueba, esta se ignora | Segundo soplido dentro de 20 s |
 | DNI que no está en el sistema: no se usa | Persona registrada solo en el G4 |

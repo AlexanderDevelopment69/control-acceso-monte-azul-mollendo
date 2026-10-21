@@ -74,7 +74,7 @@ export function MotivoDenegacion({
   }
   if (evento.denegadoSinDni) {
     return (
-      <span title="Aprobó rostro y alcohol, pero no pasó su DNI en los 15 segundos que mostró el Panel. Debe empezar otra vez por el equipo facial." className="cursor-help">
+      <span title="Aprobó rostro y alcohol, pero no pasó su DNI en los 30 segundos que mostró el Panel. Debe empezar otra vez por el equipo facial." className="cursor-help">
         <Badge color="error">No pasó su DNI a tiempo</Badge>
       </span>
     );

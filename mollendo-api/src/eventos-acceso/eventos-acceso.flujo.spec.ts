@@ -916,17 +916,17 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         const correcto = new Date(ahora);
         avanzar(11_000);
         await attlog('11111111', '0.00g/L', correcto);
-        expect(new Date(String(de('ingreso.en-espera')[0].hasta)).getTime() - ahora).toBe(15_000);
+        expect(new Date(String(de('ingreso.en-espera')[0].hasta)).getTime() - ahora).toBe(30_000);
         avanzar(7_000);
         expect(await ingreso('11111111')).toMatchObject({ resultado: 'autorizado' });
       });
 
-      it('pasa el DNI 16 s después de aparecer "pase su DNI": fuera de plazo, "DNI antes del facial"', async () => {
+      it('pasa el DNI 31 s después de aparecer "pase su DNI": fuera de plazo, "DNI antes del facial"', async () => {
         agregarPersona(base, '11111111');
         const correcto = new Date(ahora);
         avanzar(11_000);
         await attlog('11111111', '0.00g/L', correcto);
-        avanzar(16_000);
+        avanzar(31_000);
         expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
         avanzar(9_000);
         await vencidos();
@@ -1004,10 +1004,10 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(base.pendientes).toHaveLength(0);
       });
 
-      it('aprobó pero no pasó su DNI en 15 s: denegado "sin DNI" con su nombre', async () => {
+      it('aprobó pero no pasó su DNI en 30 s: denegado "sin DNI" con su nombre', async () => {
         agregarPersona(base, '11111111');
         await attlog('11111111');
-        avanzar(21_000);
+        avanzar(36_000);
         await vencidos();
         expect(base.eventos[0]).toMatchObject({ numeroDocumento: '11111111', resultado: 'denegado', denegadoSinDni: true });
       });

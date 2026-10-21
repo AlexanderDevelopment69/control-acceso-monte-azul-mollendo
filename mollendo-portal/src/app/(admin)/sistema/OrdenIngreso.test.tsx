@@ -27,13 +27,13 @@ describe("Orden del ingreso", () => {
     expect(cambiarModoIngreso).toHaveBeenCalledWith(false);
   });
 
-  it("activar facial primero muestra sus pasos (15 segundos para el DNI)", async () => {
+  it("activar facial primero muestra sus pasos (30 segundos para el DNI)", async () => {
     facialPrimero = false;
     render(<OrdenIngreso />);
     await userEvent.click(await screen.findByRole("switch", { name: "Facial + Alcohol → DNI → Molinete" }));
 
     expect(screen.getByText("Activar “Facial + Alcohol → DNI → Molinete”")).toBeInTheDocument();
-    expect(screen.getByText(/pasa su DNI: tiene/)).toHaveTextContent("15 segundos");
+    expect(screen.getByText(/pasa su DNI: tiene/)).toHaveTextContent("30 segundos");
   });
 
   it("tocar el orden que ya está activo no abre ninguna ventana", async () => {

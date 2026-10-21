@@ -563,7 +563,7 @@ function TarjetasContent() {
 
 export default function TarjetasContingenciaPage() {
   return (
-    <RequireRole roles={["administrador", "vigilancia"]}>
+    <RequireRole roles={["administrador"]}>
       <TarjetasContent />
     </RequireRole>
   );

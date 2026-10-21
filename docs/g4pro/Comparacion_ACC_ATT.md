@@ -149,7 +149,7 @@ Por indicación del soporte, se cambió en el equipo: menú *firmware type setti
 - **Demora del aviso del G4** (medida el 19/10): 10-12 s después de terminar la prueba con 0.00; 15-17 s con alcohol alto. La hora del G4 y la del servidor difieren en 1-2 s. Se compara siempre la hora de la prueba (la del G4) con la del DNI, sin margen.
 - **Orden normal** (interruptor "Facial primero" apagado): vale solo la prueba hecha **después** del DNI. El DNI queda en espera 1 minuto, con cuenta regresiva en el Panel; luego, "No completó rostro y alcohol". Una prueba aprobada sin DNI previo no vale.
 - **Facial primero:** vale solo la prueba hecha **antes** del DNI.
-  - Hay **15 s** para pasar el DNI desde que aparece "pase su DNI" en el Panel, es decir, desde que llega el aviso del G4, unos 25 s desde el "correcto" (`PLAZO_DNI_DESDE_AVISO_MS`, 17:57). Contados desde el "correcto" quedaban 5 s en el Panel y no alcanzaban: en la garita se tardó 14 y 18 s. La fila "Aprobó … pase su DNI" muestra la foto de quien sopló. Si no pasa el DNI a tiempo: "No pasó su DNI a tiempo".
+  - Hay **15 s** para pasar el DNI desde que aparece "pase su DNI" en el Panel, es decir, desde que llega el aviso del G4, unos 25 s desde el "correcto" (`PLAZO_DNI_DESDE_AVISO_MS`, 17:57; desde el 21/10/2026, **30 s**). Contados desde el "correcto" quedaban 5 s en el Panel y no alcanzaban: en la garita se tardó 14 y 18 s. La fila "Aprobó … pase su DNI" muestra la foto de quien sopló. Si no pasa el DNI a tiempo: "No pasó su DNI a tiempo".
   - Si el DNI llega antes que el aviso del G4, espera **en silencio hasta 8 s** (`ESPERA_PRUEBA_EN_CAMINO_MS`), sin mostrarse en el Panel. Si llega su prueba con 0.00, entra.
   - Si pasa el DNI sin una prueba suya, o fuera de plazo: **"DNI antes del facial"** (`denegado_sin_facial`). Sin cuenta regresiva, por pedido de TMAM.
 - **Alcohol alto:** queda denegado **con su nombre** en los dos órdenes, aunque no pase el DNI, y suena el aviso. En facial primero, si pasa el DNI en el minuto siguiente, se le responde con el mismo rechazo, sin otra fila.
@@ -160,7 +160,7 @@ Por indicación del soporte, se cambió en el equipo: menú *firmware type setti
 **Panel (portal)**
 - Motivo "DNI antes del facial" (antes "Sin rostro y alcohol").
 - Se quitaron los enlaces de corrección manual del antipassback ("Registrar salida/ingreso manual"), por pedido de TMAM. La corrección sigue en el API, sin pantalla.
-- Textos de "Facial primero" (aviso del Panel, confirmación y manual): 15 s desde que aparece "pase su DNI".
+- Textos de "Facial primero" (aviso del Panel, confirmación y manual): 15 s desde que aparece "pase su DNI" (30 s desde el 21/10/2026).
 
 **Garita (19/10)**
 - El puerto USB 9 de la mini PC reconocía el adaptador del lector, pero no le pasaba los datos. Se resolvió cambiando el adaptador de entrada a otro puerto.

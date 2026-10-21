@@ -325,7 +325,7 @@ Menú **Contingencias → Tarjetas de contingencia**. Las tarjetas se ven como u
 
 | Qué | Administrador | Vigilante |
 |---|---|---|
-| Ver las tarjetas y la lista de usos | Sí | Sí |
+| Ver las tarjetas y la lista de usos | Sí | No |
 | Crear una tarjeta (con o sin vencimiento) | Sí | No |
 | Imprimir (vista previa en el portal, tamaño carné) | Sí | No |
 | Cambiar el vencimiento | Sí | No |
@@ -342,7 +342,7 @@ Funciona con el orden **"facial primero"** (rostro y alcohol antes del DNI). El 
 1. **Personal:** avisa al vigilante que no tiene su DNI o que el lector no lo reconoce.
 2. **Personal:** hace rostro y alcohol en el equipo facial, como siempre.
 3. **Panel:** muestra *"Aprobó … pase su DNI"*.
-4. **Vigilante:** en esos 15 segundos, pasa la tarjeta por el **lector de ingreso**, donde el personal pasaría su DNI.
+4. **Vigilante:** en esos 30 segundos, pasa la tarjeta por el **lector de ingreso**, donde el personal pasaría su DNI.
 5. **Sistema:** revisa la tarjeta y los documentos de quien aprobó y, si todo está en regla, abre el molinete.
 6. El ingreso queda **a nombre del personal**, marcado *"Tarjeta de contingencia"* en el Panel.
 
