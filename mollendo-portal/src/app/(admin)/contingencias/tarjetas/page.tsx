@@ -19,7 +19,7 @@ import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import Image from "next/image";
-import { TrashBinIcon } from "@/icons";
+import { CalenderIcon, CheckLineIcon, TrashBinIcon } from "@/icons";
 import { Movimiento } from "../../vigilancia/CeldasEvento";
 import { diaVisible } from "./imprimir";
 import { ImprimirTarjeta } from "./ImprimirTarjeta";
@@ -208,28 +208,51 @@ function VencimientoModal({
     }
   }
 
-  const opcion = (valor: boolean, texto: string) => (
-    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-      <input type="radio" name="vencimiento-tarjeta" checked={vence === valor} onChange={() => setVence(valor)} className="size-4 accent-brand-500" />
-      {texto}
-    </label>
-  );
+  // Cada opción es una tarjeta que se elige con un clic (o con las flechas del teclado, como un radio).
+  const opcion = (valor: boolean, icono: React.ReactNode, titulo: string, detalle: string) => {
+    const elegida = vence === valor;
+    return (
+      <label
+        className={`relative flex cursor-pointer flex-col gap-2 rounded-xl border p-4 transition-colors has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-brand-500/20 ${
+          elegida
+            ? "border-brand-500 bg-brand-50 dark:border-brand-400 dark:bg-brand-500/10"
+            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-600 dark:hover:bg-white/[0.03]"
+        }`}
+      >
+        <input type="radio" name="vencimiento-tarjeta" checked={elegida} onChange={() => setVence(valor)} className="sr-only" />
+        <span
+          className={`flex size-9 items-center justify-center rounded-lg ${
+            elegida ? "bg-brand-500 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+          }`}
+        >
+          {icono}
+        </span>
+        <span className={`text-sm font-medium ${elegida ? "text-brand-600 dark:text-brand-400" : "text-gray-800 dark:text-white/90"}`}>{titulo}</span>
+        <span className="text-xs leading-snug text-gray-500 dark:text-gray-400">{detalle}</span>
+        {elegida && (
+          <span className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-brand-500 text-white">
+            <CheckLineIcon className="size-3.5" />
+          </span>
+        )}
+      </label>
+    );
+  };
 
   return (
     <Modal isOpen={abierta} onClose={onCerrar} bloqueado={guardando} className="max-w-md p-6 sm:p-8">
-      <h2 className="mb-2 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">
-        {tarjeta ? `Vencimiento de la ${tarjeta.nombre.toLowerCase()}` : "Nueva tarjeta de contingencia"}
-      </h2>
-      {!tarjeta && (
-        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
-          Después de crearla, imprímala y entréguela al vigilante.
-        </p>
-      )}
-      <div className="mt-2 flex flex-col gap-3">
-        {opcion(false, "No vence")}
-        {opcion(true, "Vence el día:")}
-        {vence && <DatePicker id="vence-tarjeta" value={dia} min={hoy()} onChange={setDia} placeholder="Elija el último día" />}
+      <h2 className="pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">{tarjeta ? "Vencimiento" : "Nueva tarjeta de contingencia"}</h2>
+      <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+        {tarjeta ? tarjeta.nombre : "Después de crearla, imprímala y entréguela al vigilante."}
+      </p>
+      <div role="radiogroup" aria-label="Vencimiento" className="mt-5 grid grid-cols-2 gap-3">
+        {opcion(false, <span className="text-xl leading-none">∞</span>, "No vence", "Sirve hasta que se desactive.")}
+        {opcion(true, <CalenderIcon className="size-5" />, "Vence un día", "Deja de servir después de esa fecha.")}
       </div>
+      {vence && (
+        <div className="mt-4">
+          <DatePicker id="vence-tarjeta" label="Último día en que sirve" value={dia} min={hoy()} onChange={setDia} placeholder="Elija el día" />
+        </div>
+      )}
       {error && <ErrorBanner className="mt-4">{error}</ErrorBanner>}
       <div className="mt-6 flex justify-end gap-3">
         <Button type="button" variant="outline" disabled={guardando} onClick={onCerrar}>
