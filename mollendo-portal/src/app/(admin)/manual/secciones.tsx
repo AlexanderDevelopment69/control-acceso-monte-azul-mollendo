@@ -1040,6 +1040,10 @@ export const SECCIONES: SeccionManual[] = [
                   <b>Terminal facial (G4 Pro):</b> en línea o no, su última actividad y cuántas personas y rostros tiene.
                 </li>
                 <li>
+                  <b>Alcoholímetro (DT1700):</b> conectado o no al terminal facial; se revisa cada 10 segundos. Desconectado, nadie puede
+                  ingresar.
+                </li>
+                <li>
                   <b>Lectores de DNI:</b> ingreso y salida, con su última lectura. Si no pita al pasar un DNI, revise su alimentación.
                 </li>
                 <li>

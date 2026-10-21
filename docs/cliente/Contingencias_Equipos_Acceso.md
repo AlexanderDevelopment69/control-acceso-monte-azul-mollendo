@@ -73,7 +73,7 @@ En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y sue
 
 | Señal | Dónde | Qué fallas muestra | Estado |
 |---|---|---|---|
-| **Franja roja de fallas** | Arriba de todas las pantallas del portal, para el administrador y el vigilante | Equipo facial desconectado (unos 20 segundos sin contacto), alcoholímetro desconectado del equipo facial (un minuto como máximo), lector de DNI con el cable desconectado, relé no conectado, Controlador (PC) desconectado, respaldos atrasados, sin conexión con el servidor. Aparece y desaparece en el momento, junto con "Sistema y APIs" | Ya existe |
+| **Franja roja de fallas** | Arriba de todas las pantallas del portal, para el administrador y el vigilante | Equipo facial desconectado (unos 20 segundos sin contacto), alcoholímetro desconectado del equipo facial (unos 10 segundos), lector de DNI con el cable desconectado, relé no conectado, Controlador (PC) desconectado, respaldos atrasados, sin conexión con el servidor. Aparece y desaparece en el momento, junto con "Sistema y APIs" | Ya existe |
 | **"Sistema y APIs"** | Portal del administrador | El estado de cada equipo, en detalle | Ya existe |
 | **Auditoría** | Portal del administrador | Cada desconexión y cada vuelta de un equipo, con cuánto duró (buscar "equipos") | Ya existe |
 | **Panel de vigilancia** | Portal del vigilante | Cada ingreso: "esperando rostro y alcohol" con su cuenta regresiva, y el resultado | Ya existe |
@@ -90,7 +90,7 @@ En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y sue
 
 - **Salidas:** normales.
 - **Ingresos:** nadie puede ingresar, pero **nadie entra sin prueba de alcohol** (comprobado el 07/10/2026, anexo B). El equipo facial reconoce el rostro, muestra *"Verificación de identidad completada. Realice una medición de alcohol."* y se queda esperando. Al minuto, el sistema deniega por "No completó rostro y alcohol" y el molinete **no se abre**.
-- **El sistema vigila el alcoholímetro** (21/10/2026): cada minuto le pregunta al equipo facial si lo ve conectado por USB. Si se desconecta, aparece en la franja roja de fallas (*"Nadie puede ingresar: el equipo facial no puede tomar la prueba de alcohol"*), en "Sistema y APIs" (tarjeta "Alcoholímetro (DT1700)") y en la Auditoría. **Límite:** un alcoholímetro conectado pero malogrado (no mide) no se detecta así, porque el equipo solo le habla durante una prueba; para ese caso quedan las señales de la tabla siguiente (pendiente: avisar cuando varias pruebas seguidas empiezan y no dan resultado).
+- **El sistema vigila el alcoholímetro** (21/10/2026): cada 10 segundos le pregunta al equipo facial si lo ve conectado por USB. Si se desconecta, aparece en la franja roja de fallas (*"Nadie puede ingresar: el equipo facial no puede tomar la prueba de alcohol"*), en "Sistema y APIs" (tarjeta "Alcoholímetro (DT1700)") y en la Auditoría. **Límite:** un alcoholímetro conectado pero malogrado (no mide) no se detecta así, porque el equipo solo le habla durante una prueba; para ese caso quedan las señales de la tabla siguiente (pendiente: avisar cuando varias pruebas seguidas empiezan y no dan resultado).
 
 ### 3.2. Cómo se detecta
 
@@ -101,7 +101,7 @@ La persona que no puede soplar **no se va**: le avisa al vigilante en ese moment
 | La persona dice *"miré al equipo pero no me deja soplar"* | — |
 | El Panel muestra "esperando rostro y alcohol" y, al minuto, "Denegado: no completó rostro y alcohol" | Ya existe |
 | **Aviso en el Panel**: en el momento en que alguien no completa, aparece arriba del Panel un aviso ámbar con su nombre y la hora: *"Si dice que no pudo soplar: revise si el equipo facial muestra un punto rojo (alcoholímetro desconectado) y avise a soporte."* Se cierra con la ✕ o desaparece solo cuando la siguiente persona ingresa bien; se mantiene al recargar la página. La etiqueta "No completó rostro y alcohol" de la tabla lleva una ⓘ con la misma explicación | Programado (15/10/2026); falta subirlo al servidor |
-| **Franja roja de fallas y "Sistema y APIs"**: "Alcoholímetro (DT1700): Desconectado" (un minuto como máximo) | Ya existe (21/10/2026); falta la prueba desconectándolo de verdad |
+| **Franja roja de fallas y "Sistema y APIs"**: "Alcoholímetro (DT1700): Desconectado" (unos 10 segundos) | Ya existe (21/10/2026); falta la prueba desconectándolo de verdad |
 | Punto rojo en la pantalla del equipo facial | Ya existe |
 
 ### 3.3. Qué se hace

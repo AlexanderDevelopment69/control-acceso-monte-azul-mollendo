@@ -2,8 +2,11 @@ import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@ne
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PushSdkService } from './push-sdk.service.js';
 
-/** Cada cuánto se pregunta al equipo facial si el alcoholímetro sigue conectado. */
-const REVISION_MS = 60 * 1000;
+/**
+ * Cada cuánto se pregunta al equipo facial si el alcoholímetro sigue conectado
+ * (el equipo no avisa solo; la orden es liviana: solo lee la lista de USB).
+ */
+const REVISION_MS = 10 * 1000;
 /** Cuánto se espera la respuesta (el equipo recoge las órdenes cada ~2 s). */
 const ESPERA_RESPUESTA_MS = 20 * 1000;
 

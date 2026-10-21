@@ -319,7 +319,7 @@ export class PushSdkService {
    * Respuestas a consultas (por id de comando). Las grandes llegan en varias
    * partes (`packcnt`/`packidx`): se juntan hasta tenerlas todas.
    */
-  /** Consultas que no se anotan en el registro (las periódicas, p. ej. el alcoholímetro cada minuto). */
+  /** Consultas que no se anotan en el registro (las periódicas, p. ej. el alcoholímetro cada 10 s). */
   private readonly consultasSilenciosas = new Set<number>();
   private readonly respuestasConsulta = new Map<
     number,

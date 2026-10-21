@@ -244,7 +244,7 @@ export interface EstadoDispositivo {
   ipAddress: string | null;
   /** IP del equipo en la red de la garita (la que informa al registrarse). */
   ipLocal?: string | null;
-  /** El alcoholímetro conectado a ese equipo (se revisa cada minuto; conectado null: todavía no se sabe). */
+  /** El alcoholímetro conectado a ese equipo (se revisa cada 10 s; conectado null: todavía no se sabe). */
   alcoholimetro?: { conectado: boolean | null; revisado: string | null; conectadoVisto: string | null };
 }
 

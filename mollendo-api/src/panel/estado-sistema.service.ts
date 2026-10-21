@@ -47,7 +47,7 @@ export class EstadoSistemaService {
       baseDeDatos = { estado: 'down', latenciaMs: Date.now() - inicio };
     }
 
-    // Cada equipo facial con su alcoholímetro (se revisa cada minuto: AlcoholimetroService).
+    // Cada equipo facial con su alcoholímetro (se revisa cada 10 s: AlcoholimetroService).
     const dispositivos = (await this.pushSdk.listarEstadoDispositivos()).map((d) => ({ ...d, alcoholimetro: this.alcoholimetro.estado(d.serialNumber) }));
     // Con controlador (MOLINETES_REMOTOS=true), los lectores y los relés
     // están en la mini PC de la garita: se muestra lo que ella informa.

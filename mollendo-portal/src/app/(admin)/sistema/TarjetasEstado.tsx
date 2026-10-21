@@ -119,7 +119,7 @@ export function EquiposEstado({
 
 /**
  * El alcoholímetro de cada equipo facial: el equipo lo ve como un dispositivo
- * USB y el servidor le pregunta cada minuto si sigue ahí. Si está conectado
+ * USB y el servidor le pregunta cada 10 s si sigue ahí. Si está conectado
  * pero no mide, no se nota aquí (el equipo solo le habla durante una prueba).
  */
 export function AlcoholimetroEstado({ comprobando, equipos }: { comprobando: boolean; equipos?: EstadoSistema["equipos"] }) {
