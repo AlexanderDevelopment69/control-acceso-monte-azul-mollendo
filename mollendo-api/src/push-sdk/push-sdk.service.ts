@@ -319,6 +319,8 @@ export class PushSdkService {
    * Respuestas a consultas (por id de comando). Las grandes llegan en varias
    * partes (`packcnt`/`packidx`): se juntan hasta tenerlas todas.
    */
+  /** Consultas que no se anotan en el registro (las periódicas, p. ej. el alcoholímetro cada minuto). */
+  private readonly consultasSilenciosas = new Set<number>();
   private readonly respuestasConsulta = new Map<
     number,
     { serialNumber: string; tipo: string; tabla: string; partes: Map<number, string>; total: number; recibidoEn: Date }
@@ -348,6 +350,7 @@ export class PushSdkService {
       this.respuestasConsulta.set(comandoId, respuesta);
       if (this.respuestasConsulta.size > 200) this.respuestasConsulta.delete(this.respuestasConsulta.keys().next().value!);
     }
+    if (this.consultasSilenciosas.has(comandoId)) return;
     const resumen = datos.replace(/\t/g, ' | ').replace(/\r?\n/g, ' // ').slice(0, 1000);
     const deParte = parte.total && parte.total > 1 ? ` [parte ${parte.indice}/${parte.total}]` : '';
     this.logger.log(`Respuesta de ${serialNumber} al comando ${comandoId} (${tipo} ${tabla})${deParte}: ${resumen || '(vacía)'}`);
@@ -365,16 +368,33 @@ export class PushSdkService {
    * comandos cada ~2 s y responde por `/iclock/querydata`). null si no
    * responde a tiempo.
    */
-  async consultar(dispositivoId: number, comando: string, esperaMs = 60_000): Promise<string | null> {
+  async consultar(
+    dispositivoId: number,
+    comando: string,
+    esperaMs = 60_000,
+    opciones: {
+      /** Sin anotar la respuesta en el registro. */
+      silencioso?: boolean;
+      /** Se borra de la cola al terminar (consultas periódicas: no llenan la tabla). */
+      temporal?: boolean;
+    } = {},
+  ): Promise<string | null> {
     const { id } = await this.prisma.comandoDispositivo.create({ data: { dispositivoId, comando } });
+    if (opciones.silencioso) this.consultasSilenciosas.add(id);
     const hasta = Date.now() + esperaMs;
+    let respuesta: string | null = null;
     while (Date.now() < hasta) {
-      const respuesta = this.respuestaConsulta(id);
-      if (respuesta !== null) return respuesta;
+      respuesta = this.respuestaConsulta(id);
+      if (respuesta !== null) break;
       await new Promise((r) => setTimeout(r, 1000));
     }
-    this.logger.warn(`El equipo no respondió a "${comando}" en ${esperaMs / 1000} s`);
-    return null;
+    if (respuesta === null && !opciones.silencioso) this.logger.warn(`El equipo no respondió a "${comando}" en ${esperaMs / 1000} s`);
+    this.consultasSilenciosas.delete(id);
+    if (opciones.temporal) {
+      this.respuestasConsulta.delete(id);
+      await this.prisma.comandoDispositivo.deleteMany({ where: { id } }).catch(() => undefined);
+    }
+    return respuesta;
   }
 
   /**

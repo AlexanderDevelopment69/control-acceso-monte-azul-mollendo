@@ -9,10 +9,11 @@ import type { EstadoSistema } from "@/lib/api/types";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { PageHeader } from "@/components/common/PageHeader";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
-import { BellIcon, BoltIcon, BoxCubeIcon, BoxIcon, CheckCircleIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
+import { AlcoholIcon, BellIcon, BoltIcon, BoxCubeIcon, BoxIcon, CheckCircleIcon, DocsIcon, FolderIcon, LockIcon, PlugInIcon } from "@/icons";
 import { ComprobandoBadge, ConfiguradoBadge, EstadoBadge } from "./Insignias";
 import {
   ControladorGaritaEstado,
+  AlcoholimetroEstado,
   EquiposEstado,
   LectoresDniEstado,
   ReleEstado,
@@ -35,10 +36,11 @@ function SistemaContent() {
   // Equipos de acceso: tarjetas del mismo ancho, tantas por fila como haya (controlador y relés de aviso son opcionales).
   // Con controlador, la tarjeta de avisos se muestra siempre (aunque esté desconectado).
   const hayAvisos = !!(estado?.controladorGarita?.remoto || estado?.releMolinetes?.avisoIngreso || estado?.releMolinetes?.avisoSalida);
-  const tarjetasEquipos = 3 + (estado?.controladorGarita?.remoto ? 1 : 0) + (hayAvisos ? 1 : 0);
+  // Equipo facial, alcoholímetro, lectores y relés, más el controlador y los relés de aviso si los hay.
+  const tarjetasEquipos = 4 + (estado?.controladorGarita?.remoto ? 1 : 0) + (hayAvisos ? 1 : 0);
   // Según el ancho del contenido (no de la pantalla: el menú lateral ocupa parte): todas en una fila solo si caben.
   const columnasEquipos =
-    { 3: "@3xl:grid-cols-3", 4: "@3xl:grid-cols-3 @4xl:grid-cols-4", 5: "@3xl:grid-cols-3 @5xl:grid-cols-5" }[tarjetasEquipos] ??
+    { 4: "@3xl:grid-cols-4", 5: "@3xl:grid-cols-3 @5xl:grid-cols-5", 6: "@3xl:grid-cols-3" }[tarjetasEquipos] ??
     "@3xl:grid-cols-3";
   // Se incrementa para recargar el estado al terminar una sincronización.
   const [version, setVersion] = useState(0);
@@ -148,6 +150,11 @@ function SistemaContent() {
             {(estado?.equipos.total ?? 1) > 1 ? "Equipos" : "Equipo"} (G4 Pro)
           </p>
           <EquiposEstado comprobando={comprobando} equipos={estado?.equipos} sincronizacion={estado?.sincronizacionG4} />
+        </StatusCard>
+
+        <StatusCard icon={<AlcoholIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Alcoholímetro (DT1700)</p>
+          <AlcoholimetroEstado comprobando={comprobando} equipos={estado?.equipos} />
         </StatusCard>
 
         <StatusCard icon={<DocsIcon className="text-gray-800 size-6 dark:text-white/90" />}>

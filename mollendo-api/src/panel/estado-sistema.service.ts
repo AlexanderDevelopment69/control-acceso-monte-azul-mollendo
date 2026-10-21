@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { estadoRespaldos } from './respaldos.util.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
+import { AlcoholimetroService } from '../push-sdk/alcoholimetro.service.js';
 import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
 import { ReleUsbService } from '../integraciones/rele-usb.service.js';
 import { ControladorGateway } from '../controlador-remoto/controlador.gateway.js';
@@ -33,6 +34,7 @@ export class EstadoSistemaService {
     private readonly releUsb: ReleUsbService,
     private readonly controlador: ControladorGateway,
     private readonly integraciones: IntegracionesService,
+    private readonly alcoholimetro: AlcoholimetroService,
   ) {}
 
   async calcular() {
@@ -45,7 +47,8 @@ export class EstadoSistemaService {
       baseDeDatos = { estado: 'down', latenciaMs: Date.now() - inicio };
     }
 
-    const dispositivos = await this.pushSdk.listarEstadoDispositivos();
+    // Cada equipo facial con su alcoholímetro (se revisa cada minuto: AlcoholimetroService).
+    const dispositivos = (await this.pushSdk.listarEstadoDispositivos()).map((d) => ({ ...d, alcoholimetro: this.alcoholimetro.estado(d.serialNumber) }));
     // Con controlador (MOLINETES_REMOTOS=true), los lectores y los relés
     // están en la mini PC de la garita: se muestra lo que ella informa.
     const controlador = this.controlador.estado();

@@ -40,6 +40,17 @@ describe('avisosDelSistema', () => {
     expect(avisosDelSistema(e)).toEqual([expect.objectContaining({ tipo: 'terminal', equipo: 'Terminal facial HSR1', desde: '2026-10-08T19:39:00Z' })]);
   });
 
+  it('alcoholímetro desconectado (con el equipo facial en línea), con la última vez que se lo vio', () => {
+    const e = base();
+    e.dispositivos[0] = { serialNumber: 'HSR1', enLinea: true, ultimaActividad: null, alcoholimetro: { conectado: false, conectadoVisto: '2026-10-21T13:00:00Z' } };
+    expect(avisosDelSistema(e)).toEqual([
+      expect.objectContaining({ tipo: 'alcoholimetro', equipo: 'Alcoholímetro (DT1700)', estado: 'Desconectado', desde: '2026-10-21T13:00:00Z' }),
+    ]);
+    // Sin datos todavía, o con el equipo facial caído (ya avisado), no se avisa del alcoholímetro.
+    e.dispositivos[0].alcoholimetro = { conectado: null, conectadoVisto: null };
+    expect(avisosDelSistema(e)).toEqual([]);
+  });
+
   it('lector sin configurar no es una falla; lector desconectado sí', () => {
     const e = base();
     e.lectoresDni.ingreso = { configurado: false, conectado: false, ultimaLectura: null };

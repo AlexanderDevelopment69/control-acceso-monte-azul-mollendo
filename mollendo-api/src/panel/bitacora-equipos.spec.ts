@@ -25,6 +25,16 @@ describe('registro de desconexiones de equipos', () => {
     ]);
   });
 
+  it('alcoholímetro desconectado: una falla más, solo con el equipo facial en línea', () => {
+    const con = (enLinea: boolean, conectado: boolean | null) => ({
+      ...estado(),
+      dispositivos: [{ serialNumber: 'HSR1', enLinea, ultimaActividad: null, alcoholimetro: { conectado, conectadoVisto: null } }],
+    });
+    expect(fallasEquipos(con(true, false))).toEqual([{ etiqueta: 'Alcoholímetro (DT1700)', caida: 'desconectado' }]);
+    expect(fallasEquipos(con(true, true))).toEqual([]);
+    expect(fallasEquipos(con(false, false))).toEqual([{ etiqueta: 'Equipo facial (G4 Pro)', caida: 'desconectado' }]);
+  });
+
   it('textos de la vuelta, con cuánto duró', () => {
     expect(duracionTexto(4_000)).toBe('4 s');
     expect(duracionTexto(125_000)).toBe('2 min 5 s');

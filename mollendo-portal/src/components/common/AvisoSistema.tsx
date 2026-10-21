@@ -9,6 +9,7 @@ import { ApiError } from "@/lib/api/client";
 import type { AvisoSistema as Aviso } from "@/lib/api/types";
 import { escucharEventos } from "@/lib/ws";
 import {
+  AlcoholIcon,
   AlertCircleIcon,
   BellIcon,
   BoltIcon,
@@ -31,6 +32,7 @@ const ICONO: Record<Aviso["tipo"], React.ComponentType<{ className?: string }>> 
   respaldos: FolderIcon,
   controlador: BoxIcon,
   terminal: PlugInIcon,
+  alcoholimetro: AlcoholIcon,
   lector: DocsIcon,
   rele: BoltIcon,
   aviso: BellIcon,

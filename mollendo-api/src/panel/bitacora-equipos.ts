@@ -9,6 +9,13 @@ export interface Falla {
   caida: string;
 }
 
+/**
+ * Sin saber cómo está el alcoholímetro (el equipo facial desconectado o sin
+ * respuesta todavía): no se da por vuelto el que estaba desconectado.
+ */
+export const alcoholimetroSinDatos = (e: EstadoParaAvisos) =>
+  e.dispositivos.some((d) => !d.enLinea || d.alcoholimetro === undefined || d.alcoholimetro.conectado === null);
+
 /** Lo que depende del controlador (mini PC): sin él no se puede saber su estado. */
 export const dependeDelControlador = (etiqueta: string) => etiqueta.startsWith('Lector de DNI') || etiqueta.startsWith('Relé');
 
@@ -29,6 +36,9 @@ export function fallasEquipos(e: EstadoParaAvisos): Falla[] {
   const varios = e.dispositivos.length > 1;
   for (const d of e.dispositivos) {
     if (!d.enLinea) fallas.push({ etiqueta: `Equipo facial (G4 Pro)${varios ? ` ${d.serialNumber}` : ''}`, caida: 'desconectado' });
+    else if (d.alcoholimetro?.conectado === false) {
+      fallas.push({ etiqueta: `Alcoholímetro (DT1700)${varios ? ` ${d.serialNumber}` : ''}`, caida: 'desconectado' });
+    }
   }
   if (e.controlador.remoto && !e.controlador.conectado) {
     fallas.push({ etiqueta: 'Controlador (PC)', caida: 'desconectado (sin internet o apagado)' });

@@ -244,6 +244,8 @@ export interface EstadoDispositivo {
   ipAddress: string | null;
   /** IP del equipo en la red de la garita (la que informa al registrarse). */
   ipLocal?: string | null;
+  /** El alcoholímetro conectado a ese equipo (se revisa cada minuto; conectado null: todavía no se sabe). */
+  alcoholimetro?: { conectado: boolean | null; revisado: string | null; conectadoVisto: string | null };
 }
 
 export interface EstadoSistema {
@@ -271,7 +273,7 @@ export interface EstadoSistema {
 
 /** Algo caído de "Sistema y APIs", para la franja de arriba (ver mollendo-api/src/panel/avisos-sistema.ts). */
 export interface AvisoSistema {
-  tipo: "base-de-datos" | "clave" | "respaldos" | "controlador" | "terminal" | "lector" | "rele" | "aviso" | "servidor";
+  tipo: "base-de-datos" | "clave" | "respaldos" | "controlador" | "terminal" | "alcoholimetro" | "lector" | "rele" | "aviso" | "servidor";
   equipo: string;
   estado: string;
   impacto: string;

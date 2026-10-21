@@ -117,6 +117,57 @@ export function EquiposEstado({
   );
 }
 
+/**
+ * El alcoholímetro de cada equipo facial: el equipo lo ve como un dispositivo
+ * USB y el servidor le pregunta cada minuto si sigue ahí. Si está conectado
+ * pero no mide, no se nota aquí (el equipo solo le habla durante una prueba).
+ */
+export function AlcoholimetroEstado({ comprobando, equipos }: { comprobando: boolean; equipos?: EstadoSistema["equipos"] }) {
+  if (comprobando) {
+    return (
+      <div className="mt-2">
+        <ComprobandoBadge />
+      </div>
+    );
+  }
+  if (!equipos || equipos.total === 0) {
+    return (
+      <div className="mt-2">
+        <Badge color="light">Sin datos</Badge>
+      </div>
+    );
+  }
+  const hora = (iso: string) => new Date(iso).toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
+  return (
+    <div className="mt-2 space-y-3">
+      {equipos.dispositivos.map((d) => {
+        const a = d.alcoholimetro;
+        return (
+          <div key={d.serialNumber}>
+            {!d.enLinea || !a || a.conectado === null ? (
+              <Badge color="light">Sin datos</Badge>
+            ) : a.conectado ? (
+              <Activo>Conectado</Activo>
+            ) : (
+              <Falla>Desconectado</Falla>
+            )}
+            <p className="mt-1 text-xs text-gray-400">
+              {!d.enLinea
+                ? "El equipo facial está desconectado"
+                : !a || a.conectado === null
+                  ? "Todavía no se revisó"
+                  : `Al equipo facial${equipos.total > 1 ? ` ${d.serialNumber}` : ""} · revisado ${hora(a.revisado!)}`}
+            </p>
+            {a?.conectado === false && a.conectadoVisto && (
+              <p className="mt-1 text-xs text-gray-400">Última vez conectado: {hora(a.conectadoVisto)}</p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /** "1 persona" / "3 personas". */
 export const personas = (n: number) => `${n} ${n === 1 ? "persona" : "personas"}`;
 

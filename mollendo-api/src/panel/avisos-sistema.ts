@@ -4,7 +4,7 @@
 /** Más de 26 horas sin respaldo automático: alguno falló (se hace uno por día). */
 export const RESPALDO_ATRASADO_MS = 26 * 60 * 60 * 1000;
 
-export type TipoAviso = 'base-de-datos' | 'clave' | 'respaldos' | 'controlador' | 'terminal' | 'lector' | 'rele' | 'aviso';
+export type TipoAviso = 'base-de-datos' | 'clave' | 'respaldos' | 'controlador' | 'terminal' | 'alcoholimetro' | 'lector' | 'rele' | 'aviso';
 
 export interface AvisoSistema {
   tipo: TipoAviso;
@@ -32,7 +32,13 @@ export interface EstadoParaAvisos {
   baseDeDatos: { estado: 'up' | 'down' };
   claveEquiposConfigurada: boolean;
   respaldos: { disponible: boolean; ultimoAutomatico: { fecha: string } | null };
-  dispositivos: { serialNumber: string; enLinea: boolean; ultimaActividad: string | null }[];
+  dispositivos: {
+    serialNumber: string;
+    enLinea: boolean;
+    ultimaActividad: string | null;
+    /** El alcoholímetro de ese equipo facial (null: todavía no se sabe). */
+    alcoholimetro?: { conectado: boolean | null; conectadoVisto: string | null };
+  }[];
   lectoresDni: { ingreso: Lector; salida: Lector };
   releMolinetes: { ingreso?: Rele; salida?: Rele; avisoIngreso?: Rele; avisoSalida?: Rele };
   controlador: { remoto: boolean; conectado: boolean; ultimoReporte: string | null };
@@ -72,6 +78,14 @@ export function avisosDelSistema(e: EstadoParaAvisos): AvisoSistema[] {
   for (const d of e.dispositivos) {
     if (!d.enLinea) {
       agregar('terminal', `Terminal facial ${d.serialNumber}`, 'Desconectado', 'Nadie puede ingresar: no reconoce el rostro ni toma la prueba de alcohol', d.ultimaActividad);
+    } else if (d.alcoholimetro?.conectado === false) {
+      agregar(
+        'alcoholimetro',
+        e.dispositivos.length > 1 ? `Alcoholímetro (DT1700) del ${d.serialNumber}` : 'Alcoholímetro (DT1700)',
+        'Desconectado',
+        'Nadie puede ingresar: el equipo facial no puede tomar la prueba de alcohol',
+        d.alcoholimetro.conectadoVisto,
+      );
     }
   }
 

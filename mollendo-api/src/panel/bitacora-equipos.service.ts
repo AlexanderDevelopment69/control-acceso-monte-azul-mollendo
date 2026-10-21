@@ -3,7 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { EstadoSistemaService } from './estado-sistema.service.js';
-import { dependeDelControlador, fallasEquipos, textoVuelta, type Falla } from './bitacora-equipos.js';
+import { alcoholimetroSinDatos, dependeDelControlador, fallasEquipos, textoVuelta, type Falla } from './bitacora-equipos.js';
 
 /** Cada cuánto se revisan los equipos (el controlador informa cada ~5 s; el G4 Pro, cada ~2 s). */
 const REVISION_MS = 5 * 1000;
@@ -78,6 +78,7 @@ export class BitacoraEquiposService implements OnModuleInit, OnModuleDestroy {
     let fallas: Falla[];
     let remoto = true;
     let sinControlador = false;
+    let sinAlcoholimetro = false;
     let soloBase = false;
     try {
       const e = await this.estadoSistema.calcular();
@@ -94,6 +95,7 @@ export class BitacoraEquiposService implements OnModuleInit, OnModuleDestroy {
       fallas = fallasEquipos(estado);
       remoto = estado.controlador.remoto;
       sinControlador = estado.controlador.remoto && !estado.controlador.conectado;
+      sinAlcoholimetro = alcoholimetroSinDatos(estado);
     } catch {
       // Sin base de datos no se puede leer el resto: solo se sabe eso.
       fallas = [{ etiqueta: 'Base de datos', caida: 'sin conexión' }];
@@ -110,7 +112,7 @@ export class BitacoraEquiposService implements OnModuleInit, OnModuleDestroy {
     for (const [etiqueta, desde] of this.abiertas) {
       if (caidas.has(etiqueta)) continue;
       // Lo que no se pudo revisar sigue como estaba.
-      if (soloBase || (sinControlador && dependeDelControlador(etiqueta))) continue;
+      if (soloBase || (sinControlador && dependeDelControlador(etiqueta)) || (sinAlcoholimetro && etiqueta.startsWith('Alcoholímetro'))) continue;
       this.abiertas.delete(etiqueta);
       this.anotar('reconexion', textoVuelta(etiqueta, ahora.getTime() - desde.getTime(), remoto), ahora);
     }
