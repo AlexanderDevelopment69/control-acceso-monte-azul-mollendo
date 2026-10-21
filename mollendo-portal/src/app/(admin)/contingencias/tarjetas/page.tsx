@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
+import { LockIcon } from "@/icons";
 import { Movimiento } from "../../vigilancia/CeldasEvento";
 import { diaVisible, htmlTarjeta } from "./imprimir";
 
@@ -29,10 +30,102 @@ function fechaYHora(iso: string): string {
   return `${d.toLocaleDateString("es-PE")} ${d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
-function EstadoTarjeta({ tarjeta }: { tarjeta: TarjetaContingencia }) {
-  if (!tarjeta.activa) return <Badge color="light">Desactivada</Badge>;
-  if (tarjeta.vencida) return <Badge color="error">Vencida</Badge>;
-  return <Badge color="success">Activa</Badge>;
+/** Estado de la tarjeta: solo una activa y sin vencer sirve en los lectores. */
+function estadoDe(tarjeta: TarjetaContingencia): { texto: string; sirve: boolean } {
+  if (!tarjeta.activa) return { texto: "Desactivada", sirve: false };
+  if (tarjeta.vencida) return { texto: "Vencida", sirve: false };
+  return { texto: "Activa", sirve: true };
+}
+
+/** QR de adorno (no es el de la tarjeta: ese solo sale al imprimir). */
+function QrAdorno() {
+  const celdas = [
+    "1110101", "1010011", "1110110", "0001010", "1101011", "0110101", "1011101",
+  ];
+  return (
+    <svg viewBox="0 0 7 7" className="size-14 rounded-md bg-white p-1.5 text-gray-900" aria-hidden>
+      {celdas.flatMap((fila, y) => [...fila].map((c, x) => (c === "1" ? <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="currentColor" /> : null)))}
+    </svg>
+  );
+}
+
+/** Una tarjeta como el carné impreso: nombre, estado y vencimiento; debajo, último uso y botones. */
+function TarjetaVisual({
+  tarjeta,
+  esAdministrador,
+  onImprimir,
+  onVencimiento,
+  onAccion,
+}: {
+  tarjeta: TarjetaContingencia;
+  esAdministrador: boolean;
+  onImprimir: () => void;
+  onVencimiento: () => void;
+  onAccion: (accion: Confirmacion["accion"]) => void;
+}) {
+  const estado = estadoDe(tarjeta);
+  return (
+    <Tarjeta className="flex flex-col overflow-hidden p-4">
+      <div
+        className={`relative flex aspect-[85.6/54] flex-col justify-between overflow-hidden rounded-xl p-5 text-white shadow-md ${
+          estado.sirve ? "bg-gradient-to-br from-brand-500 to-brand-800" : "bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-600 dark:to-gray-800"
+        }`}
+      >
+        {/* Círculos de fondo, solo de adorno. */}
+        <span className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-white/10" aria-hidden />
+        <span className="pointer-events-none absolute -bottom-16 right-16 size-40 rounded-full bg-white/5" aria-hidden />
+        <div className="relative flex items-start justify-between gap-3">
+          <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/80">
+            <LockIcon className="size-4" aria-hidden />
+            Contingencia
+          </span>
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+              estado.sirve ? "bg-white/20 text-white" : "bg-gray-900/30 text-white"
+            }`}
+          >
+            {estado.texto}
+          </span>
+        </div>
+        <div className="relative flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-lg font-semibold leading-tight">Tarjeta de contingencia</p>
+            <p className="text-3xl font-bold leading-tight">N.º {tarjeta.numero}</p>
+            <p className="mt-2 text-xs text-white/80">{tarjeta.venceEl ? `Vence el ${diaVisible(tarjeta.venceEl)}` : "No vence"}</p>
+          </div>
+          <QrAdorno />
+        </div>
+      </div>
+
+      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <dt className="text-xs text-gray-500 dark:text-gray-400">Último uso</dt>
+          <dd className="text-gray-800 dark:text-white/90">{tarjeta.ultimoUso ? fechaYHora(tarjeta.ultimoUso) : "Sin usar"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-gray-500 dark:text-gray-400">Código del</dt>
+          <dd className="text-gray-800 dark:text-white/90">{new Date(tarjeta.codigoCambiadoEn).toLocaleDateString("es-PE")}</dd>
+        </div>
+      </dl>
+
+      {esAdministrador && (
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
+          <Button type="button" size="sm" onClick={onImprimir}>
+            Imprimir
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={onVencimiento}>
+            Vencimiento
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => onAccion("cambiar-codigo")}>
+            Cambiar código
+          </Button>
+          <Button type="button" size="sm" variant={tarjeta.activa ? "outline-danger" : "outline"} onClick={() => onAccion(tarjeta.activa ? "desactivar" : "activar")}>
+            {tarjeta.activa ? "Desactivar" : "Activar"}
+          </Button>
+        </div>
+      )}
+    </Tarjeta>
+  );
 }
 
 /** Nueva tarjeta, o cambiar el vencimiento de una: "No vence" o hasta un día (incluido). */
@@ -258,7 +351,6 @@ function TarjetasContent() {
     }
   }
 
-  const columnas = esAdministrador ? 5 : 4;
   const datosUsos = usos?.datos ?? [];
 
   return (
@@ -289,80 +381,27 @@ function TarjetasContent() {
         </div>
       )}
 
-      <Tarjeta className="mb-8 overflow-hidden">
-        <div className="overflow-x-auto [&_th]:whitespace-nowrap">
-          <Table>
-            <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-              <TableRow>
-                {["Tarjeta", "Vence", "Estado", "Último uso", ...(esAdministrador ? [""] : [])].map((c, i) => (
-                  <TableCell key={i} isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">
-                    {c}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {!tarjetas && !error && (
-                <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={columnas}>
-                    Cargando…
-                  </TableCell>
-                </TableRow>
-              )}
-              {tarjetas?.length === 0 && (
-                <TableRow>
-                  <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={columnas}>
-                    {esAdministrador ? "Todavía no hay tarjetas. Use “+ Nueva tarjeta”." : "Todavía no hay tarjetas."}
-                  </TableCell>
-                </TableRow>
-              )}
-              {tarjetas?.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell className="px-5 py-4 text-sm">
-                    <span className="block whitespace-nowrap text-gray-800 dark:text-white/90">{t.nombre}</span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400">
-                      Código del {new Date(t.codigoCambiadoEn).toLocaleDateString("es-PE")}
-                    </span>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
-                    {t.venceEl ? diaVisible(t.venceEl) : "No vence"}
-                  </TableCell>
-                  <TableCell className="px-5 py-4 text-sm">
-                    <EstadoTarjeta tarjeta={t} />
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
-                    {t.ultimoUso ? fechaYHora(t.ultimoUso) : "Sin usar"}
-                  </TableCell>
-                  {esAdministrador && (
-                    <TableCell className="px-5 py-4 text-sm">
-                      {/* Con poco espacio, los botones pasan a dos líneas. */}
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <Button type="button" size="sm" onClick={() => void imprimir(t)}>
-                          Imprimir
-                        </Button>
-                        <Button type="button" size="sm" variant="outline" onClick={() => setVencimiento(t)}>
-                          Vencimiento
-                        </Button>
-                        <Button type="button" size="sm" variant="outline" onClick={() => setConfirmacion({ tarjeta: t, accion: "cambiar-codigo" })}>
-                          Cambiar código
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={t.activa ? "outline-danger" : "outline"}
-                          onClick={() => setConfirmacion({ tarjeta: t, accion: t.activa ? "desactivar" : "activar" })}
-                        >
-                          {t.activa ? "Desactivar" : "Activar"}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      {/* Cada tarjeta como el carné impreso, con sus datos y botones debajo. */}
+      {!tarjetas && !error && <p className="mb-8 text-sm text-gray-400">Cargando…</p>}
+      {tarjetas?.length === 0 && (
+        <div className="mb-8 rounded-2xl border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+          {esAdministrador ? "Todavía no hay tarjetas. Use “+ Nueva tarjeta”." : "Todavía no hay tarjetas."}
         </div>
-      </Tarjeta>
+      )}
+      {!!tarjetas?.length && (
+        <div className="mb-8 grid grid-cols-[repeat(auto-fill,minmax(min(100%,19rem),1fr))] gap-5">
+          {tarjetas.map((t) => (
+            <TarjetaVisual
+              key={t.id}
+              tarjeta={t}
+              esAdministrador={esAdministrador}
+              onImprimir={() => void imprimir(t)}
+              onVencimiento={() => setVencimiento(t)}
+              onAccion={(accion) => setConfirmacion({ tarjeta: t, accion })}
+            />
+          ))}
+        </div>
+      )}
 
       <h2 className="mb-3 text-base font-semibold text-gray-800 dark:text-white/90">Usos de las tarjetas</h2>
       <Tarjeta className="overflow-hidden">
