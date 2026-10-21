@@ -550,9 +550,18 @@ export const SECCIONES: SeccionManual[] = [
                     m="No pasó su DNI a tiempo"
                     hacer="En “facial primero”, aprobó rostro y alcohol, pero no pasó su DNI en los 30 segundos. Debe empezar otra vez."
                   />
+                  <Motivo
+                    m="No es quien sopló"
+                    hacer="En “facial primero”, la prueba de rostro y alcohol la hizo otra persona. No puede entrar con esa prueba."
+                  />
                   <Motivo m="Ya figura dentro" hacer="Figura que ya entró y no marcó su salida." />
                   <Motivo m="No registra ingreso" hacer="Quiere salir, pero no figura que haya entrado." />
                 </ul>
+                <p className="mb-2">
+                  <b>Marcas junto al motivo:</b> <Badge color="warning">Tarjeta de contingencia</Badge>,{" "}
+                  <Badge color="warning">Sin lector de DNI: identificado por rostro</Badge>, <Badge color="warning">Salida sin lector</Badge> y{" "}
+                  <Badge color="warning">Manual</Badge> (con quién decidió).
+                </p>
                 <p>
                   <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revise si el terminal tiene un <b>punto rojo</b>{" "}
                   (alcoholímetro desconectado) y avise a soporte. Se cierra con la ✕ o solo, cuando la siguiente persona entra bien.
@@ -596,13 +605,38 @@ export const SECCIONES: SeccionManual[] = [
               </li>
             </Lista>
             <p className="my-3">
-              La tarjeta pasada en otro momento <b>no abre</b>, suena el aviso y queda anotada. Cada uso, aceptado o no, se ve en{" "}
-              <b>Contingencias → Tarjetas de contingencia</b>, en el menú.
+              La tarjeta pasada en otro momento <b>no abre</b>, suena el aviso y queda anotada. Cada uso, aceptado o no, lo ve el administrador
+              en <b>Contingencias → Tarjetas de contingencia</b>.
             </p>
             <p>
-              <b>Administrador:</b> ahí mismo crea la tarjeta (“No vence” o hasta un día), la imprime, la desactiva o la elimina (solo si nunca se usó). Si se pierde o alguien le
-              toma una foto, use <b>“Cambiar código”</b>: la impresa queda anulada y debe imprimirse de nuevo. Solo el administrador las ve y las
+              <b>Administrador:</b> ahí mismo crea la tarjeta (“No vence” o hasta un día), la imprime, la desactiva o la elimina (solo si nunca se usó). Si se pierde o se copia,
+              use <b>“Cambiar código”</b>: la impresa queda anulada y debe imprimirse de nuevo. Solo el administrador las ve y las
               administra en el portal.
+            </p>
+          </>
+        ),
+      },
+      {
+        titulo: "Si falla un lector de DNI",
+        descripcion: "Contingencia «sin lector»: se activa sola",
+        contenido: (
+          <>
+            <p className="mb-3">
+              Si se desconecta un lector, el sistema lo detecta solo y muestra una franja roja en el Panel. No hay que activar nada.
+            </p>
+            <Lista>
+              <li>
+                <b>Lector de ingreso:</b> el ingreso es solo con rostro y alcohol, sin pasar el DNI (con el orden Facial + Alcohol → DNI).
+                Queda marcado <Badge color="warning">Sin lector de DNI: identificado por rostro</Badge>.
+              </li>
+              <li>
+                <b>Lector de salida:</b> toque <b>“Ir a Presentes ahora”</b>, busque a la persona y toque <b>“Salida”</b>; confirme con{" "}
+                <b>“Abrir salida”</b>. Queda marcado <Badge color="warning">Salida sin lector</Badge>, con su usuario. Mientras tanto, “Salida
+                sin DNI” no se puede usar.
+              </li>
+            </Lista>
+            <p className="mt-3">
+              Cuando el lector vuelve, todo regresa solo a la normalidad. Avise a soporte para que lo revise o lo cambie.
             </p>
           </>
         ),
@@ -706,6 +740,53 @@ export const SECCIONES: SeccionManual[] = [
     ],
   },
   {
+    id: "presentes",
+    titulo: "Presentes ahora",
+    descripcion: "Quiénes están dentro del terminal en este momento.",
+    roles: ["administrador", "vigilancia"],
+    pantallas: [
+      {
+        titulo: "Presentes ahora",
+        descripcion: "Quiénes están dentro",
+        clave: "presentes",
+        puntos: [
+          {
+            titulo: "Buscar",
+            texto: (
+              <p>
+                Por nombre, DNI o empresa. Útil, por ejemplo, en una evacuación. Se actualiza sola con cada ingreso o salida. El
+                administrador regresa con “‹ Dashboard”.
+              </p>
+            ),
+          },
+          { titulo: "Filtrar por perfil", texto: <p>Muestra solo las personas de ese perfil.</p> },
+          {
+            titulo: "Descargar Excel",
+            texto: <p>El reporte “Personal presente”, con el perfil elegido (solo el administrador).</p>,
+          },
+          {
+            titulo: "Tiempo dentro",
+            texto: (
+              <p>
+                De mayor a menor tiempo dentro; en naranja, más de 12 horas.
+              </p>
+            ),
+          },
+          { titulo: "Páginas", texto: <p>De 10 en 10.</p> },
+          {
+            titulo: "Salida",
+            texto: (
+              <p>
+                Solo aparece si el lector de salida está desconectado: abre la salida de esa persona (ver “Si falla un lector de DNI”, en
+                Panel de vigilancia).
+              </p>
+            ),
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "dashboard",
     titulo: "Dashboard",
     descripcion: "Indicadores y gráficos de lo que pasa en el terminal, y quiénes están dentro ahora.",
@@ -770,36 +851,6 @@ export const SECCIONES: SeccionManual[] = [
               </>
             ),
           },
-        ],
-      },
-      {
-        titulo: "Presentes ahora",
-        descripcion: "Quiénes están dentro",
-        clave: "presentes",
-        puntos: [
-          {
-            titulo: "Buscar",
-            texto: (
-              <p>
-                Por nombre, DNI o empresa. Útil, por ejemplo, en una evacuación. Se actualiza sola con cada ingreso o salida; “‹ Dashboard”
-                regresa.
-              </p>
-            ),
-          },
-          { titulo: "Filtrar por perfil", texto: <p>Muestra solo las personas de ese perfil.</p> },
-          {
-            titulo: "Descargar Excel",
-            texto: <p>El reporte “Personal presente”, con el perfil elegido.</p>,
-          },
-          {
-            titulo: "Tiempo dentro",
-            texto: (
-              <p>
-                De mayor a menor tiempo dentro; en naranja, más de 12 horas.
-              </p>
-            ),
-          },
-          { titulo: "Páginas", texto: <p>De 10 en 10.</p> },
         ],
       },
     ],

@@ -17,6 +17,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
+import { io } from "socket.io-client";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORTAL = process.env.PORTAL_URL ?? "http://localhost:3000";
@@ -140,13 +141,23 @@ const CAPTURAS = [
   {
     clave: "presentes",
     ruta: "/dashboard/presentes",
-    alto: 1010,
+    // Con el lector de salida desconectado (controlador simulado), para que se vean los botones "Salida".
+    preparar: async (p) => {
+      lectorSalida(false);
+      await espera(2000);
+      await p.reload({ waitUntil: "networkidle2" });
+      await p.addStyleTag({ content: OCULTAR + OCULTAR_AVISO });
+      await p.waitForFunction(() => [...document.querySelectorAll("tbody button")].some((b) => b.innerText.trim() === "Salida"));
+    },
+    despues: async () => lectorSalida(true),
+    alto: 1180,
     puntos: [
       { sel: 'input[placeholder*="Buscar por nombre, DNI o empresa"]', lado: "texto-buscador" },
       'button[aria-label="Perfil"]',
       { sel: "button::-p-text(Descargar Excel)", lado: "arriba" },
       "::-p-text(Tiempo dentro)",
       { sel: "::-p-text(Mostrando)", texto: true, lado: "der" },
+      { sel: "tbody button::-p-text(Salida)", lado: "arriba" },
     ],
   },
   {
@@ -291,6 +302,39 @@ const CAPTURAS = [
     ],
   },
 ];
+
+/**
+ * Controlador simulado (solo en la PC de desarrollo): informa los dos lectores y
+ * relés conectados salvo el lector de salida (conectado = false). Con true se
+ * desconecta y deja de simularse.
+ */
+let controladorSimulado = null;
+function lectorSalida(conectado) {
+  if (conectado) {
+    if (controladorSimulado) {
+      clearInterval(controladorSimulado.reporte);
+      controladorSimulado.socket.close();
+      controladorSimulado = null;
+    }
+    return;
+  }
+  const socket = io(API.replace(/\/api\/v1$/, "") + "/ws/controlador", {
+    path: "/api/v1/socket.io",
+    auth: { clave: valor("DEVICE_API_KEY") },
+    transports: ["websocket"],
+  });
+  const rele = { conectado: true, serie: "ING01", canal: 1, ultimoPulso: null, error: null };
+  const lector = (c) => ({ configurado: true, conectado: c, ultimaLectura: null, error: null });
+  const informar = () =>
+    socket.emit("estado", {
+      lectoresDni: { ingreso: lector(true), salida: lector(false) },
+      releMolinetes: { ingreso: rele, salida: { ...rele, serie: "SAL01" } },
+      listaPersonal: { personas: 0, actualizado: null },
+      salidasPendientes: 0,
+    });
+  socket.on("connect", informar);
+  controladorSimulado = { socket, reporte: setInterval(informar, 3000) };
+}
 
 /** Activa (POST) o termina (DELETE) la verificación manual con la cuenta del administrador. */
 async function verificacionManual(method, body) {
