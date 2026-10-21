@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api/client";
 import type {
   DecisionManual,
   EstadoModoIngreso,
+  CausaVerificacionManual,
   EstadoVerificacionManual,
   EventoAcceso,
   IngresoEnEspera,
@@ -152,12 +153,15 @@ function VigilanciaContent() {
   // desconectado (los mismos avisos de la franja roja): entonces la causa no es
   // el alcoholímetro y el texto lo dice.
   const [equipoFacialDesconectado, setEquipoFacialDesconectado] = useState<boolean | null>(null);
+  const [alcoholimetroDesconectado, setAlcoholimetroDesconectado] = useState<boolean | null>(null);
   const hayAviso = !!aviso;
 
   // Verificación manual (contingencia por falla del equipo facial): la franja, la
   // ventana para activarla y la decisión del vigilante sobre quien está en su turno.
   const [manual, setManual] = useState<EstadoVerificacionManual | null>(null);
   const [activando, setActivando] = useState(false);
+  // Desde dónde se activa (el motivo que viene escrito y qué vuelta se espera).
+  const [causaActivar, setCausaActivar] = useState<CausaVerificacionManual>("terminal");
   const [terminando, setTerminando] = useState(false);
   const [seguirEnManual, setSeguirEnManual] = useState(false);
   const cargarManual = useCallback(async () => {
@@ -209,19 +213,27 @@ function VigilanciaContent() {
     }
   }
 
-  // El botón "Activar verificación manual" está en la franja roja de fallas (AvisoSistema):
-  // desde esta página avisa con un evento; desde otra, trae aquí con ?activarManual=1.
+  // El botón "Activar verificación manual" está en la franja roja de fallas (AvisoSistema), en el
+  // recuadro del equipo facial o del alcoholímetro: desde esta página avisa con un evento (con la
+  // causa); desde otra, trae aquí con ?activarManual=<causa>. También en el aviso ámbar.
   useEffect(() => {
-    const abrir = () => setActivando(true);
+    const causaDe = (valor: unknown): CausaVerificacionManual =>
+      valor === "alcoholimetro" || valor === "ambar" ? valor : "terminal";
+    const abrir = (e: Event) => {
+      setCausaActivar(causaDe((e as CustomEvent).detail));
+      setActivando(true);
+    };
     window.addEventListener("activar-verificacion-manual", abrir);
-    if (new URLSearchParams(window.location.search).has("activarManual")) {
+    const pedida = new URLSearchParams(window.location.search).get("activarManual");
+    if (pedida !== null) {
+      setCausaActivar(causaDe(pedida));
       setActivando(true);
       window.history.replaceState(null, "", window.location.pathname);
     }
     return () => window.removeEventListener("activar-verificacion-manual", abrir);
   }, []);
   async function activarManual(motivo: string) {
-    setManual(await eventosAccesoApi.activarVerificacionManual(motivo));
+    setManual(await eventosAccesoApi.activarVerificacionManual(motivo, causaActivar));
     setActivando(false);
     setSeguirEnManual(false);
   }
@@ -235,8 +247,8 @@ function VigilanciaContent() {
       setTerminando(false);
     }
   }
-  async function decidir(id: number, decision: DecisionManual) {
-    await eventosAccesoApi.decidir(id, decision);
+  async function decidir(id: number, decision: DecisionManual, grado?: number) {
+    await eventosAccesoApi.decidir(id, decision, grado);
     setEnEspera((actuales) => actuales.filter((i) => i.id !== id));
   }
   const manualActiva = !!manual?.activa;
@@ -251,7 +263,11 @@ function VigilanciaContent() {
     const revisar = () =>
       panelApi
         .avisos()
-        .then((r) => activo && setEquipoFacialDesconectado(r.avisos.some((a) => a.tipo === "terminal")))
+        .then((r) => {
+          if (!activo) return;
+          setEquipoFacialDesconectado(r.avisos.some((a) => a.tipo === "terminal"));
+          setAlcoholimetroDesconectado(r.avisos.some((a) => a.tipo === "alcoholimetro"));
+        })
         .catch(() => {
           // Sin respuesta, se deja el texto anterior.
         });
@@ -264,8 +280,17 @@ function VigilanciaContent() {
   }, [hayAviso, manualActiva]);
   // "Seguir en manual" vale hasta que el equipo vuelva a desconectarse.
   useEffect(() => {
-    if (equipoFacialDesconectado) setSeguirEnManual(false);
-  }, [equipoFacialDesconectado]);
+    if (equipoFacialDesconectado || alcoholimetroDesconectado) setSeguirEnManual(false);
+  }, [equipoFacialDesconectado, alcoholimetroDesconectado]);
+  // Se pregunta si se vuelve a modo normal cuando vuelve lo que la motivó. Activada desde el
+  // aviso ámbar (alcoholímetro conectado que no mide) no hay nada que esperar: se termina a mano.
+  const causaManual = manual?.periodo?.causa ?? "terminal";
+  const volvioLoQueFallo =
+    causaManual === "terminal"
+      ? equipoFacialDesconectado === false
+      : causaManual === "alcoholimetro"
+        ? equipoFacialDesconectado === false && alcoholimetroDesconectado === false
+        : false;
   function cerrarAviso() {
     if (!aviso) return;
     setAvisoCerrado(aviso.eventoId);
@@ -439,13 +464,30 @@ function VigilanciaContent() {
       {manual && (
         <FranjaVerificacionManual estado={manual} terminando={terminando} onTerminar={() => void terminarManual()} />
       )}
-      {manualActiva && equipoFacialDesconectado === false && !seguirEnManual && (
-        <AvisoEquipoVolvio terminando={terminando} onVolver={() => void terminarManual()} onSeguir={() => setSeguirEnManual(true)} />
+      {manualActiva && volvioLoQueFallo && !seguirEnManual && (
+        <AvisoEquipoVolvio
+          equipo={causaManual === "alcoholimetro" ? "El alcoholímetro" : "El equipo facial"}
+          terminando={terminando}
+          onVolver={() => void terminarManual()}
+          onSeguir={() => setSeguirEnManual(true)}
+        />
       )}
       {aviso && aviso.eventoId !== avisoCerrado && (
-        <AvisoNoCompletoBanner aviso={aviso} equipoFacialDesconectado={!!equipoFacialDesconectado} onCerrar={cerrarAviso} />
+        <AvisoNoCompletoBanner
+          aviso={aviso}
+          equipoFacialDesconectado={!!equipoFacialDesconectado}
+          onCerrar={cerrarAviso}
+          onActivarManual={
+            manualActiva
+              ? undefined
+              : () => {
+                  setCausaActivar("ambar");
+                  setActivando(true);
+                }
+          }
+        />
       )}
-      <ActivarVerificacionManual abierta={activando} onCerrar={() => setActivando(false)} onActivar={activarManual} />
+      <ActivarVerificacionManual abierta={activando} causa={causaActivar} onCerrar={() => setActivando(false)} onActivar={activarManual} />
       <DecisionManualVentana ingreso={enEspera.find((i) => i.manual && !i.enCola) ?? null} ahora={ahora} onDecidir={decidir} />
 
       {/* En el celular, los tres contadores en una fila y compactos. */}

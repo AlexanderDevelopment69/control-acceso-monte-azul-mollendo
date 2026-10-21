@@ -129,6 +129,8 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 | 5.13 | Un ingreso y una salida con DNI | Entran y salen normal: confirma la corrección del 21/10 (desde el 20/10 ~20:07 la API rechazaba todo DNI del lector) | [ ] |
 | 5.14 | Alcoholímetro conectado pero apagado (si tiene encendido propio) | Ver qué muestra el equipo facial y leer `Verify.txt` y `logcat` justo después (guía de depuración, 8.3). Hoy el sistema no lo detecta: base para la parte B | [ ] |
 | 5.15 | Persona reconocida que no sopla | El equipo abandona la prueba a los ~22 s y nadie entra; leer los registros igual que en 5.14 | [ ] |
+| 5.16 | Alcoholímetro de repuesto, cuando llegue | Que mida solo (botón "Test"), qué unidad muestra su pantalla (debe ser mg/L para escribir el grado en la verificación manual) y que el equipo facial lo reconozca al conectarlo | [ ] |
+| 5.17 | Verificación manual con el grado | Activarla desde el recuadro del alcoholímetro (o el aviso ámbar), pasar un DNI y escribir el grado del repuesto: bajo 0,100 mg/L abre; igual o sobre él, "Alcohol". Probar también "Mi alcoholímetro no muestra el número" | [ ] |
 
 ---
 

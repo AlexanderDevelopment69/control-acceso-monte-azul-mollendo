@@ -165,12 +165,27 @@ export function MarcaSinLector({ evento }: { evento: Pick<EventoAcceso, "sinLect
   );
 }
 
-/** Verificación manual (equipo facial fuera de servicio): quién aprobó o denegó el ingreso. */
-export function MarcaVerificacionManual({ evento }: { evento: Pick<EventoAcceso, "verificacionManual" | "verificadoPor"> }) {
+/** Lo que marcó el alcoholímetro de repuesto: "0,000 mg/L", "marcó apto, sin número" (null en las de antes del 21/10/2026). */
+export function gradoManualTexto(evento: Pick<EventoAcceso, "gradoManual" | "manualSinNumero" | "resultado">): string | null {
+  if (evento.gradoManual !== null && evento.gradoManual !== undefined) return `${evento.gradoManual.toFixed(3).replace(".", ",")} mg/L`;
+  if (evento.manualSinNumero) return `marcó ${evento.resultado === "autorizado" ? "apto" : "alcohol"}, sin número`;
+  return null;
+}
+
+/** Verificación manual (equipo facial o alcoholímetro fuera de servicio): lo que marcó y quién decidió. */
+export function MarcaVerificacionManual({
+  evento,
+}: {
+  evento: Pick<EventoAcceso, "verificacionManual" | "verificadoPor" | "gradoManual" | "manualSinNumero" | "resultado">;
+}) {
   if (!evento.verificacionManual) return null;
+  const grado = gradoManualTexto(evento);
   return (
-    <span title="Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio)">
-      <Badge color="primary">Manual{evento.verificadoPor ? ` · ${evento.verificadoPor.correo}` : ""}</Badge>
+    <span title="Rostro y alcohol los verificó un vigilante, con el alcoholímetro de repuesto">
+      <Badge color="primary">
+        Manual{grado ? ` · ${grado}` : ""}
+        {evento.verificadoPor ? ` · ${evento.verificadoPor.correo}` : ""}
+      </Badge>
     </span>
   );
 }

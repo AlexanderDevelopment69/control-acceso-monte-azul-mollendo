@@ -111,7 +111,7 @@ La persona que no puede soplar **no se va**: le avisa al vigilante en ese moment
 3. **Soporte:** comprueba con una persona que el equipo le pida soplar y la apruebe. La persona que no pudo pasar vuelve a pasar su DNI e ingresa normal.
 4. **Administrador:** gestiona la reparación del alcoholímetro malogrado.
 
-Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar, el vigilante o el administrador pueden activar la **verificación manual** de la sección 4 (con el alcoholímetro de repuesto usado solo).
+Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar, el vigilante o el administrador pueden activar la **verificación manual** de la sección 4 (con el alcoholímetro de repuesto usado solo): el botón **"Activar verificación manual"** está en el recuadro rojo *"Alcoholímetro (DT1700) … Desconectado"* y, si el alcoholímetro está conectado pero no mide, en el aviso ámbar *"No completó"* (desde el 21/10/2026). Cuando el alcoholímetro vuelve a conectarse, el Panel pregunta *"El alcoholímetro volvió a conectarse. ¿Volver a modo normal?"*; si se activó desde el aviso ámbar, se termina a mano con "Volver a modo normal".
 
 ### 3.4. Pendiente: prueba en el punto de acceso
 
@@ -126,6 +126,7 @@ Con los casos 2 y 3 se programará un aviso de **"posible falla"** cuando varias
 ### 3.5. Requisitos del repuesto
 
 - Debe ser **el mismo modelo (DT1700)** u otro que el equipo facial acepte. Un alcoholímetro portátil cualquiera **no se puede conectar** al equipo facial.
+- **Debe funcionar solo y mostrar el número en mg/L** (como el DT1700): en la verificación manual el vigilante escribe ese número y el sistema decide. Si se compra uno que solo funciona conectado al equipo facial, no sirve para la verificación manual y, si falla el equipo facial, nadie podría ingresar. Si muestra solo una luz o un mensaje (sin número), sirve, pero queda registrado "sin número".
 - El DT1700 **también funciona solo** (pantalla, botón "Test" y registro de pruebas; anexo B), así que el mismo repuesto sirve para la verificación manual de la sección 4.
 - **Probar el cambio una vez** antes de necesitarlo: conectar el repuesto al equipo facial y comprobar que lo reconoce y mide bien. Puede requerir algún ajuste en el menú del equipo.
 - Conviene que use la misma escala: apto por debajo de **0,090 mg/L** (la del DT1700).
@@ -134,7 +135,7 @@ Con los casos 2 y 3 se programará un aviso de **"posible falla"** cuando varias
 
 ## 4. Falla del equipo facial: verificación manual
 
-**Decidido (15/10/2026):** si falla el equipo facial (G4 Pro), se usa la **verificación manual**: el DNI sigue igual, el vigilante compara el rostro con la foto registrada y toma la **prueba de alcohol a todos** con el alcoholímetro de repuesto. **Programado el 15/10/2026**; falta la prueba en el punto de acceso.
+**Decidido (15/10/2026):** si falla el equipo facial (G4 Pro), se usa la **verificación manual**: el DNI sigue igual, el vigilante compara el rostro con la foto registrada y toma la **prueba de alcohol a todos** con el alcoholímetro de repuesto. **Programado el 15/10/2026**; falta la prueba en el punto de acceso. **Mejorado el 21/10/2026:** el vigilante escribe el grado y el sistema decide (como con el equipo facial), y se puede activar también si falla el alcoholímetro (sección 3.3).
 
 ### 4.1. Qué pasa cuando falla
 
@@ -155,9 +156,9 @@ Con los casos 2 y 3 se programará un aviso de **"posible falla"** cuando varias
 
 ### 4.3. Paso a paso
 
-**1. Se detecta la falla.** Aparece la franja roja *"Terminal facial desconectado"*, con el botón **"Activar verificación manual"**. Si alguien no completó rostro y alcohol en ese momento, el aviso ámbar del Panel dice *"El equipo facial está desconectado: nadie puede completar rostro y alcohol. Avise a soporte."*
+**1. Se detecta la falla.** Aparece la franja roja *"Terminal facial desconectado"*, con el botón **"Activar verificación manual"**. Si alguien no completó rostro y alcohol en ese momento, el aviso ámbar del Panel dice *"El equipo facial está desconectado: nadie puede completar rostro y alcohol. Avise a soporte."* y tiene el mismo botón.
 
-**2. Se activa.** El vigilante o el administrador presiona **"Activar verificación manual"** en el Panel de vigilancia y escribe el **motivo** (por ejemplo, "equipo facial apagado"). Queda en la **auditoría** quién, cuándo y por qué. Mientras dure, el Panel muestra una franja fija:
+**2. Se activa.** El vigilante o el administrador presiona **"Activar verificación manual"** en el Panel de vigilancia y escribe el **motivo**; viene escrito según desde dónde se activa (*"Equipo facial desconectado"*, *"Alcoholímetro desconectado"* o, desde el aviso ámbar, *"El equipo facial no toma la prueba"*) y se puede cambiar. Queda en la **auditoría** quién, cuándo y por qué. Mientras dure, el Panel muestra una franja fija:
 
 > **Verificación manual activa** desde 15/10 08:30, activada por *vigilante 1*. Motivo: equipo facial apagado.
 
@@ -166,22 +167,24 @@ Con los casos 2 y 3 se programará un aviso de **"posible falla"** cuando varias
 1. Pasa su **DNI** por el lector, como siempre.
 2. El sistema revisa que esté registrada, activa y con sus documentos vigentes. Si no cumple, **se deniega igual que siempre**.
 3. Si cumple, el Panel muestra una ventana grande con su **foto registrada**, nombre, DNI y empresa.
-4. El vigilante **compara el rostro** con la foto y le toma la **prueba de alcohol** con el alcoholímetro de repuesto.
+4. El vigilante **compara el rostro** con la foto, le toma la **prueba de alcohol** con el alcoholímetro de repuesto y **escribe el grado** que marca (*"Grado de alcohol (mg/L)"*).
 5. El vigilante elige:
 
 | Botón | Qué hace | Cómo queda en el historial |
 |---|---|---|
-| **"Apto: abrir"** | Abre el molinete de ingreso | Autorizado, verificación manual, con el vigilante que lo aprobó |
-| **"Alcohol: no apto"** | No abre; activa el aviso de ingreso denegado | Denegado por alcohol, verificación manual |
+| **"Registrar prueba"** | **Decide el sistema** con el grado, con el mismo límite del equipo facial (0,0001 g/L = 0,100 mg/L): bajo el límite abre el molinete; igual o sobre él, no abre y activa el aviso de ingreso denegado | Autorizado o denegado por alcohol, *"Manual · 0,000 mg/L"* con el vigilante |
+| **"Mi alcoholímetro no muestra el número"** → **"Marcó apto"** / **"Marcó alcohol"** | Si el repuesto no muestra el número: el vigilante elige lo que marcó (abre o no abre) | *"Manual · marcó apto, sin número"* (o *"marcó alcohol"*) con el vigilante |
 | **"No es la persona"** | No abre; activa el aviso de ingreso denegado | Denegado: el rostro no coincide con el DNI |
+
+Antes del 21/10/2026 los botones eran "Apto: abrir" y "Alcohol: no apto" (el vigilante decidía, sin registrar el grado).
 
 Si el vigilante no elige en **2 minutos**, el ingreso se deniega y la ventana se cierra.
 
 **4. Mientras dure.**
 
 - Las **salidas** siguen normales.
-- Cada ingreso queda **marcado como "verificación manual"** en el historial y en los reportes, con el vigilante y el resultado.
-- Si el equipo facial vuelve a conectarse, el Panel avisa: *"El equipo facial volvió a conectarse. ¿Volver a modo normal?"*
+- Cada ingreso queda **marcado como "verificación manual"** en el historial y en los reportes, con el grado (o "sin número"), el vigilante y el resultado. En el Excel: *"Verificación manual (vigilante): 0,000 mg/L"*.
+- Si vuelve lo que falló, el Panel avisa: *"El equipo facial volvió a conectarse. ¿Volver a modo normal?"* (o *"El alcoholímetro volvió a conectarse…"*). Si se activó desde el aviso ámbar, no hay aviso: se termina a mano.
 
 **5. Fin.** El vigilante o el administrador presiona **"Volver a modo normal"** (queda en la auditoría). No vuelve solo, a propósito: si el equipo se conectara y desconectara varias veces seguidas, el modo cambiaría a cada rato y el vigilante no sabría en cuál está.
 
@@ -189,14 +192,15 @@ Si el vigilante no elige en **2 minutos**, el ingreso se deniega y la ventana se
 
 | Qué | Estado |
 |---|---|
-| Alcoholímetro para la prueba manual | El repuesto DT1700 (sección 3.4). También sirve el que estaba conectado al equipo facial, que funciona solo |
+| Alcoholímetro para la prueba manual | El repuesto DT1700 (sección 3.5): debe funcionar solo y mostrar el número en mg/L. También sirve el que estaba conectado al equipo facial, que funciona solo. **Falta comprarlo** |
 | Foto de cada persona | Ya se guarda en el sistema |
 | Activar y desactivar (vigilante y administrador), con motivo y auditoría | Programado |
 | Franja fija con el modo vigente en el Panel | Programado |
 | Ventana con la foto y los botones, con límite de 2 minutos | Programado |
-| Abrir el molinete desde "Apto: abrir" | Programado |
-| Marca "Manual" con quien decidió en historial y reportes; motivo "Rostro no coincide" | Programado |
-| Aviso "¿volver a modo normal?" | Programado |
+| Abrir el molinete desde "Registrar prueba" (decide el sistema con el grado) o "Marcó apto" (sin número) | Programado (21/10/2026) |
+| Marca "Manual" con el grado y quien decidió en historial y reportes; motivo "Rostro no coincide" | Programado (grado: 21/10/2026) |
+| Aviso "¿volver a modo normal?" según lo que falló (equipo facial o alcoholímetro) | Programado (alcoholímetro: 21/10/2026) |
+| Activarla desde el recuadro del alcoholímetro y desde el aviso ámbar "No completó" | Programado (21/10/2026) |
 | En modo manual no se envían órdenes al equipo facial (al volver, nadie queda habilitado) | Programado |
 
 Una vez programado, se hace una **prueba en el punto de acceso**: apagar el equipo facial, activar la verificación manual y usar el alcoholímetro de repuesto.

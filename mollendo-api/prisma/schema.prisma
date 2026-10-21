@@ -262,6 +262,10 @@ model EventoAcceso {
   denegadoSinDni           Boolean                 @default(false) @map("denegado_sin_dni")
   /// Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio), no el G4 Pro.
   verificacionManual       Boolean                 @default(false) @map("verificacion_manual")
+  /// Verificación manual: grado que marcó el alcoholímetro de repuesto (mg/L), escrito por el vigilante.
+  gradoManual              Float?                  @map("grado_manual")
+  /// Verificación manual: el alcoholímetro de repuesto no mostró el número; el vigilante eligió lo que marcó.
+  manualSinNumero          Boolean                 @default(false) @map("manual_sin_numero")
   /// Movimiento registrado a mano por un vigilante o administrador para corregir el antipassback
   /// (p. ej. salió en una emergencia con los brazos liberados): no pasó por el molinete.
   correccionManual         Boolean                 @default(false) @map("correccion_manual")
@@ -323,6 +327,8 @@ model IngresoPendiente {
 model PeriodoVerificacionManual {
   id             Int       @id @default(autoincrement())
   motivo         String    @db.VarChar(300)
+  /// Por qué se activó: "terminal" (equipo facial desconectado), "alcoholimetro" (desconectado) o "ambar" (no toma la prueba). null: antes del 21/10/2026.
+  causa          String?   @db.VarChar(20)
   activadoEn     DateTime  @default(now()) @map("activado_en")
   activadoPorId  Int?      @map("activado_por_id")
   activadoPor    Usuario?  @relation("ActivadaPor", fields: [activadoPorId], references: [id], onDelete: SetNull)

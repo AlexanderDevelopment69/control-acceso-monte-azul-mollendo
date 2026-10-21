@@ -14,6 +14,7 @@ import type {
   AvisosSistema,
   EventoAcceso,
   FiltrosLista,
+  CausaVerificacionManual,
   DecisionManual,
   EstadoVerificacionManual,
   EstadoModoIngreso,
@@ -170,8 +171,8 @@ export const eventosAccesoApi = {
   enEspera: () => apiRequest<IngresoEnEspera[]>("/eventos-acceso/en-espera"),
   /** Verificación manual (contingencia por falla del equipo facial). */
   verificacionManual: () => apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual"),
-  activarVerificacionManual: (motivo: string) =>
-    apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual", { method: "POST", body: { motivo } }),
+  activarVerificacionManual: (motivo: string, causa?: CausaVerificacionManual) =>
+    apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual", { method: "POST", body: { motivo, causa } }),
   terminarVerificacionManual: () =>
     apiRequest<EstadoVerificacionManual>("/eventos-acceso/verificacion-manual", { method: "DELETE" }),
   /** Orden del ingreso (facial primero, en prueba); solo el administrador lo cambia. */
@@ -179,8 +180,11 @@ export const eventosAccesoApi = {
   cambiarModoIngreso: (facialPrimero: boolean) =>
     apiRequest<EstadoModoIngreso>("/eventos-acceso/modo-ingreso", { method: "PUT", body: { facialPrimero } }),
   /** Decisión del vigilante sobre la persona en su turno. */
-  decidir: (id: number, decision: DecisionManual) =>
-    apiRequest<{ ok: true }>(`/eventos-acceso/en-espera/${id}/decision`, { method: "POST", body: { decision } }),
+  decidir: (id: number, decision: DecisionManual, grado?: number) =>
+    apiRequest<{ ok: true; autorizado: boolean }>(`/eventos-acceso/en-espera/${id}/decision`, {
+      method: "POST",
+      body: { decision, grado },
+    }),
   /** Corrección manual del antipassback: registra la salida o el ingreso de una persona (no abre el molinete). */
   corregir: (personaId: number, tipoMovimiento: "ingreso" | "salida", motivo: string) =>
     apiRequest<{ eventoId: number }>("/eventos-acceso/correccion", { method: "POST", body: { personaId, tipoMovimiento, motivo } }),

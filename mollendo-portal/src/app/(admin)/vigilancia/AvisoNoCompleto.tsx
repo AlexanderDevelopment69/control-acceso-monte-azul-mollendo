@@ -72,15 +72,19 @@ export function avisoDesdeHistorial(eventos: EventoAcceso[]): AvisoNoCompleto | 
 /**
  * Aviso ámbar arriba del Panel: quién no completó y qué revisar. Se cierra con
  * la ✕. Con el equipo facial desconectado, la causa no es el alcoholímetro.
+ * Con `onActivarManual` (sin verificación manual activa) ofrece activarla: es
+ * la única señal si el alcoholímetro está conectado pero no mide.
  */
 export function AvisoNoCompletoBanner({
   aviso,
   equipoFacialDesconectado = false,
   onCerrar,
+  onActivarManual,
 }: {
   aviso: AvisoNoCompleto;
   equipoFacialDesconectado?: boolean;
   onCerrar: () => void;
+  onActivarManual?: () => void;
 }) {
   const hora = new Date(aviso.fechaHora).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
   return (
@@ -94,6 +98,15 @@ export function AvisoNoCompletoBanner({
           {aviso.persona} no completó rostro y alcohol ({hora}).
         </span>{" "}
         {equipoFacialDesconectado ? PISTA_EQUIPO_DESCONECTADO : PISTA_NO_COMPLETO}
+        {onActivarManual && (
+          <button
+            type="button"
+            onClick={onActivarManual}
+            className="mt-2 block rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          >
+            Activar verificación manual
+          </button>
+        )}
       </p>
       <button
         type="button"

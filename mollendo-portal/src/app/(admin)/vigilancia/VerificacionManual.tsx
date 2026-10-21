@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import type { DecisionManual, EstadoVerificacionManual, IngresoEnEspera } from "@/lib/api/types";
+import React, { useEffect, useState } from "react";
+import type { CausaVerificacionManual, DecisionManual, EstadoVerificacionManual, IngresoEnEspera } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
@@ -10,11 +10,19 @@ import { FotoGuardada } from "@/components/personal/FotoPersonal";
 import { CheckCircleIcon, InfoIcon } from "@/icons";
 
 /*
- * Verificación manual (contingencia por falla del equipo facial,
- * docs/cliente/Contingencias_Equipos_Acceso.md, sección 4): el DNI y los
- * documentos se revisan igual; el vigilante compara el rostro con la foto y
- * toma la prueba de alcohol con el alcoholímetro de repuesto.
+ * Verificación manual (contingencia por falla del equipo facial o del
+ * alcoholímetro, docs/cliente/Contingencias_Equipos_Acceso.md, secciones 3 y 4):
+ * el DNI y los documentos se revisan igual; el vigilante compara el rostro con
+ * la foto, toma la prueba con el alcoholímetro de repuesto y escribe el grado
+ * (decide el sistema).
  */
+
+/** Motivo que viene escrito según desde dónde se activa (se puede cambiar). */
+export const MOTIVO_POR_CAUSA: Record<CausaVerificacionManual, string> = {
+  terminal: "Equipo facial desconectado",
+  alcoholimetro: "Alcoholímetro desconectado",
+  ambar: "El equipo facial no toma la prueba",
+};
 
 /** "15/10 08:30". */
 function diaYHora(iso: string): string {
@@ -60,8 +68,21 @@ export function FranjaVerificacionManual({
   );
 }
 
-/** El equipo facial volvió a conectarse durante la verificación manual: se pregunta, no se vuelve solo. */
-export function AvisoEquipoVolvio({ terminando, onVolver, onSeguir }: { terminando: boolean; onVolver: () => void; onSeguir: () => void }) {
+/**
+ * Volvió lo que motivó la verificación manual (el equipo facial o el
+ * alcoholímetro): se pregunta, no se vuelve solo.
+ */
+export function AvisoEquipoVolvio({
+  equipo = "El equipo facial",
+  terminando,
+  onVolver,
+  onSeguir,
+}: {
+  equipo?: string;
+  terminando: boolean;
+  onVolver: () => void;
+  onSeguir: () => void;
+}) {
   return (
     <div
       role="status"
@@ -70,7 +91,7 @@ export function AvisoEquipoVolvio({ terminando, onVolver, onSeguir }: { terminan
       <p className="flex min-w-0 items-start gap-2.5 text-gray-700 dark:text-gray-300">
         <CheckCircleIcon className="mt-0.5 size-5 shrink-0 text-success-600 dark:text-success-400" aria-hidden />
         <span>
-          <span className="font-semibold text-success-700 dark:text-success-400">El equipo facial volvió a conectarse.</span> ¿Volver
+          <span className="font-semibold text-success-700 dark:text-success-400">{equipo} volvió a conectarse.</span> ¿Volver
           a modo normal?
         </span>
       </p>
@@ -89,16 +110,25 @@ export function AvisoEquipoVolvio({ terminando, onVolver, onSeguir }: { terminan
 /** Ventana para activarla: el motivo es obligatorio y queda en la auditoría. */
 export function ActivarVerificacionManual({
   abierta,
+  causa = "terminal",
   onCerrar,
   onActivar,
 }: {
   abierta: boolean;
+  causa?: CausaVerificacionManual;
   onCerrar: () => void;
   onActivar: (motivo: string) => Promise<void>;
 }) {
-  const [motivo, setMotivo] = useState("Equipo facial desconectado");
+  const [motivo, setMotivo] = useState(MOTIVO_POR_CAUSA[causa]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Cada vez que se abre, el motivo de esa causa.
+  useEffect(() => {
+    if (abierta) {
+      setMotivo(MOTIVO_POR_CAUSA[causa]);
+      setError(null);
+    }
+  }, [abierta, causa]);
 
   async function activar() {
     setGuardando(true);
@@ -116,8 +146,8 @@ export function ActivarVerificacionManual({
     <Modal isOpen={abierta} onClose={onCerrar} bloqueado={guardando} className="max-w-md p-6 sm:p-8">
       <h2 className="mb-2 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Activar verificación manual</h2>
       <p className="text-sm text-gray-600 dark:text-gray-300">
-        Mientras esté activa, cada ingreso lo aprueba el vigilante: compara el rostro con la foto y toma la prueba de alcohol
-        con el alcoholímetro de repuesto.
+        Mientras esté activa, el vigilante compara el rostro con la foto, toma la prueba con el alcoholímetro de repuesto y
+        escribe el grado; el sistema decide si puede entrar.
       </p>
       <label htmlFor="motivo-verificacion-manual" className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">
         Motivo *
@@ -149,10 +179,21 @@ function restante(hasta: string, ahora: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** "0.000" o "0,125" → número (mg/L); null si no es un grado válido. */
+export function leerGrado(texto: string): number | null {
+  const limpio = texto.trim().replace(",", ".");
+  if (!/^\d+(\.\d+)?$/.test(limpio)) return null;
+  const valor = Number(limpio);
+  return Number.isFinite(valor) && valor <= 10 ? valor : null;
+}
+
+const GRADO_INVALIDO = "Escriba el grado que marcó el alcoholímetro (por ejemplo, 0.000).";
+
 /**
- * La persona en su turno: foto grande, datos y los tres botones. Se cierra
- * sola al decidir, al vencer los 2 minutos o si otro vigilante decidió antes
- * (desaparece de las esperas).
+ * La persona en su turno: foto grande, datos, el grado que marcó el
+ * alcoholímetro de repuesto (o, si no muestra el número, lo que marcó) y "No es
+ * la persona". Se cierra sola al decidir, al vencer los 2 minutos o si otro
+ * vigilante decidió antes (desaparece de las esperas).
  */
 export function DecisionManualVentana({
   ingreso,
@@ -161,84 +202,150 @@ export function DecisionManualVentana({
 }: {
   ingreso: IngresoEnEspera | null;
   ahora: number;
-  onDecidir: (id: number, decision: DecisionManual) => Promise<void>;
+  onDecidir: (id: number, decision: DecisionManual, grado?: number) => Promise<void>;
+}) {
+  return (
+    // Sin ✕ ni Esc: la persona espera en el molinete; si no se decide, vence sola a los 2 minutos.
+    <Modal isOpen={!!ingreso} onClose={() => undefined} showCloseButton={false} bloqueado className="max-w-xl p-6 sm:p-8">
+      {/* key: con cada persona, el campo vacío y de nuevo con número. */}
+      {ingreso && <ContenidoDecision key={ingreso.id} ingreso={ingreso} ahora={ahora} onDecidir={onDecidir} />}
+    </Modal>
+  );
+}
+
+function ContenidoDecision({
+  ingreso,
+  ahora,
+  onDecidir,
+}: {
+  ingreso: IngresoEnEspera;
+  ahora: number;
+  onDecidir: (id: number, decision: DecisionManual, grado?: number) => Promise<void>;
 }) {
   const [enviando, setEnviando] = useState<DecisionManual | null>(null);
-  const [error, setError] = useState<{ id: number; texto: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [grado, setGrado] = useState("");
+  const [sinNumero, setSinNumero] = useState(false);
 
   async function decidir(decision: DecisionManual) {
-    if (!ingreso) return;
+    let valor: number | undefined;
+    if (decision === "grado") {
+      const leido = leerGrado(grado);
+      if (leido === null) {
+        setError(GRADO_INVALIDO);
+        return;
+      }
+      valor = leido;
+    }
     setEnviando(decision);
     setError(null);
     try {
-      await onDecidir(ingreso.id, decision);
+      await onDecidir(ingreso.id, decision, valor);
     } catch (err) {
-      setError({ id: ingreso.id, texto: err instanceof ApiError ? err.message : "No se pudo registrar la decisión" });
+      setError(err instanceof ApiError ? err.message : "No se pudo registrar la decisión");
     } finally {
       setEnviando(null);
     }
   }
 
-  const mensaje = error && ingreso && error.id === ingreso.id ? error.texto : null;
+  const enlace =
+    "text-sm font-medium text-brand-600 underline-offset-2 hover:underline disabled:opacity-50 dark:text-brand-400";
   return (
-    // Sin ✕ ni Esc: la persona espera en el molinete; si no se decide, vence sola a los 2 minutos.
-    <Modal isOpen={!!ingreso} onClose={() => undefined} showCloseButton={false} bloqueado className="max-w-xl p-6 sm:p-8">
-      {ingreso && (
-        <>
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Verificación manual de ingreso</h2>
-          {ingreso.hasta && (
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Tiempo para decidir:{" "}
-              <span className="font-semibold tabular-nums text-warning-600 dark:text-orange-400">{restante(ingreso.hasta, ahora)}</span>
-            </p>
+    <>
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Verificación manual de ingreso</h2>
+      {ingreso.hasta && (
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          Tiempo para decidir:{" "}
+          <span className="font-semibold tabular-nums text-warning-600 dark:text-orange-400">{restante(ingreso.hasta, ahora)}</span>
+        </p>
+      )}
+      <div className="grid gap-5 sm:grid-cols-[auto_1fr]">
+        <FotoGuardada personaId={ingreso.personaId} tieneFoto={ingreso.tieneFoto} version={ingreso.fotoVersion} tamano="size-40" />
+        <div className="min-w-0 text-sm">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            <dt className="text-gray-500 dark:text-gray-400">Nombre</dt>
+            <dd className="font-medium text-gray-800 dark:text-white/90">
+              {ingreso.nombres} {ingreso.apellidos}
+            </dd>
+            <dt className="text-gray-500 dark:text-gray-400">DNI</dt>
+            <dd className="font-medium text-gray-800 dark:text-white/90">{ingreso.numeroDocumento}</dd>
+            <dt className="text-gray-500 dark:text-gray-400">Empresa</dt>
+            <dd className="font-medium text-gray-800 dark:text-white/90">{ingreso.empresa ?? "—"}</dd>
+          </dl>
+          <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-success-50 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:bg-success-500/15 dark:text-success-400">
+            ✓ Documentos vigentes
+          </span>
+          {!ingreso.tieneFoto && (
+            <ErrorBanner tono="aviso" className="mt-3">
+              No tiene foto registrada: compare con su DNI.
+            </ErrorBanner>
           )}
-          <div className="grid gap-5 sm:grid-cols-[auto_1fr]">
-            <FotoGuardada personaId={ingreso.personaId} tieneFoto={ingreso.tieneFoto} version={ingreso.fotoVersion} tamano="size-40" />
-            <div className="min-w-0 text-sm">
-              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                <dt className="text-gray-500 dark:text-gray-400">Nombre</dt>
-                <dd className="font-medium text-gray-800 dark:text-white/90">
-                  {ingreso.nombres} {ingreso.apellidos}
-                </dd>
-                <dt className="text-gray-500 dark:text-gray-400">DNI</dt>
-                <dd className="font-medium text-gray-800 dark:text-white/90">{ingreso.numeroDocumento}</dd>
-                <dt className="text-gray-500 dark:text-gray-400">Empresa</dt>
-                <dd className="font-medium text-gray-800 dark:text-white/90">{ingreso.empresa ?? "—"}</dd>
-              </dl>
-              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-success-50 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:bg-success-500/15 dark:text-success-400">
-                ✓ Documentos vigentes
-              </span>
-              {!ingreso.tieneFoto && (
-                <ErrorBanner tono="aviso" className="mt-3">
-                  No tiene foto registrada: compare con su DNI.
-                </ErrorBanner>
-              )}
-              <ol className="mt-3 list-decimal space-y-0.5 pl-5 text-gray-600 dark:text-gray-400">
-                <li>Compare el rostro con la foto.</li>
-                <li>Tome la prueba con el alcoholímetro de repuesto.</li>
-              </ol>
-            </div>
-          </div>
-          {mensaje && <ErrorBanner className="mt-4">{mensaje}</ErrorBanner>}
+          <ol className="mt-3 list-decimal space-y-0.5 pl-5 text-gray-600 dark:text-gray-400">
+            <li>Compare el rostro con la foto.</li>
+            <li>Tómele la prueba con el alcoholímetro de repuesto y escriba lo que marca.</li>
+          </ol>
+        </div>
+      </div>
+      {!sinNumero && (
+        <form
+          className="mt-5"
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            void decidir("grado");
+          }}
+        >
+          <label htmlFor="grado-manual" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Grado de alcohol (mg/L)
+          </label>
+          <input
+            id="grado-manual"
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="0.000"
+            value={grado}
+            onChange={(e) => setGrado(e.target.value)}
+            className="mt-1.5 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 sm:w-48 dark:border-gray-700 dark:text-white/90"
+          />
+          <button type="button" className={`${enlace} mt-2 block`} disabled={!!enviando} onClick={() => { setSinNumero(true); setError(null); }}>
+            Mi alcoholímetro no muestra el número
+          </button>
+        </form>
+      )}
+      {error && <ErrorBanner className="mt-4">{error}</ErrorBanner>}
+      {sinNumero ? (
+        <>
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
             {/* Verde, como "Autorizado" (Button no tiene una variante de éxito). */}
             <button
               type="button"
               disabled={!!enviando}
-              onClick={() => void decidir("apto")}
+              onClick={() => void decidir("marco-apto")}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-success-500 px-5 py-3.5 text-sm font-medium text-white shadow-theme-xs transition hover:bg-success-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {enviando === "apto" ? "Abriendo…" : "✓ Apto: abrir"}
+              {enviando === "marco-apto" ? "Abriendo…" : "Marcó apto"}
             </button>
-            <Button type="button" variant="danger" disabled={!!enviando} onClick={() => void decidir("alcohol")}>
-              {enviando === "alcohol" ? "Registrando…" : "Alcohol: no apto"}
+            <Button type="button" variant="danger" disabled={!!enviando} onClick={() => void decidir("marco-alcohol")}>
+              {enviando === "marco-alcohol" ? "Registrando…" : "Marcó alcohol"}
             </Button>
             <Button type="button" variant="outline" disabled={!!enviando} onClick={() => void decidir("no-es-la-persona")}>
               {enviando === "no-es-la-persona" ? "Registrando…" : "No es la persona"}
             </Button>
           </div>
+          <button type="button" className={`${enlace} mt-3`} disabled={!!enviando} onClick={() => { setSinNumero(false); setError(null); }}>
+            Volver a escribir el grado
+          </button>
         </>
+      ) : (
+        <div className="mt-6 grid gap-2 sm:grid-cols-2">
+          <Button type="button" disabled={!!enviando} onClick={() => void decidir("grado")}>
+            {enviando === "grado" ? "Registrando…" : "Registrar prueba"}
+          </Button>
+          <Button type="button" variant="outline" disabled={!!enviando} onClick={() => void decidir("no-es-la-persona")}>
+            {enviando === "no-es-la-persona" ? "Registrando…" : "No es la persona"}
+          </Button>
+        </div>
       )}
-    </Modal>
+    </>
   );
 }

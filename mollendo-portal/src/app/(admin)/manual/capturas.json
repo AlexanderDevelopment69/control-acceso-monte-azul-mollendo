@@ -532,42 +532,42 @@
   "verificacion-ventana": {
     "imagen": "/manual/verificacion-ventana.webp",
     "ancho": 608,
-    "alto": 392,
+    "alto": 524,
     "puntos": [
       {
         "n": 1,
         "x": 7.89,
-        "y": 21.94,
+        "y": 16.41,
         "lado": "izq"
       },
       {
         "n": 2,
         "x": 61.47,
-        "y": 51.53,
+        "y": 38.55,
         "lado": "der"
       },
       {
         "n": 3,
         "x": 92.11,
-        "y": 62.5,
+        "y": 48.66,
         "lado": "der"
       },
       {
         "n": 4,
-        "x": 21.49,
-        "y": 75.51,
+        "x": 28.62,
+        "y": 81.68,
         "lado": "arriba"
       },
       {
         "n": 5,
-        "x": 50,
-        "y": 75.51,
-        "lado": "arriba"
+        "x": 47.54,
+        "y": 75.19,
+        "lado": "der"
       },
       {
         "n": 6,
-        "x": 78.51,
-        "y": 75.51,
+        "x": 71.38,
+        "y": 81.68,
         "lado": "arriba"
       }
     ]

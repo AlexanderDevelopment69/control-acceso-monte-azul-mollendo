@@ -102,6 +102,17 @@ const ACCION = {
   consulta: 'Consulta',
 } as const;
 
+/**
+ * Verificación manual: lo que marcó el alcoholímetro de repuesto (": 0,000 mg/L"
+ * o ": marcó apto, sin número"). Vacío en las de antes del 21/10/2026 y con
+ * "No es la persona" (no hay prueba).
+ */
+export function textoGradoManual(e: { gradoManual: number | null; manualSinNumero: boolean; resultado: string }): string {
+  if (e.gradoManual !== null) return `: ${e.gradoManual.toFixed(3).replace('.', ',')} mg/L`;
+  if (e.manualSinNumero) return `: marcó ${e.resultado === 'autorizado' ? 'apto' : 'alcohol'}, sin número`;
+  return '';
+}
+
 /** Motivos de denegación de un evento, como en el Panel de vigilancia. */
 export function motivosEvento(e: {
   denegadoNoRegistrado: boolean;
@@ -472,7 +483,7 @@ export class ReportesService {
         e.correccionManual
           ? `Corrección manual (${e.verificadoPor?.correo ?? '-'}): ${e.motivoCorreccion ?? ''}`
           : e.verificacionManual
-            ? `Manual (${e.verificadoPor?.correo ?? 'sin decisión'})`
+            ? `Verificación manual (${e.verificadoPor?.correo ?? 'sin decisión'})${textoGradoManual(e)}`
             : e.sinLector
               ? e.tipoMovimiento === 'salida'
                 ? `Salida sin lector (eligió ${e.verificadoPor?.correo ?? '-'})`

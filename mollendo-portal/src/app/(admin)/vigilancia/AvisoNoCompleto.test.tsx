@@ -92,6 +92,15 @@ describe("Aviso de “no completó rostro y alcohol”", () => {
     expect(screen.getByRole("status")).not.toHaveTextContent("punto rojo");
   });
 
+  it("ofrece activar la verificación manual (alcoholímetro conectado que no mide); con ella activa, no", async () => {
+    const onActivarManual = vi.fn();
+    const { rerender } = render(<AvisoNoCompletoBanner aviso={AVISO} onCerrar={() => {}} onActivarManual={onActivarManual} />);
+    await userEvent.click(screen.getByRole("button", { name: "Activar verificación manual" }));
+    expect(onActivarManual).toHaveBeenCalledTimes(1);
+    rerender(<AvisoNoCompletoBanner aviso={AVISO} onCerrar={() => {}} />);
+    expect(screen.queryByRole("button", { name: "Activar verificación manual" })).not.toBeInTheDocument();
+  });
+
   it("la etiqueta de la tabla explica qué revisar al pasar el mouse (equipo desconectado o alcoholímetro)", () => {
     render(<MotivoDenegacion evento={evento(1, { denegadoSinVerificacion: true })} onVerDocumentos={() => {}} />);
     expect(screen.getByText("No completó rostro y alcohol").closest("[title]")).toHaveAttribute("title", PISTA_TABLA);

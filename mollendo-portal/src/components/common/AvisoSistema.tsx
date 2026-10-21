@@ -88,8 +88,8 @@ export function AvisoSistema() {
           if (!activo) return;
           setAvisos(r.avisos);
           setRevisado(new Date());
-          // Con el equipo facial caído se ofrece la verificación manual (si no está ya activa).
-          if (r.avisos.some((a) => a.tipo === "terminal")) {
+          // Con el equipo facial o el alcoholímetro caído se ofrece la verificación manual (si no está ya activa).
+          if (r.avisos.some((a) => a.tipo === "terminal" || a.tipo === "alcoholimetro")) {
             eventosAccesoApi
               .verificacionManual()
               .then((m) => activo && setManualActiva(m.activa))
@@ -193,14 +193,14 @@ export function AvisoSistema() {
                     </p>
                     <p className="mt-0.5 text-xs leading-snug text-gray-500 dark:text-gray-400">{a.impacto}</p>
                     {a.desde && <p className="mt-1 text-xs text-gray-400">Última vez en línea: {fechaCorta(a.desde)}</p>}
-                    {/* Contingencia por falla del equipo facial (contingencias, sección 4). */}
-                    {a.tipo === "terminal" && !manualActiva && (
+                    {/* Contingencia por falla del equipo facial o del alcoholímetro (contingencias, secciones 3 y 4). */}
+                    {(a.tipo === "terminal" || a.tipo === "alcoholimetro") && !manualActiva && (
                       <button
                         type="button"
                         onClick={() =>
                           pathname === "/vigilancia"
-                            ? window.dispatchEvent(new Event("activar-verificacion-manual"))
-                            : router.push("/vigilancia?activarManual=1")
+                            ? window.dispatchEvent(new CustomEvent("activar-verificacion-manual", { detail: a.tipo }))
+                            : router.push(`/vigilancia?activarManual=${a.tipo}`)
                         }
                         className="mt-2 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
                       >

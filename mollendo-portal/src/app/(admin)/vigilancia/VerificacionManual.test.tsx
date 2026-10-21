@@ -46,6 +46,19 @@ describe("Verificación manual en el Panel", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("si se activó por el alcoholímetro, la pregunta habla del alcoholímetro", () => {
+    render(<AvisoEquipoVolvio equipo="El alcoholímetro" terminando={false} onVolver={() => {}} onSeguir={() => {}} />);
+    expect(screen.getByRole("status")).toHaveTextContent("El alcoholímetro volvió a conectarse. ¿Volver a modo normal?");
+  });
+
+  it("el motivo viene escrito según desde dónde se activa, y el texto dice que el sistema decide", () => {
+    const { rerender } = render(<ActivarVerificacionManual abierta causa="alcoholimetro" onCerrar={() => {}} onActivar={async () => {}} />);
+    expect(screen.getByLabelText("Motivo *")).toHaveValue("Alcoholímetro desconectado");
+    expect(screen.getByText(/escribe el grado; el sistema decide si puede entrar/)).toBeInTheDocument();
+    rerender(<ActivarVerificacionManual abierta causa="ambar" onCerrar={() => {}} onActivar={async () => {}} />);
+    expect(screen.getByLabelText("Motivo *")).toHaveValue("El equipo facial no toma la prueba");
+  });
+
   it("al volver el equipo facial pregunta: volver a modo normal o seguir en manual", async () => {
     const onVolver = vi.fn();
     const onSeguir = vi.fn();
@@ -75,7 +88,7 @@ describe("Verificación manual en el Panel", () => {
     expect(await screen.findByText("La verificación manual ya está activa")).toBeInTheDocument();
   });
 
-  it("la persona en su turno: datos, tiempo y los tres botones", async () => {
+  it("la persona en su turno: datos, tiempo, el grado y 'Registrar prueba' (acepta coma)", async () => {
     const onDecidir = vi.fn().mockResolvedValue(undefined);
     render(<DecisionManualVentana ingreso={JUAN} ahora={new Date("2026-10-15T13:33:18.000Z").getTime()} onDecidir={onDecidir} />);
     expect(screen.getByRole("heading", { name: "Verificación manual de ingreso" })).toBeInTheDocument();
@@ -83,18 +96,42 @@ describe("Verificación manual en el Panel", () => {
     expect(screen.getByText("45678912")).toBeInTheDocument();
     expect(screen.getByText("Transportes Norte")).toBeInTheDocument();
     expect(screen.getByText("1:42")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "✓ Apto: abrir" }));
-    expect(onDecidir).toHaveBeenLastCalledWith(7, "apto");
-    await userEvent.click(screen.getByRole("button", { name: "Alcohol: no apto" }));
-    expect(onDecidir).toHaveBeenLastCalledWith(7, "alcohol");
+    expect(screen.getByText("Tómele la prueba con el alcoholímetro de repuesto y escriba lo que marca.")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Grado de alcohol (mg/L)"), "0,125");
+    await userEvent.click(screen.getByRole("button", { name: "Registrar prueba" }));
+    expect(onDecidir).toHaveBeenLastCalledWith(7, "grado", 0.125);
     await userEvent.click(screen.getByRole("button", { name: "No es la persona" }));
-    expect(onDecidir).toHaveBeenLastCalledWith(7, "no-es-la-persona");
+    expect(onDecidir).toHaveBeenLastCalledWith(7, "no-es-la-persona", undefined);
+  });
+
+  it("sin grado (o con letras) no se registra y lo pide", async () => {
+    const onDecidir = vi.fn().mockResolvedValue(undefined);
+    render(<DecisionManualVentana ingreso={JUAN} ahora={Date.now()} onDecidir={onDecidir} />);
+    await userEvent.click(screen.getByRole("button", { name: "Registrar prueba" }));
+    expect(screen.getByText("Escriba el grado que marcó el alcoholímetro (por ejemplo, 0.000).")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Grado de alcohol (mg/L)"), "abc");
+    await userEvent.click(screen.getByRole("button", { name: "Registrar prueba" }));
+    expect(onDecidir).not.toHaveBeenCalled();
+  });
+
+  it("si el alcoholímetro no muestra el número: 'Marcó apto' / 'Marcó alcohol', y se puede volver al grado", async () => {
+    const onDecidir = vi.fn().mockResolvedValue(undefined);
+    render(<DecisionManualVentana ingreso={JUAN} ahora={Date.now()} onDecidir={onDecidir} />);
+    await userEvent.click(screen.getByRole("button", { name: "Mi alcoholímetro no muestra el número" }));
+    expect(screen.queryByLabelText("Grado de alcohol (mg/L)")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Marcó apto" }));
+    expect(onDecidir).toHaveBeenLastCalledWith(7, "marco-apto", undefined);
+    await userEvent.click(screen.getByRole("button", { name: "Marcó alcohol" }));
+    expect(onDecidir).toHaveBeenLastCalledWith(7, "marco-alcohol", undefined);
+    await userEvent.click(screen.getByRole("button", { name: "Volver a escribir el grado" }));
+    expect(screen.getByLabelText("Grado de alcohol (mg/L)")).toBeInTheDocument();
   });
 
   it("si otro vigilante ya decidió, lo avisa", async () => {
     const onDecidir = vi.fn().mockRejectedValue(new ApiError("Esa persona ya no está esperando la verificación manual (venció o ya se decidió)", 400));
     render(<DecisionManualVentana ingreso={JUAN} ahora={Date.now()} onDecidir={onDecidir} />);
-    await userEvent.click(screen.getByRole("button", { name: "✓ Apto: abrir" }));
+    await userEvent.type(screen.getByLabelText("Grado de alcohol (mg/L)"), "0.000");
+    await userEvent.click(screen.getByRole("button", { name: "Registrar prueba" }));
     expect(await screen.findByText(/ya no está esperando/)).toBeInTheDocument();
   });
 
@@ -103,10 +140,15 @@ describe("Verificación manual en el Panel", () => {
     expect(screen.queryByRole("heading", { name: "Verificación manual de ingreso" })).not.toBeInTheDocument();
   });
 
-  it("historial: marca 'Manual' con el vigilante, y el motivo 'Rostro no coincide'", () => {
+  it("historial: marca 'Manual' con el grado (o sin número) y el vigilante, y el motivo 'Rostro no coincide'", () => {
     render(
       <>
-        <MarcaVerificacionManual evento={{ verificacionManual: true, verificadoPor: { id: 2, correo: "vigilancia@mollendo.local" } }} />
+        <MarcaVerificacionManual
+          evento={{ verificacionManual: true, verificadoPor: { id: 2, correo: "vigilancia@mollendo.local" }, gradoManual: 0, resultado: "autorizado" }}
+        />
+        <MarcaVerificacionManual
+          evento={{ verificacionManual: true, verificadoPor: { id: 2, correo: "vigilancia@mollendo.local" }, manualSinNumero: true, resultado: "denegado" }}
+        />
         <MotivoDenegacion
           evento={{
             denegadoNoRegistrado: false,
@@ -121,7 +163,8 @@ describe("Verificación manual en el Panel", () => {
         />
       </>,
     );
-    expect(screen.getByText("Manual · vigilancia@mollendo.local")).toBeInTheDocument();
+    expect(screen.getByText("Manual · 0,000 mg/L · vigilancia@mollendo.local")).toBeInTheDocument();
+    expect(screen.getByText("Manual · marcó alcohol, sin número · vigilancia@mollendo.local")).toBeInTheDocument();
     expect(screen.getByText("Rostro no coincide")).toBeInTheDocument();
   });
 });

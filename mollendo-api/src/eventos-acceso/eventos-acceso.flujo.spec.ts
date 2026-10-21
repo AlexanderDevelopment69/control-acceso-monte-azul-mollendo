@@ -4,7 +4,7 @@
  * Usa una base de datos falsa en memoria con solo las consultas que necesita
  * EventosAccesoService, y un reloj controlado.
  */
-import { EventosAccesoService } from './eventos-acceso.service.js';
+import { EventosAccesoService, gradoManualConforme, type DecisionManual } from './eventos-acceso.service.js';
 import type { AttlogRecibidoEvent, RtlogRecibidoEvent } from '../push-sdk/push-sdk.service.js';
 
 type Fila = Record<string, unknown> & { id: number };
@@ -387,8 +387,8 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
 
   describe('verificación manual (equipo facial fuera de servicio)', () => {
     const vigilante = { id: 2, empresaId: 1, rol: 'vigilancia', correo: 'vigilancia@mollendo.local' } as const;
-    const decidir = (decision: 'apto' | 'alcohol' | 'no-es-la-persona', id = base.pendientes[0].id) =>
-      servicio.decidirManual(id, decision, vigilante as never);
+    const decidir = (decision: DecisionManual, id = base.pendientes[0].id, grado?: number) =>
+      servicio.decidirManual(id, decision, vigilante as never, grado);
 
     beforeEach(() => {
       manualActiva = true;
@@ -402,29 +402,71 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       expect(de('ingreso.en-espera')[0]).toMatchObject({ numeroDocumento: '11111111', enCola: false, manual: true });
     });
 
-    it('"Apto: abrir": ingreso autorizado, marcado como manual con el vigilante, y se abre el molinete', async () => {
+    it('"Registrar prueba" bajo el límite: autorizado, con el grado y el vigilante, y se abre el molinete', async () => {
       agregarPersona(base, '11111111');
       await ingreso('11111111');
-      await decidir('apto');
-      expect(base.eventos[0]).toMatchObject({ resultado: 'autorizado', verificacionManual: true, verificadoPorId: 2 });
+      await expect(decidir('grado', undefined, 0)).resolves.toMatchObject({ autorizado: true });
+      expect(base.eventos[0]).toMatchObject({
+        resultado: 'autorizado',
+        verificacionManual: true,
+        verificadoPorId: 2,
+        gradoManual: 0,
+        manualSinNumero: false,
+      });
       expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'ingreso' })]);
-      expect(de('evento-acceso.registrado')[0]).toMatchObject({ verificacionManual: true, verificadoPor: 'vigilancia@mollendo.local' });
+      expect(de('evento-acceso.registrado')[0]).toMatchObject({
+        verificacionManual: true,
+        verificadoPor: 'vigilancia@mollendo.local',
+        gradoManual: 0,
+      });
       expect(de('g4pro.habilitar')).toHaveLength(0); // tampoco se manda "quitar permiso"
     });
 
-    it('"Alcohol: no apto" y "No es la persona": denegados, sin molinete', async () => {
+    it('el sistema decide con el umbral del equipo facial (0,0001 g/L = 0,100 mg/L)', async () => {
+      expect(gradoManualConforme(0.099)).toBe(true);
+      expect(gradoManualConforme(0.1)).toBe(false);
+      agregarPersona(base, '11111111');
+      await ingreso('11111111');
+      await expect(decidir('grado', undefined, 0.12)).resolves.toMatchObject({ autorizado: false });
+      expect(base.eventos[0]).toMatchObject({ resultado: 'denegado', denegadoPorAlcohol: true, gradoManual: 0.12 });
+      expect(de('molinete.abrir')).toHaveLength(0);
+    });
+
+    it('sin el grado no se registra la prueba', async () => {
+      agregarPersona(base, '11111111');
+      await ingreso('11111111');
+      await expect(decidir('grado')).rejects.toThrow(/Escriba el grado/);
+      await expect(decidir('grado', undefined, -1)).rejects.toThrow(/Escriba el grado/);
+      await expect(decidir('grado', undefined, 25)).rejects.toThrow(/Escriba el grado/);
+      expect(base.eventos).toHaveLength(0);
+    });
+
+    it('sin número: "marcó apto" abre y "marcó alcohol" deniega, y queda que fue sin número', async () => {
       agregarPersona(base, '11111111');
       agregarPersona(base, '22222222');
       await ingreso('11111111');
       await ingreso('22222222');
-      await decidir('alcohol', base.pendientes[0].id);
-      await decidir('no-es-la-persona', base.pendientes[1].id);
-      expect(base.eventos.map((e) => [e.resultado, e.denegadoPorAlcohol, e.denegadoRostroNoCoincide])).toEqual([
-        ['denegado', true, false],
-        ['denegado', false, true],
+      await decidir('marco-apto', base.pendientes[0].id);
+      await decidir('marco-alcohol', base.pendientes[1].id);
+      expect(base.eventos.map((e) => [e.resultado, e.denegadoPorAlcohol, e.manualSinNumero, e.gradoManual ?? null])).toEqual([
+        ['autorizado', false, true, null],
+        ['denegado', true, true, null],
+      ]);
+    });
+
+    it('"No es la persona": denegado sin molinete y sin prueba; "apto" y "alcohol" de antes valen como sin número', async () => {
+      agregarPersona(base, '11111111');
+      agregarPersona(base, '22222222');
+      await ingreso('11111111');
+      await ingreso('22222222');
+      await decidir('no-es-la-persona', base.pendientes[0].id);
+      await decidir('alcohol', base.pendientes[1].id);
+      expect(base.eventos.map((e) => [e.resultado, e.denegadoPorAlcohol, e.denegadoRostroNoCoincide, e.manualSinNumero])).toEqual([
+        ['denegado', false, true, false],
+        ['denegado', true, false, true],
       ]);
       expect(de('molinete.abrir')).toHaveLength(0);
-      expect(de('evento-acceso.registrado')[1]).toMatchObject({ motivos: { rostroNoCoincide: true } });
+      expect(de('evento-acceso.registrado')[0]).toMatchObject({ motivos: { rostroNoCoincide: true } });
     });
 
     it('de una persona a la vez: la segunda espera su turno y no se puede decidir antes', async () => {
@@ -433,9 +475,9 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       await ingreso('11111111');
       await ingreso('22222222');
       expect(de('ingreso.en-espera')[1]).toMatchObject({ numeroDocumento: '22222222', enCola: true });
-      await expect(decidir('apto', base.pendientes[1].id)).rejects.toThrow(/ya no está esperando/);
-      await decidir('apto', base.pendientes[0].id);
-      await decidir('apto', base.pendientes[1].id);
+      await expect(decidir('marco-apto', base.pendientes[1].id)).rejects.toThrow(/ya no está esperando/);
+      await decidir('grado', base.pendientes[0].id, 0);
+      await decidir('grado', base.pendientes[1].id, 0);
       expect(base.eventos.map((e) => e.numeroDocumento)).toEqual(['11111111', '22222222']);
     });
 
@@ -448,7 +490,7 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       avanzar(60_000);
       await vencidos();
       expect(base.eventos[0]).toMatchObject({ resultado: 'denegado', denegadoSinVerificacion: true, verificacionManual: true });
-      await expect(decidir('apto')).rejects.toThrow(/ya no está esperando/);
+      await expect(decidir('grado', undefined, 0)).rejects.toThrow(/ya no está esperando/);
     });
 
     it('lo que mande el G4 Pro no cierra una espera manual', async () => {
@@ -462,8 +504,8 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
     it('una decisión no se aplica dos veces', async () => {
       agregarPersona(base, '11111111');
       await ingreso('11111111');
-      await decidir('apto');
-      await expect(decidir('apto')).rejects.toThrow(/ya no está esperando/);
+      await decidir('grado', undefined, 0);
+      await expect(decidir('grado', undefined, 0)).rejects.toThrow(/ya no está esperando/);
       expect(base.eventos).toHaveLength(1);
     });
   });

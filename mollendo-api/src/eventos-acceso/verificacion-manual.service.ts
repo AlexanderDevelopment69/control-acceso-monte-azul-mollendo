@@ -4,10 +4,13 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 
+/** Desde dónde se activó (decide qué vuelta se espera para preguntar si se vuelve a modo normal). */
+export type CausaVerificacionManual = 'terminal' | 'alcoholimetro' | 'ambar';
+
 /** Verificación manual vigente, para el Panel (null = modo normal, con el equipo facial). */
 export interface EstadoVerificacionManual {
   activa: boolean;
-  periodo: { id: number; motivo: string; desde: string; activadaPor: string | null } | null;
+  periodo: { id: number; motivo: string; causa: CausaVerificacionManual | null; desde: string; activadaPor: string | null } | null;
 }
 
 /**
@@ -41,15 +44,23 @@ export class VerificacionManualService {
     const p = await this.periodoAbierto();
     return {
       activa: !!p,
-      periodo: p ? { id: p.id, motivo: p.motivo, desde: p.activadoEn.toISOString(), activadaPor: p.activadoPor?.correo ?? null } : null,
+      periodo: p
+        ? {
+            id: p.id,
+            motivo: p.motivo,
+            causa: (p.causa as CausaVerificacionManual | null) ?? null,
+            desde: p.activadoEn.toISOString(),
+            activadaPor: p.activadoPor?.correo ?? null,
+          }
+        : null,
     };
   }
 
-  async activar(motivo: string, usuario: AuthenticatedUser): Promise<EstadoVerificacionManual> {
+  async activar(motivo: string, usuario: AuthenticatedUser, causa?: CausaVerificacionManual): Promise<EstadoVerificacionManual> {
     const texto = motivo.trim();
     if (texto.length < 3) throw new BadRequestException('Escriba el motivo de la verificación manual');
     if (await this.activa()) throw new BadRequestException('La verificación manual ya está activa');
-    const periodo = await this.prisma.periodoVerificacionManual.create({ data: { motivo: texto, activadoPorId: usuario.id } });
+    const periodo = await this.prisma.periodoVerificacionManual.create({ data: { motivo: texto, causa: causa ?? null, activadoPorId: usuario.id } });
     await this.auditoria.registrar({ usuarioId: usuario.id, tablaAfectada: 'periodo_verificacion_manual', registroId: periodo.id, accion: 'crear' });
     return this.avisar();
   }

@@ -237,23 +237,27 @@ DNI leído en ingreso: pendiente_verificacion`,
       "Queda marcado en el Panel (\"Sin lector de DNI: identificado por rostro\" / \"Salida sin lector · correo\"), en el reporte de ingresos y salidas y, la salida, en la Auditoría (\"apertura manual\"). Termina sola al volver el lector.",
   },
   {
-    nombre: "Verificación manual (equipo facial fuera de servicio)",
+    nombre: "Verificación manual (equipo facial o alcoholímetro fuera de servicio)",
     endpoint: "/eventos-acceso/verificacion-manual · /eventos-acceso/en-espera/:id/decision",
     metodo: "GET · POST · DELETE",
     descripcion:
-      "La activan el vigilante o el administrador desde el Panel (POST, con motivo obligatorio) y la terminan con DELETE; GET dice si está activa. Mientras tanto, cada DNI en regla queda esperando la decisión del vigilante (2 minutos): POST /eventos-acceso/en-espera/:id/decision con \"apto\", \"alcohol\" o \"no-es-la-persona\". En tiempo real: verificacion-manual.",
+      "La activan el vigilante o el administrador desde el Panel (POST, con motivo obligatorio y la causa: \"terminal\", \"alcoholimetro\" o \"ambar\", según desde dónde se activó) y la terminan con DELETE; GET dice si está activa. Mientras tanto, cada DNI en regla queda esperando la decisión del vigilante (2 minutos): POST /eventos-acceso/en-espera/:id/decision con \"grado\" y lo que marcó el alcoholímetro de repuesto en mg/L (decide el sistema, con el mismo umbral del equipo facial), \"marco-apto\" o \"marco-alcohol\" si no muestra el número, o \"no-es-la-persona\". En tiempo real: verificacion-manual.",
     autenticacion: "JWT (Administrador / Vigilancia)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
     ejemploRequest: `// POST /eventos-acceso/verificacion-manual
-{ "motivo": "Terminal facial desconectado" }
+{ "motivo": "Alcoholímetro desconectado", "causa": "alcoholimetro" }
 
 // POST /eventos-acceso/en-espera/77/decision
-{ "decision": "apto" }`,
+{ "decision": "grado", "grado": 0.000 }
+{ "decision": "marco-apto" }        // el alcoholímetro no muestra el número`,
     ejemploRespuesta: `// GET /eventos-acceso/verificacion-manual
-{ "activa": true, "periodo": { "id": 7, "motivo": "Terminal facial desconectado", "desde": "2026-10-21T12:54:54.135Z", "activadaPor": "vigilante@empresa.com" } }`,
+{ "activa": true, "periodo": { "id": 7, "motivo": "Alcoholímetro desconectado", "causa": "alcoholimetro", "desde": "2026-10-21T12:54:54.135Z", "activadaPor": "vigilante@empresa.com" } }
+
+// POST …/decision
+{ "ok": true, "autorizado": true }`,
     notas:
-      "El ingreso queda marcado \"Manual\" con quién decidió, en el Panel y en el reporte. Activarla y terminarla quedan en la Auditoría. Con la verificación manual activa, la prueba del equipo facial y la tarjeta de contingencia no se usan.",
+      "El ingreso queda marcado \"Manual\" con el grado (o \"sin número\") y quién decidió, en el Panel y en el reporte (gradoManual, manualSinNumero). Activarla y terminarla quedan en la Auditoría. Con la verificación manual activa, la prueba del equipo facial y la tarjeta de contingencia no se usan.",
   },
   {
     nombre: "Ingresos en espera (Panel de vigilancia)",

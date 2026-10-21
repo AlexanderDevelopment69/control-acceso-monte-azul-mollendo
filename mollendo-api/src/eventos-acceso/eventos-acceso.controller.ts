@@ -102,7 +102,7 @@ export class EventosAccesoController {
   @Post('verificacion-manual')
   @Roles('administrador', 'vigilancia')
   activarVerificacionManual(@Body() dto: ActivarVerificacionManualDto, @CurrentUser() usuario: AuthenticatedUser) {
-    return this.verificacionManual.activar(dto.motivo, usuario);
+    return this.verificacionManual.activar(dto.motivo, usuario, dto.causa);
   }
 
   @Delete('verificacion-manual')
@@ -111,7 +111,7 @@ export class EventosAccesoController {
     return this.verificacionManual.terminar(usuario);
   }
 
-  /** Orden del ingreso: primero el DNI (normal) o primero rostro y alcohol (en prueba). */
+  /** Orden del ingreso: DNI → Facial + Alcohol o Facial + Alcohol → DNI. */
   @Get('modo-ingreso')
   @Roles('administrador', 'vigilancia')
   modoIngresoEstado() {
@@ -128,7 +128,7 @@ export class EventosAccesoController {
   @Post('en-espera/:id/decision')
   @Roles('administrador', 'vigilancia')
   decidir(@Param('id', ParseIntPipe) id: number, @Body() dto: DecisionManualDto, @CurrentUser() usuario: AuthenticatedUser) {
-    return this.eventosAccesoService.decidirManual(id, dto.decision, usuario);
+    return this.eventosAccesoService.decidirManual(id, dto.decision, usuario, dto.grado);
   }
 
   /**

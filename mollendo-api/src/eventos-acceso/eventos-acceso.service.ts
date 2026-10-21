@@ -11,7 +11,7 @@ import type { Persona, Prisma } from '../generated/prisma/client.js';
 import { paginacion, palabras, rangoDeDias, type Paginado } from '../common/paginacion.js';
 import type { AttlogRecibidoEvent, RtlogRecibidoEvent } from '../push-sdk/push-sdk.service.js';
 import { leerModoAsistencia } from '../push-sdk/protocolo-g4.js';
-import { alcoholConforme } from '../push-sdk/asistencia.util.js';
+import { alcoholConforme, umbralAlcohol } from '../push-sdk/asistencia.util.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 import { VerificacionManualService } from './verificacion-manual.service.js';
 import { ModoIngresoService } from './modo-ingreso.service.js';
@@ -140,8 +140,17 @@ export interface QuienAproboEvent {
   horaDispositivo: Date;
 }
 
-/** Decisión del vigilante en la verificación manual. */
-export type DecisionManual = 'apto' | 'alcohol' | 'no-es-la-persona';
+/** Decisión del vigilante en la verificación manual ("apto" / "alcohol": las de antes del 21/10/2026, sin número). */
+export type DecisionManual = 'grado' | 'marco-apto' | 'marco-alcohol' | 'no-es-la-persona' | 'apto' | 'alcohol';
+
+/**
+ * ¿Pasa la prueba con el grado del alcoholímetro de repuesto? El vigilante lo
+ * escribe en mg/L (lo que muestra su pantalla) y se compara con el mismo umbral
+ * del equipo facial, que está en g/L (1 g/L = 1000 mg/L).
+ */
+export function gradoManualConforme(gradoMgL: number, umbralGL = umbralAlcohol()): boolean {
+  return gradoMgL / 1000 < umbralGL;
+}
 
 /** Cada cuánto se revisan las esperas vencidas. */
 const REVISION_VENCIDOS_MS = 5000;
@@ -1029,6 +1038,9 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       fechaHora?: Date;
       /** Verificación manual: el vigilante que decidió. */
       verificadoPor?: AuthenticatedUser;
+      /** Verificación manual: grado del alcoholímetro de repuesto (mg/L), o sin número. */
+      gradoManual?: number;
+      manualSinNumero?: boolean;
     },
     verificacionId?: number,
   ) {
@@ -1044,6 +1056,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         denegadoRostroNoCoincide: resultado.denegadoRostroNoCoincide ?? false,
         verificacionManual: pendiente.manual,
         verificadoPorId: resultado.verificadoPor?.id,
+        gradoManual: resultado.gradoManual,
+        manualSinNumero: resultado.manualSinNumero ?? false,
         torniqueteId: pendiente.torniqueteId ?? undefined,
         ...(resultado.fechaHora ? { fechaHora: resultado.fechaHora } : {}),
       },
@@ -1082,6 +1096,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       },
       verificacionManual: pendiente.manual,
       verificadoPor: resultado.verificadoPor?.correo ?? null,
+      gradoManual: resultado.gradoManual ?? null,
+      manualSinNumero: resultado.manualSinNumero ?? false,
     });
     this.eventEmitter.emit('ingreso.espera-terminada', { id: pendiente.id });
     await this.habilitarSiguiente();
@@ -1216,24 +1232,34 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Decisión del vigilante en la verificación manual: "apto" abre el molinete;
-   * "alcohol" y "no es la persona" lo deniegan (y suena el aviso de denegado).
-   * Solo vale para la persona en su turno: si ya venció o la decidió otro
-   * vigilante, se avisa y no se hace nada.
+   * Decisión del vigilante en la verificación manual. Con "grado" decide el
+   * sistema: bajo el umbral abre el molinete; igual o sobre él, deniega por
+   * alcohol. Si el alcoholímetro de repuesto no muestra el número, el vigilante
+   * elige lo que marcó ("marco-apto" / "marco-alcohol") y queda "sin número".
+   * "No es la persona" deniega. Solo vale para la persona en su turno: si ya
+   * venció o la decidió otro vigilante, se avisa y no se hace nada.
    */
-  async decidirManual(pendienteId: number, decision: DecisionManual, usuario: AuthenticatedUser) {
+  async decidirManual(pendienteId: number, decision: DecisionManual, usuario: AuthenticatedUser, grado?: number) {
+    if (decision === 'grado' && (grado === undefined || !Number.isFinite(grado) || grado < 0 || grado > 10)) {
+      throw new BadRequestException('Escriba el grado que marcó el alcoholímetro (por ejemplo, 0.000).');
+    }
+    const noEsLaPersona = decision === 'no-es-la-persona';
+    const sinNumero = !noEsLaPersona && decision !== 'grado';
+    const apto = decision === 'grado' ? gradoManualConforme(grado!) : decision === 'marco-apto' || decision === 'apto';
     return this.enSerie(async () => {
       const enTurno = await this.enTurno();
       if (!enTurno || enTurno.id !== pendienteId || !enTurno.manual) {
         throw new BadRequestException('Esa persona ya no está esperando la verificación manual (venció o ya se decidió)');
       }
       await this.cerrarEspera(enTurno, {
-        autorizado: decision === 'apto',
-        denegadoPorAlcohol: decision === 'alcohol',
-        denegadoRostroNoCoincide: decision === 'no-es-la-persona',
+        autorizado: !noEsLaPersona && apto,
+        denegadoPorAlcohol: !noEsLaPersona && !apto,
+        denegadoRostroNoCoincide: noEsLaPersona,
         verificadoPor: usuario,
+        gradoManual: decision === 'grado' ? grado : undefined,
+        manualSinNumero: sinNumero,
       });
-      return { ok: true };
+      return { ok: true, autorizado: !noEsLaPersona && apto };
     });
   }
 

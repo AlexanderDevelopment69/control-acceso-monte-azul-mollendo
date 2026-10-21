@@ -7,7 +7,7 @@ Versión 1.1 · 21 de octubre de 2026
 | Versión | Fecha | Descripción |
 |---|---|---|
 | Final | 30/09/2026 | Versión final. |
-| 1.1 | 21/10/2026 | Ingreso con el terminal facial en modo asistencia y sus dos órdenes (DNI → Facial + Alcohol y Facial + Alcohol → DNI) y plazos medidos; verificación manual; tarjeta de contingencia; contingencia "sin lector"; "Presentes ahora" para el vigilante; orden del ingreso y monitor del terminal en Sistema y APIs; Auditoría con desconexiones de equipos (también del alcoholímetro, revisado cada 10 segundos), aperturas del molinete sin DNI, salida sin DNI, sincronización con el terminal, descargas de reportes y archivos abiertos; aviso de fallas en vivo; HTTPS. |
+| 1.1 | 21/10/2026 | Ingreso con el terminal facial en modo asistencia y sus dos órdenes (DNI → Facial + Alcohol y Facial + Alcohol → DNI) y plazos medidos; verificación manual (con el grado del alcoholímetro de repuesto; también si falla el alcoholímetro); tarjeta de contingencia; contingencia "sin lector"; "Presentes ahora" para el vigilante; orden del ingreso y monitor del terminal en Sistema y APIs; Auditoría con desconexiones de equipos (también del alcoholímetro, revisado cada 10 segundos), aperturas del molinete sin DNI, salida sin DNI, sincronización con el terminal, descargas de reportes y archivos abiertos; aviso de fallas en vivo; HTTPS. |
 
 ## Contenido
 
@@ -51,7 +51,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Reportes en Excel o PDF (sección 4.5).
 - Perfil de la persona (sección 4.2): personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica: no cambia la validación del ingreso ni los documentos exigidos.
 - Antipassback estricto (RN-08a) y orden del ingreso **Facial + Alcohol → DNI** (RN-03).
-- Contingencias del punto de acceso: verificación manual si falla el terminal facial, tarjeta de contingencia para el personal sin DNI y contingencia "sin lector" si falla un lector de DNI (sección 4.10 y RN-16 a RN-18). El detalle está en el documento de contingencias.
+- Contingencias del punto de acceso: verificación manual si falla el terminal facial o el alcoholímetro, tarjeta de contingencia para el personal sin DNI y contingencia "sin lector" si falla un lector de DNI (sección 4.10 y RN-16 a RN-18). El detalle está en el documento de contingencias.
 
 **Fuera del alcance base:**
 
@@ -371,7 +371,7 @@ Menú **Contingencias → Tarjetas de contingencia**. Cada tarjeta se muestra co
 | RN-13 | **Contraseñas** de al menos 8 caracteres. Al cambiarla se cierran las demás sesiones de esa cuenta. |
 | RN-14 | Toda creación, modificación o eliminación de datos queda en la **Auditoría** con el usuario y la fecha; también los inicios de sesión, las aperturas del molinete sin DNI, la salida sin DNI, la sincronización con el terminal facial, las descargas de reportes, los archivos de documentos abiertos y cada desconexión y vuelta de los equipos (a nombre de "Sistema"). |
 | RN-15 | "Hoy" y los vencimientos se calculan con la **hora de Lima**, independientemente de la configuración del servidor. |
-| RN-16 | **Verificación manual** (falla del terminal facial): la activan el vigilante o el administrador desde el Panel. Al pasar un DNI en regla, el Panel muestra su foto y el vigilante compara el rostro, toma la prueba de alcohol con el alcoholímetro de repuesto y aprueba o deniega en 2 minutos. Queda marcado "Manual", con quién decidió. |
+| RN-16 | **Verificación manual** (falla del terminal facial o del alcoholímetro): la activan el vigilante o el administrador desde el Panel (en el aviso rojo del terminal o del alcoholímetro, o en el aviso ámbar "No completó"). Al pasar un DNI en regla, el Panel muestra su foto; el vigilante compara el rostro, toma la prueba con el alcoholímetro de repuesto y escribe el grado (mg/L), y **el sistema decide** con el mismo umbral del terminal; si el repuesto no muestra el número, el vigilante elige "Marcó apto" o "Marcó alcohol" y queda "sin número". Tiene 2 minutos. Queda marcado "Manual", con el grado y quién decidió. |
 | RN-17 | **Tarjeta de contingencia** (personal sin DNI o DNI que el lector no lee): sola no abre. En el ingreso, con el orden Facial + Alcohol → DNI, el vigilante la pasa en lugar del DNI y entra quien aprobó rostro y alcohol, con sus documentos revisados (si hay dos personas esperando a la vez, no abre). En la salida, el vigilante elige al personal en el Panel ("Salida sin DNI") y tiene 2 minutos para pasarla. Desactivada, vencida o con el código cambiado, no abre y suena el aviso. Cada uso queda registrado. |
 | RN-18 | **Contingencia "sin lector":** con el lector de DNI de una puerta desconectado y el controlador en línea, se activa sola y se avisa en el Panel. Ingreso (Facial + Alcohol → DNI): quien aprueba rostro y alcohol entra sin pasar el DNI, con sus documentos revisados ("Sin lector de DNI: identificado por rostro"). Salida: el vigilante la abre desde "Presentes ahora" a quien figura dentro ("Salida sin lector", con quién la abrió). Termina sola al volver el lector. |
 
@@ -497,7 +497,7 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Emergencia o corte de luz en los molinetes | Los brazos de los molinetes se liberan automáticamente (función propia del equipo). |
 | Sin conexión a internet (modalidad con servidor en la nube) | El controlador detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: el Controlador (PC) guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
 | Falla del alcoholímetro | Si se desconecta, el aviso de fallas lo muestra en unos 10 segundos (uno conectado pero apagado o malogrado todavía no se detecta). Se conecta el alcoholímetro de repuesto al terminal facial; nadie ingresa sin la prueba de alcohol. |
-| Falla del terminal facial | **Verificación manual** (RN-16): el vigilante compara el rostro y toma la prueba con el alcoholímetro de repuesto. |
+| Falla del terminal facial | **Verificación manual** (RN-16): el vigilante compara el rostro, toma la prueba con el alcoholímetro de repuesto y escribe el grado; el sistema decide. |
 | Falla de un lector de DNI | Contingencia **"sin lector"** (RN-18), que se activa sola, mientras se conecta el lector de repuesto. |
 | Personal sin DNI, o DNI que el lector no lee | **Tarjeta de contingencia** (RN-17). |
 

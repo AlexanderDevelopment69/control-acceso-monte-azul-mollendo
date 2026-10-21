@@ -2,7 +2,7 @@ import ExcelJS from 'exceljs';
 import { generarExcel } from './reporte-excel.js';
 import { generarPdf } from './reporte-pdf.js';
 import { leyenda, textoDia, textoDuracion, textoFecha, textoFechaHora, textoHoras, type Reporte } from './reporte.types.js';
-import { nombreSeguro, rutaUnica } from './reportes.service.js';
+import { nombreSeguro, rutaUnica, textoGradoManual } from './reportes.service.js';
 
 const reporte: Reporte = {
   titulo: 'Prueba de reporte',
@@ -139,5 +139,15 @@ describe('nombres dentro del ZIP de documentos', () => {
     expect(rutaUnica('archivos/a/SCTR_v1.pdf', usados)).toBe('archivos/a/SCTR_v1.pdf');
     expect(rutaUnica('archivos/a/sctr_v1.pdf', usados)).toBe('archivos/a/sctr_v1_2.pdf');
     expect(rutaUnica('archivos/a/SCTR_v1.pdf', usados)).toBe('archivos/a/SCTR_v1_3.pdf');
+  });
+});
+
+describe('Excel: verificación manual con el grado', () => {
+  it('con número, sin número, y las de antes (sin nada)', () => {
+    expect(textoGradoManual({ gradoManual: 0, manualSinNumero: false, resultado: 'autorizado' })).toBe(': 0,000 mg/L');
+    expect(textoGradoManual({ gradoManual: 0.125, manualSinNumero: false, resultado: 'denegado' })).toBe(': 0,125 mg/L');
+    expect(textoGradoManual({ gradoManual: null, manualSinNumero: true, resultado: 'autorizado' })).toBe(': marcó apto, sin número');
+    expect(textoGradoManual({ gradoManual: null, manualSinNumero: true, resultado: 'denegado' })).toBe(': marcó alcohol, sin número');
+    expect(textoGradoManual({ gradoManual: null, manualSinNumero: false, resultado: 'autorizado' })).toBe('');
   });
 });

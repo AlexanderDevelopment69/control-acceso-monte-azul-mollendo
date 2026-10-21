@@ -642,7 +642,7 @@ export const SECCIONES: SeccionManual[] = [
         ),
       },
       {
-        titulo: "Si falla el terminal",
+        titulo: "Si falla el equipo facial o el alcoholímetro",
         descripcion: "Cómo pasar a verificación manual",
         clave: "verificacion-activar",
         puntos: [
@@ -650,8 +650,9 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "El aviso rojo",
             texto: (
               <p>
-                Si el terminal facial deja de responder 2 minutos, aparece <b>“Terminal facial… Desconectado”</b>. Nadie puede completar
-                rostro y alcohol: los ingresos se deniegan al minuto.
+                Si el equipo facial deja de responder unos 20 segundos, aparece <b>“Terminal facial… Desconectado”</b>; si se desconecta el
+                alcoholímetro, <b>“Alcoholímetro (DT1700)… Desconectado”</b>. Nadie puede completar rostro y alcohol. Si el alcoholímetro
+                está conectado pero no mide, no hay aviso rojo: la persona no puede soplar y aparece el aviso ámbar <b>“No completó”</b>.
               </p>
             ),
           },
@@ -660,16 +661,19 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  Tóquelo, escriba el motivo y presione <b>“Activar”</b>. Desde ahí <b>usted</b> revisa el rostro y toma la prueba de alcohol a
-                  todos. El DNI y los documentos se revisan igual que siempre; las salidas no cambian.
+                  El botón está en el aviso rojo y en el aviso ámbar <b>“No completó”</b>. Tóquelo, escriba el motivo y presione{" "}
+                  <b>“Activar”</b>. Desde ahí <b>usted</b> revisa el rostro y toma la prueba de alcohol a todos. El DNI y los documentos se
+                  revisan igual que siempre; las salidas no cambian.
                 </p>
                 <p>
                   Arriba del panel queda una <b>franja azul</b> con desde cuándo, quién la activó y el motivo, y el botón{" "}
                   <b>“Volver a modo normal”</b>.
                 </p>
                 <p>
-                  Cuando el terminal vuelve, el panel pregunta en verde: <b>“¿Volver a modo normal?”</b>. Si aún no funciona bien, elija{" "}
-                  <b>“Seguir en manual”</b>. No vuelve sola, a propósito, para que siempre sepa en qué modo está.
+                  Cuando vuelve el equipo facial o el alcoholímetro, el panel pregunta en verde: <b>“¿Volver a modo normal?”</b>. Si aún no
+                  funciona bien, elija <b>“Seguir en manual”</b>. Si la activó desde el aviso ámbar, termínela con{" "}
+                  <b>“Volver a modo normal”</b> cuando el alcoholímetro mida de nuevo. No vuelve sola, a propósito, para que siempre sepa en
+                  qué modo está.
                 </p>
                 <p>
                   La activan y terminan el vigilante o el administrador. No tiene tiempo máximo. Activarla, terminarla y cada decisión quedan
@@ -711,25 +715,28 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <p>
                 Compare su rostro con la foto (si no tiene foto, con su DNI) y tómele la prueba con el alcoholímetro de repuesto, a todos sin
-                excepción.
+                excepción. Escriba el grado que marca.
               </p>
             ),
           },
           {
-            titulo: "“Apto: abrir”",
+            titulo: "“Registrar prueba”",
             texto: (
-              <>
-                <p>
-                  El rostro es el de la foto y el alcohol salió bien. Se abre el molinete y queda marcado como “Manual”, con su nombre, en la
-                  tabla y en el reporte.
-                </p>
-                <p>Si otro vigilante decidió antes, vale la primera decisión y su ventana se cierra.</p>
-              </>
+              <p>
+                Bajo el límite, se abre el molinete y queda marcado como “Manual” con el grado y su nombre, en la tabla y en el reporte. Igual
+                o sobre el límite, no se abre, suena el aviso y queda como “Alcohol”. Si otro vigilante decidió antes, vale la primera
+                decisión y su ventana se cierra.
+              </p>
             ),
           },
           {
-            titulo: "“Alcohol: no apto”",
-            texto: <p>La prueba salió sobre el límite. No se abre y suena el aviso.</p>,
+            titulo: "Sin número",
+            texto: (
+              <p>
+                Si el alcoholímetro de repuesto no muestra el número, toque <b>“Mi alcoholímetro no muestra el número”</b> y elija lo que
+                marcó: <b>“Marcó apto”</b> abre; <b>“Marcó alcohol”</b> no abre. Queda registrado que fue sin número.
+              </p>
+            ),
           },
           {
             titulo: "“No es la persona”",

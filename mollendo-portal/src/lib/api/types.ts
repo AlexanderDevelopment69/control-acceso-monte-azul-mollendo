@@ -109,13 +109,24 @@ export interface EstadoModoIngreso {
   cambiadoPor: string | null;
 }
 
-/** Verificación manual vigente (contingencia por falla del equipo facial). */
+/** Desde dónde se activó la verificación manual: equipo facial o alcoholímetro desconectado, o el aviso ámbar "No completó". */
+export type CausaVerificacionManual = "terminal" | "alcoholimetro" | "ambar";
+
+/** Verificación manual vigente (contingencia por falla del equipo facial o del alcoholímetro). */
 export interface EstadoVerificacionManual {
   activa: boolean;
-  periodo: { id: number; motivo: string; desde: string; activadaPor: string | null } | null;
+  periodo: {
+    id: number;
+    motivo: string;
+    /** null: activada antes del 21/10/2026 (como el equipo facial). */
+    causa?: CausaVerificacionManual | null;
+    desde: string;
+    activadaPor: string | null;
+  } | null;
 }
 
-export type DecisionManual = "apto" | "alcohol" | "no-es-la-persona";
+/** "grado": con lo que marcó el alcoholímetro de repuesto (decide el sistema); "marco-…": sin número. */
+export type DecisionManual = "grado" | "marco-apto" | "marco-alcohol" | "no-es-la-persona";
 
 export interface EventoAcceso {
   id: number;
@@ -155,6 +166,9 @@ export interface EventoAcceso {
   /** Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio). */
   verificacionManual?: boolean;
   verificadoPor?: { id: number; correo: string } | null;
+  /** Verificación manual: grado del alcoholímetro de repuesto (mg/L), o sin número. */
+  gradoManual?: number | null;
+  manualSinNumero?: boolean;
   /** Sin DNI: el vigilante pasó esta tarjeta de contingencia en lugar del DNI. */
   tarjetaContingencia?: { numero: number } | null;
   /** Lector de DNI de esa puerta desconectado: ingreso identificado por rostro, o salida abierta desde "Presentes ahora". */
