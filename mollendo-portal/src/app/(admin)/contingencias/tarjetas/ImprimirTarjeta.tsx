@@ -44,8 +44,8 @@ export function ImprimirTarjeta({ tarjeta, onCerrar }: { tarjeta: TarjetaConting
         <>
           <h2 className="mb-2 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Imprimir {tarjeta.nombre.toLowerCase()}</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Sale en tamaño real de carné. En la ventana de impresión elija su impresora y la escala al 100 %; después recórtela por la
-            línea punteada y plastifíquela.
+            Se imprime en tamaño carné (85,6 × 54 mm). Al imprimir, elija su impresora con escala al 100 %; luego recórtela y
+            plastifíquela.
           </p>
           <div className="mt-4 flex h-64 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700">
             {html ? (
