@@ -127,12 +127,15 @@ function Paso({
   titulo,
   detalle,
   Icono,
+  tiempo,
   final = false,
   exito = false,
 }: {
   n: number;
   titulo: string;
   detalle: string;
+  /** Cuánto tarda o cuánto tiempo hay (medido con el equipo real). */
+  tiempo?: string;
   Icono: React.ComponentType<PropsIcono>;
   final?: boolean;
   /** El último paso (se abre el molinete), en verde. */
@@ -165,8 +168,83 @@ function Paso({
       <span className="pb-5 md:pb-0">
         <span className="block font-medium text-gray-800 dark:text-white/90">{titulo}</span>
         <span className="block text-xs text-gray-500 dark:text-gray-400">{detalle}</span>
+        {tiempo && (
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
+            <svg className="size-3" viewBox="0 0 24 24" {...trazo} aria-hidden>
+              <circle cx="12" cy="12" r="8.5" />
+              <path d="M12 7.5V12l3 2" />
+            </svg>
+            {tiempo}
+          </span>
+        )}
       </span>
     </li>
+  );
+}
+
+/**
+ * "Facial primero", los tiempos medidos con el equipo real (como en el flujo de
+ * ingreso): 0-40 s desde el "correcto"; el aviso llega a los ~10 s y desde ahí
+ * hay 30 s para el DNI. Escala: 17 px por segundo, desde x = 40.
+ */
+function LineaTiempoFacialPrimero() {
+  const x = (s: number) => 40 + s * 17;
+  const marcas = [0, 10, 20, 30, 40];
+  return (
+    <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+      <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Tiempos medidos con el equipo real</p>
+      <svg
+        viewBox="0 0 760 110"
+        className="min-w-[560px] text-gray-400 dark:text-gray-500"
+        role="img"
+        aria-label="“Correcto” en 0 s, DNI hacia los 7 s, se abre a los 10 s al llegar el aviso, fin del plazo a los 40 s"
+      >
+        <g className="fill-current" fontSize="11" textAnchor="middle">
+          {marcas.map((s) => (
+            <text key={s} x={x(s)} y="14">
+              {s} s
+            </text>
+          ))}
+        </g>
+        <g className="stroke-gray-200 dark:stroke-gray-800" strokeWidth="1">
+          {marcas.map((s) => (
+            <line key={s} x1={x(s)} y1="22" x2={x(s)} y2="96" />
+          ))}
+        </g>
+        <rect x={x(0)} y="52" width={x(40) - x(0)} height="6" rx="3" className="fill-gray-100 dark:fill-gray-800" />
+        <rect x={x(0)} y="52" width={x(10) - x(0)} height="6" rx="3" className="fill-brand-300 dark:fill-brand-500/60" />
+        <rect x={x(10)} y="52" width={x(40) - x(10)} height="6" rx="3" className="fill-warning-200 dark:fill-warning-500/40" />
+        <g fontSize="12.5" textAnchor="middle" className="fill-gray-700 dark:fill-gray-200">
+          <circle cx={x(0)} cy="55" r="8" className="fill-brand-500" />
+          <text x={x(0)} y="84">
+            “Correcto”
+          </text>
+          <circle cx={x(7)} cy="55" r="8" className="fill-brand-500" />
+          <text x={x(7)} y="40">
+            Pasa su DNI
+          </text>
+          <circle cx={x(10)} cy="55" r="8" className="fill-success-500" />
+          <text x={x(10)} y="84">
+            Se abre
+          </text>
+          <circle cx={x(40)} cy="55" r="8" className="fill-warning-500" />
+          <text x={x(40) - 14} y="84" textAnchor="end">
+            Fin del plazo
+          </text>
+        </g>
+        <g className="fill-current" fontSize="11" textAnchor="middle">
+          <text x={x(10)} y="100">
+            llega el aviso del equipo
+          </text>
+          <text x={(x(10) + x(40)) / 2} y="40">
+            30 s visibles en el Panel
+          </text>
+        </g>
+      </svg>
+      <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+        Si el DNI llega antes que el aviso del equipo, el sistema lo espera unos segundos en silencio y abre cuando llega.
+      </p>
+    </div>
   );
 }
 
@@ -196,28 +274,38 @@ export function RecorridoAcceso() {
         <ol className="flex flex-col md:flex-row md:gap-2">
           {facialPrimero ? (
             <>
-              <Paso n={1} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el equipo facial lo reconoce" />
-              <Paso n={2} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro; el equipo dice “correcto”" />
-              <Paso n={3} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso, en 30 segundos" />
-              <Paso n={4} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" />
+              <Paso n={1} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el equipo facial lo reconoce" tiempo="rostro y soplido: 5 a 15 s" />
+              <Paso n={2} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro; el equipo dice “correcto”" tiempo="el Panel lo muestra en unos 10 s" />
+              <Paso n={3} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso, en 30 segundos" tiempo="máximo 30 s desde “pase su DNI”" />
+              <Paso n={4} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" tiempo="al instante" />
+              <Paso n={5} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" tiempo="al pasar el DNI" final exito />
             </>
           ) : (
             <>
-              <Paso n={1} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso" />
-              <Paso n={2} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" />
-              <Paso n={3} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el equipo facial lo reconoce" />
-              <Paso n={4} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro" />
+              <Paso n={1} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso" tiempo="al instante" />
+              <Paso n={2} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" tiempo="al instante" />
+              <Paso n={3} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el equipo facial lo reconoce" tiempo="tiene 1 minuto desde que pasó el DNI" />
+              <Paso n={4} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro" tiempo="rostro y soplido: 5 a 15 s" />
+              <Paso n={5} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" tiempo="unos 10 s después de soplar" final exito />
             </>
           )}
-          <Paso n={5} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" final exito />
         </ol>
+        {facialPrimero && (
+          <>
+            <p className="mt-4 text-xs text-gray-600 dark:text-gray-300">
+              <b>Puede pasar el DNI apenas oye “correcto”:</b> el sistema espera el aviso del equipo facial. Si no lo pasa en los 30
+              segundos, queda “No pasó su DNI a tiempo” y debe empezar otra vez.
+            </p>
+            <LineaTiempoFacialPrimero />
+          </>
+        )}
       </div>
       <div>
         <p className="mb-4 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">Salida</p>
         <ol className="flex flex-col md:flex-row md:gap-2">
-          <Paso n={1} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de salida" />
-          <Paso n={2} Icono={IconoRegistrado} titulo="Se revisa su ingreso" detalle="registrado y con un ingreso antes; también si está de baja" />
-          <Paso n={3} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" final exito />
+          <Paso n={1} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de salida" tiempo="al instante" />
+          <Paso n={2} Icono={IconoRegistrado} titulo="Se revisa su ingreso" detalle="registrado y con un ingreso antes; también si está de baja" tiempo="al instante" />
+          <Paso n={3} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" tiempo="al pasar el DNI" final exito />
         </ol>
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-400">
