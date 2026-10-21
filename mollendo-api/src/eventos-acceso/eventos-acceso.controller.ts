@@ -81,8 +81,8 @@ export class EventosAccesoController {
 
   @Delete('salida-sin-dni')
   @Roles('administrador', 'vigilancia')
-  cancelarSalidaSinDni() {
-    return this.eventosAccesoService.cancelarSalidaSinDni();
+  cancelarSalidaSinDni(@CurrentUser() usuario: AuthenticatedUser) {
+    return this.eventosAccesoService.cancelarSalidaSinDni(usuario);
   }
 
   /** DNI en regla esperando el rostro y el alcohol del G4 Pro, o al vigilante (Panel de vigilancia). */

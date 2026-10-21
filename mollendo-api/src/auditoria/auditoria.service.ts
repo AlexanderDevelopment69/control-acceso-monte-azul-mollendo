@@ -27,6 +27,10 @@ export const TABLA_LABEL: Record<string, string> = {
   ajuste_sistema: 'Orden de ingreso',
   evento_acceso: 'Ingreso o salida (corrección manual)',
   equipo: 'Equipos',
+  molinete: 'Molinete',
+  salida_sin_dni: 'Salida sin DNI',
+  sincronizacion_g4: 'Sincronización con el equipo facial',
+  reporte: 'Reporte',
 };
 
 /** Tablas cuyo nombre visible contiene la palabra (sin distinguir mayúsculas ni tildes). */

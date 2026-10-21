@@ -30,6 +30,10 @@ const TABLA_LABEL: Record<string, string> = {
   ajuste_sistema: "Orden de ingreso",
   tarjeta_contingencia: "Tarjeta de contingencia",
   equipo: "Equipos",
+  molinete: "Molinete",
+  salida_sin_dni: "Salida sin DNI",
+  sincronizacion_g4: "Sincronización con el equipo facial",
+  reporte: "Reporte",
 };
 const tablaLabel = (tabla: string) => TABLA_LABEL[tabla] ?? tabla;
 
@@ -41,6 +45,10 @@ const ACCION_COLOR: Record<string, "success" | "warning" | "error" | "info"> = {
   inicio_sesion_fallido: "warning",
   desconexion: "error",
   reconexion: "success",
+  apertura: "warning",
+  ejecucion: "info",
+  descarga: "info",
+  consulta: "info",
 };
 
 const ACCION_LABEL: Record<string, string> = {
@@ -48,7 +56,14 @@ const ACCION_LABEL: Record<string, string> = {
   inicio_sesion_fallido: "inicio rechazado",
   desconexion: "desconectado",
   reconexion: "conectado",
+  apertura: "apertura manual",
+  ejecucion: "ejecución",
+  descarga: "descarga",
+  consulta: "consulta",
 };
+
+/** Lo que hace el propio sistema, sin un usuario (desconexiones, revisión diaria con el equipo facial). */
+const DEL_SISTEMA = ["equipo", "sincronizacion_g4"];
 
 const esInicioSesion = (accion: string) => accion === "inicio_sesion" || accion === "inicio_sesion_fallido";
 
@@ -100,7 +115,7 @@ function AuditoriaContent() {
     <div>
       <PageHeader
         title="Auditoría"
-        description="Registro de quién creó o modificó cada dato del sistema, y cuándo."
+        description="Registro de quién hizo cada cambio o acción en el sistema, y cuándo."
       />
 
       {error && (
@@ -207,7 +222,7 @@ function AuditoriaContent() {
                       {entrada.usuario?.correo ??
                         (esInicioSesion(entrada.accion)
                           ? (entrada.detalle?.split(" · ")[0] ?? "—")
-                          : entrada.tablaAfectada === "equipo"
+                          : DEL_SISTEMA.includes(entrada.tablaAfectada)
                             ? "Sistema"
                             : "Carga de datos (script)")}
                     </TableCell>
@@ -219,8 +234,8 @@ function AuditoriaContent() {
                           {entrada.ip ? `IP ${entrada.ip}` : "—"}
                           {entrada.detalle?.includes(" · ") && <span className="block text-gray-500">{entrada.detalle.split(" · ")[1]}</span>}
                         </span>
-                      ) : entrada.tablaAfectada === "equipo" ? (
-                        // Equipos: cuál, qué pasó y, al volver, cuánto estuvo sin conexión.
+                      ) : entrada.detalle ? (
+                        // Qué se hizo: el equipo y cuánto estuvo sin conexión, el reporte y sus filtros, el documento abierto…
                         // Texto largo: en varias líneas, para que no empuje la columna Acción fuera de la vista.
                         <span className="block min-w-60 max-w-md text-xs whitespace-normal">{entrada.detalle}</span>
                       ) : (

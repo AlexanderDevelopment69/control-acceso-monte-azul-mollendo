@@ -892,7 +892,7 @@ export const SECCIONES: SeccionManual[] = [
   {
     id: "auditoria",
     titulo: "Auditoría",
-    descripcion: "Quién creó o modificó cada dato del sistema y cuándo, y cuándo se desconectó un equipo. Solo se puede ver.",
+    descripcion: "Quién hizo cada cambio o acción en el sistema y cuándo, y cuándo se desconectó un equipo. Solo se puede ver.",
     roles: ["administrador"],
     pantallas: [
       {
@@ -917,13 +917,18 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Dato y registro",
             texto: (
               <p>
-                Qué se cambió (empresa, personal, documento, usuario o un ingreso o salida corregido a mano) y cuál.
+                Sobre qué fue (empresa, personal, documento, usuario, molinete, reporte, salida sin DNI…) y el detalle de lo que se hizo.
               </p>
             ),
           },
           {
             titulo: "Acción",
-            texto: <p>Si se creó, modificó o eliminó. Sirve para responder “¿quién cargó esto?”.</p>,
+            texto: (
+              <p>
+                Qué se hizo: crear, modificar o eliminar un dato, abrir el molinete sin DNI, sincronizar con el equipo facial, descargar un
+                reporte o abrir el archivo de un documento. Sirve para responder “¿quién hizo esto?”.
+              </p>
+            ),
           },
           {
             titulo: "Desconexiones de equipos",
@@ -957,7 +962,10 @@ export const SECCIONES: SeccionManual[] = [
                   Si algo se cae, aparece arriba de cualquier página (también para el vigilante): un recuadro rojo por equipo con qué falla,
                   qué deja de funcionar y desde cuándo.
                 </p>
-                <p>Se revisa cada 30 segundos y desaparece solo cuando todo vuelve. Con la flecha se contrae hasta que falle algo distinto.</p>
+                <p>
+                  Aparece y desaparece en el momento en que un equipo se cae o vuelve, junto con las tarjetas de esta pantalla. Con la flecha
+                  se contrae hasta que falle algo distinto.
+                </p>
               </>
             ),
           },

@@ -6,6 +6,7 @@ import type { TorniqueteComandoDto } from './dto/torniquete-comando.dto.js';
 import { PushSdkService } from '../push-sdk/push-sdk.service.js';
 import { AVISO_DE, ReleUsbService } from './rele-usb.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
 import { guardarHoraDiaria, leerCambioDiaria, leerHoraDiaria } from './sincronizacion-diaria.js';
 import { leerFacialPrimero, type PermisosFijosEvent } from '../eventos-acceso/modo-ingreso.service.js';
@@ -74,6 +75,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
     private readonly pushSdk: PushSdkService,
     private readonly releUsb: ReleUsbService,
     private readonly prisma: PrismaService,
+    private readonly auditoria: AuditoriaService,
   ) {}
 
   /** Orden "facial primero": permiso fijo a todo el personal activo (al activarlo) o su retiro (al apagarlo). */
@@ -169,7 +171,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
    * sueltos (salvo a la persona en su turno) y registra, con su foto, al
    * personal activo que falte. Con `simular`, solo informa qué haría.
    */
-  async sincronizarTodas(simular = false, origen: 'manual' | 'diaria' = 'manual'): Promise<ResultadoSincronizacion> {
+  async sincronizarTodas(simular = false, origen: 'manual' | 'diaria' = 'manual', usuarioId?: number): Promise<ResultadoSincronizacion> {
     if (this.enCurso) throw new ConflictException('Ya hay una sincronización con el G4 Pro en curso');
     this.enCurso = true;
     const inicio = new Date();
@@ -180,12 +182,27 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       resultado = { ...RESUMEN_VACIO, simulacion: simular, origen, fecha: inicio.toISOString(), error: (error as Error).message };
       await this.guardarResultado(resultado);
+      await this.auditarSincronizacion(resultado, usuarioId);
       throw error;
     } finally {
       this.enCurso = false;
     }
     await this.guardarResultado(resultado);
+    await this.auditarSincronizacion(resultado, usuarioId);
     return resultado;
+  }
+
+  /** En la Auditoría: quién la ejecutó ("Sistema" la diaria) y qué cambió en el equipo. */
+  private async auditarSincronizacion(r: ResultadoSincronizacion, usuarioId?: number) {
+    const que = r.origen === 'diaria' ? 'Revisión diaria' : r.simulacion ? 'Simulación' : 'Sincronización';
+    const detalle = r.error
+      ? `${que}: falló (${r.error})`
+      : r.simulacion
+        ? `${que}: agregaría ${r.agregadas}, borraría ${r.borradas}, corregiría ${r.corregidas}`
+        : `${que}: ${r.agregadas} agregadas, ${r.borradas} borradas, ${r.corregidas} corregidas`;
+    await this.auditoria
+      .registrar({ usuarioId: usuarioId ?? null, tablaAfectada: 'sincronizacion_g4', registroId: 0, accion: 'ejecucion', detalle: detalle.slice(0, 200) })
+      .catch(() => undefined);
   }
 
   /** Estado de la sincronización para "Sistema y APIs" (la última se lee de la base de datos). */
@@ -266,9 +283,16 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** Activa (hora 0..23, hora de Lima) o desactiva (null) la sincronización diaria, desde "Sistema y APIs". */
-  async cambiarDiaria(hora: number | null, cambiadoPor?: string) {
+  async cambiarDiaria(hora: number | null, cambiadoPor?: string, usuarioId?: number) {
     guardarHoraDiaria(hora, cambiadoPor);
     this.programarDiaria(hora);
+    await this.auditoria.registrar({
+      usuarioId: usuarioId ?? null,
+      tablaAfectada: 'sincronizacion_g4',
+      registroId: 0,
+      accion: 'modificar',
+      detalle: hora === null ? 'Revisión diaria: desactivada' : `Revisión diaria: activada a las ${hora}:00`,
+    });
     return this.estadoSincronizacion();
   }
 
@@ -301,12 +325,21 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
    * "salida"; también "Ingreso"/"Salida", como los nombra el lector). El
    * molinete se cierra solo después del paso, así que "cerrar" no hace nada.
    */
-  async enviarComandoTorniquete(dto: TorniqueteComandoDto): Promise<{ enviado: boolean }> {
+  async enviarComandoTorniquete(dto: TorniqueteComandoDto, usuarioId?: number): Promise<{ enviado: boolean }> {
     const molinete = dto.torniqueteId.trim().toLowerCase();
     if (dto.comando !== 'abrir' || (molinete !== 'ingreso' && molinete !== 'salida')) {
       this.logger.log(`Comando molinete ${dto.torniqueteId}: ${dto.comando} (sin acción)`);
       return { enviado: false };
     }
-    return { enviado: await this.releUsb.pulso(molinete) };
+    const enviado = await this.releUsb.pulso(molinete);
+    // Abre sin DNI: queda en la Auditoría con quién lo pidió.
+    await this.auditoria.registrar({
+      usuarioId: usuarioId ?? null,
+      tablaAfectada: 'molinete',
+      registroId: 0,
+      accion: 'apertura',
+      detalle: `Molinete de ${molinete} abierto a mano (por la API)${enviado ? '' : ': el relé no respondió'}`,
+    });
+    return { enviado };
   }
 }

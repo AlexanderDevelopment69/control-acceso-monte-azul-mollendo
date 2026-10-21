@@ -89,6 +89,14 @@ enum AccionAuditoria {
   desconexion
   /// Volvió a conectarse, con cuánto duró la falla.
   reconexion
+  /// Molinete abierto sin DNI: a mano por la API o "Salida sin lector".
+  apertura
+  /// Sincronización con el equipo facial (manual o la diaria).
+  ejecucion
+  /// Descarga de un reporte.
+  descarga
+  /// Se abrió el archivo de un documento.
+  consulta
 
   @@map("accion_auditoria")
 }

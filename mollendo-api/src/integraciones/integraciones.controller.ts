@@ -24,21 +24,21 @@ export class IntegracionesController {
 
   @Post('torniquete/comando')
   @Roles('administrador', 'vigilancia')
-  enviarComandoTorniquete(@Body() dto: TorniqueteComandoDto) {
-    return this.integracionesService.enviarComandoTorniquete(dto);
+  enviarComandoTorniquete(@Body() dto: TorniqueteComandoDto, @CurrentUser() usuario: AuthenticatedUser) {
+    return this.integracionesService.enviarComandoTorniquete(dto, usuario.id);
   }
 
   /** Registra a todo el personal (con foto) en los G4 Pro; por ejemplo, al instalar un equipo nuevo. */
   @Post('g4pro/sincronizar')
   @Roles('administrador')
-  sincronizarG4Pro(@Query('simular') simular?: string) {
-    return this.integracionesService.sincronizarTodas(simular === 'true');
+  sincronizarG4Pro(@Query('simular') simular?: string, @CurrentUser() usuario?: AuthenticatedUser) {
+    return this.integracionesService.sincronizarTodas(simular === 'true', 'manual', usuario?.id);
   }
 
   /** Activa (hora 0..23) o desactiva (null) la sincronización diaria; se guarda en el servidor. */
   @Put('g4pro/sincronizacion-diaria')
   @Roles('administrador')
   cambiarSincronizacionDiaria(@Body() dto: SincronizacionDiariaDto, @CurrentUser() usuario: AuthenticatedUser) {
-    return this.integracionesService.cambiarDiaria(dto.hora ?? null, usuario.correo);
+    return this.integracionesService.cambiarDiaria(dto.hora ?? null, usuario.correo, usuario.id);
   }
 }

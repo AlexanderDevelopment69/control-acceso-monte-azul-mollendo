@@ -18,11 +18,15 @@ import { CreateDocumentoDto } from './dto/create-documento.dto.js';
 import { documentosMulterOptions } from './documentos-storage.util.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import { AuditoriaService } from '../auditoria/auditoria.service.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 
 @Controller()
 export class DocumentosController {
-  constructor(private readonly documentosService: DocumentosService) {}
+  constructor(
+    private readonly documentosService: DocumentosService,
+    private readonly auditoria: AuditoriaService,
+  ) {}
 
   @Post('personas/:personaId/documentos')
   @Roles('administrador')
@@ -54,8 +58,16 @@ export class DocumentosController {
     @Param('personaId', ParseIntPipe) personaId: number,
     @Param('documentoId', ParseIntPipe) documentoId: number,
     @Res() res: Response,
+    @CurrentUser() usuario: AuthenticatedUser,
   ) {
     const archivo = await this.documentosService.archivo(personaId, documentoId);
+    await this.auditoria.registrar({
+      usuarioId: usuario.id,
+      tablaAfectada: 'documento_persona',
+      registroId: documentoId,
+      accion: 'consulta',
+      detalle: archivo.descripcion.slice(0, 200),
+    });
     res.setHeader('Content-Type', archivo.tipo);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Disposition', `${archivo.enLinea ? 'inline' : 'attachment'}; filename="${archivo.nombre}"`);

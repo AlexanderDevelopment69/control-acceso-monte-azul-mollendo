@@ -96,6 +96,10 @@ const ACCION = {
   inicio_sesion_fallido: 'Inicio de sesión rechazado',
   desconexion: 'Desconectado',
   reconexion: 'Conectado de nuevo',
+  apertura: 'Apertura manual',
+  ejecucion: 'Ejecución',
+  descarga: 'Descarga',
+  consulta: 'Consulta',
 } as const;
 
 /** Motivos de denegación de un evento, como en el Panel de vigilancia. */
@@ -797,11 +801,11 @@ export class ReportesService {
       columnas: [
         { titulo: 'Fecha y hora', tipo: 'fechaHora', ancho: 16, descripcion: 'Cuándo se hizo el cambio.' },
         { titulo: 'Usuario', ancho: 30, descripcion: 'Correo del usuario que hizo el cambio. "Sistema" si lo hizo el propio sistema.' },
-        { titulo: 'Acción', ancho: 22, descripcion: 'Crear, Modificar, Eliminar, Inicio de sesión, Inicio de sesión rechazado, Desconectado o Conectado de nuevo (equipos).' },
+        { titulo: 'Acción', ancho: 22, descripcion: 'Crear, Modificar, Eliminar, Inicio de sesión, Inicio de sesión rechazado, Desconectado o Conectado de nuevo (equipos), Apertura manual (molinete sin DNI), Ejecución (sincronización), Descarga (reporte) o Consulta (archivo de un documento).' },
         { titulo: 'Dato', ancho: 20, descripcion: 'Qué se cambió: personal, empresa, documento, tipo de documento, usuario, verificación manual, orden de ingreso o tarjeta de contingencia. "Equipos": un equipo o servicio se desconectó o volvió (lo registra el sistema).' },
         { titulo: 'N° de registro', tipo: 'numero', ancho: 13, descripcion: 'Número interno del dato cambiado, para ubicarlo en el sistema.' },
         { titulo: 'IP', ancho: 16, descripcion: 'Inicios de sesión: dirección desde donde se intentó.' },
-        { titulo: 'Detalle', ancho: 40, descripcion: 'Inicios de sesión rechazados: el correo escrito y el motivo (correo no registrado, contraseña incorrecta o cuenta de baja). Equipos: cuál, qué pasó y, al volver, cuánto tiempo estuvo sin conexión.' },
+        { titulo: 'Detalle', ancho: 40, descripcion: 'Inicios de sesión rechazados: el correo escrito y el motivo (correo no registrado, contraseña incorrecta o cuenta de baja). Equipos: cuál, qué pasó y, al volver, cuánto tiempo estuvo sin conexión. En las demás acciones, qué se hizo (por ejemplo, el reporte y sus filtros, o el documento abierto).' },
       ],
       filas: registros.map((r) => [
         r.fechaHora,

@@ -97,7 +97,7 @@ export class DocumentosService {
   async archivo(personaId: number, documentoId: number) {
     const documento = await this.prisma.documentoPersona.findFirst({
       where: { id: documentoId, personaId },
-      include: { tipoDocumento: { select: { nombre: true } }, persona: { select: { numeroDocumento: true } } },
+      include: { tipoDocumento: { select: { nombre: true } }, persona: { select: { numeroDocumento: true, nombres: true, apellidos: true } } },
     });
     if (!documento) {
       throw new NotFoundException('Documento no encontrado');
@@ -117,6 +117,8 @@ export class DocumentosService {
       tipo,
       nombre: `${base}${extension}`,
       enLinea: tipo === 'application/pdf' || tipo.startsWith('image/'),
+      // Para la Auditoría (quién abrió qué).
+      descripcion: `Abrió el archivo de «${documento.tipoDocumento.nombre}» v${documento.version} de ${documento.persona.apellidos}, ${documento.persona.nombres}`,
     };
   }
 

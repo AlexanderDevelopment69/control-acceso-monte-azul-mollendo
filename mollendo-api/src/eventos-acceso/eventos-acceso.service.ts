@@ -1465,12 +1465,21 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     return this.enSerie(async () => {
       if (!(await this.figuraDentro(persona.id))) throw new BadRequestException('Esa persona figura fuera: no tiene una salida pendiente');
       this.logger.log(`Salida sin lector: ${persona.numeroDocumento} (abrió ${usuario.correo})`);
-      return this.registrarSalida({
+      const respuesta = await this.registrarSalida({
         tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
         numeroDocumento: persona.numeroDocumento,
         verificadoPorId: usuario.id,
         sinLector: true,
       });
+      // Abre el molinete sin DNI: también en la Auditoría.
+      await this.auditoria.registrar({
+        usuarioId: usuario.id,
+        tablaAfectada: 'molinete',
+        registroId: respuesta.eventoId,
+        accion: 'apertura',
+        detalle: `Salida sin lector: ${persona.nombres} ${persona.apellidos} (DNI ${persona.numeroDocumento})`.slice(0, 200),
+      });
+      return respuesta;
     });
   }
 
@@ -1503,6 +1512,13 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       hasta: new Date(Date.now() + VENTANA_SALIDA_SIN_DNI_MS).toISOString(),
       preparadaPor: usuario.correo,
       usuarioId: usuario.id,
+    });
+    await this.auditoria.registrar({
+      usuarioId: usuario.id,
+      tablaAfectada: 'salida_sin_dni',
+      registroId: persona.id,
+      accion: 'crear',
+      detalle: `Eligió a ${persona.nombres} ${persona.apellidos} (DNI ${persona.numeroDocumento}) para salir con la tarjeta`.slice(0, 200),
     });
     return this.salidaSinDniPreparada()!;
   }
@@ -1539,8 +1555,18 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       }));
   }
 
-  cancelarSalidaSinDni(): { ok: true } {
-    if (this.salidaSinDni) this.cambiarSalidaSinDni(null);
+  async cancelarSalidaSinDni(usuario?: AuthenticatedUser): Promise<{ ok: true }> {
+    const cancelada = this.salidaSinDni;
+    if (cancelada) {
+      this.cambiarSalidaSinDni(null);
+      await this.auditoria.registrar({
+        usuarioId: usuario?.id ?? null,
+        tablaAfectada: 'salida_sin_dni',
+        registroId: cancelada.personaId,
+        accion: 'eliminar',
+        detalle: `Canceló la salida sin DNI de ${cancelada.nombres} ${cancelada.apellidos} (DNI ${cancelada.numeroDocumento})`.slice(0, 200),
+      });
+    }
     return { ok: true };
   }
 

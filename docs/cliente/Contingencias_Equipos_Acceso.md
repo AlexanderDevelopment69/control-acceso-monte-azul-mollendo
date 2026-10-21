@@ -73,8 +73,9 @@ En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y sue
 
 | Señal | Dónde | Qué fallas muestra | Estado |
 |---|---|---|---|
-| **Franja roja de fallas** | Arriba de todas las pantallas del portal, para el administrador y el vigilante | Equipo facial desconectado (2 minutos sin contacto), lector de DNI con el cable desconectado, relé no conectado, Controlador (PC) desconectado, respaldos atrasados, sin conexión con el servidor | Ya existe |
+| **Franja roja de fallas** | Arriba de todas las pantallas del portal, para el administrador y el vigilante | Equipo facial desconectado (unos 20 segundos sin contacto), lector de DNI con el cable desconectado, relé no conectado, Controlador (PC) desconectado, respaldos atrasados, sin conexión con el servidor. Aparece y desaparece en el momento, junto con "Sistema y APIs" | Ya existe |
 | **"Sistema y APIs"** | Portal del administrador | El estado de cada equipo, en detalle | Ya existe |
+| **Auditoría** | Portal del administrador | Cada desconexión y cada vuelta de un equipo, con cuánto duró (buscar "equipos") | Ya existe |
 | **Panel de vigilancia** | Portal del vigilante | Cada ingreso: "esperando rostro y alcohol" con su cuenta regresiva, y el resultado | Ya existe |
 | **Pantalla del equipo facial** | En el punto de acceso | Un ícono con **punto rojo** si el alcoholímetro está desconectado (el equipo **no** se lo avisa al sistema) | Ya existe |
 | **La propia persona** | En el molinete | Avisa al vigilante si no puede pasar | — |
@@ -129,7 +130,7 @@ Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar
 - **Salidas:** normales.
 - **Ingresos:** nadie puede ingresar. Sin el equipo no hay prueba de rostro y alcohol: con el orden Facial + Alcohol → DNI, el DNI queda en *"DNI antes del facial"*; con DNI → Facial + Alcohol, al minuto queda *"No completó rostro y alcohol"*. No hay riesgo de ingresos sin control: el molinete no se abre.
 - Como el alcoholímetro está conectado al equipo facial, **también se pierde la prueba de alcohol**.
-- El sistema lo detecta a los **2 minutos** sin contacto y muestra en la franja roja *"Equipo facial (G4 Pro) desconectado"*.
+- El sistema lo detecta a los **~20 segundos** sin contacto, muestra en la franja roja *"Terminal facial … Desconectado"* y lo registra en la Auditoría.
 
 ### 4.2. Decisiones
 
