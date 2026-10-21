@@ -18,7 +18,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
-import { LockIcon, TrashBinIcon } from "@/icons";
+import Image from "next/image";
+import { TrashBinIcon } from "@/icons";
 import { Movimiento } from "../../vigilancia/CeldasEvento";
 import { diaVisible } from "./imprimir";
 import { ImprimirTarjeta } from "./ImprimirTarjeta";
@@ -86,9 +87,10 @@ function TarjetaVisual({
         <span className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-white/10" aria-hidden />
         <span className="pointer-events-none absolute -bottom-16 right-16 size-40 rounded-full bg-white/5" aria-hidden />
         <div className="relative flex items-start justify-between gap-3">
-          <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/80">
-            <LockIcon className="size-4" aria-hidden />
-            Contingencia
+          {/* Logo de Monte Azul en blanco (el original es azul y no se vería sobre el fondo azul). */}
+          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-white">
+            <Image src="/images/logo/marca-monteazul.png" alt="" width={46} height={16} className="brightness-0 invert" />
+            Monte Azul Sur
           </span>
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${

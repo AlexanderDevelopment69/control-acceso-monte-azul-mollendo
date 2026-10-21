@@ -7,7 +7,7 @@ import { ApiError } from "@/lib/api/client";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
-import { htmlTarjeta } from "./imprimir";
+import { htmlTarjeta, logoIncluido, LOGO_TARJETA } from "./imprimir";
 
 /**
  * Imprimir una tarjeta sin salir del portal: la vista previa (tal como sale
@@ -22,9 +22,9 @@ export function ImprimirTarjeta({ tarjeta, onCerrar }: { tarjeta: TarjetaConting
   useEffect(() => {
     if (!tarjeta) return;
     let activo = true;
-    tarjetasContingenciaApi
-      .qr(tarjeta.id)
-      .then((qr) => activo && setVista({ id: tarjeta.id, html: htmlTarjeta(tarjeta, qr) }))
+    // Si el logo no se puede incluir, va por su dirección (igual se ve en la vista previa).
+    Promise.all([tarjetasContingenciaApi.qr(tarjeta.id), logoIncluido().catch(() => LOGO_TARJETA)])
+      .then(([qr, logo]) => activo && setVista({ id: tarjeta.id, html: htmlTarjeta(tarjeta, qr, logo) }))
       .catch(
         (err) =>
           activo && setError({ id: tarjeta.id, texto: err instanceof ApiError ? err.message : "No se pudo preparar la tarjeta para imprimir" }),

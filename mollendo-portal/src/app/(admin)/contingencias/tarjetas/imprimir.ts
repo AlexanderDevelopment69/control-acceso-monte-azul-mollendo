@@ -8,8 +8,19 @@ export function diaVisible(dia: string): string {
 
 const escapar = (texto: string) => texto.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-/** Candado (el mismo ícono del menú "Contingencias"). */
-const CANDADO = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+/** Logo de Monte Azul (el símbolo; en la tarjeta se ve en blanco, ver `.marca img`). */
+export const LOGO_TARJETA = "/images/logo/marca-monteazul.png";
+
+/** El logo dentro de la tarjeta (data:), para que salga impreso aunque la impresión no lo vuelva a descargar. */
+export async function logoIncluido(): Promise<string> {
+  const archivo = await (await fetch(LOGO_TARJETA)).blob();
+  return new Promise((listo, fallo) => {
+    const lector = new FileReader();
+    lector.onload = () => listo(String(lector.result));
+    lector.onerror = () => fallo(lector.error);
+    lector.readAsDataURL(archivo);
+  });
+}
 
 /**
  * La tarjeta impresa, del tamaño de un carné (85,6 × 54 mm), con el mismo
@@ -17,7 +28,7 @@ const CANDADO = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" str
  * blanco (con margen, para que el lector lo lea bien). El código no va
  * escrito: solo en el QR. Sirve para la vista previa y para imprimir.
  */
-export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string): string {
+export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string, logo = LOGO_TARJETA): string {
   const vence = tarjeta.venceEl ? `Vence el ${diaVisible(tarjeta.venceEl)}` : "No vence";
   return `<!doctype html>
 <html lang="es">
@@ -43,7 +54,9 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string): string
   .arriba, .abajo { position: relative; display: flex; justify-content: space-between; gap: 3mm; }
   .arriba { align-items: center; }
   .abajo { align-items: flex-end; }
-  .marca { display: flex; align-items: center; gap: 1.5mm; font-size: 2.6mm; font-weight: 600; letter-spacing: 0.25mm; text-transform: uppercase; color: rgba(255, 255, 255, 0.85); }
+  .marca { display: flex; align-items: center; gap: 1.8mm; font-size: 2.7mm; font-weight: 700; letter-spacing: 0.15mm; text-transform: uppercase; color: #fff; }
+  /* El original es azul: en blanco para que se vea sobre el fondo azul. */
+  .marca img { height: 4.2mm; width: auto; filter: brightness(0) invert(1); }
   .solo { font-size: 2.3mm; font-weight: 600; padding: 0.6mm 2mm; border-radius: 3mm; background: rgba(255, 255, 255, 0.2); }
   .titulo { font-size: 3.6mm; font-weight: 600; line-height: 1.15; }
   .numero { font-size: 8mm; font-weight: 700; line-height: 1.05; }
@@ -66,7 +79,7 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string): string
     <div class="tarjeta">
       <span class="circulo c1"></span><span class="circulo c2"></span>
       <div class="arriba">
-        <span class="marca">${CANDADO}Contingencia</span>
+        <span class="marca"><img src="${logo}" alt="">Monte Azul Sur</span>
         <span class="solo">Solo vigilancia</span>
       </div>
       <div class="abajo">
