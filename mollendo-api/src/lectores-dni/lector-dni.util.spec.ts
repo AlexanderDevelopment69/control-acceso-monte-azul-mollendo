@@ -1,4 +1,4 @@
-import { esBinario, extraerDocumento, FiltroRepetidos, SeparadorLineas } from './lector-dni.util.js';
+import { esBinario, extraerDocumento, FiltroRepetidos, momentoRegistroKernel, SeparadorLineas, ttyConErrorUsb } from './lector-dni.util.js';
 
 describe('extraerDocumento', () => {
   it('toma el número de 8 dígitos que envía el lector', () => {
@@ -61,5 +61,21 @@ describe('FiltroRepetidos', () => {
     expect(f.esRepetido('12345678', 1500)).toBe(false);
     expect(f.esRepetido('48058719', 2000)).toBe(false);
     expect(f.esRepetido('48058719', 6000)).toBe(false);
+  });
+});
+
+describe('registro del kernel: adaptador USB trabado', () => {
+  it('reconoce el -71 del pl2303 con su ttyUSB, no otros mensajes', () => {
+    expect(ttyConErrorUsb('3,1180,4458700,-;pl2303 ttyUSB1: pl2303_set_line_request - failed: -71')).toBe('ttyUSB1');
+    expect(ttyConErrorUsb('3,1181,4458710,-;pl2303 ttyUSB3: error sending break = -71')).toBe('ttyUSB3');
+    // Desenchufado (-19) o mensajes normales: no es un adaptador trabado.
+    expect(ttyConErrorUsb('3,1182,4458720,-;pl2303 ttyUSB0: error sending break = -19')).toBeNull();
+    expect(ttyConErrorUsb('6,1068,4458685,-;usb 3-9: pl2303 converter now attached to ttyUSB1')).toBeNull();
+    expect(ttyConErrorUsb('3,1183,4458730,-;pl2303 3-9:1.0: pl2303_vendor_read - failed to read [000a]: -71')).toBeNull();
+  });
+
+  it('lee el momento del mensaje (microsegundos desde el arranque)', () => {
+    expect(momentoRegistroKernel('6,1068,4458685,-;usb 3-9: algo')).toBe(4458685);
+    expect(momentoRegistroKernel('cualquier cosa')).toBeNull();
   });
 });

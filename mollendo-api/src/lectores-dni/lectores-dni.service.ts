@@ -5,13 +5,21 @@ import path from 'node:path';
 import tty from 'node:tty';
 import { promisify } from 'node:util';
 import { RegistroLecturas } from './registro-lecturas.js';
-import { esBinario, extraerDocumento, FiltroRepetidos, SeparadorLineas } from './lector-dni.util.js';
+import { esBinario, extraerDocumento, FiltroRepetidos, momentoRegistroKernel, SeparadorLineas, ttyConErrorUsb } from './lector-dni.util.js';
 import { extraerTarjeta } from '../tarjetas-contingencia/tarjeta-contingencia.util.js';
 
 const ejecutar = promisify(execFile);
 
 /** Espera antes de volver a abrir un lector que se desconectó o no se pudo abrir. */
 const REINTENTO_MS = 5000;
+/**
+ * Adaptador USB trabado (error -71 en el registro del kernel): se lo da por
+ * caído y se vuelve a probar cada minuto; vuelve a contar como conectado tras
+ * 2 minutos sin errores (cada reapertura de un adaptador trabado da otro -71).
+ */
+const FALLA_USB_MS = 2 * 60 * 1000;
+const REINTENTO_FALLA_USB_MS = 60 * 1000;
+export const MOTIVO_FALLA_USB = 'El adaptador USB no responde (error -71): desconéctelo y vuelva a conectarlo';
 
 type Movimiento = 'ingreso' | 'salida';
 
@@ -20,6 +28,8 @@ export interface EstadoLectorDni {
   conectado: boolean;
   ultimaLectura: string | null;
   error: string | null;
+  /** El puerto está abierto pero el adaptador USB no responde (error -71 del kernel). */
+  adaptadorSinRespuesta?: boolean;
 }
 
 interface Lector {
@@ -32,6 +42,10 @@ interface Lector {
   reintento: NodeJS.Timeout | null;
   ultimaLectura: Date | null;
   error: string | null;
+  /** El ttyUSBn al que apunta el puerto (se resuelve en cada apertura). */
+  tty: string | null;
+  /** Último error -71 del adaptador en el registro del kernel. */
+  fallaUsb: Date | null;
 }
 
 /**
@@ -55,6 +69,8 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(LectoresDniService.name);
   private readonly lectores: Lector[] = [];
   private cerrando = false;
+  private kernel: fs.ReadStream | null = null;
+  private sinKernelAvisado = false;
 
   constructor(private readonly registro: RegistroLecturas) {}
 
@@ -76,10 +92,13 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
         reintento: null,
         ultimaLectura: null,
         error: null,
+        tty: null,
+        fallaUsb: null,
       };
       this.lectores.push(lector);
       void this.abrir(lector);
     }
+    if (this.lectores.length > 0) this.vigilarKernel();
   }
 
   onModuleDestroy() {
@@ -88,17 +107,20 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
       if (lector.reintento) clearTimeout(lector.reintento);
       lector.stream?.destroy();
     }
+    this.kernel?.destroy();
   }
 
   /** Estado de cada lector para "Sistema y APIs". */
   estado(): Record<Movimiento, EstadoLectorDni> {
     const de = (movimiento: Movimiento): EstadoLectorDni => {
       const lector = this.lectores.find((l) => l.movimiento === movimiento);
+      const sinRespuesta = !!lector && this.enFallaUsb(lector);
       return {
         configurado: !!lector,
-        conectado: !!lector?.stream,
+        conectado: !!lector?.stream && !sinRespuesta,
         ultimaLectura: lector?.ultimaLectura?.toISOString() ?? null,
-        error: lector?.error ?? null,
+        error: sinRespuesta ? MOTIVO_FALLA_USB : (lector?.error ?? null),
+        adaptadorSinRespuesta: sinRespuesta,
       };
     };
     return { ingreso: de('ingreso'), salida: de('salida') };
@@ -116,8 +138,16 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
       stream.on('error', (error) => this.desconectado(lector, error.message));
       stream.on('close', () => this.desconectado(lector, 'el puerto se cerró'));
       lector.stream = stream;
-      lector.error = null;
-      this.logger.log(`Lector de DNI de ${lector.movimiento} conectado en ${lector.puerto} (${baudios} baudios)`);
+      try {
+        lector.tty = path.basename(fs.realpathSync(lector.puerto));
+      } catch {
+        lector.tty = null;
+      }
+      // Reapertura de un adaptador trabado: sin anotar "conectado" cada minuto.
+      if (!this.enFallaUsb(lector)) {
+        lector.error = null;
+        this.logger.log(`Lector de DNI de ${lector.movimiento} conectado en ${lector.puerto} (${baudios} baudios)`);
+      }
     } catch (error) {
       this.desconectado(lector, (error as Error).message);
     }
@@ -133,7 +163,54 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`Lector de DNI de ${lector.movimiento} (${lector.puerto}) desconectado: ${motivo}. Se reintenta cada ${REINTENTO_MS / 1000} s.`);
     }
     lector.error = motivo;
-    if (!this.cerrando && !lector.reintento) lector.reintento = setTimeout(() => void this.abrir(lector), REINTENTO_MS);
+    const espera = this.enFallaUsb(lector) ? REINTENTO_FALLA_USB_MS : REINTENTO_MS;
+    if (!this.cerrando && !lector.reintento) lector.reintento = setTimeout(() => void this.abrir(lector), espera);
+  }
+
+  private enFallaUsb(lector: Lector, ahora = Date.now()): boolean {
+    return !!lector.fallaUsb && ahora - lector.fallaUsb.getTime() < FALLA_USB_MS;
+  }
+
+  /**
+   * Lee el registro del kernel (/dev/kmsg; en Docker, el del servidor montado y
+   * con el permiso SYSLOG) para ver si el adaptador USB de un lector quedó
+   * trabado: el puerto se abre sin error, pero el kernel informa -71 y no llega
+   * ninguna lectura. Se descartan los mensajes de antes de arrancar. Sin acceso
+   * al registro, solo se avisa una vez (los lectores siguen funcionando).
+   */
+  private vigilarKernel() {
+    const devServidor = process.env.LECTOR_DNI_DEV_SERVIDOR?.trim();
+    const ruta = process.env.LECTOR_DNI_KMSG?.trim() || (devServidor ? path.posix.join(devServidor, 'kmsg') : '/dev/kmsg');
+    let desde = 0;
+    try {
+      desde = Number(fs.readFileSync('/proc/uptime', 'utf8').split(' ')[0]) * 1e6;
+    } catch {
+      // Sin /proc/uptime se leen todos (los viejos ya no tienen el puerto abierto).
+    }
+    const stream = fs.createReadStream(ruta, { encoding: 'utf8' });
+    stream.on('data', (registros: string | Buffer) => {
+      for (const registro of String(registros).split('\n')) {
+        const tty = ttyConErrorUsb(registro);
+        if (!tty || (momentoRegistroKernel(registro) ?? Infinity) < desde) continue;
+        const lector = this.lectores.find((l) => l.tty === tty);
+        if (!lector) continue;
+        if (!this.enFallaUsb(lector)) {
+          this.logger.warn(`Lector de DNI de ${lector.movimiento}: el adaptador USB (${tty}) no responde (error -71 del kernel)`);
+        }
+        lector.fallaUsb = new Date();
+        if (lector.stream) this.desconectado(lector, MOTIVO_FALLA_USB);
+      }
+    });
+    stream.on('error', (error) => {
+      // Sin permiso (falta SYSLOG) o se cortó la lectura: se avisa una vez y se reintenta cada minuto.
+      if (!this.sinKernelAvisado) {
+        this.logger.warn(`Sin acceso al registro del kernel (${ruta}: ${error.message}): no se detecta un adaptador USB trabado`);
+        this.sinKernelAvisado = true;
+      }
+      this.kernel = null;
+      if (!this.cerrando) setTimeout(() => this.vigilarKernel(), REINTENTO_FALLA_USB_MS).unref();
+    });
+    this.kernel = stream;
   }
 
   private recibir(lector: Lector, pedazo: Buffer) {

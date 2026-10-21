@@ -368,6 +368,8 @@ export interface EstadoLectorDni {
   conectado: boolean;
   ultimaLectura: string | null;
   error: string | null;
+  /** El puerto está abierto pero el adaptador USB no responde (error -71): hay que desconectarlo y volver a conectarlo. */
+  adaptadorSinRespuesta?: boolean;
 }
 
 export interface ResumenRespaldo {

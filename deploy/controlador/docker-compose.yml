@@ -44,7 +44,12 @@ services:
       RELE_AVISO_SALIDA_MODO: ${RELE_AVISO_SALIDA_MODO:-}
       RELE_AVISO_ALTERNO_MS: ${RELE_AVISO_ALTERNO_MS:-3000}
     # Igual que la API de la mini PC: puertos serie USB (lectores) y hidraw (relés).
+    # Registro del kernel (/dev/kmsg, solo lectura): para detectar un adaptador USB de
+    # lector trabado (error -71; visto el 20-21/10/2026). SYSLOG es el permiso para leerlo.
+    cap_add:
+      - SYSLOG
     device_cgroup_rules:
+      - "c 1:11 r"
       - "c 188:* rmw"
       - "c 166:* rmw"
       # Relés USB (hidraw): el kernel les da un número al arrancar, dentro del rango

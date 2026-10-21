@@ -1052,7 +1052,8 @@ export const SECCIONES: SeccionManual[] = [
                   ingresar.
                 </li>
                 <li>
-                  <b>Lectores de DNI:</b> ingreso y salida, con su última lectura. Si no pita al pasar un DNI, revise su alimentación.
+                  <b>Lectores de DNI:</b> ingreso y salida, con su última lectura. Si no pita al pasar un DNI, revise su alimentación. Si dice
+                  «Adaptador sin respuesta», desconecte y vuelva a conectar el adaptador USB de ese lector en la mini PC.
                 </li>
                 <li>
                   <b>Relés:</b> de molinetes y de aviso, con su última apertura o aviso.

@@ -229,6 +229,8 @@ export function LectoresDniEstado({
             <Badge color="light">Sin configurar</Badge>
           ) : lector.error === "Controlador desconectado" ? (
             <Falla>Desconectado</Falla>
+          ) : lector.adaptadorSinRespuesta ? (
+            <Falla>Adaptador sin respuesta</Falla>
           ) : lector.conectado ? (
             <Activo>Cable conectado</Activo>
           ) : (
@@ -236,7 +238,9 @@ export function LectoresDniEstado({
           )}
           <p className="mt-1 text-xs text-gray-400">
             {etiqueta}
-            {lector?.configurado && ` · ${ultimaLectura(lector)}`}
+            {lector?.adaptadorSinRespuesta
+              ? " · desconecte y vuelva a conectar su adaptador USB"
+              : lector?.configurado && ` · ${ultimaLectura(lector)}`}
           </p>
         </div>
       ))}

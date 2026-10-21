@@ -71,3 +71,21 @@ export class FiltroRepetidos {
     return repetido;
   }
 }
+
+/**
+ * Error USB de un adaptador en el registro del kernel (/dev/kmsg): el tty
+ * (`ttyUSB1`) si el driver pl2303 informa un -71 (error de protocolo USB).
+ * Visto el 20-21/10/2026 con el adaptador del lector de salida trabado: el
+ * puerto se abre sin error, pero el adaptador no acepta su configuración y no
+ * entrega nada (el lector pita y no pasa nada). Ej.:
+ * `3,1180,4458700,-;pl2303 ttyUSB1: pl2303_set_line_request - failed: -71`.
+ */
+export function ttyConErrorUsb(registro: string): string | null {
+  return /;pl2303 (ttyUSB\d+): .*(?:failed: -71|= -71)\s*$/.exec(registro)?.[1] ?? null;
+}
+
+/** Microsegundos desde el arranque del registro del kernel (para descartar los anteriores). */
+export function momentoRegistroKernel(registro: string): number | null {
+  const m = /^\d+,\d+,(\d+),/.exec(registro);
+  return m ? Number(m[1]) : null;
+}
