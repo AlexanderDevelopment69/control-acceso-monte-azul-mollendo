@@ -157,6 +157,8 @@ export interface EventoAcceso {
   verificadoPor?: { id: number; correo: string } | null;
   /** Sin DNI: el vigilante pasó esta tarjeta de contingencia en lugar del DNI. */
   tarjetaContingencia?: { numero: number } | null;
+  /** Lector de DNI de esa puerta desconectado: ingreso identificado por rostro, o salida abierta desde "Presentes ahora". */
+  sinLector?: boolean;
   fechaHora: string;
   torniqueteId: string | null;
   persona?: {
@@ -475,6 +477,12 @@ export interface UsoTarjetaContingencia {
   resultado: "autorizado" | "denegado" | null;
   persona: string | null;
   numeroDocumento: string | null;
+}
+
+/** Puertas con el lector de DNI desconectado (contingencia "sin lector"). */
+export interface SinLector {
+  ingreso: boolean;
+  salida: boolean;
 }
 
 /** Salida sin DNI elegida en el Panel, esperando la tarjeta por el lector de salida. */

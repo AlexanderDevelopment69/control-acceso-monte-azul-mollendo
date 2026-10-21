@@ -36,11 +36,13 @@ import {
   MarcaCorreccionManual,
   MarcaFacialPrimero,
   MarcaTarjetaContingencia,
+  MarcaSinLector,
   MarcaVerificacionManual,
   MotivoDenegacion,
   Movimiento,
 } from "./CeldasEvento";
 import { ElegirSalidaSinDni, FranjaSalidaSinDni } from "./SalidaSinDni";
+import { FranjasSinLectorPanel, useSinLector } from "./SinLector";
 import { DocumentosModal } from "./DocumentosModal";
 import {
   avisoDesdeHistorial,
@@ -183,6 +185,8 @@ function VigilanciaContent() {
   useEffect(() => {
     void cargarModoIngreso();
   }, [cargarModoIngreso]);
+  // Lector de DNI desconectado (contingencia "sin lector"): franjas y, sin el de salida, no hay "Salida sin DNI".
+  const sinLector = useSinLector();
   // Salida sin DNI (tarjeta de contingencia): el trabajador elegido que espera la tarjeta.
   const [salidaSinDni, setSalidaSinDni] = useState<SalidaSinDni | null>(null);
   const [eligiendoSalida, setEligiendoSalida] = useState(false);
@@ -409,7 +413,8 @@ function VigilanciaContent() {
         actions={
           <div className="flex flex-wrap items-center gap-3">
             {servidorCaido && <Badge color="error" size="md">⚠ El servidor no responde — no se están validando ingresos</Badge>}
-            <Button type="button" variant="outline" size="sm" onClick={() => setEligiendoSalida(true)}>
+            {/* La tarjeta se pasa por el lector de salida: sin él, la salida se abre desde "Presentes ahora". */}
+            <Button type="button" variant="outline" size="sm" disabled={sinLector.salida} onClick={() => setEligiendoSalida(true)}>
               Salida sin DNI
             </Button>
           </div>
@@ -417,6 +422,7 @@ function VigilanciaContent() {
       />
       <ElegirSalidaSinDni abierta={eligiendoSalida} onCerrar={() => setEligiendoSalida(false)} onElegida={setSalidaSinDni} />
       <FranjaSalidaSinDni salida={salidaSinDni} onCancelar={() => void cancelarSalidaSinDni()} />
+      <FranjasSinLectorPanel estado={sinLector} />
 
       {errorCarga && (
         <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -624,6 +630,7 @@ function VigilanciaContent() {
                         <MarcaCorreccionManual evento={ev} />
                         <MarcaFacialPrimero evento={ev} />
                         <MarcaTarjetaContingencia evento={ev} />
+                        <MarcaSinLector evento={ev} />
                       </div>
                     </TableCell>
                   </TableRow>

@@ -3,12 +3,20 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Presentes, tiempoDentro } from "./Presentes";
 
-const api = vi.hoisted(() => ({ presentes: vi.fn(), descargar: vi.fn() }));
+const api = vi.hoisted(() => ({
+  presentes: vi.fn(),
+  descargar: vi.fn(),
+  sinLector: vi.fn(),
+  salidaSinLector: vi.fn(),
+  rol: { actual: "administrador" },
+}));
 vi.mock("@/lib/ws", () => ({ escucharEventos: () => () => {}, canalConectado: () => false }));
 vi.mock("@/lib/api/endpoints", () => ({
   panelApi: { presentes: api.presentes },
   reportesApi: { descargar: api.descargar },
+  eventosAccesoApi: { sinLector: api.sinLector, salidaSinLector: api.salidaSinLector },
 }));
+vi.mock("@/lib/auth/AuthContext", () => ({ useAuth: () => ({ user: { id: 7, rol: api.rol.actual, correo: "x@tmam.pe" } }) }));
 
 const AHORA = new Date("2026-10-16T22:00:00.000Z");
 const hace = (horas: number) => new Date(AHORA.getTime() - horas * 3_600_000).toISOString();
@@ -23,6 +31,9 @@ vi.stubGlobal(
 );
 
 beforeEach(() => {
+  api.rol.actual = "administrador";
+  api.sinLector.mockReset().mockResolvedValue({ ingreso: false, salida: false });
+  api.salidaSinLector.mockReset().mockResolvedValue({ resultado: "autorizado" });
   api.presentes.mockReset().mockResolvedValue({
     generadoEn: AHORA.toISOString(),
     datos: [
@@ -81,6 +92,28 @@ describe("lista de presentes", () => {
     await userEvent.click(screen.getByRole("button", { name: "2" }));
     expect(screen.getByText("Prueba, Persona11")).toBeInTheDocument();
     expect(screen.getByText("Mostrando 11 a 20 de 20 registros")).toBeInTheDocument();
+  });
+
+  it("lector de salida desconectado: el vigilante abre la salida desde la fila, con confirmación", async () => {
+    api.rol.actual = "vigilancia";
+    api.sinLector.mockResolvedValue({ ingreso: false, salida: true });
+    render(<Presentes />);
+    expect(await screen.findByText("Lector de DNI de salida sin conexión.")).toBeInTheDocument();
+    // El Excel es solo del administrador.
+    expect(screen.queryByRole("button", { name: /Descargar Excel/ })).not.toBeInTheDocument();
+    const fila = screen.getByText("Torres, Ana").closest("tr")!;
+    await userEvent.click(within(fila).getByRole("button", { name: "Salida" }));
+    expect(screen.getByText(/¿Abrir la salida de Ana Torres \(DNI 40000001\)\?/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Abrir salida" }));
+    expect(api.salidaSinLector).toHaveBeenCalledWith(1);
+    expect(await screen.findByText("Se abrió la salida de Ana Torres.")).toBeInTheDocument();
+  });
+
+  it("con el lector de salida conectado no hay botón de salida", async () => {
+    render(<Presentes />);
+    expect(await screen.findByText("Torres, Ana")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Salida" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Descargar Excel/ })).toBeInTheDocument();
   });
 
   it("sin nadie dentro lo dice", async () => {

@@ -28,6 +28,7 @@ import type {
   ResumenPanel,
   RolUsuario,
   SalidaSinDni,
+  SinLector,
   TarjetaContingencia,
   TipoDocumento,
   UsoTarjetaContingencia,
@@ -190,6 +191,9 @@ export const eventosAccesoApi = {
   prepararSalidaSinDni: (personaId: number) =>
     apiRequest<SalidaSinDni>("/eventos-acceso/salida-sin-dni", { method: "POST", body: { personaId } }),
   cancelarSalidaSinDni: () => apiRequest<{ ok: true }>("/eventos-acceso/salida-sin-dni", { method: "DELETE" }),
+  sinLector: () => apiRequest<SinLector>("/eventos-acceso/sin-lector"),
+  salidaSinLector: (personaId: number) =>
+    apiRequest<{ resultado: "autorizado" | "denegado" }>("/eventos-acceso/salida-sin-lector", { method: "POST", body: { personaId } }),
 };
 
 // ---- tarjetas de contingencia ----

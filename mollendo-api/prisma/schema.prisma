@@ -261,6 +261,8 @@ model EventoAcceso {
   /// Sin DNI: el vigilante pasó una tarjeta de contingencia en lugar del DNI del trabajador.
   tarjetaContingenciaId    Int?                    @map("tarjeta_contingencia_id")
   tarjetaContingencia      TarjetaContingencia?    @relation(fields: [tarjetaContingenciaId], references: [id], onDelete: SetNull)
+  /// Lector de DNI de esa puerta desconectado: ingreso identificado por rostro, o salida abierta por el vigilante desde "Presentes ahora".
+  sinLector                Boolean                 @default(false) @map("sin_lector")
   fechaHora                DateTime                @default(now()) @map("fecha_hora")
   torniqueteId             String?                 @map("torniquete_id") @db.VarChar(50)
 

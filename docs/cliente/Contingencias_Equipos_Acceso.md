@@ -15,7 +15,7 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 | **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3) | El vigilante informa; soporte lo cambia | No | Decidido. Falta comprar el repuesto |
 | **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto (sección 4) | Vigilante o administrador la activan; el vigilante aprueba cada ingreso | No | **Programado** (15/10/2026); falta la prueba en el punto de acceso |
 | **Internet** del punto de acceso | **Segunda conexión de otro proveedor** que entra sola (sección 5) | TMAM | No | Decidido, a cargo de TMAM |
-| **Lector de DNI** | Mientras tanto, dos opciones: **solo el equipo facial** identifica a la persona (ingreso) o **el vigilante escribe el DNI** en el Panel (ingreso y salida); se conecta el **lector de repuesto** (sección 6) | El vigilante informa y, mientras tanto, opera con la opción elegida; soporte cambia el lector | No | Decidido. Por programar; la opción del equipo facial requiere una prueba; falta el repuesto |
+| **Lector de DNI** | Mientras tanto, contingencia **"sin lector"**, que se activa sola: el **ingreso** es solo con rostro y alcohol y la **salida** la abre el vigilante desde **"Presentes ahora"**; se conecta el **lector de repuesto** (sección 6) | El vigilante informa y abre las salidas; soporte cambia el lector | En el ingreso, el DNI: la persona se identifica solo por su rostro | **Programado** (21/10/2026); falta probarlo en el punto de acceso y el repuesto |
 | **Personal sin DNI**, o DNI que el lector no lee | El vigilante pasa la **tarjeta de contingencia** en lugar del DNI, después de rostro y alcohol; en la salida elige al personal en el Panel (sección 6.5) | El personal avisa; el vigilante pasa la tarjeta; el administrador la imprime y la administra | No: rostro, alcohol y documentos se revisan igual | **Programado** (20/10/2026); falta probar el QR en el lector. Tarjeta digital pendiente |
 | **Relé de un molinete** | Se cambia por el **relé de repuesto** (sección 7.1) | El vigilante informa; soporte lo cambia | No | Decidido. Falta el repuesto preparado |
 | **PC de control** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | El vigilante informa; soporte la cambia | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
@@ -27,7 +27,7 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 
 | Rol | Qué hace ante una falla |
 |---|---|
-| **Vigilante** | **Informa** la falla a soporte y al administrador. No cambia ni configura equipos. Sigue operando el punto de acceso con lo que el sistema le muestre (por ejemplo, la verificación manual de la sección 4 o el DNI escrito de la sección 6.3). Guarda la tarjeta de contingencia y la pasa cuando el personal no tiene DNI (sección 6.5) |
+| **Vigilante** | **Informa** la falla a soporte y al administrador. No cambia ni configura equipos. Sigue operando el punto de acceso con lo que el sistema le muestre (por ejemplo, la verificación manual de la sección 4 o la salida desde "Presentes ahora" de la sección 6.3). Guarda la tarjeta de contingencia y la pasa cuando el personal no tiene DNI (sección 6.5) |
 | **Administrador** | Gestiona la reparación o la compra de repuestos; puede activar y desactivar la verificación manual; crea, imprime y administra las tarjetas de contingencia |
 | **Soporte** | **Cambia los equipos** por sus repuestos y hace la **configuración** que haga falta en la PC de control |
 
@@ -220,13 +220,14 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 
 ## 6. Falla del lector de DNI
 
-**Decidido (15/10/2026):** mientras se cambia el lector hay **dos opciones** para seguir operando (sección 6.3): **usar solo el equipo facial** para identificar a la persona en el ingreso, o que **el vigilante escriba el DNI** en el Panel. Luego se conecta el **lector de repuesto** (sección 6.4). Por programar.
+**Decidido (21/10/2026):** mientras se cambia el lector, el sistema pasa **solo** a la contingencia **"sin lector"** (sección 6.3): el ingreso es solo con rostro y alcohol y la salida la abre el vigilante desde "Presentes ahora". Luego se conecta el **lector de repuesto** (sección 6.4). **Programado el 21/10/2026.**
 
 ### 6.1. Qué pasa cuando falla
 
 - **Ingreso:** nadie puede ingresar. Sin el DNI, el sistema no sabe quién es la persona y no la habilita en el equipo facial.
 - **Salida:** nadie sale por el molinete.
 - La franja roja muestra *"Lector de DNI de ingreso (o de salida): cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
+- Mientras tanto, se activa sola la contingencia "sin lector" (sección 6.3).
 
 ### 6.2. Cómo está conectado un lector
 
@@ -239,49 +240,46 @@ Cada lector tiene **dos partes**:
 
 Por eso, lo que haya que hacer al cambiarlo depende de qué parte se malogró (sección 6.4).
 
-### 6.3. Mientras tanto: dos opciones
+### 6.3. Mientras tanto: contingencia "sin lector"
 
-| | **Opción 1: solo el equipo facial** | **Opción 2: el vigilante escribe el DNI** |
-|---|---|---|
-| Para qué paso | **Ingreso** (la salida no tiene equipo facial) | **Ingreso y salida** |
-| Quién identifica a la persona | El **equipo facial**, por su rostro | El **vigilante**, que escribe el número del DNI en el Panel |
-| ¿Hace algo el vigilante? | No: se activa **solo** cuando el lector de ingreso se desconecta | Sí: escribe cada DNI |
-| ¿La persona mira el equipo una sola vez? | Sí (se queda unos segundos frente a él) | Sí, como siempre |
-| Documentos, rostro, alcohol y quién entró | Se mantienen | Se mantienen |
-| Estado | Por programar. **Requiere antes una prueba con el equipo real** (abajo) | Por programar. Funciona seguro: es el mismo proceso de siempre |
+Hecho el 21/10/2026 (decisión del cliente: que se active sola y que avise). Con el lector de DNI de una puerta desconectado y la PC de control en línea, el sistema pasa **solo** a esta contingencia y vuelve **solo** al modo normal cuando el lector se conecta. Nadie la activa ni la desactiva.
 
-**Cómo se usan juntas:** si la prueba con el equipo facial sale bien, el **ingreso** usa la opción 1 (automática) y la **salida** la opción 2. Si la prueba no sale bien, se usa la opción 2 para los dos. La opción 2 queda siempre disponible, también como respaldo de la opción 1.
+**Cómo avisa:** además de la franja roja de equipos (en todas las páginas), el Panel de vigilancia muestra una franja por cada puerta:
 
-#### Opción 1: solo el equipo facial (ingreso)
+- *"**Lector de DNI de ingreso sin conexión.** El ingreso es solo con rostro y alcohol, sin pasar el DNI."*
+- *"**Lector de DNI de salida sin conexión.** Abra la salida desde «Presentes ahora»."*, con el botón **"Ir a Presentes ahora"**.
 
-**Por qué no basta con "habilitar a todos" en el equipo:** cuando el equipo facial aprueba a alguien (rostro y alcohol conformes), **no informa quién fue**: el sistema lo sabe porque solo había una persona habilitada. Si se habilitara a todos los que están en regla, el sistema **no sabría quién entró**. El único momento en que el equipo informa quién es la persona es cuando **la rechaza** por estar bloqueada: en ese caso envía su DNI. La opción 1 usa justamente eso.
+#### Ingreso: solo con rostro y alcohol
 
-**Cómo funciona:**
+Funciona con el orden **"facial primero"**. Con el orden "facial primero", el equipo facial informa quién aprobó rostro y alcohol (por eso el Panel muestra *"Aprobó [nombre]"*), así que no hace falta la prueba con el equipo que se pedía antes.
 
-1. El lector de ingreso se desconecta: el sistema pasa **solo** a "identificación por rostro" y el Panel muestra la franja *"Lector de DNI de ingreso sin conexión: identificación por rostro"*.
-2. La persona se para frente al equipo facial **y se queda ahí**.
-3. El equipo la reconoce y, como está bloqueada, la rechaza e **informa su DNI** al sistema.
-4. El sistema revisa sus documentos, como si hubiera pasado el DNI. Si no cumple, se deniega igual que siempre.
-5. Si cumple, la habilita en el equipo (~2 segundos).
-6. El equipo **la vuelve a reconocer solo**, porque sigue frente a él, y le pide soplar.
-7. Si es apta, se abre el molinete. En el historial queda marcado como **"identificado por rostro"**.
-8. Cuando el lector vuelve a conectarse, el sistema regresa **solo** al modo normal: como esta opción no baja ningún control, no hace falta que nadie lo active ni lo desactive.
+1. La persona hace rostro y alcohol, como siempre.
+2. El sistema revisa sus documentos, bajas y antipassback, como si hubiera pasado su DNI.
+3. Si cumple, **se abre el molinete sin esperar el DNI**. Si no cumple, se deniega igual que siempre.
+4. En el Panel queda marcado *"Sin lector de DNI: identificado por rostro"*.
 
-**Prueba pendiente con el equipo real** (no requiere programar): con el equipo conectado al servidor, una persona registrada se para frente al equipo **sin pasar el DNI** y se queda ahí. Comprobar:
+**Qué control se pierde:** el DNI. La persona se identifica **solo por su rostro**; el equipo facial podría confundir a dos personas muy parecidas. Por eso queda marcado en el Panel y en el reporte.
 
-1. Que el equipo informe su DNI al rechazarla, y cuánto tarda.
-2. Si, una vez habilitada, el equipo **la vuelve a reconocer solo** sin que se mueva, y qué muestra en su pantalla durante esos segundos.
+Con el **orden normal** (DNI primero) no hay ingreso sin lector: el sistema no sabe quién es la persona hasta que pasa el DNI.
 
-Si el equipo no la vuelve a reconocer sola, la persona tendría que mirar dos veces, y esta opción no se usa.
+#### Salida: desde "Presentes ahora"
 
-#### Opción 2: el vigilante escribe el DNI (ingreso y salida)
+1. El vigilante toca **"Ir a Presentes ahora"** en la franja del Panel. La página muestra a todo el personal que figura dentro, con un buscador por nombre, DNI o empresa.
+2. Busca a la persona y toca **"Salida"** en su fila.
+3. Confirma en la ventana *"¿Abrir la salida de … (DNI …)? Se abre el molinete de salida."* con **"Abrir salida"**.
+4. Se abre el molinete de salida. La salida queda **a nombre de la persona**, marcada *"Salida sin lector"* y con el vigilante que la abrió.
 
-El Panel de vigilancia tendrá un campo **"Ingresar DNI manualmente"**, uno para el ingreso y otro para la salida. Hace exactamente lo mismo que el lector; solo cambia de dónde sale el número.
+El botón **"Salida"** aparece **solo mientras el lector de salida está desconectado**; con el lector conectado, la página es solo de consulta. Mientras tanto, **"Salida sin DNI"** (tarjeta de contingencia) queda desactivado, porque la tarjeta se pasa por el lector de salida. Para estar seguro de quién es, el vigilante puede pedirle el DNI a la persona y buscarla por el número.
 
-- **Ingreso:** la persona le muestra su DNI al vigilante, que escribe el número en el campo de **ingreso**. Desde ahí todo sigue igual que siempre (sección 1): documentos, equipo facial (rostro y alcohol) y molinete.
-- **Salida:** el vigilante escribe el número en el campo de **salida** y, si la persona está registrada, se abre el molinete de salida.
+#### En el reporte
 
-Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**, con el nombre del vigilante. El campo se puede usar en cualquier momento, no solo cuando falla el lector: por ejemplo, si un DNI está gastado y el lector no lo lee.
+En el Excel de ingresos y salidas, la columna "Verificación" dice *"Sin lector de DNI (identificado por rostro)"* en el ingreso y *"Salida sin lector (eligió …)"* en la salida, con el correo del vigilante.
+
+#### Lo que no cubre
+
+- **Sin la PC de control** no se abre ningún molinete: la contingencia no se activa (sección 7.2).
+- **Sin internet:** igual que siempre (sección 5).
+- **Verificación manual activa** (falla del equipo facial): el ingreso lo decide el vigilante y necesita el DNI.
 
 ### 6.4. Cambio por el repuesto
 
@@ -301,7 +299,7 @@ Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**,
 **Qué se hace:**
 
 1. **Vigilante:** ve la franja roja *"Lector de DNI: cable desconectado"*, o nota que el lector no lee. **Informa** a soporte y al administrador.
-2. **Mientras tanto** se sigue operando con las opciones de la sección 6.3: en el ingreso, el equipo facial identifica a la persona (si la opción 1 está disponible) o el vigilante escribe el DNI; en la salida, el vigilante escribe el DNI.
+2. **Mientras tanto** se sigue operando con la contingencia "sin lector" de la sección 6.3: en el ingreso, solo con rostro y alcohol; en la salida, el vigilante la abre desde "Presentes ahora".
 3. **Soporte:** conecta el repuesto (lector y, si hace falta, su adaptador). Con la opción B funciona solo; con la A, registra el adaptador nuevo.
 4. **Soporte:** comprueba que el aviso desaparezca y que el lector lea un DNI.
 5. **Administrador:** gestiona la reparación o la compra de otro repuesto.
@@ -387,7 +385,7 @@ Si la tarjeta es aceptada pero el personal **no cumple** (documentos vencidos, d
 
 #### 6.5.7. Lo que la tarjeta no cubre
 
-- **Falla del lector de DNI:** la tarjeta se pasa por el mismo lector, así que tampoco se lee. Se usan las opciones de la sección 6.3.
+- **Falla del lector de DNI:** la tarjeta se pasa por el mismo lector, así que tampoco se lee. Se usa la contingencia "sin lector" de la sección 6.3.
 - **Verificación manual** (falla del equipo facial): la tarjeta no es válida; decide el vigilante en el Panel.
 - **Sin internet:** no es válida, igual que el DNI (el sistema no puede saber quién es).
 
@@ -463,7 +461,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | 5 | ¿Tiempo máximo para la verificación manual? | **No** (15/10/2026) |
 | 6 | ¿Aviso por "varias personas seguidas sin completar la prueba"? | **No**: la persona avisa al vigilante en ese momento. En su lugar, un aviso en el Panel con la primera persona que no completa (15/10/2026) |
 | 7 | ¿Qué se hace ante un **corte de internet**? | **A cargo de TMAM**: segunda conexión con los requisitos de la sección 5.2. Si fallan las dos, nadie ingresa y las salidas siguen (15/10/2026) |
-| 8 | ¿Qué se hace si falla el **lector de DNI**? | Mientras tanto, **solo el equipo facial** identifica a la persona en el ingreso (si la prueba con el equipo sale bien) o **el vigilante escribe el DNI** (ingreso y salida); se conecta el **lector de repuesto** (15/10/2026) |
+| 8 | ¿Qué se hace si falla el **lector de DNI**? | Contingencia **"sin lector"**, que se activa sola y avisa: ingreso solo con rostro y alcohol; la salida la abre el vigilante desde **"Presentes ahora"**. Se conecta el **lector de repuesto** (21/10/2026; reemplaza lo decidido el 15/10/2026) |
 | 9 | ¿Qué se hace si falla el **relé de un molinete**? | Se cambia de inmediato por el **repuesto** (15/10/2026) |
 | 10 | ¿Qué se hace si falla la **PC de control**? | **PC de repuesto**; si no la hay, liberar el molinete a mano y anotar los pasos (15/10/2026) |
 | 11 | ¿El **adaptador del lector de repuesto** lo registra soporte en el momento (A) o queda registrado desde antes (B)? | **Pendiente** (se recomienda B; sección 6.4). No haría falta si se programa la vista opcional de la sección 10 |
@@ -489,8 +487,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 |---|---|
 | ~~Verificación manual~~ Hecho el 15/10/2026 (falta subirlo a la nube y probarlo en el punto de acceso) | 4 |
 | ~~Aviso en el Panel junto a "no completó rostro y alcohol"~~ Hecho el 15/10/2026 (falta subirlo al servidor) | 3.2 |
-| Identificación por rostro en el ingreso, automática al desconectarse el lector (opción 1; solo si la prueba sale bien) | 6.3 |
-| Campo "Ingresar DNI manualmente" en el Panel (ingreso y salida), con la marca en el historial (opción 2) | 6.3 |
+| ~~Contingencia "sin lector": ingreso solo con rostro y salida desde "Presentes ahora"~~ Hecho el 21/10/2026 | 6.3 |
 | Adaptador de repuesto registrado desde antes (si se elige la opción B) | 6.4 |
 | *Pendiente:* tarjeta de contingencia digital, con QR que cambia cada 30 segundos en el celular del vigilante | 6.5.8 |
 | *Opcional:* vista "Configuración de equipos" en el portal, para que soporte asigne lectores y relés de repuesto sin entrar a la PC de control | 10 |
@@ -504,7 +501,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Cambiar un relé por el repuesto | 7.1 |
 | Cambiar la PC de control por la de repuesto | 7.2 |
 | Cambiar un lector de DNI por el repuesto | 6.4 |
-| Identificación por rostro con el equipo real (antes de programar la opción 1) | 6.3 |
+| Contingencia "sin lector": desconectar un lector y comprobar el ingreso por rostro, la salida desde "Presentes ahora" y que vuelva solo al conectarlo | 6.3 |
 | Pasar una tarjeta de contingencia impresa por los lectores de ingreso y salida (y, para la tarjeta digital, desde la pantalla de un celular) | 6.5 |
 
 ---

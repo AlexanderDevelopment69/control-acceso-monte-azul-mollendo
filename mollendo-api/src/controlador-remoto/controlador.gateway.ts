@@ -1,7 +1,7 @@
-import { Logger } from '@nestjs/common';
+import { Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import fs from 'node:fs';
 import path from 'node:path';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import {
   ConnectedSocket,
   MessageBody,
@@ -30,6 +30,12 @@ export interface EstadoReportado {
   ipLocal?: string | null;
 }
 
+/** ¿Qué puertas están en contingencia "sin lector"? */
+export interface SinLector {
+  ingreso: boolean;
+  salida: boolean;
+}
+
 interface Conexion {
   desde: string;
   direccion: string;
@@ -55,9 +61,11 @@ export const molinetesRemotos = () => process.env.MOLINETES_REMOTOS === 'true';
   addTrailingSlash: false,
   namespace: '/ws/controlador',
 })
-export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit, OnModuleDestroy {
   @WebSocketServer()
   server!: Server;
+
+  constructor(private readonly eventEmitter: EventEmitter2) {}
 
   private readonly logger = new Logger(ControladorGateway.name);
   private readonly conexiones = new Map<string, Conexion>();
@@ -67,6 +75,18 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
    * (junto a los documentos) para recordarlo aunque se reinicie el servidor.
    */
   private ultimoConocido: { estado: EstadoReportado; cuando: string } | null = leerUltimoConocido();
+  /** Último estado "sin lector" avisado, para avisar solo cuando cambia. */
+  private sinLectorAvisado: SinLector = { ingreso: false, salida: false };
+  private revision: ReturnType<typeof setInterval> | null = null;
+
+  onModuleInit() {
+    // También cambia cuando el controlador deja de reportar sin cortar la conexión (ver estado()).
+    this.revision = setInterval(() => this.revisarSinLector(), 5000);
+  }
+
+  onModuleDestroy() {
+    if (this.revision) clearInterval(this.revision);
+  }
 
   handleConnection(cliente: Socket): void {
     const clave = cliente.handshake.auth?.['clave'];
@@ -86,6 +106,7 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
 
   handleDisconnect(cliente: Socket): void {
     if (this.conexiones.delete(cliente.id)) this.logger.warn('Controlador desconectado');
+    this.revisarSinLector();
   }
 
   @SubscribeMessage('estado')
@@ -96,6 +117,34 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
     conexion.ultimoReporte = new Date().toISOString();
     this.ultimoConocido = { estado, cuando: conexion.ultimoReporte };
     guardarUltimoConocido(this.ultimoConocido);
+    this.revisarSinLector();
+  }
+
+  /**
+   * Contingencia "sin lector": el lector de DNI de esa puerta está
+   * desconectado y el controlador sigue en línea (sin el controlador no se
+   * abre ningún molinete). Ingreso: entra quien aprueba rostro y alcohol.
+   * Salida: el vigilante la abre desde "Presentes ahora".
+   */
+  sinLector(): SinLector {
+    if (!molinetesRemotos()) return { ingreso: false, salida: false };
+    const { conectado, estado } = this.estado();
+    const caido = (l: EstadoLectorDni | undefined) => conectado && !!l && l.configurado && !l.conectado;
+    return { ingreso: caido(estado?.lectoresDni.ingreso), salida: caido(estado?.lectoresDni.salida) };
+  }
+
+  /** Avisa a los paneles (y deja en el registro) cuando la contingencia se activa o termina. */
+  private revisarSinLector() {
+    const ahora = this.sinLector();
+    for (const puerta of ['ingreso', 'salida'] as const) {
+      if (ahora[puerta] === this.sinLectorAvisado[puerta]) continue;
+      if (ahora[puerta]) this.logger.warn(`Contingencia activada: lector de DNI de ${puerta} sin conexión`);
+      else this.logger.log(`Contingencia terminada: lector de DNI de ${puerta} (conectado, o sin el controlador)`);
+    }
+    if (ahora.ingreso !== this.sinLectorAvisado.ingreso || ahora.salida !== this.sinLectorAvisado.salida) {
+      this.sinLectorAvisado = ahora;
+      this.eventEmitter.emit('sin-lector.cambio', ahora);
+    }
   }
 
   /** Orden de abrir un molinete (DNI de salida, o ingreso verificado por el G4 Pro). */

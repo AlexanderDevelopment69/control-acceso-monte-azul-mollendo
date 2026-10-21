@@ -137,6 +137,8 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
   let quienSoplo: Promise<unknown>;
   /** Cada vez que se pasó una tarjeta de contingencia (la TARJETA sirve; TARJETA_DESACTIVADA, no). */
   let usosTarjeta: Record<string, unknown>[];
+  /** Puertas con el lector de DNI desconectado (contingencia "sin lector"). */
+  let sinLector: { ingreso: boolean; salida: boolean };
 
   const ingreso = (dni: string) => servicio.registrarIngreso({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Ingreso' });
   const salida = (dni: string) => servicio.registrarSalida({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Salida' });
@@ -195,7 +197,9 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
           codigo === TARJETA ? { tarjeta: { id: 1, numero: 1 } } : { rechazo: 'Tarjeta desactivada', tarjetaId: 2 },
         anotarUso: async (uso: Record<string, unknown>) => void usosTarjeta.push(uso),
       } as never,
+      { sinLector: () => sinLector } as never,
     );
+    sinLector = { ingreso: false, salida: false };
     usosTarjeta = [];
   });
 
@@ -1123,6 +1127,52 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(servicio.salidaSinDniPreparada()).toBeNull();
         expect(de('salida-sin-dni.cambio').at(-1)).toBeNull();
         expect(await tarjeta('salida')).toMatchObject({ resultado: 'denegado' });
+      });
+    });
+
+    describe('sin lector de DNI (desconectado): ingreso por rostro y salida desde "Presentes ahora"', () => {
+      const vigilante = { id: 7, empresaId: 1, rol: 'vigilancia' as const, correo: 'vigilante@tmam.pe' };
+
+      beforeEach(() => {
+        facialPrimero = true;
+      });
+
+      it('lector de ingreso desconectado: quien aprueba rostro y alcohol entra sin pasar el DNI', async () => {
+        sinLector.ingreso = true;
+        agregarPersona(base, '11111111');
+        await attlog('11111111');
+        expect(base.eventos).toEqual([
+          expect.objectContaining({ personaId: 100, tipoMovimiento: 'ingreso', resultado: 'autorizado', sinLector: true, dniQueSoplo: '11111111' }),
+        ]);
+        expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'ingreso' })]);
+        expect(de('ingreso.en-espera')).toHaveLength(0);
+      });
+
+      it('sin lector de ingreso se revisan igual los documentos: vencidos, denegado', async () => {
+        sinLector.ingreso = true;
+        agregarPersona(base, '11111111', { vencido: true });
+        await attlog('11111111');
+        expect(base.eventos).toEqual([expect.objectContaining({ resultado: 'denegado', denegadoPorDocumentos: true, sinLector: true })]);
+        expect(de('molinete.abrir')).toHaveLength(0);
+      });
+
+      it('con el lector conectado no cambia nada: espera el DNI', async () => {
+        agregarPersona(base, '11111111');
+        await attlog('11111111');
+        expect(base.eventos).toHaveLength(0);
+        expect(de('ingreso.en-espera')).toHaveLength(1);
+      });
+
+      it('salida sin lector: abre la salida de quien figura dentro, con el vigilante que la abrió', async () => {
+        agregarPersona(base, '11111111');
+        yaIngreso('11111111');
+        await expect(servicio.salidaSinLector(100, vigilante)).rejects.toThrow('ya está conectado');
+        sinLector.salida = true;
+        expect(await servicio.salidaSinLector(100, vigilante)).toMatchObject({ resultado: 'autorizado', numeroDocumento: '11111111' });
+        expect(base.eventos.at(-1)).toMatchObject({ tipoMovimiento: 'salida', sinLector: true, verificadoPorId: 7 });
+        expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'salida' })]);
+        // Ya salió: no se puede abrir otra vez.
+        await expect(servicio.salidaSinLector(100, vigilante)).rejects.toThrow('figura fuera');
       });
     });
 

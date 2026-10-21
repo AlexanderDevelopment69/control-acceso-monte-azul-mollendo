@@ -118,6 +118,12 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
     this.server.emit('tarjeta-contingencia-uso', {});
   }
 
+  // Un lector de DNI se desconectó o volvió (contingencia "sin lector"): los paneles actualizan su franja.
+  @OnEvent('sin-lector.cambio')
+  handleSinLector(payload: unknown): void {
+    this.server.emit('sin-lector', payload);
+  }
+
   // Cambió el orden del ingreso (facial primero, en prueba): los paneles actualizan su franja.
   @OnEvent('modo-ingreso.cambio')
   handleModoIngreso(payload: unknown): void {

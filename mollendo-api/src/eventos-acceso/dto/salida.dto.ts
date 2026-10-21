@@ -35,4 +35,6 @@ export class SalidaDto {
    */
   tarjetaContingenciaId?: number;
   verificadoPorId?: number;
+  /** Solo dentro del servidor: lector de DNI de salida desconectado, el vigilante abrió la salida desde "Presentes ahora". */
+  sinLector?: boolean;
 }

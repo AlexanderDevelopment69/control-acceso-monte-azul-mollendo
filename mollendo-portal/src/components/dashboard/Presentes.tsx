@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { guardarArchivo } from "@/lib/descargas";
 import { escucharEventos } from "@/lib/ws";
-import { panelApi, reportesApi } from "@/lib/api/endpoints";
+import { eventosAccesoApi, panelApi, reportesApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { PersonaPresente } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
@@ -17,6 +17,9 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { EtiquetaPerfil } from "@/components/personal/EtiquetaPerfil";
 import { OPCIONES_PERFIL, type Perfil } from "@/lib/perfiles";
 import { DownloadIcon } from "@/icons";
+import { Modal } from "@/components/ui/modal";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { FranjaSinLector, useSinLector } from "@/app/(admin)/vigilancia/SinLector";
 
 /** Más de 12 horas dentro: se resalta (permanencia larga). */
 const MS_PERMANENCIA_LARGA = 12 * 3_600_000;
@@ -59,6 +62,14 @@ export function Presentes() {
   const [pagina, setPagina] = useState(1);
   const [descargando, setDescargando] = useState(false);
   const [ahora, setAhora] = useState(() => Date.now());
+  const { user } = useAuth();
+  const esAdministrador = user?.rol === "administrador";
+  // Lector de DNI de salida desconectado: cada fila tiene "Salida" (contingencia "sin lector").
+  const sinLectorSalida = useSinLector().salida;
+  const [saliendo, setSaliendo] = useState<PersonaPresente | null>(null);
+  const [abriendo, setAbriendo] = useState(false);
+  const [errorSalida, setErrorSalida] = useState<string | null>(null);
+  const [salio, setSalio] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -113,6 +124,22 @@ export function Presentes() {
   const desde = (paginaActual - 1) * POR_PAGINA;
   const enPagina = visibles.slice(desde, desde + POR_PAGINA);
 
+  async function abrirSalida() {
+    if (!saliendo) return;
+    setAbriendo(true);
+    setErrorSalida(null);
+    try {
+      await eventosAccesoApi.salidaSinLector(saliendo.personaId);
+      setSalio(`Se abrió la salida de ${saliendo.nombres} ${saliendo.apellidos}.`);
+      setSaliendo(null);
+      void cargar();
+    } catch (err) {
+      setErrorSalida(err instanceof ApiError ? err.message : "No se pudo abrir la salida");
+    } finally {
+      setAbriendo(false);
+    }
+  }
+
   async function descargar() {
     setDescargando(true);
     try {
@@ -127,6 +154,14 @@ export function Presentes() {
 
   return (
     <div>
+      {sinLectorSalida && (
+        <FranjaSinLector titulo="Lector de DNI de salida sin conexión.">Abra la salida desde esta lista con el botón «Salida».</FranjaSinLector>
+      )}
+      {salio && (
+        <ErrorBanner tono="exito" className="mb-4">
+          {salio}
+        </ErrorBanner>
+      )}
       {error && <ErrorBanner className="mb-4">{error}</ErrorBanner>}
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -147,16 +182,19 @@ export function Presentes() {
           aria-label="Perfil"
           options={[{ value: "todos", label: "Todos los perfiles" }, ...OPCIONES_PERFIL]}
         />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => void descargar()}
-          disabled={descargando || !presentes?.length}
-          startIcon={<DownloadIcon className="size-4" />}
-        >
-          {descargando ? "Descargando…" : "Descargar Excel"}
-        </Button>
+        {/* El Excel es un reporte: solo el administrador. */}
+        {esAdministrador && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void descargar()}
+            disabled={descargando || !presentes?.length}
+            startIcon={<DownloadIcon className="size-4" />}
+          >
+            {descargando ? "Descargando…" : "Descargar Excel"}
+          </Button>
+        )}
       </div>
 
       <Tarjeta className="overflow-hidden">
@@ -173,7 +211,7 @@ export function Presentes() {
               <Table>
                 <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                   <TableRow>
-                    {["Persona", "Perfil", "Empresa", "Ingreso", "Tiempo dentro"].map((c) => (
+                    {["Persona", "Perfil", "Empresa", "Ingreso", "Tiempo dentro", ...(sinLectorSalida ? [""] : [])].map((c) => (
                       <TableCell key={c} isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">
                         {c}
                       </TableCell>
@@ -204,6 +242,21 @@ export function Presentes() {
                           {/* En naranja: más de 12 horas dentro (permanencia larga). */}
                           <span title={largo ? "Más de 12 horas dentro" : undefined}>{tiempoDentro(p.ingreso, ahora)}</span>
                         </TableCell>
+                        {sinLectorSalida && (
+                          <TableCell className="px-5 py-4 text-end">
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => {
+                                setErrorSalida(null);
+                                setSalio(null);
+                                setSaliendo(p);
+                              }}
+                            >
+                              Salida
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
@@ -221,6 +274,25 @@ export function Presentes() {
           onPageChange={setPagina}
         />
       </Tarjeta>
+      <Modal isOpen={!!saliendo} onClose={() => setSaliendo(null)} bloqueado={abriendo} className="max-w-md p-6 sm:p-8">
+        {saliendo && (
+          <>
+            <h2 className="mb-2 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Salida sin lector</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              ¿Abrir la salida de {saliendo.nombres} {saliendo.apellidos} (DNI {saliendo.numeroDocumento})? Se abre el molinete de salida.
+            </p>
+            {errorSalida && <ErrorBanner className="mt-4">{errorSalida}</ErrorBanner>}
+            <div className="mt-6 flex justify-end gap-3">
+              <Button type="button" size="sm" variant="outline" disabled={abriendo} onClick={() => setSaliendo(null)}>
+                Cancelar
+              </Button>
+              <Button type="button" size="sm" disabled={abriendo} onClick={() => void abrirSalida()}>
+                {abriendo ? "Abriendo…" : "Abrir salida"}
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
       {presentes && visibles.length !== presentes.length && (
         <p className="mt-2 text-xs text-gray-400">
           Filtrando: {visibles.length} de {presentes.length} {presentes.length === 1 ? "persona dentro" : "personas dentro"}

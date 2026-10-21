@@ -29,4 +29,6 @@ export class IngresoDto {
    * vigilante pasó esta tarjeta de contingencia en lugar del DNI.
    */
   tarjetaContingenciaId?: number;
+  /** Solo dentro del servidor: lector de DNI de ingreso desconectado, entró identificado por rostro. */
+  sinLector?: boolean;
 }

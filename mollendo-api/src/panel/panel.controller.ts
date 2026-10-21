@@ -61,8 +61,9 @@ export class PanelController {
   }
 
   // Todas las personas dentro ahora (lista de "Presentes actualmente" del dashboard).
+  // También el vigilante: desde ahí abre la salida si se desconecta el lector de salida.
   @Get('panel/dashboard/presentes')
-  @Roles('administrador')
+  @Roles('administrador', 'vigilancia')
   presentes() {
     return this.dashboardService.presentes();
   }

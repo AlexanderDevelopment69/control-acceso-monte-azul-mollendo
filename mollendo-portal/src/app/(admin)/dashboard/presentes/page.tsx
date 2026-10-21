@@ -6,16 +6,19 @@ import { RequireRole } from "@/lib/auth/RequireRole";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Presentes } from "@/components/dashboard/Presentes";
 import { ChevronLeftIcon } from "@/icons";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function PresentesPage() {
+  // El vigilante llega desde el Panel (lector de salida desconectado: abre la salida desde aquí).
+  const vigilante = useAuth().user?.rol === "vigilancia";
   return (
-    <RequireRole roles={["administrador"]}>
+    <RequireRole roles={["administrador", "vigilancia"]}>
       <Link
-        href="/dashboard"
+        href={vigilante ? "/vigilancia" : "/dashboard"}
         className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-brand-500 dark:text-gray-400"
       >
         <ChevronLeftIcon className="size-4" />
-        Dashboard
+        {vigilante ? "Panel de vigilancia" : "Dashboard"}
       </Link>
       <PageHeader
         title="Presentes ahora"

@@ -4,9 +4,10 @@ import { EventosAccesoService } from './eventos-acceso.service.js';
 import { VerificacionManualService } from './verificacion-manual.service.js';
 import { ModoIngresoService } from './modo-ingreso.service.js';
 import { TarjetasContingenciaModule } from '../tarjetas-contingencia/tarjetas-contingencia.module.js';
+import { ControladorRemotoModule } from '../controlador-remoto/controlador-remoto.module.js';
 
 @Module({
-  imports: [TarjetasContingenciaModule],
+  imports: [TarjetasContingenciaModule, ControladorRemotoModule],
   controllers: [EventosAccesoController],
   providers: [EventosAccesoService, VerificacionManualService, ModoIngresoService],
   exports: [EventosAccesoService, VerificacionManualService, ModoIngresoService],

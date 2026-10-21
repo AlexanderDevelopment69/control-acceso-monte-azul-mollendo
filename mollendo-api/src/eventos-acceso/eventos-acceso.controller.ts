@@ -44,6 +44,20 @@ export class EventosAccesoController {
     return this.eventosAccesoService.registrarTarjeta(dto);
   }
 
+  /** Puertas con el lector de DNI desconectado (contingencia "sin lector"). */
+  @Get('sin-lector')
+  @Roles('administrador', 'vigilancia')
+  sinLector() {
+    return this.eventosAccesoService.sinLector();
+  }
+
+  /** Salida sin lector: el vigilante abre desde "Presentes ahora" la salida de quien figura dentro. */
+  @Post('salida-sin-lector')
+  @Roles('administrador', 'vigilancia')
+  salidaSinLector(@Body() dto: SalidaSinDniDto, @CurrentUser() usuario: AuthenticatedUser) {
+    return this.eventosAccesoService.salidaSinLector(dto.personaId, usuario);
+  }
+
   /** Salida sin DNI elegida en el Panel que espera la tarjeta (null: ninguna). */
   @Get('salida-sin-dni')
   @Roles('administrador', 'vigilancia')

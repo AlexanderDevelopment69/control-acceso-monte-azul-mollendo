@@ -21,6 +21,7 @@ import { versionFoto } from '../common/archivos-persona.util.js';
 import { TarjetasContingenciaService } from '../tarjetas-contingencia/tarjetas-contingencia.service.js';
 import type { TarjetaContingencia } from '../generated/prisma/client.js';
 import type { TarjetaLeidaDto } from './dto/tarjeta-leida.dto.js';
+import { ControladorGateway } from '../controlador-remoto/controlador.gateway.js';
 
 /** Payload del evento interno que ordena abrir el molinete (lo atiende IntegracionesModule). */
 export interface AbrirMolineteEvent {
@@ -269,6 +270,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     private readonly auditoria: AuditoriaService,
     private readonly modoIngreso: ModoIngresoService,
     private readonly tarjetas: TarjetasContingenciaService,
+    private readonly controlador: ControladorGateway,
   ) {}
 
   onModuleInit() {
@@ -507,6 +509,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         dniQueSoplo: quien?.pin ?? null,
         torniqueteId: dto.torniqueteId,
         tarjetaContingenciaId: dto.tarjetaContingenciaId,
+        sinLector: dto.sinLector ?? false,
       },
     });
     await this.anotarPrueba(aprobada.verificacionId, { eventoAccesoId: evento.id });
@@ -734,6 +737,12 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         await this.usarTarjeta(tarjeta.tarjeta, tarjeta.dto);
         return;
       }
+      // Lector de DNI de ingreso sin conexión (contingencia "sin lector"): entra con su rostro, sin esperar el DNI.
+      if (this.controlador.sinLector().ingreso) {
+        await anotar('Aprobó; lector de DNI de ingreso sin conexión: entra identificado por rostro');
+        await this.ingresoSinLector(persona, aprobacion, quien);
+        return;
+      }
       await anotar('Aprobó: "pase su DNI" (15 s)');
       this.aprobaciones.push(aprobacion);
       this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
@@ -889,6 +898,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         ...(motivos.denegadoNoEsQuienSoplo ? { facialPrimero: true, dniQueSoplo: motivos.dniQueSoplo ?? null } : {}),
         torniqueteId: dto.torniqueteId,
         tarjetaContingenciaId: dto.tarjetaContingenciaId,
+        sinLector: dto.sinLector ?? false,
       },
     });
 
@@ -1224,6 +1234,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
           torniqueteId: dto.torniqueteId,
           tarjetaContingenciaId: dto.tarjetaContingenciaId,
           verificadoPorId: dto.verificadoPorId,
+          sinLector: dto.sinLector ?? false,
         },
       });
       const respuesta = {
@@ -1249,6 +1260,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         torniqueteId: dto.torniqueteId,
         tarjetaContingenciaId: dto.tarjetaContingenciaId,
         verificadoPorId: dto.verificadoPorId,
+        sinLector: dto.sinLector ?? false,
         ...(fechaHora && { fechaHora }),
       },
     });
@@ -1386,6 +1398,49 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     });
     this.eventEmitter.emit('tarjeta-contingencia.uso', {});
     return respuesta;
+  }
+
+  /**
+   * Contingencia "sin lector", ingreso: con el lector de DNI de ingreso
+   * desconectado, quien aprobó rostro y alcohol entra sin pasar el DNI
+   * (identificado por rostro). Baja, antipassback y documentos se revisan igual.
+   */
+  private async ingresoSinLector(persona: Persona, aprobacion: AprobacionSinDni, quien: PaseExitoso) {
+    const ingreso: IngresoDto = {
+      tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
+      numeroDocumento: persona.numeroDocumento,
+      sinLector: true,
+    };
+    this.logger.log(`Sin lector de DNI de ingreso: ingreso de ${persona.numeroDocumento} (identificado por rostro)`);
+    const denegado = await this.denegarSiNoCorresponde(persona, ingreso);
+    if (denegado) await this.anotarPrueba(aprobacion.verificacionId, { eventoAccesoId: denegado.eventoId });
+    else await this.autorizarConAprobacion(persona, ingreso, aprobacion, quien);
+  }
+
+  /** Puertas con el lector de DNI desconectado (contingencia "sin lector"), para el Panel. */
+  sinLector() {
+    return this.controlador.sinLector();
+  }
+
+  /**
+   * Contingencia "sin lector", salida: con el lector de DNI de salida
+   * desconectado, el vigilante abre desde "Presentes ahora" la salida de quien
+   * figura dentro. Queda a su nombre y con quién la abrió.
+   */
+  async salidaSinLector(personaId: number, usuario: AuthenticatedUser) {
+    if (!this.controlador.sinLector().salida) throw new BadRequestException('El lector de salida ya está conectado: la persona pasa su DNI');
+    const persona = await this.prisma.persona.findUnique({ where: { id: personaId } });
+    if (!persona) throw new NotFoundException('Persona no encontrada');
+    return this.enSerie(async () => {
+      if (!(await this.figuraDentro(persona.id))) throw new BadRequestException('Esa persona figura fuera: no tiene una salida pendiente');
+      this.logger.log(`Salida sin lector: ${persona.numeroDocumento} (abrió ${usuario.correo})`);
+      return this.registrarSalida({
+        tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
+        numeroDocumento: persona.numeroDocumento,
+        verificadoPorId: usuario.id,
+        sinLector: true,
+      });
+    });
   }
 
   /** Salida sin DNI esperando la tarjeta, para el Panel (null: ninguna). */

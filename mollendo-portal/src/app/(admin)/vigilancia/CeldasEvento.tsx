@@ -153,6 +153,18 @@ export function MarcaTarjetaContingencia({
   );
 }
 
+/** Sin lector de DNI (desconectado): ingreso identificado por rostro, o salida abierta por el vigilante desde "Presentes ahora". */
+export function MarcaSinLector({ evento }: { evento: Pick<EventoAcceso, "sinLector" | "tipoMovimiento" | "verificadoPor"> }) {
+  if (!evento.sinLector) return null;
+  return (
+    <Badge color="warning">
+      {evento.tipoMovimiento === "salida"
+        ? `Salida sin lector${evento.verificadoPor ? ` · ${evento.verificadoPor.correo}` : ""}`
+        : "Sin lector de DNI: identificado por rostro"}
+    </Badge>
+  );
+}
+
 /** Verificación manual (equipo facial fuera de servicio): quién aprobó o denegó el ingreso. */
 export function MarcaVerificacionManual({ evento }: { evento: Pick<EventoAcceso, "verificacionManual" | "verificadoPor"> }) {
   if (!evento.verificacionManual) return null;

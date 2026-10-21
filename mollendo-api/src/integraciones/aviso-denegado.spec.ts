@@ -31,7 +31,7 @@ describe('Aviso de ingreso y salida denegados', () => {
     expect(pulsos).toEqual([]);
 
     const enviados: { evento: string; datos: unknown }[] = [];
-    const gateway = new ControladorGateway();
+    const gateway = new ControladorGateway({ emit: () => true } as never);
     gateway.server = { emit: (evento: string, datos: unknown) => enviados.push({ evento, datos }) } as never;
     (gateway as unknown as { conexiones: Map<string, unknown> }).conexiones.set('c1', {});
     gateway.avisarDenegado({ tipoMovimiento: 'ingreso', resultado: 'denegado', numeroDocumento: '48058719' });
@@ -45,7 +45,7 @@ describe('Aviso de ingreso y salida denegados', () => {
 
   it('controlador desconectado: se siguen mostrando sus lectores y relés (como no conectados)', () => {
     process.env.MOLINETES_REMOTOS = 'true';
-    const gateway = new ControladorGateway();
+    const gateway = new ControladorGateway({ emit: () => true } as never);
     gateway.handleConnection({ id: 'c1', handshake: { auth: { clave: (process.env.DEVICE_API_KEY = 'k') }, address: 'x' }, disconnect: () => undefined } as never);
     const rele = { conectado: true, serie: 'DEN01', canal: 1, ultimoPulso: null, error: null };
     const lector = { configurado: true, conectado: true, ultimaLectura: null, error: null };
@@ -60,5 +60,30 @@ describe('Aviso de ingreso y salida denegados', () => {
     expect(estado.conectado).toBe(false);
     expect(estado.estado?.releMolinetes.avisoIngreso).toMatchObject({ serie: 'DEN01', conectado: false, error: 'Controlador desconectado' });
     expect(estado.estado?.lectoresDni.ingreso).toMatchObject({ configurado: true, conectado: false });
+  });
+
+  it('sin lector: solo con el controlador en línea y el lector desconectado; avisa al activarse y al terminar', () => {
+    process.env.MOLINETES_REMOTOS = 'true';
+    const avisos: unknown[] = [];
+    const gateway = new ControladorGateway({ emit: (_evento: string, datos: unknown) => avisos.push(datos) } as never);
+    gateway.handleConnection({ id: 'c1', handshake: { auth: { clave: (process.env.DEVICE_API_KEY = 'k') }, address: 'x' }, disconnect: () => undefined } as never);
+    const rele = { conectado: true, serie: 'R1', canal: 1, ultimoPulso: null, error: null };
+    const lector = (conectado: boolean) => ({ configurado: true, conectado, ultimaLectura: null, error: null });
+    const informar = (ingreso: boolean, salida: boolean) =>
+      gateway.recibirEstado({ id: 'c1' } as never, {
+        lectoresDni: { ingreso: lector(ingreso), salida: lector(salida) },
+        releMolinetes: { ingreso: rele, salida: rele },
+        listaPersonal: { personas: 0, actualizado: null },
+        salidasPendientes: 0,
+      });
+    informar(true, true);
+    expect(gateway.sinLector()).toEqual({ ingreso: false, salida: false });
+    informar(true, false);
+    informar(true, false);
+    expect(gateway.sinLector()).toEqual({ ingreso: false, salida: true });
+    // Sin el controlador no se abre ningún molinete: no hay contingencia.
+    gateway.handleDisconnect({ id: 'c1' } as never);
+    expect(gateway.sinLector()).toEqual({ ingreso: false, salida: false });
+    expect(avisos).toEqual([{ ingreso: false, salida: true }, { ingreso: false, salida: false }]);
   });
 });
