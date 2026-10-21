@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
-import { Movimiento } from "../vigilancia/CeldasEvento";
+import { Movimiento } from "../../vigilancia/CeldasEvento";
 import { diaVisible, htmlTarjeta } from "./imprimir";
 
 const POR_PAGINA = 10;

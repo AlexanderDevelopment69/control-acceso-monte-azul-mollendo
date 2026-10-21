@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
+  ChevronDownIcon,
   DocsIcon,
   EyeLineIcon,
   BuildingIcon,
@@ -24,6 +25,8 @@ type NavItem = {
   icon: React.ReactNode;
   path?: string;
   roles: RolUsuario[];
+  /** Grupo que se despliega: sus opciones, en lugar de `path`. */
+  subItems?: { name: string; path: string }[];
 };
 
 const navItems: NavItem[] = [
@@ -31,7 +34,12 @@ const navItems: NavItem[] = [
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
   { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador"] },
   { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
-  { icon: <LockIcon />, name: "Tarjetas de contingencia", path: "/tarjetas-contingencia", roles: ["administrador", "vigilancia"] },
+  {
+    icon: <LockIcon />,
+    name: "Contingencias",
+    roles: ["administrador", "vigilancia"],
+    subItems: [{ name: "Tarjetas de contingencia", path: "/contingencias/tarjetas" }],
+  },
   { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },
   { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador"] },
@@ -52,6 +60,13 @@ const AppSidebar: React.FC = () => {
   // También en sus vistas internas (p. ej. /dashboard/presentes resalta "Dashboard").
   const isActive = useCallback((path: string) => path === ruta || (path !== "/" && ruta.startsWith(`${path}/`)), [ruta]);
 
+  // Grupos desplegados: abierto el que contiene la página actual, salvo que se lo abra o cierre a mano.
+  const grupoActual = navItems.find((n) => n.subItems?.some((s) => isActive(s.path)))?.name ?? null;
+  const [aMano, setAMano] = useState<Record<string, boolean>>({});
+  const abierto = (nombre: string) => aMano[nombre] ?? nombre === grupoActual;
+  const alternar = (nombre: string) => setAMano((actual) => ({ ...actual, [nombre]: !abierto(nombre) }));
+  const conTexto = isExpanded || isHovered || isMobileOpen;
+
   // En el celular el menú tapa la página: se cierra al elegir una opción.
   const cerrarEnCelular = () => {
     if (isMobileOpen) toggleMobileSidebar();
@@ -61,6 +76,56 @@ const AppSidebar: React.FC = () => {
     <ul className="flex flex-col gap-1">
       {items.map((nav) => (
         <li key={nav.name}>
+          {nav.subItems && (
+            <>
+              <button
+                type="button"
+                onClick={() => alternar(nav.name)}
+                aria-expanded={abierto(nav.name)}
+                className={`menu-item group overflow-hidden transition-colors duration-300 ease-out motion-reduce:transition-none ${
+                  nav.name === grupoActual ? "menu-item-active" : "menu-item-inactive"
+                } ${!conTexto ? "lg:justify-center" : ""}`}
+              >
+                <span
+                  className={`flex size-6 shrink-0 items-center justify-center transition-colors duration-300 ease-out motion-reduce:transition-none ${
+                    nav.name === grupoActual ? "menu-item-icon-active" : "menu-item-icon-inactive"
+                  }`}
+                >
+                  {nav.icon}
+                </span>
+                {conTexto && (
+                  <>
+                    <span className="menu-item-text whitespace-nowrap">{nav.name}</span>
+                    <ChevronDownIcon
+                      className={`ml-auto size-5 transition-transform duration-200 ${
+                        abierto(nav.name) ? "rotate-180 text-brand-500 dark:text-brand-400" : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    />
+                  </>
+                )}
+              </button>
+              {conTexto && abierto(nav.name) && (
+                <ul className="ml-9 mt-1 flex flex-col gap-1">
+                  {nav.subItems.map((sub) => (
+                    <li key={sub.path}>
+                      <Link
+                        href={sub.path}
+                        onClick={(e) => {
+                          if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) setElegida({ ruta: sub.path, desde: pathname });
+                          cerrarEnCelular();
+                        }}
+                        className={`menu-dropdown-item whitespace-nowrap transition-colors duration-300 ease-out motion-reduce:transition-none ${
+                          isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
+                        }`}
+                      >
+                        {sub.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
           {nav.path && (
             <Link
               href={nav.path}

@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { EventoAcceso, TarjetaContingencia } from "@/lib/api/types";
-import { MarcaTarjetaContingencia } from "../vigilancia/CeldasEvento";
-import { FranjaSalidaSinDni } from "../vigilancia/SalidaSinDni";
+import { MarcaTarjetaContingencia } from "../../vigilancia/CeldasEvento";
+import { FranjaSalidaSinDni } from "../../vigilancia/SalidaSinDni";
 import { htmlTarjeta } from "./imprimir";
 
 const tarjeta: TarjetaContingencia = {

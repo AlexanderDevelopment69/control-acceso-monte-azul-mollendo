@@ -597,7 +597,7 @@ export const SECCIONES: SeccionManual[] = [
             </Lista>
             <p className="my-3">
               La tarjeta pasada en otro momento <b>no abre</b>, suena el aviso y queda anotada. Cada uso, aceptado o no, se ve en{" "}
-              <b>Tarjetas de contingencia</b>, en el menú.
+              <b>Contingencias → Tarjetas de contingencia</b>, en el menú.
             </p>
             <p>
               <b>Administrador:</b> ahí mismo crea la tarjeta (“No vence” o hasta un día), la imprime y la desactiva. Si se pierde o alguien le

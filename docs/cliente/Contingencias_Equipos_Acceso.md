@@ -311,7 +311,7 @@ Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**,
 
 ### 6.5. Trabajador sin DNI, o DNI que el lector no lee: tarjeta de contingencia
 
-Hecho el 20/10/2026. El administrador crea e imprime en el portal (**Tarjetas de contingencia**) una tarjeta con un QR y se la entrega al vigilante. La tarjeta **sola no abre**: reemplaza al DNI del trabajador en ese momento.
+Hecho el 20/10/2026. El administrador crea e imprime en el portal (**Contingencias → Tarjetas de contingencia**, en el menú) una tarjeta con un QR y se la entrega al vigilante. La tarjeta **sola no abre**: reemplaza al DNI del trabajador en ese momento.
 
 - **Ingreso** (orden "facial primero"): el trabajador avisa al vigilante, hace rostro y alcohol y, cuando el Panel muestra *"Aprobó … pase su DNI"*, el vigilante pasa la tarjeta por el lector de ingreso en esos 15 segundos. Entra el trabajador que aprobó, con sus documentos revisados como siempre. Si hay dos personas esperando su DNI a la vez, no abre.
 - **Salida:** el vigilante toca **"Salida sin DNI"** en el Panel, elige al trabajador (solo aparecen quienes figuran dentro) y tiene 2 minutos para pasar la tarjeta por el lector de salida.
