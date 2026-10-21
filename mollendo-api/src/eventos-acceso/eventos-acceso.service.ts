@@ -18,6 +18,9 @@ import { ModoIngresoService } from './modo-ingreso.service.js';
 import type { PaseExitoso } from '../push-sdk/verify-success.util.js';
 import { pinDeDocumento } from '../push-sdk/comandos-acceso.util.js';
 import { versionFoto } from '../common/archivos-persona.util.js';
+import { TarjetasContingenciaService } from '../tarjetas-contingencia/tarjetas-contingencia.service.js';
+import type { TarjetaContingencia } from '../generated/prisma/client.js';
+import type { TarjetaLeidaDto } from './dto/tarjeta-leida.dto.js';
 
 /** Payload del evento interno que ordena abrir el molinete (lo atiende IntegracionesModule). */
 export interface AbrirMolineteEvent {
@@ -105,6 +108,19 @@ const MISMO_PASE_MS = 20 * 1000;
  * y soplar después de pasar el DNI.
  */
 const TOLERANCIA_RELOJ_MS = 0;
+
+/** Salida sin DNI: desde que el vigilante elige al trabajador en el Panel, tiene esto para pasar la tarjeta. */
+const VENTANA_SALIDA_SIN_DNI_MS = 2 * 60 * 1000;
+
+/** Salida sin DNI preparada en el Panel (falta pasar la tarjeta por el lector de salida). */
+export interface SalidaSinDni {
+  personaId: number;
+  nombres: string;
+  apellidos: string;
+  numeroDocumento: string;
+  hasta: string;
+  preparadaPor: string;
+}
 
 /** Pedido a la integración del G4 Pro: quién aprobó el rtlog de esta hora (responde por emitAsync). */
 export interface QuienAproboEvent {
@@ -241,6 +257,10 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   private rechazosAlcohol = new Map<string, { en: number; eventoId: number }>();
   /** G4 Pro en asistencia, "facial primero": DNI que esperan en silencio su prueba (ver ESPERA_PRUEBA_EN_CAMINO_MS), por DNI. */
   private dniEsperandoPrueba = new Map<string, { persona: Persona; dto: IngresoDto; en: number }>();
+  /** "Facial primero": tarjeta de contingencia pasada antes de que llegara el aviso de la prueba (como dniEsperandoPrueba). */
+  private tarjetaEsperandoPrueba: { tarjeta: TarjetaContingencia; dto: TarjetaLeidaDto; en: number } | null = null;
+  /** Salida sin DNI elegida en el Panel, esperando la tarjeta (una a la vez). */
+  private salidaSinDni: (SalidaSinDni & { usuarioId: number }) | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -248,6 +268,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     private readonly verificacionManual: VerificacionManualService,
     private readonly auditoria: AuditoriaService,
     private readonly modoIngreso: ModoIngresoService,
+    private readonly tarjetas: TarjetasContingenciaService,
   ) {}
 
   onModuleInit() {
@@ -485,6 +506,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         facialPrimero: true,
         dniQueSoplo: quien?.pin ?? null,
         torniqueteId: dto.torniqueteId,
+        tarjetaContingenciaId: dto.tarjetaContingenciaId,
       },
     });
     await this.anotarPrueba(aprobada.verificacionId, { eventoAccesoId: evento.id });
@@ -658,6 +680,13 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         this.rechazosAlcohol.set(evento.pin, { en: Date.now(), eventoId });
         // Si su DNI esperaba esta prueba, el rechazo por alcohol ya lo dice (sonó el aviso): no se repite.
         this.dniEsperandoPrueba.delete(evento.pin);
+        // Igual con la tarjeta de contingencia que la esperaba: queda anotada como no usada.
+        const tarjeta = this.tarjetaEsperandoPrueba;
+        if (tarjeta && tarjeta.en >= hora - TOLERANCIA_RELOJ_MS) {
+          this.tarjetaEsperandoPrueba = null;
+          await this.tarjetas.anotarUso({ tarjetaId: tarjeta.tarjeta.id, tipoMovimiento: 'ingreso', aceptada: false, detalle: `No pasó el alcohol (${persona.nombres} ${persona.apellidos})` });
+          this.eventEmitter.emit('tarjeta-contingencia.uso', {});
+        }
         return;
       }
       this.rechazosAlcohol.delete(evento.pin);
@@ -693,6 +722,16 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         const denegado = await this.denegarSiNoCorresponde(dni.persona, dni.dto);
         if (denegado) await this.anotarPrueba(evento.verificacionId, { eventoAccesoId: denegado.eventoId });
         else await this.autorizarConAprobacion(dni.persona, dni.dto, aprobacion, quien);
+        return;
+      }
+      // La tarjeta de contingencia ya se pasó (después de la prueba) y la esperaba: se usa ya.
+      const tarjeta = this.tarjetaEsperandoPrueba;
+      if (tarjeta && tarjeta.en >= hora - TOLERANCIA_RELOJ_MS && tarjeta.en <= aprobacion.vence) {
+        this.tarjetaEsperandoPrueba = null;
+        await anotar('Aprobó; la tarjeta de contingencia ya estaba pasada y esperando');
+        this.aprobaciones.push(aprobacion);
+        this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
+        await this.usarTarjeta(tarjeta.tarjeta, tarjeta.dto);
         return;
       }
       await anotar('Aprobó: "pase su DNI" (15 s)');
@@ -741,6 +780,12 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         }
         this.eventEmitter.emit('ingreso.en-espera', aprobacionEnEspera(aprobacion));
       });
+      // La tarjeta de contingencia ya se pasó y la esperaba: se usa ya (usarTarjeta espera a saber quién sopló).
+      const tarjeta = this.tarjetaEsperandoPrueba;
+      if (tarjeta) {
+        this.tarjetaEsperandoPrueba = null;
+        await this.usarTarjeta(tarjeta.tarjeta, tarjeta.dto);
+      }
       return;
     }
     if (codigo !== '1') this.logger.warn(`G4 Pro: código desconocido event=${codigo}; se deniega por alcohol`);
@@ -843,6 +888,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         denegadoNoEsQuienSoplo: motivos.denegadoNoEsQuienSoplo ?? false,
         ...(motivos.denegadoNoEsQuienSoplo ? { facialPrimero: true, dniQueSoplo: motivos.dniQueSoplo ?? null } : {}),
         torniqueteId: dto.torniqueteId,
+        tarjetaContingenciaId: dto.tarjetaContingenciaId,
       },
     });
 
@@ -1076,6 +1122,17 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`Facial primero: el DNI ${pin} pasó su DNI sin haber hecho antes rostro y alcohol`);
       await this.registrarIngresoDenegadoInmediato(dni.persona, dni.dto, { denegadoSinFacial: true });
     }
+    // Tarjeta de contingencia pasada sin que nadie aprobara rostro y alcohol antes.
+    const tarjeta = this.tarjetaEsperandoPrueba;
+    if (tarjeta && ahora - tarjeta.en >= ESPERA_PRUEBA_EN_CAMINO_MS) {
+      this.tarjetaEsperandoPrueba = null;
+      await this.rechazarTarjeta(tarjeta.tarjeta.id, 'ingreso', 'Nadie aprobó rostro y alcohol antes de pasar la tarjeta');
+    }
+    // Salida sin DNI elegida en el Panel a la que no le pasaron la tarjeta a tiempo.
+    if (this.salidaSinDni && Date.parse(this.salidaSinDni.hasta) < ahora) {
+      this.logger.log(`Salida sin DNI de ${this.salidaSinDni.numeroDocumento}: no se pasó la tarjeta a tiempo`);
+      this.cambiarSalidaSinDni(null);
+    }
     // Facial primero: aprobaciones cuyo dueño no pasó su DNI en 20 s.
     const vigentes = this.aprobacionesVigentes(ahora);
     for (const vencida of this.aprobaciones.filter((a) => !vigentes.includes(a))) {
@@ -1165,6 +1222,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
           resultado: 'denegado',
           denegadoSinIngreso: true,
           torniqueteId: dto.torniqueteId,
+          tarjetaContingenciaId: dto.tarjetaContingenciaId,
+          verificadoPorId: dto.verificadoPorId,
         },
       });
       const respuesta = {
@@ -1188,6 +1247,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         tipoMovimiento: 'salida',
         resultado: 'autorizado',
         torniqueteId: dto.torniqueteId,
+        tarjetaContingenciaId: dto.tarjetaContingenciaId,
+        verificadoPorId: dto.verificadoPorId,
         ...(fechaHora && { fechaHora }),
       },
     });
@@ -1212,6 +1273,189 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
 
     this.eventEmitter.emit('evento-acceso.registrado', respuesta);
     return respuesta;
+  }
+
+  /**
+   * Tarjeta de contingencia pasada por un lector en lugar del DNI (el
+   * trabajador lo olvidó o el lector no lo reconoce). Sola no abre:
+   * - **Ingreso** ("facial primero"): usa la aprobación de rostro y alcohol
+   *   que espera su DNI, y entra quien aprobó (usarTarjeta). Si la aprobación
+   *   todavía no llegó (el aviso del G4 tarda unos segundos), la espera como
+   *   un DNI (ESPERA_PRUEBA_EN_CAMINO_MS).
+   * - **Salida**: sale el trabajador que eligió el vigilante en el Panel
+   *   ("Salida sin DNI").
+   * Cada vez queda anotada en los usos de la tarjeta, aceptada o no.
+   */
+  async registrarTarjeta(dto: TarjetaLeidaDto) {
+    const revisada = await this.tarjetas.revisar(dto.codigo);
+    if ('rechazo' in revisada) return this.rechazarTarjeta(revisada.tarjetaId, dto.tipoMovimiento, revisada.rechazo);
+    const { tarjeta } = revisada;
+    return dto.tipoMovimiento === 'ingreso'
+      ? this.enSerie(() => this.ingresoConTarjeta(tarjeta, dto))
+      : this.enSerie(() => this.salidaConTarjeta(tarjeta, dto));
+  }
+
+  /** La tarjeta no sirvió: se anota, suena el aviso de denegado de esa puerta y no se abre. */
+  private async rechazarTarjeta(tarjetaId: number | null, tipoMovimiento: 'ingreso' | 'salida', detalle: string) {
+    this.logger.warn(`Tarjeta de contingencia en ${tipoMovimiento}: ${detalle}`);
+    await this.tarjetas.anotarUso({ tarjetaId, tipoMovimiento, aceptada: false, detalle });
+    this.eventEmitter.emit('aviso.denegado', { tipoMovimiento });
+    this.eventEmitter.emit('tarjeta-contingencia.uso', {});
+    return { resultado: 'denegado' as const, mensaje: detalle };
+  }
+
+  private async ingresoConTarjeta(tarjeta: TarjetaContingencia, dto: TarjetaLeidaDto) {
+    if (await this.verificacionManual.activa()) {
+      return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'Verificación manual activa: el ingreso lo decide el vigilante en el Panel');
+    }
+    if (!(await this.modoIngreso.facialPrimero())) {
+      return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'La tarjeta sirve solo con el orden "facial primero"');
+    }
+    if (this.aprobacionesVigentes().length === 0) {
+      this.tarjetaEsperandoPrueba = { tarjeta, dto, en: Date.now() };
+      return { estado: 'pendiente_verificacion' as const, mensaje: 'Verificando la prueba de rostro y alcohol del equipo facial.' };
+    }
+    return this.usarTarjeta(tarjeta, dto);
+  }
+
+  /**
+   * Ingreso con tarjeta: entra quien aprobó rostro y alcohol (la aprobación
+   * que espera su DNI). Debe haber **una sola** esperando: con varias no se
+   * sabe a quién dejar pasar. Baja, antipassback y documentos se revisan como
+   * con el DNI.
+   */
+  private async usarTarjeta(tarjeta: TarjetaContingencia, dto: TarjetaLeidaDto) {
+    const vigentes = this.aprobacionesVigentes();
+    if (vigentes.length === 0) return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'Nadie aprobó rostro y alcohol antes de pasar la tarjeta');
+    if (vigentes.length > 1) {
+      return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'Varias personas aprobaron rostro y alcohol a la vez: no se sabe a quién dejar pasar');
+    }
+    const [aprobacion] = vigentes;
+    await this.esperarQuienAprobo(vigentes);
+    const quien = aprobacion.quienSabido ?? null;
+    if (!quien) return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'El equipo facial no dijo quién aprobó rostro y alcohol');
+    const persona = aprobacion.persona
+      ? await this.prisma.persona.findUnique({ where: { id: aprobacion.persona.id } })
+      : await this.prisma.persona.findFirst({ where: { numeroDocumento: quien.pin } });
+    if (!persona) return this.rechazarTarjeta(tarjeta.id, 'ingreso', `Quien aprobó (${quien.pin}) no está en el sistema`);
+    this.soltarAprobacion(aprobacion);
+
+    const ingreso: IngresoDto = {
+      tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
+      numeroDocumento: persona.numeroDocumento,
+      torniqueteId: dto.torniqueteId,
+      tarjetaContingenciaId: tarjeta.id,
+    };
+    this.logger.log(`Tarjeta de contingencia ${tarjeta.numero}: ingreso de ${persona.numeroDocumento} (aprobó rostro y alcohol)`);
+    const denegado = await this.denegarSiNoCorresponde(persona, ingreso);
+    const respuesta = denegado ?? (await this.autorizarConAprobacion(persona, ingreso, aprobacion, quien));
+    if (denegado) await this.anotarPrueba(aprobacion.verificacionId, { eventoAccesoId: denegado.eventoId });
+    await this.tarjetas.anotarUso({
+      tarjetaId: tarjeta.id,
+      tipoMovimiento: 'ingreso',
+      aceptada: true,
+      detalle: denegado ? 'Ingreso denegado (ver el motivo en el Panel)' : 'Ingreso',
+      eventoAccesoId: respuesta.eventoId,
+    });
+    this.eventEmitter.emit('tarjeta-contingencia.uso', {});
+    return respuesta;
+  }
+
+  private async salidaConTarjeta(tarjeta: TarjetaContingencia, dto: TarjetaLeidaDto) {
+    const preparada = this.salidaSinDni;
+    if (!preparada || Date.parse(preparada.hasta) < Date.now()) {
+      return this.rechazarTarjeta(tarjeta.id, 'salida', 'Nadie eligió al trabajador en el Panel ("Salida sin DNI")');
+    }
+    this.cambiarSalidaSinDni(null);
+    const persona = await this.prisma.persona.findUnique({ where: { id: preparada.personaId } });
+    if (!persona) return this.rechazarTarjeta(tarjeta.id, 'salida', 'El trabajador elegido ya no está en el sistema');
+    this.logger.log(`Tarjeta de contingencia ${tarjeta.numero}: salida de ${persona.numeroDocumento} (eligió ${preparada.preparadaPor})`);
+    const respuesta = await this.registrarSalida({
+      tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
+      numeroDocumento: persona.numeroDocumento,
+      torniqueteId: dto.torniqueteId,
+      tarjetaContingenciaId: tarjeta.id,
+      verificadoPorId: preparada.usuarioId,
+    });
+    await this.tarjetas.anotarUso({
+      tarjetaId: tarjeta.id,
+      tipoMovimiento: 'salida',
+      aceptada: true,
+      detalle: respuesta.resultado === 'autorizado' ? 'Salida' : 'Salida denegada (ver el motivo en el Panel)',
+      eventoAccesoId: respuesta.eventoId,
+    });
+    this.eventEmitter.emit('tarjeta-contingencia.uso', {});
+    return respuesta;
+  }
+
+  /** Salida sin DNI esperando la tarjeta, para el Panel (null: ninguna). */
+  salidaSinDniPreparada(): SalidaSinDni | null {
+    if (!this.salidaSinDni || Date.parse(this.salidaSinDni.hasta) < Date.now()) return null;
+    const { usuarioId: _usuario, ...salida } = this.salidaSinDni;
+    return salida;
+  }
+
+  private cambiarSalidaSinDni(salida: (SalidaSinDni & { usuarioId: number }) | null) {
+    this.salidaSinDni = salida;
+    this.eventEmitter.emit('salida-sin-dni.cambio', this.salidaSinDniPreparada());
+  }
+
+  /**
+   * Salida sin DNI: el vigilante elige en el Panel al trabajador (debe figurar
+   * dentro) y tiene VENTANA_SALIDA_SIN_DNI_MS para pasar la tarjeta por el
+   * lector de salida. Una a la vez: elegir otro reemplaza al anterior.
+   */
+  async prepararSalidaSinDni(personaId: number, usuario: AuthenticatedUser): Promise<SalidaSinDni> {
+    const persona = await this.prisma.persona.findUnique({ where: { id: personaId } });
+    if (!persona) throw new NotFoundException('Persona no encontrada');
+    if (!(await this.figuraDentro(persona.id))) throw new BadRequestException('Esa persona figura fuera: no tiene una salida pendiente');
+    this.cambiarSalidaSinDni({
+      personaId: persona.id,
+      nombres: persona.nombres,
+      apellidos: persona.apellidos,
+      numeroDocumento: persona.numeroDocumento,
+      hasta: new Date(Date.now() + VENTANA_SALIDA_SIN_DNI_MS).toISOString(),
+      preparadaPor: usuario.correo,
+      usuarioId: usuario.id,
+    });
+    return this.salidaSinDniPreparada()!;
+  }
+
+  /** Salida sin DNI: quienes figuran dentro y coinciden con la búsqueda (nombre o documento), para elegir. */
+  async buscarDentro(busqueda: string | undefined) {
+    const buscadas = palabras(busqueda);
+    if (buscadas.length === 0) return [];
+    const personas = await this.prisma.persona.findMany({
+      where: {
+        AND: buscadas.map((palabra) => ({
+          OR: [
+            { numeroDocumento: { contains: palabra, mode: 'insensitive' as const } },
+            { nombres: { contains: palabra, mode: 'insensitive' as const } },
+            { apellidos: { contains: palabra, mode: 'insensitive' as const } },
+          ],
+        })),
+      },
+      include: { empresa: { select: { razonSocial: true } } },
+      orderBy: [{ apellidos: 'asc' }, { nombres: 'asc' }],
+      take: 20,
+    });
+    const dentro = await Promise.all(personas.map((p) => this.figuraDentro(p.id)));
+    return personas
+      .filter((_, i) => dentro[i])
+      .map((p) => ({
+        id: p.id,
+        nombres: p.nombres,
+        apellidos: p.apellidos,
+        numeroDocumento: p.numeroDocumento,
+        empresa: p.empresa?.razonSocial ?? null,
+        tieneFoto: !!p.fotoUrl,
+        fotoVersion: versionFoto(p.fotoUrl),
+      }));
+  }
+
+  cancelarSalidaSinDni(): { ok: true } {
+    if (this.salidaSinDni) this.cambiarSalidaSinDni(null);
+    return { ok: true };
   }
 
   /**
@@ -1294,6 +1538,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
             },
           },
           verificadoPor: { select: { id: true, correo: true } },
+          tarjetaContingencia: { select: { numero: true } },
         },
         orderBy: [{ fechaHora: 'desc' }, { id: 'desc' }],
         skip,

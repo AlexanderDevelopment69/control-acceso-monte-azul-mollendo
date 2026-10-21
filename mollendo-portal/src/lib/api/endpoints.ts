@@ -24,9 +24,13 @@ import type {
   PersonaPermanencia,
   PersonaPresente,
   ResultadoSincronizacionG4,
+  PersonaDentro,
   ResumenPanel,
   RolUsuario,
+  SalidaSinDni,
+  TarjetaContingencia,
   TipoDocumento,
+  UsoTarjetaContingencia,
 } from "./types";
 
 // ---- auth ----
@@ -179,6 +183,26 @@ export const eventosAccesoApi = {
   /** Corrección manual del antipassback: registra la salida o el ingreso de una persona (no abre el molinete). */
   corregir: (personaId: number, tipoMovimiento: "ingreso" | "salida", motivo: string) =>
     apiRequest<{ eventoId: number }>("/eventos-acceso/correccion", { method: "POST", body: { personaId, tipoMovimiento, motivo } }),
+  /** Salida sin DNI: la elegida que espera la tarjeta (null: ninguna). */
+  salidaSinDni: () => apiRequest<SalidaSinDni | null>("/eventos-acceso/salida-sin-dni"),
+  candidatosSalidaSinDni: (busqueda: string) =>
+    apiRequest<PersonaDentro[]>(`/eventos-acceso/salida-sin-dni/candidatos${consulta({ busqueda })}`),
+  prepararSalidaSinDni: (personaId: number) =>
+    apiRequest<SalidaSinDni>("/eventos-acceso/salida-sin-dni", { method: "POST", body: { personaId } }),
+  cancelarSalidaSinDni: () => apiRequest<{ ok: true }>("/eventos-acceso/salida-sin-dni", { method: "DELETE" }),
+};
+
+// ---- tarjetas de contingencia ----
+export const tarjetasContingenciaApi = {
+  listar: () => apiRequest<TarjetaContingencia[]>("/tarjetas-contingencia"),
+  usos: (params: FiltrosLista = {}) =>
+    apiRequest<Paginado<UsoTarjetaContingencia>>(`/tarjetas-contingencia/usos${consulta({ ...params })}`),
+  crear: (venceEl: string | null) => apiRequest<TarjetaContingencia>("/tarjetas-contingencia", { method: "POST", body: { venceEl } }),
+  actualizar: (id: number, cambios: { activa?: boolean; venceEl?: string | null }) =>
+    apiRequest<TarjetaContingencia>(`/tarjetas-contingencia/${id}`, { method: "PATCH", body: cambios }),
+  cambiarCodigo: (id: number) => apiRequest<TarjetaContingencia>(`/tarjetas-contingencia/${id}/cambiar-codigo`, { method: "POST" }),
+  /** El QR (SVG) para imprimir la tarjeta. */
+  qr: async (id: number) => (await apiRequest<Blob>(`/tarjetas-contingencia/${id}/qr`, { responseType: "blob" })).text(),
 };
 
 // ---- reportes ----

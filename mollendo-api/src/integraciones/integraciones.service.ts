@@ -124,6 +124,13 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
     await this.releUsb.pulso(AVISO_DE[evento.tipoMovimiento]);
   }
 
+  /** Tarjeta de contingencia rechazada (sin evento de acceso): suena igual el aviso de esa puerta. */
+  @OnEvent('aviso.denegado')
+  async avisarTarjetaRechazada(aviso: { tipoMovimiento: 'ingreso' | 'salida' }): Promise<void> {
+    if (process.env.MOLINETES_REMOTOS === 'true') return;
+    await this.releUsb.pulso(AVISO_DE[aviso.tipoMovimiento]);
+  }
+
   @OnEvent('molinete.abrir')
   async abrirMolinete(evento: AbrirMolineteEvent): Promise<void> {
     // Con controlador, la orden la lleva ControladorGateway a la mini PC.

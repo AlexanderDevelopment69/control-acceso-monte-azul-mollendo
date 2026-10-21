@@ -7,6 +7,7 @@ import { SalidaDto } from './dto/salida.dto.js';
 import { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
 import { ActivarVerificacionManualDto, CambiarModoIngresoDto, DecisionManualDto } from './dto/verificacion-manual.dto.js';
 import { CorreccionAntipassbackDto } from './dto/correccion-antipassback.dto.js';
+import { SalidaSinDniDto, TarjetaLeidaDto } from './dto/tarjeta-leida.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
@@ -33,6 +34,41 @@ export class EventosAccesoController {
   @UseGuards(ApiKeyGuard)
   registrarSalida(@Body() dto: SalidaDto) {
     return this.eventosAccesoService.registrarSalida(dto);
+  }
+
+  /** Tarjeta de contingencia pasada por un lector de DNI (en lugar del DNI). */
+  @Post('tarjeta')
+  @Public()
+  @UseGuards(ApiKeyGuard)
+  registrarTarjeta(@Body() dto: TarjetaLeidaDto) {
+    return this.eventosAccesoService.registrarTarjeta(dto);
+  }
+
+  /** Salida sin DNI elegida en el Panel que espera la tarjeta (null: ninguna). */
+  @Get('salida-sin-dni')
+  @Roles('administrador', 'vigilancia')
+  salidaSinDni() {
+    return this.eventosAccesoService.salidaSinDniPreparada();
+  }
+
+  /** Salida sin DNI: quienes figuran dentro y coinciden con la búsqueda. */
+  @Get('salida-sin-dni/candidatos')
+  @Roles('administrador', 'vigilancia')
+  candidatosSalidaSinDni(@Query('busqueda') busqueda?: string) {
+    return this.eventosAccesoService.buscarDentro(busqueda?.slice(0, 100));
+  }
+
+  /** El vigilante elige al trabajador que sale sin DNI; después pasa la tarjeta por el lector de salida. */
+  @Post('salida-sin-dni')
+  @Roles('administrador', 'vigilancia')
+  prepararSalidaSinDni(@Body() dto: SalidaSinDniDto, @CurrentUser() usuario: AuthenticatedUser) {
+    return this.eventosAccesoService.prepararSalidaSinDni(dto.personaId, usuario);
+  }
+
+  @Delete('salida-sin-dni')
+  @Roles('administrador', 'vigilancia')
+  cancelarSalidaSinDni() {
+    return this.eventosAccesoService.cancelarSalidaSinDni();
   }
 
   /** DNI en regla esperando el rostro y el alcohol del G4 Pro, o al vigilante (Panel de vigilancia). */

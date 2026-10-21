@@ -5,6 +5,7 @@ import path from 'node:path';
 import { io, type Socket } from 'socket.io-client';
 import type { IngresoDto } from '../eventos-acceso/dto/ingreso.dto.js';
 import type { SalidaDto } from '../eventos-acceso/dto/salida.dto.js';
+import type { TarjetaLeidaDto } from '../eventos-acceso/dto/tarjeta-leida.dto.js';
 import { AVISO_DE, ReleUsbService } from '../integraciones/rele-usb.service.js';
 import { LectoresDniService } from '../lectores-dni/lectores-dni.service.js';
 import { RegistroLecturas, type ResultadoLectura } from '../lectores-dni/registro-lecturas.js';
@@ -128,6 +129,18 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     } catch (error) {
       if (!(error instanceof SinConexion)) throw error;
       return this.salidaSinConexion(dto);
+    }
+  }
+
+  /** Tarjeta de contingencia: la decide el servidor. Sin conexión no sirve (no se sabe quién es): suena el aviso. */
+  async registrarTarjeta(dto: TarjetaLeidaDto): Promise<ResultadoLectura> {
+    try {
+      return await this.enviar<ResultadoLectura>('POST', '/eventos-acceso/tarjeta', dto);
+    } catch (error) {
+      if (!(error instanceof SinConexion)) throw error;
+      this.logger.warn(`Tarjeta de contingencia en ${dto.tipoMovimiento}: sin conexión con el servidor, no se abre`);
+      await this.releUsb.pulso(dto.tipoMovimiento === 'ingreso' ? 'avisoIngreso' : 'avisoSalida');
+      return { resultado: 'denegado (sin conexión)' };
     }
   }
 

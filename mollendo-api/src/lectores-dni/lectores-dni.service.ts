@@ -6,6 +6,7 @@ import tty from 'node:tty';
 import { promisify } from 'node:util';
 import { RegistroLecturas } from './registro-lecturas.js';
 import { esBinario, extraerDocumento, FiltroRepetidos, SeparadorLineas } from './lector-dni.util.js';
+import { extraerTarjeta } from '../tarjetas-contingencia/tarjeta-contingencia.util.js';
 
 const ejecutar = promisify(execFile);
 
@@ -137,6 +138,14 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
 
   private recibir(lector: Lector, pedazo: Buffer) {
     for (const linea of lector.separador.agregar(pedazo.toString('latin1'))) {
+      // Tarjeta de contingencia (QR): la pasa el vigilante en lugar del DNI.
+      const tarjeta = extraerTarjeta(linea);
+      if (tarjeta) {
+        if (lector.repetidos.esRepetido(tarjeta)) continue;
+        lector.ultimaLectura = new Date();
+        void this.registrarTarjeta(lector, tarjeta);
+        continue;
+      }
       const documento = extraerDocumento(linea);
       if (!documento) {
         // La firma binaria que sigue a un código 2D del DNI: no es un error.
@@ -150,6 +159,15 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
       if (lector.repetidos.esRepetido(documento.numeroDocumento)) continue;
       lector.ultimaLectura = new Date();
       void this.registrar(lector, documento);
+    }
+  }
+
+  private async registrarTarjeta(lector: Lector, codigo: string) {
+    try {
+      const resultado = await this.registro.registrarTarjeta({ codigo, tipoMovimiento: lector.movimiento, torniqueteId: lector.molinete });
+      this.logger.log(`Tarjeta de contingencia leída en ${lector.movimiento}: ${resultado.estado ?? resultado.resultado}`);
+    } catch (error) {
+      this.logger.error(`No se pudo registrar la tarjeta de contingencia leída en ${lector.movimiento}: ${(error as Error).message}`);
     }
   }
 

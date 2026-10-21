@@ -13,6 +13,7 @@ import {
   HorizontaLDots,
   InfoIcon,
   ListIcon,
+  LockIcon,
   PieChartIcon,
   PlugInIcon,
 } from "../icons/index";
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
   { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador"] },
   { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
+  { icon: <LockIcon />, name: "Tarjetas de contingencia", path: "/tarjetas-contingencia", roles: ["administrador", "vigilancia"] },
   { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },
   { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador"] },

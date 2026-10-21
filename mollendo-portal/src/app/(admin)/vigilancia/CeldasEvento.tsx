@@ -135,6 +135,24 @@ export function MarcaFacialPrimero({ evento }: { evento: Pick<EventoAcceso, "fac
   );
 }
 
+/** Sin DNI: el vigilante pasó la tarjeta de contingencia en lugar del DNI (en la salida, con quién eligió al trabajador). */
+export function MarcaTarjetaContingencia({
+  evento,
+}: {
+  evento: Pick<EventoAcceso, "tarjetaContingencia" | "tipoMovimiento" | "verificadoPor">;
+}) {
+  if (!evento.tarjetaContingencia) return null;
+  const quien = evento.tipoMovimiento === "salida" && evento.verificadoPor ? ` · ${evento.verificadoPor.correo}` : "";
+  return (
+    <span
+      title={`Sin DNI: el vigilante pasó la tarjeta de contingencia ${evento.tarjetaContingencia.numero} en lugar del DNI`}
+      className="cursor-help"
+    >
+      <Badge color="warning">Tarjeta de contingencia{quien}</Badge>
+    </span>
+  );
+}
+
 /** Verificación manual (equipo facial fuera de servicio): quién aprobó o denegó el ingreso. */
 export function MarcaVerificacionManual({ evento }: { evento: Pick<EventoAcceso, "verificacionManual" | "verificadoPor"> }) {
   if (!evento.verificacionManual) return null;

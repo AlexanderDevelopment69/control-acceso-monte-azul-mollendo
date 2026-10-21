@@ -9,6 +9,9 @@ import type { AttlogRecibidoEvent, RtlogRecibidoEvent } from '../push-sdk/push-s
 
 type Fila = Record<string, unknown> & { id: number };
 
+const TARJETA = 'TMAM-CONT-ABCDEFGHIJKLMNOPQRST';
+const TARJETA_DESACTIVADA = 'TMAM-CONT-ZZZZZZZZZZZZZZZZZZZZ';
+
 /** ¿La fila cumple el `where` de Prisma? (solo lo que usa el servicio). */
 function cumple(fila: Fila, where: Record<string, unknown> = {}): boolean {
   return Object.entries(where).every(([campo, condicion]) => {
@@ -132,6 +135,8 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
   let facialPrimero: boolean;
   /** Lo que responde el G4 Pro a "¿quién aprobó?" (rastreo VerifySuccess.txt). */
   let quienSoplo: Promise<unknown>;
+  /** Cada vez que se pasó una tarjeta de contingencia (la TARJETA sirve; TARJETA_DESACTIVADA, no). */
+  let usosTarjeta: Record<string, unknown>[];
 
   const ingreso = (dni: string) => servicio.registrarIngreso({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Ingreso' });
   const salida = (dni: string) => servicio.registrarSalida({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: dni, torniqueteId: 'Salida' });
@@ -185,7 +190,13 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       { activa: async () => manualActiva } as never,
       { registrar: async () => undefined } as never,
       { facialPrimero: async () => facialPrimero } as never,
+      {
+        revisar: async (codigo: string) =>
+          codigo === TARJETA ? { tarjeta: { id: 1, numero: 1 } } : { rechazo: 'Tarjeta desactivada', tarjetaId: 2 },
+        anotarUso: async (uso: Record<string, unknown>) => void usosTarjeta.push(uso),
+      } as never,
     );
+    usosTarjeta = [];
   });
 
   afterEach(() => {
@@ -1002,6 +1013,116 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         await attlog('55555555');
         expect(await ingreso('55555555')).toMatchObject({ resultado: 'denegado', motivos: { documentos: true } });
         expect(de('molinete.abrir')).toHaveLength(0);
+      });
+    });
+
+    describe('tarjeta de contingencia (sin DNI): el vigilante la pasa en lugar del DNI', () => {
+      const tarjeta = (tipoMovimiento: 'ingreso' | 'salida' = 'ingreso', codigo = TARJETA) =>
+        servicio.registrarTarjeta({ codigo, tipoMovimiento, torniqueteId: tipoMovimiento === 'ingreso' ? 'Ingreso' : 'Salida' });
+      const vigilante = { id: 7, empresaId: 1, rol: 'vigilancia' as const, correo: 'vigilante@tmam.pe' };
+
+      beforeEach(() => {
+        facialPrimero = true;
+      });
+
+      it('aprobó rostro y alcohol y el vigilante pasa la tarjeta: entra a su nombre, con la tarjeta', async () => {
+        agregarPersona(base, '11111111');
+        await attlog('11111111');
+        avanzar(8_000);
+        expect(await tarjeta()).toMatchObject({ resultado: 'autorizado', numeroDocumento: '11111111', dniQueSoplo: '11111111' });
+        expect(base.eventos[0]).toMatchObject({ personaId: 100, resultado: 'autorizado', tarjetaContingenciaId: 1 });
+        expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'ingreso' })]);
+        expect(usosTarjeta).toEqual([expect.objectContaining({ tarjetaId: 1, aceptada: true, eventoAccesoId: base.eventos[0].id })]);
+        expect(de('ingreso.espera-terminada')).toHaveLength(1);
+      });
+
+      it('la pasa antes de que llegue el aviso de la prueba (hecha antes): espera en silencio y entra', async () => {
+        agregarPersona(base, '11111111');
+        const correcto = new Date(ahora);
+        avanzar(5_000);
+        expect(await tarjeta()).toMatchObject({ estado: 'pendiente_verificacion' });
+        avanzar(5_000);
+        await attlog('11111111', '0.00g/L', correcto);
+        expect(base.eventos).toEqual([expect.objectContaining({ numeroDocumento: '11111111', resultado: 'autorizado', tarjetaContingenciaId: 1 })]);
+        expect(de('molinete.abrir')).toHaveLength(1);
+      });
+
+      it('sin nadie que aprobó rostro y alcohol: a los 8 s queda rechazada, suena el aviso y no abre', async () => {
+        expect(await tarjeta()).toMatchObject({ estado: 'pendiente_verificacion' });
+        avanzar(9_000);
+        await vencidos();
+        expect(usosTarjeta).toEqual([expect.objectContaining({ aceptada: false, detalle: 'Nadie aprobó rostro y alcohol antes de pasar la tarjeta' })]);
+        expect(de('aviso.denegado')).toEqual([{ tipoMovimiento: 'ingreso' }]);
+        expect(base.eventos).toHaveLength(0);
+        expect(de('molinete.abrir')).toHaveLength(0);
+      });
+
+      it('esperaba la prueba y dio alcohol alto: queda "Alcohol" con su nombre y la tarjeta no se usa', async () => {
+        agregarPersona(base, '11111111');
+        const prueba = new Date(ahora);
+        avanzar(2_000);
+        await tarjeta();
+        await attlog('11111111', '0.000595g/L', prueba);
+        expect(base.eventos).toEqual([expect.objectContaining({ numeroDocumento: '11111111', denegadoPorAlcohol: true })]);
+        expect(usosTarjeta).toEqual([expect.objectContaining({ aceptada: false })]);
+        expect(de('molinete.abrir')).toHaveLength(0);
+      });
+
+      it('dos personas aprobaron a la vez: no se sabe a quién dejar pasar; no abre y nadie pierde su aprobación', async () => {
+        agregarPersona(base, '11111111');
+        agregarPersona(base, '22222222');
+        await attlog('11111111');
+        await attlog('22222222');
+        expect(await tarjeta()).toMatchObject({ resultado: 'denegado' });
+        expect(de('molinete.abrir')).toHaveLength(0);
+        expect(await ingreso('22222222')).toMatchObject({ resultado: 'autorizado' });
+      });
+
+      it('documentos vencidos: se deniega igual que con el DNI (queda con la tarjeta)', async () => {
+        agregarPersona(base, '55555555', { vencido: true });
+        await attlog('55555555');
+        expect(await tarjeta()).toMatchObject({ resultado: 'denegado', motivos: { documentos: true } });
+        expect(base.eventos[0]).toMatchObject({ tarjetaContingenciaId: 1, denegadoPorDocumentos: true });
+        expect(de('molinete.abrir')).toHaveLength(0);
+      });
+
+      it('tarjeta desactivada o vencida, orden normal o verificación manual: rechazada al momento', async () => {
+        agregarPersona(base, '11111111');
+        await attlog('11111111');
+        expect(await tarjeta('ingreso', TARJETA_DESACTIVADA)).toMatchObject({ resultado: 'denegado', mensaje: 'Tarjeta desactivada' });
+        facialPrimero = false;
+        expect(await tarjeta()).toMatchObject({ resultado: 'denegado' });
+        facialPrimero = true;
+        manualActiva = true;
+        expect(await tarjeta()).toMatchObject({ resultado: 'denegado' });
+        expect(usosTarjeta.map((u) => u.aceptada)).toEqual([false, false, false]);
+        expect(de('molinete.abrir')).toHaveLength(0);
+      });
+
+      it('salida: sin elegir al trabajador en el Panel no abre; elegido, sale a su nombre', async () => {
+        agregarPersona(base, '11111111');
+        yaIngreso('11111111');
+        expect(await tarjeta('salida')).toMatchObject({ resultado: 'denegado' });
+        expect(de('aviso.denegado')).toEqual([{ tipoMovimiento: 'salida' }]);
+        expect(await servicio.prepararSalidaSinDni(100, vigilante)).toMatchObject({ numeroDocumento: '11111111', preparadaPor: 'vigilante@tmam.pe' });
+        expect(await tarjeta('salida')).toMatchObject({ resultado: 'autorizado', numeroDocumento: '11111111' });
+        expect(base.eventos.at(-1)).toMatchObject({ tipoMovimiento: 'salida', tarjetaContingenciaId: 1, verificadoPorId: 7 });
+        expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'salida' })]);
+        expect(servicio.salidaSinDniPreparada()).toBeNull();
+        // Se usa una vez: otra pasada ya no abre.
+        expect(await tarjeta('salida')).toMatchObject({ resultado: 'denegado' });
+      });
+
+      it('salida: no se puede elegir a quien figura fuera, y la elegida vence a los 2 minutos', async () => {
+        agregarPersona(base, '11111111');
+        await expect(servicio.prepararSalidaSinDni(100, vigilante)).rejects.toThrow('figura fuera');
+        yaIngreso('11111111');
+        await servicio.prepararSalidaSinDni(100, vigilante);
+        avanzar(121_000);
+        await vencidos();
+        expect(servicio.salidaSinDniPreparada()).toBeNull();
+        expect(de('salida-sin-dni.cambio').at(-1)).toBeNull();
+        expect(await tarjeta('salida')).toMatchObject({ resultado: 'denegado' });
       });
     });
 

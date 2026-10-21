@@ -119,6 +119,13 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
     this.server.emit('aviso-denegado', { tipoMovimiento: evento.tipoMovimiento, numeroDocumento: evento.numeroDocumento ?? null });
   }
 
+  /** Tarjeta de contingencia rechazada (sin evento de acceso): suena igual el aviso de esa puerta. */
+  @OnEvent('aviso.denegado')
+  avisarTarjetaRechazada(aviso: { tipoMovimiento: 'ingreso' | 'salida' }): void {
+    if (!molinetesRemotos() || this.conexiones.size === 0) return;
+    this.server.emit('aviso-denegado', { tipoMovimiento: aviso.tipoMovimiento, numeroDocumento: null });
+  }
+
   /** Para "Sistema y APIs": el controlador conectado (el más reciente) y lo que informó. */
   estado() {
     const conexion = [...this.conexiones.values()].sort((a, b) => b.desde.localeCompare(a.desde))[0] ?? null;

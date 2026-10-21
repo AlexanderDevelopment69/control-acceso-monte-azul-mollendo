@@ -28,4 +28,11 @@ export class SalidaDto {
   @IsOptional()
   @IsISO8601({}, { message: 'La fecha y hora deben tener el formato ISO 8601' })
   fechaHora?: string;
+
+  /**
+   * Solo dentro del servidor (sin validador: por la API se rechaza): salida
+   * con tarjeta de contingencia y el vigilante que eligió al trabajador.
+   */
+  tarjetaContingenciaId?: number;
+  verificadoPorId?: number;
 }

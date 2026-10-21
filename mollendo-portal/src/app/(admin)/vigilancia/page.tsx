@@ -13,6 +13,7 @@ import type {
   IngresoEnEspera,
   Paginado,
   ResumenPanel,
+  SalidaSinDni,
 } from "@/lib/api/types";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
@@ -30,7 +31,16 @@ import { AlertCircleIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { FilasEnEspera } from "./FilasEnEspera";
 import { CompararFoto, FranjaFacialPrimero, type IngresoParaComparar } from "./FranjaFacialPrimero";
-import { documentoDelEvento, MarcaCorreccionManual, MarcaFacialPrimero, MarcaVerificacionManual, MotivoDenegacion, Movimiento } from "./CeldasEvento";
+import {
+  documentoDelEvento,
+  MarcaCorreccionManual,
+  MarcaFacialPrimero,
+  MarcaTarjetaContingencia,
+  MarcaVerificacionManual,
+  MotivoDenegacion,
+  Movimiento,
+} from "./CeldasEvento";
+import { ElegirSalidaSinDni, FranjaSalidaSinDni } from "./SalidaSinDni";
 import { DocumentosModal } from "./DocumentosModal";
 import {
   avisoDesdeHistorial,
@@ -173,6 +183,28 @@ function VigilanciaContent() {
   useEffect(() => {
     void cargarModoIngreso();
   }, [cargarModoIngreso]);
+  // Salida sin DNI (tarjeta de contingencia): el trabajador elegido que espera la tarjeta.
+  const [salidaSinDni, setSalidaSinDni] = useState<SalidaSinDni | null>(null);
+  const [eligiendoSalida, setEligiendoSalida] = useState(false);
+  const cargarSalidaSinDni = useCallback(async () => {
+    try {
+      setSalidaSinDni(await eventosAccesoApi.salidaSinDni());
+    } catch {
+      // Sin respuesta: se mantiene lo último conocido.
+    }
+  }, []);
+  useEffect(() => {
+    void cargarSalidaSinDni();
+  }, [cargarSalidaSinDni]);
+  async function cancelarSalidaSinDni() {
+    try {
+      await eventosAccesoApi.cancelarSalidaSinDni();
+      setSalidaSinDni(null);
+    } catch (err) {
+      setErrorCarga(err instanceof ApiError ? err.message : "No se pudo cancelar la salida sin DNI");
+    }
+  }
+
   // El botón "Activar verificación manual" está en la franja roja de fallas (AvisoSistema):
   // desde esta página avisa con un evento; desde otra, trae aquí con ?activarManual=1.
   useEffect(() => {
@@ -256,6 +288,7 @@ function VigilanciaContent() {
       {
         "verificacion-manual": (estado: EstadoVerificacionManual) => setManual(estado),
         "modo-ingreso": (estado: EstadoModoIngreso) => setModoIngreso(estado),
+        "salida-sin-dni": (salida: SalidaSinDni | null) => setSalidaSinDni(salida),
         "evento-acceso": (payload: EventoEnVivo) => {
           setAviso((actual) => siguienteAviso(actual, payload));
           if (payload.facialPrimero && payload.resultado === "autorizado" && payload.persona?.id) {
@@ -292,6 +325,7 @@ function VigilanciaContent() {
         void cargarAviso();
         void cargarManual();
         void cargarModoIngreso();
+        void cargarSalidaSinDni();
       },
     );
     return () => {
@@ -299,7 +333,7 @@ function VigilanciaContent() {
       if (recargaPendiente.current) clearTimeout(recargaPendiente.current);
       if (finResalte.current) clearTimeout(finResalte.current);
     };
-  }, [cargarAviso, cargarManual, cargarModoIngreso]);
+  }, [cargarAviso, cargarManual, cargarModoIngreso, cargarSalidaSinDni]);
 
   // Respaldo del tiempo real: aunque el canal en vivo falle sin avisar, la
   // tabla, los contadores y las esperas se ponen al día cada minuto.
@@ -373,11 +407,16 @@ function VigilanciaContent() {
         title="Panel de vigilancia"
         description="Resultado de cada ingreso y salida en tiempo real, con el motivo cuando se deniega."
         actions={
-          servidorCaido ? (
-            <Badge color="error" size="md">⚠ El servidor no responde — no se están validando ingresos</Badge>
-          ) : undefined
+          <div className="flex flex-wrap items-center gap-3">
+            {servidorCaido && <Badge color="error" size="md">⚠ El servidor no responde — no se están validando ingresos</Badge>}
+            <Button type="button" variant="outline" size="sm" onClick={() => setEligiendoSalida(true)}>
+              Salida sin DNI
+            </Button>
+          </div>
         }
       />
+      <ElegirSalidaSinDni abierta={eligiendoSalida} onCerrar={() => setEligiendoSalida(false)} onElegida={setSalidaSinDni} />
+      <FranjaSalidaSinDni salida={salidaSinDni} onCancelar={() => void cancelarSalidaSinDni()} />
 
       {errorCarga && (
         <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -584,6 +623,7 @@ function VigilanciaContent() {
                         <MarcaVerificacionManual evento={ev} />
                         <MarcaCorreccionManual evento={ev} />
                         <MarcaFacialPrimero evento={ev} />
+                        <MarcaTarjetaContingencia evento={ev} />
                       </div>
                     </TableCell>
                   </TableRow>

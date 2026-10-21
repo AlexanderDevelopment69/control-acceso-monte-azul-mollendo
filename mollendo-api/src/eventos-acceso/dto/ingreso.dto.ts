@@ -23,4 +23,10 @@ export class IngresoDto {
   @IsString({ message: 'El ID del torniquete debe ser texto' })
   @MaxLength(50, { message: 'El ID del torniquete no puede tener más de 50 caracteres' })
   torniqueteId?: string;
+
+  /**
+   * Solo dentro del servidor (sin validador: por la API se rechaza): el
+   * vigilante pasó esta tarjeta de contingencia en lugar del DNI.
+   */
+  tarjetaContingenciaId?: number;
 }

@@ -155,6 +155,8 @@ export interface EventoAcceso {
   /** Rostro y alcohol los verificó un vigilante (equipo facial fuera de servicio). */
   verificacionManual?: boolean;
   verificadoPor?: { id: number; correo: string } | null;
+  /** Sin DNI: el vigilante pasó esta tarjeta de contingencia en lugar del DNI. */
+  tarjetaContingencia?: { numero: number } | null;
   fechaHora: string;
   torniqueteId: string | null;
   persona?: {
@@ -444,4 +446,52 @@ export interface RevisionCargaMasiva {
 export interface ResultadoCargaMasiva {
   registradas: number;
   omitidas: { numeroDocumento: string; motivo: string }[];
+}
+
+/** Tarjeta de contingencia (QR que el vigilante pasa en lugar del DNI). */
+export interface TarjetaContingencia {
+  id: number;
+  numero: number;
+  nombre: string;
+  activa: boolean;
+  vencida: boolean;
+  /** Último día en que sirve (AAAA-MM-DD); null: no vence. */
+  venceEl: string | null;
+  creadaEn: string;
+  codigoCambiadoEn: string;
+  ultimoUso: string | null;
+}
+
+/** Cada vez que se pasó una tarjeta por un lector, aceptada o no. */
+export interface UsoTarjetaContingencia {
+  id: number;
+  fechaHora: string;
+  tarjeta: string | null;
+  tipoMovimiento: "ingreso" | "salida";
+  aceptada: boolean;
+  detalle: string;
+  resultado: "autorizado" | "denegado" | null;
+  persona: string | null;
+  numeroDocumento: string | null;
+}
+
+/** Salida sin DNI elegida en el Panel, esperando la tarjeta por el lector de salida. */
+export interface SalidaSinDni {
+  personaId: number;
+  nombres: string;
+  apellidos: string;
+  numeroDocumento: string;
+  hasta: string;
+  preparadaPor: string;
+}
+
+/** Quien figura dentro, para elegirlo en "Salida sin DNI". */
+export interface PersonaDentro {
+  id: number;
+  nombres: string;
+  apellidos: string;
+  numeroDocumento: string;
+  empresa: string | null;
+  tieneFoto: boolean;
+  fotoVersion: string | null;
 }

@@ -57,7 +57,7 @@ POST /iclock/cdata?SN=HSR3263100192&table=ATTLOG&Stamp=9999
 Lector de DNI de ingreso conectado en /dev-servidor/serial/by-id/usb-Prolific…-port0 (115200 baudios)
 DNI leído en ingreso: pendiente_verificacion`,
     notas:
-      "El lector viene en modo USB: se configura con el folleto de la caja (Factory Default → RS232 → 115200). Se ignora la misma lectura dentro de 3 s; si el adaptador se desconecta, se reintenta cada 5 s. El estado (Cable conectado / desconectado) corresponde al cable de datos, no a la energía del lector.",
+      "El lector viene en modo USB: se configura con el folleto de la caja (Factory Default → RS232 → 115200). Se ignora la misma lectura dentro de 3 s; si el adaptador se desconecta, se reintenta cada 5 s. El estado (Cable conectado / desconectado) corresponde al cable de datos, no a la energía del lector. Si lee el QR de una tarjeta de contingencia (TMAM-CONT-…), la manda a POST /eventos-acceso/tarjeta en lugar de un DNI.",
   },
   {
     nombre: "Ingreso",
@@ -155,6 +155,63 @@ DNI leído en ingreso: pendiente_verificacion`,
 }`,
     notas:
       "Antipassback estricto: sin un ingreso registrado se deniega (\"No registra ingreso\") y no se abre. Si el controlador estaba sin internet, deja salir y la registra después con su hora.",
+  },
+  {
+    nombre: "Tarjeta de contingencia (sin DNI)",
+    endpoint: "/eventos-acceso/tarjeta",
+    metodo: "POST",
+    descripcion:
+      "El QR de una tarjeta de contingencia leído por un lector de DNI (lo manda el controlador). La tarjeta sola no abre: en el ingreso (orden \"facial primero\") entra quien aprobó rostro y alcohol y espera su DNI, si es una sola persona; si la prueba todavía no llegó, la espera hasta 8 s, como un DNI. En la salida, sale el trabajador elegido en el Panel (\"Salida sin DNI\"). Baja, antipassback y documentos se revisan igual que con el DNI, y el ingreso o la salida queda a nombre del trabajador, con la tarjeta. Una tarjeta no registrada, desactivada o vencida, o pasada sin nadie esperando, se rechaza: suena el aviso de denegado de esa puerta y queda en los usos de la tarjeta.",
+    autenticacion: "Clave de equipo (X-API-Key)",
+    tipo: "real",
+    headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
+    ejemploRequest: `{
+  "codigo": "TMAM-CONT-K3QZ7M2XWB5RTA4NJD6P",
+  "tipoMovimiento": "ingreso",
+  "torniqueteId": "Ingreso"
+}`,
+    ejemploRespuesta: `// 201 Created — aprobó rostro y alcohol: autorizado a su nombre
+{
+  "eventoId": 212,
+  "tipoMovimiento": "ingreso",
+  "resultado": "autorizado",
+  "persona": { "id": 1, "nombres": "Juan", "apellidos": "Pérez" },
+  "numeroDocumento": "12345678",
+  "motivos": {},
+  "facialPrimero": true,
+  "dniQueSoplo": "12345678"
+}
+
+// 201 Created — rechazada (no abre)
+{
+  "resultado": "denegado",
+  "mensaje": "Nadie eligió al trabajador en el Panel (\"Salida sin DNI\")"
+}`,
+    notas:
+      "Las tarjetas las maneja el administrador en Tarjetas de contingencia (GET/POST /tarjetas-contingencia, PATCH /tarjetas-contingencia/:id, POST /tarjetas-contingencia/:id/cambiar-codigo y GET /tarjetas-contingencia/:id/qr para imprimir); el vigilante solo las ve, con sus usos (GET /tarjetas-contingencia/usos). El código va solo en el QR: la API no lo devuelve. Sin internet, el controlador no la manda y suena el aviso. Con la verificación manual activa o en el orden normal, la tarjeta no sirve.",
+  },
+  {
+    nombre: "Salida sin DNI (Panel de vigilancia)",
+    endpoint: "/eventos-acceso/salida-sin-dni",
+    metodo: "POST",
+    descripcion:
+      "El vigilante elige al trabajador que sale sin DNI (debe figurar dentro; GET /eventos-acceso/salida-sin-dni/candidatos?busqueda=… los busca) y tiene 2 minutos para pasar la tarjeta de contingencia por el lector de salida. Una a la vez: elegir otro reemplaza al anterior. GET devuelve la que espera (o null) y DELETE la cancela. En tiempo real se avisa por WebSocket (/ws/eventos): salida-sin-dni.",
+    autenticacion: "JWT (Administrador / Vigilancia)",
+    tipo: "real",
+    headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
+    ejemploRequest: `{ "personaId": 41 }`,
+    ejemploRespuesta: `// 201 Created
+{
+  "personaId": 41,
+  "nombres": "Juan",
+  "apellidos": "Pérez",
+  "numeroDocumento": "12345678",
+  "hasta": "2026-10-20T20:12:00.000Z",
+  "preparadaPor": "vigilante@empresa.com"
+}
+
+// 400 — Esa persona figura fuera: no tiene una salida pendiente`,
+    notas: "La salida queda con la tarjeta y con quién eligió al trabajador (\"Tarjeta de contingencia · correo\" en el Panel).",
   },
   {
     nombre: "Ingresos en espera (Panel de vigilancia)",

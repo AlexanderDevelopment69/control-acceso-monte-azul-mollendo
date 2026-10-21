@@ -258,6 +258,9 @@ model EventoAcceso {
   /// Quién decidió en la verificación manual, o quién registró la corrección manual.
   verificadoPorId          Int?                    @map("verificado_por_id")
   verificadoPor            Usuario?                @relation("VerificadoPor", fields: [verificadoPorId], references: [id], onDelete: SetNull)
+  /// Sin DNI: el vigilante pasó una tarjeta de contingencia en lugar del DNI del trabajador.
+  tarjetaContingenciaId    Int?                    @map("tarjeta_contingencia_id")
+  tarjetaContingencia      TarjetaContingencia?    @relation(fields: [tarjetaContingenciaId], references: [id], onDelete: SetNull)
   fechaHora                DateTime                @default(now()) @map("fecha_hora")
   torniqueteId             String?                 @map("torniquete_id") @db.VarChar(50)
 
@@ -454,4 +457,45 @@ model SincronizacionG4 {
 
   @@index([fecha])
   @@map("sincronizacion_g4")
+}
+
+// ---------------------------------------------------------------------
+// TARJETA_CONTINGENCIA (QR que el vigilante pasa por el lector de DNI cuando
+// el trabajador olvidó su DNI o el lector no lo reconoce). La crea e imprime
+// el administrador; sola no abre: en el ingreso usa la aprobación de rostro y
+// alcohol que espera su DNI, y en la salida, al trabajador elegido en el Panel.
+// ---------------------------------------------------------------------
+model TarjetaContingencia {
+  id               Int       @id @default(autoincrement())
+  /// "Tarjeta de contingencia {numero}".
+  numero           Int       @unique
+  /// Lo que lleva el QR (TMAM-CONT-…); al cambiarlo, la tarjeta impresa anterior deja de servir.
+  codigo           String    @unique @db.VarChar(40)
+  activa           Boolean   @default(true)
+  /// Último día en que sirve (null: no vence).
+  venceEl          DateTime? @map("vence_el") @db.Date
+  creadaEn         DateTime  @default(now()) @map("creada_en")
+  codigoCambiadoEn DateTime  @default(now()) @map("codigo_cambiado_en")
+
+  eventos EventoAcceso[]
+  usos    UsoTarjetaContingencia[]
+
+  @@map("tarjeta_contingencia")
+}
+
+/// Cada vez que se pasó una tarjeta de contingencia por un lector: aceptada o rechazada y por qué.
+model UsoTarjetaContingencia {
+  id             Int                  @id @default(autoincrement())
+  /// null: el QR no es de ninguna tarjeta registrada.
+  tarjetaId      Int?                 @map("tarjeta_id")
+  tarjeta        TarjetaContingencia? @relation(fields: [tarjetaId], references: [id], onDelete: SetNull)
+  tipoMovimiento TipoMovimiento       @map("tipo_movimiento")
+  aceptada       Boolean
+  detalle        String               @db.VarChar(200)
+  /// El ingreso o la salida en que terminó (aceptada).
+  eventoAccesoId Int?                 @map("evento_acceso_id")
+  fechaHora      DateTime             @default(now()) @map("fecha_hora")
+
+  @@index([fechaHora])
+  @@map("uso_tarjeta_contingencia")
 }

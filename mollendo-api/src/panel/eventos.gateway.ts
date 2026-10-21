@@ -106,6 +106,18 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
     this.server.emit('g4-marcacion', payload);
   }
 
+  // Salida sin DNI elegida, usada, cancelada o vencida: los paneles actualizan su aviso.
+  @OnEvent('salida-sin-dni.cambio')
+  handleSalidaSinDni(payload: unknown): void {
+    this.server.emit('salida-sin-dni', payload);
+  }
+
+  // Se pasó una tarjeta de contingencia (aceptada o no): la lista de usos se vuelve a pedir.
+  @OnEvent('tarjeta-contingencia.uso')
+  handleUsoTarjeta(): void {
+    this.server.emit('tarjeta-contingencia-uso', {});
+  }
+
   // Cambió el orden del ingreso (facial primero, en prueba): los paneles actualizan su franja.
   @OnEvent('modo-ingreso.cambio')
   handleModoIngreso(payload: unknown): void {

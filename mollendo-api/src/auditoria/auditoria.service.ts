@@ -23,6 +23,7 @@ export const TABLA_LABEL: Record<string, string> = {
   tipo_documento: 'Tipo de documento',
   usuario: 'Usuario',
   periodo_verificacion_manual: 'Verificación manual',
+  tarjeta_contingencia: 'Tarjeta de contingencia',
 };
 
 /** Tablas cuyo nombre visible contiene la palabra (sin distinguir mayúsculas ni tildes). */
