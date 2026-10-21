@@ -142,7 +142,7 @@ function TarjetaVisual({
                 aria-label="Eliminar tarjeta"
                 disabled={!tarjeta.eliminable}
                 onClick={() => onAccion("eliminar")}
-                className="flex size-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:hover:bg-error-500/10"
+                className="flex size-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:hover:bg-error-500/10"
               >
                 <TrashBinIcon className="size-4" />
               </button>
