@@ -493,6 +493,22 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       await expect(decidir('grado', undefined, 0)).rejects.toThrow(/ya no está esperando/);
     });
 
+    it('si se activa mientras alguien espera al equipo facial, al volver a pasar su DNI pasa a la verificación manual', async () => {
+      manualActiva = false;
+      agregarPersona(base, '11111111');
+      await ingreso('11111111');
+      expect(base.pendientes[0]).toMatchObject({ manual: false });
+      manualActiva = true;
+      const r = await ingreso('11111111');
+      expect(r).toMatchObject({ estado: 'pendiente_verificacion', mensaje: expect.stringContaining('Verificación manual') });
+      expect(base.pendientes).toHaveLength(1);
+      expect(base.pendientes[0]).toMatchObject({ manual: true });
+      expect(de('g4pro.habilitar').at(-1)).toMatchObject({ numeroDocumento: '11111111', habilitar: false });
+      expect(de('ingreso.en-espera').at(-1)).toMatchObject({ numeroDocumento: '11111111', manual: true, enCola: false });
+      await decidir('grado', base.pendientes[0].id, 0);
+      expect(base.eventos[0]).toMatchObject({ resultado: 'autorizado', verificacionManual: true, gradoManual: 0 });
+    });
+
     it('lo que mande el G4 Pro no cierra una espera manual', async () => {
       agregarPersona(base, '11111111');
       await ingreso('11111111');

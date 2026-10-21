@@ -278,6 +278,6 @@ No escribir en `/dev/ttyUSB0`: el protocolo del DT1700 no está documentado y po
   1. Desconectar el USB del alcoholímetro: ¿la franja y la tarjeta en ~10 s? ¿"Probador de alcohol no conectado" en la pantalla? (no muestra punto rojo) ¿deja hacer la prueba? Volver a conectarlo.
   2. Alcoholímetro **conectado pero apagado** (si tiene encendido propio): qué muestra la pantalla y qué deja en los registros.
   3. Una persona reconocida que **no sopla**: confirmar el abandono a los ~22 s.
-- Con eso, **parte B**: aviso de "posible falla" cuando varias pruebas seguidas empiezan y no miden (leyendo `Verify.txt`), ajustado a lo que el equipo anote en los casos 2 y 3.
+- **Parte B descartada (decisión del usuario, 21/10/2026):** no se programa el aviso de "posible falla" tras varias pruebas sin medir (decisión n.º 6 de contingencias): el aviso ámbar "No completó" avisa con la primera persona y trae "Activar verificación manual". Los casos 2 y 3 quedan para saber qué muestra el equipo.
 - **Consultar a ZKTeco / proveedor:** por qué tarda 5-6 s en abrir el puerto y ~8 s en decir "correcto", y si se puede acortar; si el DT1700 tiene encendido propio o se alimenta del equipo. En internet ZKTeco solo documenta un "USB Alcohol Tester" sin modelo para el G4L; no hay manual público del DT1700 ni de qué hace el equipo si falla.
 - Ajustes guardados en la base interna del equipo (p. ej. un tiempo de prueba): no se revisan, porque habría que descifrarla.

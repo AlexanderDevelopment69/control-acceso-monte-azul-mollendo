@@ -13,7 +13,7 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 | Si falla… | Qué se hace | Quién | ¿Se pierde algún control? | Estado |
 |---|---|---|---|---|
 | **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3). Si se desconecta, la franja roja lo avisa en unos 10 segundos | El vigilante informa; soporte lo cambia | No | Decidido. Falta comprar el repuesto |
-| **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto (sección 4) | Vigilante o administrador la activan; el vigilante aprueba cada ingreso | No | **Programado** (15/10/2026); falta la prueba en el punto de acceso |
+| **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto; el vigilante escribe el grado y el sistema decide (sección 4) | Vigilante o administrador la activan; el vigilante revisa cada ingreso | No | **Programado** (15/10/2026; con el grado, 21/10/2026); falta la prueba en el punto de acceso y comprar el repuesto |
 | **Internet** del punto de acceso | **Segunda conexión de otro proveedor** que entra sola (sección 5) | TMAM | No | Decidido, a cargo de TMAM |
 | **Lector de DNI** | Mientras tanto, contingencia **"sin lector"**, que se activa sola: el **ingreso** es solo con rostro y alcohol y la **salida** la abre el vigilante desde **"Presentes ahora"**; se conecta el **lector de repuesto** (sección 6) | El vigilante informa y abre las salidas; soporte cambia el lector | En el ingreso, el DNI: la persona se identifica solo por su rostro | **Programado** (21/10/2026); falta probarlo en el punto de acceso y el repuesto |
 | **Personal sin DNI**, o DNI que el lector no lee | El vigilante pasa la **tarjeta de contingencia** en lugar del DNI, después de rostro y alcohol; en la salida elige al personal en el Panel (sección 6.5) | El personal avisa; el vigilante pasa la tarjeta; el administrador la imprime y la administra | No: rostro, alcohol y documentos se revisan igual | **Programado** (20/10/2026); falta probar el QR en el lector. Tarjeta digital pendiente |
@@ -121,7 +121,7 @@ Lo anterior se comprobó con una **simulación** (21/10/2026). Falta probarlo co
 2. **Alcoholímetro conectado pero apagado:** ver qué muestra el equipo facial. Este caso hoy **no** lo detecta el sistema (el equipo solo le habla al alcoholímetro durante una prueba).
 3. **Una persona que no sopla:** confirmar que el equipo abandona la prueba y nadie entra.
 
-Con los casos 2 y 3 se programará un aviso de **"posible falla"** cuando varias pruebas seguidas no midan. El detalle técnico está en la guía de depuración del G4 Pro (sección 8).
+Los casos 2 y 3 sirven para saber qué muestra el equipo facial. **No se programa** un aviso de "posible falla" tras varias pruebas sin medir (decisión n.º 6, confirmada el 21/10/2026): el aviso ámbar "No completó" avisa con la primera persona y trae el botón "Activar verificación manual". El detalle técnico está en la guía de depuración del G4 Pro (sección 8).
 
 ### 3.5. Requisitos del repuesto
 
@@ -180,6 +180,8 @@ Antes del 21/10/2026 los botones eran "Apto: abrir" y "Alcohol: no apto" (el vig
 
 Si el vigilante no elige en **2 minutos**, el ingreso se deniega y la ventana se cierra.
 
+Si alguien ya esperaba al equipo facial cuando se activó la verificación manual, al volver a pasar su DNI pasa a la verificación manual (21/10/2026).
+
 **4. Mientras dure.**
 
 - Las **salidas** siguen normales.
@@ -203,7 +205,7 @@ Si el vigilante no elige en **2 minutos**, el ingreso se deniega y la ventana se
 | Activarla desde el recuadro del alcoholímetro y desde el aviso ámbar "No completó" | Programado (21/10/2026) |
 | En modo manual no se envían órdenes al equipo facial (al volver, nadie queda habilitado) | Programado |
 
-Una vez programado, se hace una **prueba en el punto de acceso**: apagar el equipo facial, activar la verificación manual y usar el alcoholímetro de repuesto.
+Falta la **prueba en el punto de acceso**: apagar el equipo facial, activar la verificación manual, tomar la prueba con el alcoholímetro de repuesto y escribir el grado (checklist 5.17).
 
 ---
 
@@ -479,12 +481,12 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 
 | # | Pregunta | Respuesta |
 |---|---|---|
-| 1 | ¿Qué se hace si falla el **alcoholímetro**? | Se reemplaza por el **repuesto** conectado al equipo facial, sin contingencia (15/10/2026) |
+| 1 | ¿Qué se hace si falla el **alcoholímetro**? | Se reemplaza por el **repuesto** conectado al equipo facial, sin contingencia (15/10/2026). Si el cambio demora, se puede activar la verificación manual desde el aviso del alcoholímetro o el aviso ámbar (21/10/2026) |
 | 2 | ¿Qué se hace si falla el **equipo facial**? | **Verificación manual**, prueba de alcohol a todos (15/10/2026) |
-| 3 | ¿Quién activa la verificación manual? ¿Quién aprueba cada ingreso? | La activan y desactivan **el vigilante y el administrador**; cada ingreso lo aprueba el vigilante de turno (15/10/2026) |
-| 4 | ¿Habrá un **alcoholímetro de repuesto**? | **Sí**, DT1700 u otro compatible con el equipo facial (15/10/2026) |
+| 3 | ¿Quién activa la verificación manual? ¿Quién aprueba cada ingreso? | La activan y desactivan **el vigilante y el administrador**; cada ingreso lo revisa el vigilante de turno (15/10/2026). Desde el 21/10/2026 el vigilante escribe el grado del repuesto y **el sistema decide** con el mismo límite del equipo facial |
+| 4 | ¿Habrá un **alcoholímetro de repuesto**? | **Sí**, DT1700 u otro compatible con el equipo facial (15/10/2026); que **funcione solo y muestre el número en mg/L** (21/10/2026, sección 3.5) |
 | 5 | ¿Tiempo máximo para la verificación manual? | **No** (15/10/2026) |
-| 6 | ¿Aviso por "varias personas seguidas sin completar la prueba"? | **No**: la persona avisa al vigilante en ese momento. En su lugar, un aviso en el Panel con la primera persona que no completa (15/10/2026) |
+| 6 | ¿Aviso por "varias personas seguidas sin completar la prueba"? | **No**: la persona avisa al vigilante en ese momento. En su lugar, un aviso en el Panel con la primera persona que no completa (15/10/2026). **Confirmado el 21/10/2026:** no se programa el aviso de "posible falla" tras varias pruebas sin medir; el aviso ámbar trae el botón "Activar verificación manual" |
 | 7 | ¿Qué se hace ante un **corte de internet**? | **A cargo de TMAM**: segunda conexión con los requisitos de la sección 5.2. Si fallan las dos, nadie ingresa y las salidas siguen (15/10/2026) |
 | 8 | ¿Qué se hace si falla el **lector de DNI**? | Contingencia **"sin lector"**, que se activa sola y avisa: ingreso solo con rostro y alcohol; la salida la abre el vigilante desde **"Presentes ahora"**. Se conecta el **lector de repuesto** (21/10/2026; reemplaza lo decidido el 15/10/2026) |
 | 9 | ¿Qué se hace si falla el **relé de un molinete**? | Se cambia de inmediato por el **repuesto** (15/10/2026) |
@@ -500,7 +502,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 
 | Qué | Para qué | Responsable |
 |---|---|---|
-| Alcoholímetro de repuesto **DT1700** (o compatible) | Secciones 3 y 4 | TMAM compra; soporte prueba el cambio una vez |
+| Alcoholímetro de repuesto **DT1700** (o compatible), que funcione solo y muestre el número en mg/L | Secciones 3 y 4 | TMAM compra; soporte prueba el cambio una vez |
 | Relé de repuesto, **con la serie grabada** | Sección 7.1 | TMAM compra; soporte lo prepara |
 | Controlador (PC) de repuesto, **instalado y configurado** | Sección 7.2 | TMAM compra; soporte la prepara |
 | Segunda conexión de internet, router con doble salida, UPS e IP fija | Sección 5.2 | TMAM |
@@ -510,8 +512,9 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 
 | Qué | Sección |
 |---|---|
-| ~~Verificación manual~~ Hecho el 15/10/2026 (falta subirlo a la nube y probarlo en el punto de acceso) | 4 |
-| ~~Aviso en el Panel junto a "no completó rostro y alcohol"~~ Hecho el 15/10/2026 (falta subirlo al servidor) | 3.2 |
+| ~~Verificación manual~~ Hecho el 15/10/2026; el 21/10/2026, con el grado (decide el sistema) y también por falla del alcoholímetro (falta probarlo en el punto de acceso) | 4 |
+| ~~Aviso en el Panel junto a "no completó rostro y alcohol"~~ Hecho el 15/10/2026 | 3.2 |
+| ~~Vigilar el alcoholímetro (desconectado en unos 10 segundos)~~ Hecho el 21/10/2026 (probado con una simulación) | 3.1 |
 | ~~Contingencia "sin lector": ingreso solo con rostro y salida desde "Presentes ahora"~~ Hecho el 21/10/2026 | 6.3 |
 | Adaptador de repuesto registrado desde antes (si se elige la opción B) | 6.4 |
 | *Pendiente:* tarjeta de contingencia digital, con QR que cambia cada 30 segundos en el celular del vigilante | 6.5.8 |
@@ -521,8 +524,9 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 
 | Qué | Sección |
 |---|---|
-| Cambiar el alcoholímetro por el repuesto | 3.4 |
-| Verificación manual con el equipo facial apagado (una vez programada) | 4.4 |
+| Desconectar el alcoholímetro, dejarlo conectado pero apagado, y una persona que no sopla | 3.4 |
+| Cambiar el alcoholímetro por el repuesto, y que el repuesto muestre el número en mg/L | 3.5 |
+| Verificación manual con el equipo facial apagado, escribiendo el grado del repuesto | 4 |
 | Cambiar un relé por el repuesto | 7.1 |
 | Cambiar el Controlador (PC) por la PC de repuesto | 7.2 |
 | Cambiar un lector de DNI por el repuesto | 6.4 |

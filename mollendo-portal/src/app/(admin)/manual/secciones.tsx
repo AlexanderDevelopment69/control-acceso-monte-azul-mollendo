@@ -560,11 +560,12 @@ export const SECCIONES: SeccionManual[] = [
                 <p className="mb-2">
                   <b>Marcas junto al motivo:</b> <Badge color="warning">Tarjeta de contingencia</Badge>,{" "}
                   <Badge color="warning">Sin lector de DNI: identificado por rostro</Badge>, <Badge color="warning">Salida sin lector</Badge> y{" "}
-                  <Badge color="warning">Manual</Badge> (con quién decidió).
+                  <Badge color="primary">Manual</Badge> (con el grado y quién decidió).
                 </p>
                 <p>
                   <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revise si arriba dice <b>«Alcoholímetro desconectado»</b>{" "}
-                  y avise a soporte. Se cierra con la ✕ o solo, cuando la siguiente persona entra bien.
+                  y avise a soporte. Si el cambio va a demorar, use su botón <b>«Activar verificación manual»</b>. Se cierra con la ✕ o solo,
+                  cuando la siguiente persona entra bien.
                 </p>
               </>
             ),

@@ -13,14 +13,17 @@ export type DocumentoLeido = { tipoDocumentoIdentidad: 'DNI'; numeroDocumento: s
  * - el código 2D (PDF417) del reverso: 2 dígitos, los 8 del DNI y los
  *   apellidos y nombres en mayúsculas (`0146534518GUERRERO   CHUQUILIN ...`,
  *   visto con el equipo real el 17/10/2026). Después llega otra línea con la
- *   firma en binario, que se descarta (ver esBinario).
+ *   firma en binario, que se descarta (ver esBinario);
+ * - otro código 2D del DNI: los 8 dígitos, un espacio y el nombre
+ *   (`72892338 JAIR VALENTIN`, visto el 21/10/2026 con el lector de salida
+ *   leyendo códigos 2D).
  * Cualquier otra cosa (un código que no sea de un DNI, ruido del cable al
  * encender el lector) devuelve null.
  */
 export function extraerDocumento(linea: string): DocumentoLeido | null {
   const limpio = linea.replace(/[^\x21-\x7E]/g, '');
   if (/^\d{8}$/.test(limpio)) return { tipoDocumentoIdentidad: 'DNI', numeroDocumento: limpio };
-  const codigo2d = /^\d{2}(\d{8})[A-ZÑ]/.exec(linea.trimStart());
+  const codigo2d = /^\d{2}(\d{8})[A-ZÑ]/.exec(linea.trimStart()) ?? /^(\d{8}) +[A-ZÁÉÍÓÚÑ]/.exec(linea.trimStart());
   return codigo2d ? { tipoDocumentoIdentidad: 'DNI', numeroDocumento: codigo2d[1] } : null;
 }
 

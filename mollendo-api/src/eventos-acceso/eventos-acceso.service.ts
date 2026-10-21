@@ -390,11 +390,15 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     if (denegado) return denegado;
 
     await this.enSerie(async () => {
-      // Si ya está esperando (volvió a pasar el DNI), se mantiene su lugar.
+      // Si ya está esperando (volvió a pasar el DNI), se mantiene su lugar; si esperaba al equipo
+      // facial y ya rige la verificación manual, su espera pasa a la verificación manual.
       const abierto = (
         await this.prisma.ingresoPendiente.findMany({ where: { personaId: persona.id, consumidoEn: null, ...this.filtroAbiertos() } })
       ).find((p) => this.sigueAbierta(p));
-      if (abierto) return;
+      if (abierto) {
+        if (manual && !abierto.manual) await this.pasarAManual(abierto, persona.numeroDocumento);
+        return;
+      }
       const pendiente = await this.prisma.ingresoPendiente.create({
         data: { personaId: persona.id, torniqueteId: dto.torniqueteId, manual },
         include: CON_PERSONA,
@@ -982,6 +986,26 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     return p.habilitadoEn
       ? p.habilitadoEn.getTime() >= ahora - ventanaDe(p) - gracia
       : p.creadoEn.getTime() >= ahora - ESPERA_MAXIMA_EN_COLA_MS;
+  }
+
+  /**
+   * Quien esperaba al equipo facial y vuelve a pasar su DNI con la verificación
+   * manual ya activa (se activó mientras esperaba): su espera pasa a la
+   * verificación manual, al final de la cola como un DNI nuevo, y se le quita
+   * el permiso en el G4 Pro. Sin esto seguiría esperando al equipo caído hasta
+   * vencer.
+   */
+  private async pasarAManual(pendiente: { id: number; habilitadoEn: Date | null }, numeroDocumento: string) {
+    const actualizado = await this.prisma.ingresoPendiente.update({
+      where: { id: pendiente.id },
+      data: { manual: true, habilitadoEn: null, creadoEn: new Date() },
+      include: CON_PERSONA,
+    });
+    if (pendiente.habilitadoEn) {
+      this.eventEmitter.emit('g4pro.habilitar', { numeroDocumento, habilitar: false } satisfies HabilitarEnEquipoEvent);
+    }
+    const habilitado = await this.habilitarSiguiente();
+    if (habilitado !== actualizado.id) this.eventEmitter.emit('ingreso.en-espera', aEnEspera(actualizado));
   }
 
   /** La espera habilitada ahora (a lo sumo una: el G4 Pro o el vigilante atienden a una persona a la vez). */

@@ -12,6 +12,13 @@ describe('extraerDocumento', () => {
     expect(extraerDocumento('0148058719BAUTISTA')).toEqual({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: '48058719' });
   });
 
+  it('toma el DNI del otro código 2D: los 8 dígitos, un espacio y el nombre', () => {
+    expect(extraerDocumento('72892338 JAIR VALENTIN')).toEqual({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: '72892338' });
+    expect(extraerDocumento('48058719  ÑAHUI')).toEqual({ tipoDocumentoIdentidad: 'DNI', numeroDocumento: '48058719' });
+    expect(extraerDocumento('123456789 JAIR')).toBeNull();
+    expect(extraerDocumento('1234567 JAIR')).toBeNull();
+  });
+
   it('descarta lo que no es un DNI', () => {
     expect(extraerDocumento('')).toBeNull();
     expect(extraerDocumento('ü')).toBeNull();
