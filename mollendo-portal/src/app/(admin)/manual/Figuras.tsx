@@ -182,86 +182,128 @@ function Paso({
   );
 }
 
-type Tramo = { titulo: string; detalle: string; duracion: string; segundos: number; color: "azul" | "ambar" };
-type Hito = { titulo: string; detalle: string; donde: "inicio" | number | "fin"; color: string };
+type Color = "azul" | "verde" | "rojo";
+type Punto = {
+  s: number;
+  color: Color;
+  rotulo: string;
+  lado: "start" | "middle" | "end";
+  /** Rótulo en una segunda fila, para que no se monte con el del punto anterior. */
+  abajo?: boolean;
+  cuando: string;
+  detalle: string;
+};
+type Tramo = { desde: number; hasta: number; color: "azul" | "ambar"; rotulo: string };
 
-const COLOR_TRAMO = {
-  azul: "bg-brand-100 text-brand-800 dark:bg-brand-500/20 dark:text-brand-200",
-  ambar: "bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-200",
+const PUNTO = { azul: "fill-brand-500", verde: "fill-success-500", rojo: "fill-error-500" };
+const BOLA = { azul: "bg-brand-500", verde: "bg-success-500", rojo: "bg-error-500" };
+const TRAMO = {
+  azul: { barra: "fill-brand-300 dark:fill-brand-500/50", texto: "fill-brand-600 dark:fill-brand-300" },
+  ambar: { barra: "fill-warning-200 dark:fill-warning-500/40", texto: "fill-warning-700 dark:fill-warning-400" },
+};
+
+/** Los tiempos de cada orden del ingreso, medidos con el equipo real. */
+const TIEMPOS: Record<"facialPrimero" | "dniPrimero", { titulo: string; desde: string; total: number; paso: number; tramos: Tramo[]; puntos: Punto[] }> = {
+  facialPrimero: {
+    titulo: "Tiempos con Facial + Alcohol → DNI",
+    desde: "Segundos desde que el equipo dice “correcto”, medidos con el equipo real.",
+    total: 40,
+    paso: 10,
+    tramos: [
+      { desde: 0, hasta: 10, color: "azul", rotulo: "Espera el aviso · ~10 s" },
+      { desde: 10, hasta: 40, color: "ambar", rotulo: "Tiempo para pasar el DNI · 30 s" },
+    ],
+    puntos: [
+      { s: 0, color: "azul", rotulo: "“Correcto”", lado: "start", cuando: "0 s", detalle: "Termina de soplar y aprueba." },
+      { s: 7, color: "azul", rotulo: "Pasa su DNI", lado: "middle", abajo: true, cuando: "ej. a los 7 s", detalle: "Puede pasarlo antes del aviso: el sistema lo espera." },
+      { s: 10, color: "verde", rotulo: "Se abre", lado: "start", cuando: "~10 s", detalle: "Llega el aviso del equipo; el Panel muestra “pase su DNI”." },
+      { s: 40, color: "rojo", rotulo: "Fin del plazo", lado: "end", cuando: "40 s", detalle: "Sin DNI: “No pasó su DNI a tiempo”." },
+    ],
+  },
+  dniPrimero: {
+    titulo: "Tiempos con DNI → Facial + Alcohol",
+    desde: "Segundos desde que pasa su DNI, medidos con el equipo real.",
+    total: 60,
+    paso: 10,
+    tramos: [{ desde: 0, hasta: 60, color: "ambar", rotulo: "Tiempo para hacer rostro y alcohol · 1 minuto" }],
+    puntos: [
+      { s: 0, color: "azul", rotulo: "Pasa su DNI", lado: "start", cuando: "0 s", detalle: "Se revisan sus documentos; el Panel lo muestra “en espera”." },
+      { s: 15, color: "azul", rotulo: "Sopla", lado: "middle", cuando: "ej. a los 15 s", detalle: "Hace rostro y alcohol en el equipo facial." },
+      { s: 25, color: "verde", rotulo: "Se abre", lado: "middle", cuando: "~25 s", detalle: "Unos 10 s después de soplar, al llegar el aviso." },
+      { s: 60, color: "rojo", rotulo: "Fin del plazo", lado: "end", cuando: "60 s", detalle: "Sin prueba: “No completó rostro y alcohol”." },
+    ],
+  },
 };
 
 /**
- * Los tiempos del ingreso, medidos con el equipo real, en el orden que está
- * activo: una barra por tramos (qué pasa y cuánto dura, de ancho proporcional
- * a su duración), los momentos clave debajo y un ejemplo. En el celular, los
- * tramos y los momentos van uno debajo del otro.
+ * Los tiempos del ingreso en el orden activo: la línea con los tramos
+ * rotulados encima, los puntos numerados y, debajo, qué significa cada uno.
+ * En el celular la línea se desliza en su recuadro y la lista va en una columna.
  */
 function LineaTiempo({ facialPrimero }: { facialPrimero: boolean }) {
-  const { titulo, desde, tramos, hitos, ejemplo } = facialPrimero
-    ? {
-        titulo: "Tiempos con Facial + Alcohol → DNI",
-        desde: "Medidos con el equipo real, desde que el equipo dice “correcto”.",
-        tramos: [
-          { titulo: "Espera el aviso", detalle: "El equipo avisa al sistema quién sopló.", duracion: "unos 10 s", segundos: 10, color: "azul" },
-          { titulo: "Tiempo para pasar el DNI", detalle: "El Panel muestra “Aprobó … pase su DNI”, con su foto.", duracion: "30 s", segundos: 30, color: "ambar" },
-        ] satisfies Tramo[],
-        hitos: [
-          { titulo: "“Correcto”", detalle: "termina de soplar", donde: "inicio", color: "bg-brand-500" },
-          { titulo: "Aparece “pase su DNI”", detalle: "a los ~10 s", donde: 25, color: "bg-warning-500" },
-          { titulo: "Vence el plazo", detalle: "“No pasó su DNI a tiempo”", donde: "fin", color: "bg-error-500" },
-        ] satisfies Hito[],
-        ejemplo: "pasa su DNI apenas oye “correcto” (a los 7 s). El sistema lo espera y el molinete se abre a los ~10 s, cuando llega el aviso.",
-      }
-    : {
-        titulo: "Tiempos con DNI → Facial + Alcohol",
-        desde: "Medidos con el equipo real, desde que pasa su DNI.",
-        tramos: [
-          { titulo: "Tiempo para hacer rostro y alcohol", detalle: "El Panel lo muestra “en espera” mientras tanto.", duracion: "1 minuto", segundos: 60, color: "ambar" },
-        ] satisfies Tramo[],
-        hitos: [
-          { titulo: "Pasa su DNI", detalle: "se revisan sus documentos", donde: "inicio", color: "bg-brand-500" },
-          { titulo: "Sopla y se abre", detalle: "~10 s después de soplar", donde: 50, color: "bg-success-500" },
-          { titulo: "Vence el plazo", detalle: "“No completó rostro y alcohol”", donde: "fin", color: "bg-error-500" },
-        ] satisfies Hito[],
-        ejemplo: "pasa su DNI, hace rostro y sopla en unos 15 s; el molinete se abre unos 10 s después, a los ~25 s.",
-      };
+  const { titulo, desde, total, paso, tramos, puntos } = TIEMPOS[facialPrimero ? "facialPrimero" : "dniPrimero"];
+  const x = (seg: number) => 40 + (seg / total) * 680;
+  const marcas = Array.from({ length: total / paso + 1 }, (_, i) => i * paso);
   return (
     <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
       <p className="text-xs font-semibold text-gray-800 dark:text-white/90">{titulo}</p>
-      <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400">{desde}</p>
-      <div className="flex flex-col gap-[3px] overflow-hidden rounded-lg sm:flex-row">
-        {tramos.map((t) => (
-          <div key={t.titulo} className={`min-w-0 px-3 py-2.5 ${COLOR_TRAMO[t.color]}`} style={{ flexGrow: t.segundos, flexBasis: 0 }}>
-            <span className="block text-xs font-semibold">{t.titulo}</span>
-            <span className="block text-[11px] opacity-90">{t.detalle}</span>
-            <span className="mt-1 inline-block rounded-full bg-white/60 px-2 text-[11px] font-semibold dark:bg-black/25">{t.duracion}</span>
-          </div>
-        ))}
+      <p className="mb-1 text-[11px] text-gray-500 dark:text-gray-400">{desde}</p>
+      <div className="overflow-x-auto">
+        <svg viewBox="0 0 760 110" className="w-full min-w-[560px]" role="img" aria-label={`${titulo}: ${puntos.map((pt) => `${pt.rotulo} ${pt.cuando}`).join(", ")}`}>
+          <g className="fill-gray-400 dark:fill-gray-500" fontSize="11" textAnchor="middle">
+            {marcas.map((seg) => (
+              <text key={seg} x={x(seg)} y="12">
+                {seg} s
+              </text>
+            ))}
+          </g>
+          <g className="stroke-gray-200 dark:stroke-gray-800">
+            {marcas.map((seg) => (
+              <line key={seg} x1={x(seg)} y1="18" x2={x(seg)} y2="104" />
+            ))}
+          </g>
+          {tramos.map((t) => (
+            <text key={t.rotulo} x={(x(t.desde) + x(t.hasta)) / 2} y="36" textAnchor="middle" fontSize="12" fontWeight="600" className={TRAMO[t.color].texto}>
+              {t.rotulo}
+            </text>
+          ))}
+          <rect x={x(0)} y="50" width={x(total) - x(0)} height="8" rx="4" className="fill-gray-100 dark:fill-gray-800" />
+          {tramos.map((t) => (
+            <rect key={t.rotulo} x={x(t.desde)} y="50" width={x(t.hasta) - x(t.desde)} height="8" rx="4" className={TRAMO[t.color].barra} />
+          ))}
+          {puntos.map((pt, i) => (
+            <g key={pt.rotulo}>
+              <circle cx={x(pt.s)} cy="54" r="10" className={PUNTO[pt.color]} />
+              <text x={x(pt.s)} y="58" textAnchor="middle" fontSize="11" fontWeight="700" className="fill-white">
+                {i + 1}
+              </text>
+              <text
+                x={x(pt.s) + (pt.lado === "start" && pt.s > 0 ? 4 : 0)}
+                y={pt.abajo ? 102 : 84}
+                textAnchor={pt.lado}
+                fontSize="12.5"
+                fontWeight="600"
+                className="fill-gray-800 dark:fill-white/90"
+              >
+                {pt.rotulo}
+              </text>
+            </g>
+          ))}
+        </svg>
       </div>
-      <div className="mt-2 flex flex-col gap-1.5 sm:relative sm:block sm:h-12">
-        {hitos.map((h) => (
-          <div
-            key={h.titulo}
-            className={`flex items-center gap-2 text-[11px] text-gray-600 sm:absolute sm:top-0 sm:max-w-[34%] sm:flex-col sm:gap-0.5 dark:text-gray-300 ${
-              h.donde === "inicio"
-                ? "sm:left-0 sm:items-start"
-                : h.donde === "fin"
-                  ? "sm:right-0 sm:items-end sm:text-right"
-                  : "sm:-translate-x-1/2 sm:items-center sm:text-center"
-            }`}
-            style={typeof h.donde === "number" ? { left: `${h.donde}%` } : undefined}
-          >
-            <span className={`size-2.5 shrink-0 rounded-full ${h.color}`} aria-hidden />
-            <span>
-              <span className="font-medium text-gray-700 dark:text-gray-200">{h.titulo}</span>{" "}
-              <span className="text-gray-500 sm:block dark:text-gray-400">{h.detalle}</span>
+      <ol className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-dashed border-gray-200 pt-2.5 sm:grid-cols-2 lg:grid-cols-4 dark:border-gray-800">
+        {puntos.map((pt, i) => (
+          <li key={pt.rotulo} className="flex gap-2 text-[11px] text-gray-600 dark:text-gray-300">
+            <span className={`mt-px flex size-[18px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${BOLA[pt.color]}`}>
+              {i + 1}
             </span>
-          </div>
+            <span>
+              <b className="font-semibold text-gray-800 dark:text-white/90">{pt.rotulo}</b> · {pt.cuando}
+              <span className="block">{pt.detalle}</span>
+            </span>
+          </li>
         ))}
-      </div>
-      <p className="mt-3 border-t border-dashed border-gray-200 pt-2.5 text-[11px] text-gray-600 dark:border-gray-800 dark:text-gray-300">
-        <b className="text-gray-800 dark:text-white/90">Ejemplo:</b> {ejemplo}
-      </p>
+      </ol>
     </div>
   );
 }
