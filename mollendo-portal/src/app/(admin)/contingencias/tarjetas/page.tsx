@@ -421,7 +421,7 @@ function TarjetasContent() {
     <div>
       <PageHeader
         title="Tarjetas de contingencia"
-        description="El vigilante la pasa por el lector en lugar del DNI cuando el trabajador lo olvidó o el lector no lo reconoce."
+        description="Reemplazan al DNI cuando el personal lo olvidó o el lector no lo reconoce. Solo las usa el vigilante."
         actions={
           esAdministrador ? (
             <Button size="sm" onClick={() => setNueva(true)}>
@@ -483,7 +483,7 @@ function TarjetasContent() {
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  {["Fecha y hora", "Tarjeta", "Movimiento", "Resultado", "Trabajador o motivo"].map((c) => (
+                  {["Fecha y hora", "Tarjeta", "Movimiento", "Resultado", "Personal o motivo"].map((c) => (
                     <TableCell key={c} isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">
                       {c}
                     </TableCell>

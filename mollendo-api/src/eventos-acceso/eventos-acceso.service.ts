@@ -1364,11 +1364,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   private async salidaConTarjeta(tarjeta: TarjetaContingencia, dto: TarjetaLeidaDto) {
     const preparada = this.salidaSinDni;
     if (!preparada || Date.parse(preparada.hasta) < Date.now()) {
-      return this.rechazarTarjeta(tarjeta.id, 'salida', 'Nadie eligió al trabajador en el Panel ("Salida sin DNI")');
+      return this.rechazarTarjeta(tarjeta.id, 'salida', 'Nadie eligió al personal en el Panel ("Salida sin DNI")');
     }
     this.cambiarSalidaSinDni(null);
     const persona = await this.prisma.persona.findUnique({ where: { id: preparada.personaId } });
-    if (!persona) return this.rechazarTarjeta(tarjeta.id, 'salida', 'El trabajador elegido ya no está en el sistema');
+    if (!persona) return this.rechazarTarjeta(tarjeta.id, 'salida', 'El personal elegido ya no está en el sistema');
     this.logger.log(`Tarjeta de contingencia ${tarjeta.numero}: salida de ${persona.numeroDocumento} (eligió ${preparada.preparadaPor})`);
     const respuesta = await this.registrarSalida({
       tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,

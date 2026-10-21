@@ -309,13 +309,13 @@ Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**,
 
 ---
 
-### 6.5. Trabajador sin DNI, o DNI que el lector no lee: tarjeta de contingencia
+### 6.5. Personal sin DNI, o DNI que el lector no lee: tarjeta de contingencia
 
-Hecho el 20/10/2026. El administrador crea e imprime en el portal (**Contingencias → Tarjetas de contingencia**, en el menú) una tarjeta con un QR y se la entrega al vigilante. La tarjeta **sola no abre**: reemplaza al DNI del trabajador en ese momento.
+Hecho el 20/10/2026. El administrador crea e imprime en el portal (**Contingencias → Tarjetas de contingencia**, en el menú) una tarjeta con un QR y se la entrega al vigilante. La tarjeta **sola no abre**: reemplaza al DNI del personal en ese momento.
 
-- **Ingreso** (orden "facial primero"): el trabajador avisa al vigilante, hace rostro y alcohol y, cuando el Panel muestra *"Aprobó … pase su DNI"*, el vigilante pasa la tarjeta por el lector de ingreso en esos 15 segundos. Entra el trabajador que aprobó, con sus documentos revisados como siempre. Si hay dos personas esperando su DNI a la vez, no abre.
-- **Salida:** el vigilante toca **"Salida sin DNI"** en el Panel, elige al trabajador (solo aparecen quienes figuran dentro) y tiene 2 minutos para pasar la tarjeta por el lector de salida.
-- El ingreso o la salida queda **a nombre del trabajador**, marcado *"Tarjeta de contingencia"* (en la salida, con el vigilante que lo eligió). Cada uso, aceptado o no, queda en la lista de usos de la tarjeta; la tarjeta pasada en otro momento no abre y suena el aviso.
+- **Ingreso** (orden "facial primero"): el personal avisa al vigilante, hace rostro y alcohol y, cuando el Panel muestra *"Aprobó … pase su DNI"*, el vigilante pasa la tarjeta por el lector de ingreso en esos 15 segundos. Entra el personal que aprobó, con sus documentos revisados como siempre. Si hay dos personas esperando su DNI a la vez, no abre.
+- **Salida:** el vigilante toca **"Salida sin DNI"** en el Panel, elige al personal (solo aparecen quienes figuran dentro) y tiene 2 minutos para pasar la tarjeta por el lector de salida.
+- El ingreso o la salida queda **a nombre del personal**, marcado *"Tarjeta de contingencia"* (en la salida, con el vigilante que lo eligió). Cada uso, aceptado o no, queda en la lista de usos de la tarjeta; la tarjeta pasada en otro momento no abre y suena el aviso.
 - El administrador puede ponerle fecha de vencimiento o dejarla sin vencer, desactivarla y **cambiar su código** si se pierde o alguien le toma una foto (la impresa pierde vigencia). El vigilante solo ve las tarjetas.
 - Sin internet no es válida (el sistema no sabe quién es). Con la verificación manual activa tampoco: decide el vigilante en el Panel.
 
@@ -388,7 +388,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | 9 | ¿Qué se hace si falla el **relé de un molinete**? | Se cambia de inmediato por el **repuesto** (15/10/2026) |
 | 10 | ¿Qué se hace si falla la **PC de control**? | **PC de repuesto**; si no la hay, liberar el molinete a mano y anotar los pasos (15/10/2026) |
 | 11 | ¿El **adaptador del lector de repuesto** lo registra soporte en el momento (A) o queda registrado desde antes (B)? | **Pendiente** (se recomienda B; sección 6.4). No haría falta si se programa la vista opcional de la sección 10 |
-| 12 | ¿Qué se hace si el trabajador **olvidó su DNI** o el lector **no lo lee**? | **Tarjeta de contingencia** (QR) que el vigilante pasa en lugar del DNI, después de rostro y alcohol; en la salida, el vigilante elige al trabajador en el Panel. La imprime el administrador; puede vencer o no (20/10/2026) |
+| 12 | ¿Qué se hace si el personal **olvidó su DNI** o el lector **no lo lee**? | **Tarjeta de contingencia** (QR) que el vigilante pasa en lugar del DNI, después de rostro y alcohol; en la salida, el vigilante elige al personal en el Panel. La imprime el administrador; puede vencer o no (20/10/2026) |
 
 ---
 

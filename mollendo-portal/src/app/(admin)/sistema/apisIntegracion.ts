@@ -161,7 +161,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/eventos-acceso/tarjeta",
     metodo: "POST",
     descripcion:
-      "El QR de una tarjeta de contingencia leído por un lector de DNI (lo manda el controlador). La tarjeta sola no abre: en el ingreso (orden \"facial primero\") entra quien aprobó rostro y alcohol y espera su DNI, si es una sola persona; si la prueba todavía no llegó, la espera hasta 8 s, como un DNI. En la salida, sale el trabajador elegido en el Panel (\"Salida sin DNI\"). Baja, antipassback y documentos se revisan igual que con el DNI, y el ingreso o la salida queda a nombre del trabajador, con la tarjeta. Una tarjeta no registrada, desactivada o vencida, o pasada sin nadie esperando, se rechaza: suena el aviso de denegado de esa puerta y queda en los usos de la tarjeta.",
+      "El QR de una tarjeta de contingencia leído por un lector de DNI (lo manda el controlador). La tarjeta sola no abre: en el ingreso (orden \"facial primero\") entra quien aprobó rostro y alcohol y espera su DNI, si es una sola persona; si la prueba todavía no llegó, la espera hasta 8 s, como un DNI. En la salida, sale el personal elegido en el Panel (\"Salida sin DNI\"). Baja, antipassback y documentos se revisan igual que con el DNI, y el ingreso o la salida queda a nombre del personal, con la tarjeta. Una tarjeta no registrada, desactivada o vencida, o pasada sin nadie esperando, se rechaza: suena el aviso de denegado de esa puerta y queda en los usos de la tarjeta.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -185,7 +185,7 @@ DNI leído en ingreso: pendiente_verificacion`,
 // 201 Created — rechazada (no abre)
 {
   "resultado": "denegado",
-  "mensaje": "Nadie eligió al trabajador en el Panel (\"Salida sin DNI\")"
+  "mensaje": "Nadie eligió al personal en el Panel (\"Salida sin DNI\")"
 }`,
     notas:
       "Las tarjetas las maneja el administrador en Contingencias → Tarjetas de contingencia, en el menú (GET/POST /tarjetas-contingencia, PATCH y DELETE /tarjetas-contingencia/:id (eliminar, solo si nunca se usó), POST /tarjetas-contingencia/:id/cambiar-codigo y GET /tarjetas-contingencia/:id/qr para imprimir); el vigilante solo las ve, con sus usos (GET /tarjetas-contingencia/usos). El código va solo en el QR: la API no lo devuelve. Sin internet, el controlador no la manda y suena el aviso. Con la verificación manual activa o en el orden normal, la tarjeta no sirve.",
@@ -195,7 +195,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/eventos-acceso/salida-sin-dni",
     metodo: "POST",
     descripcion:
-      "El vigilante elige al trabajador que sale sin DNI (debe figurar dentro; GET /eventos-acceso/salida-sin-dni/candidatos?busqueda=… los busca) y tiene 2 minutos para pasar la tarjeta de contingencia por el lector de salida. Una a la vez: elegir otro reemplaza al anterior. GET devuelve la que espera (o null) y DELETE la cancela. En tiempo real se avisa por WebSocket (/ws/eventos): salida-sin-dni.",
+      "El vigilante elige al personal que sale sin DNI (debe figurar dentro; GET /eventos-acceso/salida-sin-dni/candidatos?busqueda=… los busca) y tiene 2 minutos para pasar la tarjeta de contingencia por el lector de salida. Una a la vez: elegir otro reemplaza al anterior. GET devuelve la que espera (o null) y DELETE la cancela. En tiempo real se avisa por WebSocket (/ws/eventos): salida-sin-dni.",
     autenticacion: "JWT (Administrador / Vigilancia)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
@@ -211,7 +211,7 @@ DNI leído en ingreso: pendiente_verificacion`,
 }
 
 // 400 — Esa persona figura fuera: no tiene una salida pendiente`,
-    notas: "La salida queda con la tarjeta y con quién eligió al trabajador (\"Tarjeta de contingencia · correo\" en el Panel).",
+    notas: "La salida queda con la tarjeta y con quién eligió al personal (\"Tarjeta de contingencia · correo\" en el Panel).",
   },
   {
     nombre: "Ingresos en espera (Panel de vigilancia)",

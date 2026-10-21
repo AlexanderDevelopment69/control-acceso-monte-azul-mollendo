@@ -259,7 +259,7 @@ export class PersonasService {
   async rutaFoto(id: number): Promise<string> {
     const persona = await this.findPersona(id);
     if (!persona.fotoUrl || !existsSync(persona.fotoUrl)) {
-      throw new NotFoundException('El trabajador no tiene foto');
+      throw new NotFoundException('El personal no tiene foto');
     }
     return resolve(persona.fotoUrl);
   }

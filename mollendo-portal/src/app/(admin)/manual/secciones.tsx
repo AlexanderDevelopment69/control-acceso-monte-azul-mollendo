@@ -564,32 +564,32 @@ export const SECCIONES: SeccionManual[] = [
       },
       {
         titulo: "Sin DNI: tarjeta de contingencia",
-        descripcion: "Si el trabajador olvidó su DNI o el lector no lo reconoce",
+        descripcion: "Si el personal olvidó su DNI o el lector no lo reconoce",
         contenido: (
           <>
             <p className="mb-3">
               El administrador imprime la <b>tarjeta de contingencia</b> (un QR) y se la entrega al vigilante. La tarjeta sola no abre: se usa
-              en lugar del DNI del trabajador.
+              en lugar del DNI del personal.
             </p>
             <p className="mb-2 font-medium text-gray-800 dark:text-white/90">Para entrar:</p>
             <Lista>
-              <li>El trabajador avisa al vigilante <b>antes</b> de hacer rostro y alcohol.</li>
+              <li>El personal avisa al vigilante <b>antes</b> de hacer rostro y alcohol.</li>
               <li>
                 Hace rostro y alcohol. En el panel aparece <Badge color="success">Pase su DNI</Badge> con su nombre y su foto.
               </li>
               <li>
                 En esos <b>15 segundos</b>, el vigilante pasa la tarjeta por el lector de ingreso. Se abre el molinete y queda a nombre del
-                trabajador, con la marca <Badge color="warning">Tarjeta de contingencia</Badge>.
+                personal, con la marca <Badge color="warning">Tarjeta de contingencia</Badge>.
               </li>
             </Lista>
             <p className="my-3">
               Si en ese momento hay dos personas esperando su DNI, la tarjeta no sabe a quién dejar pasar y no abre: espere a que pase la
-              otra y que el trabajador repita rostro y alcohol.
+              otra y que el personal repita rostro y alcohol.
             </p>
             <p className="mb-2 font-medium text-gray-800 dark:text-white/90">Para salir:</p>
             <Lista>
               <li>
-                En el panel, toque <b>“Salida sin DNI”</b>, busque al trabajador y toque <b>“Elegir”</b>. Solo aparecen quienes figuran dentro.
+                En el panel, toque <b>“Salida sin DNI”</b>, busque al personal y toque <b>“Elegir”</b>. Solo aparecen quienes figuran dentro.
               </li>
               <li>
                 Arriba queda una franja ámbar con su nombre: tiene <b>2 minutos</b> para pasar la tarjeta por el lector de salida.

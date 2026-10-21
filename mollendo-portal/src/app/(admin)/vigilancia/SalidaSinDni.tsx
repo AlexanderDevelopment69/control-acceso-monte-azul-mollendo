@@ -75,7 +75,7 @@ export function ElegirSalidaSinDni({
       onElegida(await eventosAccesoApi.prepararSalidaSinDni(persona.id));
       cerrar();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo elegir al trabajador");
+      setError(err instanceof ApiError ? err.message : "No se pudo elegir al personal");
     } finally {
       setEligiendo(null);
     }
@@ -85,7 +85,7 @@ export function ElegirSalidaSinDni({
     <Modal isOpen={abierta} onClose={cerrar} bloqueado={eligiendo !== null} className="max-w-lg p-6 sm:p-8">
       <h2 className="mb-2 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Salida sin DNI</h2>
       <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
-        Elija al trabajador y después pase la tarjeta de contingencia por el lector de salida.
+        Elija al personal y después pase la tarjeta de contingencia por el lector de salida.
       </p>
       <div ref={buscador}>{abierta && <TableSearch value={busqueda} onChange={setBusqueda} placeholder="Nombre o DNI…" />}</div>
       {error && <ErrorBanner className="mt-3">{error}</ErrorBanner>}
