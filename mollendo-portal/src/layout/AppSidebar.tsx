@@ -14,7 +14,7 @@ import {
   HorizontaLDots,
   InfoIcon,
   ListIcon,
-  LockIcon,
+  LockLineIcon,
   PieChartIcon,
   PlugInIcon,
 } from "../icons/index";
@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
   { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador"] },
   { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
   {
-    icon: <LockIcon />,
+    icon: <LockLineIcon />,
     name: "Contingencias",
     roles: ["administrador", "vigilancia"],
     subItems: [{ name: "Tarjetas de contingencia", path: "/contingencias/tarjetas" }],
@@ -84,7 +84,7 @@ const AppSidebar: React.FC = () => {
                 aria-expanded={abierto(nav.name)}
                 className={`menu-item group overflow-hidden transition-colors duration-300 ease-out motion-reduce:transition-none ${
                   nav.name === grupoActual ? "menu-item-active" : "menu-item-inactive"
-                } ${!conTexto ? "lg:justify-center" : ""}`}
+                }`}
               >
                 <span
                   className={`flex size-6 shrink-0 items-center justify-center transition-colors duration-300 ease-out motion-reduce:transition-none ${
