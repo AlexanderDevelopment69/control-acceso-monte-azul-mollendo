@@ -780,6 +780,31 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(de('g4pro.habilitar').filter((h) => h.habilitar)).toHaveLength(0);
       });
 
+      it('sopla a los 55 s y el aviso del equipo llega después del minuto: entra (vale la hora del soplido)', async () => {
+        agregarPersona(base, '11111111');
+        const dni = ahora;
+        await ingreso('11111111');
+        avanzar(67_000);
+        await vencidos();
+        expect(base.eventos).toHaveLength(0);
+        await attlog('11111111', '0.00g/L', new Date(dni + 55_000));
+        expect(base.eventos).toEqual([expect.objectContaining({ numeroDocumento: '11111111', resultado: 'autorizado' })]);
+        expect(de('molinete.abrir')).toHaveLength(1);
+      });
+
+      it('sopla después del minuto: no vale y, pasado el margen del aviso, "No completó rostro y alcohol"', async () => {
+        agregarPersona(base, '11111111');
+        const dni = ahora;
+        await ingreso('11111111');
+        avanzar(70_000);
+        await attlog('11111111', '0.00g/L', new Date(dni + 62_000));
+        expect(base.eventos).toHaveLength(0);
+        avanzar(15_000);
+        await vencidos();
+        expect(base.eventos).toEqual([expect.objectContaining({ resultado: 'denegado', denegadoSinVerificacion: true })]);
+        expect(de('molinete.abrir')).toHaveLength(0);
+      });
+
       it('primero el DNI y la prueba da alcohol alto (0.000951 g/L): denegado por alcohol, con su nombre', async () => {
         agregarPersona(base, '11111111');
         await ingreso('11111111');
@@ -853,10 +878,14 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(base.eventos[0]).toMatchObject({ numeroDocumento: '11111111', resultado: 'denegado', denegadoPorAlcohol: true });
       });
 
-      it('pasó su DNI y no llegó su prueba en 1 minuto: "No completó rostro y alcohol"', async () => {
+      it('pasó su DNI y no llegó su prueba (minuto y margen del aviso): "No completó rostro y alcohol"', async () => {
         agregarPersona(base, '11111111');
         await ingreso('11111111');
         avanzar(61_000);
+        await vencidos();
+        // En el margen del aviso (20 s) sigue esperando la prueba soplada a tiempo.
+        expect(base.eventos).toHaveLength(0);
+        avanzar(20_000);
         await vencidos();
         expect(base.eventos[0]).toMatchObject({ numeroDocumento: '11111111', resultado: 'denegado', denegadoSinVerificacion: true });
       });

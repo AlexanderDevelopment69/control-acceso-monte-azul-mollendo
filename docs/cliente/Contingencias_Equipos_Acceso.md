@@ -35,16 +35,25 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 
 ## 1. Cómo funciona el punto de acceso normalmente
 
-**Ingreso:**
+**Ingreso.** El equipo facial (G4 Pro) trabaja en **modo asistencia** (desde el 19/10/2026): reconoce a todo el personal registrado, le toma la **prueba de alcohol** con el alcoholímetro (DT1700) conectado a él y envía al sistema quién sopló y el grado. El sistema decide según el **orden del ingreso**, que se elige en *Sistema y APIs → Orden del ingreso*:
 
-1. La persona pasa su **DNI** por el lector de ingreso.
-2. El sistema revisa que esté **registrada, activa y con sus documentos vigentes**. Si no cumple, se deniega en ese momento.
-3. Si cumple, el sistema la **habilita** en el **equipo de reconocimiento facial** (G4 Pro). Las personas están cargadas en el equipo, pero bloqueadas: solo se habilita a quien acaba de pasar su DNI.
-4. La persona mira al equipo, que le **reconoce el rostro** y le toma la **prueba de alcohol** con el alcoholímetro (DT1700) conectado a él.
-5. El equipo informa el resultado: **apto** o **alcohol**. Si en 1 minuto no llega resultado, el sistema deniega por "No completó rostro y alcohol".
-6. Si es apto, el sistema **abre el molinete de ingreso** con su relé.
+**Facial + Alcohol → DNI** (el que se usa):
 
-**Salida:** la persona pasa su DNI por el lector de salida y, si está registrada, se abre el molinete de salida. No usa el equipo facial ni el alcoholímetro.
+1. La persona mira al equipo, que le **reconoce el rostro** y le pide soplar.
+2. Sopla. Unos 8 segundos después de medir, el equipo dice **"correcto"** (en total, unos 20 segundos desde que miró al equipo).
+3. Casi al mismo tiempo, el Panel muestra **"Aprobó [nombre] · pase su DNI"**, con su foto. Tiene **30 segundos** para pasar su **DNI**.
+4. El sistema revisa que esté **activa, con sus documentos vigentes** y que no figure dentro (antipassback). Si cumple, **abre el molinete de ingreso** con su relé.
+5. Si no pasa el DNI a tiempo: *"No pasó su DNI a tiempo"*. Si pasa el DNI sin haber hecho antes la prueba: *"DNI antes del facial"*.
+
+**DNI → Facial + Alcohol:**
+
+1. La persona pasa su **DNI**. Si no cumple (baja, documentos o antipassback), se deniega en ese momento.
+2. Si cumple, tiene **1 minuto** para hacer rostro y alcohol en el equipo facial (el Panel la muestra "en espera").
+3. Si es apta, el sistema **abre el molinete** cuando el equipo dice "correcto" (unos 25 segundos después del DNI). Vale la prueba soplada dentro del minuto aunque el aviso del equipo llegue después; si no la hace, *"No completó rostro y alcohol"*.
+
+En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y suena el aviso.
+
+**Salida:** la persona pasa su DNI por el lector de salida y, si está registrada y figura dentro, se abre el molinete de salida. No usa el equipo facial ni el alcoholímetro.
 
 **Equipos que intervienen:**
 
@@ -118,7 +127,7 @@ Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar
 ### 4.1. Qué pasa cuando falla
 
 - **Salidas:** normales.
-- **Ingresos:** nadie puede ingresar. La persona pasa su DNI, el sistema la habilita en el equipo, pero el equipo no responde; al minuto queda denegada por "No completó rostro y alcohol". No hay riesgo de ingresos sin control: el molinete no se abre.
+- **Ingresos:** nadie puede ingresar. Sin el equipo no hay prueba de rostro y alcohol: con el orden Facial + Alcohol → DNI, el DNI queda en *"DNI antes del facial"*; con DNI → Facial + Alcohol, al minuto queda *"No completó rostro y alcohol"*. No hay riesgo de ingresos sin control: el molinete no se abre.
 - Como el alcoholímetro está conectado al equipo facial, **también se pierde la prueba de alcohol**.
 - El sistema lo detecta a los **2 minutos** sin contacto y muestra en la franja roja *"Equipo facial (G4 Pro) desconectado"*.
 
@@ -224,7 +233,7 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 
 ### 6.1. Qué pasa cuando falla
 
-- **Ingreso:** nadie puede ingresar. Sin el DNI, el sistema no sabe quién es la persona y no la habilita en el equipo facial.
+- **Ingreso:** sin el DNI, el sistema no puede revisar los documentos de la persona, así que nadie ingresa por la vía normal.
 - **Salida:** nadie sale por el molinete.
 - La franja roja muestra *"Lector de DNI de ingreso (o de salida): cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
 - Mientras tanto, se activa sola la contingencia "sin lector" (sección 6.3).
@@ -571,7 +580,7 @@ No hacen falta: con el alcoholímetro de repuesto y la verificación manual se m
 
 ### A.2. Ingresar sin internet
 
-Hoy no se puede ingresar sin internet por dos motivos: (1) los **documentos y las bajas** están en el servidor; (2) el **equipo facial** está conectado al servidor, que es quien lo habilita y recibe el resultado. Alternativas evaluadas:
+Hoy no se puede ingresar sin internet por dos motivos: (1) los **documentos y las bajas** están en el servidor; (2) el **equipo facial** está conectado al servidor, que es quien recibe el resultado y decide. Alternativas evaluadas:
 
 | Alternativa | Cómo funciona | Por qué no se eligió |
 |---|---|---|

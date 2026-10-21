@@ -8,8 +8,9 @@ Pruebas en la garita con el G4 Pro **HSR3263100192** en modo asistencia (ATT). E
 **Reglas que valen en los dos modos:**
 
 - El G4 avisa cada prueba al servidor **10 a 15 s después del soplido**, con el DNI y el grado. El 19/10 a las 18:27 avisó en 2 s; falta ver si se repite.
+- **Esa demora es del equipo antes del "correcto"** (visto en su `Verify.txt` el 21/10): reconoce el rostro (0 s), mide el alcohol (12 s), dice "correcto" (20 s, unos 8 s después de medir) y el aviso llega al servidor **~1 s después del "correcto"**. La hora de la prueba que envía el G4 es la del soplido, no la del "correcto".
 - Hay alcohol alto si el grado es **≥ 0.0001 g/L**.
-- **Facial primero:** hay **30 s** para pasar el DNI desde que aparece "pase su DNI" en el Panel (unos 40 s desde el "correcto"; eran 15 s hasta el 21/10). Si el DNI llega antes que el aviso del G4, el sistema espera en silencio hasta 8 s.
+- **Facial primero:** hay **30 s** para pasar el DNI desde que aparece "pase su DNI" en el Panel (casi lo mismo que desde el "correcto"; eran 15 s hasta el 21/10). Si el DNI llega antes que el aviso del G4, el sistema espera en silencio hasta 8 s.
 - **Vale la primera marcación del pase.** Si la persona vuelve a soplar en los 20 s siguientes, se ignora. Después de 20 s, un soplido nuevo es otro intento, sin bloqueo.
 
 Marque `[x]` cuando la prueba pase. Anote la hora y lo que vio si algo sale distinto.
@@ -63,7 +64,7 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 
 | # | Prueba | Qué debe pasar | Pasa |
 |---|---|---|---|
-| 2.1 | Rostro y soplido con 0.00 (el equipo dice "correcto") y **no** pasa el DNI | 10-12 s después aparece "Aprobó Jose Vilchez · pase su DNI" con **su foto** y una cuenta de **0:15** | [ ] |
+| 2.1 | Rostro y soplido con 0.00 (el equipo dice "correcto") y **no** pasa el DNI | Al decir "correcto" (~1 s después) aparece "Aprobó Jose Vilchez · pase su DNI" con **su foto** y una cuenta de **0:30** | [ ] |
 | 2.2 | "Correcto" y el DNI **enseguida** (antes de que aparezca la fila) | Espera en silencio unos segundos y **autorizado**, sin ningún rechazo | [ ] |
 | 2.3 | Rostro y soplido con alcohol alto | **Denegado "Alcohol"** con su nombre, sin pasar el DNI; suena el aviso | [x] |
 | 2.4 | Alcohol alto y enseguida el DNI | Se le responde con el mismo rechazo; no se crea otra fila | [x] |
@@ -141,7 +142,7 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 
 ## Pendiente de confirmar
 
-- [x] **Demora del aviso del G4.** Llega 10-12 s después del "correcto" (con alcohol alto, 15-17 s). Resuelto el 19/10 17:57: plazo de 15 s (desde el 21/10, 30 s) desde que aparece "pase su DNI" en el Panel y espera en silencio de hasta 8 s para un DNI pasado antes de que llegue el aviso.
+- [x] **Demora del aviso del G4.** Llega 10-12 s después del soplido (con alcohol alto, 15-17 s); el 21/10 se vio en el `Verify.txt` del equipo que es ~1 s después del "correcto" (el equipo tarda unos 8 s en decirlo). Resuelto el 19/10 17:57: plazo de 15 s (desde el 21/10, 30 s) desde que aparece "pase su DNI" en el Panel y espera en silencio de hasta 8 s para un DNI pasado antes de que llegue el aviso.
 
 - [ ] En los ingresos de las 16:30 y 16:31 del 19/10, ¿el vigilante **sopló**? Si no sopló y el G4 registró 0.00 g/L, el equipo estaría aceptando la prueba sin soplido. Para comprobarlo: pararse frente al G4 **sin soplar** y ver si aparece algo en el Panel.
 - [ ] Lecturas del lector con el formato `71988749 JOSE VILCHEZ`: el sistema las ignora. Confirmar qué documento las produce.

@@ -27,7 +27,7 @@ En **Sistema y APIs**, debajo de "Orden del ingreso". La tarjeta tiene el botón
 | Columna | Qué es |
 |---|---|
 | Prueba | Hora del soplido según el reloj del G4 y su **N.º de marcación** |
-| Llegó | Hora en que llegó al servidor y la **demora** ("11 s después"); en naranja si pasa de 15 s (lo normal: 10 a 12 s) |
+| Llegó | Hora en que llegó al servidor y la **demora** ("11 s después"); en naranja si pasa de 15 s (lo normal: 10 a 12 s, contados desde el soplido; el equipo dice "correcto" ~1 s antes de que llegue) |
 | Persona | Foto, nombre y DNI; "No está en el sistema" si el DNI no está registrado |
 | Alcohol | Grado medido: verde si está bajo el umbral, rojo si dio alcohol |
 | Qué hizo el sistema | La decisión al llegar la prueba (ver tabla de abajo) |

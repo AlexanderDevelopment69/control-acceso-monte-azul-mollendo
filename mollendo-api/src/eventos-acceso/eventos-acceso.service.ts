@@ -49,8 +49,17 @@ const VENTANA_VERIFICACION_MANUAL_MS = 2 * 60 * 1000;
 const ventanaDe = (pendiente: { manual: boolean }) =>
   pendiente.manual ? VENTANA_VERIFICACION_MANUAL_MS : VENTANA_INGRESO_PENDIENTE_MS;
 
+/**
+ * G4 Pro en asistencia, orden DNI primero: el minuto es para soplar. El aviso
+ * de la prueba llega 10 a 17 s después del soplido (lo que tarda el equipo en
+ * decir "correcto", visto en su Verify.txt el 21/10/2026), así que la espera
+ * sigue abierta esto después del minuto: vale la prueba hecha (soplada) dentro
+ * del minuto aunque su aviso llegue después. Pasado esto, "No completó rostro y alcohol".
+ */
+const GRACIA_AVISO_G4_MS = 20 * 1000;
+
 /** El turno más largo: para buscar en la base las esperas que pueden seguir abiertas. */
-const VENTANA_MAXIMA_MS = Math.max(VENTANA_INGRESO_PENDIENTE_MS, VENTANA_VERIFICACION_MANUAL_MS);
+const VENTANA_MAXIMA_MS = Math.max(VENTANA_INGRESO_PENDIENTE_MS + GRACIA_AVISO_G4_MS, VENTANA_VERIFICACION_MANUAL_MS);
 
 /** Cuánto puede esperar en cola un DNI (otra persona estaba habilitada) antes de cerrarse sin verificar. */
 const ESPERA_MAXIMA_EN_COLA_MS = 3 * VENTANA_INGRESO_PENDIENTE_MS;
@@ -76,18 +85,19 @@ const RECHAZO_ALCOHOL_RECIENTE_MS = 60 * 1000;
 
 /**
  * G4 Pro en asistencia, "facial primero" (pedido de TMAM, 19/10/2026): desde
- * que aparece "pase su DNI" en el Panel (llega el aviso del G4, 10-12 s
- * después del "correcto"), la persona tiene esto para pasar su DNI. Contado
- * desde el "correcto" quedaban 5 s en el Panel y no alcanzaba (probado: 14 y
- * 18 s del "correcto" al DNI). Eran 15 s; desde el 21/10/2026, 30 s (pedido de
+ * que aparece "pase su DNI" en el Panel (llega el aviso del G4, ~1 s después
+ * del "correcto"), la persona tiene esto para pasar su DNI. Contado desde la
+ * hora de la prueba (la del soplido: el G4 dice "correcto" unos 8 s después,
+ * visto en su Verify.txt el 21/10/2026) quedaban 5 s en el Panel y no alcanzaba. Eran 15 s; desde el 21/10/2026, 30 s (pedido de
  * TMAM: con varias personas esperando, cada aprobación es de quien sopló).
  */
 const PLAZO_DNI_DESDE_AVISO_MS = 30 * 1000;
 
 /**
  * G4 Pro en asistencia, "facial primero": el aviso de la prueba llega al
- * servidor 10-12 s después del "correcto" (medido el 19/10/2026), y la persona
- * suele pasar el DNI antes. Un DNI sin aprobación espera en silencio (sin
+ * servidor 10-12 s después del soplido, ~1 s después del "correcto" (Verify.txt
+ * del G4, 21/10/2026); si la persona pasa el DNI apenas oye "correcto", puede
+ * llegar antes que el aviso. Un DNI sin aprobación espera en silencio (sin
  * mostrarse en el Panel) hasta esto a que llegue su prueba, hecha antes del
  * DNI; si no llega, "DNI antes del facial".
  */
@@ -253,6 +263,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   private cola: Promise<unknown> = Promise.resolve();
   /** Orden "facial primero": las aprobaciones del G4 Pro que esperan su DNI (cada una con sus 20 s). */
   private aprobaciones: AprobacionSinDni[] = [];
+  /** ¿El G4 Pro está en asistencia? (se revisa con cada vuelta de cerrarVencidos; ver GRACIA_AVISO_G4_MS). */
+  private asistenciaG4 = false;
   /** G4 Pro en asistencia: hora de la primera marcación del pase de cada DNI (ver MISMO_PASE_MS). */
   private primerasMarcaciones = new Map<string, number>();
   /** G4 Pro en asistencia: último alcohol alto de cada DNI (para responder a su DNI, ver RECHAZO_ALCOHOL_RECIENTE_MS). */
@@ -545,7 +557,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    *   en los 20 s siguientes. Si aprobó, se autoriza; si dio alcohol alto, se
    *   le responde con ese rechazo; si no hay prueba suya, espera en silencio
    *   (sin cuenta regresiva, pedido de TMAM) ESPERA_PRUEBA_EN_CAMINO_MS a que
-   *   llegue (el aviso del G4 tarda 10-12 s): si es de antes del DNI y aprobó,
+   *   llegue (el aviso llega ~1 s después del "correcto"): si es de antes del DNI y aprobó,
    *   entra; si no, "DNI antes del facial".
    */
   private async registrarIngresoAsistencia(persona: Persona, dto: IngresoDto) {
@@ -610,11 +622,18 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * ¿La prueba vale para esta espera (orden normal)? Debe ser de después del
-   * DNI. Sin la hora del equipo, vale.
+   * DNI y de dentro de su minuto (soplada a tiempo; el aviso puede llegar
+   * después, ver GRACIA_AVISO_G4_MS). Sin la hora del equipo, vale.
    */
   private pruebaValePara(espera: { habilitadoEn: Date | null }, horaPrueba: Date | null): boolean {
     if (!horaPrueba || !espera.habilitadoEn) return true;
-    return horaPrueba.getTime() - espera.habilitadoEn.getTime() >= -TOLERANCIA_RELOJ_MS;
+    const desdeDni = horaPrueba.getTime() - espera.habilitadoEn.getTime();
+    return desdeDni >= -TOLERANCIA_RELOJ_MS && desdeDni <= VENTANA_INGRESO_PENDIENTE_MS;
+  }
+
+  /** La prueba es de después del minuto de esa espera (sopló tarde). */
+  private pruebaTarde(espera: { habilitadoEn: Date | null }, horaPrueba: Date | null): boolean {
+    return !!horaPrueba && !!espera.habilitadoEn && horaPrueba.getTime() - espera.habilitadoEn.getTime() > VENTANA_INGRESO_PENDIENTE_MS;
   }
 
   /** La espera de esta persona que sigue abierta (G4 Pro en asistencia: cada una tiene la suya). */
@@ -640,6 +659,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   @OnEvent('dispositivo.attlog')
   async resultadoAsistencia(evento: AttlogRecibidoEvent): Promise<void> {
     await this.enSerie(async () => {
+      this.asistenciaG4 = true;
       const aprobado = alcoholConforme(evento.alcohol);
       const anotar = (decision: string) => this.anotarPrueba(evento.verificacionId, { decision });
       if (await this.verificacionManual.activa()) {
@@ -674,7 +694,12 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         await this.cerrarEspera(espera, { autorizado: aprobado, denegadoPorAlcohol: !aprobado, fechaHora }, evento.verificacionId);
         return;
       }
-      if (espera) this.logger.warn(`G4 Pro: la prueba del DNI ${evento.pin} es de antes de pasar su DNI (orden normal); no cierra su espera`);
+      const tarde = !!espera && this.pruebaTarde(espera, evento.horaDispositivo);
+      if (espera) {
+        this.logger.warn(
+          `G4 Pro: la prueba del DNI ${evento.pin} es de ${tarde ? 'después de su minuto' : 'antes de pasar su DNI'} (orden normal); no cierra su espera`,
+        );
+      }
       if (!aprobado) {
         cuenta();
         await anotar('Alcohol alto: denegado con su nombre');
@@ -697,9 +722,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       if (!(await this.modoIngreso.facialPrimero())) {
         this.logger.warn(`G4 Pro: el DNI ${evento.pin} hizo rostro y alcohol sin pasar antes su DNI (orden normal); no vale`);
         await anotar(
-          espera
-            ? 'Orden normal: prueba de antes de pasar su DNI, no vale (su espera sigue)'
-            : 'Orden normal: sopló sin pasar antes su DNI, no vale',
+          tarde
+            ? 'Orden normal: sopló después de su minuto, no vale'
+            : espera
+              ? 'Orden normal: prueba de antes de pasar su DNI, no vale (su espera sigue)'
+              : 'Orden normal: sopló sin pasar antes su DNI, no vale',
         );
         return;
       }
@@ -941,8 +968,10 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
 
   /** ¿Sigue dentro de su turno (o de la espera máxima en cola)? */
   private sigueAbierta(p: { habilitadoEn: Date | null; creadoEn: Date; manual: boolean }, ahora = Date.now()): boolean {
+    // En asistencia, la espera del G4 sigue abierta un poco más: llega el aviso de quien sopló a tiempo.
+    const gracia = !p.manual && this.asistenciaG4 ? GRACIA_AVISO_G4_MS : 0;
     return p.habilitadoEn
-      ? p.habilitadoEn.getTime() >= ahora - ventanaDe(p)
+      ? p.habilitadoEn.getTime() >= ahora - ventanaDe(p) - gracia
       : p.creadoEn.getTime() >= ahora - ESPERA_MAXIMA_EN_COLA_MS;
   }
 
@@ -1124,6 +1153,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    * denegado ("No completó rostro y alcohol").
    */
   private async cerrarVencidos(): Promise<void> {
+    this.asistenciaG4 = await leerModoAsistencia(this.prisma);
     const ahora = Date.now();
     for (const [pin, hora] of this.primerasMarcaciones) if (ahora - hora > 2 * MISMO_PASE_MS) this.primerasMarcaciones.delete(pin);
     // Facial primero (G4 Pro en asistencia): DNI cuya prueba no llegó en ESPERA_PRUEBA_EN_CAMINO_MS.

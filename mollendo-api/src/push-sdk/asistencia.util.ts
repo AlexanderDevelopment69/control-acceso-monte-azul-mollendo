@@ -7,7 +7,8 @@ import { textoCampo } from './comandos-acceso.util.js';
  * también cuando el alcohol sale alto (probado con el equipo real:
  * `48058719 2026-10-19 14:25:28 255 15 0 0 0 255 0 0 3 0.000951g/L - - -`, separado por tabuladores).
  * El estado es siempre 255: el resultado se decide con el grado
- * (alcoholConforme). Llega unos 10 a 15 s después del soplido. En la variante
+ * (alcoholConforme). Llega unos 10 a 15 s después del soplido (~1 s después de que el
+ * equipo dice "correcto": tarda unos 8 s en darlo después de medir). En la variante
  * de control de acceso, el aprobado llega con `pin=0`. Para que lo envíe, el
  * servidor responde a `GET /iclock/cdata?options=all` con las opciones de
  * asistencia y `TransFlag` con `AttLog`. Los usuarios se registran con

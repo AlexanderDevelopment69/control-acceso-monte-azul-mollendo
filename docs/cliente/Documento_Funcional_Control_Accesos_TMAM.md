@@ -2,11 +2,12 @@
 
 **Terminal Monte Azul Mollendo (TMAM) · Alcance base**
 
-Versión final · 30 de septiembre de 2026
+Versión 1.1 · 21 de octubre de 2026
 
 | Versión | Fecha | Descripción |
 |---|---|---|
 | Final | 30/09/2026 | Versión final. |
+| 1.1 | 21/10/2026 | Ingreso con el terminal facial en modo asistencia y sus dos órdenes (DNI → Facial + Alcohol y Facial + Alcohol → DNI) y plazos medidos; verificación manual; tarjeta de contingencia; contingencia "sin lector"; "Presentes ahora" para el vigilante; orden del ingreso y monitor del terminal en Sistema y APIs; HTTPS. |
 
 ## Contenido
 
@@ -49,6 +50,8 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Dashboard con indicadores (KPI) y gráficos (sección 4.4).
 - Reportes en Excel o PDF (sección 4.5).
 - Perfil de la persona (sección 4.2): personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica: no cambia la validación del ingreso ni los documentos exigidos.
+- Antipassback estricto (RN-08a) y orden del ingreso **Facial + Alcohol → DNI** (RN-03).
+- Contingencias del punto de acceso: verificación manual si falla el terminal facial, tarjeta de contingencia para el personal sin DNI y contingencia "sin lector" si falla un lector de DNI (sección 4.10 y RN-16 a RN-18). El detalle está en el documento de contingencias.
 
 **Fuera del alcance base:**
 
@@ -57,7 +60,6 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Perfiles, puestos, zonas o actividades con requisitos de documentos distintos (matriz configurable de requisitos).
 - Roles de usuario adicionales (por ejemplo, Auditor), pantalla de gestión de usuarios y recuperación de contraseña por correo.
 - Solicitud y agenda de visitas, invitaciones de visita y control de equipos personales y materiales (pase y guía de remisión).
-- Antipassback: impedir una salida sin ingreso previo o un segundo ingreso sin salida (el Dashboard solo informa quiénes están dentro).
 - Auditoría detallada (valor anterior y nuevo, historial de aprobaciones).
 - Activos (vehículos, maquinaria y equipos), operadores y checklists.
 - Sanciones y restricciones con niveles.
@@ -98,7 +100,7 @@ La arquitectura es de tres capas: el **portal web** (presentación), el **backen
 | `portal` | Portal web | Puerto 3000 (navegador) |
 | `api` | Backend. Aplica las migraciones de la base de datos al arrancar | Puerto 3001 (equipos y documentación de la API) |
 | `db` | Base de datos PostgreSQL | Solo red interna |
-| `backup` | Respaldo diario a las 00:00 (base de datos y archivos) | Solo red interna |
+| `backup` | Respaldo diario a las 04:00 (base de datos y archivos) | Solo red interna |
 
 Los contenedores se reinician automáticamente ante una falla y se inician junto con el servidor. Acceso: por la red local (`http://192.168.0.165:3000`) o por Tailscale (`http://100.78.153.33:3000`).
 
@@ -134,7 +136,7 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 | Rol | Quién es | Qué hace |
 |---|---|---|
 | Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; da de baja o reactiva; consulta el Panel de vigilancia, la Auditoría y el estado del sistema. |
-| Vigilancia | Personal de vigilancia | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos. No puede modificar información. |
+| Vigilancia | Personal de vigilancia | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos; consulta quiénes están dentro ("Presentes ahora"). En las contingencias: activa la verificación manual y decide cada ingreso, pasa la tarjeta de contingencia y abre la salida si el lector de salida está desconectado. No puede modificar los datos del personal. |
 
 ### 3.1. Permisos por módulo
 
@@ -144,7 +146,9 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 | Dashboard | Ver | — |
 | Reportes (Excel y PDF) | Descargar | — |
 | Panel de vigilancia | Ver | Ver |
+| Presentes ahora | Ver (desde el Dashboard) | Ver (en su menú) y abrir la salida si el lector de salida está desconectado |
 | Documentos de una persona (desde el Panel) | Ver | Ver |
+| Contingencias → Tarjetas de contingencia | Ver y administrar | — |
 | Auditoría | Ver | — |
 | Sistema y APIs | Ver | — |
 | Manual | Ver | Ver |
@@ -175,6 +179,8 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 | Personal y documentos | `/` | Administrador |
 | Dashboard | `/dashboard` | Administrador |
 | Panel de vigilancia | `/vigilancia` | Administrador y Vigilancia |
+| Presentes ahora | `/dashboard/presentes` | Administrador y Vigilancia |
+| Tarjetas de contingencia | `/contingencias/tarjetas` | Administrador |
 | Reportes | `/reportes` | Administrador |
 | Auditoría | `/auditoria` | Administrador |
 | Sistema y APIs | `/sistema` | Administrador |
@@ -252,9 +258,14 @@ La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada pe
 - **Contadores:** "Accesos restringidos hoy", "Prueba de alcohol test positivo hoy" y "Documentos vencidos" (documentos del personal activo que ya vencieron). Se actualizan automáticamente.
 - **Historial:** hora, documento, persona (con su perfil), movimiento (ingreso o salida), resultado (autorizado o denegado) y motivo, paginado de 10 registros por página.
 - **Filtros:** por día (por defecto **hoy**; "Hoy" y "Todos los días"; no se pueden elegir días futuros) y búsqueda por nombre, apellido o número de documento en todo el historial.
-- **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol, No completó rostro y alcohol (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar. El administrador puede además abrir cada documento ("Ver"); vigilancia solo ve su estado.
+- **Motivos:** No registrado, Dado de baja, Sin documentos, Documentos, Alcohol, Ya figura dentro, No registra ingreso, No completó rostro y alcohol, DNI antes del facial, No pasó su DNI a tiempo y No es quien sopló (se muestran todos los que apliquen). Al hacer clic en "Documentos ›" se abre una ventana con los documentos de la persona, indicando cuáles debe regularizar. El administrador puede además abrir cada documento ("Ver"); vigilancia solo ve su estado.
 - Los intentos con un documento **no registrado** también quedan en el historial.
-- **En espera en el terminal facial:** cuando una persona pasa un DNI en regla, aparece al instante en la primera fila del historial con resultado **"en espera"**, su **foto** (para compararla con quien está frente al terminal), el motivo "Esperando rostro y alcohol", el tiempo que le queda para completar el ingreso (1 minuto) y una barra que se va vaciando. Si otra persona está en su turno, figura **"en cola"** ("Esperando su turno en el terminal facial"). Al llegar el resultado del terminal facial, la fila pasa a ser el ingreso autorizado o denegado; si vence el tiempo, queda denegado con "No completó rostro y alcohol".
+- **Ingreso en curso**, según el orden del ingreso (RN-03):
+  - **DNI → Facial + Alcohol:** al pasar un DNI en regla aparece al instante en la primera fila con resultado **"en espera"**, su **foto**, el motivo "Esperando rostro y alcohol", el tiempo que le queda (1 minuto) y una barra que se va vaciando. Al llegar el resultado del terminal facial, la fila pasa a ser el ingreso autorizado o denegado; si no hizo la prueba, queda denegado con "No completó rostro y alcohol".
+  - **Facial + Alcohol → DNI:** al decir el terminal "correcto", aparece **"Aprobó [nombre] · pase su DNI"**, con su foto y una cuenta de **30 segundos**. Si no pasa su DNI a tiempo, queda "No pasó su DNI a tiempo". Una franja naranja recuerda el orden activo.
+- **Marcas** junto al motivo: "Tarjeta de contingencia", "Sin lector de DNI: identificado por rostro", "Salida sin lector", "Corrección manual" y la verificación manual, con quién decidió.
+- **Salida sin DNI:** botón para elegir a quien sale sin DNI (solo quienes figuran dentro); después el vigilante pasa la tarjeta de contingencia por el lector de salida (RN-17). Una franja ámbar muestra a quién y cuánto tiempo queda (2 minutos).
+- **Franjas de contingencia:** verificación manual activa (RN-16) y lector de DNI de ingreso o de salida sin conexión (RN-18), esta última con el botón "Ir a Presentes ahora".
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).
 
 ### 4.4. Dashboard (Administrador)
@@ -263,7 +274,7 @@ Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salid
 
 | Indicador | Cálculo |
 |---|---|
-| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 12 horas).  Al presionar la tarjeta se abre la vista **Presentes ahora** (`/dashboard/presentes`) con la lista de quiénes son (persona, perfil, empresa, hora de ingreso y tiempo dentro; de mayor a menor permanencia, en naranja más de 12 horas), con buscador, filtro por perfil y descarga en Excel |
+| Presentes actualmente | Personas cuyo último movimiento autorizado es un ingreso, sin importar cuándo entraron. Se indica cuántas ingresaron en el periodo y cuántas antes (por ejemplo, las de permanencia mayor a 12 horas).  Al presionar la tarjeta se abre la vista **Presentes ahora** (`/dashboard/presentes`) con la lista de quiénes son (persona, perfil, empresa, hora de ingreso y tiempo dentro; de mayor a menor permanencia, en naranja más de 12 horas), con buscador, filtro por perfil y descarga en Excel. El vigilante también la ve (en su menú, sin la descarga) y, con el lector de salida desconectado, abre desde ahí la salida de cada persona (RN-18) |
 | Ingresos finalizados | Ingresos del periodo que ya registraron su salida. |
 | Total de ingresos | Ingresos autorizados en el periodo. |
 | Permanencia mayor a 12 horas | Personas que ingresaron hace más de 12 horas y no registran salida. |
@@ -274,7 +285,7 @@ Pantalla de indicadores y gráficos, calculados a partir de los ingresos y salid
 - **Lista de permanencia mayor a 12 horas:** persona, documento, empresa, fecha de ingreso y tiempo dentro; de mayor a menor permanencia, paginada de 10 registros por página.
 
 - **Acceso:** solo el Administrador, desde la opción "Dashboard" del menú.
-- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo), `GET /panel/dashboard/presentes` (todas las personas dentro ahora) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 12 horas).
+- **Interfaces:** `GET /panel/dashboard` (indicadores y gráficos del periodo), `GET /panel/dashboard/presentes` (todas las personas dentro ahora; también Vigilancia) y `GET /panel/dashboard/permanencia` (lista paginada de la permanencia mayor a 12 horas).
 
 Todos entran y salen por el molinete. La única excepción es una emergencia con los brazos del molinete liberados: quienes salgan así seguirán figurando como presentes hasta que el vigilante registre su salida manual (antipassback, RN-08a).
 
@@ -310,11 +321,13 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 - **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado"), **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas), **equipos** (cada terminal G4 Pro "En línea" o "Desconectado", con su última actividad) y **lectores de DNI** de ingreso y salida ("Cable conectado", "Cable desconectado" o "Sin configurar", con la hora de su última lectura; el estado corresponde al cable de datos, ya que el lector solo envía información al leer un DNI) y **relés de los molinetes** ("Conectado" o "No conectado" para ingreso y salida, con la última apertura). Se actualiza cada 15 segundos.
 - **Aviso de fallas en todo el portal:** cuando algo de esta pantalla está caído (base de datos, respaldos atrasados, controlador, terminal facial, lectores de DNI o relés), aparece un aviso en la parte superior de cualquier página, **para el administrador y para el vigilante** (que así puede informarlo). Muestra un recuadro por cada tarjeta en falla de Sistema y APIs, en rojo como en esa pantalla, con su estado, qué deja de funcionar (por ejemplo, "Nadie puede ingresar") y la última vez que estuvo en línea. El administrador tiene además un enlace a Sistema y APIs. Se revisa cada 30 segundos y desaparece solo cuando todo vuelve a estar en línea. Se puede contraer; se vuelve a abrir si falla algo distinto.
 - **Sincronización con el terminal facial:** un interruptor activa o desactiva la **revisión diaria** y permite elegir su hora (al activarla pide confirmación, porque borra del terminal a quien el sistema no conoce); el resultado de la última (personas agregadas, usuarios borrados, permisos quitados y usuarios del terminal que el sistema no conoce) y los botones **Simular** y **Sincronizar ahora** (con confirmación). La tarjeta del terminal muestra cuántos usuarios y rostros tiene.
+- **Orden del ingreso:** dos interruptores que se excluyen, **DNI → Facial + Alcohol → Molinete** y **Facial + Alcohol → DNI → Molinete**, con los pasos de cada uno, quién lo cambió y desde cuándo (RN-03).
+- **Monitor del terminal facial** (`/sistema/monitor`): cada prueba que envía el terminal (persona, grado de alcohol, hora de la prueba, hora de llegada y demora) y qué hizo el sistema con ella; por día, con búsqueda y en vivo.
 - **Documentación de las APIs de integración** con ejemplos de uso y su estado ("Disponible", "Simulado" o "Por programar"), y enlace a la documentación interactiva (Swagger).
 
 ### 4.8. Manual
 
-Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, reportes, cuenta y contraseña, auditoría y sistema. La introducción incluye un diagrama del recorrido de ingreso y de salida por el punto de acceso, y las secciones de uso diario muestran capturas de la pantalla con números que señalan cada parte y, debajo, qué hace cada una; un clic amplía la captura. Se muestra una sección a la vez, elegida en el índice (o con "Anterior" y "Siguiente"); cada sección tiene su propio enlace (por ejemplo `/manual#reportes`).
+Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, panel de vigilancia, dashboard, reportes, cuenta y contraseña, auditoría y sistema. La introducción incluye un diagrama del recorrido de ingreso y de salida por el punto de acceso (el ingreso, en el orden activo, con el tiempo de cada paso y una línea de tiempo medida con el equipo real), y las secciones de uso diario muestran capturas de la pantalla con números que señalan cada parte y, debajo, qué hace cada una; un clic amplía la captura. Se muestra una sección a la vez, elegida en el índice (o con "Anterior" y "Siguiente"); cada sección tiene su propio enlace (por ejemplo `/manual#reportes`).
 
 ### 4.9. Características generales del portal
 
@@ -322,6 +335,15 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 - Diseño adaptable a computadora, tablet y celular (menú desplegable, tablas desplazables, tarjetas).
 - Selector de fechas con semanas de lunes a domingo: la fecha se puede escribir (los separadores se insertan automáticamente) o seleccionar en el calendario, que se abre desde el ícono.
 - Mensajes de error claros con la opción "Reintentar" cuando no se puede cargar la información.
+
+### 4.10. Contingencias (Administrador)
+
+Menú **Contingencias → Tarjetas de contingencia**. Cada tarjeta se muestra como un carné, en un carrusel, con su último uso y sus acciones:
+
+- **Crear** con vencimiento ("No vence" o "Vence un día") e **imprimir** en tamaño carné (85,6 × 54 mm), con vista previa en el portal. El QR lleva un código al azar, sin datos de ninguna persona; no se muestra en el portal.
+- **Cambiar el vencimiento**, **desactivar / activar**, **cambiar el código** (si se pierde o se copia: la impresa queda anulada) y **eliminar** (solo si nunca se usó).
+- **Lista de usos:** cada vez que se pasó una tarjeta, aceptada o no, con el personal o el motivo.
+- La guarda el vigilante y la pasa por el lector en lugar del DNI (RN-17). Todo cambio queda en la Auditoría.
 
 ---
 
@@ -331,9 +353,9 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 |---|---|
 | RN-01 | **Ingreso autorizado** solo si la persona está registrada, no está dada de baja, tiene al menos un documento cargado, ninguno de sus documentos está vencido y la prueba de alcohol es conforme. |
 | RN-02 | Una persona **dada de baja** se deniega de inmediato, sin evaluar las demás condiciones. |
-| RN-03 | El ingreso se valida **en dos pasos**. Al pasar el DNI: si la persona está activa, se revisan sus documentos; sin documentos o con alguno vencido se deniega de inmediato, informando todos los motivos de documentos. Si están en regla, el sistema **habilita en el terminal facial solo a esa persona**, por 1 minuto: el terminal reconoce su rostro y toma la prueba de alcohol, y rechaza el rostro de cualquier otra persona. Si ambos son conformes, el sistema abre el molinete (autorizado); si el alcohol no es conforme, se deniega por alcohol. Al terminar, se le retira la habilitación. |
-| RN-03a | Se habilita **a una sola persona a la vez** en el terminal facial. Si otra persona pasa un DNI en regla mientras tanto, queda **en cola** y su minuto empieza cuando termina la anterior (puede esperar en cola hasta 3 minutos). Si la misma persona vuelve a pasar su DNI mientras espera, conserva su lugar. |
-| RN-03b | Si la persona habilitada **no completa rostro y alcohol en el minuto** (o espera en cola más de 3 minutos), el ingreso se deniega con el motivo **"No completó rostro y alcohol"** y queda en el historial. |
+| RN-03 | El ingreso se valida con el **DNI** (baja, documentos y antipassback) y con la **prueba de rostro y alcohol** del terminal facial, que informa quién sopló y el grado de alcohol (modo asistencia, desde el 19/10/2026). El **orden del ingreso** se elige en Sistema y APIs: **DNI → Facial + Alcohol** o **Facial + Alcohol → DNI** (en uso). Si todo es conforme, se abre el molinete; si el alcohol supera el umbral, se deniega por alcohol, con su nombre. |
+| RN-03a | **DNI → Facial + Alcohol:** sin documentos o con alguno vencido se deniega al pasar el DNI. Si están en regla, tiene **1 minuto para hacer rostro y alcohol**; vale solo la prueba hecha después del DNI y soplada dentro del minuto, aunque el aviso del terminal llegue después (llega unos 10 a 17 segundos después del soplido). Si no la hace, se deniega con **"No completó rostro y alcohol"**. Varias personas pueden esperar a la vez. |
+| RN-03b | **Facial + Alcohol → DNI:** todo el personal registrado puede hacer la prueba sin pasar antes el DNI. Al decir el terminal "correcto" (unos 20 segundos desde que mira al equipo), el Panel muestra "pase su DNI" y la persona tiene **30 segundos** para pasarlo; los documentos se revisan con el DNI. Si no lo pasa a tiempo: **"No pasó su DNI a tiempo"**; si pasa el DNI sin una prueba suya: **"DNI antes del facial"**; si sopló otra persona: **"No es quien sopló"**. Cada aprobación es de quien sopló, así que varias personas pueden esperar a la vez. |
 | RN-04 | Un documento está **vigente** si no tiene fecha de vencimiento o si vence hoy o después: el día de su vencimiento sigue siendo válido todo el día. Al cargarlo o renovarlo no se acepta una fecha de vencimiento anterior a hoy. |
 | RN-05 | De cada documento **cuenta solo la última versión**. Renovar crea una versión nueva y la anterior queda en el historial. |
 | RN-06 | Los documentos **no requieren aprobación**: tienen validez desde su carga. Verificar que correspondan a cada persona es responsabilidad del administrador. |
@@ -347,6 +369,9 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | RN-13 | **Contraseñas** de al menos 8 caracteres. Al cambiarla se cierran las demás sesiones de esa cuenta. |
 | RN-14 | Toda creación, modificación o eliminación de datos queda en la **Auditoría** con el usuario y la fecha. |
 | RN-15 | "Hoy" y los vencimientos se calculan con la **hora de Lima**, independientemente de la configuración del servidor. |
+| RN-16 | **Verificación manual** (falla del terminal facial): la activan el vigilante o el administrador desde el Panel. Al pasar un DNI en regla, el Panel muestra su foto y el vigilante compara el rostro, toma la prueba de alcohol con el alcoholímetro de repuesto y aprueba o deniega en 2 minutos. Queda marcado "Manual", con quién decidió. |
+| RN-17 | **Tarjeta de contingencia** (personal sin DNI o DNI que el lector no lee): sola no abre. En el ingreso, con el orden Facial + Alcohol → DNI, el vigilante la pasa en lugar del DNI y entra quien aprobó rostro y alcohol, con sus documentos revisados (si hay dos personas esperando a la vez, no abre). En la salida, el vigilante elige al personal en el Panel ("Salida sin DNI") y tiene 2 minutos para pasarla. Desactivada, vencida o con el código cambiado, no abre y suena el aviso. Cada uso queda registrado. |
+| RN-18 | **Contingencia "sin lector":** con el lector de DNI de una puerta desconectado y el controlador en línea, se activa sola y se avisa en el Panel. Ingreso (Facial + Alcohol → DNI): quien aprueba rostro y alcohol entra sin pasar el DNI, con sus documentos revisados ("Sin lector de DNI: identificado por rostro"). Salida: el vigilante la abre desde "Presentes ahora" a quien figura dentro ("Salida sin lector", con quién la abrió). Termina sola al volver el lector. |
 
 ---
 
@@ -358,10 +383,10 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | Apertura de los molinetes | Un módulo de relés USB por molinete, conectado al servidor: al autorizar una salida, o un ingreso aprobado por el terminal facial, el sistema activa el relé del molinete durante 1 segundo. |
 | Aviso de ingreso denegado | Un relé adicional (contacto seco) que se activa cada vez que se deniega un ingreso, por cualquier motivo: no registrado, dado de baja, documentos, alcohol o no completó la verificación facial (incluido el rostro no reconocido). Permite conectar una luz, una sirena o un tablero de vigilancia. |
 | Aviso de salida denegada | Otro relé (contacto seco) que se activa cuando se pasa por la salida un DNI no registrado, también si el punto de acceso está sin conexión a internet. |
-| Lectores de DNI | Dos lectores de código de barras (ingreso y salida) conectados al servidor por RS232. Leen el código de barras del reverso del DNI; el sistema registra el ingreso o la salida según el lector. |
+| Lectores de DNI | Dos lectores de código de barras (ingreso y salida) conectados por RS232 a la mini PC. Leen el código de barras del reverso del DNI (y el QR de la tarjeta de contingencia); el sistema registra el ingreso o la salida según el lector. |
 | Registro del personal en el terminal facial | Al registrar o editar a una persona, el sistema la carga en el terminal con su número de documento y su nombre; al cargar o cambiar su foto, se la envía y el terminal la usa para reconocerla. Se registran con el número de su documento (DNI, carné de extranjería o pasaporte). Todos los días el sistema revisa el terminal y lo deja igual al registro: borra a quien no está registrado en el sistema y agrega a quien falte. El personal no debe registrarse directamente en el terminal. |
-| Habilitación en el terminal facial | Durante su minuto de espera, solo la persona del DNI tiene permiso de paso en el terminal; se le retira al terminar. |
-| Prueba de alcohol | La realiza el terminal facial con el alcoholímetro, después del rostro. El terminal informa si la persona supera el **umbral de alcohol** configurado en el propio equipo (valor definido por el cliente); en ese caso el ingreso se deniega por alcohol. |
+| Prueba de rostro y alcohol | El terminal facial trabaja en **modo asistencia** (desde el 19/10/2026): reconoce a todo el personal registrado, le toma la prueba con el alcoholímetro y envía al sistema quién sopló, la hora del soplido y el **grado de alcohol**. El sistema lo compara con el **umbral** (0,0001 g/L, el mismo configurado en el equipo) y decide según el orden del ingreso (RN-03). El terminal dice "correcto" unos 8 segundos después de medir y el aviso llega al sistema alrededor de 1 segundo después. |
+| Habilitación en el terminal facial | Solo con el terminal en modo control de acceso (el usado hasta el 19/10/2026): durante su minuto de espera, solo la persona del DNI tenía permiso de paso. |
 
 ---
 
@@ -373,7 +398,9 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 | Persona (personal) | Empresa, perfil (vacío en las registradas antes de que existiera), tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
 | Tipo de documento | Nombre (único, sin distinguir mayúsculas), por ejemplo "SCTR Salud". |
 | Documento de la persona | Persona, tipo de documento, fecha de vencimiento (opcional), archivo y número de versión. |
-| Evento de acceso | Persona (vacía si no está registrada), documento leído, ingreso o salida, resultado, motivos de denegación (incluido "No completó rostro y alcohol"), fecha y hora, molinete. |
+| Evento de acceso | Persona (vacía si no está registrada), documento leído, ingreso o salida, resultado, motivos de denegación, fecha y hora, molinete; y cómo se verificó: facial primero (con quién sopló), verificación manual o corrección manual (con quién), tarjeta de contingencia o sin lector. |
+| Prueba del terminal facial | Cada aviso del terminal: hora de la prueba, grado de alcohol, hora de llegada y qué hizo el sistema con ella (monitor). |
+| Tarjeta de contingencia | Número, código (solo en el QR), activa o no, vencimiento y fecha del código; y cada uso: ingreso o salida, aceptado o no, motivo y el evento que generó. |
 | Usuario | Correo (único), rol, estado de la cuenta, contraseña cifrada y fecha del último cambio de contraseña. |
 | Auditoría | Usuario, dato afectado, identificador del registro, acción (crear / modificar / eliminar), fecha y hora. |
 
@@ -399,7 +426,15 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `POST /eventos-acceso/ingreso` · `/salida` | Registrar un ingreso o una salida | Equipos (`X-API-Key`) |
 | `POST /integraciones/torniquete/comando` | Orden manual de apertura de un molinete (`ingreso` o `salida`): activa su relé durante 1 segundo | Administrador y Vigilancia |
 | `POST /integraciones/g4pro/sincronizar` | Deja el terminal facial igual al sistema: borra a quien el sistema no conoce, quita permisos sueltos y registra con foto al personal activo que falta (también se ejecuta todos los días a medianoche) | Administrador |
-| `GET /eventos-acceso/en-espera` | Personas en espera del terminal facial (en su turno o en cola), para el Panel | Administrador y Vigilancia |
+| `GET /eventos-acceso/en-espera` | Ingresos en curso para el Panel: DNI esperando su prueba o aprobaciones esperando el DNI | Administrador y Vigilancia |
+| `GET` · `PUT /eventos-acceso/modo-ingreso` | Orden del ingreso activo y cambiarlo | Ver: ambos; cambiar: Administrador |
+| `GET` · `POST` · `DELETE /eventos-acceso/verificacion-manual` · `POST /eventos-acceso/en-espera/:id/decision` | Verificación manual: estado, activar, terminar y decidir cada ingreso | Administrador y Vigilancia |
+| `POST /eventos-acceso/tarjeta` | Tarjeta de contingencia leída por un lector | Equipos (`X-API-Key`) |
+| `GET` · `POST` · `DELETE /eventos-acceso/salida-sin-dni` · `GET /eventos-acceso/salida-sin-dni/candidatos` | Salida sin DNI: elegir al personal que sale con la tarjeta | Administrador y Vigilancia |
+| `GET /eventos-acceso/sin-lector` · `POST /eventos-acceso/salida-sin-lector` | Contingencia "sin lector": puertas con el lector desconectado y abrir una salida | Administrador y Vigilancia |
+| `POST /eventos-acceso/correccion` | Corrección manual del antipassback | Administrador y Vigilancia |
+| `GET` · `POST /tarjetas-contingencia` · `PATCH` · `DELETE /tarjetas-contingencia/:id` · `POST /tarjetas-contingencia/:id/cambiar-codigo` · `GET /tarjetas-contingencia/:id/qr` · `GET /tarjetas-contingencia/usos` | Tarjetas de contingencia y sus usos | Administrador |
+| `GET /integraciones/g4pro/marcaciones` | Monitor del terminal facial | Administrador |
 | `/iclock/*` | Protocolo PUSH del terminal facial: registro, órdenes, resultados y consultas | Terminal facial |
 | `GET /eventos-acceso` | Historial paginado, con búsqueda y fechas | Administrador y Vigilancia |
 | `GET /panel/resumen` | Contadores del Panel | Administrador y Vigilancia |
@@ -430,7 +465,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 - **Panel en vivo:** la conexión en tiempo real exige una sesión válida y una cuenta activa; al dar de baja una cuenta o cambiar su contraseña, se cortan también sus paneles abiertos.
 - **Auditoría** de todos los cambios de datos.
 - **Red:** en la mini PC, el sistema solo es accesible desde la red local del terminal o mediante la VPN Tailscale. En el servidor en la nube solo están abiertos el portal, la API y el acceso de administración (SSH, únicamente con llave); la base de datos no es accesible desde fuera. Las credenciales de producción se almacenan únicamente en el servidor.
-- **Cifrado HTTPS:** se habilitará cuando se disponga del dominio del cliente.
+- **Cifrado HTTPS** en el servidor en la nube (https://accesos.monteazulsur.com.pe), con certificado que se renueva solo.
 
 ---
 
@@ -459,7 +494,12 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Falla del backend | Se reinicia automáticamente. El Panel avisa "El servidor no responde". |
 | Emergencia o corte de luz en los molinetes | Los brazos de los molinetes se liberan automáticamente (función propia del equipo). |
 | Sin conexión a internet (modalidad con servidor en la nube) | El controlador detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: la mini PC guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
-| Falla del alcoholímetro o del terminal facial | El ingreso no se completa y la persona es denegada; nadie ingresa sin la prueba de alcohol. Las alternativas de contingencia se describen en un documento aparte. |
+| Falla del alcoholímetro | Se conecta el alcoholímetro de repuesto al terminal facial; nadie ingresa sin la prueba de alcohol. |
+| Falla del terminal facial | **Verificación manual** (RN-16): el vigilante compara el rostro y toma la prueba con el alcoholímetro de repuesto. |
+| Falla de un lector de DNI | Contingencia **"sin lector"** (RN-18), que se activa sola, mientras se conecta el lector de repuesto. |
+| Personal sin DNI, o DNI que el lector no lee | **Tarjeta de contingencia** (RN-17). |
+
+El detalle de cada contingencia está en el documento de contingencias.
 
 ---
 
@@ -487,9 +527,11 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Mini PC | Servidor local, ubicado junto a los molinetes, donde se ejecuta el sistema. |
 | Molinete | Torniquete de paso (ZKTeco TS2000 Plus). |
 | Protocolo PUSH | Protocolo de comunicación del fabricante ZKTeco entre el terminal facial y el sistema. |
-| Permiso de paso | Autorización que el terminal facial guarda para dejar pasar a una persona. Sin ella, el terminal la reconoce pero la rechaza. El sistema no se la da a nadie de forma permanente: solo durante la habilitación. |
-| Habilitación | Permiso de paso que el sistema da en el terminal facial solo a la persona que pasó su DNI en regla, durante su minuto de espera (RN-03). |
-| En cola | Persona con DNI en regla que espera su turno porque otra está habilitada en el terminal facial (RN-03a). |
+| Modo asistencia | Modo del terminal facial en uso desde el 19/10/2026: reconoce a todo el personal registrado y envía quién sopló y el grado de alcohol; decide el sistema (RN-03). |
+| Facial primero | Orden del ingreso Facial + Alcohol → DNI: primero la prueba, después el DNI (RN-03b). |
+| Tarjeta de contingencia | Tarjeta con un QR que el vigilante pasa por el lector en lugar del DNI del personal (RN-17). |
+| Sin lector | Contingencia que se activa sola cuando se desconecta un lector de DNI (RN-18). |
+| Permiso de paso, habilitación y en cola | Términos del modo control de acceso del terminal facial (el usado hasta el 19/10/2026): el sistema daba permiso de paso solo a quien pasó su DNI, una persona a la vez, y las demás esperaban en cola. |
 | Visita | Perfil de persona: alguien de afuera que viene de visita (no un trabajador). Hasta el 16/10/2026 el Dashboard llamaba "visita" a cada ingreso; ahora dice "ingreso". |
 | Respaldo | Copia de la base de datos y de los archivos para recuperar la información. |
 | Tailscale | Red privada virtual (VPN) que permite acceder a la mini PC desde fuera del terminal sin exponerla a internet. |
