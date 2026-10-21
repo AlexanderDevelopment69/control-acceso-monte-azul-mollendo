@@ -68,6 +68,12 @@ export class TarjetasContingenciaService {
     };
   }
 
+  /** Cuándo se pasó por un lector la última vez (null: nunca). */
+  private async ultimoUso(id: number): Promise<Date | null> {
+    const uso = await this.prisma.usoTarjetaContingencia.findFirst({ where: { tarjetaId: id }, orderBy: { fechaHora: 'desc' } });
+    return uso?.fechaHora ?? null;
+  }
+
   private async buscar(id: number) {
     const tarjeta = await this.prisma.tarjetaContingencia.findUnique({ where: { id } });
     if (!tarjeta) throw new NotFoundException('Tarjeta no encontrada');
@@ -94,7 +100,7 @@ export class TarjetasContingenciaService {
       },
     });
     await this.auditoria.registrar({ usuarioId, tablaAfectada: 'tarjeta_contingencia', registroId: id, accion: 'modificar' });
-    return this.vista(tarjeta, null);
+    return this.vista(tarjeta, await this.ultimoUso(id));
   }
 
   /** Código nuevo (p. ej. se perdió o se fotografió la tarjeta): la impresa antes deja de servir. */
@@ -105,7 +111,7 @@ export class TarjetasContingenciaService {
       data: { codigo: generarCodigoTarjeta(), codigoCambiadoEn: new Date() },
     });
     await this.auditoria.registrar({ usuarioId, tablaAfectada: 'tarjeta_contingencia', registroId: id, accion: 'modificar' });
-    return this.vista(tarjeta, null);
+    return this.vista(tarjeta, await this.ultimoUso(id));
   }
 
   /**

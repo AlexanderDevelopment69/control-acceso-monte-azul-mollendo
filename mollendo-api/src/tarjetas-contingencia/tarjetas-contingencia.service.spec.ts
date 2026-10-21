@@ -34,3 +34,22 @@ describe('eliminar una tarjeta de contingencia', () => {
     await expect(servicio.eliminar(9, 5)).rejects.toThrow('Tarjeta no encontrada');
   });
 });
+
+describe('desactivar o cambiar el código de una tarjeta ya usada', () => {
+  const usada = new Date('2026-10-20T15:00:00Z');
+  const tarjeta = { id: 1, numero: 1, activa: true, venceEl: null, creadaEn: usada, codigoCambiadoEn: usada };
+  const prisma = {
+    tarjetaContingencia: {
+      findUnique: async () => tarjeta,
+      update: async ({ data }: { data: object }) => ({ ...tarjeta, ...data }),
+    },
+    usoTarjetaContingencia: { findFirst: async () => ({ fechaHora: usada }) },
+  };
+  const servicio = new TarjetasContingenciaService(prisma as never, { registrar: async () => undefined } as never);
+
+  it('la respuesta sigue diciendo su último uso y que no se puede eliminar', async () => {
+    for (const vista of [await servicio.actualizar(1, { activa: false }, 5), await servicio.cambiarCodigo(1, 5)]) {
+      expect(vista).toMatchObject({ ultimoUso: usada.toISOString(), eliminable: false });
+    }
+  });
+});

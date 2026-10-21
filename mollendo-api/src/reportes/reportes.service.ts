@@ -424,6 +424,7 @@ export class ReportesService {
       include: {
         persona: { select: { nombres: true, apellidos: true, perfil: true, empresa: { select: { razonSocial: true } } } },
         verificadoPor: { select: { correo: true } },
+        tarjetaContingencia: { select: { numero: true } },
       },
       orderBy: [{ fechaHora: 'asc' }, { id: 'asc' }],
     });
@@ -448,7 +449,7 @@ export class ReportesService {
         { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
         { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
         { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, rostro no coincide, ya figura dentro (no registró su salida), no registra ingreso, sin rostro y alcohol o no pasó su DNI a tiempo (estos dos, solo en el orden "facial primero"; el segundo, y el alcohol en ese orden, quedan sin persona porque el equipo no dice quién sopló).' },
-        { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Corrección manual: el movimiento lo registró un vigilante o administrador sin pasar por el molinete (antipassback), con quién y el motivo. Facial primero: rostro y alcohol antes del DNI; el equipo no confirma que quien sopló sea el del DNI. Vacío: verificación normal.' },
+        { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Corrección manual: el movimiento lo registró un vigilante o administrador sin pasar por el molinete (antipassback), con quién y el motivo. Facial primero: rostro y alcohol antes del DNI; el equipo no confirma que quien sopló sea el del DNI. Tarjeta de contingencia: el personal pasó sin su DNI; el vigilante pasó la tarjeta en su lugar (en la salida, entre paréntesis, quién eligió al personal). Vacío: verificación normal.' },
         { titulo: 'Molinete', ancho: 12, descripcion: 'Molinete por el que pasó.' },
       ],
       filas: eventos.map((e) => [
@@ -466,6 +467,10 @@ export class ReportesService {
           ? `Corrección manual (${e.verificadoPor?.correo ?? '-'}): ${e.motivoCorreccion ?? ''}`
           : e.verificacionManual
             ? `Manual (${e.verificadoPor?.correo ?? 'sin decisión'})`
+            : e.tarjetaContingencia
+              ? e.tipoMovimiento === 'salida'
+                ? `Tarjeta de contingencia N.º ${e.tarjetaContingencia.numero} (eligió ${e.verificadoPor?.correo ?? '-'})`
+                : `Tarjeta de contingencia N.º ${e.tarjetaContingencia.numero}${e.dniQueSoplo ? ` (sopló el DNI ${e.dniQueSoplo})` : ''}`
             : e.facialPrimero
               ? e.dniQueSoplo
                 ? `Facial primero (sopló el DNI ${e.dniQueSoplo})`
