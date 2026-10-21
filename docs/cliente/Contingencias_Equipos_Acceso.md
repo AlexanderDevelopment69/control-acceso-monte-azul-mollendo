@@ -2,9 +2,9 @@
 
 Sistema de Control de Accesos — Terminal Monte Azul Mollendo (TMAM)
 
-Este documento describe **qué hacer cuando falla un equipo del punto de acceso**: cómo se detecta, quién hace cada cosa (vigilante, soporte y administrador), qué hace el sistema y cómo se vuelve a la normalidad. Cubre el alcoholímetro, el equipo de reconocimiento facial, el corte de internet, el lector de DNI, los relés de los molinetes, la PC de control y el servidor en la nube.
+Este documento describe **qué hacer cuando falla un equipo del punto de acceso**: cómo se detecta, quién hace cada cosa (vigilante, soporte y administrador), qué hace el sistema y cómo se vuelve a la normalidad. Cubre el alcoholímetro, el equipo de reconocimiento facial, el corte de internet, el lector de DNI, el personal sin DNI (tarjeta de contingencia), los relés de los molinetes, la PC de control y el servidor en la nube.
 
-Actualizado al 15/10/2026, con las decisiones del cliente de esa fecha. **Lo que dice "por programar" todavía no existe en el sistema.**
+Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo que dice "por programar" todavía no existe en el sistema.**
 
 ---
 
@@ -16,6 +16,7 @@ Actualizado al 15/10/2026, con las decisiones del cliente de esa fecha. **Lo que
 | **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto (sección 4) | Vigilante o administrador la activan; el vigilante aprueba cada ingreso | No | **Programado** (15/10/2026); falta la prueba en el punto de acceso |
 | **Internet** del punto de acceso | **Segunda conexión de otro proveedor** que entra sola (sección 5) | TMAM | No | Decidido, a cargo de TMAM |
 | **Lector de DNI** | Mientras tanto, dos opciones: **solo el equipo facial** identifica a la persona (ingreso) o **el vigilante escribe el DNI** en el Panel (ingreso y salida); se conecta el **lector de repuesto** (sección 6) | El vigilante informa y, mientras tanto, opera con la opción elegida; soporte cambia el lector | No | Decidido. Por programar; la opción del equipo facial requiere una prueba; falta el repuesto |
+| **Personal sin DNI**, o DNI que el lector no lee | El vigilante pasa la **tarjeta de contingencia** en lugar del DNI, después de rostro y alcohol; en la salida elige al personal en el Panel (sección 6.5) | El personal avisa; el vigilante pasa la tarjeta; el administrador la imprime y la administra | No: rostro, alcohol y documentos se revisan igual | **Programado** (20/10/2026); falta probar el QR en el lector. Tarjeta digital pendiente |
 | **Relé de un molinete** | Se cambia por el **relé de repuesto** (sección 7.1) | El vigilante informa; soporte lo cambia | No | Decidido. Falta el repuesto preparado |
 | **PC de control** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | El vigilante informa; soporte la cambia | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
 | **Servidor en la nube** | Se recupera solo al reiniciarse; respaldos diarios probados (sección 7.3) | Soporte | No | Funciona hoy |
@@ -26,8 +27,8 @@ Actualizado al 15/10/2026, con las decisiones del cliente de esa fecha. **Lo que
 
 | Rol | Qué hace ante una falla |
 |---|---|
-| **Vigilante** | **Informa** la falla a soporte y al administrador. No cambia ni configura equipos. Sigue operando el punto de acceso con lo que el sistema le muestre (por ejemplo, la verificación manual de la sección 4 o el DNI escrito de la sección 6.3) |
-| **Administrador** | Gestiona la reparación o la compra de repuestos; puede activar y desactivar la verificación manual |
+| **Vigilante** | **Informa** la falla a soporte y al administrador. No cambia ni configura equipos. Sigue operando el punto de acceso con lo que el sistema le muestre (por ejemplo, la verificación manual de la sección 4 o el DNI escrito de la sección 6.3). Guarda la tarjeta de contingencia y la pasa cuando el personal no tiene DNI (sección 6.5) |
+| **Administrador** | Gestiona la reparación o la compra de repuestos; puede activar y desactivar la verificación manual; crea, imprime y administra las tarjetas de contingencia |
 | **Soporte** | **Cambia los equipos** por sus repuestos y hace la **configuración** que haga falta en la PC de control |
 
 ---
@@ -311,13 +312,91 @@ Cada paso queda en el historial marcado como **"DNI escrito por el vigilante"**,
 
 ### 6.5. Personal sin DNI, o DNI que el lector no lee: tarjeta de contingencia
 
-Hecho el 20/10/2026. El administrador crea e imprime en el portal (**Contingencias → Tarjetas de contingencia**, en el menú) una tarjeta con un QR y se la entrega al vigilante. La tarjeta **sola no abre**: reemplaza al DNI del personal en ese momento.
+Hecho el 20/10/2026. Sirve cuando el personal **olvidó su DNI** o el lector **no lo reconoce** (DNI dañado). El vigilante pasa una **tarjeta con un código QR** por el lector en lugar del DNI. La tarjeta **sola no abre**: reemplaza al DNI de ese personal en ese momento, y el sistema revisa todo lo demás igual que siempre (rostro, alcohol, documentos, bajas y antipassback).
 
-- **Ingreso** (orden "facial primero"): el personal avisa al vigilante, hace rostro y alcohol y, cuando el Panel muestra *"Aprobó … pase su DNI"*, el vigilante pasa la tarjeta por el lector de ingreso en esos 15 segundos. Entra el personal que aprobó, con sus documentos revisados como siempre. Si hay dos personas esperando su DNI a la vez, no abre.
-- **Salida:** el vigilante toca **"Salida sin DNI"** en el Panel, elige al personal (solo aparecen quienes figuran dentro) y tiene 2 minutos para pasar la tarjeta por el lector de salida.
-- El ingreso o la salida queda **a nombre del personal**, marcado *"Tarjeta de contingencia"* (en la salida, con el vigilante que lo eligió). Cada uso, aceptado o no, queda en la lista de usos de la tarjeta; la tarjeta pasada en otro momento no abre y suena el aviso.
-- El administrador puede ponerle fecha de vencimiento o dejarla sin vencer, desactivarla y **cambiar su código** si se pierde o alguien le toma una foto (la impresa queda anulada y debe imprimirse de nuevo). El vigilante solo ve las tarjetas.
-- Sin internet no es válida (el sistema no sabe quién es). Con la verificación manual activa tampoco: decide el vigilante en el Panel.
+#### 6.5.1. La tarjeta
+
+- Tiene el tamaño de un carné (85,6 × 54 mm), con el logo de Monte Azul, el nombre *"Tarjeta de contingencia"*, su número (N.º 1, N.º 2…), su vencimiento y el QR.
+- El QR lleva un código al azar (`TMAM-CONT-` y 20 letras y números). **No lleva el DNI ni el nombre de nadie**: la tarjeta no es de una persona, es del punto de acceso.
+- Puede **no vencer** (*"Vigente hasta que se desactive"*) o **vencer un día** (*"Pierde vigencia después de esa fecha"*).
+- La imprime el administrador y **la guarda el vigilante**. No se presta ni se le entrega al personal.
+
+#### 6.5.2. Dónde está en el portal
+
+Menú **Contingencias → Tarjetas de contingencia**. Las tarjetas se ven como un carné (azul si está vigente; gris si está desactivada o vencida), en un carrusel que se pasa con las flechas, con los puntos de abajo o arrastrando. Al costado de cada una: su último uso, la fecha de su código y los botones. Debajo, la **lista de usos** de todas las tarjetas.
+
+| Qué | Administrador | Vigilante |
+|---|---|---|
+| Ver las tarjetas y la lista de usos | Sí | Sí |
+| Crear una tarjeta (con o sin vencimiento) | Sí | No |
+| Imprimir (vista previa en el portal, tamaño carné) | Sí | No |
+| Cambiar el vencimiento | Sí | No |
+| Desactivar y volver a activar | Sí | No |
+| Cambiar el código | Sí | No |
+| Eliminar (solo si nunca se usó) | Sí | No |
+
+El código no se muestra en el portal: solo va en el QR impreso.
+
+#### 6.5.3. Ingreso paso a paso
+
+Funciona con el orden **"facial primero"** (rostro y alcohol antes del DNI). El Panel no cambia y el vigilante no presiona ningún botón.
+
+1. **Personal:** avisa al vigilante que no tiene su DNI o que el lector no lo reconoce.
+2. **Personal:** hace rostro y alcohol en el equipo facial, como siempre.
+3. **Panel:** muestra *"Aprobó … pase su DNI"*.
+4. **Vigilante:** en esos 15 segundos, pasa la tarjeta por el **lector de ingreso**, donde el personal pasaría su DNI.
+5. **Sistema:** revisa la tarjeta y los documentos de quien aprobó y, si todo está en regla, abre el molinete.
+6. El ingreso queda **a nombre del personal**, marcado *"Tarjeta de contingencia"* en el Panel.
+
+Si la tarjeta se pasa un instante antes de que llegue el resultado de la prueba, el sistema la espera hasta 8 segundos, igual que con un DNI.
+
+#### 6.5.4. Salida paso a paso
+
+En la salida no hay equipo facial que diga quién es, por eso el vigilante lo elige:
+
+1. **Personal:** avisa al vigilante.
+2. **Vigilante:** en el Panel toca **"Salida sin DNI"** y elige al personal (solo aparecen quienes figuran dentro; se puede buscar).
+3. **Panel:** muestra una franja con la cuenta regresiva de **2 minutos** y el botón *"Cancelar"*.
+4. **Vigilante:** pasa la tarjeta por el **lector de salida**.
+5. La salida queda **a nombre del personal**, marcada *"Tarjeta de contingencia"* y con el vigilante que lo eligió.
+
+#### 6.5.5. Cuándo la tarjeta no abre
+
+En todos estos casos el molinete no se abre, **suena el aviso de denegado** de esa puerta y el intento queda en la lista de usos con el motivo:
+
+| Caso | Motivo en la lista de usos | Qué hacer |
+|---|---|---|
+| Se pasó sin que nadie aprobara rostro y alcohol | *Nadie aprobó rostro y alcohol antes de pasar la tarjeta* | El personal hace primero la prueba |
+| Dos personas aprobaron a la vez y esperan su DNI | *Varias personas aprobaron rostro y alcohol a la vez* | Esperar a que pase la otra persona y repetir la prueba |
+| El personal no pasó el alcohol | *No pasó el alcohol* | Igual que con DNI: no ingresa |
+| El orden no es "facial primero" | *La tarjeta solo es válida con el orden "facial primero"* | Solo se usa con ese orden |
+| Verificación manual activa (falla del equipo facial) | *Verificación manual activa: el ingreso lo decide el vigilante en el Panel* | La tarjeta no se usa en verificación manual |
+| Salida sin elegir al personal (o pasaron los 2 minutos) | *Nadie eligió al personal en el Panel ("Salida sin DNI")* | Tocar "Salida sin DNI" y elegirlo |
+| Tarjeta desactivada | *Tarjeta desactivada* | El administrador la activa, si corresponde |
+| Tarjeta vencida | *Tarjeta vencida* | El administrador cambia el vencimiento |
+| Tarjeta con el código cambiado, o QR que no es del sistema | *Tarjeta no registrada (o con un código cambiado)* | Usar la tarjeta impresa nueva |
+
+Si la tarjeta es aceptada pero el personal **no cumple** (documentos vencidos, dado de baja o antipassback), se deniega igual que con su DNI.
+
+#### 6.5.6. Cuidados
+
+- **Se perdió o se copió** (por ejemplo, alguien leyó el QR con su celular): el administrador usa **"Cambiar código"**. La tarjeta impresa queda **anulada** y debe imprimirse de nuevo.
+- **No se va a usar por un tiempo:** **desactivarla**. Queda sin vigencia hasta que se vuelva a activar.
+- **Eliminar** solo se puede si nunca se pasó por un lector. La que ya se usó se desactiva, para que su historial siga diciendo con qué tarjeta fue cada ingreso y salida.
+- Todo cambio (crear, vencimiento, desactivar, cambiar código, eliminar) queda en la **Auditoría**.
+
+#### 6.5.7. Lo que la tarjeta no cubre
+
+- **Falla del lector de DNI:** la tarjeta se pasa por el mismo lector, así que tampoco se lee. Se usan las opciones de la sección 6.3.
+- **Verificación manual** (falla del equipo facial): la tarjeta no es válida; decide el vigilante en el Panel.
+- **Sin internet:** no es válida, igual que el DNI (el sistema no puede saber quién es).
+
+#### 6.5.8. Pendiente
+
+- **Probar** con una tarjeta impresa que el lector de DNI lee el QR.
+- **Tarjeta digital** (por decidir y programar): mostrar el QR en el **celular del vigilante** en lugar de imprimirlo. La opción recomendada es un QR que **cambia solo cada 30 segundos**, abierto en el portal con el usuario del vigilante: una captura o una foto deja de servir al rato. Un QR fijo en el celular se podría copiar con una captura y servir para siempre. Antes hay que probar que el lector lee el QR desde la pantalla de un celular (brillo y reflejo).
+
+---
 
 ## 7. Otras fallas
 
@@ -413,6 +492,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Identificación por rostro en el ingreso, automática al desconectarse el lector (opción 1; solo si la prueba sale bien) | 6.3 |
 | Campo "Ingresar DNI manualmente" en el Panel (ingreso y salida), con la marca en el historial (opción 2) | 6.3 |
 | Adaptador de repuesto registrado desde antes (si se elige la opción B) | 6.4 |
+| *Pendiente:* tarjeta de contingencia digital, con QR que cambia cada 30 segundos en el celular del vigilante | 6.5.8 |
 | *Opcional:* vista "Configuración de equipos" en el portal, para que soporte asigne lectores y relés de repuesto sin entrar a la PC de control | 10 |
 
 **Probar en el punto de acceso:**
@@ -425,6 +505,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Cambiar la PC de control por la de repuesto | 7.2 |
 | Cambiar un lector de DNI por el repuesto | 6.4 |
 | Identificación por rostro con el equipo real (antes de programar la opción 1) | 6.3 |
+| Pasar una tarjeta de contingencia impresa por los lectores de ingreso y salida (y, para la tarjeta digital, desde la pantalla de un celular) | 6.5 |
 
 ---
 
