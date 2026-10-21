@@ -28,7 +28,7 @@ export class IngresoDto {
    * Solo dentro del servidor (sin validador: por la API se rechaza): el
    * vigilante pasó esta tarjeta de contingencia en lugar del DNI.
    */
-  tarjetaContingenciaId?: number;
+  declare tarjetaContingenciaId?: number;
   /** Solo dentro del servidor: lector de DNI de ingreso desconectado, entró identificado por rostro. */
-  sinLector?: boolean;
+  declare sinLector?: boolean;
 }

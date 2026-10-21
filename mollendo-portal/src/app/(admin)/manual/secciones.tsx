@@ -892,7 +892,7 @@ export const SECCIONES: SeccionManual[] = [
   {
     id: "auditoria",
     titulo: "Auditoría",
-    descripcion: "Quién creó o modificó cada dato del sistema y cuándo. Solo se puede ver.",
+    descripcion: "Quién creó o modificó cada dato del sistema y cuándo, y cuándo se desconectó un equipo. Solo se puede ver.",
     roles: ["administrador"],
     pantallas: [
       {
@@ -924,6 +924,15 @@ export const SECCIONES: SeccionManual[] = [
           {
             titulo: "Acción",
             texto: <p>Si se creó, modificó o eliminó. Sirve para responder “¿quién cargó esto?”.</p>,
+          },
+          {
+            titulo: "Desconexiones de equipos",
+            texto: (
+              <p>
+                Cada vez que un equipo se desconecta y cuando vuelve queda una fila a nombre de “Sistema”, con cuánto tiempo estuvo sin
+                conexión: equipo facial, Controlador (PC), lectores de DNI, relés, base de datos y respaldos. Búsquelas con “equipos”.
+              </p>
+            ),
           },
         ],
       },

@@ -44,7 +44,7 @@ export function RespaldosEstado({
         <div className="mt-2">
           <Badge color="light">Sin información</Badge>
         </div>
-        <p className="mt-2 text-xs text-gray-400">Solo se ven en el servidor (mini PC).</p>
+        <p className="mt-2 text-xs text-gray-400">Solo se ven en el servidor.</p>
       </>
     );
   }

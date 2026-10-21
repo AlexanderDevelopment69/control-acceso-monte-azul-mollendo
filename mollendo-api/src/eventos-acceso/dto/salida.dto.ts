@@ -33,8 +33,8 @@ export class SalidaDto {
    * Solo dentro del servidor (sin validador: por la API se rechaza): salida
    * con tarjeta de contingencia y el vigilante que eligió al trabajador.
    */
-  tarjetaContingenciaId?: number;
-  verificadoPorId?: number;
+  declare tarjetaContingenciaId?: number;
+  declare verificadoPorId?: number;
   /** Solo dentro del servidor: lector de DNI de salida desconectado, el vigilante abrió la salida desde "Presentes ahora". */
-  sinLector?: boolean;
+  declare sinLector?: boolean;
 }

@@ -2,7 +2,7 @@
 
 Sistema de Control de Accesos — Terminal Monte Azul Mollendo (TMAM)
 
-Este documento describe **qué hacer cuando falla un equipo del punto de acceso**: cómo se detecta, quién hace cada cosa (vigilante, soporte y administrador), qué hace el sistema y cómo se vuelve a la normalidad. Cubre el alcoholímetro, el equipo de reconocimiento facial, el corte de internet, el lector de DNI, el personal sin DNI (tarjeta de contingencia), los relés de los molinetes, la PC de control y el servidor en la nube.
+Este documento describe **qué hacer cuando falla un equipo del punto de acceso**: cómo se detecta, quién hace cada cosa (vigilante, soporte y administrador), qué hace el sistema y cómo se vuelve a la normalidad. Cubre el alcoholímetro, el equipo de reconocimiento facial, el corte de internet, el lector de DNI, el personal sin DNI (tarjeta de contingencia), los relés de los molinetes, el Controlador (PC) y el servidor en la nube.
 
 Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo que dice "por programar" todavía no existe en el sistema.**
 
@@ -18,7 +18,7 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 | **Lector de DNI** | Mientras tanto, contingencia **"sin lector"**, que se activa sola: el **ingreso** es solo con rostro y alcohol y la **salida** la abre el vigilante desde **"Presentes ahora"**; se conecta el **lector de repuesto** (sección 6) | El vigilante informa y abre las salidas; soporte cambia el lector | En el ingreso, el DNI: la persona se identifica solo por su rostro | **Programado** (21/10/2026); falta probarlo en el punto de acceso y el repuesto |
 | **Personal sin DNI**, o DNI que el lector no lee | El vigilante pasa la **tarjeta de contingencia** en lugar del DNI, después de rostro y alcohol; en la salida elige al personal en el Panel (sección 6.5) | El personal avisa; el vigilante pasa la tarjeta; el administrador la imprime y la administra | No: rostro, alcohol y documentos se revisan igual | **Programado** (20/10/2026); falta probar el QR en el lector. Tarjeta digital pendiente |
 | **Relé de un molinete** | Se cambia por el **relé de repuesto** (sección 7.1) | El vigilante informa; soporte lo cambia | No | Decidido. Falta el repuesto preparado |
-| **PC de control** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | El vigilante informa; soporte la cambia | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
+| **Controlador (PC)** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | El vigilante informa; soporte la cambia | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
 | **Servidor en la nube** | Se recupera solo al reiniciarse; respaldos diarios probados (sección 7.3) | Soporte | No | Funciona hoy |
 
 **Regla general:** en todos los casos el sistema **sigue exigiendo el DNI con documentos vigentes**, y quien no cumple se deniega igual que siempre. Ninguna contingencia decidida deja entrar a alguien sin prueba de alcohol.
@@ -29,7 +29,7 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 |---|---|
 | **Vigilante** | **Informa** la falla a soporte y al administrador. No cambia ni configura equipos. Sigue operando el punto de acceso con lo que el sistema le muestre (por ejemplo, la verificación manual de la sección 4 o la salida desde "Presentes ahora" de la sección 6.3). Guarda la tarjeta de contingencia y la pasa cuando el personal no tiene DNI (sección 6.5) |
 | **Administrador** | Gestiona la reparación o la compra de repuestos; puede activar y desactivar la verificación manual; crea, imprime y administra las tarjetas de contingencia |
-| **Soporte** | **Cambia los equipos** por sus repuestos y hace la **configuración** que haga falta en la PC de control |
+| **Soporte** | **Cambia los equipos** por sus repuestos y hace la **configuración** que haga falta en el Controlador (PC) |
 
 ---
 
@@ -59,12 +59,12 @@ En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y sue
 
 | Equipo | Dónde está conectado | Para qué |
 |---|---|---|
-| Lectores de DNI (ingreso y salida) | PC de control (USB) | Saber quién quiere pasar |
+| Lectores de DNI (ingreso y salida) | Controlador (PC) (USB) | Saber quién quiere pasar |
 | Equipo facial (G4 Pro) | Servidor en la nube, por internet | Rostro y prueba de alcohol |
 | Alcoholímetro (DT1700) | Equipo facial | Prueba de alcohol |
-| Relés de los molinetes (ingreso y salida) | PC de control (USB) | Abrir los molinetes |
-| Relés de aviso (si están instalados) | PC de control (USB) | Luz o sirena cuando se deniega un paso |
-| PC de control | Servidor en la nube, por internet | Lee los DNI y abre los molinetes cuando el servidor lo ordena |
+| Relés de los molinetes (ingreso y salida) | Controlador (PC) (USB) | Abrir los molinetes |
+| Relés de aviso (si están instalados) | Controlador (PC) (USB) | Luz o sirena cuando se deniega un paso |
+| Controlador (PC) | Servidor en la nube, por internet | Lee los DNI y abre los molinetes cuando el servidor lo ordena |
 | Servidor en la nube | — | Decide cada ingreso y salida; guarda el personal, los documentos y el historial |
 
 ---
@@ -73,7 +73,7 @@ En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y sue
 
 | Señal | Dónde | Qué fallas muestra | Estado |
 |---|---|---|---|
-| **Franja roja de fallas** | Arriba de todas las pantallas del portal, para el administrador y el vigilante | Equipo facial desconectado (2 minutos sin contacto), lector de DNI con el cable desconectado, relé no conectado, PC de control desconectada, respaldos atrasados, sin conexión con el servidor | Ya existe |
+| **Franja roja de fallas** | Arriba de todas las pantallas del portal, para el administrador y el vigilante | Equipo facial desconectado (2 minutos sin contacto), lector de DNI con el cable desconectado, relé no conectado, Controlador (PC) desconectado, respaldos atrasados, sin conexión con el servidor | Ya existe |
 | **"Sistema y APIs"** | Portal del administrador | El estado de cada equipo, en detalle | Ya existe |
 | **Panel de vigilancia** | Portal del vigilante | Cada ingreso: "esperando rostro y alcohol" con su cuenta regresiva, y el resultado | Ya existe |
 | **Pantalla del equipo facial** | En el punto de acceso | Un ícono con **punto rojo** si el alcoholímetro está desconectado (el equipo **no** se lo avisa al sistema) | Ya existe |
@@ -197,18 +197,18 @@ Una vez programado, se hace una **prueba en el punto de acceso**: apagar el equi
 
 ### 5.1. Qué pasa sin internet
 
-La PC de control y el equipo facial trabajan con el servidor en la nube, por internet.
+El Controlador (PC) y el equipo facial trabajan con el servidor en la nube, por internet.
 
 | Situación | Qué pasa |
 |---|---|
 | Alguien quiere **ingresar** | **No ingresa nadie.** Se activa el aviso de ingreso denegado |
-| Alguien **registrado** quiere **salir** | **Sale.** La PC de control guarda la lista del personal (se renueva cada 10 minutos) y abre el molinete |
+| Alguien **registrado** quiere **salir** | **Sale.** El Controlador (PC) guarda la lista del personal (se renueva cada 10 minutos) y abre el molinete |
 | Alguien **no registrado** quiere salir | No sale. Se activa el aviso de salida denegada |
-| **Vuelve internet** | La PC de control se reconecta sola y envía al servidor las salidas que registró, con su hora real |
+| **Vuelve internet** | El Controlador (PC) se reconecta solo y envía al servidor las salidas que registró, con su hora real |
 
 En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se puede ingresar porque el equipo facial y la revisión de documentos dependen del servidor (anexo A).
 
-**Cómo se nota:** la franja roja muestra *"Controlador desconectado"* (la PC de control) y *"Equipo facial desconectado"*.
+**Cómo se nota:** la franja roja muestra *"Controlador desconectado"* y *"Equipo facial desconectado"*.
 
 ### 5.2. Lo que debe tener el punto de acceso (a cargo de TMAM)
 
@@ -217,9 +217,9 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 | 1 | **Conexión principal estable** (por ejemplo, fibra óptica) | Uso normal |
 | 2 | **Segunda conexión de internet de alta velocidad, de otro proveedor** | Si cae la principal, sigue funcionando. De **otra empresa**, para que no fallen las dos a la vez |
 | 3 | **Router con doble salida y cambio automático** (*dual WAN / failover*) | Que pase a la segunda conexión **solo**, en segundos, y vuelva a la principal cuando regrese |
-| 4 | **Equipo de respaldo de energía (UPS)** para el router, la PC de control, el equipo facial y el switch de red | Que un corte de luz breve no corte también el internet ni los equipos |
+| 4 | **Equipo de respaldo de energía (UPS)** para el router, el Controlador (PC), el equipo facial y el switch de red | Que un corte de luz breve no corte también el internet ni los equipos |
 | 5 | **IP pública fija** en la conexión principal (y, si es posible, en la segunda) | Permite que el servidor solo acepte al equipo facial desdel punto de acceso (`docs/seguridad/Seguridad.md`, sección 4.2). Con dos conexiones, se autorizan las dos IP |
-| 6 | **No cambiar la configuración de red** de la PC de control ni del equipo facial sin avisar a soporte | Ambos tienen configurada la dirección del servidor |
+| 6 | **No cambiar la configuración de red** del Controlador (PC) ni del equipo facial sin avisar a soporte | Ambos tienen configurada la dirección del servidor |
 
 **Uso de internet del sistema:** bajo. Viajan los datos de cada ingreso y salida y, al registrar o actualizar personal, sus fotos. Cualquier conexión de alta velocidad es suficiente, también la segunda.
 
@@ -245,13 +245,13 @@ Cada lector tiene **dos partes**:
 | Parte | Qué es | Qué reconoce el sistema |
 |---|---|---|
 | **Lector** (Syble XB-7705H) | Lee el código de barras del reverso del DNI | Nada: el sistema no distingue un lector de otro |
-| **Adaptador USB** (cable blanco) | Une el lector con la PC de control | **Su número de serie**, que trae de fábrica. La PC de control tiene configurado cuál es el de ingreso y cuál el de salida |
+| **Adaptador USB** (cable blanco) | Une el lector con el Controlador (PC) | **Su número de serie**, que trae de fábrica. El Controlador (PC) tiene configurado cuál es el de ingreso y cuál el de salida |
 
 Por eso, lo que haya que hacer al cambiarlo depende de qué parte se malogró (sección 6.4).
 
 ### 6.3. Mientras tanto: contingencia "sin lector"
 
-Hecho el 21/10/2026 (decisión del cliente: que se active sola y que avise). Con el lector de DNI de una puerta desconectado y la PC de control en línea, el sistema pasa **solo** a esta contingencia y vuelve **solo** al modo normal cuando el lector se conecta. Nadie la activa ni la desactiva.
+Hecho el 21/10/2026 (decisión del cliente: que se active sola y que avise). Con el lector de DNI de una puerta desconectado y el Controlador (PC) en línea, el sistema pasa **solo** a esta contingencia y vuelve **solo** al modo normal cuando el lector se conecta. Nadie la activa ni la desactiva.
 
 **Cómo avisa:** además de la franja roja de equipos (en todas las páginas), el Panel de vigilancia muestra una franja por cada puerta:
 
@@ -286,7 +286,7 @@ En el Excel de ingresos y salidas, la columna "Verificación" dice *"Sin lector 
 
 #### Lo que no cubre
 
-- **Sin la PC de control** no se abre ningún molinete: la contingencia no se activa (sección 7.2).
+- **Sin el Controlador (PC)** no se abre ningún molinete: la contingencia no se activa (sección 7.2).
 - **Sin internet:** igual que siempre (sección 5).
 - **Verificación manual activa** (falla del equipo facial): el ingreso lo decide el vigilante y necesita el DNI.
 
@@ -302,8 +302,8 @@ En el Excel de ingresos y salidas, la columna "Verificación" dice *"Sin lector 
 
 | Opción | Cómo | Ventaja | Desventaja |
 |---|---|---|---|
-| **A. Soporte lo registra al cambiarlo** | Soporte conecta el repuesto y registra el adaptador nuevo en la PC de control | No requiere programar nada | Un paso más para soporte en el momento del cambio |
-| **B. Adaptador de repuesto registrado desde antes** (recomendada) | La PC de control acepta, para cada lector, **también** el adaptador de repuesto | Soporte **lo conecta y funciona solo** | Requiere un cambio pequeño de programación |
+| **A. Soporte lo registra al cambiarlo** | Soporte conecta el repuesto y registra el adaptador nuevo en el Controlador (PC) | No requiere programar nada | Un paso más para soporte en el momento del cambio |
+| **B. Adaptador de repuesto registrado desde antes** (recomendada) | El Controlador (PC) acepta, para cada lector, **también** el adaptador de repuesto | Soporte **lo conecta y funciona solo** | Requiere un cambio pequeño de programación |
 
 **Qué se hace:**
 
@@ -416,19 +416,19 @@ Si la tarjeta es aceptada pero el personal **no cumple** (documentos vencidos, d
 **Qué se hace:**
 
 1. **Vigilante:** ve el aviso del relé en la franja roja (o que el molinete no abre aunque el Panel dice "Autorizado"). **Informa** a soporte y al administrador.
-2. **Soporte:** desconecta el relé malogrado de la PC de control y **conecta el de repuesto** en su lugar.
+2. **Soporte:** desconecta el relé malogrado del Controlador (PC) y **conecta el de repuesto** en su lugar.
 3. **Soporte:** comprueba en la franja roja que el aviso desaparezca (el sistema reconecta el relé solo) y prueba un paso por el molinete.
 4. **Administrador:** gestiona la reparación o la compra de otro repuesto.
 
-**Requisito del repuesto:** cada relé tiene grabada una **serie** que la PC de control usa para saber cuál es cuál (ingreso `ING01`, salida `SAL01` y, si hay, avisos `DEN01` y `DSA01`). Un relé nuevo viene de fábrica con otra serie, así que **el repuesto debe dejarse preparado por soporte** con la serie que va a reemplazar (`deploy/controlador/README.md`, paso 6). Con un solo repuesto, soporte le graba la serie del molinete que falle, o se tienen dos repuestos ya preparados (uno para ingreso y uno para salida). **Probar el cambio una vez** antes de necesitarlo.
+**Requisito del repuesto:** cada relé tiene grabada una **serie** que el Controlador (PC) usa para saber cuál es cuál (ingreso `ING01`, salida `SAL01` y, si hay, avisos `DEN01` y `DSA01`). Un relé nuevo viene de fábrica con otra serie, así que **el repuesto debe dejarse preparado por soporte** con la serie que va a reemplazar (`deploy/controlador/README.md`, paso 6). Con un solo repuesto, soporte le graba la serie del molinete que falle, o se tienen dos repuestos ya preparados (uno para ingreso y uno para salida). **Probar el cambio una vez** antes de necesitarlo.
 
 **Relés de aviso** (luz o sirena): si fallan, el sistema sigue funcionando normal; solo se pierde la señal de "denegado". Se cambian igual que los de los molinetes, sin urgencia.
 
-### 7.2. PC de control
+### 7.2. Controlador (PC)
 
 **Decidido (15/10/2026):** se cambia por la **PC de repuesto**; si no la hay a mano, se **libera el molinete a mano**.
 
-**Qué pasa cuando falla:** sin la PC de control no funcionan los **lectores de DNI** ni los **relés**: nadie pasa por el sistema, ni para ingresar ni para salir. La franja roja muestra *"Controlador desconectado"*. El equipo facial sigue conectado al servidor, pero sin DNI nadie llega a usarlo.
+**Qué pasa cuando falla:** sin el Controlador (PC) no funcionan los **lectores de DNI** ni los **relés**: nadie pasa por el sistema, ni para ingresar ni para salir. La franja roja muestra *"Controlador desconectado"*. El equipo facial sigue conectado al servidor, pero sin DNI nadie llega a usarlo.
 
 El **vigilante informa** a soporte y al administrador. Luego:
 
@@ -451,7 +451,7 @@ Requisitos: la PC de repuesto debe estar **instalada y configurada por soporte c
 
 | Situación | Qué pasa |
 |---|---|
-| **El servidor se reinicia** | Todo arranca solo: base de datos, sistema, portal y respaldos. Comprobado el 15/10/2026: el portal volvió en ~24 segundos, con los mismos datos y la misma dirección IP. La PC de control y el equipo facial se reconectan solos |
+| **El servidor se reinicia** | Todo arranca solo: base de datos, sistema, portal y respaldos. Comprobado el 15/10/2026: el portal volvió en ~24 segundos, con los mismos datos y la misma dirección IP. El Controlador (PC) y el equipo facial se reconectan solos |
 | **Pérdida o daño de los datos** | Respaldo diario a las 04:00 (base de datos, documentos y fotos), guardado 30 días. La restauración se probó el 15/10/2026 en el propio servidor: datos completos e iguales al sistema |
 | **El servidor no responde** | Igual que un corte de internet (sección 5.1): nadie ingresa, las salidas siguen con la lista guardada. Soporte revisa el servidor |
 
@@ -472,7 +472,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | 7 | ¿Qué se hace ante un **corte de internet**? | **A cargo de TMAM**: segunda conexión con los requisitos de la sección 5.2. Si fallan las dos, nadie ingresa y las salidas siguen (15/10/2026) |
 | 8 | ¿Qué se hace si falla el **lector de DNI**? | Contingencia **"sin lector"**, que se activa sola y avisa: ingreso solo con rostro y alcohol; la salida la abre el vigilante desde **"Presentes ahora"**. Se conecta el **lector de repuesto** (21/10/2026; reemplaza lo decidido el 15/10/2026) |
 | 9 | ¿Qué se hace si falla el **relé de un molinete**? | Se cambia de inmediato por el **repuesto** (15/10/2026) |
-| 10 | ¿Qué se hace si falla la **PC de control**? | **PC de repuesto**; si no la hay, liberar el molinete a mano y anotar los pasos (15/10/2026) |
+| 10 | ¿Qué se hace si falla el **Controlador (PC)**? | **PC de repuesto**; si no la hay, liberar el molinete a mano y anotar los pasos (15/10/2026) |
 | 11 | ¿El **adaptador del lector de repuesto** lo registra soporte en el momento (A) o queda registrado desde antes (B)? | **Pendiente** (se recomienda B; sección 6.4). No haría falta si se programa la vista opcional de la sección 10 |
 | 12 | ¿Qué se hace si el personal **olvidó su DNI** o el lector **no lo lee**? | **Tarjeta de contingencia** (QR) que el vigilante pasa en lugar del DNI, después de rostro y alcohol; en la salida, el vigilante elige al personal en el Panel. La imprime el administrador; puede vencer o no (20/10/2026) |
 
@@ -486,7 +486,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 |---|---|---|
 | Alcoholímetro de repuesto **DT1700** (o compatible) | Secciones 3 y 4 | TMAM compra; soporte prueba el cambio una vez |
 | Relé de repuesto, **con la serie grabada** | Sección 7.1 | TMAM compra; soporte lo prepara |
-| PC de control de repuesto, **instalada y configurada** | Sección 7.2 | TMAM compra; soporte la prepara |
+| Controlador (PC) de repuesto, **instalado y configurado** | Sección 7.2 | TMAM compra; soporte la prepara |
 | Segunda conexión de internet, router con doble salida, UPS e IP fija | Sección 5.2 | TMAM |
 | Lector de DNI de repuesto **con su adaptador USB**, el lector ya configurado | Sección 6.4 | TMAM compra; soporte lo configura (y, con la opción B, registra el adaptador) |
 
@@ -499,7 +499,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | ~~Contingencia "sin lector": ingreso solo con rostro y salida desde "Presentes ahora"~~ Hecho el 21/10/2026 | 6.3 |
 | Adaptador de repuesto registrado desde antes (si se elige la opción B) | 6.4 |
 | *Pendiente:* tarjeta de contingencia digital, con QR que cambia cada 30 segundos en el celular del vigilante | 6.5.8 |
-| *Opcional:* vista "Configuración de equipos" en el portal, para que soporte asigne lectores y relés de repuesto sin entrar a la PC de control | 10 |
+| *Opcional:* vista "Configuración de equipos" en el portal, para que soporte asigne lectores y relés de repuesto sin entrar al Controlador (PC) | 10 |
 
 **Probar en el punto de acceso:**
 
@@ -508,7 +508,7 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Cambiar el alcoholímetro por el repuesto | 3.4 |
 | Verificación manual con el equipo facial apagado (una vez programada) | 4.4 |
 | Cambiar un relé por el repuesto | 7.1 |
-| Cambiar la PC de control por la de repuesto | 7.2 |
+| Cambiar el Controlador (PC) por la PC de repuesto | 7.2 |
 | Cambiar un lector de DNI por el repuesto | 6.4 |
 | Contingencia "sin lector": desconectar un lector y comprobar el ingreso por rostro, la salida desde "Presentes ahora" y que vuelva solo al conectarlo | 6.3 |
 | Pasar una tarjeta de contingencia impresa por los lectores de ingreso y salida (y, para la tarjeta digital, desde la pantalla de un celular) | 6.5 |
@@ -517,15 +517,15 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 
 ## 10. Desarrollo opcional: configuración de equipos desde el portal
 
-> **Pendiente, opcional** (15/10/2026). No es necesario para las contingencias de este documento: sin esta vista, soporte hace la configuración directamente en la PC de control, como hoy. Se programa solo si el cliente lo pide.
+> **Pendiente, opcional** (15/10/2026). No es necesario para las contingencias de este documento: sin esta vista, soporte hace la configuración directamente en el Controlador (PC), como hoy. Se programa solo si el cliente lo pide.
 
 ### 10.1. Para qué sirve
 
-Hoy, cuando soporte cambia un **lector de DNI** (su adaptador USB) o un **relé** por un repuesto, tiene que entrar a la PC de control, editar su configuración y reiniciar el programa; y el relé de repuesto debe tener grabada la serie correcta antes de conectarlo (secciones 6.4 y 7.1). Con esta vista, soporte haría esa configuración **desde el portal**, sin entrar a la PC de control.
+Hoy, cuando soporte cambia un **lector de DNI** (su adaptador USB) o un **relé** por un repuesto, tiene que entrar al Controlador (PC), editar su configuración y reiniciar el programa; y el relé de repuesto debe tener grabada la serie correcta antes de conectarlo (secciones 6.4 y 7.1). Con esta vista, soporte haría esa configuración **desde el portal**, sin entrar al Controlador (PC).
 
 ### 10.2. Cómo sería
 
-Una pantalla **"Configuración de equipos"**, solo para soporte (y el administrador, si el cliente lo decide; **nunca el vigilante**). Muestra los equipos que la PC de control tiene conectados en ese momento:
+Una pantalla **"Configuración de equipos"**, solo para soporte (y el administrador, si el cliente lo decide; **nunca el vigilante**). Muestra los equipos que el Controlador (PC) tiene conectados en ese momento:
 
 | Lectores de DNI detectados | Uso | Estado |
 |---|---|---|
@@ -541,7 +541,7 @@ Una pantalla **"Configuración de equipos"**, solo para soporte (y el administra
 
 | Acción | Qué hace |
 |---|---|
-| **Asignar un lector** | Soporte conecta el adaptador de repuesto, aparece como "nuevo" y elige si es de ingreso o de salida. La PC de control lo empieza a usar al instante |
+| **Asignar un lector** | Soporte conecta el adaptador de repuesto, aparece como "nuevo" y elige si es de ingreso o de salida. El Controlador (PC) lo empieza a usar al instante |
 | **Asignar un relé** | Soporte conecta el relé de repuesto, aparece con la serie de fábrica y elige su uso (molinete de ingreso, de salida o aviso). El sistema le **graba la serie** y lo empieza a usar |
 | **Probar un relé** | Un botón que lo activa un segundo, para comprobar que abre el molinete correcto |
 
@@ -551,16 +551,16 @@ Cada cambio queda en la **auditoría**: quién, cuándo, qué equipo y para qué
 
 | | Hoy | Con la vista |
 |---|---|---|
-| Dónde configura soporte | Entrando a la PC de control | **Desde el portal** |
+| Dónde configura soporte | Entrando al Controlador (PC) | **Desde el portal** |
 | Preparar el repuesto antes (grabar la serie del relé, registrar el adaptador) | Necesario | **No hace falta**: se asigna al conectarlo |
 | Registro de los cambios | No | **Sí**, en la auditoría |
 | Decisión 11 (adaptador de repuesto, opción A o B) | Pendiente | Ya no haría falta |
 
 ### 10.4. A tener en cuenta
 
-- **Necesita internet:** la vista habla con la PC de control a través del servidor. Sin internet no se puede configurar, aunque los equipos ya configurados siguen funcionando.
+- **Necesita internet:** la vista habla con el Controlador (PC) a través del servidor. Sin internet no se puede configurar, aunque los equipos ya configurados siguen funcionando.
 - **Relés nuevos de uno en uno:** todos los relés nuevos traen de fábrica la misma serie; si se conectan dos a la vez, el sistema no puede distinguirlos.
-- **La configuración se guarda en la PC de control** y se respeta aunque se reinicie. La configuración inicial de la instalación sigue sirviendo como base.
+- **La configuración se guarda en el Controlador (PC)** y se respeta aunque se reinicie. La configuración inicial de la instalación sigue sirviendo como base.
 - **Solo soporte (o el administrador):** una asignación equivocada, por ejemplo cruzar ingreso con salida, cambiaría cómo funciona el punto de acceso.
 
 ---
@@ -584,10 +584,10 @@ Hoy no se puede ingresar sin internet por dos motivos: (1) los **documentos y la
 
 | Alternativa | Cómo funciona | Por qué no se eligió |
 |---|---|---|
-| Solo DNI | Ingresa quien esté en regla según una lista guardada en la PC de control | Sin rostro ni alcohol |
-| Verificación manual | Como la sección 4, con una lista guardada en la PC de control | Más lenta; con la segunda conexión de internet (sección 5.2) los cortes deberían ser raros |
-| PC de control como respaldo completo | La PC de control tendría una copia de todo el sistema | Muy compleja: dos sistemas que mantener sincronizados |
-| **E. Ingreso como la salida** | La PC de control guarda la lista de quién puede ingresar (con las fechas de vencimiento) y el equipo facial se conecta a ella. Con internet, le pasa todo al servidor; sin internet, la PC habilita a la persona en el equipo, este hace rostro y alcohol como siempre y la PC abre el molinete. Al volver internet, envía los ingresos | **Mejora futura.** Mantiene rostro y alcohol sin internet y cubre también una caída del servidor; solo se perderían las bajas hechas durante el corte. Requiere programación considerable y pruebas con el equipo real |
+| Solo DNI | Ingresa quien esté en regla según una lista guardada en el Controlador (PC) | Sin rostro ni alcohol |
+| Verificación manual | Como la sección 4, con una lista guardada en el Controlador (PC) | Más lenta; con la segunda conexión de internet (sección 5.2) los cortes deberían ser raros |
+| Controlador (PC) como respaldo completo | El Controlador (PC) tendría una copia de todo el sistema | Muy compleja: dos sistemas que mantener sincronizados |
+| **E. Ingreso como la salida** | El Controlador (PC) guarda la lista de quién puede ingresar (con las fechas de vencimiento) y el equipo facial se conecta a ella. Con internet, le pasa todo al servidor; sin internet, la PC habilita a la persona en el equipo, este hace rostro y alcohol como siempre y la PC abre el molinete. Al volver internet, envía los ingresos | **Mejora futura.** Mantiene rostro y alcohol sin internet y cubre también una caída del servidor; solo se perderían las bajas hechas durante el corte. Requiere programación considerable y pruebas con el equipo real |
 
 ---
 
@@ -606,7 +606,7 @@ Con una persona habilitada en el equipo facial y el sistema registrando todo lo 
 
 **Conclusión:** sin alcoholímetro **nadie ingresa sin prueba de alcohol**; el problema es solo operativo (nadie puede ingresar).
 
-### B.2. Alcoholímetro conectado a la PC de control (07/10/2026)
+### B.2. Alcoholímetro conectado al Controlador (PC) (07/10/2026)
 
 | Prueba | Resultado |
 |---|---|

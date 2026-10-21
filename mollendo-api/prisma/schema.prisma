@@ -85,6 +85,10 @@ enum AccionAuditoria {
   inicio_sesion
   /// Intento de inicio de sesión rechazado (correo o contraseña incorrectos, o cuenta de baja).
   inicio_sesion_fallido
+  /// Un equipo o servicio se desconectó (registro de desconexiones, a nombre de "Sistema").
+  desconexion
+  /// Volvió a conectarse, con cuánto duró la falla.
+  reconexion
 
   @@map("accion_auditoria")
 }

@@ -7,7 +7,7 @@ Versión 1.1 · 21 de octubre de 2026
 | Versión | Fecha | Descripción |
 |---|---|---|
 | Final | 30/09/2026 | Versión final. |
-| 1.1 | 21/10/2026 | Ingreso con el terminal facial en modo asistencia y sus dos órdenes (DNI → Facial + Alcohol y Facial + Alcohol → DNI) y plazos medidos; verificación manual; tarjeta de contingencia; contingencia "sin lector"; "Presentes ahora" para el vigilante; orden del ingreso y monitor del terminal en Sistema y APIs; HTTPS. |
+| 1.1 | 21/10/2026 | Ingreso con el terminal facial en modo asistencia y sus dos órdenes (DNI → Facial + Alcohol y Facial + Alcohol → DNI) y plazos medidos; verificación manual; tarjeta de contingencia; contingencia "sin lector"; "Presentes ahora" para el vigilante; orden del ingreso y monitor del terminal en Sistema y APIs; desconexiones de equipos en la Auditoría; HTTPS. |
 
 ## Contenido
 
@@ -104,7 +104,7 @@ La arquitectura es de tres capas: el **portal web** (presentación), el **backen
 
 Los contenedores se reinician automáticamente ante una falla y se inician junto con el servidor. Acceso: por la red local (`http://192.168.0.165:3000`) o por Tailscale (`http://100.78.153.33:3000`).
 
-**Modalidad con servidor en la nube.** El sistema también puede instalarse con el portal, el backend y la base de datos en un servidor en la nube. **Es la modalidad en uso desde el 16/10/2026, con un servidor en Azure de TMAM** (portal en **https://accesos.monteazulsur.com.pe**, con certificado de seguridad que se renueva solo). En esa modalidad, la mini PC trabaja como **controlador**:
+**Modalidad con servidor en la nube.** El sistema también puede instalarse con el portal, el backend y la base de datos en un servidor en la nube. **Es la modalidad en uso desde el 16/10/2026, con un servidor en Azure de TMAM** (portal en **https://accesos.monteazulsur.com.pe**, con certificado de seguridad que se renueva solo). En esa modalidad, la mini PC trabaja como **Controlador (PC)**:
 
 - lee los DNI y los envía al servidor por internet, con la clave de equipos;
 - recibe del servidor la orden de abrir cada molinete y activa su relé;
@@ -314,6 +314,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 ### 4.6. Auditoría (Administrador)
 
 - Registro de solo lectura que indica qué usuario creó, modificó o eliminó cada dato y en qué fecha: personal, empresas, documentos, tipos de documento y usuarios.
+- **Desconexiones de equipos** (desde el 21/10/2026): cada vez que un equipo o servicio se desconecta y cada vez que vuelve, a nombre de "Sistema", con cuánto tiempo estuvo sin conexión. Cubre el terminal facial, el Controlador (PC) (también un corte de internet en el punto de acceso), los lectores de DNI (con la contingencia "sin lector"), los relés de los molinetes y de aviso, la base de datos y los respaldos atrasados. Se revisa cada 10 segundos; se busca con "equipos".
 - Búsqueda por usuario o por tipo de dato ("personal", "documento"…) y filtro por rango de fechas ("Desde" / "Hasta"), paginado de 10 registros por página.
 
 ### 4.7. Sistema y APIs (Administrador)
@@ -383,7 +384,7 @@ Menú **Contingencias → Tarjetas de contingencia**. Cada tarjeta se muestra co
 | Apertura de los molinetes | Un módulo de relés USB por molinete, conectado al servidor: al autorizar una salida, o un ingreso aprobado por el terminal facial, el sistema activa el relé del molinete durante 1 segundo. |
 | Aviso de ingreso denegado | Un relé adicional (contacto seco) que se activa cada vez que se deniega un ingreso, por cualquier motivo: no registrado, dado de baja, documentos, alcohol o no completó la verificación facial (incluido el rostro no reconocido). Permite conectar una luz, una sirena o un tablero de vigilancia. |
 | Aviso de salida denegada | Otro relé (contacto seco) que se activa cuando se pasa por la salida un DNI no registrado, también si el punto de acceso está sin conexión a internet. |
-| Lectores de DNI | Dos lectores de código de barras (ingreso y salida) conectados por RS232 a la mini PC. Leen el código de barras del reverso del DNI (y el QR de la tarjeta de contingencia); el sistema registra el ingreso o la salida según el lector. |
+| Lectores de DNI | Dos lectores de código de barras (ingreso y salida) conectados por RS232 al Controlador (PC). Leen el código de barras del reverso del DNI (y el QR de la tarjeta de contingencia); el sistema registra el ingreso o la salida según el lector. |
 | Registro del personal en el terminal facial | Al registrar o editar a una persona, el sistema la carga en el terminal con su número de documento y su nombre; al cargar o cambiar su foto, se la envía y el terminal la usa para reconocerla. Se registran con el número de su documento (DNI, carné de extranjería o pasaporte). Todos los días el sistema revisa el terminal y lo deja igual al registro: borra a quien no está registrado en el sistema y agrega a quien falte. El personal no debe registrarse directamente en el terminal. |
 | Prueba de rostro y alcohol | El terminal facial trabaja en **modo asistencia** (desde el 19/10/2026): reconoce a todo el personal registrado, le toma la prueba con el alcoholímetro y envía al sistema quién sopló, la hora del soplido y el **grado de alcohol**. El sistema lo compara con el **umbral** (0,0001 g/L, el mismo configurado en el equipo) y decide según el orden del ingreso (RN-03). El terminal dice "correcto" unos 8 segundos después de medir y el aviso llega al sistema alrededor de 1 segundo después. |
 | Habilitación en el terminal facial | Solo con el terminal en modo control de acceso (el usado hasta el 19/10/2026): durante su minuto de espera, solo la persona del DNI tenía permiso de paso. |
@@ -493,7 +494,7 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Corte de luz o reinicio | El sistema se inicia automáticamente al encender la mini PC. Los datos guardados se conservan. |
 | Falla del backend | Se reinicia automáticamente. El Panel avisa "El servidor no responde". |
 | Emergencia o corte de luz en los molinetes | Los brazos de los molinetes se liberan automáticamente (función propia del equipo). |
-| Sin conexión a internet (modalidad con servidor en la nube) | El controlador detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: la mini PC guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
+| Sin conexión a internet (modalidad con servidor en la nube) | El controlador detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: el Controlador (PC) guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
 | Falla del alcoholímetro | Se conecta el alcoholímetro de repuesto al terminal facial; nadie ingresa sin la prueba de alcohol. |
 | Falla del terminal facial | **Verificación manual** (RN-16): el vigilante compara el rostro y toma la prueba con el alcoholímetro de repuesto. |
 | Falla de un lector de DNI | Contingencia **"sin lector"** (RN-18), que se activa sola, mientras se conecta el lector de repuesto. |
@@ -524,7 +525,8 @@ El detalle de cada contingencia está en el documento de contingencias.
 | Dado de baja | Persona inactiva en el sistema (por ejemplo, porque ya no labora en el terminal); no puede ingresar. |
 | Documento vigente / vencido | Según su fecha de vencimiento respecto de hoy (RN-04). |
 | Evento de acceso | Registro de un intento de ingreso o salida, autorizado o denegado. |
-| Mini PC | Servidor local, ubicado junto a los molinetes, donde se ejecuta el sistema. |
+| Mini PC | Computadora ubicada junto a los molinetes. Fue el servidor local; desde que el sistema está en la nube trabaja como Controlador (PC). |
+| Controlador (PC) | Papel de la mini PC con el servidor en la nube: lee los DNI, abre los molinetes y se conecta con el servidor. En el portal figura como "Controlador". |
 | Molinete | Torniquete de paso (ZKTeco TS2000 Plus). |
 | Protocolo PUSH | Protocolo de comunicación del fabricante ZKTeco entre el terminal facial y el sistema. |
 | Modo asistencia | Modo del terminal facial en uso desde el 19/10/2026: reconoce a todo el personal registrado y envía quién sopló y el grado de alcohol; decide el sistema (RN-03). |

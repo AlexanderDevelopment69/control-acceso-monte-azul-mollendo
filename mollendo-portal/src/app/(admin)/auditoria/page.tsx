@@ -28,6 +28,8 @@ const TABLA_LABEL: Record<string, string> = {
   evento_acceso: "Ingreso o salida (corrección manual)",
   periodo_verificacion_manual: "Verificación manual",
   ajuste_sistema: "Orden de ingreso",
+  tarjeta_contingencia: "Tarjeta de contingencia",
+  equipo: "Equipos",
 };
 const tablaLabel = (tabla: string) => TABLA_LABEL[tabla] ?? tabla;
 
@@ -37,11 +39,15 @@ const ACCION_COLOR: Record<string, "success" | "warning" | "error" | "info"> = {
   eliminar: "error",
   inicio_sesion: "success",
   inicio_sesion_fallido: "warning",
+  desconexion: "error",
+  reconexion: "success",
 };
 
 const ACCION_LABEL: Record<string, string> = {
   inicio_sesion: "inicio de sesión",
   inicio_sesion_fallido: "inicio rechazado",
+  desconexion: "desconectado",
+  reconexion: "conectado",
 };
 
 const esInicioSesion = (accion: string) => accion === "inicio_sesion" || accion === "inicio_sesion_fallido";
@@ -199,7 +205,11 @@ function AuditoriaContent() {
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {entrada.usuario?.correo ??
-                        (esInicioSesion(entrada.accion) ? (entrada.detalle?.split(" · ")[0] ?? "—") : "Carga de datos (script)")}
+                        (esInicioSesion(entrada.accion)
+                          ? (entrada.detalle?.split(" · ")[0] ?? "—")
+                          : entrada.tablaAfectada === "equipo"
+                            ? "Sistema"
+                            : "Carga de datos (script)")}
                     </TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{tablaLabel(entrada.tablaAfectada)}</TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
@@ -209,6 +219,10 @@ function AuditoriaContent() {
                           {entrada.ip ? `IP ${entrada.ip}` : "—"}
                           {entrada.detalle?.includes(" · ") && <span className="block text-gray-500">{entrada.detalle.split(" · ")[1]}</span>}
                         </span>
+                      ) : entrada.tablaAfectada === "equipo" ? (
+                        // Equipos: cuál, qué pasó y, al volver, cuánto estuvo sin conexión.
+                        // Texto largo: en varias líneas, para que no empuje la columna Acción fuera de la vista.
+                        <span className="block min-w-60 max-w-md text-xs whitespace-normal">{entrada.detalle}</span>
                       ) : (
                         `#${entrada.registroId}`
                       )}

@@ -217,12 +217,20 @@ const CAPTURAS = [
   {
     clave: "auditoria",
     ruta: "/auditoria",
+    // Buscando "equipos", como dice el manual: se ven las desconexiones (en la PC de desarrollo no hay equipos).
+    preparar: async (p) => {
+      await p.locator('input[placeholder*="Buscar por usuario"]').fill("equipos");
+      await p.waitForFunction(() => [...document.querySelectorAll("td")].some((td) => td.innerText.trim() === "Sistema"));
+      await espera(800);
+    },
     alto: 640,
     puntos: [
       { sel: 'input[placeholder*="Buscar por usuario"]', lado: "texto-buscador" },
       { sel: 'input[placeholder="Desde"]', lado: "izq" },
       { sel: "th::-p-text(Dato)", texto: true, lado: "der" },
       { sel: "th::-p-text(Acción)", texto: true, lado: "der" },
+      // Una desconexión de equipo (a nombre de "Sistema").
+      { sel: "td::-p-text(Sistema)", texto: true, lado: "der" },
     ],
   },
   {

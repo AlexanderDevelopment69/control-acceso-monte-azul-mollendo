@@ -24,6 +24,9 @@ export const TABLA_LABEL: Record<string, string> = {
   usuario: 'Usuario',
   periodo_verificacion_manual: 'Verificación manual',
   tarjeta_contingencia: 'Tarjeta de contingencia',
+  ajuste_sistema: 'Orden de ingreso',
+  evento_acceso: 'Ingreso o salida (corrección manual)',
+  equipo: 'Equipos',
 };
 
 /** Tablas cuyo nombre visible contiene la palabra (sin distinguir mayúsculas ni tildes). */
