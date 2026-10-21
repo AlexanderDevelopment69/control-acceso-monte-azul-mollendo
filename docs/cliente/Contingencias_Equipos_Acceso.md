@@ -316,8 +316,8 @@ Hecho el 20/10/2026. El administrador crea e imprime en el portal (**Contingenci
 - **Ingreso** (orden "facial primero"): el trabajador avisa al vigilante, hace rostro y alcohol y, cuando el Panel muestra *"Aprobó … pase su DNI"*, el vigilante pasa la tarjeta por el lector de ingreso en esos 15 segundos. Entra el trabajador que aprobó, con sus documentos revisados como siempre. Si hay dos personas esperando su DNI a la vez, no abre.
 - **Salida:** el vigilante toca **"Salida sin DNI"** en el Panel, elige al trabajador (solo aparecen quienes figuran dentro) y tiene 2 minutos para pasar la tarjeta por el lector de salida.
 - El ingreso o la salida queda **a nombre del trabajador**, marcado *"Tarjeta de contingencia"* (en la salida, con el vigilante que lo eligió). Cada uso, aceptado o no, queda en la lista de usos de la tarjeta; la tarjeta pasada en otro momento no abre y suena el aviso.
-- El administrador puede ponerle fecha de vencimiento o dejarla sin vencer, desactivarla y **cambiar su código** si se pierde o alguien le toma una foto (la impresa deja de servir). El vigilante solo ve las tarjetas.
-- Sin internet no sirve (el sistema no sabe quién es). Con la verificación manual activa tampoco: decide el vigilante en el Panel.
+- El administrador puede ponerle fecha de vencimiento o dejarla sin vencer, desactivarla y **cambiar su código** si se pierde o alguien le toma una foto (la impresa pierde vigencia). El vigilante solo ve las tarjetas.
+- Sin internet no es válida (el sistema no sabe quién es). Con la verificación manual activa tampoco: decide el vigilante en el Panel.
 
 ## 7. Otras fallas
 

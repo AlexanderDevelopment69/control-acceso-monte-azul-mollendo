@@ -1309,7 +1309,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'Verificación manual activa: el ingreso lo decide el vigilante en el Panel');
     }
     if (!(await this.modoIngreso.facialPrimero())) {
-      return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'La tarjeta sirve solo con el orden "facial primero"');
+      return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'La tarjeta solo es válida con el orden "facial primero"');
     }
     if (this.aprobacionesVigentes().length === 0) {
       this.tarjetaEsperandoPrueba = { tarjeta, dto, en: Date.now() };

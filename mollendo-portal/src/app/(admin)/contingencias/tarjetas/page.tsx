@@ -245,12 +245,12 @@ function VencimientoModal({
         {tarjeta ? tarjeta.nombre : "Después de crearla, imprímala y entréguela al vigilante."}
       </p>
       <div role="radiogroup" aria-label="Vencimiento" className="mt-5 grid grid-cols-2 gap-3">
-        {opcion(false, <span className="text-xl leading-none">∞</span>, "No vence", "Sirve hasta que se desactive.")}
-        {opcion(true, <CalenderIcon className="size-5" />, "Vence un día", "Deja de servir después de esa fecha.")}
+        {opcion(false, <span className="text-xl leading-none">∞</span>, "No vence", "Vigente hasta que se desactive.")}
+        {opcion(true, <CalenderIcon className="size-5" />, "Vence un día", "Pierde vigencia después de esa fecha.")}
       </div>
       {vence && (
         <div className="mt-4">
-          <DatePicker id="vence-tarjeta" label="Último día en que sirve" value={dia} min={hoy()} onChange={setDia} placeholder="Elija el día" />
+          <DatePicker id="vence-tarjeta" label="Vigente hasta el" value={dia} min={hoy()} onChange={setDia} placeholder="Elija el día" />
         </div>
       )}
       {error && <ErrorBanner className="mt-4">{error}</ErrorBanner>}
@@ -268,7 +268,7 @@ function VencimientoModal({
 
 type Confirmacion = { tarjeta: TarjetaContingencia; accion: "desactivar" | "activar" | "cambiar-codigo" | "eliminar" };
 
-/** Confirmación de desactivar, activar o cambiar el código (la tarjeta impresa deja de servir). */
+/** Confirmación de desactivar, activar o cambiar el código (la tarjeta impresa pierde vigencia). */
 function ConfirmarAccion({
   confirmacion,
   onCerrar,
@@ -311,13 +311,13 @@ function ConfirmarAccion({
           <p className="text-sm text-gray-600 dark:text-gray-300">
             {accion === "cambiar-codigo" && (
               <>
-                La <strong>{t.nombre}</strong> impresa dejará de servir. Úselo si se perdió o alguien le tomó una foto. Después
+                La <strong>{t.nombre}</strong> impresa perderá vigencia. Úselo si se perdió o alguien le tomó una foto. Después
                 imprímala otra vez y entréguela al vigilante.
               </>
             )}
             {accion === "desactivar" && (
               <>
-                ¿Desactivar la <strong>{t.nombre}</strong>? Dejará de servir hasta que la vuelva a activar.
+                ¿Desactivar la <strong>{t.nombre}</strong>? Perderá vigencia hasta que la vuelva a activar.
               </>
             )}
             {accion === "eliminar" && (
@@ -328,7 +328,7 @@ function ConfirmarAccion({
             )}
             {accion === "activar" && (
               <>
-                ¿Activar la <strong>{t.nombre}</strong>? Volverá a servir en los lectores.
+                ¿Activar la <strong>{t.nombre}</strong>? Volverá a estar vigente en los lectores.
               </>
             )}
           </p>
@@ -408,7 +408,7 @@ function TarjetasContent() {
       listo(`Se eliminó la ${tarjeta.nombre.toLowerCase()}.`);
     } else if (accion === "cambiar-codigo") {
       await tarjetasContingenciaApi.cambiarCodigo(tarjeta.id);
-      listo(`Se cambió el código de la ${tarjeta.nombre.toLowerCase()}. Imprímala otra vez: la anterior ya no sirve.`);
+      listo(`Se cambió el código de la ${tarjeta.nombre.toLowerCase()}. Imprímala otra vez: la anterior perdió vigencia.`);
     } else {
       await tarjetasContingenciaApi.actualizar(tarjeta.id, { activa: accion === "activar" });
       listo(`La ${tarjeta.nombre.toLowerCase()} quedó ${accion === "activar" ? "activa" : "desactivada"}.`);
