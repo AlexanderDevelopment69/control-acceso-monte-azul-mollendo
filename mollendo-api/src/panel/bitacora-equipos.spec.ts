@@ -49,14 +49,16 @@ describe('registro de desconexiones de equipos', () => {
         },
       },
     };
+    const avisos: unknown[] = [];
     const servicio = new BitacoraEquiposService(prisma as never, {
       calcular: async () => {
         if (baseCaida) throw new Error('sin base');
         const e = actual;
         return { api: { fecha: e.fecha }, baseDeDatos: e.baseDeDatos, integraciones: { claveEquiposConfigurada: true }, respaldos: e.respaldos, equipos: { dispositivos: e.dispositivos }, lectoresDni: e.lectoresDni, releMolinetes: e.releMolinetes, controladorGarita: e.controlador };
       },
-    } as never);
+    } as never, { emit: (_e: string, d: unknown) => avisos.push(d) } as never);
     return {
+      avisos,
       servicio,
       guardados,
       poner: (cambios: Parameters<typeof estado>[0]) => (actual = estado(cambios)),
@@ -77,6 +79,8 @@ describe('registro de desconexiones de equipos', () => {
       ['desconexion', 'Lector de DNI de salida: desconectado. Contingencia "sin lector" activada'],
       ['reconexion', 'Lector de DNI de salida: conectado de nuevo (estuvo 20 s sin conexión). Contingencia "sin lector" terminada'],
     ]);
+    // Un aviso en vivo por cambio (la caída y la vuelta), no por cada revisión.
+    expect(b.avisos).toHaveLength(2);
   });
 
   it('sin el Controlador (PC), el lector que ya estaba caído sigue abierto hasta que se lo pueda ver', async () => {

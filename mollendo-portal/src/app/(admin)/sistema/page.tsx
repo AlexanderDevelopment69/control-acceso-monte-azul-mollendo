@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { panelApi } from "@/lib/api/endpoints";
+import { escucharEventos } from "@/lib/ws";
 import { API_BASE } from "@/lib/config";
 import type { EstadoSistema } from "@/lib/api/types";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
@@ -60,9 +61,12 @@ function SistemaContent() {
     }
     cargar();
     const interval = setInterval(cargar, 15000);
+    // Un equipo se cayó o volvió: se recarga en el acto (la franja de fallas también, con el mismo aviso).
+    const dejarDeEscuchar = escucharEventos({ "equipos-cambio": () => void cargar() }, () => void cargar());
     return () => {
       activo = false;
       clearInterval(interval);
+      dejarDeEscuchar();
     };
   }, [version]);
 

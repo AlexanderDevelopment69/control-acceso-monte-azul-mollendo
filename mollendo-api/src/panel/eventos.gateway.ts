@@ -118,6 +118,12 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
     this.server.emit('tarjeta-contingencia-uso', {});
   }
 
+  // Un equipo se desconectó o volvió (registro de desconexiones): la franja de fallas y "Sistema y APIs" se actualizan.
+  @OnEvent('equipos.cambio')
+  handleEquiposCambio(): void {
+    this.server.emit('equipos-cambio', {});
+  }
+
   // Un lector de DNI se desconectó o volvió (contingencia "sin lector"): los paneles actualizan su franja.
   @OnEvent('sin-lector.cambio')
   handleSinLector(payload: unknown): void {

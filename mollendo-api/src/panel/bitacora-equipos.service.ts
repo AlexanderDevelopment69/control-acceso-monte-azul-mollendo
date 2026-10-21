@@ -1,11 +1,12 @@
 import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { EstadoSistemaService } from './estado-sistema.service.js';
 import { dependeDelControlador, fallasEquipos, textoVuelta, type Falla } from './bitacora-equipos.js';
 
 /** Cada cuánto se revisan los equipos (el controlador informa cada ~5 s; el G4 Pro, cada ~2 s). */
-const REVISION_MS = 10 * 1000;
+const REVISION_MS = 5 * 1000;
 /** Al arrancar el servidor, el controlador y el G4 Pro tardan unos segundos en volver a conectarse: no es una desconexión. */
 const ESPERA_INICIAL_MS = 30 * 1000;
 /** En la Auditoría, el dato de estos registros. */
@@ -32,6 +33,7 @@ export class BitacoraEquiposService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly estadoSistema: EstadoSistemaService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   onModuleInit() {
@@ -98,6 +100,7 @@ export class BitacoraEquiposService implements OnModuleInit, OnModuleDestroy {
       soloBase = true;
     }
 
+    const antes = this.pendientes.length;
     const caidas = new Map(fallas.map((f) => [f.etiqueta, f]));
     for (const f of fallas) {
       if (this.abiertas.has(f.etiqueta)) continue;
@@ -111,6 +114,8 @@ export class BitacoraEquiposService implements OnModuleInit, OnModuleDestroy {
       this.abiertas.delete(etiqueta);
       this.anotar('reconexion', textoVuelta(etiqueta, ahora.getTime() - desde.getTime(), remoto), ahora);
     }
+    // Algo se cayó o volvió: la franja de fallas y "Sistema y APIs" se actualizan en el acto (y juntas).
+    if (this.pendientes.length !== antes) this.eventEmitter.emit('equipos.cambio', {});
     await this.guardar();
   }
 

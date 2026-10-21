@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { AvisoSistema as Aviso } from "@/lib/api/types";
+import { escucharEventos } from "@/lib/ws";
 import {
   AlertCircleIcon,
   BellIcon,
@@ -102,9 +103,12 @@ export function AvisoSistema() {
         });
     revisar();
     const id = setInterval(revisar, CADA_MS);
+    // El servidor avisa en vivo cuando un equipo se cae o vuelve: se revisa en el acto, junto con "Sistema y APIs".
+    const dejarDeEscuchar = escucharEventos({ "equipos-cambio": revisar }, revisar);
     return () => {
       activo = false;
       clearInterval(id);
+      dejarDeEscuchar();
     };
   }, [user]);
 
