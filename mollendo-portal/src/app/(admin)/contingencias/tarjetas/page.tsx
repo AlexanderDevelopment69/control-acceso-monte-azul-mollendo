@@ -268,7 +268,7 @@ function VencimientoModal({
 
 type Confirmacion = { tarjeta: TarjetaContingencia; accion: "desactivar" | "activar" | "cambiar-codigo" | "eliminar" };
 
-/** Confirmación de desactivar, activar o cambiar el código (la tarjeta impresa pierde vigencia). */
+/** Confirmación de desactivar, activar o cambiar el código (la tarjeta impresa queda anulada). */
 function ConfirmarAccion({
   confirmacion,
   onCerrar,
@@ -311,19 +311,17 @@ function ConfirmarAccion({
           <p className="text-sm text-gray-600 dark:text-gray-300">
             {accion === "cambiar-codigo" && (
               <>
-                La <strong>{t.nombre}</strong> impresa perderá vigencia. Úselo si se perdió o alguien le tomó una foto. Después
-                imprímala otra vez y entréguela al vigilante.
+                Use esta opción si la tarjeta se perdió. La <strong>{t.nombre}</strong> impresa quedará anulada y deberá imprimirse de nuevo.
               </>
             )}
             {accion === "desactivar" && (
               <>
-                ¿Desactivar la <strong>{t.nombre}</strong>? Perderá vigencia hasta que la vuelva a activar.
+                ¿Desactivar la <strong>{t.nombre}</strong>? Quedará sin vigencia hasta que la vuelva a activar.
               </>
             )}
             {accion === "eliminar" && (
               <>
-                ¿Eliminar la <strong>{t.nombre}</strong>? Nunca se usó: se borra definitivamente y queda en la Auditoría. Si ya la
-                imprimió, deje de usarla.
+                ¿Eliminar la <strong>{t.nombre}</strong>? Se borrará definitivamente.
               </>
             )}
             {accion === "activar" && (
@@ -408,7 +406,7 @@ function TarjetasContent() {
       listo(`Se eliminó la ${tarjeta.nombre.toLowerCase()}.`);
     } else if (accion === "cambiar-codigo") {
       await tarjetasContingenciaApi.cambiarCodigo(tarjeta.id);
-      listo(`Se cambió el código de la ${tarjeta.nombre.toLowerCase()}. Imprímala otra vez: la anterior perdió vigencia.`);
+      listo(`Se cambió el código de la ${tarjeta.nombre.toLowerCase()}. La impresa quedó anulada: imprímala de nuevo.`);
     } else {
       await tarjetasContingenciaApi.actualizar(tarjeta.id, { activa: accion === "activar" });
       listo(`La ${tarjeta.nombre.toLowerCase()} quedó ${accion === "activar" ? "activa" : "desactivada"}.`);

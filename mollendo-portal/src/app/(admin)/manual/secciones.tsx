@@ -601,7 +601,7 @@ export const SECCIONES: SeccionManual[] = [
             </p>
             <p>
               <b>Administrador:</b> ahí mismo crea la tarjeta (“No vence” o hasta un día), la imprime, la desactiva o la elimina (solo si nunca se usó). Si se pierde o alguien le
-              toma una foto, use <b>“Cambiar código”</b>: la impresa pierde vigencia y se imprime otra. El vigilante solo ve las tarjetas y sus
+              toma una foto, use <b>“Cambiar código”</b>: la impresa queda anulada y debe imprimirse de nuevo. El vigilante solo ve las tarjetas y sus
               usos.
             </p>
           </>
