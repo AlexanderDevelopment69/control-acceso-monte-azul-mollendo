@@ -31,7 +31,8 @@ GET /iclock/cdata?SN=HSR3263100192&options=all&pushver=2.4.1&DeviceType=att
 DATA UPDATE USERINFO PIN=12345678\tName=Juan Pérez\tPri=0\tPasswd=\tCard=\tGrp=1\tTZ=0000000100000000\tVerify=-1\tViceCard=
 DATA UPDATE biophoto PIN=12345678\tType=9\tSize=…\tContent=<foto JPG ≤ 20 KB en base64>\tFormat=0\tUrl=\tPostBackTmpFlag=0
 DATA DELETE USERINFO PIN=12345678
-DATA QUERY USERINFO   // lista de usuarios (responde por table=OPERLOG y table=BIODATA)`,
+DATA QUERY USERINFO   // lista de usuarios (responde por table=OPERLOG y table=BIODATA)
+SHELL cat /sys/bus/usb/devices/*/uevent | grep -c PRODUCT=1a86/7523/   // cada 10 s: ¿está el alcoholímetro? (2 / 0)`,
     ejemploRespuesta: `// Cada prueba (table=ATTLOG), campos separados por tabulador:
 // DNI, hora, estado (255), verificación (15 = rostro), código de trabajo,
 // 2 reservados, mascarilla (255 = apagada), temperatura, temperatura convertida,

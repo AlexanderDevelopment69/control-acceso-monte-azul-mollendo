@@ -859,3 +859,11 @@ El G4 acepta el comando `SHELL` del protocolo PUSH (12.8.1) y responde por `/icl
 - Bases de datos: `/data/data/com.zkteco.android.core/databases/ZKDB.db`, `ZKEXTDB.db`, `ZKSystem.db`.
 
 **Se detuvo aquí:** no se descargaron las bases de datos ni los registros internos. Los scripts usados se borraron del servidor. Para ver los datos completos queda la vía oficial del equipo (exportar por USB desde el menú) o pedírselo a ZKTeco.
+
+## 21/10/2026 — El alcoholímetro como equipo aparte
+
+- El G4 Pro ve al DT1700 como un USB "USB Serial" (`1a86:7523`, chip CH340, `/dev/ttyUSB0`), el único puerto serie del equipo. Lo abre solo durante cada prueba (5-6 s después del inicio).
+- El servidor le pregunta cada 10 s si lo ve (orden `SHELL` de solo lectura): si no, franja de fallas, tarjeta en Sistema y APIs y Auditoría. Probado con una simulación (`ALCOHOLIMETRO_USB`); falta desconectarlo de verdad.
+- Aprendido: con varias órdenes separadas por `;` el equipo devuelve solo la salida de la última (usar `sh -c '…'`); el `logcat` es legible y guarda el grado medido de cada prueba.
+- Un alcoholímetro conectado pero apagado o malogrado todavía no se detecta. En internet no hay documentación del DT1700 (el manual, la ficha y la guía rápida del G4 Pro no lo mencionan).
+- Detalle y consultas: guía de depuración, sección 8.

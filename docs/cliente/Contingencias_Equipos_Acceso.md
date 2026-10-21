@@ -12,7 +12,7 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 
 | Si falla… | Qué se hace | Quién | ¿Se pierde algún control? | Estado |
 |---|---|---|---|---|
-| **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3) | El vigilante informa; soporte lo cambia | No | Decidido. Falta comprar el repuesto |
+| **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3). Si se desconecta, la franja roja lo avisa en unos 10 segundos | El vigilante informa; soporte lo cambia | No | Decidido. Falta comprar el repuesto |
 | **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto (sección 4) | Vigilante o administrador la activan; el vigilante aprueba cada ingreso | No | **Programado** (15/10/2026); falta la prueba en el punto de acceso |
 | **Internet** del punto de acceso | **Segunda conexión de otro proveedor** que entra sola (sección 5) | TMAM | No | Decidido, a cargo de TMAM |
 | **Lector de DNI** | Mientras tanto, contingencia **"sin lector"**, que se activa sola: el **ingreso** es solo con rostro y alcohol y la **salida** la abre el vigilante desde **"Presentes ahora"**; se conecta el **lector de repuesto** (sección 6) | El vigilante informa y abre las salidas; soporte cambia el lector | En el ingreso, el DNI: la persona se identifica solo por su rostro | **Programado** (21/10/2026); falta probarlo en el punto de acceso y el repuesto |
@@ -77,7 +77,7 @@ En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y sue
 | **"Sistema y APIs"** | Portal del administrador | El estado de cada equipo, en detalle | Ya existe |
 | **Auditoría** | Portal del administrador | Cada desconexión y cada vuelta de un equipo, con cuánto duró (buscar "equipos") | Ya existe |
 | **Panel de vigilancia** | Portal del vigilante | Cada ingreso: "esperando rostro y alcohol" con su cuenta regresiva, y el resultado | Ya existe |
-| **Pantalla del equipo facial** | En el punto de acceso | Un ícono con **punto rojo** si el alcoholímetro está desconectado (visto el 07/10; falta confirmar que aparece en el modo actual) | Ya existe |
+| **Pantalla del equipo facial** | En el punto de acceso | Mensajes del propio equipo: *"Probador de alcohol no conectado"* al desconectarlo y *"Por favor, verifique si el probador de alcohol está conectado o encendido"* o *"Fallo al conectar el probador"* si no responde (están en su programa; falta verlos en la prueba física). **No muestra un punto rojo** en el modo actual (el ícono se vio el 07/10, en el modo anterior) | Ya existe |
 | **La propia persona** | En el molinete | Avisa al vigilante si no puede pasar | — |
 
 ---
@@ -100,20 +100,30 @@ La persona que no puede soplar **no se va**: le avisa al vigilante en ese moment
 |---|---|
 | La persona dice *"miré al equipo pero no me deja soplar"* | — |
 | El Panel muestra "esperando rostro y alcohol" y, al minuto, "Denegado: no completó rostro y alcohol" | Ya existe |
-| **Aviso en el Panel**: en el momento en que alguien no completa, aparece arriba del Panel un aviso ámbar con su nombre y la hora: *"Si dice que no pudo soplar: revise si el equipo facial muestra un punto rojo (alcoholímetro desconectado) y avise a soporte."* Se cierra con la ✕ o desaparece solo cuando la siguiente persona ingresa bien; se mantiene al recargar la página. La etiqueta "No completó rostro y alcohol" de la tabla lleva una ⓘ con la misma explicación | Programado (15/10/2026); falta subirlo al servidor |
+| **Aviso en el Panel**: en el momento en que alguien no completa, aparece arriba del Panel un aviso ámbar con su nombre y la hora: *"Si dice que no pudo soplar: revise si arriba dice «Alcoholímetro desconectado» y avise a soporte."* Se cierra con la ✕ o desaparece solo cuando la siguiente persona ingresa bien; se mantiene al recargar la página. La etiqueta "No completó rostro y alcohol" de la tabla lleva una ⓘ con la misma explicación | Ya existe |
 | **Franja roja de fallas y "Sistema y APIs"**: "Alcoholímetro (DT1700): Desconectado" (unos 10 segundos) | Ya existe (21/10/2026); falta la prueba desconectándolo de verdad |
-| Punto rojo en la pantalla del equipo facial | Ya existe |
+| Mensaje del equipo facial *"Probador de alcohol no conectado"* (no muestra punto rojo) | Falta verlo en la prueba física |
 
 ### 3.3. Qué se hace
 
-1. **Vigilante:** mira la franja roja de fallas y la pantalla del equipo facial; si dice "Alcoholímetro (DT1700): Desconectado" o tiene el **punto rojo**, es el alcoholímetro. **Informa** a soporte y al administrador.
+1. **Vigilante:** mira la franja roja de fallas y la pantalla del equipo facial; si dice "Alcoholímetro (DT1700): Desconectado" o el equipo facial muestra *"Probador de alcohol no conectado"*, es el alcoholímetro. **Informa** a soporte y al administrador.
 2. **Soporte:** desconecta el alcoholímetro malogrado y **conecta el de repuesto** al equipo facial.
 3. **Soporte:** comprueba con una persona que el equipo le pida soplar y la apruebe. La persona que no pudo pasar vuelve a pasar su DNI e ingresa normal.
 4. **Administrador:** gestiona la reparación del alcoholímetro malogrado.
 
 Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar, el vigilante o el administrador pueden activar la **verificación manual** de la sección 4 (con el alcoholímetro de repuesto usado solo).
 
-### 3.4. Requisitos del repuesto
+### 3.4. Pendiente: prueba en el punto de acceso
+
+Lo anterior se comprobó con una **simulación** (21/10/2026). Falta probarlo con el equipo real:
+
+1. **Desconectar el alcoholímetro:** que la franja roja y "Sistema y APIs" lo muestren en unos 10 segundos, que el equipo facial muestre *"Probador de alcohol no conectado"* y que nadie entre.
+2. **Alcoholímetro conectado pero apagado:** ver qué muestra el equipo facial. Este caso hoy **no** lo detecta el sistema (el equipo solo le habla al alcoholímetro durante una prueba).
+3. **Una persona que no sopla:** confirmar que el equipo abandona la prueba y nadie entra.
+
+Con los casos 2 y 3 se programará un aviso de **"posible falla"** cuando varias pruebas seguidas no midan. El detalle técnico está en la guía de depuración del G4 Pro (sección 8).
+
+### 3.5. Requisitos del repuesto
 
 - Debe ser **el mismo modelo (DT1700)** u otro que el equipo facial acepte. Un alcoholímetro portátil cualquiera **no se puede conectar** al equipo facial.
 - El DT1700 **también funciona solo** (pantalla, botón "Test" y registro de pruebas; anexo B), así que el mismo repuesto sirve para la verificación manual de la sección 4.
@@ -271,7 +281,7 @@ Funciona con el orden **"facial primero"**. Con el orden "facial primero", el eq
 
 **Qué control se pierde:** el DNI. La persona se identifica **solo por su rostro**; el equipo facial podría confundir a dos personas muy parecidas. Por eso queda marcado en el Panel y en el reporte.
 
-Con el **orden normal** (DNI primero) no hay ingreso sin lector: el sistema no sabe quién es la persona hasta que pasa el DNI.
+Con el orden **DNI → Facial + Alcohol** no hay ingreso sin lector: el sistema no sabe quién es la persona hasta que pasa el DNI.
 
 #### Salida: desde "Presentes ahora"
 
@@ -602,7 +612,7 @@ Con una persona habilitada en el equipo facial y el sistema registrando todo lo 
 | Paso | Resultado |
 |---|---|
 | Verificaciones con el alcoholímetro conectado | Aprobadas: el equipo informa "apto" |
-| Desconectar el alcoholímetro | El equipo **no envía nada** al sistema; solo muestra un ícono con punto rojo en su pantalla |
+| Desconectar el alcoholímetro | El equipo **no envía nada** al sistema; solo muestra un ícono con punto rojo en su pantalla. *(Desde el 21/10/2026 el sistema lo detecta por su cuenta, preguntándole al equipo cada 10 segundos: sección 3.1.)* |
 | Verificación sin el alcoholímetro | Reconoce el rostro, muestra *"Verificación de identidad completada. Realice una medición de alcohol."* y **queda esperando**: no aprueba ni informa nada |
 | Volver a conectar el alcoholímetro | El equipo **no envía nada** al sistema |
 

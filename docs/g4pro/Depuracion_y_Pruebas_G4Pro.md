@@ -177,6 +177,7 @@ Comandos usados en las pruebas:
 | `SET OPTION <Clave>=<valor>` + `RELOAD OPTIONS` | Cambiar una opción del equipo (siempre seguido de `RELOAD OPTIONS`) |
 | `DATA QUERY USERINFO` | Pedir la lista de usuarios (responde por `OPERLOG` y `BIODATA`) |
 | `SHELL date +%s` | Hora del G4 en segundos, para compararla con la del servidor (diferencia normal: 1-2 s) |
+| `SHELL sh -c '…; …'` | Varias órdenes de **solo lectura** en una (sin `sh -c`, el equipo devuelve solo la salida de la última). La respuesta queda en el registro de la API, cortada a 1000 caracteres: hacer consultas cortas (ver sección 8) |
 
 **No mande** `DATA DELETE`, `CLEAR` ni cambios de usuarios a mano: borran personas o rostros del equipo. Para dejar el G4 igual al sistema use **Sincronizar ahora** en Sistema y APIs.
 
@@ -225,3 +226,58 @@ select clave, valor, modificado_en, modificado_por from ajuste_sistema where cla
 | "No llegó la prueba N.º …" | El G4 perdió la conexión al mandarla | Revisar red de la garita; al volver, las pruebas viejas llegan con atraso y solo se guardan |
 | El contenedor `backup` se reinicia sin parar (`syntax error`) | Un `.sh` subido desde Windows con fines de línea CRLF | `sed -i 's/\r$//' deploy/comun/respaldo.sh` en el servidor y `docker compose restart backup` (pasó el 20/10/2026) |
 | Persona en el G4 que no está en el sistema | Registrada a mano en el equipo | Sincronizar ahora (la borra del G4) |
+
+---
+
+## 8. Alcoholímetro: diagnóstico
+
+Investigado el 21/10/2026 con órdenes `SHELL` de solo lectura (sin cambiar nada en el equipo).
+
+### 8.1. Cómo lo vigila el sistema
+
+- El DT1700 va por USB al G4 Pro, que lo ve como "USB Serial" (fabricante `1a86`, producto `7523`, chip CH340, `/dev/ttyUSB0`). Es el único puerto serie del equipo.
+- La API (`AlcoholimetroService`) pregunta **cada 10 s** a cada G4 en línea: `SHELL cat /sys/bus/usb/devices/*/uevent | grep -c PRODUCT=1a86/7523/` → `2` si está, `0` si no. La orden no se anota en el registro y se borra de la cola al responder.
+- Si no está: franja de fallas, tarjeta "Alcoholímetro (DT1700)" en Sistema y APIs y la Auditoría ("Sistema", dato "Equipos"), igual que los demás equipos.
+- **Simular una desconexión** (sin tocar el equipo): en Azure, `cd ~/mollendo/deploy/nube && sudo ALCOHOLIMETRO_USB=ffff/0000 docker compose up -d --no-deps api`; volver con `sudo docker compose up -d --no-deps api` (variable vacía = el real; solo acepta la forma `xxxx/xxxx`). Probado el 21/10 (11:07–11:10).
+- **Límite:** un alcoholímetro conectado pero apagado o malogrado **no se detecta así**: el USB sigue presente y el equipo solo le habla durante una prueba.
+
+### 8.2. Qué hace el equipo en cada prueba
+
+En `/sdcard/ZKTeco/trace/Verify.txt`:
+
+| Desde el inicio | Línea | Qué es |
+|---|---|---|
+| 0 s | `stateAlcohol onStartAlcoholDetect` | Reconoció el rostro y empieza la prueba |
+| 5-6 s | `startAlcoholSerialPortConnect` | Abre el puerto del alcoholímetro (en todas las pruebas, también las buenas; en reposo nadie lo tiene abierto) |
+| ~12 s | `onFinishAlcoholResultHandler true` | Midió |
+| ~22 s | `cleanData: CON_MARK_BUNDLE 5` + `onWait` sin resultado | No midió: abandona y vuelve a esperar |
+
+Después del resultado el equipo sigue leyendo el alcoholímetro ~8 s y recién dice "correcto" (sección de los ~8 s en el checklist). Las líneas `onAlcohol` (~90 por segundo) son esas lecturas y no traen datos.
+
+El programa del equipo (`com.zktechnology.android.launcher`) también:
+
+- reacciona al conectar y desconectar el USB (`onAlcoholUsbAttached` / `onAlcoholUsbDetached` → `changeUsbAlcoholUiTips`, el aviso en pantalla);
+- tiene los avisos "Probador de alcohol conectado" / "Probador de alcohol no conectado" (USB), "Por favor, verifique si el probador de alcohol está conectado o encendido" y "Fallo al conectar el probador" (no responde), además de `alcohol_breath_break` / `alcohol_breath_over` (soplido interrumpido o terminado) y `alcohol_no_data`; **no tiene un ícono de punto rojo** (el usuario confirma que no aparece; se vio el 07/10 en el modo anterior);
+- escribe en el registro de Android (`logcat`, guarda unas horas) más detalle que en `Verify.txt`: `completeAlcoholDetected: concentration->` (grado medido), `startAlcoholSerialPortConnect: mSerialHelper isOpen=` y `startAlcoholSerialPortConnect Exception:` (no pudo abrir el puerto);
+- solo expone dos opciones del alcohol (`AlcoholDetectionFun`, `AlcoholVolume`): ninguna de tiempo.
+
+### 8.3. Consultas útiles (solo lectura)
+
+| Orden (`SHELL …`) | Para qué |
+|---|---|
+| `cat /sys/bus/usb/devices/*/uevent \| grep -c PRODUCT=1a86/7523/` | ¿Está conectado? (2 / 0) |
+| `sh -c 'cd /sdcard/ZKTeco/trace; grep -a -e onStartAlcoholDetect -e onFinishAlcohol -e SerialPort -e cleanData Verify.txt \| tail -12'` | Últimas pruebas: inicio, puerto, resultado o abandono |
+| `sh -c 'logcat -d \| grep -e concentration -e mSerialHelper -e UsbAttached -e UsbDetached -e Exception \| tail -15'` | Detalle de las últimas pruebas y de las conexiones USB (leer poco después: el registro se renueva) |
+| `sh -c 'dmesg \| grep -i -e ch34 -e ttyUSB -e "usb 1-1.4" \| tail -8'` | Conexiones y desconexiones USB desde el arranque, con su hora |
+
+No escribir en `/dev/ttyUSB0`: el protocolo del DT1700 no está documentado y podría chocar con una prueba en curso.
+
+### 8.4. Lo que no se sabe todavía
+
+- **Prueba física (pendiente, en el punto de acceso)**; leer `Verify.txt` y `logcat` justo después de cada caso:
+  1. Desconectar el USB del alcoholímetro: ¿la franja y la tarjeta en ~10 s? ¿"Probador de alcohol no conectado" en la pantalla? (no muestra punto rojo) ¿deja hacer la prueba? Volver a conectarlo.
+  2. Alcoholímetro **conectado pero apagado** (si tiene encendido propio): qué muestra la pantalla y qué deja en los registros.
+  3. Una persona reconocida que **no sopla**: confirmar el abandono a los ~22 s.
+- Con eso, **parte B**: aviso de "posible falla" cuando varias pruebas seguidas empiezan y no miden (leyendo `Verify.txt`), ajustado a lo que el equipo anote en los casos 2 y 3.
+- **Consultar a ZKTeco / proveedor:** por qué tarda 5-6 s en abrir el puerto y ~8 s en decir "correcto", y si se puede acortar; si el DT1700 tiene encendido propio o se alimenta del equipo. En internet ZKTeco solo documenta un "USB Alcohol Tester" sin modelo para el G4L; no hay manual público del DT1700 ni de qué hace el equipo si falla.
+- Ajustes guardados en la base interna del equipo (p. ej. un tiempo de prueba): no se revisan, porque habría que descifrarla.

@@ -7,7 +7,7 @@ Versión 1.1 · 21 de octubre de 2026
 | Versión | Fecha | Descripción |
 |---|---|---|
 | Final | 30/09/2026 | Versión final. |
-| 1.1 | 21/10/2026 | Ingreso con el terminal facial en modo asistencia y sus dos órdenes (DNI → Facial + Alcohol y Facial + Alcohol → DNI) y plazos medidos; verificación manual; tarjeta de contingencia; contingencia "sin lector"; "Presentes ahora" para el vigilante; orden del ingreso y monitor del terminal en Sistema y APIs; Auditoría con desconexiones de equipos, aperturas del molinete sin DNI, salida sin DNI, sincronización con el terminal, descargas de reportes y archivos abiertos; aviso de fallas en vivo; HTTPS. |
+| 1.1 | 21/10/2026 | Ingreso con el terminal facial en modo asistencia y sus dos órdenes (DNI → Facial + Alcohol y Facial + Alcohol → DNI) y plazos medidos; verificación manual; tarjeta de contingencia; contingencia "sin lector"; "Presentes ahora" para el vigilante; orden del ingreso y monitor del terminal en Sistema y APIs; Auditoría con desconexiones de equipos (también del alcoholímetro, revisado cada 10 segundos), aperturas del molinete sin DNI, salida sin DNI, sincronización con el terminal, descargas de reportes y archivos abiertos; aviso de fallas en vivo; HTTPS. |
 
 ## Contenido
 
@@ -314,7 +314,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 ### 4.6. Auditoría (Administrador)
 
 - Registro de solo lectura que indica qué usuario creó, modificó o eliminó cada dato y en qué fecha: personal, empresas, documentos, tipos de documento y usuarios.
-- **Desconexiones de equipos** (desde el 21/10/2026): cada vez que un equipo o servicio se desconecta y cada vez que vuelve, a nombre de "Sistema", con cuánto tiempo estuvo sin conexión. Cubre el terminal facial, el Controlador (PC) (también un corte de internet en el punto de acceso), los lectores de DNI (con la contingencia "sin lector"), los relés de los molinetes y de aviso, la base de datos y los respaldos atrasados. Se revisa cada 5 segundos; se busca con "equipos".
+- **Desconexiones de equipos** (desde el 21/10/2026): cada vez que un equipo o servicio se desconecta y cada vez que vuelve, a nombre de "Sistema", con cuánto tiempo estuvo sin conexión. Cubre el terminal facial, el alcoholímetro (desconectado del terminal), el Controlador (PC) (también un corte de internet en el punto de acceso), los lectores de DNI (con la contingencia "sin lector"), los relés de los molinetes y de aviso, la base de datos y los respaldos atrasados. Se revisa cada 5 segundos; se busca con "equipos".
 - **Otras acciones** (desde el 21/10/2026), con quién y el detalle: **apertura manual** del molinete sin DNI (por la API, o "Salida sin lector" desde Presentes ahora), **Salida sin DNI** (elegir al personal y cancelar), **sincronización** con el terminal facial (simular, "Sincronizar ahora", la revisión diaria a nombre de "Sistema", y activarla o desactivarla), **descarga** de cada reporte (cuál, formato y filtros) y **consulta** del archivo de un documento (cuál y de quién).
 - Búsqueda por usuario o por tipo de dato ("personal", "documento"…) y filtro por rango de fechas ("Desde" / "Hasta"), paginado de 10 registros por página.
 
@@ -496,7 +496,7 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Falla del backend | Se reinicia automáticamente. El Panel avisa "El servidor no responde". |
 | Emergencia o corte de luz en los molinetes | Los brazos de los molinetes se liberan automáticamente (función propia del equipo). |
 | Sin conexión a internet (modalidad con servidor en la nube) | El controlador detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: el Controlador (PC) guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
-| Falla del alcoholímetro | Se conecta el alcoholímetro de repuesto al terminal facial; nadie ingresa sin la prueba de alcohol. |
+| Falla del alcoholímetro | Si se desconecta, el aviso de fallas lo muestra en unos 10 segundos (uno conectado pero apagado o malogrado todavía no se detecta). Se conecta el alcoholímetro de repuesto al terminal facial; nadie ingresa sin la prueba de alcohol. |
 | Falla del terminal facial | **Verificación manual** (RN-16): el vigilante compara el rostro y toma la prueba con el alcoholímetro de repuesto. |
 | Falla de un lector de DNI | Contingencia **"sin lector"** (RN-18), que se activa sola, mientras se conecta el lector de repuesto. |
 | Personal sin DNI, o DNI que el lector no lee | **Tarjeta de contingencia** (RN-17). |

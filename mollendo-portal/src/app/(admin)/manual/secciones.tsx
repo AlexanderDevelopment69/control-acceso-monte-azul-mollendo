@@ -563,8 +563,8 @@ export const SECCIONES: SeccionManual[] = [
                   <Badge color="warning">Manual</Badge> (con quién decidió).
                 </p>
                 <p>
-                  <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revise si el terminal tiene un <b>punto rojo</b>{" "}
-                  (alcoholímetro desconectado) y avise a soporte. Se cierra con la ✕ o solo, cuando la siguiente persona entra bien.
+                  <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revise si arriba dice <b>«Alcoholímetro desconectado»</b>{" "}
+                  y avise a soporte. Se cierra con la ✕ o solo, cuando la siguiente persona entra bien.
                 </p>
               </>
             ),
@@ -986,7 +986,7 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <p>
                 Cada vez que un equipo se desconecta y cuando vuelve queda una fila a nombre de “Sistema”, con cuánto tiempo estuvo sin
-                conexión: equipo facial, Controlador (PC), lectores de DNI, relés, base de datos y respaldos. Búsquelas con “equipos”.
+                conexión: equipo facial, alcoholímetro, Controlador (PC), lectores de DNI, relés, base de datos y respaldos. Búsquelas con “equipos”.
               </p>
             ),
           },
@@ -1107,7 +1107,7 @@ export const SECCIONES: SeccionManual[] = [
       },
       {
         titulo: "Orden del ingreso",
-        descripcion: "Normal o facial primero",
+        descripcion: "Qué va primero: el DNI o el facial",
         contenido: (
           <>
             <p className="mb-3">
@@ -1117,11 +1117,11 @@ export const SECCIONES: SeccionManual[] = [
             </p>
             <Lista>
               <li>
-                <b>DNI → Facial + Alcohol → Molinete (normal):</b> primero el DNI por el lector de ingreso; si está en regla, la persona hace rostro y
+                <b>DNI → Facial + Alcohol → Molinete:</b> primero el DNI por el lector de ingreso; si está en regla, la persona hace rostro y
                 alcohol en el terminal facial y se abre el molinete.
               </li>
               <li>
-                <b>Facial + Alcohol → DNI → Molinete (facial primero):</b> primero rostro y alcohol en el terminal facial; cuando el terminal dice
+                <b>Facial + Alcohol → DNI → Molinete:</b> primero rostro y alcohol en el terminal facial; cuando el terminal dice
                 “correcto”, pasa su DNI (tiene 30 segundos desde que el Panel muestra “pase su DNI”). Los documentos se revisan con el DNI.
               </li>
             </Lista>

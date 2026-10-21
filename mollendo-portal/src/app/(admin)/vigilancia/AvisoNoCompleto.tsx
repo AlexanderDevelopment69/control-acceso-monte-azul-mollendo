@@ -4,14 +4,14 @@ import { AlertCircleIcon } from "@/icons";
 
 /** Qué revisar cuando alguien no completa rostro y alcohol (contingencias, sección 3.2). */
 export const PISTA_NO_COMPLETO =
-  "Si dice que no pudo soplar: revise si el equipo facial muestra un punto rojo (alcoholímetro desconectado) y avise a soporte.";
+  "Si dice que no pudo soplar: revise si arriba dice «Alcoholímetro desconectado» y avise a soporte.";
 
 /** Con el equipo facial desconectado la causa es otra: nadie puede completar (contingencias, sección 4). */
 export const PISTA_EQUIPO_DESCONECTADO =
   "El equipo facial está desconectado: nadie puede completar rostro y alcohol. Avise a soporte.";
 
 /** Explicación de la ⓘ de la tabla: sirve para cualquier momento, sin saber el estado del equipo de entonces. */
-export const PISTA_TABLA = `Si el equipo facial estaba desconectado, nadie podía completar: avise a soporte. Si estaba conectado y la persona no pudo soplar, revise si muestra un punto rojo (alcoholímetro desconectado) y avise a soporte.`;
+export const PISTA_TABLA = `Si el equipo facial estaba desconectado, nadie podía completar: avise a soporte. Si estaba conectado y la persona no pudo soplar, revise si arriba dice «Alcoholímetro desconectado» y avise a soporte.`;
 
 /** Ingreso que terminó en "No completó rostro y alcohol" y todavía merece el aviso. */
 export interface AvisoNoCompleto {

@@ -88,6 +88,8 @@ cat .env      # anota ADMIN_SEED_PASSWORD, VIGILANCIA_SEED_PASSWORD y DEVICE_API
 >
 > `G4PRO_IPS_PERMITIDAS`: la IP pública de la sede (desde donde llega el G4 Pro; hoy `190.119.170.73`). Con ella, aunque alguien conozca el número de serie, no puede hacerse pasar por el equipo (pedir los datos del personal o abrir el molinete). Además, el puerto 3001 solo atiende al G4 Pro: el portal y el inicio de sesión van siempre por HTTPS.
 >
+> `ALCOHOLIMETRO_USB` **no va en el `.env`**: solo sirve para simular el alcoholímetro desconectado (`sudo ALCOHOLIMETRO_USB=ffff/0000 docker compose up -d --no-deps api`; volver con `sudo docker compose up -d --no-deps api`). Ver `docs/g4pro/Depuracion_y_Pruebas_G4Pro.md`, sección 8.
+>
 > **El G4 dejó de conectarse** (Sistema y APIs lo muestra desconectado) y en `sudo docker compose logs api | grep "Terminal rechazado"` dice "la IP no está en G4PRO_IPS_PERMITIDAS": la sede cambió de IP. Poner la nueva (la que figura en ese mensaje) en `.env` y `sudo docker compose up -d api`. Para salir del paso, dejarla vacía. Swagger (`/api/docs`) queda apagado; para verlo un momento, `SWAGGER=true` en `.env` y `sudo docker compose up -d`.
 
 **4. Levantar** (la primera vez tarda varios minutos):

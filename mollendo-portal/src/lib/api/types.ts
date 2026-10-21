@@ -102,7 +102,7 @@ export interface IngresoEnEspera {
   esperaDni?: boolean;
 }
 
-/** Orden del ingreso: primero el DNI (normal) o primero rostro y alcohol (en prueba). */
+/** Orden del ingreso: primero el DNI (DNI → Facial + Alcohol) o primero rostro y alcohol (Facial + Alcohol → DNI). */
 export interface EstadoModoIngreso {
   facialPrimero: boolean;
   desde: string | null;
