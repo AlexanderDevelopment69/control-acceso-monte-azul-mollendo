@@ -65,9 +65,10 @@ function TarjetaVisual({
 }) {
   const estado = estadoDe(tarjeta);
   return (
-    <Tarjeta className="flex flex-col overflow-hidden p-4">
+    // El carné a la izquierda; los datos y los botones al costado (en el celular, debajo).
+    <Tarjeta className="flex flex-col gap-4 overflow-hidden p-4 sm:flex-row">
       <div
-        className={`relative flex aspect-[85.6/54] flex-col justify-between overflow-hidden rounded-xl p-5 text-white shadow-md ${
+        className={`relative flex aspect-[85.6/54] w-full shrink-0 flex-col self-start sm:w-80 justify-between overflow-hidden rounded-xl p-5 text-white shadow-md ${
           estado.sirve ? "bg-gradient-to-br from-brand-500 to-brand-800" : "bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-600 dark:to-gray-800"
         }`}
       >
@@ -97,7 +98,8 @@ function TarjetaVisual({
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 sm:max-w-sm">
+      <dl className="grid grid-cols-2 gap-3 text-sm">
         <div>
           <dt className="text-xs text-gray-500 dark:text-gray-400">Último uso</dt>
           <dd className="text-gray-800 dark:text-white/90">{tarjeta.ultimoUso ? fechaYHora(tarjeta.ultimoUso) : "Sin usar"}</dd>
@@ -109,7 +111,7 @@ function TarjetaVisual({
       </dl>
 
       {esAdministrador && (
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
+        <div className="grid grid-cols-2 gap-2 [&_button]:w-full [&_button]:px-3">
           <Button type="button" size="sm" onClick={onImprimir}>
             Imprimir
           </Button>
@@ -124,6 +126,7 @@ function TarjetaVisual({
           </Button>
         </div>
       )}
+      </div>
     </Tarjeta>
   );
 }
@@ -389,7 +392,7 @@ function TarjetasContent() {
         </div>
       )}
       {!!tarjetas?.length && (
-        <div className="mb-8 grid grid-cols-[repeat(auto-fill,minmax(min(100%,19rem),1fr))] gap-5">
+        <div className="mb-8 grid grid-cols-[repeat(auto-fill,minmax(min(100%,37rem),44rem))] gap-5">
           {tarjetas.map((t) => (
             <TarjetaVisual
               key={t.id}
