@@ -20,7 +20,8 @@ import { AltoEstable } from "@/components/tables/AltoEstable";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import { LockIcon, TrashBinIcon } from "@/icons";
 import { Movimiento } from "../../vigilancia/CeldasEvento";
-import { diaVisible, htmlTarjeta } from "./imprimir";
+import { diaVisible } from "./imprimir";
+import { ImprimirTarjeta } from "./ImprimirTarjeta";
 import { PaginasTarjetas } from "./PaginasTarjetas";
 
 const POR_PAGINA = 10;
@@ -338,6 +339,7 @@ function TarjetasContent() {
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [nueva, setNueva] = useState(false);
+  const [imprimiendo, setImprimiendo] = useState<TarjetaContingencia | null>(null);
   // La recién creada: el carrusel va hasta ella y queda marcada unos segundos.
   const [creada, setCreada] = useState<number | null>(null);
   const [vencimiento, setVencimiento] = useState<TarjetaContingencia | null>(null);
@@ -371,24 +373,6 @@ function TarjetasContent() {
     setVencimiento(null);
     setConfirmacion(null);
     recargar();
-  }
-
-  /** Abre la tarjeta lista para imprimir en otra ventana (se abre antes de pedir el QR, para que el navegador no la bloquee). */
-  async function imprimir(tarjeta: TarjetaContingencia) {
-    const ventana = window.open("", "_blank", "width=720,height=520");
-    if (!ventana) {
-      setError("El navegador bloqueó la ventana para imprimir. Permita las ventanas emergentes de este sitio.");
-      return;
-    }
-    try {
-      const qr = await tarjetasContingenciaApi.qr(tarjeta.id);
-      ventana.document.open();
-      ventana.document.write(htmlTarjeta(tarjeta, qr));
-      ventana.document.close();
-    } catch (err) {
-      ventana.close();
-      setError(err instanceof ApiError ? err.message : "No se pudo preparar la tarjeta para imprimir");
-    }
   }
 
   async function confirmarAccion() {
@@ -458,7 +442,7 @@ function TarjetasContent() {
                 tarjeta={t}
                 resaltada={t.id === creada}
                 esAdministrador={esAdministrador}
-                onImprimir={() => void imprimir(t)}
+                onImprimir={() => setImprimiendo(t)}
                 onVencimiento={() => setVencimiento(t)}
                 onAccion={(accion) => setConfirmacion({ tarjeta: t, accion })}
               />
@@ -548,6 +532,7 @@ function TarjetasContent() {
           listo(t.venceEl ? `La ${t.nombre.toLowerCase()} vence el ${diaVisible(t.venceEl)}.` : `La ${t.nombre.toLowerCase()} no vence.`);
         }}
       />
+      <ImprimirTarjeta tarjeta={imprimiendo} onCerrar={() => setImprimiendo(null)} />
       <ConfirmarAccion confirmacion={confirmacion} onCerrar={() => setConfirmacion(null)} onConfirmar={confirmarAccion} />
     </div>
   );

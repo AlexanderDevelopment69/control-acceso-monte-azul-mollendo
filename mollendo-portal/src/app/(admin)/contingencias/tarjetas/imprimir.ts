@@ -8,9 +8,14 @@ export function diaVisible(dia: string): string {
 
 const escapar = (texto: string) => texto.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
+/** Candado (el mismo ícono del menú "Contingencias"). */
+const CANDADO = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+
 /**
- * La tarjeta para imprimir, del tamaño de un carné (85,6 × 54 mm): el QR y
- * su nombre. El código no va escrito: solo en el QR.
+ * La tarjeta impresa, del tamaño de un carné (85,6 × 54 mm), con el mismo
+ * diseño que se ve en el portal: nombre, número, vencimiento y el QR sobre
+ * blanco (con margen, para que el lector lo lea bien). El código no va
+ * escrito: solo en el QR. Sirve para la vista previa y para imprimir.
  */
 export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string): string {
   const vence = tarjeta.venceEl ? `Vence el ${diaVisible(tarjeta.venceEl)}` : "No vence";
@@ -22,30 +27,49 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string): string
 <style>
   @page { size: A4; margin: 15mm; }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 24px; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #111827; background: #fff; }
-  .acciones { margin-bottom: 20px; display: flex; gap: 12px; align-items: center; font-size: 14px; color: #4b5563; }
-  .acciones button { font: inherit; padding: 8px 16px; border-radius: 8px; border: 0; background: #465fff; color: #fff; cursor: pointer; }
-  .tarjeta { width: 85.6mm; height: 54mm; border: 0.3mm solid #9ca3af; border-radius: 3mm; padding: 3mm; display: flex; gap: 3mm; align-items: center; }
-  .qr { width: 46mm; height: 46mm; flex: none; }
-  .qr svg { width: 100%; height: 100%; display: block; }
-  .texto { display: flex; flex-direction: column; gap: 1.6mm; font-size: 2.9mm; line-height: 1.3; }
-  .titulo { font-size: 3.8mm; font-weight: 700; line-height: 1.15; }
-  .uso { color: #374151; }
-  .vence { font-weight: 600; }
-  @media print { body { padding: 0; } .acciones { display: none; } }
+  html, body { margin: 0; background: #fff; }
+  body { padding: 8mm; display: flex; justify-content: center; font-family: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  /* Línea de corte alrededor del carné. */
+  .corte { padding: 2mm; border: 0.2mm dashed #9ca3af; border-radius: 4.5mm; }
+  .tarjeta {
+    position: relative; overflow: hidden; width: 85.6mm; height: 54mm; border-radius: 3.2mm; padding: 4mm 4.5mm;
+    display: flex; flex-direction: column; justify-content: space-between; color: #fff;
+    background: linear-gradient(135deg, #465fff 0%, #252dae 100%);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .circulo { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.1); }
+  .c1 { width: 36mm; height: 36mm; right: -9mm; top: -9mm; }
+  .c2 { width: 34mm; height: 34mm; right: 18mm; bottom: -20mm; background: rgba(255, 255, 255, 0.06); }
+  .arriba, .abajo { position: relative; display: flex; justify-content: space-between; gap: 3mm; }
+  .arriba { align-items: center; }
+  .abajo { align-items: flex-end; }
+  .marca { display: flex; align-items: center; gap: 1.5mm; font-size: 2.6mm; font-weight: 600; letter-spacing: 0.25mm; text-transform: uppercase; color: rgba(255, 255, 255, 0.85); }
+  .solo { font-size: 2.3mm; font-weight: 600; padding: 0.6mm 2mm; border-radius: 3mm; background: rgba(255, 255, 255, 0.2); }
+  .titulo { font-size: 3.6mm; font-weight: 600; line-height: 1.15; }
+  .numero { font-size: 8mm; font-weight: 700; line-height: 1.05; }
+  .vence { margin-top: 1.5mm; font-size: 2.6mm; color: rgba(255, 255, 255, 0.85); }
+  .uso { margin-top: 0.8mm; font-size: 2.2mm; color: rgba(255, 255, 255, 0.7); max-width: 40mm; }
+  .qr { flex: none; width: 25mm; height: 25mm; padding: 1.2mm; border-radius: 2mm; background: #fff; }
+  .qr svg { display: block; width: 100%; height: 100%; }
 </style>
 </head>
 <body>
-  <div class="acciones">
-    <button type="button" onclick="window.print()">Imprimir</button>
-    <span>Imprima al 100 % (tamaño real), recórtela y plastifíquela.</span>
-  </div>
-  <div class="tarjeta">
-    <div class="qr">${qrSvg}</div>
-    <div class="texto">
-      <div class="titulo">${escapar(tarjeta.nombre)}</div>
-      <div class="uso">Solo para el vigilante. Se pasa por el lector en lugar del DNI.</div>
-      <div class="vence">${vence}</div>
+  <div class="corte">
+    <div class="tarjeta">
+      <span class="circulo c1"></span><span class="circulo c2"></span>
+      <div class="arriba">
+        <span class="marca">${CANDADO}Contingencia</span>
+        <span class="solo">Solo vigilancia</span>
+      </div>
+      <div class="abajo">
+        <div>
+          <div class="titulo">Tarjeta de contingencia</div>
+          <div class="numero">N.º ${tarjeta.numero}</div>
+          <div class="vence">${vence}</div>
+          <div class="uso">Se pasa por el lector en lugar del DNI.</div>
+        </div>
+        <div class="qr">${qrSvg}</div>
+      </div>
     </div>
   </div>
 </body>
