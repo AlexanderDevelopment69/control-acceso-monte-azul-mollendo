@@ -182,67 +182,85 @@ function Paso({
   );
 }
 
+type Tramo = { titulo: string; detalle: string; duracion: string; segundos: number; color: "azul" | "ambar" };
+type Hito = { titulo: string; detalle: string; donde: "inicio" | number | "fin"; color: string };
+
+const COLOR_TRAMO = {
+  azul: "bg-brand-100 text-brand-800 dark:bg-brand-500/20 dark:text-brand-200",
+  ambar: "bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-200",
+};
+
 /**
- * "Facial primero", los tiempos medidos con el equipo real (como en el flujo de
- * ingreso): 0-40 s desde el "correcto"; el aviso llega a los ~10 s y desde ahí
- * hay 30 s para el DNI. Escala: 17 px por segundo, desde x = 40.
+ * Los tiempos del ingreso, medidos con el equipo real, en el orden que está
+ * activo: una barra por tramos (qué pasa y cuánto dura, de ancho proporcional
+ * a su duración), los momentos clave debajo y un ejemplo. En el celular, los
+ * tramos y los momentos van uno debajo del otro.
  */
-function LineaTiempoFacialPrimero() {
-  const x = (s: number) => 40 + s * 17;
-  const marcas = [0, 10, 20, 30, 40];
+function LineaTiempo({ facialPrimero }: { facialPrimero: boolean }) {
+  const { titulo, desde, tramos, hitos, ejemplo } = facialPrimero
+    ? {
+        titulo: "Tiempos con Facial + Alcohol → DNI",
+        desde: "Medidos con el equipo real, desde que el equipo dice “correcto”.",
+        tramos: [
+          { titulo: "Espera el aviso", detalle: "El equipo avisa al sistema quién sopló.", duracion: "unos 10 s", segundos: 10, color: "azul" },
+          { titulo: "Tiempo para pasar el DNI", detalle: "El Panel muestra “Aprobó … pase su DNI”, con su foto.", duracion: "30 s", segundos: 30, color: "ambar" },
+        ] satisfies Tramo[],
+        hitos: [
+          { titulo: "“Correcto”", detalle: "termina de soplar", donde: "inicio", color: "bg-brand-500" },
+          { titulo: "Aparece “pase su DNI”", detalle: "a los ~10 s", donde: 25, color: "bg-warning-500" },
+          { titulo: "Vence el plazo", detalle: "“No pasó su DNI a tiempo”", donde: "fin", color: "bg-error-500" },
+        ] satisfies Hito[],
+        ejemplo: "pasa su DNI apenas oye “correcto” (a los 7 s). El sistema lo espera y el molinete se abre a los ~10 s, cuando llega el aviso.",
+      }
+    : {
+        titulo: "Tiempos con DNI → Facial + Alcohol",
+        desde: "Medidos con el equipo real, desde que pasa su DNI.",
+        tramos: [
+          { titulo: "Tiempo para hacer rostro y alcohol", detalle: "El Panel lo muestra “en espera” mientras tanto.", duracion: "1 minuto", segundos: 60, color: "ambar" },
+        ] satisfies Tramo[],
+        hitos: [
+          { titulo: "Pasa su DNI", detalle: "se revisan sus documentos", donde: "inicio", color: "bg-brand-500" },
+          { titulo: "Sopla y se abre", detalle: "~10 s después de soplar", donde: 50, color: "bg-success-500" },
+          { titulo: "Vence el plazo", detalle: "“No completó rostro y alcohol”", donde: "fin", color: "bg-error-500" },
+        ] satisfies Hito[],
+        ejemplo: "pasa su DNI, hace rostro y sopla en unos 15 s; el molinete se abre unos 10 s después, a los ~25 s.",
+      };
   return (
-    <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-      <p className="mb-1 text-xs font-medium text-gray-700 dark:text-gray-300">Tiempos medidos con el equipo real</p>
-      <svg
-        viewBox="0 0 760 110"
-        className="min-w-[560px] text-gray-400 dark:text-gray-500"
-        role="img"
-        aria-label="“Correcto” en 0 s, DNI hacia los 7 s, se abre a los 10 s al llegar el aviso, fin del plazo a los 40 s"
-      >
-        <g className="fill-current" fontSize="11" textAnchor="middle">
-          {marcas.map((s) => (
-            <text key={s} x={x(s)} y="14">
-              {s} s
-            </text>
-          ))}
-        </g>
-        <g className="stroke-gray-200 dark:stroke-gray-800" strokeWidth="1">
-          {marcas.map((s) => (
-            <line key={s} x1={x(s)} y1="22" x2={x(s)} y2="96" />
-          ))}
-        </g>
-        <rect x={x(0)} y="52" width={x(40) - x(0)} height="6" rx="3" className="fill-gray-100 dark:fill-gray-800" />
-        <rect x={x(0)} y="52" width={x(10) - x(0)} height="6" rx="3" className="fill-brand-300 dark:fill-brand-500/60" />
-        <rect x={x(10)} y="52" width={x(40) - x(10)} height="6" rx="3" className="fill-warning-200 dark:fill-warning-500/40" />
-        <g fontSize="12.5" textAnchor="middle" className="fill-gray-700 dark:fill-gray-200">
-          <circle cx={x(0)} cy="55" r="8" className="fill-brand-500" />
-          <text x={x(0)} y="84">
-            “Correcto”
-          </text>
-          <circle cx={x(7)} cy="55" r="8" className="fill-brand-500" />
-          <text x={x(7)} y="40">
-            Pasa su DNI
-          </text>
-          <circle cx={x(10)} cy="55" r="8" className="fill-success-500" />
-          <text x={x(10)} y="84">
-            Se abre
-          </text>
-          <circle cx={x(40)} cy="55" r="8" className="fill-warning-500" />
-          <text x={x(40) - 14} y="84" textAnchor="end">
-            Fin del plazo
-          </text>
-        </g>
-        <g className="fill-current" fontSize="11" textAnchor="middle">
-          <text x={x(10)} y="100">
-            llega el aviso del equipo
-          </text>
-          <text x={(x(10) + x(40)) / 2} y="40">
-            30 s visibles en el Panel
-          </text>
-        </g>
-      </svg>
-      <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-        Si el DNI llega antes que el aviso del equipo, el sistema lo espera unos segundos en silencio y abre cuando llega.
+    <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <p className="text-xs font-semibold text-gray-800 dark:text-white/90">{titulo}</p>
+      <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400">{desde}</p>
+      <div className="flex flex-col gap-[3px] overflow-hidden rounded-lg sm:flex-row">
+        {tramos.map((t) => (
+          <div key={t.titulo} className={`min-w-0 px-3 py-2.5 ${COLOR_TRAMO[t.color]}`} style={{ flexGrow: t.segundos, flexBasis: 0 }}>
+            <span className="block text-xs font-semibold">{t.titulo}</span>
+            <span className="block text-[11px] opacity-90">{t.detalle}</span>
+            <span className="mt-1 inline-block rounded-full bg-white/60 px-2 text-[11px] font-semibold dark:bg-black/25">{t.duracion}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-col gap-1.5 sm:relative sm:block sm:h-12">
+        {hitos.map((h) => (
+          <div
+            key={h.titulo}
+            className={`flex items-center gap-2 text-[11px] text-gray-600 sm:absolute sm:top-0 sm:max-w-[34%] sm:flex-col sm:gap-0.5 dark:text-gray-300 ${
+              h.donde === "inicio"
+                ? "sm:left-0 sm:items-start"
+                : h.donde === "fin"
+                  ? "sm:right-0 sm:items-end sm:text-right"
+                  : "sm:-translate-x-1/2 sm:items-center sm:text-center"
+            }`}
+            style={typeof h.donde === "number" ? { left: `${h.donde}%` } : undefined}
+          >
+            <span className={`size-2.5 shrink-0 rounded-full ${h.color}`} aria-hidden />
+            <span>
+              <span className="font-medium text-gray-700 dark:text-gray-200">{h.titulo}</span>{" "}
+              <span className="text-gray-500 sm:block dark:text-gray-400">{h.detalle}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 border-t border-dashed border-gray-200 pt-2.5 text-[11px] text-gray-600 dark:border-gray-800 dark:text-gray-300">
+        <b className="text-gray-800 dark:text-white/90">Ejemplo:</b> {ejemplo}
       </p>
     </div>
   );
@@ -250,8 +268,8 @@ function LineaTiempoFacialPrimero() {
 
 /**
  * El recorrido de ingreso y el de salida, paso a paso. El ingreso, en el orden
- * que está activo (Sistema y APIs → Orden del ingreso): "facial primero" o el
- * normal. Mientras no se sabe (o sin respuesta), "facial primero", el que se usa.
+ * que está activo (Sistema y APIs → Orden del ingreso): "Facial + Alcohol → DNI"
+ * o "DNI → Facial + Alcohol". Mientras no se sabe (o sin respuesta), el primero, el que se usa.
  */
 export function RecorridoAcceso() {
   const [facialPrimero, setFacialPrimero] = useState(true);
@@ -291,14 +309,12 @@ export function RecorridoAcceso() {
           )}
         </ol>
         {facialPrimero && (
-          <>
-            <p className="mt-4 text-xs text-gray-600 dark:text-gray-300">
-              <b>Puede pasar el DNI apenas oye “correcto”:</b> el sistema espera el aviso del equipo facial. Si no lo pasa en los 30
-              segundos, queda “No pasó su DNI a tiempo” y debe empezar otra vez.
-            </p>
-            <LineaTiempoFacialPrimero />
-          </>
+          <p className="mt-4 text-xs text-gray-600 dark:text-gray-300">
+            <b>Puede pasar el DNI apenas oye “correcto”:</b> el sistema espera el aviso del equipo facial. Si no lo pasa en los 30
+            segundos, queda “No pasó su DNI a tiempo” y debe empezar otra vez.
+          </p>
         )}
+        <LineaTiempo facialPrimero={facialPrimero} />
       </div>
       <div>
         <p className="mb-4 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">Salida</p>

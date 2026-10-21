@@ -508,8 +508,8 @@ export const SECCIONES: SeccionManual[] = [
                     <Badge color="error">Denegado</Badge> no se abrió: al lado está el motivo.
                   </li>
                   <li>
-                    <Badge color="primary">En espera</Badge> pasó su DNI y tiene <b>1 minuto</b> para hacer rostro y alcohol en el terminal
-                    (orden normal).
+                    <Badge color="primary">En espera</Badge> pasó su DNI y tiene <b>1 minuto</b> para hacer rostro y alcohol en el equipo
+                    facial (orden DNI → Facial + Alcohol).
                   </li>
                   <li>
                     <Badge color="success">Pase su DNI</Badge> aprobó rostro y alcohol y tiene <b>30 segundos</b> para pasar su DNI (orden

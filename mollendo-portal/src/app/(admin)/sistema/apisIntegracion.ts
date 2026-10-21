@@ -218,7 +218,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/eventos-acceso/en-espera",
     metodo: "GET",
     descripcion:
-      "Lo que el Panel muestra mientras se completa un ingreso: en el orden normal, los DNI en regla que esperan su prueba de rostro y alcohol (1 minuto); en \"facial primero\", las aprobaciones del G4 Pro que esperan el DNI de quien sopló (\"Aprobó … pase su DNI\", con su foto, 30 s). En tiempo real se avisan por WebSocket (/ws/eventos): ingreso-en-espera y ingreso-espera-terminada.",
+      "Lo que el Panel muestra mientras se completa un ingreso: en el orden DNI → Facial + Alcohol, los DNI en regla que esperan su prueba de rostro y alcohol (1 minuto); en \"facial primero\", las aprobaciones del G4 Pro que esperan el DNI de quien sopló (\"Aprobó … pase su DNI\", con su foto, 30 s). En tiempo real se avisan por WebSocket (/ws/eventos): ingreso-en-espera y ingreso-espera-terminada.",
     autenticacion: "JWT (Administrador / Vigilancia)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>"],
