@@ -321,7 +321,11 @@ function Formulario({
           <div className="space-y-3">
             <div ref={listaRef} className="max-h-[45vh] space-y-3 overflow-y-auto pr-1">
               {filas.map((f, i) => (
-                <div key={f.clave} className="relative space-y-3 rounded-lg bg-gray-50 p-3 pr-10 dark:bg-white/[0.03]">
+                // El margen derecho para la X de "Quitar" solo cuando se muestra (con un solo documento, no).
+                <div
+                  key={f.clave}
+                  className={`relative space-y-3 rounded-lg bg-gray-50 p-3 dark:bg-white/[0.03] ${filas.length > 1 && !f.subido ? "pr-10" : ""}`}
+                >
                   {filas.length > 1 && !f.subido && (
                     <button
                       type="button"
