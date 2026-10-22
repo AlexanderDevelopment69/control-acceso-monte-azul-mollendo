@@ -54,7 +54,7 @@ export function cambioPeriodo(
 }
 
 /** "22/10/2026" a partir de "2026-10-22…". */
-function fechaCorta(fecha: string): string {
+export function fechaCorta(fecha: string): string {
   const [a, m, d] = fecha.slice(0, 10).split("-");
   return `${d}/${m}/${a}`;
 }

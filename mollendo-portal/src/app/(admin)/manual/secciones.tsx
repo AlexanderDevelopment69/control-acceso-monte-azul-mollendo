@@ -149,9 +149,10 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Si puede ingresar hoy",
             texto: (
               <>
-                <p>Puede ingresar si cumple las tres condiciones:</p>
+                <p>Puede ingresar si cumple las cuatro condiciones:</p>
                 <Lista>
                   <li>No está dada de baja.</li>
+                  <li>Hoy está dentro de su período de autorización, si tiene uno.</li>
                   <li>Tiene al menos un documento cargado.</li>
                   <li>Ningún documento está vencido. Uno que vence hoy sigue válido todo el día.</li>
                 </Lista>
@@ -910,7 +911,7 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <Lista>
                 <li>
-                  <b>Personal y empresas:</b> empresa, perfil, estado y si puede ingresar (con el motivo).
+                  <b>Personal y empresas:</b> empresa, perfil, estado, si puede ingresar (con el motivo) y el período autorizado.
                 </li>
                 <li>
                   <b>Documentos por persona:</b> la última versión de cada documento, con su vencimiento y estado.

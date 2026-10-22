@@ -1,8 +1,8 @@
-import { textoPeriodo } from "@/lib/periodo";
+import { fechaCorta, textoPeriodo } from "@/lib/periodo";
 import React from "react";
 import type { Cumplimiento, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
-import { CheckLineIcon, CloseLineIcon, FileIcon } from "@/icons";
+import { CalenderIcon, CheckLineIcon, CloseLineIcon, FileIcon } from "@/icons";
 // Los mismos íconos del recorrido de ingreso del manual.
 import { IconoDni, IconoDocumentos, IconoRostro } from "@/app/(admin)/manual/Figuras";
 import { diasDesde, formatearFecha } from "./cumplimiento";
@@ -31,9 +31,10 @@ const TEXTO_PASO: Record<EstadoPaso, string> = {
 };
 
 /**
- * Los pasos del ingreso que se pueden revisar desde la ficha (DNI → documentos
- * → rostro), con los íconos del recorrido del manual. La prueba de alcohol no
- * aparece: solo se mide al pasar por el molinete.
+ * Los pasos del ingreso que se pueden revisar desde la ficha (DNI → período →
+ * documentos → rostro, en el orden en que se revisan en el molinete), con los
+ * íconos del recorrido del manual. La prueba de alcohol no aparece: solo se mide
+ * al pasar por el molinete.
  */
 function RecorridoValidacion({
   pasos,
@@ -41,7 +42,7 @@ function RecorridoValidacion({
   pasos: { nombre: string; estado: EstadoPaso; detalle: string; Icono: React.ComponentType<{ className?: string }> }[];
 }) {
   return (
-    <ol className="mt-4 grid grid-cols-3 gap-1">
+    <ol className="mt-4 grid grid-cols-4 gap-1">
       {pasos.map(({ nombre, estado, detalle, Icono }, i) => (
         <li key={nombre} className="relative flex flex-col items-center text-center">
           {/* Línea que une cada paso con el siguiente. */}
@@ -251,9 +252,17 @@ export function EstadoIngreso({
                 Icono: IconoDni,
                 ...(persona.estado === "inactivo"
                   ? { estado: "falla" as const, detalle: "Dado de baja" }
-                  : cumplimiento.fueraDePeriodo
-                    ? { estado: "falla" as const, detalle: "Fuera del período" }
-                    : { estado: "ok" as const, detalle: "Registrado" }),
+                  : { estado: "ok" as const, detalle: "Registrado" }),
+              },
+              {
+                // Período de autorización: su propio paso (antes se marcaba en el DNI).
+                nombre: "Período",
+                Icono: CalenderIcon,
+                ...(cumplimiento.fueraDePeriodo
+                  ? { estado: "falla" as const, detalle: "Fuera del período" }
+                  : persona.autorizadoHasta
+                    ? { estado: "ok" as const, detalle: `Hasta el ${fechaCorta(persona.autorizadoHasta)}` }
+                    : { estado: "ok" as const, detalle: "Sin límite" }),
               },
               {
                 nombre: "Documentos",

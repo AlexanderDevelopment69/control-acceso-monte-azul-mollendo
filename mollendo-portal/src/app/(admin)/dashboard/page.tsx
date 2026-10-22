@@ -350,14 +350,16 @@ function DashboardContent() {
                           "Documentos vencidos",
                           "Sin documentos",
                           "Alcohol",
-                          "No completó rostro y alcohol",
+                          // Los nombres largos en dos líneas: en una sola el gráfico los cortaba con "…".
+                          ["No completó rostro", "y alcohol"],
                           "Rostro no coincide",
                           "Ya figura dentro",
                           "No registra ingreso",
-                          "Fuera del período autorizado",
+                          ["Fuera del período", "autorizado"],
                           "Dado de baja",
                           "No registrado",
-                        ],
+                          // Apex acepta todas en una línea o todas como líneas: cada una pasa a lista.
+                        ].map((c) => (Array.isArray(c) ? c : [c])),
                         ...ejeEntero(Object.values(motivos)),
                       },
                     }}

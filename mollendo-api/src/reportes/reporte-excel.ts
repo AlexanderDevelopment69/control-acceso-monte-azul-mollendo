@@ -101,7 +101,7 @@ export async function generarExcel(reporte: Reporte, generado: Date): Promise<Bu
     'Sistema de Control de Accesos - Terminal Monte Azul Mollendo',
     ...reporte.filtros,
     `Generado el ${textoFechaHora(generado)}`,
-    'Qué significa cada columna: hoja "Leyenda".',
+    'Qué significa cada columna: hoja Leyenda.',
   ];
   for (const texto of encabezado) {
     const fila = hoja.addRow([texto]);
@@ -150,7 +150,7 @@ function escribirLeyenda(libro: ExcelJS.Workbook, reporte: Reporte) {
   const t = hoja.addRow(['Leyenda']);
   t.font = { bold: true, size: 14, color: { argb: 'FF1D2939' } };
   hoja.mergeCells(t.number, 1, t.number, 2);
-  const nota = hoja.addRow([`Qué significa cada columna del reporte "${reporte.titulo}".`]);
+  const nota = hoja.addRow([`Qué significa cada columna del reporte ${reporte.titulo}.`]);
   nota.font = { size: 10, color: { argb: GRIS } };
   hoja.mergeCells(nota.number, 1, nota.number, 2);
   hoja.addRow([]);

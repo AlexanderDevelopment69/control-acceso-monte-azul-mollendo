@@ -75,11 +75,12 @@ const paso = (nombre: string) => {
 };
 
 describe("Ficha de la persona", () => {
-  it("habilitada: “Puede ingresar hoy” y los tres pasos en regla", async () => {
+  it("habilitada: “Puede ingresar hoy” y los pasos en regla", async () => {
     await montar(persona({ habilitado: true }));
     expect(within(tarjeta()).getByText("Puede ingresar hoy")).toBeInTheDocument();
     expect(within(tarjeta()).queryByRole("button")).not.toBeInTheDocument();
     expect(paso("DNI")).toContain("Registrado");
+    expect(paso("Período")).toContain("Sin límite");
     expect(paso("Documentos")).toContain("Vigentes");
     expect(paso("Rostro")).toContain("Con foto");
     expect(screen.getByText("DNI 45678912 · Transportes Norte")).toBeInTheDocument();

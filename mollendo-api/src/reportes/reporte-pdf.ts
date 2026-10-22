@@ -67,6 +67,8 @@ function tablaPdf(columnas: Columna[], filas: Celda[][]): Content {
   return {
     table: {
       headerRows: 1,
+      // Una fila no se parte entre dos páginas (quedaba la mitad de la empresa en la página siguiente).
+      dontBreakRows: true,
       widths: anchos,
       body: [
         columnas.map((c) => ({ text: c.titulo, bold: true, color: '#ffffff', fillColor: MARCA })),

@@ -296,7 +296,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 
 | Reporte | Contenido | Filtros |
 |---|---|---|
-| Personal y empresas | Apellidos, nombres, documento de identidad, empresa y RUC, perfil, estado, si puede ingresar (con el motivo si no puede), cantidad de documentos y fecha de registro. | Empresa; perfil; activos o dados de baja. |
+| Personal y empresas | Apellidos, nombres, documento de identidad, empresa y RUC, perfil, estado, si puede ingresar (con el motivo si no puede), período autorizado y su motivo, cantidad de documentos y fecha de registro. | Empresa; perfil; activos o dados de baja. |
 | Documentos por persona | Última versión de cada documento: persona, empresa, perfil, documento, versión, fecha de carga, vencimiento, días para vencer y estado (vigente, por vencer en 30 días o vencido). Primero los más urgentes. | Empresa; perfil; estado del documento. |
 | Ingresos y salidas | Historial en orden cronológico: fecha y hora, movimiento, resultado, documento, persona, empresa, perfil, motivo de denegación y molinete. | Periodo; perfil; ingresos o salidas; autorizados o denegados. |
 | Ingresos del periodo | Cada ingreso autorizado con su salida, duración y estado (finalizado o presente). | Periodo; perfil. |

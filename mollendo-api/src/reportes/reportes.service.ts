@@ -89,7 +89,7 @@ function filtroPerfil(query: QueryReporteDto): string[] {
   return [`Perfil: ${query.perfil === 'sin_perfil' ? SIN_PERFIL : PERFIL_LABEL[query.perfil]}`];
 }
 
-const PERFIL_DESCRIPCION = `Cómo se clasifica a la persona: ${PERFILES.map((p) => PERFIL_LABEL[p]).join(', ')}. "${SIN_PERFIL}": registrada antes de que existiera el perfil. Solo clasifica: el molinete valida a todos igual.`;
+const PERFIL_DESCRIPCION = `Cómo se clasifica a la persona: ${PERFILES.map((p) => PERFIL_LABEL[p]).join(', ')}. ${SIN_PERFIL}: registrada antes de que existiera el perfil. Solo clasifica: el molinete valida a todos igual.`;
 const ACCION = {
   crear: 'Crear',
   modificar: 'Modificar',
@@ -224,9 +224,10 @@ export class ReportesService {
       });
       if (resultado.autorizado) pueden++;
       const motivos = resultado.denegadoPorBaja
-        ? `Dado de baja${p.fechaBaja ? ` el ${textoDia(claveDia(p.fechaBaja))}` : ''}${p.motivoBaja ? `: ${p.motivoBaja}` : ''}`
+        ? `Dado de baja${p.fechaBaja ? ` el ${textoDia(claveDia(p.fechaBaja))}` : ''}${p.motivoBaja ? `. Motivo: ${p.motivoBaja}` : ''}`
         : [
-            resultado.denegadoFueraPeriodo && `Fuera del período autorizado (${textoPeriodo(p)})`,
+            resultado.denegadoFueraPeriodo &&
+              `Fuera del período autorizado (${textoPeriodo(p)})${p.motivoAutorizacion ? `. Motivo: ${p.motivoAutorizacion}` : ''}`,
             resultado.denegadoSinDocumentos && 'Sin documentos cargados',
             resultado.documentosVencidos.length > 0 && `Vencido: ${resultado.documentosVencidos.join(', ')}`,
           ]
@@ -243,6 +244,8 @@ export class ReportesService {
         ESTADO_PERSONA[p.estado],
         resultado.autorizado ? 'Sí' : 'No',
         motivos || null,
+        textoPeriodo(p) || null,
+        p.motivoAutorizacion,
         actuales.length,
         p.creadoEn,
       ];
@@ -254,21 +257,24 @@ export class ReportesService {
         ...(await this.filtroEmpresa(query.empresaId)),
         ...filtroPerfil(query),
         ...(query.estado ? [`Estado: ${query.estado === 'activo' ? 'Activos' : 'Dados de baja'}`] : []),
-        'Puede ingresar: según sus documentos a la fecha (la prueba de alcohol se hace al ingresar).',
+        'Puede ingresar: según su período de autorización y sus documentos a la fecha (la prueba de alcohol se hace al ingresar).',
       ],
       columnas: [
-        { titulo: 'Apellidos', ancho: 20, descripcion: 'Apellidos de la persona.' },
-        { titulo: 'Nombres', ancho: 16, descripcion: 'Nombres de la persona.' },
+        // Anchos pensados para el PDF (A4 horizontal, 14 columnas): el N° de documento y el RUC entran en una línea.
+        { titulo: 'Apellidos', ancho: 18, descripcion: 'Apellidos de la persona.' },
+        { titulo: 'Nombres', ancho: 13, descripcion: 'Nombres de la persona.' },
         { titulo: 'Tipo doc.', ancho: 8, descripcion: 'Tipo de documento de identidad: DNI, CE (carné de extranjería) o pasaporte.' },
-        { titulo: 'N° documento', ancho: 12, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
-        { titulo: 'Empresa', ancho: 30, descripcion: 'Empresa a la que pertenece la persona.' },
-        { titulo: 'RUC', ancho: 14, descripcion: 'RUC de la empresa.' },
+        { titulo: 'N° documento', ancho: 14, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
+        { titulo: 'Empresa', ancho: 24, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'RUC', ancho: 16, descripcion: 'RUC de la empresa.' },
         { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
-        { titulo: 'Estado', ancho: 12, descripcion: 'Activo: puede ingresar si cumple sus documentos. Dado de baja: ya no puede ingresar; se conserva su historial.' },
-        { titulo: 'Puede ingresar', ancho: 10, descripcion: 'Sí: hoy tiene sus documentos en regla y el molinete lo dejaría pasar (la prueba de alcohol se hace al ingresar). No: ver la columna Motivo.' },
-        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué no puede ingresar: dado de baja, sin documentos cargados o con documentos vencidos. Vacío si puede ingresar.' },
-        { titulo: 'N° docs.', tipo: 'numero', ancho: 9, descripcion: 'Cantidad de documentos cargados de la persona (la última versión de cada uno).' },
-        { titulo: 'Registrado', tipo: 'fechaHora', ancho: 18, descripcion: 'Fecha y hora en que se registró a la persona en el sistema.' },
+        { titulo: 'Estado', ancho: 11, descripcion: 'Activo: puede ingresar si cumple sus documentos. Dado de baja: ya no puede ingresar; se conserva su historial.' },
+        { titulo: 'Puede ingresar', ancho: 12, descripcion: 'Sí: hoy está dentro de su período de autorización (si tiene uno), tiene sus documentos en regla y el molinete lo dejaría pasar (la prueba de alcohol se hace al ingresar). No: ver la columna Motivo.' },
+        { titulo: 'Motivo', ancho: 22, descripcion: 'Por qué no puede ingresar: dado de baja, fuera del período autorizado, sin documentos cargados o con documentos vencidos. Vacío si puede ingresar.' },
+        { titulo: 'Período autorizado', ancho: 18, descripcion: 'Fechas en que puede ingresar (las dos incluidas). Vacío si no tiene límite de fechas.' },
+        { titulo: 'Motivo de la autorización', ancho: 18, descripcion: 'Por qué se le autorizó ese período.' },
+        { titulo: 'N° docs.', tipo: 'numero', ancho: 8, descripcion: 'Cantidad de documentos cargados de la persona (la última versión de cada uno).' },
+        { titulo: 'Registrado', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora en que se registró a la persona en el sistema.' },
       ],
       filas,
       resumen: [`Total: ${personas.length}`, `Pueden ingresar: ${pueden}`, `No pueden: ${personas.length - pueden}`],
@@ -396,24 +402,24 @@ export class ReportesService {
         ...filtroPerfil(query),
         ...(query.estadoDocumento ? [`Estado del documento: ${estados[query.estadoDocumento]}`] : []),
         anteriores
-          ? `Cada documento con todas sus versiones (las anteriores, como "Reemplazado"). Por vencer: vence en los próximos ${DIAS_AVISO} días.`
+          ? `Cada documento con todas sus versiones (las anteriores, como Reemplazado). Por vencer: vence en los próximos ${DIAS_AVISO} días.`
           : `Última versión de cada documento. Por vencer: vence en los próximos ${DIAS_AVISO} días.`,
         ...(conArchivos
           ? [
-              `${conFotos ? 'Columnas "Archivo" y "Foto": abren' : 'Columna "Archivo": abre'} el archivo de la carpeta "archivos". Primero descomprima el ZIP (clic derecho → Extraer todo) y abra este Excel desde esa carpeta.`,
+              `${conFotos ? 'Columnas Archivo y Foto: abren' : 'Columna Archivo: abre'} el archivo de la carpeta archivos. Primero descomprima el ZIP (clic derecho → Extraer todo) y abra este Excel desde esa carpeta.`,
             ]
           : []),
       ],
       columnas: [
-        { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona.' },
+        { titulo: 'Persona', ancho: 28, descripcion: 'Apellidos y nombres de la persona.' },
         { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento de identidad (el que se pasa por el lector del molinete).' },
-        { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Empresa', ancho: 30, descripcion: 'Empresa a la que pertenece la persona.' },
         { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
         { titulo: 'Estado de la persona', ancho: 14, descripcion: 'Activo o dado de baja.' },
         { titulo: 'Documento', ancho: 26, descripcion: 'Nombre del documento, tal como está configurado en el sistema.' },
-        { titulo: 'Versión', tipo: 'numero', ancho: 8, descripcion: '1 es el primero que se cargó; cada renovación suma uno.' },
+        { titulo: 'Versión', tipo: 'numero', ancho: 10, descripcion: '1 es el primero que se cargó; cada renovación suma uno.' },
         { titulo: 'Cargado', tipo: 'fechaHora', ancho: 16, descripcion: 'Fecha y hora en que se cargó esa versión.' },
-        { titulo: 'Vence', tipo: 'fecha', ancho: 12, descripcion: 'Fecha de vencimiento. Vacío si el documento no vence.' },
+        { titulo: 'Vence', tipo: 'fecha', ancho: 14, descripcion: 'Fecha de vencimiento. Vacío si el documento no vence.' },
         { titulo: 'Días para vencer', tipo: 'numero', ancho: 11, descripcion: 'Días que faltan para que venza; si es negativo, hace cuántos días venció. Vacío si no vence o si es una versión anterior.' },
         { titulo: 'Estado', ancho: 12, descripcion: `Vigente; Por vencer: vence en los próximos ${DIAS_AVISO} días; Vencido; Reemplazado: versión anterior, ya renovada.` },
         ...(conArchivos ? [{ titulo: 'Archivo', ancho: 12, descripcion: 'Abre el archivo del documento. Funciona con el ZIP descomprimido.' }] : []),
@@ -468,14 +474,14 @@ export class ReportesService {
       ],
       columnas: [
         { titulo: 'Fecha y hora', tipo: 'fechaHora', ancho: 16, descripcion: 'Cuándo pasó el documento por el lector del molinete.' },
-        { titulo: 'Movimiento', ancho: 11, descripcion: 'Ingreso o salida.' },
-        { titulo: 'Resultado', ancho: 11, descripcion: 'Autorizado: el molinete se abrió. Denegado: no se abrió (ver la columna Motivo).' },
+        { titulo: 'Movimiento', ancho: 14, descripcion: 'Ingreso o salida.' },
+        { titulo: 'Resultado', ancho: 14, descripcion: 'Autorizado: el molinete se abrió. Denegado: no se abrió (ver la columna Motivo).' },
         { titulo: 'Tipo doc.', ancho: 9, descripcion: 'Tipo de documento de identidad: DNI, CE (carné de extranjería) o pasaporte.' },
         { titulo: 'N° documento', ancho: 13, descripcion: 'Número del documento que se pasó por el lector.' },
-        { titulo: 'Persona', ancho: 30, descripcion: 'Apellidos y nombres de la persona. "No registrado" si el documento no está en el sistema.' },
-        { titulo: 'Empresa', ancho: 32, descripcion: 'Empresa a la que pertenece la persona.' },
+        { titulo: 'Persona', ancho: 27, descripcion: 'Apellidos y nombres de la persona. No registrado si el documento no está en el sistema.' },
+        { titulo: 'Empresa', ancho: 29, descripcion: 'Empresa a la que pertenece la persona.' },
         { titulo: 'Perfil', ancho: 18, descripcion: PERFIL_DESCRIPCION },
-        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, rostro no coincide, ya figura dentro (no registró su salida), no registra ingreso, sin rostro y alcohol o no pasó su DNI a tiempo (estos dos, solo en el orden "facial primero"; el segundo, y el alcohol en ese orden, quedan sin persona porque el equipo no dice quién sopló).' },
+        { titulo: 'Motivo', ancho: 26, descripcion: 'Por qué se denegó: no registrado, dado de baja, sin documentos, documentos vencidos, alcohol, no completó rostro y alcohol, rostro no coincide, ya figura dentro (no registró su salida), no registra ingreso, fuera del período autorizado, sin rostro y alcohol o no pasó su DNI a tiempo (estos dos, solo en el orden facial primero; el segundo, y el alcohol en ese orden, quedan sin persona porque el equipo no dice quién sopló).' },
         { titulo: 'Verificación', ancho: 30, descripcion: 'Manual: el rostro y el alcohol los verificó un vigilante porque el equipo facial falló; entre paréntesis, quién decidió. Corrección manual: el movimiento lo registró un vigilante o administrador sin pasar por el molinete (antipassback), con quién y el motivo. Facial primero: rostro y alcohol antes del DNI; el equipo no confirma que quien sopló sea el del DNI. Tarjeta de contingencia: el personal pasó sin su DNI; el vigilante pasó la tarjeta en su lugar (en la salida, entre paréntesis, quién eligió al personal). Sin lector de DNI: el lector de esa puerta estaba desconectado; en el ingreso la persona fue identificada por rostro y en la salida la abrió un vigilante (entre paréntesis). Vacío: verificación normal.' },
         { titulo: 'Molinete', ancho: 12, descripcion: 'Molinete por el que pasó.' },
       ],
@@ -794,7 +800,7 @@ export class ReportesService {
           tipo: 'numero' as const,
           ancho: 12,
           descripcion: c
-            ? `Personas activas de la empresa con perfil "${PERFIL_LABEL[c]}".`
+            ? `Personas activas de la empresa con perfil ${PERFIL_LABEL[c]}.`
             : 'Personas activas registradas antes de que existiera el perfil: falta asignárselo en su ficha.',
         })),
       ],
@@ -821,9 +827,9 @@ export class ReportesService {
       filtros: [periodo.texto],
       columnas: [
         { titulo: 'Fecha y hora', tipo: 'fechaHora', ancho: 16, descripcion: 'Cuándo se hizo el cambio.' },
-        { titulo: 'Usuario', ancho: 30, descripcion: 'Correo del usuario que hizo el cambio. "Sistema" si lo hizo el propio sistema.' },
+        { titulo: 'Usuario', ancho: 30, descripcion: 'Correo del usuario que hizo el cambio. Sistema si lo hizo el propio sistema.' },
         { titulo: 'Acción', ancho: 22, descripcion: 'Crear, Modificar, Eliminar, Inicio de sesión, Inicio de sesión rechazado, Desconectado o Conectado de nuevo (equipos), Apertura manual (molinete sin DNI), Ejecución (sincronización), Descarga (reporte) o Consulta (archivo de un documento).' },
-        { titulo: 'Dato', ancho: 20, descripcion: 'Qué se cambió: personal, empresa, documento, tipo de documento, usuario, verificación manual, orden de ingreso o tarjeta de contingencia. "Equipos": un equipo o servicio se desconectó o volvió (lo registra el sistema).' },
+        { titulo: 'Dato', ancho: 20, descripcion: 'Qué se cambió: personal, empresa, documento, tipo de documento, usuario, verificación manual, orden de ingreso o tarjeta de contingencia. Equipos: un equipo o servicio se desconectó o volvió (lo registra el sistema).' },
         { titulo: 'N° de registro', tipo: 'numero', ancho: 13, descripcion: 'Número interno del dato cambiado, para ubicarlo en el sistema.' },
         { titulo: 'IP', ancho: 16, descripcion: 'Inicios de sesión: dirección desde donde se intentó.' },
         { titulo: 'Detalle', ancho: 40, descripcion: 'Inicios de sesión rechazados: el correo escrito y el motivo (correo no registrado, contraseña incorrecta o cuenta de baja). Equipos: cuál, qué pasó y, al volver, cuánto tiempo estuvo sin conexión. En las demás acciones, qué se hizo (por ejemplo, el reporte y sus filtros, o el documento abierto).' },
