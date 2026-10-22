@@ -155,7 +155,7 @@ export function Presentes() {
   return (
     <div>
       {sinLectorSalida && (
-        <FranjaSinLector titulo="Lector de DNI de salida sin conexión.">Abra la salida desde esta lista con el botón «Salida».</FranjaSinLector>
+        <FranjaSinLector titulo="Lector de DNI de salida sin conexión.">Abra la salida desde esta lista con el botón <b>Salida</b>.</FranjaSinLector>
       )}
       {salio && (
         <ErrorBanner tono="exito" className="mb-4">

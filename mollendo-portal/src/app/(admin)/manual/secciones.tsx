@@ -594,8 +594,8 @@ export const SECCIONES: SeccionManual[] = [
                   <Badge color="primary">Manual</Badge> (con el grado y quién decidió).
                 </p>
                 <p>
-                  <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revise si arriba dice <b>«Alcoholímetro desconectado»</b>{" "}
-                  y avise a soporte. Si el cambio va a demorar, use su botón <b>«Activar verificación manual»</b>. Se cierra con la ✕ o solo,
+                  <b>Aviso ámbar “No completó”:</b> si dice que no pudo soplar, revise si arriba dice <b>Alcoholímetro desconectado</b>{" "}
+                  y avise a soporte. Si el cambio va a demorar, use su botón <b>Activar verificación manual</b>. Se cierra con la ✕ o solo,
                   cuando la siguiente persona entra bien.
                 </p>
               </>
@@ -650,7 +650,7 @@ export const SECCIONES: SeccionManual[] = [
       },
       {
         titulo: "Si falla un lector de DNI",
-        descripcion: "Contingencia «sin lector»: se activa sola",
+        descripcion: "Contingencia “sin lector”: se activa sola",
         contenido: (
           <>
             <p className="mb-3">
@@ -1084,7 +1084,7 @@ export const SECCIONES: SeccionManual[] = [
                 </li>
                 <li>
                   <b>Lectores de DNI:</b> ingreso y salida, con su última lectura. Si no pita al pasar un DNI, revise su alimentación. Si dice
-                  «Adaptador sin respuesta», desconecte y vuelva a conectar el adaptador USB de ese lector en la mini PC.
+                  <b>Adaptador sin respuesta</b>, desconecte y vuelva a conectar el adaptador USB de ese lector en la mini PC.
                 </li>
                 <li>
                   <b>Relés:</b> de molinetes y de aviso, con su última apertura o aviso.

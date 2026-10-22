@@ -80,7 +80,7 @@ export function FranjasSinLectorPanel({ estado }: { estado: SinLector }) {
             </Link>
           }
         >
-          Abra la salida desde «Presentes ahora».
+          Abra la salida desde <b>Presentes ahora</b>.
         </FranjaSinLector>
       )}
     </>

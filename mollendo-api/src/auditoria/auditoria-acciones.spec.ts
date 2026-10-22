@@ -67,7 +67,7 @@ describe('Auditoría: acciones sin cambio de datos', () => {
 
   it('archivo de un documento: queda quién lo abrió y cuál era', async () => {
     const { registros, auditoria } = auditoriaFalsa();
-    const archivo = { ruta: '/x.pdf', tipo: 'application/pdf', nombre: 'x.pdf', enLinea: true, descripcion: 'Abrió el archivo de «SCTR Salud» v2 de Pérez, Juan' };
+    const archivo = { ruta: '/x.pdf', tipo: 'application/pdf', nombre: 'x.pdf', enLinea: true, descripcion: 'Abrió el archivo de “SCTR Salud” v2 de Pérez, Juan' };
     const controlador = new DocumentosController({ archivo: async () => archivo } as never, auditoria as never);
     const res = { setHeader: () => undefined, sendFile: () => undefined };
     await controlador.verArchivo(41, 9, res as never, admin);

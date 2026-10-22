@@ -107,7 +107,7 @@ export function avisosDelSistema(e: EstadoParaAvisos): AvisoSistema[] {
         ? 'Sin el controlador no se leen DNI en ingreso ni salida'
         : `No se leen DNI en ${lectores === 'ingreso y salida' ? 'el ingreso ni en la salida' : lectores === 'ingreso' ? 'el ingreso' : 'la salida'}${
             // Con el controlador en línea se activa sola la contingencia (ingreso por rostro; salida desde Presentes ahora).
-            e.controlador.remoto ? '. Contingencia «sin lector» activa' : ''
+            e.controlador.remoto ? '. Contingencia “sin lector” activa' : ''
           }`,
     );
   }

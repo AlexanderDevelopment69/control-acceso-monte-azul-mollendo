@@ -4,14 +4,14 @@ import { AlertCircleIcon } from "@/icons";
 
 /** Qué revisar cuando alguien no completa rostro y alcohol (contingencias, sección 3.2). */
 export const PISTA_NO_COMPLETO =
-  "Si dice que no pudo soplar: revise si arriba dice «Alcoholímetro desconectado» y avise a soporte.";
+  "Si dice que no pudo soplar: revise si arriba dice Alcoholímetro desconectado y avise a soporte.";
 
 /** Con el equipo facial desconectado la causa es otra: nadie puede completar (contingencias, sección 4). */
 export const PISTA_EQUIPO_DESCONECTADO =
   "El equipo facial está desconectado: nadie puede completar rostro y alcohol. Avise a soporte.";
 
 /** Explicación de la ⓘ de la tabla: sirve para cualquier momento, sin saber el estado del equipo de entonces. */
-export const PISTA_TABLA = `Si el equipo facial estaba desconectado, nadie podía completar: avise a soporte. Si estaba conectado y la persona no pudo soplar, revise si arriba dice «Alcoholímetro desconectado» y avise a soporte.`;
+export const PISTA_TABLA = `Si el equipo facial estaba desconectado, nadie podía completar: avise a soporte. Si estaba conectado y la persona no pudo soplar, revise si arriba dice “Alcoholímetro desconectado” y avise a soporte.`;
 
 /** Ingreso que terminó en "No completó rostro y alcohol" y todavía merece el aviso. */
 export interface AvisoNoCompleto {
@@ -97,7 +97,14 @@ export function AvisoNoCompletoBanner({
         <span className="font-semibold text-warning-700 dark:text-orange-400">
           {aviso.persona} no completó rostro y alcohol ({hora}).
         </span>{" "}
-        {equipoFacialDesconectado ? PISTA_EQUIPO_DESCONECTADO : PISTA_NO_COMPLETO}
+        {equipoFacialDesconectado ? (
+          PISTA_EQUIPO_DESCONECTADO
+        ) : (
+          // PISTA_NO_COMPLETO, con el nombre del aviso en negrita.
+          <>
+            Si dice que no pudo soplar: revise si arriba dice <b>Alcoholímetro desconectado</b> y avise a soporte.
+          </>
+        )}
         {onActivarManual && (
           <button
             type="button"
