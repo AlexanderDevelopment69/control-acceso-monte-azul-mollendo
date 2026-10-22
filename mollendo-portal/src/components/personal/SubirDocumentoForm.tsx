@@ -109,7 +109,7 @@ export function SubirDocumentoForm({
           value={fechaVencimiento}
           onChange={setFechaVencimiento}
         />
-        <p className="mt-1 text-xs text-gray-400">Déjelo vacío si el documento no vence.</p>
+        <p className="mt-1 text-xs text-gray-400">Vacío si no vence.</p>
       </div>
       <div>
         <Label>Archivo</Label>

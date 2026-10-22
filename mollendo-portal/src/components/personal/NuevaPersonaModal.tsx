@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { documentosApi, personasApi, tiposDocumentoApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
@@ -102,11 +102,12 @@ function Seccion({
 }
 
 /**
- * Alta de un trabajador con sus documentos, todo en un solo formulario
- * (alcance base: lo carga el administrador). La empresa se elige de la lista
- * o se crea aquí mismo; de cada documento se escribe su nombre (si ya existe
- * uno igual, se reutiliza), su vencimiento y el archivo. Si algo falla a mitad de camino, al reintentar no se duplica lo que
- * ya se guardó (empresa, trabajador, documentos ya subidos).
+ * Alta de un trabajador con su foto, su período de autorización (opcional) y sus
+ * documentos, todo en un solo formulario (lo carga el administrador). La empresa
+ * se elige de la lista (las nuevas se registran en Empresas); cada documento se
+ * elige de la lista fija, con su vencimiento y el archivo. Si algo falla a mitad
+ * de camino, al reintentar no se duplica lo que ya se guardó (trabajador, foto,
+ * documentos ya subidos).
  */
 function Formulario({
   onClose,
@@ -147,8 +148,7 @@ function Formulario({
     return () => window.removeEventListener("focus", onRecargarEmpresas);
   }, [onRecargarEmpresas]);
 
-  // Al agregar una fila, bajar hasta ella para que se vea. La lista no tiene
-  // scroll propio: cortaría el desplegable del nombre del documento.
+  // Al agregar una fila, la lista (con desplazamiento propio) baja hasta ella para que se vea.
   const listaRef = useRef<HTMLDivElement>(null);
   const cantidadFilas = useRef(filas.length);
   useEffect(() => {
@@ -157,6 +157,19 @@ function Formulario({
     }
     cantidadFilas.current = filas.length;
   }, [filas.length]);
+
+  // El mensaje va arriba, bajo la descripción: si se presionó el botón de abajo (en el celular la
+  // ventana es larga), se sube hasta el mensaje para que se lea.
+  // Cuenta cada vez que se muestra un error, para subir también si se repite el mismo mensaje.
+  const mensajeRef = useRef<HTMLDivElement>(null);
+  const [vecesError, setVecesError] = useState(0);
+  useLayoutEffect(() => {
+    if (vecesError) mensajeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [vecesError]);
+  function mostrarError(mensaje: string) {
+    setError(mensaje);
+    setVecesError((n) => n + 1);
+  }
 
   function actualizarFila(clave: number, cambios: Partial<FilaDocumento>) {
     setFilas((prev) => prev.map((f) => (f.clave === clave ? { ...f, ...cambios } : f)));
@@ -171,6 +184,10 @@ function Formulario({
       }
       const problemaNumero = validarNumeroDocumento(tipoDocumentoIdentidad, numeroDocumento);
       if (problemaNumero) return problemaNumero;
+      // Con la lista ya cargada se avisa sin consultar a la API (el mismo mensaje que daría ella).
+      if (personas.some((p) => p.tipoDocumentoIdentidad === tipoDocumentoIdentidad && p.numeroDocumento === numeroDocumento)) {
+        return "Ya existe una persona registrada con ese documento";
+      }
       const problemaDelPeriodo = problemaPeriodo(periodo);
       if (problemaDelPeriodo) return problemaDelPeriodo;
     }
@@ -197,7 +214,7 @@ function Formulario({
     e.preventDefault();
     const problema = validar();
     if (problema) {
-      setError(problema);
+      mostrarError(problema);
       return;
     }
     setError(null);
@@ -241,7 +258,7 @@ function Formulario({
       onCreated(persona);
       onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo guardar");
+      mostrarError(err instanceof ApiError ? err.message : "No se pudo guardar");
     } finally {
       setLoading(false);
       onGuardando(false);
@@ -252,7 +269,11 @@ function Formulario({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <ErrorBanner>{error}</ErrorBanner>}
+      {error && (
+        <div ref={mensajeRef} className="scroll-mt-4">
+          <ErrorBanner>{error}</ErrorBanner>
+        </div>
+      )}
       {personaCreada && (
         <ErrorBanner tono="exito">
           Personal <strong>{personaCreada.nombres} {personaCreada.apellidos}</strong> ya registrado. Corrija lo que
@@ -263,7 +284,8 @@ function Formulario({
       {/* En pantallas anchas, tres recuadros iguales: datos, foto y período, documentos. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <Seccion numero={1} titulo="Datos del personal" descripcion="Datos de identificación de la persona.">
-          <fieldset disabled={bloqueado} className="space-y-4 disabled:opacity-60">
+          {/* min-w-0: un fieldset no se encoge por defecto y, con un nombre de empresa largo, los campos se salían en el celular. */}
+          <fieldset disabled={bloqueado} className="min-w-0 space-y-4 disabled:opacity-60">
             <div>
               <Label>Perfil</Label>
               <Select
@@ -306,7 +328,7 @@ function Formulario({
               </div>
               <div>
                 <Label>Número de documento</Label>
-                <Input defaultValue={numeroDocumento} onChange={(e) => setNumeroDocumento(e.target.value.trim())} />
+                <Input defaultValue={numeroDocumento} onChange={(e) => setNumeroDocumento(e.target.value.trim().toUpperCase())} />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -327,11 +349,11 @@ function Formulario({
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Foto del personal</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Se usa para el reconocimiento facial.</p>
           </div>
-            {fotoSubida ? (
-              <p className="text-sm text-success-600 dark:text-success-500">✔ Foto subida.</p>
-            ) : (
-              <SelectorFoto archivo={foto} onChange={setFoto} />
-            )}
+          {fotoSubida ? (
+            <p className="text-sm text-success-600 dark:text-success-500">✔ Foto subida.</p>
+          ) : (
+            <SelectorFoto archivo={foto} onChange={setFoto} />
+          )}
           {!personaCreada && <PeriodoAutorizacionCampos id="nuevo-periodo" periodo={periodo} onChange={setPeriodo} />}
         </Seccion>
 

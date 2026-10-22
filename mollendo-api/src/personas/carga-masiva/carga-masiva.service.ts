@@ -45,7 +45,7 @@ export class CargaMasivaService {
     } catch (error) {
       throw new BadRequestException((error as Error).message);
     }
-    if (!filasLeidas.length) throw new BadRequestException('El Excel no tiene personas: llene la hoja "Personal" desde la fila 2.');
+    if (!filasLeidas.length) throw new BadRequestException('El Excel no tiene personas: llene la hoja Personal desde la fila 2.');
 
     const existentes = await this.prisma.persona.findMany({
       select: { tipoDocumentoIdentidad: true, numeroDocumento: true, nombres: true, apellidos: true, estado: true },

@@ -377,9 +377,9 @@ export async function generarPlantillaCarga(
   titulo.font = { bold: true, size: 14, color: { argb: MARCA } };
   instrucciones.addRow([]);
   for (const texto of [
-    '1. Llene la hoja "Personal": una fila por persona, desde la fila 2. No cambie los títulos de la fila 1.',
+    '1. Llene la hoja Personal: una fila por persona, desde la fila 2. No cambie los títulos de la fila 1.',
     `2. Hasta ${MAX_FILAS_CARGA} personas por archivo.`,
-    '3. En el portal: Personal → "Carga masiva" → suba este archivo. El sistema revisa todas las filas antes de guardar.',
+    '3. En el portal: Personal → Carga masiva → suba este archivo. El sistema revisa todas las filas antes de guardar.',
     '4. Se registran solo las filas correctas. Las que ya están registradas se omiten y las que tienen errores se pueden descargar para corregirlas.',
     '5. Después de registrarlas, cada persona necesita su foto y sus documentos (en su ficha) para poder ingresar.',
   ]) {
@@ -400,7 +400,7 @@ export async function generarPlantillaCarga(
   ]).getCell(2).alignment = { wrapText: true };
   instrucciones.addRow([
     'Empresas',
-    'Si la empresa no aparece en la lista, regístrela primero en el portal (menú "Empresas" → "+ Nueva empresa") y vuelva a descargar la plantilla.',
+    'Si la empresa no aparece en la lista, regístrela primero en el portal (menú Empresas → + Nueva empresa) y vuelva a descargar la plantilla.',
   ]).getCell(2).alignment = { wrapText: true };
 
   return Buffer.from(await libro.xlsx.writeBuffer());

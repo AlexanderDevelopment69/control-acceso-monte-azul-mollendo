@@ -157,7 +157,7 @@ describe("Ficha de la persona", () => {
     await montar(
       persona({ habilitado: true }, { motivoReactivacion: "Volvió a trabajar en el Terminal", fechaReactivacion: "2026-10-22T15:00:00.000Z" }),
     );
-    expect(within(tarjeta()).getByText(/Reactivado el .*: Volvió a trabajar en el Terminal/)).toBeInTheDocument();
+    expect(within(tarjeta()).getByText(/Reactivado el .*\. Motivo: Volvió a trabajar en el Terminal/)).toBeInTheDocument();
   });
 
   it("sin foto: aviso del reconocimiento facial y el paso Rostro en aviso", async () => {

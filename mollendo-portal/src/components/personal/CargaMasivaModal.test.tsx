@@ -45,7 +45,9 @@ async function revisarArchivo() {
 describe("carga masiva de personal", () => {
   it("descarga la plantilla", async () => {
     render(<CargaMasivaModal isOpen onClose={() => {}} onRegistradas={() => {}} />);
-    expect(screen.getByRole("button", { name: "Revisar archivo" })).toBeDisabled();
+    // Sin Excel, "Revisar archivo" dice qué falta (sin enviar nada).
+    await userEvent.click(screen.getByRole("button", { name: "Revisar archivo" }));
+    expect(screen.getByText("Elija el Excel con el personal")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Descargar plantilla" }));
     expect(guardarArchivo).toHaveBeenCalledWith(expect.any(Blob), "plantilla-carga-personal.xlsx");
   });

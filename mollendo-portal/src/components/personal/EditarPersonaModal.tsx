@@ -39,7 +39,7 @@ export function cambiosPersona(
 
 /**
  * Corregir los datos de una persona (perfil, empresa, documento, nombres y
- * apellidos). La foto y los documentos se cambian en la ficha. El G4 Pro se
+ * apellidos). La foto, los documentos y el período se cambian en la ficha. El G4 Pro se
  * actualiza solo si cambian el número o el nombre.
  */
 function Formulario({ persona, onClose, onGuardado, onGuardando }: {
@@ -181,7 +181,7 @@ export function EditarPersonaModal({
     <Modal isOpen={isOpen} onClose={onClose} bloqueado={guardando} className="max-w-2xl p-6 sm:p-8">
       <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Editar datos del personal</h2>
       <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-        Para corregir errores. La foto y los documentos se cambian en la ficha. El perfil solo clasifica a la persona: no
+        Para corregir errores. La foto, los documentos y el período se cambian en la ficha. El perfil solo clasifica a la persona: no
         cambia lo que se valida en el molinete.
       </p>
       {/* Se monta de nuevo cada vez que se abre: siempre con los datos actuales. */}

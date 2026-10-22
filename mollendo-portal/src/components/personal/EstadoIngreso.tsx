@@ -108,7 +108,7 @@ export function EstadoIngreso({
   return (
     <>
       {/* Tarjeta de estado: ícono, título, resumen y, si no puede ingresar, cada problema
-          con el botón que lo resuelve (renovar o agregar documento; si está de baja, “Reactivar” de arriba). */}
+          con el botón que lo resuelve (renovar o agregar documento; si está de baja, el enlace Reactivar). */}
       <div
         className={`mt-4 rounded-xl p-4 ${
           cumplimiento.habilitado ? "bg-success-50 dark:bg-success-500/10" : "bg-error-50 dark:bg-error-500/10"
@@ -165,20 +165,20 @@ export function EstadoIngreso({
                             {persona.motivoAutorizacion ? `. Motivo: ${persona.motivoAutorizacion}` : ""}.
                           </span>
                           <span className="block">
-                          Puede cambiarlo abajo, en{" "}
-                          {/* Lleva al recuadro del período, más abajo en la ficha. */}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              document
-                                .getElementById(idRecuadroPeriodo(persona.id))
-                                ?.scrollIntoView({ behavior: "smooth", block: "center" })
-                            }
-                            className="font-semibold text-gray-800 underline-offset-2 hover:underline dark:text-white/90"
-                          >
-                            Período de autorización
-                          </button>
-                          .
+                            Puede cambiarlo abajo, en{" "}
+                            {/* Lleva al recuadro del período, más abajo en la ficha. */}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                document
+                                  .getElementById(idRecuadroPeriodo(persona.id))
+                                  ?.scrollIntoView({ behavior: "smooth", block: "center" })
+                              }
+                              className="font-semibold text-gray-800 underline-offset-2 hover:underline dark:text-white/90"
+                            >
+                              Período de autorización
+                            </button>
+                            .
                           </span>
                         </>
                       )
@@ -191,13 +191,13 @@ export function EstadoIngreso({
             {persona.estado !== "inactivo" && !cumplimiento.fueraDePeriodo && persona.autorizadoDesde && (
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Autorizado {textoPeriodo(persona)}
-                {persona.motivoAutorizacion ? `: ${persona.motivoAutorizacion}` : ""}
+                {persona.motivoAutorizacion ? `. Motivo: ${persona.motivoAutorizacion}` : ""}
               </p>
             )}
             {persona.estado !== "inactivo" && persona.fechaReactivacion && (
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Reactivado el {new Date(persona.fechaReactivacion).toLocaleDateString("es-PE")}
-                {persona.motivoReactivacion ? `: ${persona.motivoReactivacion}` : ""}
+                {persona.motivoReactivacion ? `. Motivo: ${persona.motivoReactivacion}` : ""}
               </p>
             )}
           </div>

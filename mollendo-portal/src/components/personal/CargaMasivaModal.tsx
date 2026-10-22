@@ -87,18 +87,23 @@ export function CargaMasivaModal({
       "No se pudo descargar la plantilla",
     );
 
-  const revisar = () =>
-    ejecutar(
+  const revisar = () => {
+    // El botón siempre está habilitado: sin archivo, se dice qué falta.
+    if (!archivo) {
+      setError("Elija el Excel con el personal");
+      return;
+    }
+    return ejecutar(
       "revisando",
       async () => {
-        if (!archivo) return;
-        const r = await personasApi.revisarCarga(archivo);
+        const r = await personasApi.revisarCarga(archivo!);
         setRevision(r);
         // Con errores se muestran primero las filas a corregir.
         setFiltro(r.resumen.errores > 0 ? "error" : "todas");
       },
       "No se pudo revisar el archivo",
     );
+  };
 
   const registrar = () =>
     ejecutar(
@@ -307,7 +312,7 @@ export function CargaMasivaModal({
             <li>Descargue la plantilla de Excel.</li>
             <li>
               Llene una fila por persona: perfil, empresa, tipo y número de documento, nombres y apellidos y, si corresponde, el
-              período de autorización (la hoja &quot;Instrucciones&quot; explica cada columna).
+              período de autorización (la hoja <b>Instrucciones</b> explica cada columna).
             </li>
             <li>Súbala: el sistema revisa todas las filas y le muestra el resultado antes de guardar.</li>
           </ol>
@@ -323,14 +328,21 @@ export function CargaMasivaModal({
           </Button>
           <div>
             <p className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-400">Excel con el personal</p>
-            <FileInput key={claveArchivo} accept={ACEPTA_EXCEL} onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
+            <FileInput
+              key={claveArchivo}
+              accept={ACEPTA_EXCEL}
+              onChange={(e) => {
+                setArchivo(e.target.files?.[0] ?? null);
+                setError(null);
+              }}
+            />
             <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Archivo .xlsx de hasta 5 MB y 2000 personas. Sin fotos: se agregan después en la ficha.</p>
           </div>
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" size="sm" onClick={cerrar} disabled={!!ocupado}>
               Cancelar
             </Button>
-            <Button type="button" size="sm" onClick={() => void revisar()} disabled={!archivo || !!ocupado}>
+            <Button type="button" size="sm" onClick={() => void revisar()} disabled={!!ocupado}>
               {ocupado === "revisando" ? "Revisando…" : "Revisar archivo"}
             </Button>
           </div>

@@ -363,9 +363,14 @@ function EmpresasContent() {
         )}
       </Tarjeta>
 
-      <EmpresaModal isOpen={nueva} onClose={() => setNueva(false)} onGuardada={(e) => guardada(`Se registró ${e.razonSocial}`)} />
+      <EmpresaModal
+        existentes={empresas ?? []}
+        isOpen={nueva}
+        onClose={() => setNueva(false)}
+        onGuardada={(e) => guardada(`Se registró ${e.razonSocial}`)} />
       <EmpresaModal
         empresa={editando ?? undefined}
+        existentes={empresas ?? []}
         isOpen={!!editando}
         onClose={() => setEditando(null)}
         onGuardada={(e) => guardada(`Se guardaron los cambios de ${e.razonSocial}`)}

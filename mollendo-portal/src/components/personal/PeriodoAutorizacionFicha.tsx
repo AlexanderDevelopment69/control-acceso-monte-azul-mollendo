@@ -13,14 +13,15 @@ import { PeriodoAutorizacionCampos } from "./PeriodoAutorizacionCampos";
 /** id del recuadro, para llegar a él desde el aviso "Fuera del período autorizado". */
 export const idRecuadroPeriodo = (personaId: number) => `periodo-autorizacion-${personaId}`;
 
-/**
- * Período de autorización en la ficha (fuera de "Editar datos"): los campos
- * siempre a la vista, "Guardar período" (solo con cambios) y "Quitar período".
- * Mismo estilo que el recuadro "Documentos". Queda en la Auditoría (la API).
- */
 /** Mensaje verde tras guardar o quitar (el recuadro se vuelve a montar con lo guardado, por eso lo guarda la ficha). */
 export const AVISO_PERIODO = { guardar: "Período de autorización guardado.", quitar: "Período de autorización quitado." } as const;
 
+/**
+ * Período de autorización en la ficha (fuera de "Editar datos"): los campos
+ * siempre a la vista, "Guardar período" (siempre habilitado: si falta algo o no
+ * cambió nada, lo dice) y "Quitar período". Mismo estilo que el recuadro
+ * "Documentos". Queda en la Auditoría (la API).
+ */
 export function PeriodoAutorizacionFicha({
   persona,
   aviso,
@@ -108,10 +109,8 @@ export function PeriodoAutorizacionFicha({
             size="sm"
             variant="outline"
             disabled={guardando !== null}
-            onClick={() => {
-              setPeriodo(PERIODO_VACIO);
-              void enviar(PERIODO_VACIO, "quitar");
-            }}
+            // Los campos se vacían solos al guardarse (el recuadro se vuelve a montar); si falla, quedan como estaban.
+            onClick={() => void enviar(PERIODO_VACIO, "quitar")}
           >
             {guardando === "quitar" ? "Quitando…" : "Quitar período"}
           </Button>

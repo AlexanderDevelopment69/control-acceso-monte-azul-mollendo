@@ -88,9 +88,15 @@ export function PersonaFicha({
     };
   }, [obtener, aplicar, fallar]);
 
+  /** Vuelve a leer tras un cambio que no es del período: su mensaje verde ya no corresponde. */
+  function recargarTrasCambio() {
+    setAvisoPeriodo(null);
+    cargar();
+  }
+
   function documentoSubido() {
     setVentana(null);
-    cargar();
+    recargarTrasCambio();
   }
 
   async function confirmarEliminar() {
@@ -100,7 +106,7 @@ export function PersonaFicha({
     try {
       await documentosApi.eliminar(personaId, aEliminar.tipoDocumentoId);
       setAEliminar(null);
-      cargar();
+      recargarTrasCambio();
     } catch (err) {
       setErrorEliminar(err instanceof ApiError ? err.message : "No se pudo eliminar el documento");
     } finally {
@@ -118,7 +124,7 @@ export function PersonaFicha({
     setSubiendoFoto(true);
     try {
       await personasApi.subirFoto(personaId, archivo);
-      cargar();
+      recargarTrasCambio();
     } catch (err) {
       setErrorFoto(err instanceof ApiError ? err.message : "No se pudo subir la foto");
     } finally {
@@ -148,7 +154,7 @@ export function PersonaFicha({
     try {
       await personasApi.updateEstado(persona.id, estado, motivoBaja.trim());
       setConfirmarEstado(null);
-      cargar();
+      recargarTrasCambio();
     } catch (err) {
       setErrorEstado(err instanceof ApiError ? err.message : "No se pudo cambiar el estado");
     } finally {
@@ -280,7 +286,7 @@ export function PersonaFicha({
           onClose={() => setEditando(false)}
           onGuardado={() => {
             setEditando(false);
-            cargar();
+            recargarTrasCambio();
           }}
         />
         <Modal isOpen={verFoto} onClose={() => setVerFoto(false)} className="max-w-md p-6 sm:p-8">

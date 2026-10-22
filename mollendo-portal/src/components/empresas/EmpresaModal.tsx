@@ -37,11 +37,13 @@ export function cambiosEmpresa(empresa: Empresa, d: DatosEmpresa) {
 
 function Formulario({
   empresa,
+  existentes,
   onClose,
   onGuardada,
   onGuardando,
 }: {
   empresa?: Empresa;
+  existentes: Empresa[];
   onClose: () => void;
   onGuardada: (empresa: Empresa) => void;
   onGuardando: (guardando: boolean) => void;
@@ -65,6 +67,10 @@ function Formulario({
     e.preventDefault();
     const problema = problemaEmpresa(datos);
     if (problema) return setError(problema);
+    // Con la lista ya cargada se avisa sin consultar a la API (el mismo mensaje que daría ella).
+    if (existentes.some((e) => e.ruc === datos.ruc && e.id !== empresa?.id)) {
+      return setError("Ya existe una empresa registrada con ese RUC");
+    }
     setError(null);
     if (!hayCambios) return setSinCambiosAviso(true);
     setGuardando(true);
@@ -90,7 +96,8 @@ function Formulario({
   }
 
   return (
-    <form onSubmit={guardar} className="space-y-4">
+    // noValidate: el correo lo revisa problemaEmpresa con el mensaje de siempre (sin el globo del navegador).
+    <form onSubmit={guardar} noValidate className="space-y-4">
       {error && <ErrorBanner>{error}</ErrorBanner>}
       {sinCambiosAviso && !hayCambios && !error && <ErrorBanner tono="aviso">No cambió ningún dato.</ErrorBanner>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -128,11 +135,14 @@ function Formulario({
 /** Registrar una empresa nueva o, con `empresa`, corregir sus datos. */
 export function EmpresaModal({
   empresa,
+  existentes = [],
   isOpen,
   onClose,
   onGuardada,
 }: {
   empresa?: Empresa;
+  /** Empresas ya registradas, para avisar de un RUC repetido antes de enviar. */
+  existentes?: Empresa[];
   isOpen: boolean;
   onClose: () => void;
   onGuardada: (empresa: Empresa) => void;
@@ -149,7 +159,7 @@ export function EmpresaModal({
           : "Registre la empresa a la que pertenece el personal."}
       </p>
       {/* Se monta de nuevo cada vez que se abre: siempre con los datos actuales. */}
-      {isOpen && <Formulario empresa={empresa} onClose={onClose} onGuardada={onGuardada} onGuardando={setGuardando} />}
+      {isOpen && <Formulario empresa={empresa} existentes={existentes} onClose={onClose} onGuardada={onGuardada} onGuardando={setGuardando} />}
     </Modal>
   );
 }

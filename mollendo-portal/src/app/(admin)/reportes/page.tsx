@@ -365,7 +365,7 @@ function ReportesContent() {
         </div>
 
         {error && <ErrorBanner className="mt-5">{error}</ErrorBanner>}
-        {faltanFechas && <ErrorBanner className="mt-5">Elija las fechas &quot;desde&quot; y &quot;hasta&quot; del periodo.</ErrorBanner>}
+        {faltanFechas && <ErrorBanner className="mt-5">Elija las fechas <b>desde</b> y <b>hasta</b> del periodo.</ErrorBanner>}
 
         <div className="mt-6 flex flex-col gap-3 border-t border-gray-100 pt-5 dark:border-gray-800 sm:flex-row">
           <Button
