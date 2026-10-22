@@ -181,7 +181,8 @@ export interface EventoAcceso {
   gradoManual?: number | null;
   manualSinNumero?: boolean;
   /** Sin DNI: el vigilante pasó esta tarjeta de contingencia en lugar del DNI. */
-  tarjetaContingencia?: { numero: number } | null;
+  /** Tarjeta pasada por el lector: de contingencia (en lugar del DNI) o de acceso (abrió sola, sin persona). */
+  tarjetaContingencia?: { tipo?: TipoTarjeta; numero: number } | null;
   /** Lector de DNI de esa puerta desconectado: ingreso identificado por rostro, o salida abierta desde "Presentes ahora". */
   sinLector?: boolean;
   fechaHora: string;
@@ -497,9 +498,13 @@ export interface ResultadoCargaMasiva {
   omitidas: { numeroDocumento: string; motivo: string }[];
 }
 
-/** Tarjeta de contingencia (QR que el vigilante pasa en lugar del DNI). */
+export type TipoTarjeta = "contingencia" | "acceso";
+
+/** Tarjeta de contingencia (QR que el vigilante pasa en lugar del DNI) o de acceso (abre sola). */
 export interface TarjetaContingencia {
   id: number;
+  /** contingencia: reemplaza al DNI (sola no abre). acceso: abre sola (visitas, autoridades). Sin dato: contingencia. */
+  tipo?: TipoTarjeta;
   numero: number;
   nombre: string;
   activa: boolean;

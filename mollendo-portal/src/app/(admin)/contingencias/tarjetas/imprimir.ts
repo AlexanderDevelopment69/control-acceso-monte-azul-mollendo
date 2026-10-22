@@ -84,7 +84,7 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string, logo = 
       </div>
       <div class="abajo">
         <div>
-          <div class="titulo">Tarjeta de contingencia</div>
+          <div class="titulo">${tarjeta.tipo === "acceso" ? "Tarjeta de acceso" : "Tarjeta de contingencia"}</div>
           <div class="numero">N.º ${tarjeta.numero}</div>
           <div class="vence">${vence}</div>
           <div class="uso">Se pasa por el lector en lugar del DNI.</div>

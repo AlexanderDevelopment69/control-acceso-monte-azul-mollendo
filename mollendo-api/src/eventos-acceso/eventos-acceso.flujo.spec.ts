@@ -11,6 +11,8 @@ type Fila = Record<string, unknown> & { id: number };
 
 const TARJETA = 'TMAM-CONT-ABCDEFGHIJKLMNOPQRST';
 const TARJETA_DESACTIVADA = 'TMAM-CONT-ZZZZZZZZZZZZZZZZZZZZ';
+/** Tarjeta de acceso (visitas, autoridades): mismo QR, abre sola. */
+const TARJETA_ACCESO = 'TMAM-CONT-AAAAAAAAAAAAAAAAAAAA';
 
 /** ¿La fila cumple el `where` de Prisma? (solo lo que usa el servicio). */
 function cumple(fila: Fila, where: Record<string, unknown> = {}): boolean {
@@ -202,7 +204,11 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       { facialPrimero: async () => facialPrimero } as never,
       {
         revisar: async (codigo: string) =>
-          codigo === TARJETA ? { tarjeta: { id: 1, numero: 1 } } : { rechazo: 'Tarjeta desactivada', tarjetaId: 2 },
+          codigo === TARJETA
+            ? { tarjeta: { id: 1, tipo: 'contingencia', numero: 1 } }
+            : codigo === TARJETA_ACCESO
+              ? { tarjeta: { id: 3, tipo: 'acceso', numero: 1 } }
+              : { rechazo: 'Tarjeta desactivada', tarjetaId: 2 },
         anotarUso: async (uso: Record<string, unknown>) => void usosTarjeta.push(uso),
       } as never,
       { sinLector: () => sinLector } as never,
@@ -1235,6 +1241,29 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(servicio.salidaSinDniPreparada()).toBeNull();
         expect(de('salida-sin-dni.cambio').at(-1)).toBeNull();
         expect(await tarjeta('salida')).toMatchObject({ resultado: 'denegado' });
+      });
+    });
+
+    describe('tarjeta de acceso (visitas, autoridades): la pasa el vigilante y abre sola', () => {
+      const acceso = (tipoMovimiento: 'ingreso' | 'salida') =>
+        servicio.registrarTarjeta({ codigo: TARJETA_ACCESO, tipoMovimiento, torniqueteId: tipoMovimiento === 'ingreso' ? 'Ingreso' : 'Salida' });
+
+      it('ingreso: abre sin rostro, alcohol ni DNI; queda sin persona, con la tarjeta', async () => {
+        expect(await acceso('ingreso')).toMatchObject({ resultado: 'autorizado', persona: null, tarjetaAcceso: 1 });
+        expect(base.eventos).toEqual([expect.objectContaining({ resultado: 'autorizado', tarjetaContingenciaId: 3 })]);
+        expect(base.eventos[0].personaId ?? null).toBeNull();
+        expect(de('molinete.abrir')).toEqual([expect.objectContaining({ tipoMovimiento: 'ingreso', torniqueteId: 'Ingreso' })]);
+        expect(usosTarjeta).toEqual([expect.objectContaining({ tarjetaId: 3, aceptada: true, detalle: 'Ingreso' })]);
+        expect(de('g4pro.habilitar')).toHaveLength(0);
+      });
+
+      it('salida: abre la salida; también en "facial primero" y con la verificación manual activa', async () => {
+        expect(await acceso('salida')).toMatchObject({ resultado: 'autorizado' });
+        facialPrimero = true;
+        manualActiva = true;
+        expect(await acceso('ingreso')).toMatchObject({ resultado: 'autorizado' });
+        expect(de('molinete.abrir').map((e) => (e as { tipoMovimiento: string }).tipoMovimiento)).toEqual(['salida', 'ingreso']);
+        expect(de('aviso.denegado')).toHaveLength(0);
       });
     });
 

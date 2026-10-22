@@ -77,6 +77,14 @@ enum ResultadoAcceso {
   @@map("resultado_acceso")
 }
 
+/// Tarjeta de contingencia (reemplaza al DNI de un trabajador) o de acceso (abre sola: visitas, autoridades).
+enum TipoTarjeta {
+  contingencia
+  acceso
+
+  @@map("tipo_tarjeta")
+}
+
 enum AccionAuditoria {
   crear
   modificar
@@ -497,8 +505,11 @@ model SincronizacionG4 {
 // ---------------------------------------------------------------------
 model TarjetaContingencia {
   id               Int       @id @default(autoincrement())
-  /// "Tarjeta de contingencia {numero}".
-  numero           Int       @unique
+  /// contingencia: reemplaza al DNI (sola no abre). acceso: abre sola el molinete, sin rostro, alcohol ni DNI
+  /// (la pasa el vigilante para visitas o autoridades).
+  tipo             TipoTarjeta @default(contingencia)
+  /// "Tarjeta de contingencia {numero}" o "Tarjeta de acceso {numero}" (cada tipo con su numeración).
+  numero           Int
   /// Lo que lleva el QR (TMAM-CONT-…); al cambiarlo, la tarjeta impresa anterior deja de servir.
   codigo           String    @unique @db.VarChar(40)
   activa           Boolean   @default(true)
@@ -510,6 +521,7 @@ model TarjetaContingencia {
   eventos EventoAcceso[]
   usos    UsoTarjetaContingencia[]
 
+  @@unique([tipo, numero])
   @@map("tarjeta_contingencia")
 }
 

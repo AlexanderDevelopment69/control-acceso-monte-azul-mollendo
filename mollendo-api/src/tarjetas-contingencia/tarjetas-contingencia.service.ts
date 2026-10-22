@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import QRCode from 'qrcode';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditoriaService } from '../auditoria/auditoria.service.js';
-import type { TarjetaContingencia } from '../generated/prisma/client.js';
+import type { TarjetaContingencia, TipoTarjeta } from '../generated/prisma/client.js';
 import { paginacion, rangoDeDias, type Paginado } from '../common/paginacion.js';
 import { generarCodigoTarjeta, tarjetaVencida } from './tarjeta-contingencia.util.js';
 import type { ActualizarTarjetaDto, CrearTarjetaDto, QueryUsosTarjetaDto } from './dto/tarjeta-contingencia.dto.js';
@@ -10,6 +10,7 @@ import type { ActualizarTarjetaDto, CrearTarjetaDto, QueryUsosTarjetaDto } from 
 /** La tarjeta para el portal, sin el código (solo va en el QR que se imprime). */
 export interface TarjetaVista {
   id: number;
+  tipo: TipoTarjeta;
   numero: number;
   nombre: string;
   activa: boolean;
@@ -26,7 +27,8 @@ export interface TarjetaVista {
 /** Resultado de revisar una tarjeta pasada por el lector. */
 export type TarjetaRevisada = { tarjeta: TarjetaContingencia } | { rechazo: string; tarjetaId: number | null };
 
-export const nombreTarjeta = (numero: number) => `Tarjeta de contingencia ${numero}`;
+export const nombreTarjeta = (tipo: TipoTarjeta, numero: number) =>
+  `${tipo === 'acceso' ? 'Tarjeta de acceso' : 'Tarjeta de contingencia'} ${numero}`;
 
 const fechaDb = (dia: string | null | undefined) => (dia ? new Date(`${dia}T00:00:00Z`) : null);
 
@@ -42,8 +44,8 @@ export class TarjetasContingenciaService {
     private readonly auditoria: AuditoriaService,
   ) {}
 
-  async listar(): Promise<TarjetaVista[]> {
-    const tarjetas = await this.prisma.tarjetaContingencia.findMany({ orderBy: { numero: 'asc' } });
+  async listar(tipo: TipoTarjeta): Promise<TarjetaVista[]> {
+    const tarjetas = await this.prisma.tarjetaContingencia.findMany({ where: { tipo }, orderBy: { numero: 'asc' } });
     const usos = await this.prisma.usoTarjetaContingencia.groupBy({
       by: ['tarjetaId'],
       where: { tarjetaId: { in: tarjetas.map((t) => t.id) } },
@@ -56,8 +58,9 @@ export class TarjetasContingenciaService {
   private vista(t: TarjetaContingencia, ultimoUso: Date | null): TarjetaVista {
     return {
       id: t.id,
+      tipo: t.tipo,
       numero: t.numero,
-      nombre: nombreTarjeta(t.numero),
+      nombre: nombreTarjeta(t.tipo, t.numero),
       activa: t.activa,
       vencida: tarjetaVencida(t.venceEl),
       venceEl: t.venceEl ? t.venceEl.toISOString().slice(0, 10) : null,
@@ -81,11 +84,19 @@ export class TarjetasContingenciaService {
   }
 
   async crear(dto: CrearTarjetaDto, usuarioId: number): Promise<TarjetaVista> {
-    const ultima = await this.prisma.tarjetaContingencia.aggregate({ _max: { numero: true } });
+    const tipo = dto.tipo ?? 'contingencia';
+    // Cada tipo con su numeración: Tarjeta de acceso 1, 2… aparte de las de contingencia.
+    const ultima = await this.prisma.tarjetaContingencia.aggregate({ where: { tipo }, _max: { numero: true } });
     const tarjeta = await this.prisma.tarjetaContingencia.create({
-      data: { numero: (ultima._max.numero ?? 0) + 1, codigo: generarCodigoTarjeta(), venceEl: fechaDb(dto.venceEl) },
+      data: { tipo, numero: (ultima._max.numero ?? 0) + 1, codigo: generarCodigoTarjeta(), venceEl: fechaDb(dto.venceEl) },
     });
-    await this.auditoria.registrar({ usuarioId, tablaAfectada: 'tarjeta_contingencia', registroId: tarjeta.id, accion: 'crear' });
+    await this.auditoria.registrar({
+      usuarioId,
+      tablaAfectada: 'tarjeta_contingencia',
+      registroId: tarjeta.id,
+      accion: 'crear',
+      detalle: nombreTarjeta(tarjeta.tipo, tarjeta.numero),
+    });
     return this.vista(tarjeta, null);
   }
 
@@ -99,7 +110,13 @@ export class TarjetasContingenciaService {
         ...(dto.venceEl !== undefined && { venceEl: fechaDb(dto.venceEl) }),
       },
     });
-    await this.auditoria.registrar({ usuarioId, tablaAfectada: 'tarjeta_contingencia', registroId: id, accion: 'modificar' });
+    await this.auditoria.registrar({
+      usuarioId,
+      tablaAfectada: 'tarjeta_contingencia',
+      registroId: id,
+      accion: 'modificar',
+      detalle: nombreTarjeta(tarjeta.tipo, tarjeta.numero),
+    });
     return this.vista(tarjeta, await this.ultimoUso(id));
   }
 
@@ -110,7 +127,13 @@ export class TarjetasContingenciaService {
       where: { id },
       data: { codigo: generarCodigoTarjeta(), codigoCambiadoEn: new Date() },
     });
-    await this.auditoria.registrar({ usuarioId, tablaAfectada: 'tarjeta_contingencia', registroId: id, accion: 'modificar' });
+    await this.auditoria.registrar({
+      usuarioId,
+      tablaAfectada: 'tarjeta_contingencia',
+      registroId: id,
+      accion: 'modificar',
+      detalle: `${nombreTarjeta(tarjeta.tipo, tarjeta.numero)}: código cambiado`,
+    });
     return this.vista(tarjeta, await this.ultimoUso(id));
   }
 
@@ -120,14 +143,20 @@ export class TarjetasContingenciaService {
    * salidas hechos con ella siguen diciendo con qué tarjeta fueron.
    */
   async eliminar(id: number, usuarioId: number): Promise<{ ok: true }> {
-    await this.buscar(id);
+    const tarjeta = await this.buscar(id);
     const [usos, eventos] = await Promise.all([
       this.prisma.usoTarjetaContingencia.count({ where: { tarjetaId: id } }),
       this.prisma.eventoAcceso.count({ where: { tarjetaContingenciaId: id } }),
     ]);
     if (usos + eventos > 0) throw new BadRequestException('Esta tarjeta ya se usó: desactívela para conservar su historial');
     await this.prisma.tarjetaContingencia.delete({ where: { id } });
-    await this.auditoria.registrar({ usuarioId, tablaAfectada: 'tarjeta_contingencia', registroId: id, accion: 'eliminar' });
+    await this.auditoria.registrar({
+      usuarioId,
+      tablaAfectada: 'tarjeta_contingencia',
+      registroId: id,
+      accion: 'eliminar',
+      detalle: nombreTarjeta(tarjeta.tipo, tarjeta.numero),
+    });
     return { ok: true };
   }
 
@@ -159,11 +188,16 @@ export class TarjetasContingenciaService {
   /** Cada vez que se pasó una tarjeta, más recientes primero, con el trabajador del ingreso o la salida. */
   async usos(query: QueryUsosTarjetaDto) {
     const { pagina, porPagina, skip, take } = paginacion(query, 10);
-    const where = { fechaHora: rangoDeDias(query.desde, query.hasta) };
+    // Los usos de ese tipo; los de un código no registrado (sin tarjeta) se ven con las de contingencia.
+    const tipo = query.tipo ?? 'contingencia';
+    const where = {
+      fechaHora: rangoDeDias(query.desde, query.hasta),
+      ...(tipo === 'acceso' ? { tarjeta: { tipo } } : { OR: [{ tarjetaId: null }, { tarjeta: { tipo } }] }),
+    };
     const [filas, total] = await Promise.all([
       this.prisma.usoTarjetaContingencia.findMany({
         where,
-        include: { tarjeta: { select: { numero: true } } },
+        include: { tarjeta: { select: { tipo: true, numero: true } } },
         orderBy: [{ fechaHora: 'desc' }, { id: 'desc' }],
         skip,
         take,
@@ -181,7 +215,7 @@ export class TarjetasContingenciaService {
       return {
         id: f.id,
         fechaHora: f.fechaHora.toISOString(),
-        tarjeta: f.tarjeta ? nombreTarjeta(f.tarjeta.numero) : null,
+        tarjeta: f.tarjeta ? nombreTarjeta(f.tarjeta.tipo, f.tarjeta.numero) : null,
         tipoMovimiento: f.tipoMovimiento,
         aceptada: f.aceptada,
         detalle: f.detalle,

@@ -457,7 +457,7 @@ export class ReportesService {
       include: {
         persona: { select: { nombres: true, apellidos: true, perfil: true, empresa: { select: { razonSocial: true } } } },
         verificadoPor: { select: { correo: true } },
-        tarjetaContingencia: { select: { numero: true } },
+        tarjetaContingencia: { select: { tipo: true, numero: true } },
       },
       orderBy: [{ fechaHora: 'asc' }, { id: 'asc' }],
     });
@@ -491,7 +491,11 @@ export class ReportesService {
         e.resultado === 'autorizado' ? 'Autorizado' : 'Denegado',
         e.tipoDocumentoIdentidad,
         e.numeroDocumento,
-        e.persona ? `${e.persona.apellidos}, ${e.persona.nombres}` : 'No registrado',
+        e.persona
+          ? `${e.persona.apellidos}, ${e.persona.nombres}`
+          : e.tarjetaContingencia?.tipo === 'acceso'
+            ? `Tarjeta de acceso N.º ${e.tarjetaContingencia.numero}`
+            : 'No registrado',
         e.persona?.empresa.razonSocial ?? null,
         e.persona ? textoPerfil(e.persona.perfil) : null,
         e.resultado === 'denegado' ? motivosEvento(e) || null : null,
@@ -504,6 +508,8 @@ export class ReportesService {
               ? e.tipoMovimiento === 'salida'
                 ? `Salida sin lector (eligió ${e.verificadoPor?.correo ?? '-'})`
                 : 'Sin lector de DNI (identificado por rostro)'
+            : e.tarjetaContingencia?.tipo === 'acceso'
+              ? `Tarjeta de acceso N.º ${e.tarjetaContingencia.numero} (sin rostro ni alcohol)`
             : e.tarjetaContingencia
               ? e.tipoMovimiento === 'salida'
                 ? `Tarjeta de contingencia N.º ${e.tarjetaContingencia.numero} (eligió ${e.verificadoPor?.correo ?? '-'})`

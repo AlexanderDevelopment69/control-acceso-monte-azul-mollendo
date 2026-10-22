@@ -42,7 +42,10 @@ const navItems: NavItem[] = [
     icon: <LockLineIcon />,
     name: "Contingencias",
     roles: ["administrador"],
-    subItems: [{ name: "Tarjetas de contingencia", path: "/contingencias/tarjetas" }],
+    subItems: [
+      { name: "Tarjetas de contingencia", path: "/contingencias/tarjetas" },
+      { name: "Tarjetas de acceso", path: "/contingencias/tarjetas-acceso" },
+    ],
   },
   { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },

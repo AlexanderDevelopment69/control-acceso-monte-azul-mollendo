@@ -144,6 +144,13 @@ export function MarcaTarjetaContingencia({
   evento: Pick<EventoAcceso, "tarjetaContingencia" | "tipoMovimiento" | "verificadoPor">;
 }) {
   if (!evento.tarjetaContingencia) return null;
+  if (evento.tarjetaContingencia.tipo === "acceso") {
+    return (
+      <span title="Abrió sola: sin rostro, alcohol ni DNI (visitas, autoridades)" className="cursor-help">
+        <Badge color="warning">Tarjeta de acceso</Badge>
+      </span>
+    );
+  }
   const quien = evento.tipoMovimiento === "salida" && evento.verificadoPor ? ` · ${evento.verificadoPor.correo}` : "";
   return (
     <span

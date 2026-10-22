@@ -1,19 +1,19 @@
 import { Body, Controller, Delete, Get, Header, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { TarjetasContingenciaService } from './tarjetas-contingencia.service.js';
-import { ActualizarTarjetaDto, CrearTarjetaDto, QueryUsosTarjetaDto } from './dto/tarjeta-contingencia.dto.js';
+import { ActualizarTarjetaDto, CrearTarjetaDto, QueryTipoTarjetaDto, QueryUsosTarjetaDto } from './dto/tarjeta-contingencia.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
 
-/** Tarjetas de contingencia: el administrador las maneja; el vigilante solo las ve. */
+/** Tarjetas de contingencia y de acceso (?tipo=acceso): el administrador las maneja. */
 @Controller('tarjetas-contingencia')
 export class TarjetasContingenciaController {
   constructor(private readonly tarjetas: TarjetasContingenciaService) {}
 
   @Get()
   @Roles('administrador')
-  listar() {
-    return this.tarjetas.listar();
+  listar(@Query() query: QueryTipoTarjetaDto) {
+    return this.tarjetas.listar(query.tipo ?? 'contingencia');
   }
 
   /** Cada vez que se pasó una tarjeta por un lector, aceptada o no. */

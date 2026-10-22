@@ -1389,9 +1389,53 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     const revisada = await this.tarjetas.revisar(dto.codigo);
     if ('rechazo' in revisada) return this.rechazarTarjeta(revisada.tarjetaId, dto.tipoMovimiento, revisada.rechazo);
     const { tarjeta } = revisada;
+    if (tarjeta.tipo === 'acceso') return this.enSerie(() => this.pasoConTarjetaAcceso(tarjeta, dto));
     return dto.tipoMovimiento === 'ingreso'
       ? this.enSerie(() => this.ingresoConTarjeta(tarjeta, dto))
       : this.enSerie(() => this.salidaConTarjeta(tarjeta, dto));
+  }
+
+  /**
+   * Tarjeta de acceso (visitas, autoridades): la pasa el vigilante y abre sola
+   * el molinete de esa puerta, sin rostro, alcohol ni DNI (también con la
+   * verificación manual activa). No se sabe quién pasa: el movimiento queda
+   * sin persona, con la tarjeta, y no cuenta en Presentes ni en horas-hombre.
+   */
+  private async pasoConTarjetaAcceso(tarjeta: TarjetaContingencia, dto: TarjetaLeidaDto) {
+    const evento = await this.prisma.eventoAcceso.create({
+      data: {
+        tipoMovimiento: dto.tipoMovimiento,
+        resultado: 'autorizado',
+        torniqueteId: dto.torniqueteId,
+        tarjetaContingenciaId: tarjeta.id,
+      },
+    });
+    this.eventEmitter.emit('molinete.abrir', {
+      torniqueteId: dto.torniqueteId,
+      eventoId: evento.id,
+      tipoMovimiento: dto.tipoMovimiento,
+    } satisfies AbrirMolineteEvent);
+    this.logger.log(`Tarjeta de acceso ${tarjeta.numero}: ${dto.tipoMovimiento} (abre sola)`);
+    await this.tarjetas.anotarUso({
+      tarjetaId: tarjeta.id,
+      tipoMovimiento: dto.tipoMovimiento,
+      aceptada: true,
+      detalle: dto.tipoMovimiento === 'ingreso' ? 'Ingreso' : 'Salida',
+      eventoAccesoId: evento.id,
+    });
+    this.eventEmitter.emit('tarjeta-contingencia.uso', {});
+    const respuesta = {
+      eventoId: evento.id,
+      tipoMovimiento: evento.tipoMovimiento,
+      resultado: evento.resultado,
+      fechaHora: evento.fechaHora.toISOString(),
+      persona: null,
+      numeroDocumento: null,
+      motivos: {},
+      tarjetaAcceso: tarjeta.numero,
+    };
+    this.eventEmitter.emit('evento-acceso.registrado', respuesta);
+    return respuesta;
   }
 
   /** La tarjeta no sirvió: se anota, suena el aviso de denegado de esa puerta y no se abre. */
@@ -1708,7 +1752,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
             },
           },
           verificadoPor: { select: { id: true, correo: true } },
-          tarjetaContingencia: { select: { numero: true } },
+          tarjetaContingencia: { select: { tipo: true, numero: true } },
         },
         orderBy: [{ fechaHora: 'desc' }, { id: 'desc' }],
         skip,

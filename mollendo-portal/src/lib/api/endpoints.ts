@@ -31,6 +31,7 @@ import type {
   SalidaSinDni,
   SinLector,
   TarjetaContingencia,
+  TipoTarjeta,
   TipoDocumento,
   UsoTarjetaContingencia,
 } from "./types";
@@ -208,10 +209,11 @@ export const eventosAccesoApi = {
 
 // ---- tarjetas de contingencia ----
 export const tarjetasContingenciaApi = {
-  listar: () => apiRequest<TarjetaContingencia[]>("/tarjetas-contingencia"),
-  usos: (params: FiltrosLista = {}) =>
+  listar: (tipo: TipoTarjeta = "contingencia") => apiRequest<TarjetaContingencia[]>(`/tarjetas-contingencia${consulta({ tipo })}`),
+  usos: (params: FiltrosLista & { tipo?: TipoTarjeta } = {}) =>
     apiRequest<Paginado<UsoTarjetaContingencia>>(`/tarjetas-contingencia/usos${consulta({ ...params })}`),
-  crear: (venceEl: string | null) => apiRequest<TarjetaContingencia>("/tarjetas-contingencia", { method: "POST", body: { venceEl } }),
+  crear: (venceEl: string | null, tipo: TipoTarjeta = "contingencia") =>
+    apiRequest<TarjetaContingencia>("/tarjetas-contingencia", { method: "POST", body: { venceEl, tipo } }),
   actualizar: (id: number, cambios: { activa?: boolean; venceEl?: string | null }) =>
     apiRequest<TarjetaContingencia>(`/tarjetas-contingencia/${id}`, { method: "PATCH", body: cambios }),
   /** Solo si nunca se usó. */

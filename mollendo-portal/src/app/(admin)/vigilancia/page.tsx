@@ -641,8 +641,13 @@ function VigilanciaContent() {
                       ) : (
                         <span className="flex items-center gap-3">
                           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800">?</span>
-                          <span className="text-gray-400">
-                            {ev.facialPrimero ? "Sin identificar" : "No registrado"}
+                          <span className={ev.tarjetaContingencia?.tipo === "acceso" ? "text-gray-700 dark:text-gray-300" : "text-gray-400"}>
+                            {/* Tarjeta de acceso: no se sabe quién pasó, se dice con qué tarjeta. */}
+                            {ev.tarjetaContingencia?.tipo === "acceso"
+                              ? `Tarjeta de acceso N.º ${ev.tarjetaContingencia.numero}`
+                              : ev.facialPrimero
+                                ? "Sin identificar"
+                                : "No registrado"}
                             <DniAngosto ev={ev} />
                           </span>
                         </span>
