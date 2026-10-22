@@ -48,6 +48,8 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string, logo = 
     background: linear-gradient(135deg, #465fff 0%, #252dae 100%);
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
+  /* La de acceso, oscura (la de contingencia es azul). */
+  .tarjeta.acceso { background: linear-gradient(135deg, #1d2939 0%, #0c111d 100%); }
   .circulo { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.1); }
   .c1 { width: 36mm; height: 36mm; right: -9mm; top: -9mm; }
   .c2 { width: 34mm; height: 34mm; right: 18mm; bottom: -20mm; background: rgba(255, 255, 255, 0.06); }
@@ -76,7 +78,7 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string, logo = 
 </head>
 <body>
   <div class="corte">
-    <div class="tarjeta">
+    <div class="tarjeta${tarjeta.tipo === "acceso" ? " acceso" : ""}">
       <span class="circulo c1"></span><span class="circulo c2"></span>
       <div class="arriba">
         <span class="marca"><img src="${logo}" alt="">Monte Azul Sur</span>
@@ -87,7 +89,7 @@ export function htmlTarjeta(tarjeta: TarjetaContingencia, qrSvg: string, logo = 
           <div class="titulo">${tarjeta.tipo === "acceso" ? "Tarjeta de acceso" : "Tarjeta de contingencia"}</div>
           <div class="numero">N.º ${tarjeta.numero}</div>
           <div class="vence">${vence}</div>
-          <div class="uso">Se pasa por el lector en lugar del DNI.</div>
+          <div class="uso">${tarjeta.tipo === "acceso" ? "Abre el molinete sin rostro, alcohol ni DNI." : "Se pasa por el lector en lugar del DNI."}</div>
         </div>
         <div class="qr">${qrSvg}</div>
       </div>

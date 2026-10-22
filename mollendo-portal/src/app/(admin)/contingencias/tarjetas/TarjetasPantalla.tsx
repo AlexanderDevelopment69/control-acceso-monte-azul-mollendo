@@ -95,7 +95,12 @@ function TarjetaVisual({
     >
       <div
         className={`relative flex aspect-[85.6/54] w-full shrink-0 flex-col self-start sm:w-80 justify-between overflow-hidden rounded-xl p-5 text-white shadow-md ${
-          estado.sirve ? "bg-gradient-to-br from-brand-500 to-brand-800" : "bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-600 dark:to-gray-800"
+          // La de acceso, oscura: se distingue de un vistazo de la de contingencia (azul).
+          !estado.sirve
+            ? "bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-600 dark:to-gray-800"
+            : tarjeta.tipo === "acceso"
+              ? "bg-gradient-to-br from-gray-800 to-gray-950 ring-1 ring-white/10"
+              : "bg-gradient-to-br from-brand-500 to-brand-800"
         }`}
       >
         {/* Círculos de fondo, solo de adorno. */}

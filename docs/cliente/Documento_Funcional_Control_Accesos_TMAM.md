@@ -52,6 +52,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Perfil de la persona (sección 4.2): personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica: no cambia la validación del ingreso ni los documentos exigidos.
 - Antipassback estricto (RN-08a) y orden del ingreso **Facial + Alcohol → DNI** (RN-03).
 - Contingencias del punto de acceso: verificación manual si falla el terminal facial o el alcoholímetro, tarjeta de contingencia para el personal sin DNI y contingencia "sin lector" si falla un lector de DNI (sección 4.10 y RN-16 a RN-18). El detalle está en el documento de contingencias.
+- Tarjeta de acceso para visitas y autoridades (por ejemplo, una inspección): la pasa el vigilante por el lector y abre el molinete sin rostro, alcohol ni DNI, en el ingreso y en la salida; queda en el Panel y en los reportes como "Tarjeta de acceso N.º …", sin persona. La crea, imprime, vence, desactiva o le cambia el código el administrador (Contingencias → Tarjetas de acceso).
 
 **Fuera del alcance base:**
 
@@ -264,7 +265,7 @@ La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada pe
 - **Ingreso en curso**, según el orden del ingreso (RN-03):
   - **DNI → Facial + Alcohol:** al pasar un DNI en regla aparece al instante en la primera fila con resultado **"en espera"**, su **foto**, el motivo "Esperando rostro y alcohol", el tiempo que le queda (1 minuto) y una barra que se va vaciando. Al llegar el resultado del terminal facial, la fila pasa a ser el ingreso autorizado o denegado; si no hizo la prueba, queda denegado con "No completó rostro y alcohol".
   - **Facial + Alcohol → DNI:** al decir el terminal "correcto", aparece **"Aprobó [nombre] · pase su DNI"**, con su foto y una cuenta de **30 segundos**. Si no pasa su DNI a tiempo, queda "No pasó su DNI a tiempo". Una franja naranja recuerda el orden activo.
-- **Marcas** junto al motivo: "Tarjeta de contingencia", "Sin lector de DNI: identificado por rostro", "Salida sin lector", "Corrección manual" y la verificación manual, con quién decidió.
+- **Marcas** junto al motivo: "Tarjeta de contingencia", "Tarjeta de acceso" (sin persona: "Tarjeta de acceso N.º …"), "Sin lector de DNI: identificado por rostro", "Salida sin lector", "Corrección manual" y la verificación manual, con quién decidió.
 - **Salida sin DNI:** botón para elegir a quien sale sin DNI (solo quienes figuran dentro); después el vigilante pasa la tarjeta de contingencia por el lector de salida (RN-17). Una franja ámbar muestra a quién y cuánto tiempo queda (2 minutos).
 - **Franjas de contingencia:** verificación manual activa (RN-16) y lector de DNI de ingreso o de salida sin conexión (RN-18), esta última con el botón "Ir a Presentes ahora".
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).

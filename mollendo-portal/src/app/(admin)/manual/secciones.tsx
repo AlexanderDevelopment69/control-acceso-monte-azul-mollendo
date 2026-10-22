@@ -650,6 +650,23 @@ export const SECCIONES: SeccionManual[] = [
         ),
       },
       {
+        titulo: "Tarjeta de acceso (visitas y autoridades)",
+        descripcion: "Abre sola, sin rostro, alcohol ni DNI",
+        contenido: (
+          <>
+            <p className="mb-3">
+              Para visitas o autoridades que vienen, por ejemplo, a una inspección. El vigilante pasa la tarjeta por el lector del molinete
+              y se abre, sin rostro, alcohol ni DNI: por el de ingreso al entrar y por el de salida al salir. En el panel queda como{" "}
+              <b>Tarjeta de acceso N.º …</b>, sin nombre, con la marca <Badge color="warning">Tarjeta de acceso</Badge>. Una tarjeta
+              desactivada o vencida no abre y suena el aviso.
+            </p>
+            <p>
+              <b>Administrador:</b> las crea, imprime, desactiva o les cambia el código en <b>Contingencias → Tarjetas de acceso</b>.
+            </p>
+          </>
+        ),
+      },
+      {
         titulo: "Si falla un lector de DNI",
         descripcion: "Contingencia sin lector: se activa sola",
         contenido: (

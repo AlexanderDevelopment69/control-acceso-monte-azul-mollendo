@@ -26,8 +26,30 @@ type NavItem = {
   path?: string;
   roles: RolUsuario[];
   /** Grupo que se despliega: sus opciones, en lugar de `path`. */
-  subItems?: { name: string; path: string }[];
+  subItems?: { name: string; path: string; icon?: React.ReactNode }[];
 };
+
+/** Tarjeta (carné con QR): las de contingencia. */
+function IconoTarjeta() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0" aria-hidden>
+      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+      <path d="M6 10h5M6 13.5h3.5" />
+      <rect x="14.5" y="9" width="4" height="4" rx="0.6" />
+    </svg>
+  );
+}
+
+/** Tarjeta con una llave: las de acceso (abren solas). */
+function IconoTarjetaAcceso() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="size-[18px] shrink-0" aria-hidden>
+      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+      <circle cx="8.5" cy="12" r="2.2" />
+      <path d="M10.7 12h7M15.5 12v2.2M17.7 12v1.6" />
+    </svg>
+  );
+}
 
 const navItems: NavItem[] = [
   { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador"] },
@@ -43,8 +65,8 @@ const navItems: NavItem[] = [
     name: "Contingencias",
     roles: ["administrador"],
     subItems: [
-      { name: "Tarjetas de contingencia", path: "/contingencias/tarjetas" },
-      { name: "Tarjetas de acceso", path: "/contingencias/tarjetas-acceso" },
+      { name: "Tarjetas de contingencia", path: "/contingencias/tarjetas", icon: <IconoTarjeta /> },
+      { name: "Tarjetas de acceso", path: "/contingencias/tarjetas-acceso", icon: <IconoTarjetaAcceso /> },
     ],
   },
   { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
@@ -121,10 +143,11 @@ const AppSidebar: React.FC = () => {
                           if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) setElegida({ ruta: sub.path, desde: pathname });
                           cerrarEnCelular();
                         }}
-                        className={`menu-dropdown-item whitespace-nowrap transition-colors duration-300 ease-out motion-reduce:transition-none ${
+                        className={`menu-dropdown-item flex items-center gap-2.5 whitespace-nowrap transition-colors duration-300 ease-out motion-reduce:transition-none ${
                           isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"
                         }`}
                       >
+                        {sub.icon}
                         {sub.name}
                       </Link>
                     </li>
