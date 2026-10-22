@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PERIODO_VACIO, periodoDePersona, periodoParaApi, problemaPeriodo, textoPeriodo } from "./periodo";
+import { PERIODO_VACIO, cambioPeriodo, periodoDePersona, periodoParaApi, problemaPeriodo, textoPeriodo } from "./periodo";
 
 describe("período de autorización (portal)", () => {
   it("vacío está bien (sin período) y se envía como null", () => {
@@ -25,5 +25,18 @@ describe("período de autorización (portal)", () => {
       autorizadoHasta: "2026-10-31",
       motivoAutorizacion: "Visita técnica",
     });
+  });
+
+  it("cambio: va completo solo si cambió; vaciarlo lo quita", () => {
+    const sin = { autorizadoDesde: null, autorizadoHasta: null, motivoAutorizacion: null };
+    expect(cambioPeriodo(sin, PERIODO_VACIO)).toBeNull();
+    expect(cambioPeriodo(sin, { desde: "2026-10-22", hasta: "2026-10-31", motivo: "Obra" })).toEqual({
+      autorizadoDesde: "2026-10-22",
+      autorizadoHasta: "2026-10-31",
+      motivoAutorizacion: "Obra",
+    });
+    const con = { autorizadoDesde: "2026-10-22T00:00:00.000Z", autorizadoHasta: "2026-10-31T00:00:00.000Z", motivoAutorizacion: "Obra" };
+    expect(cambioPeriodo(con, { desde: "2026-10-22", hasta: "2026-10-31", motivo: "Obra" })).toBeNull();
+    expect(cambioPeriodo(con, PERIODO_VACIO)).toEqual(sin);
   });
 });

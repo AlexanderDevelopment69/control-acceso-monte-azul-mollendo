@@ -42,6 +42,15 @@ export function periodoParaApi(p: Periodo) {
     : { autorizadoDesde: p.desde, autorizadoHasta: p.hasta, motivoAutorizacion: p.motivo.replace(/\s+/g, " ").trim() };
 }
 
+/** Lo que hay que enviar si el período cambió respecto de la persona (las tres partes), o null si es el mismo. */
+export function cambioPeriodo(
+  persona: Pick<Persona, "autorizadoDesde" | "autorizadoHasta" | "motivoAutorizacion">,
+  p: Periodo,
+) {
+  const nuevo = periodoParaApi(p);
+  return JSON.stringify(nuevo) === JSON.stringify(periodoParaApi(periodoDePersona(persona))) ? null : nuevo;
+}
+
 /** "22/10/2026" a partir de "2026-10-22…". */
 function fechaCorta(fecha: string): string {
   const [a, m, d] = fecha.slice(0, 10).split("-");

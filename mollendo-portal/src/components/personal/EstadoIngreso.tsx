@@ -138,7 +138,7 @@ export function EstadoIngreso({
                   : cumplimiento.fueraDePeriodo
                     ? `Fuera del período autorizado (${textoPeriodo(persona)})${
                         persona.motivoAutorizacion ? `. Motivo: ${persona.motivoAutorizacion}` : ""
-                      }. Para cambiarlo, use “Editar datos”.`
+                      }. Puede cambiarlo abajo, en «Período de autorización».`
                   : cumplimiento.sinDocumentos
                     ? "No tiene documentos cargados. Agregue al menos uno para que pueda ingresar."
                     : cumplimiento.documentosVencidos.length === 1

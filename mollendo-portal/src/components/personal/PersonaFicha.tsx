@@ -15,6 +15,7 @@ import { DocumentosActuales } from "./DocumentosActuales";
 import { HistorialDocumentos } from "./HistorialDocumentos";
 import { EtiquetaPerfil } from "./EtiquetaPerfil";
 import { EditarPersonaModal } from "./EditarPersonaModal";
+import { PeriodoAutorizacionFicha } from "./PeriodoAutorizacionFicha";
 
 /**
  * Ficha de un trabajador en la pantalla principal del administrador: si puede
@@ -429,6 +430,13 @@ export function PersonaFicha({
           setErrorEliminar(null);
           setAEliminar({ tipoDocumentoId: d.tipoDocumentoId, nombre: d.nombre });
         }}
+      />
+
+      {/* key: al guardar o quitar, los campos toman lo que quedó guardado. */}
+      <PeriodoAutorizacionFicha
+        key={`${persona.autorizadoDesde}|${persona.autorizadoHasta}|${persona.motivoAutorizacion}`}
+        persona={persona}
+        onGuardado={cargar}
       />
 
       {historial.length > actuales.length && (

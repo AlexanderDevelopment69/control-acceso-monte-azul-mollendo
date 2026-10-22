@@ -136,7 +136,7 @@ export const SECCIONES: SeccionManual[] = [
               <>
                 <p>
                   Junto al nombre se ve su <b>perfil</b>. “Editar datos” corrige el perfil, la empresa, el tipo y número de documento, los
-                  nombres, los apellidos y el período de autorización. El DNI va con 8 dígitos y no puede repetirse. Queda en la Auditoría.
+                  nombres y los apellidos. El DNI va con 8 dígitos y no puede repetirse. Queda en la Auditoría.
                 </p>
                 <p>
                   Si cambia el <b>número de documento</b>, desde que guarde la persona debe pasar su documento nuevo por el lector. El
@@ -186,6 +186,15 @@ export const SECCIONES: SeccionManual[] = [
               <p>
                 Agrega uno que no tenía: nombre, vencimiento y archivo. Queda <b>válido desde que se carga</b>; no hay que esperar ninguna
                 aprobación.
+              </p>
+            ),
+          },
+          {
+            titulo: "Período de autorización",
+            texto: (
+              <p>
+                Fechas y motivo de la autorización. <b>«Guardar período»</b> aplica los cambios y <b>«Quitar período»</b> lo borra. Queda
+                en la Auditoría.
               </p>
             ),
           },
@@ -548,7 +557,7 @@ export const SECCIONES: SeccionManual[] = [
                   <Motivo m="Documentos ›" hacer="Tiene un documento vencido. Tóquelo para ver cuál; el administrador sube el nuevo." />
                   <Motivo
                     m="Fuera del período autorizado"
-                    hacer="Su período de autorización no incluye hoy. El administrador puede cambiarlo en «Editar datos»."
+                    hacer="Su período de autorización no incluye hoy. El administrador puede cambiarlo en la ficha, en «Período de autorización»."
                   />
                   <Motivo
                     m="Alcohol"

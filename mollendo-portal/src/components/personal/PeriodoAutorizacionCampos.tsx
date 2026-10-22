@@ -14,6 +14,7 @@ export function PeriodoAutorizacionCampos({
   periodo,
   onChange,
   className = "mt-5 border-t border-gray-100 pt-4 dark:border-gray-800",
+  conTitulo = true,
 }: {
   /** Para los id de los selectores de fecha (únicos en la página). */
   id: string;
@@ -21,13 +22,17 @@ export function PeriodoAutorizacionCampos({
   onChange: (periodo: Periodo) => void;
   /** Separación del bloque anterior (por defecto, una línea arriba, como "Foto del personal"). */
   className?: string;
+  /** false = sin el título ni la descripción (cuando ya los pone el recuadro que lo contiene). */
+  conTitulo?: boolean;
 }) {
   return (
     <div className={className}>
-      <div className="mb-3">
-        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Período de autorización</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">Opcional. Fuera de estas fechas no podrá ingresar.</p>
-      </div>
+      {conTitulo && (
+        <div className="mb-3">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Período de autorización</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Opcional. Fuera de estas fechas no podrá ingresar.</p>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label>Fecha de ingreso</Label>

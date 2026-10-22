@@ -63,6 +63,7 @@ const CAPTURAS = [
       { sel: "::-p-text(Puede ingresar hoy)", texto: true, lado: "der" },
       "tbody button::-p-text(Ver)",
       "::-p-text(Agregar documento)",
+      { sel: "h3::-p-text(Período de autorización)", texto: true, lado: "der" },
       { sel: "button::-p-text(Dar de baja)", lado: "abajo" },
     ],
   },
