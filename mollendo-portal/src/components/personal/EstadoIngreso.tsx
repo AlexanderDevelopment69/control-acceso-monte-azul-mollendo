@@ -71,7 +71,7 @@ function RecorridoValidacion({
 }
 
 /** Fila de un problema dentro de la tarjeta de estado: qué falta, desde cuándo y el botón que lo resuelve. */
-function FilaProblema({ titulo, detalle, accion }: { titulo: string; detalle?: string; accion: React.ReactNode }) {
+function FilaProblema({ titulo, detalle, accion }: { titulo: string; detalle?: string; accion?: React.ReactNode }) {
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-lg bg-white px-3 py-2.5 dark:bg-gray-900">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-white/[0.05] dark:text-gray-400">
@@ -96,6 +96,7 @@ export function EstadoIngreso({
   onAgregar,
   onRenovar,
   onReactivar,
+  soloLectura = false,
 }: {
   persona: Persona;
   cumplimiento: Cumplimiento;
@@ -105,6 +106,8 @@ export function EstadoIngreso({
   onRenovar: (nombre: string) => void;
   /** De baja: abre la ventana de "Reactivar" (la misma del botón de arriba). */
   onReactivar: () => void;
+  /** El vigilante: sin los botones ni las indicaciones de qué cambiar. */
+  soloLectura?: boolean;
 }) {
   return (
     <>
@@ -144,6 +147,7 @@ export function EstadoIngreso({
                           Dado de baja{persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}
                           {persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""}.
                         </span>
+                        {!soloLectura && (
                         <span className="block">
                           Para que vuelva a ingresar, use{" "}
                           <button
@@ -155,6 +159,7 @@ export function EstadoIngreso({
                           </button>
                           .
                         </span>
+                        )}
                       </>
                     )
                   : cumplimiento.fueraDePeriodo
@@ -165,6 +170,7 @@ export function EstadoIngreso({
                             Fuera del período autorizado ({textoPeriodo(persona)})
                             {persona.motivoAutorizacion ? `. Motivo: ${persona.motivoAutorizacion}` : ""}.
                           </span>
+                          {!soloLectura && (
                           <span className="block">
                             Puede cambiarlo abajo, en{" "}
                             {/* Lleva al recuadro del período, más abajo en la ficha. */}
@@ -181,13 +187,20 @@ export function EstadoIngreso({
                             </button>
                             .
                           </span>
+                          )}
                         </>
                       )
                   : cumplimiento.sinDocumentos
-                    ? "No tiene documentos cargados. Agregue al menos uno para que pueda ingresar."
+                    ? soloLectura
+                      ? "No tiene documentos cargados: no puede ingresar hasta que el administrador los agregue."
+                      : "No tiene documentos cargados. Agregue al menos uno para que pueda ingresar."
                     : cumplimiento.documentosVencidos.length === 1
-                      ? "1 documento vencido. Renuévelo para que pueda ingresar."
-                      : `${cumplimiento.documentosVencidos.length} documentos vencidos. Renuévelos para que pueda ingresar.`}
+                      ? soloLectura
+                        ? "1 documento vencido: no puede ingresar hasta que el administrador lo renueve."
+                        : "1 documento vencido. Renuévelo para que pueda ingresar."
+                      : soloLectura
+                        ? `${cumplimiento.documentosVencidos.length} documentos vencidos: no puede ingresar hasta que el administrador los renueve.`
+                        : `${cumplimiento.documentosVencidos.length} documentos vencidos. Renuévelos para que pueda ingresar.`}
             </p>
             {persona.estado !== "inactivo" && !cumplimiento.fueraDePeriodo && persona.autorizadoDesde && (
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -210,9 +223,11 @@ export function EstadoIngreso({
               <FilaProblema
                 titulo="Sin documentos cargados"
                 accion={
-                  <Button size="sm" variant="outline" onClick={onAgregar}>
-                    Agregar documento
-                  </Button>
+                  !soloLectura && (
+                    <Button size="sm" variant="outline" onClick={onAgregar}>
+                      Agregar documento
+                    </Button>
+                  )
                 }
               />
             )}
@@ -231,9 +246,11 @@ export function EstadoIngreso({
                       : "Vencido"
                   }
                   accion={
-                    <Button size="sm" variant="outline" onClick={() => onRenovar(nombre)}>
-                      Renovar
-                    </Button>
+                    !soloLectura && (
+                      <Button size="sm" variant="outline" onClick={() => onRenovar(nombre)}>
+                        Renovar
+                      </Button>
+                    )
                   }
                 />
               );

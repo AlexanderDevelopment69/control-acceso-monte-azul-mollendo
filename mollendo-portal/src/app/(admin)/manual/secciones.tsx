@@ -827,6 +827,25 @@ export const SECCIONES: SeccionManual[] = [
     ],
   },
   {
+    // Solo para el vigilante: el administrador tiene la sección completa más arriba.
+    id: "personal-consulta",
+    titulo: "Personal y documentos",
+    descripcion: "Consulte quién puede ingresar hoy y por qué.",
+    roles: ["vigilancia"],
+    pantallas: [
+      {
+        titulo: "Personal y documentos (solo consulta)",
+        descripcion: "Quién puede ingresar y por qué",
+        contenido: (
+          <p>
+            Busque a una persona para ver si puede ingresar hoy y por qué: sus documentos con su vencimiento, su período de autorización y
+            si está dada de baja. Para cambiar algo, avise al administrador.
+          </p>
+        ),
+      },
+    ],
+  },
+  {
     id: "dashboard",
     titulo: "Dashboard",
     descripcion: "Indicadores y gráficos de lo que pasa en el terminal, y quiénes están dentro ahora.",
@@ -995,8 +1014,8 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Buscar",
             texto: (
               <p>
-                Por el correo del usuario o por el tipo de dato (<b>personal</b>, <b>documento</b>, <b>empresa</b>…). Recorre todos los registros, sin
-                importar su antigüedad.
+                Por el correo del usuario, por el tipo de dato (<b>personal</b>, <b>documento</b>, <b>empresa</b>…) o por lo que dice el registro,
+                como el nombre o el DNI de una persona. Recorre todos los registros, sin importar su antigüedad.
               </p>
             ),
           },

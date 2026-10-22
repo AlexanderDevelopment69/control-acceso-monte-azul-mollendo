@@ -93,6 +93,7 @@ export function CuentasManual() {
       puntos: [
         "Ve en tiempo real cada ingreso y salida por el molinete.",
         "Ve por qué se autoriza o se deniega cada uno.",
+        "Consulta el personal y sus documentos, sin cambiar nada.",
         "Recibe el aviso cuando se cae un equipo, corrige ingresos o salidas sin marcar y activa la verificación manual si falla el terminal facial.",
       ],
     },

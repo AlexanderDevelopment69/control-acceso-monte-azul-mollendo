@@ -61,6 +61,8 @@ export class AuditoriaService {
         OR: [
           { usuario: { correo: { contains: palabra, mode: 'insensitive' as const } } },
           { tablaAfectada: { in: tablasQueCoinciden(palabra) } },
+          // Lo que dice el registro: nombre o DNI de la persona, motivo, reporte…
+          { detalle: { contains: palabra, mode: 'insensitive' as const } },
         ],
       })),
     };

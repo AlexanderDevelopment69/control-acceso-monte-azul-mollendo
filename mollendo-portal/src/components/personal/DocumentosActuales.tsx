@@ -26,12 +26,15 @@ export function DocumentosActuales({
   onAgregar,
   onRenovar,
   onEliminar,
+  soloLectura = false,
 }: {
   personaId: number;
   actuales: DocumentoActual[];
   onAgregar: () => void;
   onRenovar: (nombre: string) => void;
   onEliminar: (documento: DocumentoActual) => void;
+  /** El vigilante: ve cada documento y su estado, sin Ver (el archivo), Renovar, Eliminar ni Agregar. */
+  soloLectura?: boolean;
 }) {
   /** Botones "Ver", "Renovar" y "Eliminar" de un documento (tarjeta en el celular, tabla en pantallas anchas). */
   function accionesDocumento(d: DocumentoActual, className = "") {
@@ -60,11 +63,17 @@ export function DocumentosActuales({
     >
       {actuales.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Todavía no tiene documentos: sin documentos no puede ingresar. Use{" "}
-          <button type="button" onClick={onAgregar} className="font-semibold text-gray-700 underline-offset-2 hover:underline dark:text-gray-300">
-            + Agregar documento
-          </button>
-          .
+          Todavía no tiene documentos: sin documentos no puede ingresar.
+          {!soloLectura && (
+            <>
+              {" "}
+              Use{" "}
+              <button type="button" onClick={onAgregar} className="font-semibold text-gray-700 underline-offset-2 hover:underline dark:text-gray-300">
+                + Agregar documento
+              </button>
+              .
+            </>
+          )}
         </p>
       ) : (
         <>
@@ -79,7 +88,7 @@ export function DocumentosActuales({
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {d.fechaVencimiento ? `Vence el ${formatearFecha(d.fechaVencimiento)}` : "No vence"}
                 </p>
-                <div className="mt-3 flex gap-2">{accionesDocumento(d, "flex-1")}</div>
+                {!soloLectura && <div className="mt-3 flex gap-2">{accionesDocumento(d, "flex-1")}</div>}
               </li>
             ))}
           </ul>
@@ -92,7 +101,7 @@ export function DocumentosActuales({
                   <TableCell isHeader className="py-2 pr-4 text-start text-xs font-medium text-gray-500">Documento</TableCell>
                   <TableCell isHeader className="py-2 pr-4 text-start text-xs font-medium text-gray-500">Vence</TableCell>
                   <TableCell isHeader className="py-2 pr-4 text-start text-xs font-medium text-gray-500">Estado</TableCell>
-                  <TableCell isHeader className="py-2 text-start text-xs font-medium text-gray-500"></TableCell>
+                  {!soloLectura && <TableCell isHeader className="py-2 text-start text-xs font-medium text-gray-500"></TableCell>}
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -105,9 +114,11 @@ export function DocumentosActuales({
                     <TableCell className="py-3 pr-4 text-sm">
                       {d.vigente ? <Badge color="success">Vigente</Badge> : <Badge color="error">Vencido</Badge>}
                     </TableCell>
-                    <TableCell className="py-3 text-sm">
-                      <div className="flex justify-end gap-2">{accionesDocumento(d)}</div>
-                    </TableCell>
+                    {!soloLectura && (
+                      <TableCell className="py-3 text-sm">
+                        <div className="flex justify-end gap-2">{accionesDocumento(d)}</div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -115,11 +126,13 @@ export function DocumentosActuales({
           </div>
         </>
       )}
-      <div className="mt-4">
-        <Button size="sm" variant="outline" onClick={onAgregar}>
-          + Agregar documento
-        </Button>
-      </div>
+      {!soloLectura && (
+        <div className="mt-4">
+          <Button size="sm" variant="outline" onClick={onAgregar}>
+            + Agregar documento
+          </Button>
+        </div>
+      )}
     </Seccion>
   );
 }

@@ -42,7 +42,8 @@ const MOTIVOS: MotivoFiltro[] = ["todos", "documentos", "baja"];
  * a la izquierda el personal con un ✔/✖ de si hoy puede ingresar; a la
  * derecha la ficha de la persona elegida para subir sus documentos.
  */
-export function PersonalDocumentos() {
+/** soloLectura: el vigilante consulta, sin botones que cambien datos (ver /personal). */
+export function PersonalDocumentos({ soloLectura = false }: { soloLectura?: boolean } = {}) {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,8 +193,11 @@ export function PersonalDocumentos() {
     <div>
       <PageHeader
         title="Personal y documentos"
-        description="Registre al personal, suba sus documentos y revise quién puede ingresar hoy."
+        description={
+          soloLectura ? "Consulte quién puede ingresar hoy y por qué." : "Registre al personal, suba sus documentos y revise quién puede ingresar hoy."
+        }
         actions={
+          !soloLectura && (
           <div className="flex flex-wrap gap-3">
             <Button size="sm" variant="outline" onClick={() => setCargaMasivaOpen(true)}>
               Carga masiva
@@ -202,6 +206,7 @@ export function PersonalDocumentos() {
               + Nuevo personal
             </Button>
           </div>
+          )
         }
       />
 
@@ -333,7 +338,9 @@ export function PersonalDocumentos() {
                 {errorCarga && personas.length === 0
                   ? "No se pudo cargar el personal."
                   : personas.length === 0
-                    ? (
+                    ? soloLectura
+                      ? "Todavía no hay personal registrado."
+                      : (
                         <>
                           Todavía no hay personal registrado. Use{" "}
                           <button
@@ -408,6 +415,7 @@ export function PersonalDocumentos() {
               key={`${seleccionada}-${lecturaFicha}`}
               personaId={seleccionada}
               onCambio={actualizarFila}
+              soloLectura={soloLectura}
             />
           ) : (
             // Sin nadie elegido: contadores (al presionarlos filtran la lista) y la indicación.
@@ -473,6 +481,8 @@ export function PersonalDocumentos() {
       </div>
 
 
+      {!soloLectura && (
+      <>
       <CargaMasivaModal
         isOpen={cargaMasivaOpen}
         onClose={() => setCargaMasivaOpen(false)}
@@ -492,6 +502,8 @@ export function PersonalDocumentos() {
         empresas={empresas}
         personas={personas}
       />
+      </>
+      )}
     </div>
   );
 }

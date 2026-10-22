@@ -13,11 +13,14 @@ export function HistorialDocumentos({
   personaId,
   historial,
   idsActuales,
+  soloLectura = false,
 }: {
   personaId: number;
   historial: DocumentoPersona[];
   /** Ids de la última versión de cada documento: el resto se marca "Reemplazado". */
   idsActuales: Set<number>;
+  /** El vigilante: sin Ver (no abre los archivos). */
+  soloLectura?: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
   return (
@@ -57,7 +60,7 @@ export function HistorialDocumentos({
                 </span>
                 <span className="flex items-center gap-3">
                   {!idsActuales.has(d.id) && <Badge color="light">Reemplazado</Badge>}
-                  <VerDocumento personaId={personaId} documentoId={d.id} variante="enlace" />
+                  {!soloLectura && <VerDocumento personaId={personaId} documentoId={d.id} variante="enlace" />}
                 </span>
               </li>
             ))}

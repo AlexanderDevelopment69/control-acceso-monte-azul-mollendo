@@ -6,6 +6,7 @@ import type { SinLector } from "@/lib/api/types";
 import { eventosAccesoApi } from "@/lib/api/endpoints";
 import { escucharEventos } from "@/lib/ws";
 import { InfoIcon } from "@/icons";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 /*
  * Contingencia "sin lector": con el lector de DNI de una puerta desconectado
@@ -61,6 +62,8 @@ export function FranjaSinLector({ titulo, children, accion }: { titulo: string; 
 
 /** Franjas del Panel de vigilancia: ingreso solo con rostro, y salida desde "Presentes ahora". */
 export function FranjasSinLectorPanel({ estado }: { estado: SinLector }) {
+  // Cada uno a su dirección de Presentes ahora (el vigilante no tiene Dashboard).
+  const administrador = useAuth().user?.rol === "administrador";
   return (
     <>
       {estado.ingreso && (
@@ -73,7 +76,7 @@ export function FranjasSinLectorPanel({ estado }: { estado: SinLector }) {
           titulo="Lector de DNI de salida sin conexión."
           accion={
             <Link
-              href="/dashboard/presentes"
+              href={administrador ? "/dashboard/presentes" : "/presentes"}
               className="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600"
             >
               Ir a Presentes ahora

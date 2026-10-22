@@ -25,8 +25,11 @@ import { PeriodoAutorizacionFicha } from "./PeriodoAutorizacionFicha";
 export function PersonaFicha({
   personaId,
   onCambio,
+  soloLectura = false,
 }: {
   personaId: number;
+  /** El vigilante: ve todo, sin botones que cambien datos ni abrir los archivos de los documentos. */
+  soloLectura?: boolean;
   /**
    * Entrega a la pantalla los datos recién leídos del trabajador (tras un cambio
    * o un reintento), para actualizar su fila de la lista sin volver a pedirla entera.
@@ -231,6 +234,7 @@ export function PersonaFicha({
               ) : (
                 <FotoGuardada personaId={persona.id} tieneFoto={false} tamano="size-24" />
               )}
+              {!soloLectura && (
               <button
                 type="button"
                 disabled={subiendoFoto}
@@ -239,6 +243,7 @@ export function PersonaFicha({
               >
                 {subiendoFoto ? "Subiendo…" : persona.fotoUrl ? "Cambiar foto" : "Subir foto"}
               </button>
+              )}
               <input
                 ref={fotoInputRef}
                 type="file"
@@ -264,6 +269,7 @@ export function PersonaFicha({
               </p>
             </div>
           </div>
+          {!soloLectura && (
           <div className="flex shrink-0 flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={() => setEditando(true)}>
               Editar datos
@@ -277,6 +283,7 @@ export function PersonaFicha({
               {persona.estado === "activo" ? "Dar de baja" : "Reactivar"}
             </Button>
           </div>
+          )}
         </div>
         {errorFoto && <ErrorBanner className="mt-4">{errorFoto}</ErrorBanner>}
         {errorEstado && !confirmarEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
@@ -302,11 +309,17 @@ export function PersonaFicha({
         </Modal>
         {!persona.fotoUrl && (
           <ErrorBanner tono="aviso" className="mt-4">
-            Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Use{" "}
-            <button type="button" onClick={() => fotoInputRef.current?.click()} className="font-semibold underline-offset-2 hover:underline">
-              Subir foto
-            </button>
-            .
+            Sin foto: no podrá identificarse por reconocimiento facial en el terminal.
+            {!soloLectura && (
+              <>
+                {" "}
+                Use{" "}
+                <button type="button" onClick={() => fotoInputRef.current?.click()} className="font-semibold underline-offset-2 hover:underline">
+                  Subir foto
+                </button>
+                .
+              </>
+            )}
           </ErrorBanner>
         )}
         {cumplimiento && (
@@ -316,6 +329,7 @@ export function PersonaFicha({
             onAgregar={() => setVentana({ modo: "agregar" })}
             onRenovar={(nombre) => setVentana({ modo: "renovar", nombre })}
             onReactivar={abrirCambioEstado}
+            soloLectura={soloLectura}
           />
         )}
       </Tarjeta>
@@ -441,6 +455,7 @@ export function PersonaFicha({
       <DocumentosActuales
         personaId={persona.id}
         actuales={actuales}
+        soloLectura={soloLectura}
         onAgregar={() => setVentana({ modo: "agregar" })}
         onRenovar={(nombre) => setVentana({ modo: "renovar", nombre })}
         onEliminar={(d) => {
@@ -449,7 +464,9 @@ export function PersonaFicha({
         }}
       />
 
-      {/* key: al guardar o quitar, los campos toman lo que quedó guardado. */}
+      {/* key: al guardar o quitar, los campos toman lo que quedó guardado. El vigilante lo ve
+          arriba (Autorizado del … al … y el paso Período), sin el recuadro para cambiarlo. */}
+      {!soloLectura && (
       <PeriodoAutorizacionFicha
         key={`${persona.autorizadoDesde}|${persona.autorizadoHasta}|${persona.motivoAutorizacion}`}
         persona={persona}
@@ -460,9 +477,10 @@ export function PersonaFicha({
         }}
         onCambio={() => setAvisoPeriodo(null)}
       />
+      )}
 
       {historial.length > actuales.length && (
-        <HistorialDocumentos personaId={persona.id} historial={historial} idsActuales={idsActuales} />
+        <HistorialDocumentos personaId={persona.id} historial={historial} idsActuales={idsActuales} soloLectura={soloLectura} />
       )}
     </div>
   );

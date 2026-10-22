@@ -61,6 +61,33 @@ const porcentajeVisible = (valor: number | string | number[]) =>
 /** Con movimiento continuo, el Dashboard se recarga como máximo cada tanto. */
 const RECARGA_MINIMA_MS = 10_000;
 
+/**
+ * Un nombre largo partido en líneas de hasta `largo` letras (por palabras), para
+ * que el gráfico lo muestre completo en vez de cortarlo con "…".
+ */
+function enLineas(texto: string, largo: number): string[] {
+  const lineas: string[] = [];
+  for (const palabra of texto.split(/\s+/)) {
+    const ultima = lineas.at(-1);
+    if (ultima !== undefined && `${ultima} ${palabra}`.length <= largo) lineas[lineas.length - 1] = `${ultima} ${palabra}`;
+    else lineas.push(palabra);
+  }
+  return lineas;
+}
+
+/** true en pantallas angostas (celular): los nombres del gráfico se parten en líneas más cortas. */
+function useAngosto() {
+  const [angosto, setAngosto] = useState(false);
+  useEffect(() => {
+    const consulta = window.matchMedia("(max-width: 639px)");
+    const actualizar = () => setAngosto(consulta.matches);
+    actualizar();
+    consulta.addEventListener("change", actualizar);
+    return () => consulta.removeEventListener("change", actualizar);
+  }, []);
+  return angosto;
+}
+
 const TITULO_TENDENCIA = { dia: "por día", semana: "por semana", mes: "por mes" } as const;
 
 /** 9452.1 → "9,452.1" (un decimal como mucho). */
@@ -116,6 +143,7 @@ function Bloque({
 function DashboardContent() {
   const periodoElegido = usePeriodo();
   const [datos, setDatos] = useState<Dashboard | null>(null);
+  const angosto = useAngosto();
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [paginaPermanencia, setPaginaPermanencia] = useState(1);
@@ -399,19 +427,21 @@ function DashboardContent() {
                 {d.porEmpresa.length ? (
                   <Grafico
                     tipo="bar"
-                    alto={Math.max(200, d.porEmpresa.length * 42)}
+                    // Cada empresa con su nombre completo en líneas: el alto crece con las líneas.
+                    alto={Math.max(
+                      200,
+                      d.porEmpresa.reduce((suma, e) => suma + Math.max(42, enLineas(e.empresa, angosto ? 16 : 30).length * 16 + 12), 0),
+                    )}
                     series={[{ name: "Personas activas", data: d.porEmpresa.map((e) => e.activos) }]}
                     opciones={{
                       colors: [COLORES.marca],
                       plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: "60%" } },
                       dataLabels: { enabled: true },
                       xaxis: {
-                        categories: d.porEmpresa.map((e) => e.empresa),
+                        categories: d.porEmpresa.map((e) => enLineas(e.empresa, angosto ? 16 : 30)),
                         ...ejeEntero(d.porEmpresa.map((e) => e.activos)),
                       },
-                      yaxis: { labels: { maxWidth: 220 } },
-                      // En el celular, nombres más cortos para que las barras tengan espacio.
-                      responsive: [{ breakpoint: 640, options: { yaxis: { labels: { maxWidth: 110 } } } }],
+                      yaxis: { labels: { maxWidth: angosto ? 120 : 220 } },
                     }}
                   />
                 ) : (

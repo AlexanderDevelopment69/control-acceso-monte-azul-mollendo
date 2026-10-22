@@ -135,7 +135,7 @@ function AuditoriaContent() {
               setBusqueda(v);
               setPagina(1);
             }}
-            placeholder="Buscar por usuario o dato (personal, documento…)"
+            placeholder="Buscar por usuario, dato o registro (nombre, DNI…)"
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
