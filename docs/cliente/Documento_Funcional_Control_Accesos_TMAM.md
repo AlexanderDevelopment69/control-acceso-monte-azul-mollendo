@@ -241,7 +241,7 @@ La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada pe
   - **Eliminar:** elimina el documento con todas sus versiones y archivos, previa confirmación.
   - **+ Agregar documento:** agrega un documento que la persona no tenía.
 - **Historial de documentos:** todas las versiones cargadas, con la marca "Reemplazado" en las anteriores; cada versión se puede ver ("Ver").
-- **Dar de baja / Reactivar:** la persona dada de baja no puede ingresar, sin importar sus documentos (sí puede salir). Al dar de baja se puede escribir el **motivo** (opcional, hasta 300 caracteres); queda registrado con la fecha y se muestra en la ficha, en la lista ("Dado de baja: …") y en el reporte de personal; al reactivar, el motivo se borra. Los dos piden confirmación; al reactivar, si tiene documentos vencidos o ninguno cargado, se avisa que aun así no podrá ingresar hasta regularizarlos. Sus datos, documentos e historial se conservan.
+- **Dar de baja / Reactivar:** la persona dada de baja no puede ingresar, sin importar sus documentos (sí puede salir). Al dar de baja y al reactivar se escribe el **motivo** (obligatorio desde el 22/10/2026, hasta 300 caracteres). El de la baja queda con la fecha y se muestra en la ficha, en la lista ("Dado de baja: …") y en el reporte de personal; el de la reactivación se muestra en la ficha ("Reactivado el …: motivo") mientras siga activo. Los dos quedan en la Auditoría ("Dio de baja a … / Reactivó a … (DNI …). Motivo: …"). Los dos piden confirmación; al reactivar, si tiene documentos vencidos o ninguno cargado, se avisa que aun así no podrá ingresar hasta regularizarlos. Sus datos, documentos e historial se conservan.
 
 **Empresas (menú "Empresas")**
 
@@ -497,6 +497,7 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Emergencia o corte de luz en los molinetes | Los brazos de los molinetes se liberan automáticamente (función propia del equipo). |
 | Sin conexión a internet (modalidad con servidor en la nube) | El controlador detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: el Controlador (PC) guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
 | Falla del alcoholímetro | Si se desconecta, el aviso de fallas lo muestra en unos 10 segundos (uno conectado pero apagado o malogrado todavía no se detecta). Se conecta el alcoholímetro de repuesto al terminal facial; nadie ingresa sin la prueba de alcohol. |
+| Cambio de equipos | Para cada pieza (lector, adaptador USB, relé, terminal facial, alcoholímetro, Controlador (PC)), qué repuesto se prepara antes y qué se hace el día del cambio: documento de contingencias, sección 11. |
 | Falla del terminal facial | **Verificación manual** (RN-16): el vigilante compara el rostro, toma la prueba con el alcoholímetro de repuesto y escribe el grado; el sistema decide. |
 | Falla de un lector de DNI | Contingencia **"sin lector"** (RN-18), que se activa sola, mientras se conecta el lector de repuesto. |
 | Personal sin DNI, o DNI que el lector no lee | **Tarjeta de contingencia** (RN-17). |

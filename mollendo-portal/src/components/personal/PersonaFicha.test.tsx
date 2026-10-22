@@ -135,6 +135,28 @@ describe("Ficha de la persona", () => {
     expect(paso("DNI")).toContain("Dado de baja");
   });
 
+  it("reactivar: pide el motivo (obligatorio) y lo envía", async () => {
+    await montar(persona({ dadoDeBaja: true }, { estado: "inactivo", motivoBaja: "Renuncia", fechaBaja: null }));
+    api.updateEstado.mockResolvedValueOnce(undefined);
+
+    await userEvent.click(screen.getByRole("button", { name: "Reactivar" }));
+    const ventana = screen.getByRole("heading", { name: "Reactivar" }).parentElement!;
+    await userEvent.click(within(ventana).getByRole("button", { name: "Reactivar" }));
+    expect(within(ventana).getByText("Escriba el motivo de la reactivación")).toBeInTheDocument();
+    expect(api.updateEstado).not.toHaveBeenCalled();
+    await userEvent.type(within(ventana).getByLabelText("Motivo de la reactivación *"), "  Volvió a trabajar en el Terminal ");
+    await userEvent.click(within(ventana).getByRole("button", { name: "Reactivar" }));
+
+    expect(api.updateEstado).toHaveBeenCalledWith(7, "activo", "Volvió a trabajar en el Terminal");
+  });
+
+  it("reactivado: la ficha muestra cuándo y por qué", async () => {
+    await montar(
+      persona({ habilitado: true }, { motivoReactivacion: "Volvió a trabajar en el Terminal", fechaReactivacion: "2026-10-22T15:00:00.000Z" }),
+    );
+    expect(within(tarjeta()).getByText(/Reactivado el .*: Volvió a trabajar en el Terminal/)).toBeInTheDocument();
+  });
+
   it("sin foto: aviso del reconocimiento facial y el paso Rostro en aviso", async () => {
     await montar(persona({ habilitado: true }, { fotoUrl: null }));
     expect(screen.getByText(/Sin foto: no podrá identificarse por reconocimiento facial/)).toBeInTheDocument();
@@ -156,12 +178,29 @@ describe("Ficha de la persona", () => {
     await waitFor(() => expect(onCambio).toHaveBeenCalledTimes(1));
   });
 
+  it("al cerrar la ventana sin motivo, el mensaje no queda en la ficha", async () => {
+    await montar(persona({ habilitado: true }));
+    await userEvent.click(screen.getByRole("button", { name: "Dar de baja" }));
+    const ventana = screen.getByRole("heading", { name: "Dar de baja" }).parentElement!;
+    await userEvent.click(within(ventana).getByRole("button", { name: "Dar de baja" }));
+    expect(within(ventana).getByText("Escriba el motivo de la baja")).toBeInTheDocument();
+
+    await userEvent.click(within(ventana).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Dar de baja" })).not.toBeInTheDocument());
+    expect(screen.queryByText("Escriba el motivo de la baja")).not.toBeInTheDocument();
+  });
+
   it("si dar de baja falla, la ventana queda abierta con el error", async () => {
     await montar(persona({ habilitado: true }));
     api.updateEstado.mockRejectedValueOnce(new ApiError("No tienes permiso", 403));
 
     await userEvent.click(screen.getByRole("button", { name: "Dar de baja" }));
     const ventana = screen.getByRole("heading", { name: "Dar de baja" }).parentElement!;
+    // Sin motivo no se da de baja: el botón está habilitado y avisa.
+    await userEvent.click(within(ventana).getByRole("button", { name: "Dar de baja" }));
+    expect(within(ventana).getByText("Escriba el motivo de la baja")).toBeInTheDocument();
+    expect(api.updateEstado).not.toHaveBeenCalled();
+    await userEvent.type(within(ventana).getByLabelText("Motivo de la baja *"), "Renuncia");
     await userEvent.click(within(ventana).getByRole("button", { name: "Dar de baja" }));
 
     expect(await within(ventana).findByText("No tienes permiso")).toBeInTheDocument();

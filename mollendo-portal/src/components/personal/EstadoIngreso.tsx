@@ -140,6 +140,12 @@ export function EstadoIngreso({
                       ? "1 documento vencido. Renuévelo para que pueda ingresar."
                       : `${cumplimiento.documentosVencidos.length} documentos vencidos. Renuévelos para que pueda ingresar.`}
             </p>
+            {persona.estado !== "inactivo" && persona.fechaReactivacion && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Reactivado el {new Date(persona.fechaReactivacion).toLocaleDateString("es-PE")}
+                {persona.motivoReactivacion ? `: ${persona.motivoReactivacion}` : ""}
+              </p>
+            )}
           </div>
         </div>
 

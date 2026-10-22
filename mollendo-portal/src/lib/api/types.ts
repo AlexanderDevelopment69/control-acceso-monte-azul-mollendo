@@ -39,6 +39,9 @@ export interface Persona {
   /** Por qué se la dio de baja y cuándo (solo si está de baja; las bajas antiguas pueden no tenerlo). */
   motivoBaja?: string | null;
   fechaBaja?: string | null;
+  /** Por qué y cuándo se lo reactivó (se ve en su ficha mientras siga activo). */
+  motivoReactivacion?: string | null;
+  fechaReactivacion?: string | null;
   creadoEn: string;
   empresa?: { id: number; razonSocial: string };
   documentos?: DocumentoPersona[];

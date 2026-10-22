@@ -194,13 +194,13 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  <b>“Dar de baja”</b> cuando alguien deja de trabajar en el Terminal. Puede escribir el motivo (opcional) y se confirma.
+                  <b>“Dar de baja”</b> cuando alguien deja de trabajar en el Terminal. Pide escribir el motivo (obligatorio) y se confirma.
                   Desde ese momento no puede ingresar, sin importar sus documentos; sí puede salir. El motivo y la fecha se ven en su ficha,
                   en la lista y en el reporte de personal.
                 </p>
                 <p>
-                  <b>“Reactivar”</b> lo vuelve a habilitar, con sus datos e historial. Si tiene documentos vencidos, la ventana avisa que aún
-                  debe regularizarlos.
+                  <b>“Reactivar”</b> lo vuelve a habilitar, con sus datos e historial. Pide escribir el motivo, que queda en la Auditoría. Si
+                  tiene documentos vencidos, la ventana avisa que aún debe regularizarlos.
                 </p>
               </>
             ),

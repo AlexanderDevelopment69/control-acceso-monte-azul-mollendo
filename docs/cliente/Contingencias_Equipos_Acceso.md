@@ -21,6 +21,8 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 | **Controlador (PC)** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | El vigilante informa; soporte la cambia | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
 | **Servidor en la nube** | Se recupera solo al reiniciarse; respaldos diarios probados (sección 7.3) | Soporte | No | Funciona hoy |
 
+**Cambio de equipos:** para cada pieza (lector, adaptador, relé, equipo facial, alcoholímetro, Controlador (PC)), qué repuesto se prepara antes y qué se hace el día del cambio está en la **sección 11**.
+
 **Regla general:** en todos los casos el sistema **sigue exigiendo el DNI con documentos vigentes**, y quien no cumple se deniega igual que siempre. Ninguna contingencia decidida deja entrar a alguien sin prueba de alcohol.
 
 **Quién hace qué:**
@@ -313,7 +315,7 @@ En el Excel de ingresos y salidas, la columna "Verificación" dice *"Sin lector 
 
 | Qué se malogró | ¿Basta con conectar el repuesto? | Qué hay que hacer |
 |---|---|---|
-| **El lector** (el adaptador está bien) | **Sí**, si el lector de repuesto ya está configurado | Conectar el lector de repuesto **al mismo adaptador**. El lector nuevo se configura **una sola vez, con anticipación**, con su folleto (Factory Default → RS232 → 115200) |
+| **El lector** (el adaptador está bien) | **Sí**, si el lector de repuesto ya está configurado | Conectar el lector de repuesto **al mismo adaptador**. El lector nuevo se configura **una sola vez, con anticipación**, con los códigos de su folleto (sección 11.2), incluido **"Enable all 2D barcodes"** para la tarjeta de contingencia |
 | **El adaptador** (cable blanco) | Depende de la opción elegida (abajo) | El adaptador nuevo tiene otro número de serie |
 | **Los dos** | Igual que el adaptador | Las dos cosas |
 
@@ -504,7 +506,8 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 | Qué | Para qué | Responsable |
 |---|---|---|
 | Alcoholímetro de repuesto **DT1700** (o compatible), que funcione solo y muestre el número en mg/L | Secciones 3 y 4 | TMAM compra; soporte prueba el cambio una vez |
-| Relé de repuesto, **con la serie grabada** | Sección 7.1 | TMAM compra; soporte lo prepara |
+| Relé de repuesto, **con la serie grabada** (ideal: dos, `ING01` y `SAL01`) | Secciones 7.1 y 11.4 | TMAM compra; soporte lo prepara |
+| **Adaptador USB nuevo para el lector de salida** (el actual, …C705, se traba) | Sección 11.3 | TMAM compra; soporte lo registra |
 | Controlador (PC) de repuesto, **instalado y configurado** | Sección 7.2 | TMAM compra; soporte la prepara |
 | Segunda conexión de internet, router con doble salida, UPS e IP fija | Sección 5.2 | TMAM |
 | Lector de DNI de repuesto **con su adaptador USB**, el lector ya configurado | Sección 6.4 | TMAM compra; soporte lo configura (y, con la opción B, registra el adaptador) |
@@ -583,6 +586,82 @@ Cada cambio queda en la **auditoría**: quién, cuándo, qué equipo y para qué
 - **Relés nuevos de uno en uno:** todos los relés nuevos traen de fábrica la misma serie; si se conectan dos a la vez, el sistema no puede distinguirlos.
 - **La configuración se guarda en el Controlador (PC)** y se respeta aunque se reinicie. La configuración inicial de la instalación sigue sirviendo como base.
 - **Solo soporte (o el administrador):** una asignación equivocada, por ejemplo cruzar ingreso con salida, cambiaría cómo funciona el punto de acceso.
+
+---
+
+## 11. Cambio de equipos (repuestos)
+
+Es la contingencia común a todas las fallas de hardware: **se cambia la pieza malograda por su repuesto**. Para que el día de la falla baste con desenchufar y enchufar, cada repuesto se **prepara una vez, con anticipación**, y se **prueba**. Esta sección reúne, equipo por equipo, qué se prepara antes y qué se hace el día del cambio (actualizado el 21/10/2026).
+
+Mientras se cambia una pieza, el sistema **no deja pasar a nadie sin control**: según la pieza, se activa sola la contingencia "sin lector" (sección 6.3), se usa la verificación manual (sección 4) o el ingreso se detiene hasta el cambio.
+
+### 11.1. Resumen
+
+| Pieza | Cómo se nota que falló | ¿Hay que configurar algo? | El día del cambio | Repuesto hoy |
+|---|---|---|---|---|
+| **Lector de DNI** (el aparato que lee el DNI) | No pita ni prende su luz al pasar el DNI | **Sí, una vez:** escanear los códigos de su folleto (11.2) | Conectarlo al mismo adaptador | Falta |
+| **Adaptador USB del lector** (el cable o cajita que une el lector a la mini PC) | El lector pita pero no pasa nada; Sistema y APIs dice *"Adaptador sin respuesta"* o *"Cable desconectado"* | **Sí:** avisarle al sistema su número de serie (11.3) | Opción A: soporte lo registra al cambiarlo. Opción B: funciona solo | Falta |
+| **Relé de un molinete o de aviso** | El Panel dice "Autorizado" pero el molinete no abre; la franja muestra el relé *"No conectado"* | **Sí, una vez:** grabarle la serie (11.4) | Enchufarlo; el sistema lo reconoce en segundos | Falta |
+| **Equipo facial (G4 Pro)** | Franja *"Terminal facial … Desconectado"* | **Sí:** varias cosas (11.5) | Mientras tanto, verificación manual (sección 4) | No previsto |
+| **Alcoholímetro (DT1700)** | Franja *"Alcoholímetro (DT1700) … Desconectado"*, o nadie puede soplar | **No**, si es el mismo modelo (11.6) | Enchufarlo al equipo facial y probar | Falta |
+| **Controlador (PC)** | Franja *"Controlador desconectado"* | **Sí:** instalarla y configurarla (sección 7.2) | Pasarle los lectores y relés | Falta |
+
+**Nada se "reprograma":** los lectores se configuran escaneando códigos impresos; los adaptadores y relés se registran o se les graba un nombre con un comando corto que soporte hace por acceso remoto en unos minutos, sin ir al punto de acceso.
+
+### 11.2. Lector de DNI
+
+- **Antes (una vez):** escanear del folleto de su caja, en orden y esperando el pitido de cada uno: **RS232**, **115200**, **CR**, **Continuous**, sonido **ON**, **Enable all 1D barcodes**, **Interleaved 2 of 5 → Enable** (el código de barras del DNI) y **Enable all 2D barcodes** (el QR de la tarjeta de contingencia y el código 2D del DNI); después, **desconectar y volver a conectar su energía** (los cambios recién se aplican al reiniciarlo). Probar un DNI y la tarjeta. Detalle en `deploy/controlador/README.md`.
+- **El día del cambio:** conectar el lector de repuesto al **mismo adaptador**. Funciona en el momento: el sistema no nota la diferencia.
+- **Ojo:** "Factory Default" borra todo lo anterior (vuelve a modo USB, sin enviar nada por el cable). Si se usa, hay que repetir todos los códigos. El 21/10/2026 el lector de salida no leía la tarjeta porque le faltaba "Enable all 2D barcodes".
+
+### 11.3. Adaptador USB del lector
+
+- El adaptador **no se configura**: se enchufa. Pero el sistema reconoce cada lector por el **número de serie de su adaptador**, así que un adaptador nuevo hay que **avisárselo** al Controlador (PC).
+- **Opción A** (hoy): al cambiarlo, soporte registra el adaptador nuevo en el Controlador (PC) y lo reinicia (unos minutos, por acceso remoto).
+- **Opción B** (recomendada; decisión n.º 11, pendiente): el adaptador de repuesto queda registrado desde antes y funciona apenas se conecta. Requiere un cambio pequeño de programación (sección 6.4).
+- **El adaptador de salida actual (serie terminada en …C705) conviene cambiarlo:** se trabó el 20/10 y el 21/10/2026 al reabrirse su puerto. Desde el 21/10/2026 el sistema detecta ese caso (*"Adaptador sin respuesta"*) y activa solo la contingencia "sin lector"; se arregla desconectándolo y volviéndolo a conectar, o reiniciando la mini PC.
+- Conviene **etiquetar** los adaptadores ("INGRESO", "SALIDA", "REPUESTO").
+
+### 11.4. Relé (molinete o aviso)
+
+- Cada relé tiene grabada una **serie** que el sistema usa para saber cuál es cuál: ingreso `ING01`, salida `SAL01`, aviso de ingreso `DEN01`, aviso de salida `DSA01`. Un relé nuevo viene con otra serie.
+- **Antes (una vez):** conectar el relé de repuesto a la mini PC y **grabarle la serie** del que va a reemplazar (soporte, por acceso remoto; `deploy/controlador/README.md`, paso 6). En el sistema no se cambia nada.
+- **El día del cambio:** desenchufar el relé malogrado y enchufar el repuesto. El sistema lo reconoce solo en segundos; probar un paso.
+- Lo ideal son **dos repuestos ya grabados** (uno `ING01` y otro `SAL01`), porque cada relé tiene una sola serie a la vez. Con uno solo, se le graba la serie del que falle en el momento (unos minutos). Los relés de aviso no son urgentes: sin ellos solo se pierde la señal de "denegado".
+
+### 11.5. Equipo facial (G4 Pro)
+
+Es el equipo más complejo de reemplazar; por eso la contingencia principal es la **verificación manual** (sección 4), que sigue funcionando hasta que el equipo vuelva o se reemplace. Un equipo de reemplazo necesita:
+
+1. **El mismo modelo con alcoholímetro**, en **modo asistencia** (ATT), como el actual.
+2. En el equipo (*Cloud Service Settings*): servidor `accesos.monteazulsur.com.pe`, puerto `3001`.
+3. En el servidor: agregar su **número de serie** a los equipos permitidos (`G4PRO_SN_PERMITIDOS`) y reiniciar la API (soporte, por acceso remoto). Debe conectarse desde la misma red del punto de acceso (la IP permitida).
+4. El mismo umbral de alcohol que el actual (`AlcoholVolume` = 0,0001).
+5. Conectarle el alcoholímetro y, en Sistema y APIs, **"Sincronizar ahora"**: el sistema le envía todo el personal con sus fotos (no hay que registrar a nadie a mano).
+6. Probar un ingreso completo y, al terminar, volver a modo normal (si estaba en verificación manual).
+
+Hoy no hay un equipo facial de repuesto previsto (es una compra de TMAM).
+
+### 11.6. Alcoholímetro (DT1700)
+
+- **Antes:** el repuesto debe ser **el mismo modelo** (u otro que el equipo facial acepte) y **funcionar solo, con pantalla y el número en mg/L** (sección 3.5), para que también sirva en la verificación manual. Probarlo una vez conectado al equipo facial.
+- **El día del cambio:** desconectar el malogrado y **conectar el repuesto por USB al equipo facial**. En el sistema no se configura nada: Sistema y APIs lo muestra *"Conectado"* en unos 10 segundos. Probar una persona.
+- Si fuera otro modelo, el sistema podría no reconocerlo como alcoholímetro (lo busca por su tipo de USB): avisar a soporte antes de comprarlo.
+
+### 11.7. Controlador (PC)
+
+Ver la sección 7.2: la PC de repuesto se deja **instalada y configurada con anticipación** (mismo programa y configuración); el día del cambio se le pasan los lectores, adaptadores y relés en los mismos puertos y se conecta sola al servidor. Con los mismos adaptadores no hay que registrar nada; con adaptadores nuevos, ver 11.3.
+
+### 11.8. Preparar los repuestos (lista)
+
+| Repuesto | Preparación (una vez) | Quién | Estado |
+|---|---|---|---|
+| Lector de DNI | Escanear los códigos del folleto (11.2) y probar DNI y tarjeta | Soporte, en el punto de acceso | Falta comprarlo |
+| Adaptador USB del lector | Opción B: registrarlo desde antes (decisión n.º 11); etiquetarlo | Soporte (acceso remoto, con el adaptador conectado una vez) | Falta comprarlo |
+| Relé `ING01` y relé `SAL01` | Grabarles la serie y probar | Soporte (acceso remoto, con el relé conectado una vez) | Falta comprarlos |
+| Alcoholímetro DT1700 | Probarlo conectado al equipo facial y solo (mg/L) | Soporte | Falta comprarlo |
+| Controlador (PC) | Instalar y configurar; probar | Soporte | Falta comprarla |
+| Cambiar el adaptador de salida actual (…C705) | Conectar uno nuevo y registrarlo (11.3) | Soporte | Pendiente |
 
 ---
 

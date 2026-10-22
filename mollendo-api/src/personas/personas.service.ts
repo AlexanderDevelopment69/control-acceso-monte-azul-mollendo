@@ -202,22 +202,32 @@ export class PersonasService {
     return actualizada;
   }
 
+  /**
+   * Dar de baja o reactivar, siempre con motivo (22/10/2026). Al dar de baja se
+   * guardan el motivo y la fecha de la baja y se borran los de la reactivación;
+   * al reactivar, al revés (la ficha muestra el que corresponde). El motivo
+   * queda también en la Auditoría.
+   */
   async updateEstado(id: number, dto: UpdateEstadoPersonaDto, user: AuthenticatedUser) {
     const persona = await this.findPersona(id);
-    // Al dar de baja se guarda la fecha y, si se escribió, el motivo; al reactivar se borran.
-    const motivo = dto.motivo?.replace(/\s+/g, ' ').trim() || null;
+    const baja = dto.estado === 'inactivo';
+    const motivo = dto.motivo?.replace(/\s+/g, ' ').trim() ?? '';
+    if (motivo.length < 3) {
+      throw new BadRequestException(baja ? 'Escriba el motivo de la baja' : 'Escriba el motivo de la reactivación');
+    }
+    const ahora = new Date();
     const actualizada = await this.prisma.persona.update({
       where: { id: persona.id },
-      data:
-        dto.estado === 'inactivo'
-          ? { estado: 'inactivo', motivoBaja: motivo, fechaBaja: new Date() }
-          : { estado: 'activo', motivoBaja: null, fechaBaja: null },
+      data: baja
+        ? { estado: 'inactivo', motivoBaja: motivo, fechaBaja: ahora, motivoReactivacion: null, fechaReactivacion: null }
+        : { estado: 'activo', motivoBaja: null, fechaBaja: null, motivoReactivacion: motivo, fechaReactivacion: ahora },
     });
     await this.auditoriaService.registrar({
       usuarioId: user.id,
       tablaAfectada: 'persona',
       registroId: persona.id,
       accion: 'modificar',
+      detalle: `${baja ? 'Dio de baja a' : 'Reactivó a'} ${persona.nombres} ${persona.apellidos} (DNI ${persona.numeroDocumento}). Motivo: ${motivo}`,
     });
     return actualizada;
   }

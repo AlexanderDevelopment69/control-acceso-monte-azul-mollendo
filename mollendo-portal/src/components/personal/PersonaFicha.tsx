@@ -123,15 +123,27 @@ export function PersonaFicha({
     }
   }
 
-  // Motivo que se puede escribir al dar de baja (opcional).
+  // Motivo de la baja o de la reactivación (obligatorio en los dos casos).
   const [motivoBaja, setMotivoBaja] = useState("");
+  const motivoValido = motivoBaja.trim().length >= 3;
+
+  // Al cerrar la ventana (Cancelar o la X) se borra su mensaje, para que no quede en la ficha.
+  function cerrarCambioEstado() {
+    setConfirmarEstado(null);
+    setErrorEstado(null);
+  }
 
   async function cambiarEstado(estado: "activo" | "inactivo") {
     if (!persona) return;
+    // El botón queda habilitado: sin motivo se avisa en la ventana (el mismo mensaje que da la API).
+    if (!motivoValido) {
+      setErrorEstado(estado === "inactivo" ? "Escriba el motivo de la baja" : "Escriba el motivo de la reactivación");
+      return;
+    }
     setCambiandoEstado(true);
     setErrorEstado(null);
     try {
-      await personasApi.updateEstado(persona.id, estado, estado === "inactivo" ? motivoBaja.trim() || undefined : undefined);
+      await personasApi.updateEstado(persona.id, estado, motivoBaja.trim());
       setConfirmarEstado(null);
       cargar();
     } catch (err) {
@@ -315,7 +327,7 @@ export function PersonaFicha({
 
       <Modal
         isOpen={confirmarEstado !== null}
-        onClose={() => setConfirmarEstado(null)}
+        onClose={cerrarCambioEstado}
         bloqueado={cambiandoEstado}
         className="max-w-md p-6 sm:p-8"
       >
@@ -323,15 +335,12 @@ export function PersonaFicha({
           <>
             <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Dar de baja</h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              ¿Dar de baja a <strong>{persona.nombres} {persona.apellidos}</strong>? Desde ese momento{" "}
-              <strong>no podrá ingresar</strong> por los molinetes, aunque tenga sus documentos al día. Sí podrá salir si
-              está dentro.
+              ¿Dar de baja a <strong>{persona.nombres} {persona.apellidos}</strong>? Ya <strong>no podrá ingresar</strong>, aunque
+              tenga sus documentos al día; sí podrá salir. Sus datos e historial se conservan.
             </p>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              Sus datos, documentos e historial se conservan, y se puede reactivar cuando sea necesario.
-            </p>
+            {errorEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
             <label htmlFor="motivo-baja" className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Motivo de la baja <span className="font-normal text-gray-400">(opcional)</span>
+              Motivo de la baja *
             </label>
             <textarea
               id="motivo-baja"
@@ -339,7 +348,7 @@ export function PersonaFicha({
               maxLength={300}
               value={motivoBaja}
               onChange={(e) => setMotivoBaja(e.target.value)}
-              placeholder="Por ejemplo: terminó su contrato, cambió de empresa, falta disciplinaria…"
+              placeholder="Por ejemplo: terminó su contrato"
               className="mt-1.5 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
             />
             <p className="mt-1 text-right text-xs text-gray-400">{motivoBaja.length}/300</p>
@@ -348,19 +357,32 @@ export function PersonaFicha({
           <>
             <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Reactivar</h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              ¿Reactivar a <strong>{persona.nombres} {persona.apellidos}</strong>? Podrá volver a ingresar por los
-              molinetes si tiene sus documentos al día y pasa la prueba de alcohol.
+              ¿Reactivar a <strong>{persona.nombres} {persona.apellidos}</strong>? Podrá volver a ingresar si tiene sus documentos
+              al día.
             </p>
             {pendientesAlReactivar.length > 0 && (
               <ErrorBanner tono="aviso" className="mt-3">
                 Aun reactivado no podrá ingresar hasta regularizar: {pendientesAlReactivar.join(" · ")}.
               </ErrorBanner>
             )}
+            {errorEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
+            <label htmlFor="motivo-reactivacion" className="mt-4 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Motivo de la reactivación *
+            </label>
+            <textarea
+              id="motivo-reactivacion"
+              rows={3}
+              maxLength={300}
+              value={motivoBaja}
+              onChange={(e) => setMotivoBaja(e.target.value)}
+              placeholder="Por ejemplo: volvió a trabajar en el Terminal"
+              className="mt-1.5 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
+            />
+            <p className="mt-1 text-right text-xs text-gray-400">{motivoBaja.length}/300</p>
           </>
         )}
-        {errorEstado && <ErrorBanner className="mt-4">{errorEstado}</ErrorBanner>}
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="outline" disabled={cambiandoEstado} onClick={() => setConfirmarEstado(null)}>
+          <Button type="button" variant="outline" disabled={cambiandoEstado} onClick={cerrarCambioEstado}>
             Cancelar
           </Button>
           {confirmarEstado === "inactivo" ? (
