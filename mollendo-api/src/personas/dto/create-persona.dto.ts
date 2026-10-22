@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { normalizarNumeroDocumento, recortar } from '../../common/transformaciones.js';
 import { PERFILES, type Perfil } from '../perfiles.js';
 
@@ -32,4 +32,22 @@ export class CreatePersonaDto {
   @IsNotEmpty({ message: 'Los apellidos son obligatorios' })
   @MaxLength(150, { message: 'Los apellidos no pueden tener más de 150 caracteres' })
   apellidos!: string;
+
+  /**
+   * Período de autorización (opcional): fecha de ingreso, de finalización
+   * (AAAA-MM-DD) y motivo. Si se pone, van los tres (lo revisa el servicio,
+   * ver periodo-autorizacion.ts). null o vacío = sin período.
+   */
+  @IsOptional()
+  @IsString({ message: 'La fecha de ingreso debe ser una fecha (AAAA-MM-DD)' })
+  autorizadoDesde?: string | null;
+
+  @IsOptional()
+  @IsString({ message: 'La fecha de finalización debe ser una fecha (AAAA-MM-DD)' })
+  autorizadoHasta?: string | null;
+
+  @IsOptional()
+  @IsString({ message: 'El motivo de la autorización debe ser texto' })
+  @MaxLength(300, { message: 'El motivo de la autorización puede tener hasta 300 caracteres' })
+  motivoAutorizacion?: string | null;
 }

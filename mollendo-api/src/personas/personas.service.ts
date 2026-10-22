@@ -10,11 +10,13 @@ import { borrarArchivo, guardarArchivo } from '../common/archivos-persona.util.j
 import type { CreatePersonaDto } from './dto/create-persona.dto.js';
 import type { UpdatePersonaDto } from './dto/update-persona.dto.js';
 import type { UpdateEstadoPersonaDto } from './dto/update-estado-persona.dto.js';
+import { normalizarPeriodo, textoDeFecha, textoPeriodo, type PeriodoAutorizacion } from './periodo-autorizacion.js';
 import type { QueryPersonasDto } from './dto/query-personas.dto.js';
 import {
   documentosActuales,
   esDocumentoVigente,
   evaluarIngreso,
+  fueraDelPeriodo,
   ultimasVersiones,
   type DocumentoCargado,
 } from '../eventos-acceso/validacion-acceso.engine.js';
@@ -27,13 +29,15 @@ const EMPRESA_SELECT = { select: { id: true, razonSocial: true } } as const;
  * lo que pasa en garita.
  */
 function evaluarCumplimiento(
-  estado: 'activo' | 'inactivo',
+  persona: { estado: 'activo' | 'inactivo'; autorizadoDesde: Date | null; autorizadoHasta: Date | null },
   documentos: (DocumentoCargado & { tipoDocumento: { nombre: string } })[],
 ) {
+  const hoy = new Date();
   const resultado = evaluarIngreso({
-    personaActiva: estado === 'activo',
+    personaActiva: persona.estado === 'activo',
+    fueraDePeriodo: fueraDelPeriodo(persona.autorizadoDesde, persona.autorizadoHasta, hoy),
     alcoholConforme: true,
-    documentos: documentosActuales(documentos, new Date()),
+    documentos: documentosActuales(documentos, hoy),
   });
 
   return {
@@ -41,7 +45,23 @@ function evaluarCumplimiento(
     dadoDeBaja: resultado.denegadoPorBaja,
     sinDocumentos: resultado.denegadoSinDocumentos,
     documentosVencidos: resultado.documentosVencidos,
+    fueraDePeriodo: resultado.denegadoFueraPeriodo,
   };
+}
+
+/** El período del formulario, validado; si está mal, el error con su mensaje. */
+function periodoDe(entrada: { desde?: string | null; hasta?: string | null; motivo?: string | null }): PeriodoAutorizacion {
+  const periodo = normalizarPeriodo(entrada);
+  if (typeof periodo === 'string') throw new BadRequestException(periodo);
+  return periodo;
+}
+
+/** Detalle de la Auditoría cuando cambia el período. */
+function detallePeriodo(persona: { nombres: string; apellidos: string; numeroDocumento: string }, p: PeriodoAutorizacion): string {
+  const quien = `${persona.nombres} ${persona.apellidos} (DNI ${persona.numeroDocumento})`;
+  return p.autorizadoDesde
+    ? `Período autorizado de ${quien}: ${textoPeriodo(p)}. Motivo: ${p.motivoAutorizacion}`
+    : `Quitó el período autorizado de ${quien}`;
 }
 
 /** El DNI peruano tiene 8 dígitos; CE y pasaporte solo se limpian en el DTO. */
@@ -83,14 +103,17 @@ export class PersonasService {
       throw new ConflictException('Ya existe una persona registrada con ese documento');
     }
 
+    const { autorizadoDesde, autorizadoHasta, motivoAutorizacion, ...datos } = dto;
+    const periodo = periodoDe({ desde: autorizadoDesde, hasta: autorizadoHasta, motivo: motivoAutorizacion });
     const persona = await this.prisma.persona.create({
-      data: dto,
+      data: { ...datos, ...periodo },
     });
     await this.auditoriaService.registrar({
       usuarioId: user.id,
       tablaAfectada: 'persona',
       registroId: persona.id,
       accion: 'crear',
+      detalle: periodo.autorizadoDesde ? detallePeriodo(persona, periodo) : null,
     });
     this.eventEmitter.emit('persona.guardada', { personaId: persona.id });
     return persona;
@@ -117,7 +140,7 @@ export class PersonasService {
 
     return personas.map(({ documentos, ...persona }) => ({
       ...persona,
-      cumplimiento: evaluarCumplimiento(persona.estado, documentos),
+      cumplimiento: evaluarCumplimiento(persona, documentos),
     }));
   }
 
@@ -152,7 +175,7 @@ export class PersonasService {
 
     return {
       ...persona,
-      cumplimiento: evaluarCumplimiento(persona.estado, persona.documentos),
+      cumplimiento: evaluarCumplimiento(persona, persona.documentos),
       documentosActuales: documentosVigentes,
     };
   }
@@ -181,12 +204,28 @@ export class PersonasService {
         throw new ConflictException('Ya existe una persona registrada con ese documento');
       }
     }
-    const actualizada = await this.prisma.persona.update({ where: { id: persona.id }, data: dto });
+    // El período solo cambia si vino alguno de sus campos; lo que no vino queda como estaba.
+    const { autorizadoDesde, autorizadoHasta, motivoAutorizacion, ...datos } = dto;
+    const tocaPeriodo = autorizadoDesde !== undefined || autorizadoHasta !== undefined || motivoAutorizacion !== undefined;
+    const periodo = tocaPeriodo
+      ? periodoDe({
+          desde: autorizadoDesde !== undefined ? autorizadoDesde : textoDeFecha(persona.autorizadoDesde),
+          hasta: autorizadoHasta !== undefined ? autorizadoHasta : textoDeFecha(persona.autorizadoHasta),
+          motivo: motivoAutorizacion !== undefined ? motivoAutorizacion : persona.motivoAutorizacion,
+        })
+      : null;
+    const cambioPeriodo =
+      !!periodo &&
+      (textoDeFecha(periodo.autorizadoDesde) !== textoDeFecha(persona.autorizadoDesde) ||
+        textoDeFecha(periodo.autorizadoHasta) !== textoDeFecha(persona.autorizadoHasta) ||
+        periodo.motivoAutorizacion !== persona.motivoAutorizacion);
+    const actualizada = await this.prisma.persona.update({ where: { id: persona.id }, data: { ...datos, ...(periodo ?? {}) } });
     await this.auditoriaService.registrar({
       usuarioId: user.id,
       tablaAfectada: 'persona',
       registroId: persona.id,
       accion: 'modificar',
+      detalle: cambioPeriodo ? detallePeriodo(actualizada, periodo) : null,
     });
     // Al G4 Pro solo le importan el número y el nombre: si cambió solo el perfil o la empresa, no se le envía nada.
     const cambioParaEquipos =

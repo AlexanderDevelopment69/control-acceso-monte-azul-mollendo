@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { CheckLineIcon, ChevronDownIcon } from "@/icons";
 
 export interface Opcion {
@@ -24,8 +25,25 @@ interface ComboboxProps {
   compacto?: boolean;
   /** Opciones largas: se ven completas (pasan a otra línea) en vez de cortarse con "…". */
   textoCompleto?: boolean;
+  /**
+   * La lista se dibuja sobre la página (fuera del recuadro que la contiene),
+   * para usarla dentro de un contenedor con desplazamiento propio sin que la corte.
+   */
+  flotante?: boolean;
   disabled?: boolean;
   "aria-label"?: string;
+}
+
+/**
+ * Lleva la opción a la vista desplazando solo la lista (scrollIntoView también
+ * desplazaba la página o el modal de atrás, y la ventana se movía al abrir).
+ */
+function mostrarEnLista(lista: HTMLElement | null, opcion: HTMLElement | null | undefined) {
+  if (!lista || !opcion) return;
+  const arriba = opcion.offsetTop;
+  const abajo = arriba + opcion.offsetHeight;
+  if (arriba < lista.scrollTop) lista.scrollTop = arriba;
+  else if (abajo > lista.scrollTop + lista.clientHeight) lista.scrollTop = abajo - lista.clientHeight;
 }
 
 /**
@@ -42,11 +60,16 @@ export default function Combobox({
   className = "",
   compacto = false,
   textoCompleto = false,
+  flotante = false,
   disabled = false,
   "aria-label": ariaLabel,
 }: ComboboxProps) {
   const id = useId();
   const raiz = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  // Siempre "fixed", también cerrada: si quedara en el flujo de la página, al abrirla el navegador
+  // desplazaba la página (y la ventana del modal se movía) para mostrar la opción elegida.
+  const [posicion, setPosicion] = useState<React.CSSProperties>({ position: "fixed", top: 0, left: 0 });
   const buscador = useRef<HTMLInputElement>(null);
   const lista = useRef<HTMLUListElement>(null);
   const [abierto, setAbierto] = useState(false);
@@ -74,22 +97,46 @@ export default function Combobox({
   useEffect(() => {
     if (!abierto) return;
     if (conBuscador) buscador.current?.focus();
-    lista.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
+    mostrarEnLista(lista.current, lista.current?.querySelector<HTMLElement>('[aria-selected="true"]'));
   }, [abierto, conBuscador]);
 
   // Un clic fuera la cierra.
   useEffect(() => {
     if (!abierto) return;
     const fuera = (e: MouseEvent) => {
-      if (!raiz.current?.contains(e.target as Node)) setAbierto(false);
+      const t = e.target as Node;
+      if (!raiz.current?.contains(t) && !panel.current?.contains(t)) setAbierto(false);
     };
     document.addEventListener("mousedown", fuera);
     return () => document.removeEventListener("mousedown", fuera);
   }, [abierto]);
 
+  // Flotante: la lista sigue al campo (al desplazar o cambiar el tamaño); abre hacia arriba si abajo no hay lugar.
+  useLayoutEffect(() => {
+    if (!flotante || !abierto) return;
+    const ubicar = () => {
+      const r = raiz.current?.getBoundingClientRect();
+      if (!r) return;
+      const abajo = window.innerHeight - r.bottom;
+      const arriba = abajo < 320 && r.top > abajo;
+      setPosicion(
+        arriba
+          ? { position: "fixed", left: r.left, width: r.width, bottom: window.innerHeight - r.top + 4 }
+          : { position: "fixed", left: r.left, width: r.width, top: r.bottom + 4 },
+      );
+    };
+    ubicar();
+    window.addEventListener("scroll", ubicar, true);
+    window.addEventListener("resize", ubicar);
+    return () => {
+      window.removeEventListener("scroll", ubicar, true);
+      window.removeEventListener("resize", ubicar);
+    };
+  }, [flotante, abierto]);
+
   // La opción marcada con el teclado siempre a la vista.
   useEffect(() => {
-    if (abierto) lista.current?.querySelectorAll<HTMLElement>("[role=option]")[activa]?.scrollIntoView({ block: "nearest" });
+    if (abierto) mostrarEnLista(lista.current, lista.current?.querySelectorAll<HTMLElement>("[role=option]")[activa]);
   }, [activa, abierto]);
 
   function teclado(e: React.KeyboardEvent) {
@@ -148,8 +195,13 @@ export default function Combobox({
       </button>
 
       {/* Siempre montado: se abre (150 ms) y se cierra (100 ms) con un fundido y un leve desplazamiento. */}
+      {(() => {
+        const contenido = (
       <div
-        className={`absolute top-full right-0 left-0 z-50 mt-1 origin-top overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-lg transition dark:border-gray-800 dark:bg-gray-900 ${
+        ref={panel}
+        style={flotante ? posicion : undefined}
+        onKeyDown={flotante ? teclado : undefined}
+        className={`${flotante ? "z-[100000]" : "absolute top-full right-0 left-0 z-50 mt-1"} origin-top overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-lg transition dark:border-gray-800 dark:bg-gray-900 ${
           abierto
             ? "visible translate-y-0 scale-100 opacity-100 duration-150 ease-out"
             : "invisible -translate-y-1 scale-[0.98] opacity-0 duration-100 ease-in"
@@ -176,7 +228,7 @@ export default function Combobox({
           ref={lista}
           id={`${id}-lista`}
           role="listbox"
-          className="max-h-72 overflow-y-auto p-1.5"
+          className="relative max-h-72 overflow-y-auto p-1.5"
         >
           {visibles.length === 0 && <li className="px-3 py-2.5 text-sm text-gray-400">Sin resultados</li>}
           {visibles.map((o, i) => {
@@ -210,6 +262,10 @@ export default function Combobox({
           })}
         </ul>
       </div>
+        );
+        // Flotante: fuera del modal (que tiene transform), para que "fixed" sea respecto a la ventana.
+        return flotante && typeof document !== "undefined" ? createPortal(contenido, document.body) : contenido;
+      })()}
     </div>
   );
 }

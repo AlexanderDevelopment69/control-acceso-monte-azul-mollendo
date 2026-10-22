@@ -42,6 +42,10 @@ export interface Persona {
   /** Por qué y cuándo se lo reactivó (se ve en su ficha mientras siga activo). */
   motivoReactivacion?: string | null;
   fechaReactivacion?: string | null;
+  /** Período de autorización (opcional): solo puede ingresar entre estas fechas (DATE), con su motivo. */
+  autorizadoDesde?: string | null;
+  autorizadoHasta?: string | null;
+  motivoAutorizacion?: string | null;
   creadoEn: string;
   empresa?: { id: number; razonSocial: string };
   documentos?: DocumentoPersona[];
@@ -56,6 +60,8 @@ export interface Cumplimiento {
   dadoDeBaja: boolean;
   sinDocumentos: boolean;
   documentosVencidos: string[];
+  /** Hoy está fuera de su período de autorización. */
+  fueraDePeriodo?: boolean;
 }
 
 export interface DocumentoActual {
@@ -153,6 +159,8 @@ export interface EventoAcceso {
   denegadoYaDentro?: boolean;
   /** Antipassback: quiso salir sin ingreso registrado. */
   denegadoSinIngreso?: boolean;
+  /** Fuera de su período de autorización. */
+  denegadoFueraPeriodo?: boolean;
   /** Orden "facial primero": pasó su DNI sin una aprobación de rostro y alcohol en los 20 s anteriores. */
   denegadoSinFacial?: boolean;
   /** Orden "facial primero": alguien aprobó rostro y alcohol, pero nadie pasó su DNI a tiempo (sin persona). */
@@ -225,6 +233,7 @@ export interface Dashboard {
       rostroNoCoincide?: number;
       yaDentro?: number;
       sinIngreso?: number;
+      fueraPeriodo?: number;
     };
     tendencia: { dia: string; ingresos: number; denegados: number; salidas: number }[];
   };
@@ -446,11 +455,25 @@ export interface FilaCargaMasiva {
   numeroDocumento: string;
   nombres: string;
   apellidos: string;
+  /** Período de autorización (opcional), como se escribió en el Excel. */
+  autorizadoDesde: string;
+  autorizadoHasta: string;
+  motivoAutorizacion: string;
   /** lista: se registrará; existe: ya está registrado (se omite); error: hay que corregirla. */
   estado: "lista" | "existe" | "error";
   motivos: string[];
   /** Columnas con error (se pintan en el Excel de filas con error). */
-  campos: ("perfil" | "empresa" | "tipoDocumento" | "numeroDocumento" | "nombres" | "apellidos")[];
+  campos: (
+    | "perfil"
+    | "empresa"
+    | "tipoDocumento"
+    | "numeroDocumento"
+    | "nombres"
+    | "apellidos"
+    | "autorizadoDesde"
+    | "autorizadoHasta"
+    | "motivoAutorizacion"
+  )[];
   persona?: {
     empresaId: number;
     perfil: Perfil;
@@ -458,6 +481,9 @@ export interface FilaCargaMasiva {
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
+    autorizadoDesde: string | null;
+    autorizadoHasta: string | null;
+    motivoAutorizacion: string | null;
   };
 }
 

@@ -12,13 +12,23 @@ import Select from "@/components/form/Select";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { OPCIONES_PERFIL, type Perfil } from "@/lib/perfiles";
 import { validarNumeroDocumento } from "./archivoDocumento";
+import { PeriodoAutorizacionCampos } from "./PeriodoAutorizacionCampos";
+import { periodoDePersona, periodoParaApi, problemaPeriodo, type Periodo } from "@/lib/periodo";
 
 type Tipo = Persona["tipoDocumentoIdentidad"];
 
 /** Lo que cambió respecto de la persona (solo eso se envía). */
 export function cambiosPersona(
   persona: Persona,
-  datos: { perfil: Perfil | ""; empresaId: string; tipoDocumentoIdentidad: Tipo; numeroDocumento: string; nombres: string; apellidos: string },
+  datos: {
+    perfil: Perfil | "";
+    empresaId: string;
+    tipoDocumentoIdentidad: Tipo;
+    numeroDocumento: string;
+    nombres: string;
+    apellidos: string;
+    periodo?: Periodo;
+  },
 ) {
   const cambios: Parameters<typeof personasApi.update>[1] = {};
   if (datos.perfil && datos.perfil !== persona.perfil) cambios.perfil = datos.perfil;
@@ -27,6 +37,12 @@ export function cambiosPersona(
   if (datos.numeroDocumento !== persona.numeroDocumento) cambios.numeroDocumento = datos.numeroDocumento;
   if (datos.nombres.trim() !== persona.nombres) cambios.nombres = datos.nombres.trim();
   if (datos.apellidos.trim() !== persona.apellidos) cambios.apellidos = datos.apellidos.trim();
+  // El período va completo (las tres partes) si cambió algo de él.
+  if (datos.periodo) {
+    const nuevo = periodoParaApi(datos.periodo);
+    const antes = periodoParaApi(periodoDePersona(persona));
+    if (JSON.stringify(nuevo) !== JSON.stringify(antes)) Object.assign(cambios, nuevo);
+  }
   return cambios;
 }
 
@@ -48,6 +64,7 @@ function Formulario({ persona, onClose, onGuardado, onGuardando }: {
   const [numero, setNumero] = useState(persona.numeroDocumento);
   const [nombres, setNombres] = useState(persona.nombres);
   const [apellidos, setApellidos] = useState(persona.apellidos);
+  const [periodo, setPeriodo] = useState<Periodo>(periodoDePersona(persona));
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   /** Se intentó guardar sin cambios: aviso suave, que se va solo al cambiar algo. */
@@ -61,7 +78,15 @@ function Formulario({ persona, onClose, onGuardado, onGuardando }: {
   }, []);
 
   const cambiaDocumento = tipo !== persona.tipoDocumentoIdentidad || numero !== persona.numeroDocumento;
-  const cambios = cambiosPersona(persona, { perfil, empresaId, tipoDocumentoIdentidad: tipo, numeroDocumento: numero, nombres, apellidos });
+  const cambios = cambiosPersona(persona, {
+    perfil,
+    empresaId,
+    tipoDocumentoIdentidad: tipo,
+    numeroDocumento: numero,
+    nombres,
+    apellidos,
+    periodo,
+  });
   const hayCambios = Object.keys(cambios).length > 0;
 
   async function guardar(e: React.FormEvent) {
@@ -70,6 +95,8 @@ function Formulario({ persona, onClose, onGuardado, onGuardando }: {
     if (!numero || !nombres.trim() || !apellidos.trim()) return setError("Complete número de documento, nombres y apellidos");
     const problema = validarNumeroDocumento(tipo, numero);
     if (problema) return setError(problema);
+    const problemaDelPeriodo = problemaPeriodo(periodo);
+    if (problemaDelPeriodo) return setError(problemaDelPeriodo);
     setError(null);
     if (!hayCambios) return setSinCambiosAviso(true);
     setGuardando(true);
@@ -139,6 +166,7 @@ function Formulario({ persona, onClose, onGuardado, onGuardando }: {
           terminal facial se actualiza solo. Los ingresos y salidas anteriores conservan el documento con el que se registraron.
         </ErrorBanner>
       )}
+      <PeriodoAutorizacionCampos id={`editar-periodo-${persona.id}`} periodo={periodo} onChange={setPeriodo} />
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" size="sm" variant="outline" disabled={guardando} onClick={onClose}>
           Cancelar

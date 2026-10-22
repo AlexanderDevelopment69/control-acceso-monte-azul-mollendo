@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { documentosActuales, esDocumentoVigente, evaluarIngreso } from './validacion-acceso.engine.js';
+import { documentosActuales, esDocumentoVigente, evaluarIngreso, fueraDelPeriodo } from './validacion-acceso.engine.js';
 
 const SCTR_VIGENTE = { tipoDocumentoId: 1, nombre: 'SCTR', vigente: true };
 const SCTR_VENCIDO = { tipoDocumentoId: 1, nombre: 'SCTR', vigente: false };
@@ -19,6 +19,7 @@ describe('evaluarIngreso', () => {
       denegadoSinDocumentos: false,
       denegadoPorAlcohol: false,
       denegadoPorDocumentos: false,
+      denegadoFueraPeriodo: false,
       documentosVencidos: [],
     });
   });
@@ -32,6 +33,7 @@ describe('evaluarIngreso', () => {
       denegadoSinDocumentos: false,
       denegadoPorAlcohol: false,
       denegadoPorDocumentos: false,
+      denegadoFueraPeriodo: false,
       documentosVencidos: [],
     });
   });
@@ -115,5 +117,34 @@ describe('esDocumentoVigente', () => {
 
   it('un documento que vence en el futuro está vigente', () => {
     expect(esDocumentoVigente(fecha('2027-01-01'), hoy)).toBe(true);
+  });
+});
+
+describe('período de autorización', () => {
+  const fecha = (texto: string) => new Date(`${texto}T00:00:00.000Z`);
+  // "Hoy" en la zona del servidor: el 22/10/2026 a media tarde.
+  const hoy = new Date(2026, 9, 22, 15, 30);
+
+  it('sin período, nunca está fuera', () => {
+    expect(fueraDelPeriodo(null, null, hoy)).toBe(false);
+  });
+
+  it('las dos fechas cuentan: el primer día y el último puede ingresar', () => {
+    expect(fueraDelPeriodo(fecha('2026-10-22'), fecha('2026-10-31'), hoy)).toBe(false);
+    expect(fueraDelPeriodo(fecha('2026-10-01'), fecha('2026-10-22'), hoy)).toBe(false);
+  });
+
+  it('antes de la fecha de ingreso o después de la de finalización, está fuera', () => {
+    expect(fueraDelPeriodo(fecha('2026-10-23'), fecha('2026-10-31'), hoy)).toBe(true);
+    expect(fueraDelPeriodo(fecha('2026-10-01'), fecha('2026-10-21'), hoy)).toBe(true);
+  });
+
+  it('fuera del período se deniega aunque tenga sus documentos al día, junto con los otros motivos', () => {
+    const r = evaluarIngreso({ personaActiva: true, fueraDePeriodo: true, alcoholConforme: true, documentos: [SCTR_VENCIDO] });
+    expect(r).toMatchObject({ autorizado: false, denegadoFueraPeriodo: true, denegadoPorDocumentos: true });
+    expect(evaluarIngreso({ personaActiva: true, fueraDePeriodo: true, alcoholConforme: true, documentos: [SCTR_VIGENTE] })).toMatchObject({
+      autorizado: false,
+      denegadoFueraPeriodo: true,
+    });
   });
 });

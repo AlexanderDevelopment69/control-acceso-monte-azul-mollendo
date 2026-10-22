@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { PERFILES, PERFIL_LABEL, type Perfil } from '../perfiles.js';
+import { PERIODO_AL_REVES, PERIODO_INCOMPLETO, normalizarPeriodo } from '../periodo-autorizacion.js';
 
 /**
  * Carga masiva de personal desde Excel: columnas de la plantilla, lectura del
@@ -17,7 +18,14 @@ export const COLUMNAS_CARGA = [
   { clave: 'numeroDocumento', titulo: 'Número de documento', ancho: 22, ayuda: 'Solo letras y números. El DNI tiene 8 dígitos (con los ceros de adelante).' },
   { clave: 'nombres', titulo: 'Nombres', ancho: 28, ayuda: 'Obligatorio.' },
   { clave: 'apellidos', titulo: 'Apellidos', ancho: 28, ayuda: 'Obligatorio.' },
+  // Período de autorización (22/10/2026): opcional; si se pone, van las dos fechas y el motivo.
+  { clave: 'autorizadoDesde', titulo: 'Fecha de ingreso', ancho: 18, ayuda: 'Opcional. DD/MM/AAAA: desde cuándo puede ingresar. Vacío si no tiene límite de fechas.', opcional: true },
+  { clave: 'autorizadoHasta', titulo: 'Fecha de finalización', ancho: 20, ayuda: 'Opcional. DD/MM/AAAA: hasta cuándo puede ingresar (ese día incluido).', opcional: true },
+  { clave: 'motivoAutorizacion', titulo: 'Motivo de la autorización', ancho: 36, ayuda: 'Obligatorio si pone las fechas. Por ejemplo: visita técnica, obra hasta fin de mes.', opcional: true },
 ] as const;
+
+/** Columnas que la plantilla debe tener (las del período son opcionales: una plantilla anterior sigue sirviendo). */
+const OBLIGATORIAS = COLUMNAS_CARGA.filter((c) => !('opcional' in c));
 
 export type ClaveCarga = (typeof COLUMNAS_CARGA)[number]['clave'];
 
@@ -33,6 +41,10 @@ export interface PersonaCarga {
   numeroDocumento: string;
   nombres: string;
   apellidos: string;
+  /** Período de autorización (AAAA-MM-DD), o null sin período. */
+  autorizadoDesde: string | null;
+  autorizadoHasta: string | null;
+  motivoAutorizacion: string | null;
 }
 
 export interface FilaRevisada extends FilaCarga {
@@ -89,13 +101,36 @@ const TIPO_POR_TEXTO = new Map<string, TipoDocumentoIdentidad>([
 
 const clavePersona = (tipo: string, numero: string) => `${tipo}|${numero}`;
 
+/**
+ * Fecha escrita en el Excel → AAAA-MM-DD, o null si no se entiende. Acepta
+ * DD/MM/AAAA (o con guiones), AAAA-MM-DD y el número de serie de Excel (una
+ * fecha en una celda sin formato). Vacío → null.
+ */
+export function fechaCarga(texto: string): string | null {
+  const t = texto.trim();
+  if (!t) return null;
+  let a: number, m: number, d: number;
+  let r = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/.exec(t);
+  if (r) [d, m, a] = [Number(r[1]), Number(r[2]), Number(r[3])];
+  else if ((r = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t))) [a, m, d] = [Number(r[1]), Number(r[2]), Number(r[3])];
+  else if (/^\d{5}$/.test(t)) {
+    // Serie de Excel: días desde el 30/12/1899.
+    const f = new Date(Date.UTC(1899, 11, 30) + Number(t) * 86_400_000);
+    [a, m, d] = [f.getUTCFullYear(), f.getUTCMonth() + 1, f.getUTCDate()];
+  } else return null;
+  const f = new Date(Date.UTC(a, m - 1, d));
+  if (f.getUTCFullYear() !== a || f.getUTCMonth() !== m - 1 || f.getUTCDate() !== d) return null;
+  return f.toISOString().slice(0, 10);
+}
+
 /** Texto de la celda: los números sin decimales ni separadores, las fórmulas por su resultado. */
 function textoCelda(celda: ExcelJS.Cell): string {
   const valor = celda.value;
   if (valor === null || valor === undefined) return '';
   if (typeof valor === 'number') return String(Math.round(valor));
   if (typeof valor === 'string') return valor.trim();
-  if (valor instanceof Date) return celda.text.trim();
+  // Una fecha de Excel (la guarda en UTC): como la escribiría una persona, DD/MM/AAAA.
+  if (valor instanceof Date) return valor.toISOString().slice(0, 10).split('-').reverse().join('/');
   if (typeof valor === 'object' && 'result' in valor) return String(valor.result ?? '').trim();
   return celda.text.trim();
 }
@@ -125,20 +160,23 @@ export async function leerFilasCarga(contenido: Buffer): Promise<FilaCarga[]> {
       const clave = titulos.get(normalizar(textoCelda(celda)));
       if (clave && !encontradas.has(clave)) encontradas.set(clave, col);
     });
-    if (encontradas.size === COLUMNAS_CARGA.length) {
+    if (OBLIGATORIAS.every((c) => encontradas.has(c.clave))) {
       filaCabecera = f;
       for (const [clave, col] of encontradas) posicion.set(clave, col);
     }
   }
   if (!filaCabecera) {
-    const faltan = COLUMNAS_CARGA.map((c) => `"${c.titulo}"`).join(', ');
+    const faltan = OBLIGATORIAS.map((c) => `"${c.titulo}"`).join(', ');
     throw new Error(`No se encontró la fila de títulos (${faltan}). Use la plantilla de carga masiva.`);
   }
 
   const filas: FilaCarga[] = [];
   for (let f = filaCabecera + 1; f <= hoja.rowCount; f++) {
     const fila = hoja.getRow(f);
-    const datos = Object.fromEntries(COLUMNAS_CARGA.map((c) => [c.clave, textoCelda(fila.getCell(posicion.get(c.clave)!))])) as Record<
+    // Una columna opcional que no está en el archivo (plantilla anterior) queda vacía.
+    const datos = Object.fromEntries(
+      COLUMNAS_CARGA.map((c) => [c.clave, posicion.has(c.clave) ? textoCelda(fila.getCell(posicion.get(c.clave)!)) : '']),
+    ) as Record<
       ClaveCarga,
       string
     >;
@@ -205,6 +243,32 @@ export function revisarFilasCarga(
     if (!apellidos) marcar('apellidos', 'Faltan los apellidos');
     else if (apellidos.length > 150) marcar('apellidos', 'Los apellidos no pueden tener más de 150 caracteres');
 
+    // Período de autorización (opcional): las dos fechas y el motivo, con las mismas reglas del formulario.
+    const desdeTexto = fechaCarga(fila.autorizadoDesde);
+    const hastaTexto = fechaCarga(fila.autorizadoHasta);
+    if (fila.autorizadoDesde && !desdeTexto) marcar('autorizadoDesde', `Fecha de ingreso no válida: "${fila.autorizadoDesde}" (DD/MM/AAAA)`);
+    if (fila.autorizadoHasta && !hastaTexto) marcar('autorizadoHasta', `Fecha de finalización no válida: "${fila.autorizadoHasta}" (DD/MM/AAAA)`);
+    let periodo: Pick<PersonaCarga, 'autorizadoDesde' | 'autorizadoHasta' | 'motivoAutorizacion'> = {
+      autorizadoDesde: null,
+      autorizadoHasta: null,
+      motivoAutorizacion: null,
+    };
+    if ((!fila.autorizadoDesde || desdeTexto) && (!fila.autorizadoHasta || hastaTexto)) {
+      const revisado = normalizarPeriodo({ desde: desdeTexto, hasta: hastaTexto, motivo: fila.motivoAutorizacion });
+      if (revisado === PERIODO_INCOMPLETO) {
+        const faltan: ClaveCarga[] = [];
+        if (!desdeTexto) faltan.push('autorizadoDesde');
+        if (!hastaTexto) faltan.push('autorizadoHasta');
+        if (fila.motivoAutorizacion.trim().length < 3) faltan.push('motivoAutorizacion');
+        motivos.push(PERIODO_INCOMPLETO);
+        faltan.forEach((c) => campos.add(c));
+      } else if (revisado === PERIODO_AL_REVES) marcar('autorizadoHasta', PERIODO_AL_REVES);
+      else if (typeof revisado === 'string') marcar('motivoAutorizacion', revisado);
+      else if (revisado.autorizadoDesde) {
+        periodo = { autorizadoDesde: desdeTexto, autorizadoHasta: hastaTexto, motivoAutorizacion: revisado.motivoAutorizacion };
+      }
+    }
+
     if (tipo && numero) {
       const clave = clavePersona(tipo, numero);
       const anterior = vistas.get(clave);
@@ -230,7 +294,7 @@ export function revisarFilasCarga(
       estado: 'lista',
       motivos,
       campos: [],
-      persona: { empresaId: empresa.id, perfil, tipoDocumentoIdentidad: tipo, numeroDocumento: numero, nombres, apellidos },
+      persona: { empresaId: empresa.id, perfil, tipoDocumentoIdentidad: tipo, numeroDocumento: numero, nombres, apellidos, ...periodo },
     };
   });
 }
@@ -274,6 +338,10 @@ export async function generarPlantillaCarga(
   });
   cabecera.height = 22;
   hoja.getColumn(4).numFmt = '@';
+  // Las fechas del período, como las escribe una persona (DD/MM/AAAA).
+  for (const clave of ['autorizadoDesde', 'autorizadoHasta'] as const) {
+    hoja.getColumn(COLUMNAS_CARGA.findIndex((c) => c.clave === clave) + 1).numFmt = 'dd/mm/yyyy';
+  }
 
   for (const f of filas) {
     const fila = hoja.addRow([...COLUMNAS_CARGA.map((c) => f[c.clave]), ...(conMotivo ? [f.motivo ?? ''] : [])]);
@@ -326,6 +394,10 @@ export async function generarPlantillaCarga(
   }
   instrucciones.addRow([]);
   instrucciones.addRow(['Ejemplo', 'Contratista | DEMO Servicios Portuarios Islay S.A. | DNI | 01234567 | Juan Carlos | Pérez Rojas']);
+  instrucciones.addRow([
+    'Con período',
+    'Visita | DEMO Servicios Portuarios Islay S.A. | DNI | 07654321 | Ana | Díaz | 22/10/2026 | 31/10/2026 | Visita técnica. Fuera de esas fechas no podrá ingresar.',
+  ]).getCell(2).alignment = { wrapText: true };
   instrucciones.addRow([
     'Empresas',
     'Si la empresa no aparece en la lista, regístrela primero en el portal (menú "Empresas" → "+ Nueva empresa") y vuelva a descargar la plantilla.',

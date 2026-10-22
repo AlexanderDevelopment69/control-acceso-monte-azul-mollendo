@@ -9,6 +9,7 @@ export function formatearFecha(fecha: string): string {
 export function motivosCumplimiento(c: Cumplimiento, motivoBaja?: string | null): string[] {
   if (c.dadoDeBaja) return [motivoBaja ? `Dado de baja: ${motivoBaja}` : "Dado de baja"];
   const motivos: string[] = [];
+  if (c.fueraDePeriodo) motivos.push("Fuera del período autorizado");
   if (c.sinDocumentos) motivos.push("Sin documentos cargados");
   if (c.documentosVencidos.length > 0) motivos.push(`Vencido: ${c.documentosVencidos.join(", ")}`);
   return motivos;

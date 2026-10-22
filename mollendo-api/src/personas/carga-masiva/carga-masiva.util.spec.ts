@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import {
+  fechaCarga,
   generarPlantillaCarga,
   leerFilasCarga,
   revisarFilasCarga,
@@ -24,6 +25,9 @@ const fila = (n: number, datos: Partial<FilaCarga> = {}): FilaCarga => ({
   numeroDocumento: '40000001',
   nombres: 'Juan',
   apellidos: 'Pérez',
+  autorizadoDesde: '',
+  autorizadoHasta: '',
+  motivoAutorizacion: '',
   ...datos,
 });
 
@@ -38,6 +42,9 @@ describe('revisión de la carga masiva', () => {
       numeroDocumento: '40000001',
       nombres: 'Juan',
       apellidos: 'Pérez',
+      autorizadoDesde: null,
+      autorizadoHasta: null,
+      motivoAutorizacion: null,
     });
   });
 
@@ -99,8 +106,9 @@ describe('lectura del Excel', () => {
     ]);
     const filas = await leerFilasCarga(contenido);
     expect(filas).toEqual([
-      { fila: 2, perfil: 'Contratista', empresa: 'DEMO Servicios Portuarios Islay S.A.', tipoDocumento: 'DNI', numeroDocumento: '40000001', nombres: 'Juan', apellidos: 'Pérez' },
-      { fila: 4, perfil: 'Conductor', empresa: '20123456789', tipoDocumento: 'DNI', numeroDocumento: '01234567', nombres: 'Ana', apellidos: 'Rojas' },
+      // Una plantilla anterior, sin las columnas del período, sigue sirviendo: quedan vacías.
+      { fila: 2, perfil: 'Contratista', empresa: 'DEMO Servicios Portuarios Islay S.A.', tipoDocumento: 'DNI', numeroDocumento: '40000001', nombres: 'Juan', apellidos: 'Pérez', autorizadoDesde: '', autorizadoHasta: '', motivoAutorizacion: '' },
+      { fila: 4, perfil: 'Conductor', empresa: '20123456789', tipoDocumento: 'DNI', numeroDocumento: '01234567', nombres: 'Ana', apellidos: 'Rojas', autorizadoDesde: '', autorizadoHasta: '', motivoAutorizacion: '' },
     ]);
   });
 
@@ -122,10 +130,59 @@ describe('lectura del Excel', () => {
     const libro = new ExcelJS.Workbook();
     await libro.xlsx.load(errores as unknown as ArrayBuffer);
     const hoja = libro.getWorksheet('Personal')!;
-    expect(hoja.getCell('G2').value).toBe('El DNI debe tener 8 dígitos. Faltan los nombres');
+    // El motivo va después de las 9 columnas (las 6 de la persona y las 3 del período).
+    expect(hoja.getCell('J2').value).toBe('El DNI debe tener 8 dígitos. Faltan los nombres');
     // Pintadas en rojo claro: el número (D) y los nombres vacíos (E); las demás no.
     const pintada = (ref: string) => (hoja.getCell(ref).fill as ExcelJS.FillPattern | undefined)?.fgColor?.argb === 'FFFEE4E2';
     expect(['A2', 'B2', 'C2', 'D2', 'E2', 'F2'].map(pintada)).toEqual([false, false, false, true, true, false]);
     expect(hoja.getCell('B2').dataValidation).toMatchObject({ type: 'list' });
+  });
+});
+
+describe('carga masiva: período de autorización', () => {
+  it('las fechas se entienden como las escribe una persona (y el número de serie de Excel)', () => {
+    expect(fechaCarga('22/10/2026')).toBe('2026-10-22');
+    expect(fechaCarga('2/3/2026')).toBe('2026-03-02');
+    expect(fechaCarga('22-10-2026')).toBe('2026-10-22');
+    expect(fechaCarga('2026-10-22')).toBe('2026-10-22');
+    expect(fechaCarga('46317')).toBe('2026-10-22');
+    expect(fechaCarga('31/02/2026')).toBeNull();
+    expect(fechaCarga('mañana')).toBeNull();
+    expect(fechaCarga('')).toBeNull();
+  });
+
+  it('con período completo, la persona lleva sus fechas y el motivo', () => {
+    const [r] = revisarFilasCarga(
+      [fila(2, { autorizadoDesde: '22/10/2026', autorizadoHasta: '31/10/2026', motivoAutorizacion: ' Visita técnica ' })],
+      EMPRESAS,
+      [],
+    );
+    expect(r.estado).toBe('lista');
+    expect(r.persona).toMatchObject({ autorizadoDesde: '2026-10-22', autorizadoHasta: '2026-10-31', motivoAutorizacion: 'Visita técnica' });
+  });
+
+  it('período incompleto, fecha mal escrita o al revés: error en su columna', () => {
+    const [incompleto, malEscrita, alReves] = revisarFilasCarga(
+      [
+        fila(2, { numeroDocumento: '40000001', autorizadoDesde: '22/10/2026' }),
+        fila(3, { numeroDocumento: '40000002', autorizadoDesde: '22/13/2026', autorizadoHasta: '31/10/2026', motivoAutorizacion: 'Obra' }),
+        fila(4, { numeroDocumento: '40000003', autorizadoDesde: '31/10/2026', autorizadoHasta: '22/10/2026', motivoAutorizacion: 'Obra' }),
+      ],
+      EMPRESAS,
+      [],
+    );
+    expect(incompleto).toMatchObject({ estado: 'error', motivos: [expect.stringContaining('Complete el período')] });
+    expect(incompleto.campos).toEqual(['autorizadoHasta', 'motivoAutorizacion']);
+    expect(malEscrita).toMatchObject({ estado: 'error', campos: ['autorizadoDesde'] });
+    expect(alReves).toMatchObject({ estado: 'error', campos: ['autorizadoHasta'] });
+  });
+
+  it('lee una fecha guardada como fecha de Excel', async () => {
+    const libro = new ExcelJS.Workbook();
+    const hoja = libro.addWorksheet('Personal');
+    hoja.addRow(['Perfil', 'Empresa', 'Tipo de documento', 'Número de documento', 'Nombres', 'Apellidos', 'Fecha de ingreso', 'Fecha de finalización', 'Motivo de la autorización']);
+    hoja.addRow(['Visita', '20123456789', 'DNI', '07654321', 'Ana', 'Díaz', new Date(Date.UTC(2026, 9, 22)), new Date(Date.UTC(2026, 9, 31)), 'Visita técnica']);
+    const [leida] = await leerFilasCarga(Buffer.from(await libro.xlsx.writeBuffer()));
+    expect(leida).toMatchObject({ autorizadoDesde: '22/10/2026', autorizadoHasta: '31/10/2026', motivoAutorizacion: 'Visita técnica' });
   });
 });

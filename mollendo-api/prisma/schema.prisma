@@ -171,6 +171,11 @@ model Persona {
   /// Por qué se la reactivó (obligatorio) y cuándo; se ven en su ficha y se borran al darla de baja.
   motivoReactivacion     String?                @map("motivo_reactivacion") @db.VarChar(300)
   fechaReactivacion      DateTime?              @map("fecha_reactivacion")
+  /// Período de autorización (opcional, 22/10/2026): solo puede ingresar entre estas fechas (las dos
+  /// incluidas), con su motivo. Vacío = sin límite de fechas.
+  autorizadoDesde        DateTime?              @map("autorizado_desde") @db.Date
+  autorizadoHasta        DateTime?              @map("autorizado_hasta") @db.Date
+  motivoAutorizacion     String?                @map("motivo_autorizacion") @db.VarChar(300)
   creadoEn               DateTime               @default(now()) @map("creado_en")
 
   documentos         DocumentoPersona[]
@@ -251,6 +256,8 @@ model EventoAcceso {
   denegadoYaDentro         Boolean                 @default(false) @map("denegado_ya_dentro")
   /// Antipassback: quiso salir, pero no registra ingreso (su último movimiento es una salida, o no tiene).
   denegadoSinIngreso       Boolean                 @default(false) @map("denegado_sin_ingreso")
+  /// Ingreso fuera de su período de autorización (antes de la fecha de ingreso o después de la de finalización).
+  denegadoFueraPeriodo     Boolean                 @default(false) @map("denegado_fuera_periodo")
   /// Orden "facial primero" (permiso fijo): ingreso con rostro y alcohol aprobados en el G4 Pro y el DNI al final.
   /// El rtlog no dice quién aprobó; se lee del rastreo del equipo (dniQueSoplo). Si no se pudo, lo compara el vigilante.
   facialPrimero            Boolean                 @default(false) @map("facial_primero")

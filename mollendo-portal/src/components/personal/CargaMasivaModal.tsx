@@ -118,16 +118,19 @@ export function CargaMasivaModal({
       async () => {
         const filas = (revision?.filas ?? [])
           .filter((f) => f.estado === "error")
-          .map(({ fila, perfil, empresa, tipoDocumento, numeroDocumento, nombres, apellidos, motivos, campos }) => ({
-            fila,
-            perfil,
-            empresa,
-            tipoDocumento,
-            numeroDocumento,
-            nombres,
-            apellidos,
-            motivo: `Fila ${fila}: ${motivos.join(". ")}`,
-            campos,
+          .map((f) => ({
+            fila: f.fila,
+            perfil: f.perfil,
+            empresa: f.empresa,
+            tipoDocumento: f.tipoDocumento,
+            numeroDocumento: f.numeroDocumento,
+            nombres: f.nombres,
+            apellidos: f.apellidos,
+            autorizadoDesde: f.autorizadoDesde ?? "",
+            autorizadoHasta: f.autorizadoHasta ?? "",
+            motivoAutorizacion: f.motivoAutorizacion ?? "",
+            motivo: `Fila ${f.fila}: ${f.motivos.join(". ")}`,
+            campos: f.campos,
           }));
         const { blob, nombre } = await personasApi.erroresCarga(filas);
         guardarArchivo(blob, nombre);

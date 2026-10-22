@@ -24,6 +24,8 @@ import { hoy } from "@/lib/paginaServidor";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { CloseLineIcon } from "@/icons";
 import { SelectorFoto, validarFoto } from "./FotoPersonal";
+import { PeriodoAutorizacionCampos } from "./PeriodoAutorizacionCampos";
+import { PERIODO_VACIO, periodoParaApi, problemaPeriodo, type Periodo } from "@/lib/periodo";
 
 /**
  * Empresas para el desplegable: con un perfil elegido, primero las que ya
@@ -67,15 +69,18 @@ function Seccion({
   numero,
   titulo,
   descripcion,
+  ajustado = false,
   children,
 }: {
   numero: number;
   titulo: string;
   descripcion?: string;
+  /** Con tres columnas, no agranda la fila: toma el alto de los otros recuadros (su contenido se desplaza). */
+  ajustado?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-gray-200 p-5 dark:border-gray-800">
+    <section className={`rounded-xl border border-gray-200 p-5 dark:border-gray-800 ${ajustado ? "xl:flex xl:flex-col" : ""}`}>
       <div className="mb-4 flex items-start gap-3">
         <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xs font-semibold text-white">
           {numero}
@@ -85,7 +90,13 @@ function Seccion({
           {descripcion && <p className="text-xs text-gray-500 dark:text-gray-400">{descripcion}</p>}
         </div>
       </div>
-      {children}
+      {ajustado ? (
+        <div className="xl:relative xl:min-h-0 xl:flex-1">
+          <div className="xl:absolute xl:inset-0 xl:flex xl:flex-col">{children}</div>
+        </div>
+      ) : (
+        children
+      )}
     </section>
   );
 }
@@ -120,6 +131,8 @@ function Formulario({
   const [tipoDocumentoIdentidad, setTipoDocumentoIdentidad] = useState("DNI");
   const [numeroDocumento, setNumeroDocumento] = useState("");
   const [nombres, setNombres] = useState("");
+  // Período de autorización (opcional).
+  const [periodo, setPeriodo] = useState<Periodo>(PERIODO_VACIO);
   const [apellidos, setApellidos] = useState("");
   const [filas, setFilas] = useState<FilaDocumento[]>([filaVacia(0)]);
   const [error, setError] = useState<string | null>(null);
@@ -134,8 +147,8 @@ function Formulario({
     return () => window.removeEventListener("focus", onRecargarEmpresas);
   }, [onRecargarEmpresas]);
 
-  // La lista de documentos tiene altura máxima con scroll propio; al agregar
-  // una fila, bajar hasta ella para que se vea.
+  // Al agregar una fila, bajar hasta ella para que se vea. La lista no tiene
+  // scroll propio: cortaría el desplegable del nombre del documento.
   const listaRef = useRef<HTMLDivElement>(null);
   const cantidadFilas = useRef(filas.length);
   useEffect(() => {
@@ -158,6 +171,8 @@ function Formulario({
       }
       const problemaNumero = validarNumeroDocumento(tipoDocumentoIdentidad, numeroDocumento);
       if (problemaNumero) return problemaNumero;
+      const problemaDelPeriodo = problemaPeriodo(periodo);
+      if (problemaDelPeriodo) return problemaDelPeriodo;
     }
     if (!fotoSubida) {
       if (!foto) return "Elija la foto del personal (se usa para el reconocimiento facial)";
@@ -198,6 +213,7 @@ function Formulario({
           numeroDocumento,
           nombres,
           apellidos,
+          ...periodoParaApi(periodo),
         });
         setPersonaCreada(persona);
         // Aparece en la lista aunque luego falle algún documento y se cierre el formulario.
@@ -244,7 +260,8 @@ function Formulario({
         </ErrorBanner>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* En pantallas anchas, tres recuadros iguales: datos, foto y período, documentos. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <Seccion numero={1} titulo="Datos del personal" descripcion="Datos de identificación de la persona.">
           <fieldset disabled={bloqueado} className="space-y-4 disabled:opacity-60">
             <div>
@@ -303,23 +320,25 @@ function Formulario({
               </div>
             </div>
           </fieldset>
+        </Seccion>
 
-          <div className="mt-5 border-t border-gray-100 pt-4 dark:border-gray-800">
-            <div className="mb-3">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Foto del personal</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Se usa para el reconocimiento facial.</p>
-            </div>
+        <Seccion numero={2} titulo="Foto y período" descripcion="La foto es obligatoria; el período de autorización, opcional.">
+          <div className="mb-3">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Foto del personal</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Se usa para el reconocimiento facial.</p>
+          </div>
             {fotoSubida ? (
               <p className="text-sm text-success-600 dark:text-success-500">✔ Foto subida.</p>
             ) : (
               <SelectorFoto archivo={foto} onChange={setFoto} />
             )}
-          </div>
+          {!personaCreada && <PeriodoAutorizacionCampos id="nuevo-periodo" periodo={periodo} onChange={setPeriodo} />}
         </Seccion>
 
-        <Seccion numero={2} titulo="Documentos" descripcion="Al menos uno. Quedan válidos desde que se cargan.">
-          <div className="space-y-3">
-            <div ref={listaRef} className="max-h-[45vh] space-y-3 overflow-y-auto pr-1">
+        <Seccion ajustado numero={3} titulo="Documentos" descripcion="Al menos uno. Quedan válidos desde que se cargan.">
+          <div className="space-y-3 xl:flex xl:min-h-0 xl:flex-1 xl:flex-col">
+            {/* Con desplazamiento propio: agregar documentos no agranda la ventana (el desplegable del nombre es flotante). */}
+            <div ref={listaRef} className="max-h-[45vh] space-y-3 overflow-y-auto pr-1 xl:max-h-none xl:min-h-0">
               {filas.map((f, i) => (
                 // El margen derecho para la X de "Quitar" solo cuando se muestra (con un solo documento, no).
                 <div
@@ -347,6 +366,7 @@ function Formulario({
                           <Label>Nombre del documento</Label>
                           <Select
                             textoCompleto
+                            flotante
                             defaultValue={f.nombre}
                             onChange={(v) => actualizarFila(f.clave, { nombre: v })}
                             placeholder="Seleccione un documento"
@@ -381,7 +401,7 @@ function Formulario({
             <button
               type="button"
               onClick={() => setFilas((prev) => [...prev, filaVacia(Math.max(...prev.map((x) => x.clave)) + 1)])}
-              className="text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400"
+              className="shrink-0 self-start text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400"
             >
               + Agregar otro documento
             </button>
@@ -410,7 +430,7 @@ export function NuevaPersonaModal({
 }) {
   const [guardando, setGuardando] = useState(false);
   return (
-    <Modal isOpen={isOpen} onClose={onClose} bloqueado={guardando} className="max-w-5xl p-6 sm:p-8">
+    <Modal isOpen={isOpen} onClose={onClose} bloqueado={guardando} className="max-w-5xl p-6 sm:p-8 xl:max-w-7xl">
       <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Nuevo personal</h2>
       <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
         Registre a la persona con su foto y sus documentos.

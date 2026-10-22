@@ -94,6 +94,9 @@ export const personasApi = {
     numeroDocumento: string;
     nombres: string;
     apellidos: string;
+    autorizadoDesde?: string | null;
+    autorizadoHasta?: string | null;
+    motivoAutorizacion?: string | null;
   }) => apiRequest<Persona>("/personas", { method: "POST", body: data }),
   /** Carga masiva: plantilla de Excel para llenar. */
   plantillaCarga: () => apiRequest<{ blob: Blob; nombre: string }>("/personas/carga-masiva/plantilla", { responseType: "archivo" }),
@@ -128,6 +131,9 @@ export const personasApi = {
       numeroDocumento?: string;
       nombres?: string;
       apellidos?: string;
+      autorizadoDesde?: string | null;
+      autorizadoHasta?: string | null;
+      motivoAutorizacion?: string | null;
     },
   ) => apiRequest<Persona>(`/personas/${id}`, { method: "PATCH", body: data }),
   /** Al dar de baja se puede indicar el motivo (opcional). */

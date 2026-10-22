@@ -303,7 +303,8 @@ export class DashboardService {
         -- Facial primero: sopló otra persona que la del DNI (el rostro no es el de quien pasó el DNI).
         count(*) FILTER (WHERE denegado_rostro_no_coincide OR denegado_no_es_quien_soplo)::int AS "rostroNoCoincide",
         count(*) FILTER (WHERE denegado_ya_dentro)::int AS "yaDentro",
-        count(*) FILTER (WHERE denegado_sin_ingreso)::int AS "sinIngreso"
+        count(*) FILTER (WHERE denegado_sin_ingreso)::int AS "sinIngreso",
+        count(*) FILTER (WHERE denegado_fuera_periodo)::int AS "fueraPeriodo"
       FROM evento_acceso
       WHERE fecha_hora >= (${rango.gte.toISOString()}::timestamptz AT TIME ZONE 'UTC')
         AND fecha_hora < (${rango.lt.toISOString()}::timestamptz AT TIME ZONE 'UTC')

@@ -2,9 +2,9 @@
 // Función pura, sin I/O, para poder probarla exhaustivamente con tests unitarios.
 //
 // Alcance base, sin perfiles ni puestos: una persona puede ingresar si no está
-// dada de baja, tiene al menos un documento cargado, ninguno de sus documentos
-// está vencido (se mira la última versión de cada uno) y la prueba de alcohol
-// es conforme.
+// dada de baja, está dentro de su período de autorización (si tiene uno), tiene
+// al menos un documento cargado, ninguno de sus documentos está vencido (se
+// mira la última versión de cada uno) y la prueba de alcohol es conforme.
 
 export interface DocumentoCargado {
   id: number;
@@ -22,6 +22,8 @@ export interface DocumentoActual {
 
 export interface EvaluarIngresoInput {
   personaActiva: boolean;
+  /** Hoy está fuera de su período de autorización (ver fueraDelPeriodo). */
+  fueraDePeriodo?: boolean;
   alcoholConforme: boolean;
   /** Última versión de cada tipo de documento cargado (ver documentosActuales). */
   documentos: DocumentoActual[];
@@ -33,6 +35,7 @@ export interface ResultadoValidacionIngreso {
   denegadoSinDocumentos: boolean;
   denegadoPorAlcohol: boolean;
   denegadoPorDocumentos: boolean;
+  denegadoFueraPeriodo: boolean;
   documentosVencidos: string[];
 }
 
@@ -45,6 +48,7 @@ export function evaluarIngreso(input: EvaluarIngresoInput): ResultadoValidacionI
       denegadoSinDocumentos: false,
       denegadoPorAlcohol: false,
       denegadoPorDocumentos: false,
+      denegadoFueraPeriodo: false,
       documentosVencidos: [],
     };
   }
@@ -53,14 +57,16 @@ export function evaluarIngreso(input: EvaluarIngresoInput): ResultadoValidacionI
   const documentosVencidos = input.documentos.filter((d) => !d.vigente).map((d) => d.nombre);
   const denegadoPorDocumentos = documentosVencidos.length > 0;
   const denegadoPorAlcohol = !input.alcoholConforme;
+  const denegadoFueraPeriodo = !!input.fueraDePeriodo;
 
   // Los motivos se informan todos a la vez.
   return {
-    autorizado: !denegadoSinDocumentos && !denegadoPorDocumentos && !denegadoPorAlcohol,
+    autorizado: !denegadoSinDocumentos && !denegadoPorDocumentos && !denegadoPorAlcohol && !denegadoFueraPeriodo,
     denegadoPorBaja: false,
     denegadoSinDocumentos,
     denegadoPorAlcohol,
     denegadoPorDocumentos,
+    denegadoFueraPeriodo,
     documentosVencidos,
   };
 }
@@ -102,4 +108,16 @@ export function esDocumentoVigente(fechaVencimiento: Date | null, hoy: Date): bo
   }
   const inicioDeHoy = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   return fechaVencimiento.getTime() >= inicioDeHoy;
+}
+
+/**
+ * ¿Hoy está fuera de su período de autorización? Sin período (las dos fechas
+ * vacías), nunca. Las dos fechas cuentan (desde el primer día hasta el último,
+ * incluido). Se compara por fecha, como los documentos: las columnas son DATE.
+ */
+export function fueraDelPeriodo(desde: Date | null, hasta: Date | null, hoy: Date): boolean {
+  const inicioDeHoy = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  if (desde && desde.getTime() > inicioDeHoy) return true;
+  if (hasta && hasta.getTime() < inicioDeHoy) return true;
+  return false;
 }

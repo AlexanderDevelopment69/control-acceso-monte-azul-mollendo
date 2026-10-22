@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { documentosActuales } from './validacion-acceso.engine.js';
+import { documentosActuales, fueraDelPeriodo } from './validacion-acceso.engine.js';
 import type { IngresoDto } from './dto/ingreso.dto.js';
 import type { SalidaDto } from './dto/salida.dto.js';
 import type { QueryEventosAccesoDto } from './dto/query-eventos-acceso.dto.js';
@@ -420,16 +420,19 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   /**
    * Revisiones del DNI antes de dejarlo ingresar: dado de baja, ya figura
    * dentro (antipassback estricto: no puede volver a ingresar sin haber
-   * registrado su salida), sin documentos o con alguno vencido. Devuelve el
-   * ingreso denegado, o null si está en regla.
+   * registrado su salida), fuera de su período de autorización, sin documentos
+   * o con alguno vencido (estos tres se informan juntos). Todos los caminos del
+   * ingreso pasan por aquí. Devuelve el ingreso denegado, o null si está en regla.
    */
   private async denegarSiNoCorresponde(persona: Persona, dto: IngresoDto) {
     if (persona.estado !== 'activo') return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoPorBaja: true });
     if (await this.figuraDentro(persona.id)) return this.registrarIngresoDenegadoInmediato(persona, dto, { denegadoYaDentro: true });
+    const fueraPeriodo = fueraDelPeriodo(persona.autorizadoDesde, persona.autorizadoHasta, new Date());
     const documentos = await this.getDocumentosActuales(persona.id);
     const documentosVencidos = documentos.filter((d) => !d.vigente).map((d) => d.nombre);
-    if (documentos.length === 0 || documentosVencidos.length > 0) {
+    if (fueraPeriodo || documentos.length === 0 || documentosVencidos.length > 0) {
       return this.registrarIngresoDenegadoInmediato(persona, dto, {
+        denegadoFueraPeriodo: fueraPeriodo,
         denegadoSinDocumentos: documentos.length === 0,
         denegadoPorDocumentos: documentosVencidos.length > 0,
         documentosVencidos,
@@ -917,6 +920,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       denegadoSinDocumentos?: boolean;
       denegadoPorDocumentos?: boolean;
       documentosVencidos?: string[];
+      denegadoFueraPeriodo?: boolean;
       denegadoSinFacial?: boolean;
       /** Facial primero: el G4 Pro dice que sopló otra persona (su DNI). */
       denegadoNoEsQuienSoplo?: boolean;
@@ -934,6 +938,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         denegadoYaDentro: motivos.denegadoYaDentro ?? false,
         denegadoSinDocumentos: motivos.denegadoSinDocumentos ?? false,
         denegadoPorDocumentos: motivos.denegadoPorDocumentos ?? false,
+        denegadoFueraPeriodo: motivos.denegadoFueraPeriodo ?? false,
         denegadoSinFacial: motivos.denegadoSinFacial ?? false,
         denegadoNoEsQuienSoplo: motivos.denegadoNoEsQuienSoplo ?? false,
         ...(motivos.denegadoNoEsQuienSoplo ? { facialPrimero: true, dniQueSoplo: motivos.dniQueSoplo ?? null } : {}),
@@ -956,6 +961,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         sinDocumentos: motivos.denegadoSinDocumentos ?? false,
         documentos: motivos.denegadoPorDocumentos ?? false,
         documentosVencidos: motivos.documentosVencidos ?? [],
+        fueraPeriodo: motivos.denegadoFueraPeriodo ?? false,
         sinFacial: motivos.denegadoSinFacial ?? false,
         noEsQuienSoplo: motivos.denegadoNoEsQuienSoplo ?? false,
       },

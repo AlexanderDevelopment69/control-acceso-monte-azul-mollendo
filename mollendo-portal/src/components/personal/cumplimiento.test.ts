@@ -9,6 +9,13 @@ describe("motivosCumplimiento", () => {
     expect(motivosCumplimiento({ ...base, habilitado: true })).toEqual([]);
   });
 
+  it("fuera del período autorizado (primero, junto con los demás motivos)", () => {
+    expect(motivosCumplimiento({ ...base, fueraDePeriodo: true, documentosVencidos: ["SCTR"] })).toEqual([
+      "Fuera del período autorizado",
+      "Vencido: SCTR",
+    ]);
+  });
+
   it("sin documentos", () => {
     expect(motivosCumplimiento({ ...base, sinDocumentos: true })).toEqual(["Sin documentos cargados"]);
   });

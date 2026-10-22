@@ -15,6 +15,8 @@ interface SelectProps {
   mostrarPlaceholder?: boolean;
   /** Opciones largas: se ven completas en vez de cortarse con "…". */
   textoCompleto?: boolean;
+  /** Lista sobre la página: dentro de un contenedor con desplazamiento propio no se corta. */
+  flotante?: boolean;
 }
 
 /**
@@ -29,6 +31,7 @@ const Select: React.FC<SelectProps> = ({
   defaultValue = "",
   mostrarPlaceholder = true,
   textoCompleto = false,
+  flotante = false,
 }) => {
   const [valor, setValor] = useState(defaultValue);
 
@@ -37,6 +40,7 @@ const Select: React.FC<SelectProps> = ({
       className={className}
       options={options}
       textoCompleto={textoCompleto}
+      flotante={flotante}
       value={valor}
       placeholder={mostrarPlaceholder ? placeholder : (options[0]?.label ?? placeholder)}
       onChange={(v) => {

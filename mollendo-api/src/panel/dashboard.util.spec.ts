@@ -63,6 +63,7 @@ describe('resumirMovimientos', () => {
     rostroNoCoincide: 0,
     yaDentro: 0,
     sinIngreso: 0,
+    fueraPeriodo: 0,
     ...g,
   });
 
@@ -90,6 +91,7 @@ describe('resumirMovimientos', () => {
       rostroNoCoincide: 0,
       yaDentro: 0,
       sinIngreso: 1,
+      fueraPeriodo: 0,
     });
     expect(r.tendencia).toEqual([
       { dia: '2026-09-29', ingresos: 1, denegados: 0, salidas: 0 },

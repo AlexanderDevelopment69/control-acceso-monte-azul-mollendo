@@ -1,3 +1,4 @@
+import { textoPeriodo } from "@/lib/periodo";
 import React from "react";
 import type { Cumplimiento, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
@@ -134,12 +135,22 @@ export function EstadoIngreso({
                   ? `Dado de baja${persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}${
                       persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""
                     }. Para que vuelva a ingresar, use “Reactivar”.`
+                  : cumplimiento.fueraDePeriodo
+                    ? `Fuera del período autorizado (${textoPeriodo(persona)})${
+                        persona.motivoAutorizacion ? `. Motivo: ${persona.motivoAutorizacion}` : ""
+                      }. Para cambiarlo, use “Editar datos”.`
                   : cumplimiento.sinDocumentos
                     ? "No tiene documentos cargados. Agregue al menos uno para que pueda ingresar."
                     : cumplimiento.documentosVencidos.length === 1
                       ? "1 documento vencido. Renuévelo para que pueda ingresar."
                       : `${cumplimiento.documentosVencidos.length} documentos vencidos. Renuévelos para que pueda ingresar.`}
             </p>
+            {persona.estado !== "inactivo" && !cumplimiento.fueraDePeriodo && persona.autorizadoDesde && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Autorizado {textoPeriodo(persona)}
+                {persona.motivoAutorizacion ? `: ${persona.motivoAutorizacion}` : ""}
+              </p>
+            )}
             {persona.estado !== "inactivo" && persona.fechaReactivacion && (
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Reactivado el {new Date(persona.fechaReactivacion).toLocaleDateString("es-PE")}
@@ -197,7 +208,9 @@ export function EstadoIngreso({
                 Icono: IconoDni,
                 ...(persona.estado === "inactivo"
                   ? { estado: "falla" as const, detalle: "Dado de baja" }
-                  : { estado: "ok" as const, detalle: "Registrado" }),
+                  : cumplimiento.fueraDePeriodo
+                    ? { estado: "falla" as const, detalle: "Fuera del período" }
+                    : { estado: "ok" as const, detalle: "Registrado" }),
               },
               {
                 nombre: "Documentos",

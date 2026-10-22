@@ -1,3 +1,4 @@
+import { textoPeriodo } from '../personas/periodo-autorizacion.js';
 import { existsSync, statSync } from 'node:fs';
 import { extname } from 'node:path';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
@@ -10,6 +11,7 @@ import {
   documentosActuales,
   esDocumentoVigente,
   evaluarIngreso,
+  fueraDelPeriodo,
   ultimasVersiones,
 } from '../eventos-acceso/validacion-acceso.engine.js';
 import { PERFIL_LABEL, PERFILES, SIN_PERFIL, textoPerfil } from '../personas/perfiles.js';
@@ -124,6 +126,7 @@ export function motivosEvento(e: {
   denegadoRostroNoCoincide?: boolean;
   denegadoYaDentro?: boolean;
   denegadoSinIngreso?: boolean;
+  denegadoFueraPeriodo?: boolean;
   denegadoSinFacial?: boolean;
   denegadoSinDni?: boolean;
   denegadoNoEsQuienSoplo?: boolean;
@@ -138,6 +141,7 @@ export function motivosEvento(e: {
   if (e.denegadoRostroNoCoincide) motivos.push('Rostro no coincide');
   if (e.denegadoYaDentro) motivos.push('Ya figura dentro');
   if (e.denegadoSinIngreso) motivos.push('No registra ingreso');
+  if (e.denegadoFueraPeriodo) motivos.push('Fuera del período autorizado');
   if (e.denegadoSinFacial) motivos.push('DNI antes del facial');
   if (e.denegadoSinDni) motivos.push('No pasó su DNI a tiempo');
   if (e.denegadoNoEsQuienSoplo) motivos.push('No es quien sopló');
@@ -212,11 +216,17 @@ export class ReportesService {
     let pueden = 0;
     const filas: Celda[][] = personas.map((p) => {
       const actuales = documentosActuales(p.documentos, hoy);
-      const resultado = evaluarIngreso({ personaActiva: p.estado === 'activo', alcoholConforme: true, documentos: actuales });
+      const resultado = evaluarIngreso({
+        personaActiva: p.estado === 'activo',
+        fueraDePeriodo: fueraDelPeriodo(p.autorizadoDesde, p.autorizadoHasta, hoy),
+        alcoholConforme: true,
+        documentos: actuales,
+      });
       if (resultado.autorizado) pueden++;
       const motivos = resultado.denegadoPorBaja
         ? `Dado de baja${p.fechaBaja ? ` el ${textoDia(claveDia(p.fechaBaja))}` : ''}${p.motivoBaja ? `: ${p.motivoBaja}` : ''}`
         : [
+            resultado.denegadoFueraPeriodo && `Fuera del período autorizado (${textoPeriodo(p)})`,
             resultado.denegadoSinDocumentos && 'Sin documentos cargados',
             resultado.documentosVencidos.length > 0 && `Vencido: ${resultado.documentosVencidos.join(', ')}`,
           ]

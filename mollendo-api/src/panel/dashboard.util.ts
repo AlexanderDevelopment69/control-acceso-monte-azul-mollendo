@@ -88,6 +88,8 @@ export interface GrupoMovimientos {
   rostroNoCoincide: number;
   yaDentro: number;
   sinIngreso: number;
+  /** Fuera de su período de autorización. */
+  fueraPeriodo: number;
 }
 
 const MOTIVOS = [
@@ -100,6 +102,7 @@ const MOTIVOS = [
   'rostroNoCoincide',
   'yaDentro',
   'sinIngreso',
+  'fueraPeriodo',
 ] as const;
 
 /** Totales, motivos de denegación y serie diaria de los movimientos del periodo. */

@@ -102,7 +102,11 @@ function crearBaseFalsa() {
 }
 
 /** Persona con un documento (vigente salvo que se indique). */
-function agregarPersona(base: ReturnType<typeof crearBaseFalsa>, dni: string, opciones: { baja?: boolean; vencido?: boolean } = {}) {
+function agregarPersona(
+  base: ReturnType<typeof crearBaseFalsa>,
+  dni: string,
+  opciones: { baja?: boolean; vencido?: boolean; periodo?: [string, string] } = {},
+) {
   const id = base.personas.length + 100;
   base.personas.push({
     id,
@@ -112,6 +116,8 @@ function agregarPersona(base: ReturnType<typeof crearBaseFalsa>, dni: string, op
     apellidos: 'Prueba',
     estado: opciones.baja ? 'inactivo' : 'activo',
     fotoUrl: null,
+    autorizadoDesde: opciones.periodo ? new Date(`${opciones.periodo[0]}T00:00:00.000Z`) : null,
+    autorizadoHasta: opciones.periodo ? new Date(`${opciones.periodo[1]}T00:00:00.000Z`) : null,
   });
   base.documentos.push({
     id: id + 1000,
@@ -523,6 +529,18 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       await decidir('grado', undefined, 0);
       await expect(decidir('grado', undefined, 0)).rejects.toThrow(/ya no está esperando/);
       expect(base.eventos).toHaveLength(1);
+    });
+  });
+
+  describe('Período de autorización', () => {
+    it('fuera de su período se deniega con su motivo, aunque tenga los documentos al día; dentro, pasa', async () => {
+      agregarPersona(base, '11111111', { periodo: ['2020-01-01', '2020-12-31'] });
+      agregarPersona(base, '22222222', { periodo: ['2020-01-01', '2099-12-31'] });
+      const fuera = await ingreso('11111111');
+      expect(fuera).toMatchObject({ resultado: 'denegado', motivos: { fueraPeriodo: true, documentos: false } });
+      expect(base.eventos[0]).toMatchObject({ resultado: 'denegado', denegadoFueraPeriodo: true });
+      expect(de('g4pro.habilitar')).toHaveLength(0);
+      await expect(ingreso('22222222')).resolves.toMatchObject({ estado: 'pendiente_verificacion' });
     });
   });
 

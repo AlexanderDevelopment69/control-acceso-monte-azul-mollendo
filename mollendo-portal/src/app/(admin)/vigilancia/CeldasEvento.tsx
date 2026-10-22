@@ -32,6 +32,7 @@ export function MotivoDenegacion({
     | "denegadoRostroNoCoincide"
     | "denegadoYaDentro"
     | "denegadoSinIngreso"
+    | "denegadoFueraPeriodo"
     | "denegadoSinFacial"
     | "denegadoSinDni"
     | "denegadoNoEsQuienSoplo"
@@ -43,6 +44,7 @@ export function MotivoDenegacion({
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
   if (evento.denegadoYaDentro) return <Badge color="error">Ya figura dentro</Badge>;
   if (evento.denegadoSinIngreso) return <Badge color="error">No registra ingreso</Badge>;
+  if (evento.denegadoFueraPeriodo) return <Badge color="error">Fuera del período autorizado</Badge>;
   if (evento.denegadoSinVerificacion) {
     // La ⓘ explica qué revisar, para quien lo mira después del aviso de arriba.
     return (
