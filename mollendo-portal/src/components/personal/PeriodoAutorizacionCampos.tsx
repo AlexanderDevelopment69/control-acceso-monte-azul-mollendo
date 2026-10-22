@@ -2,7 +2,6 @@
 
 import React from "react";
 import Label from "@/components/form/Label";
-import Input from "@/components/form/input/InputField";
 import DatePicker from "@/components/form/date-picker";
 import type { Periodo } from "@/lib/periodo";
 
@@ -50,12 +49,18 @@ export function PeriodoAutorizacionCampos({
           />
         </div>
         <div className="sm:col-span-2">
-          <Label>Motivo de la autorización</Label>
-          <Input
-            placeholder="Por ejemplo: visita técnica, obra hasta fin de mes"
-            defaultValue={periodo.motivo}
+          {/* Como el motivo de la baja: área de texto con contador (la base guarda hasta 300). */}
+          <Label htmlFor={`${id}-motivo`}>Motivo de la autorización</Label>
+          <textarea
+            id={`${id}-motivo`}
+            rows={3}
+            maxLength={300}
+            value={periodo.motivo}
             onChange={(e) => onChange({ ...periodo, motivo: e.target.value })}
+            placeholder="Por ejemplo: visita técnica, obra hasta fin de mes"
+            className="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:text-white/90"
           />
+          <p className="mt-1 text-right text-xs text-gray-400">{periodo.motivo.length}/300</p>
         </div>
       </div>
     </div>

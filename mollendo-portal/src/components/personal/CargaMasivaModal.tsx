@@ -306,8 +306,8 @@ export function CargaMasivaModal({
           <ol className="list-inside list-decimal space-y-1 text-sm text-gray-600 dark:text-gray-300">
             <li>Descargue la plantilla de Excel.</li>
             <li>
-              Llene una fila por persona: perfil, empresa, tipo y número de documento, nombres y apellidos (la hoja
-              &quot;Instrucciones&quot; explica cada columna).
+              Llene una fila por persona: perfil, empresa, tipo y número de documento, nombres y apellidos y, si corresponde, el
+              período de autorización (la hoja &quot;Instrucciones&quot; explica cada columna).
             </li>
             <li>Súbala: el sistema revisa todas las filas y le muestra el resultado antes de guardar.</li>
           </ol>

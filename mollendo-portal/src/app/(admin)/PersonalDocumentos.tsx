@@ -50,13 +50,20 @@ export function PersonalDocumentos() {
   // En el celular la ficha queda debajo de la lista: al elegir a alguien se
   // baja hasta ella, para que se vea que se abrió.
   const fichaRef = useRef<HTMLDivElement>(null);
+  // Sube cada vez que hay que volver a leer la ficha abierta (va en su key).
+  const [lecturaFicha, setLecturaFicha] = useState(0);
   function elegir(id: number) {
     // Otro clic en la persona ya elegida la deselecciona (vuelve a los contadores).
     if (id === seleccionada) {
       setSeleccionada(null);
       return;
     }
+    abrirFicha(id);
+  }
+  /** Abre la ficha de la persona (sin deseleccionarla si ya estaba abierta) y la vuelve a leer. */
+  function abrirFicha(id: number) {
     setSeleccionada(id);
+    setLecturaFicha((n) => n + 1);
     if (window.innerWidth < 1024) {
       requestAnimationFrame(() => fichaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     }
@@ -386,7 +393,7 @@ export function PersonalDocumentos() {
         >
           {seleccionada ? (
             <PersonaFicha
-              key={seleccionada}
+              key={`${seleccionada}-${lecturaFicha}`}
               personaId={seleccionada}
               onCambio={actualizarFila}
             />
@@ -464,9 +471,10 @@ export function PersonalDocumentos() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={(persona) => {
-          // Cambia el ✔/✖ de la lista.
+          // Cambia el ✔/✖ de la lista. Se llama al crear la persona y otra vez al terminar
+          // de subir sus documentos: la ficha se vuelve a leer, si no, quedaba "Sin documentos".
           void recargar();
-          elegir(persona.id);
+          abrirFicha(persona.id);
         }}
         onRecargarEmpresas={recargarEmpresas}
         empresas={empresas}

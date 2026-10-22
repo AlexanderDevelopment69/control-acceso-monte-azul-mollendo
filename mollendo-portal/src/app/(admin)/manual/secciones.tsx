@@ -136,7 +136,7 @@ export const SECCIONES: SeccionManual[] = [
               <>
                 <p>
                   Junto al nombre se ve su <b>perfil</b>. “Editar datos” corrige el perfil, la empresa, el tipo y número de documento, los
-                  nombres y los apellidos. El DNI va con 8 dígitos y no puede repetirse. Queda en la Auditoría.
+                  nombres, los apellidos y el período de autorización. El DNI va con 8 dígitos y no puede repetirse. Queda en la Auditoría.
                 </p>
                 <p>
                   Si cambia el <b>número de documento</b>, desde que guarde la persona debe pasar su documento nuevo por el lector. El
@@ -257,10 +257,19 @@ export const SECCIONES: SeccionManual[] = [
             ),
           },
           {
+            titulo: "Período de autorización (opcional)",
+            texto: (
+              <p>
+                Fecha de ingreso, fecha de finalización y motivo. Si lo usa, van los tres; fuera de esas fechas la persona <b>no podrá
+                ingresar</b>. Vacío, no tiene límite de fechas.
+              </p>
+            ),
+          },
+          {
             titulo: "Documentos (al menos uno)",
             texto: (
               <p>
-                Nombre (por ejemplo, SCTR), fecha de vencimiento y archivo. La fecha va <b>vacía si no vence</b> y no puede ser una fecha ya
+                Nombre (elegido de la lista: SCTR, CAMO o la inducción SSMA), fecha de vencimiento y archivo. La fecha va <b>vacía si no vence</b> y no puede ser una fecha ya
                 pasada. Archivo PDF, imagen (JPG, PNG o WEBP) o Word, de hasta 20 MB.
               </p>
             ),
@@ -306,6 +315,10 @@ export const SECCIONES: SeccionManual[] = [
                 <p>
                   Un Excel con las columnas Perfil, Empresa, Tipo de documento, Número de documento, Nombres y Apellidos. Perfil, empresa y
                   tipo de documento se eligen de listas; la hoja “Instrucciones” explica cada columna.
+                </p>
+                <p>
+                  Tiene además tres columnas opcionales para el período de autorización: Fecha de ingreso, Fecha de finalización (DD/MM/AAAA)
+                  y Motivo de la autorización. Si llena una, van las tres.
                 </p>
                 <p>
                   La empresa también se puede escribir por su RUC. Si no está, regístrela primero en <b>Empresas</b> y vuelva a descargar la
@@ -533,6 +546,10 @@ export const SECCIONES: SeccionManual[] = [
                   <Motivo m="Dado de baja" hacer="No puede entrar. Solo el administrador puede reactivarlo." />
                   <Motivo m="Sin documentos ›" hacer="No tiene documentos registrados. El administrador debe subirlos." />
                   <Motivo m="Documentos ›" hacer="Tiene un documento vencido. Tóquelo para ver cuál; el administrador sube el nuevo." />
+                  <Motivo
+                    m="Fuera del período autorizado"
+                    hacer="Su período de autorización no incluye hoy. El administrador puede cambiarlo en «Editar datos»."
+                  />
                   <Motivo
                     m="Alcohol"
                     hacer="Dio positivo en la prueba de alcohol. No puede entrar. Queda con su nombre aunque no haya pasado su DNI."

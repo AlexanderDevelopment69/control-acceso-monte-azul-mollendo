@@ -83,6 +83,7 @@ const CAPTURAS = [
       { sel: "::-p-text(¿No está?)", texto: true, lado: "der" },
       { sel: "label::-p-text(Número de documento)", texto: true, lado: "der" },
       { sel: "p::-p-text(Foto del personal)", texto: true, lado: "der" },
+      { sel: "p::-p-text(Período de autorización)", texto: true, lado: "der" },
       { sel: "label::-p-text(Vence el)", texto: true, lado: "der" },
       { sel: "button::-p-text(Agregar otro documento)", lado: "der" },
       { sel: "button::-p-text(Registrar personal y documentos)", lado: "dentro-izq" },
