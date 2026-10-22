@@ -130,7 +130,8 @@ Si pita y no llega nada a la mini PC (`docker logs` no muestra "DNI leído"), qu
 | "Sin conexión con el servidor" en el registro | Revisar internet de la garita y `SERVIDOR_URL`. Si en el registro de la nube (`sudo docker compose logs api`) aparece "Controlador rechazado (clave de equipos inválida)", la `DEVICE_API_KEY` no es la del servidor |
 | Un lector "Sin conexión" en Sistema y APIs | Revisar su ruta con `ls /dev/serial/by-id/`, corregir el `.env` y `sudo docker compose up -d` |
 | Un relé "No conectado" | Leer las series (paso 6) y comprobar que coincidan con el `.env` |
-| El lector pita pero no pasa nada | Falta configurarlo en RS232 a 115200 (Requisitos) |
+| El lector pita pero no pasa nada | Falta configurarlo en RS232 a 115200 (Requisitos). Si pita con el DNI pero no con el QR de la tarjeta, falta **Enable all 2D barcodes**; ese cambio y el de RS232 recién se aplican al cortarle la energía |
+| "Adaptador sin respuesta" en Sistema y APIs (en el registro: "el adaptador USB (ttyUSBn) no responde (error -71 del kernel)") | El adaptador USB-RS232 de ese lector se trabó (visto el 20 y 21/10/2026 con el de salida, al reabrir su puerto en una actualización). La contingencia "sin lector" se activa sola. Desconectar y volver a conectar ese adaptador (o reiniciar la mini PC); si se repite, otro puerto USB o cambiar el adaptador. El controlador lo detecta leyendo el registro del kernel: necesita `cap_add: SYSLOG` y `c 1:11 r` en el compose |
 | Ver qué pasa | `sudo docker compose logs -f controlador` |
 
 Detalle de lectores, relés y trabajo sin internet: [guía, secciones 8c, 8d y 8f](../../docs/despliegue/Registro_Despliegue_MiniPC.md). Qué es cada variable: [`.env.example`](.env.example).

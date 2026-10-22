@@ -255,6 +255,7 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 - **Salida:** nadie sale por el molinete.
 - La franja roja muestra *"Lector de DNI de ingreso (o de salida): cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
 - Mientras tanto, se activa sola la contingencia "sin lector" (sección 6.3).
+- **Adaptador USB trabado** (visto el 20 y 21/10/2026 con el lector de salida): el lector pita, pero el adaptador USB que lo une al Controlador (PC) no entrega nada. Desde el 21/10/2026 el sistema lo detecta en el momento: "Sistema y APIs" muestra *"Adaptador sin respuesta"*, la franja roja lo informa y se activa la contingencia "sin lector". Se arregla desconectando y volviendo a conectar ese adaptador en la mini PC (o reiniciándola); si se repite, se cambia el adaptador por el repuesto.
 
 ### 6.2. Cómo está conectado un lector
 

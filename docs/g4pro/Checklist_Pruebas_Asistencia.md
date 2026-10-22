@@ -131,6 +131,7 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 | 5.15 | Persona reconocida que no sopla | El equipo abandona la prueba a los ~22 s y nadie entra; leer los registros igual que en 5.14 | [ ] |
 | 5.16 | Alcoholímetro de repuesto, cuando llegue | Que mida solo (botón "Test"), qué unidad muestra su pantalla (debe ser mg/L para escribir el grado en la verificación manual) y que el equipo facial lo reconozca al conectarlo | [ ] |
 | 5.17 | Verificación manual con el grado | Activarla desde el recuadro del alcoholímetro (o el aviso ámbar), pasar un DNI y escribir el grado del repuesto: bajo 0,100 mg/L abre; igual o sobre él, "Alcohol". Probar también "Mi alcoholímetro no muestra el número" | [ ] |
+| 5.18 | Adaptador USB del lector trabado (error -71) | Probado el 21/10/2026 con la falla real (18:42:03, al reconstruir el controlador): "el adaptador USB (ttyUSB1) no responde" en el controlador y contingencia "sin lector" de salida activada a los 2 s; reintenta cada minuto. Falta ver la vuelta: desconectar y conectar el adaptador → "conectado" a los ~2 minutos sin errores y la contingencia termina sola | [ ] |
 
 ---
 
