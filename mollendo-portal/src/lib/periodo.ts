@@ -12,6 +12,8 @@ export interface Periodo {
   motivo: string;
 }
 
+export const PERIODO_INCOMPLETO = "Complete el período de autorización: fecha de ingreso, fecha de finalización y motivo";
+
 export const PERIODO_VACIO: Periodo = { desde: "", hasta: "", motivo: "" };
 
 /** El período tal como se guardó (las fechas llegan como medianoche UTC). */
@@ -29,7 +31,7 @@ const vacio = (p: Periodo) => !p.desde && !p.hasta && !p.motivo.trim();
 export function problemaPeriodo(p: Periodo): string | null {
   if (vacio(p)) return null;
   if (!p.desde || !p.hasta || p.motivo.trim().length < 3) {
-    return "Complete el período de autorización: fecha de ingreso, fecha de finalización y motivo";
+    return PERIODO_INCOMPLETO;
   }
   if (p.hasta < p.desde) return "La fecha de finalización no puede ser anterior a la fecha de ingreso";
   return null;

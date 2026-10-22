@@ -138,10 +138,12 @@ export function EstadoIngreso({
                     }. Para que vuelva a ingresar, use “Reactivar”.`
                   : cumplimiento.fueraDePeriodo
                     ? (
-                        // Cada parte en su línea: en una sola se leía como un bloque.
+                        // En dos líneas (en una sola se leía como un bloque): el período con su motivo; luego dónde cambiarlo.
                         <>
-                          <span className="block">Fuera del período autorizado ({textoPeriodo(persona)}).</span>
-                          {persona.motivoAutorizacion && <span className="block">Motivo: {persona.motivoAutorizacion}.</span>}
+                          <span className="block">
+                            Fuera del período autorizado ({textoPeriodo(persona)})
+                            {persona.motivoAutorizacion ? `. Motivo: ${persona.motivoAutorizacion}` : ""}.
+                          </span>
                           <span className="block">
                           Puede cambiarlo abajo, en{" "}
                           {/* Lleva al recuadro del período, más abajo en la ficha. */}
