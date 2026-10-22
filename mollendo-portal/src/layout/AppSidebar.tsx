@@ -133,8 +133,20 @@ const AppSidebar: React.FC = () => {
                   </>
                 )}
               </button>
-              {conTexto && abierto(nav.name) && (
-                <ul className="ml-9 mt-1 flex flex-col gap-1">
+              {/* Se despliega el alto (filas de grilla 0fr ↔ 1fr) y las opciones aparecen con un fundido,
+                  como el historial de documentos. Cerrado: sus enlaces no se alcanzan con Tab. */}
+              {conTexto && (
+                <div
+                  className={`grid transition-all duration-300 ease-in-out motion-reduce:transition-none ${
+                    abierto(nav.name) ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                  }`}
+                >
+                  <div className="overflow-hidden" inert={!abierto(nav.name)}>
+                <ul
+                  className={`ml-9 mt-1 flex flex-col gap-1 transition-opacity duration-300 ease-in-out motion-reduce:transition-none ${
+                    abierto(nav.name) ? "opacity-100 delay-100" : "opacity-0"
+                  }`}
+                >
                   {nav.subItems.map((sub) => (
                     <li key={sub.path}>
                       <Link
@@ -153,6 +165,8 @@ const AppSidebar: React.FC = () => {
                     </li>
                   ))}
                 </ul>
+                  </div>
+                </div>
               )}
             </>
           )}
