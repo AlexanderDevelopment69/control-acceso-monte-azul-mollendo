@@ -2,6 +2,17 @@ import type { Perfil } from "@/lib/perfiles";
 
 export type RolUsuario = "administrador" | "vigilancia";
 
+/** Una cuenta del sistema, en la pantalla Usuarios (sin la contraseña). */
+export interface UsuarioCuenta {
+  id: number;
+  correo: string;
+  rol: RolUsuario;
+  estadoCuenta: "activo" | "baja";
+  creadoEn: string;
+  /** Nunca se usó (no entró ni hizo nada a su nombre): se puede eliminar; si no, se da de baja. */
+  eliminable?: boolean;
+}
+
 export interface Empresa {
   id: number;
   ruc: string;

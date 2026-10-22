@@ -136,28 +136,29 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 
 | Rol | Quién es | Qué hace |
 |---|---|---|
-| Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; da de baja o reactiva; consulta el Panel de vigilancia, la Auditoría y el estado del sistema. |
-| Vigilancia | Personal de vigilancia | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos; consulta quiénes están dentro ("Presentes ahora"). En las contingencias: activa la verificación manual y decide cada ingreso, pasa la tarjeta de contingencia y abre la salida si el lector de salida está desconectado. No puede modificar los datos del personal. |
+| Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; da de baja o reactiva; crea las cuentas de vigilancia, les cambia el correo o la contraseña, las da de baja o las elimina si nunca se usaron (Usuarios); cambia el correo de su propia cuenta; consulta el Panel de vigilancia, la Auditoría y el estado del sistema. |
+| Vigilancia | Personal de vigilancia | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos; consulta quiénes están dentro ("Presentes ahora"). En las contingencias: activa la verificación manual y decide cada ingreso, pasa la tarjeta de contingencia y abre la salida si el lector de salida está desconectado. Consulta Personal y documentos sin modificar nada. Su contraseña se la cambia el administrador. No puede modificar los datos del personal. |
 
 ### 3.1. Permisos por módulo
 
 | Módulo | Administrador | Vigilancia |
 |---|---|---|
-| Personal y documentos | Ver y modificar | — |
+| Personal y documentos | Ver y modificar | Ver (sin abrir los archivos de los documentos) |
 | Dashboard | Ver | — |
 | Reportes (Excel y PDF) | Descargar | — |
 | Panel de vigilancia | Ver | Ver |
 | Presentes ahora | Ver (desde el Dashboard) | Ver (en su menú) y abrir la salida si el lector de salida está desconectado |
 | Documentos de una persona (desde el Panel) | Ver | Ver |
-| Contingencias → Tarjetas de contingencia | Ver y administrar | — |
+| Contingencias → Tarjetas de contingencia y de acceso | Ver y administrar | — |
+| Usuarios (cuentas de vigilancia) | Crear, cambiar el correo o la contraseña, dar de baja y eliminar (solo si nunca se usó) | — |
 | Auditoría | Ver | — |
 | Sistema y APIs | Ver | — |
 | Manual | Ver | Ver |
-| Cambiar su propia contraseña | Sí | Sí |
+| Cambiar su propia contraseña | Sí | No (se la cambia el administrador) |
 
 ### 3.2. Cuentas
 
-- Al instalar el sistema se crean dos cuentas: **admin@mollendo.local** (Administrador) y **vigilancia@mollendo.local** (Vigilancia), con contraseñas iniciales generadas en la instalación. Las contraseñas se entregan aparte, en la hoja **"Accesos del sistema"** (confidencial), y deben cambiarse en el primer ingreso (menú del usuario → "Cambiar contraseña").
+- Al instalar el sistema se crean dos cuentas: **admin@monteazulsur.com.pe** (Administrador) y **vigilancia@monteazulsur.com.pe** (Vigilancia), con contraseñas iniciales generadas en la instalación. Las contraseñas se entregan aparte, en la hoja **"Accesos del sistema"** (confidencial), y deben cambiarse en el primer ingreso: la del administrador, desde su menú (Cambiar contraseña); la de vigilancia, el administrador desde Usuarios.
 - El alcance base no incluye una pantalla de gestión de usuarios: la creación de cuentas adicionales y el restablecimiento de contraseñas los realiza el soporte técnico mediante la API (sección 8).
 
 ---
@@ -206,7 +207,7 @@ Pantalla principal del administrador. Muestra a la izquierda la lista del person
 
 - Cada persona muestra un **✔** si está habilitada para ingresar en la fecha o un **✖** con el motivo (dado de baja, sin documentos, documento vencido).
 - Cada persona muestra su **perfil**; las registradas antes de que existiera el perfil figuran como "Sin perfil" (en ámbar), para completarlo desde su ficha. "Sin perfil" no es una opción de los filtros.
-- Búsqueda por nombre, número de documento o empresa; filtro por **perfil** y por empresa (con un perfil elegido, el filtro de empresas muestra solo las que tienen personal de ese perfil, con cuántos); pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una. Dentro de "No pueden" se puede separar "Documentos" (personal activo con documentos sin cargar o vencidos; podrá ingresar al regularizarlos) de "De baja".
+- Búsqueda por nombre, número de documento o empresa; filtro por **perfil** y por empresa (con un perfil elegido, el filtro de empresas muestra solo las que tienen personal de ese perfil, con cuántos); pestañas "Todos", "No pueden" y "Pueden", con la cantidad de cada una. Dentro de "No pueden" se puede separar "Documentos" (personal activo con documentos sin cargar o vencidos; podrá ingresar al regularizarlos), "Período" (personal activo fuera de su período de autorización) y "De baja"; quien tiene documentos pendientes y está fuera del período aparece en los dos.
 
 **Registrar personal ("+ Nuevo personal")**
 

@@ -10,10 +10,10 @@ import { PrismaClient } from '../src/generated/prisma/client.js';
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 const ADMIN_RUC = process.env.ADMIN_SEED_RUC || '00000000000';
-const ADMIN_CORREO = process.env.ADMIN_SEED_EMAIL || 'admin@mollendo.local';
+const ADMIN_CORREO = process.env.ADMIN_SEED_EMAIL || 'admin@monteazulsur.com.pe';
 const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD || 'Cambiar123!';
 
-const VIGILANCIA_CORREO = process.env.VIGILANCIA_SEED_EMAIL || 'vigilancia@mollendo.local';
+const VIGILANCIA_CORREO = process.env.VIGILANCIA_SEED_EMAIL || 'vigilancia@monteazulsur.com.pe';
 const VIGILANCIA_PASSWORD = process.env.VIGILANCIA_SEED_PASSWORD || 'Cambiar123!';
 
 async function main() {

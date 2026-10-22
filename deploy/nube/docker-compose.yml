@@ -66,9 +66,9 @@ services:
       # Solo para mostrarlos en "Sistema y APIs" (los usa el contenedor backup).
       HORA_RESPALDO: ${HORA_RESPALDO:-00:00}
       DIAS_RESPALDO: ${DIAS_RESPALDO:-14}
-      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@mollendo.local}
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@monteazulsur.com.pe}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
-      VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@mollendo.local}
+      VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@monteazulsur.com.pe}
       VIGILANCIA_SEED_PASSWORD: ${VIGILANCIA_SEED_PASSWORD:-}
       # true cuando los lectores y relés están en un controlador conectado por
       # internet (servidor en la nube; ver deploy/controlador): la orden de

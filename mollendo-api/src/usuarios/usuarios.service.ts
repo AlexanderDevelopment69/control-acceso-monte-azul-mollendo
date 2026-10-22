@@ -26,8 +26,19 @@ export class UsuariosService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  findAll() {
-    return this.prisma.usuario.findMany({ select: USUARIO_SELECT, orderBy: { creadoEn: 'asc' } });
+  /**
+   * Las cuentas, con `eliminable`: nunca se usó (no entró ni hizo nada que quede
+   * a su nombre). Una cuenta usada se da de baja, para no perder quién hizo cada cosa.
+   */
+  async findAll() {
+    const cuentas = await this.prisma.usuario.findMany({
+      select: {
+        ...USUARIO_SELECT,
+        _count: { select: { auditorias: true, eventosVerificados: true, verificacionManualActivada: true, verificacionManualTerminada: true } },
+      },
+      orderBy: { creadoEn: 'asc' },
+    });
+    return cuentas.map(({ _count, ...cuenta }) => ({ ...cuenta, eliminable: Object.values(_count).every((n) => n === 0) }));
   }
 
   async create(dto: CreateUsuarioDto, user: AuthenticatedUser) {
@@ -50,6 +61,7 @@ export class UsuariosService {
       tablaAfectada: 'usuario',
       registroId: usuario.id,
       accion: 'crear',
+      detalle: `Creó la cuenta ${usuario.correo} (${usuario.rol === 'administrador' ? 'Administrador' : 'Vigilancia'})`,
     });
     return usuario;
   }
@@ -62,14 +74,22 @@ export class UsuariosService {
     if (id === user.id && dto.estadoCuenta === 'baja') {
       throw new BadRequestException('No puede dar de baja su propia cuenta');
     }
+    const correo = dto.correo?.trim().toLowerCase();
+    const cambiaCorreo = !!correo && correo !== usuario.correo;
+    if (cambiaCorreo && (await this.prisma.usuario.findUnique({ where: { correo } }))) {
+      throw new ConflictException('Ya existe un usuario con ese correo');
+    }
+    // Con correo o contraseña nuevos, las sesiones abiertas de la cuenta dejan de valer.
+    const cierraSesiones = !!dto.password || cambiaCorreo;
 
     const actualizado = await this.prisma.usuario.update({
       where: { id },
       data: {
         estadoCuenta: dto.estadoCuenta,
+        correo: cambiaCorreo ? correo : undefined,
         passwordHash: dto.password ? await hash(dto.password, SALT_ROUNDS) : undefined,
-        // Al restablecer la contraseña se cierran las sesiones abiertas de esa cuenta.
-        passwordCambiadoEn: dto.password ? momentoCambioPassword() : undefined,
+        // Al restablecer la contraseña o cambiar el correo se cierran las sesiones abiertas de esa cuenta.
+        passwordCambiadoEn: cierraSesiones ? momentoCambioPassword() : undefined,
       },
       select: USUARIO_SELECT,
     });
@@ -78,11 +98,38 @@ export class UsuariosService {
       tablaAfectada: 'usuario',
       registroId: id,
       accion: 'modificar',
+      detalle: [
+        cambiaCorreo && `Cambió el correo de ${usuario.correo} a ${correo}`,
+        dto.password && `Cambió la contraseña de ${cambiaCorreo ? correo : usuario.correo}`,
+        dto.estadoCuenta === 'baja' && usuario.estadoCuenta !== 'baja' && `Dio de baja la cuenta ${usuario.correo}`,
+        dto.estadoCuenta === 'activo' && usuario.estadoCuenta === 'baja' && `Reactivó la cuenta ${usuario.correo}`,
+      ]
+        .filter(Boolean)
+        .join('. ') || undefined,
     });
-    // Dado de baja o con contraseña restablecida: también se corta su panel en vivo.
-    if (dto.estadoCuenta === 'baja' || dto.password) {
+    // Dado de baja, con contraseña restablecida o correo nuevo: también se corta su panel en vivo.
+    if (dto.estadoCuenta === 'baja' || cierraSesiones) {
       this.eventEmitter.emit(SESIONES_CERRADAS, { usuarioId: id } satisfies SesionesCerradasEvent);
     }
     return actualizado;
+  }
+
+  /** Eliminar una cuenta que nunca se usó (p. ej. creada por error). Si ya se usó, se da de baja. */
+  async remove(id: number, user: AuthenticatedUser) {
+    if (id === user.id) throw new BadRequestException('No puede eliminar su propia cuenta');
+    const cuenta = (await this.findAll()).find((c) => c.id === id);
+    if (!cuenta) throw new NotFoundException('Usuario no encontrado');
+    if (!cuenta.eliminable) {
+      throw new BadRequestException('Esta cuenta ya se usó: désela de baja para conservar su historial');
+    }
+    await this.prisma.usuario.delete({ where: { id } });
+    await this.auditoriaService.registrar({
+      usuarioId: user.id,
+      tablaAfectada: 'usuario',
+      registroId: id,
+      accion: 'eliminar',
+      detalle: `Eliminó la cuenta ${cuenta.correo}`,
+    });
+    return { ok: true };
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service.js';
 import { CreateUsuarioDto } from './dto/create-usuario.dto.js';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto.js';
@@ -28,5 +28,11 @@ export class UsuariosController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.usuariosService.update(id, dto, user);
+  }
+
+  /** Solo una cuenta que nunca se usó (creada por error); las demás se dan de baja. */
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
+    return this.usuariosService.remove(id, user);
   }
 }

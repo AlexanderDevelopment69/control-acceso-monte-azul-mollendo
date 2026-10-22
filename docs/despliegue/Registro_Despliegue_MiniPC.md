@@ -199,7 +199,7 @@ ls backups
 | Qué abrir | Qué debe pasar |
 |---|---|
 | Nube: `https://accesos.monteazulsur.com.pe`. Mini PC como servidor: `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
-| Entrar con `admin@mollendo.local` y la contraseña inicial | Entra a "Personal y documentos" |
+| Entrar con `admin@monteazulsur.com.pe` y la contraseña inicial | Entra a "Personal y documentos" |
 | Menú **Sistema y APIs** | Backend y base de datos "En línea"; clave de equipos "Configurado" |
 | Botón de Swagger en Sistema y APIs (o `http://<servidor>:3000/api/docs`) | Abre la documentación de la API |
 | Menú **Panel de vigilancia** | Carga sin errores; sin el aviso "El servidor no responde" |
@@ -249,7 +249,7 @@ Si alguien olvidó su contraseña y no puede entrar (no hay recuperación por co
 ```bash
 cd ~/mollendo/deploy/nube      # o deploy/garita
 H=$(sudo docker compose exec -T api node -e "require('bcryptjs').hash(process.argv[1], 10).then(console.log)" 'NuevaClave2026' </dev/null)
-echo "UPDATE usuario SET password_hash = :'h', password_cambiado_en = now() WHERE correo = 'admin@mollendo.local';" \
+echo "UPDATE usuario SET password_hash = :'h', password_cambiado_en = now() WHERE correo = 'admin@monteazulsur.com.pe';" \
   | sudo docker compose exec -T db psql -U mollendo -d mollendo_control_acceso -v h="$H"
 ```
 
@@ -867,7 +867,7 @@ Hecho desde la PC de desarrollo (Windows), por SSH sobre Tailscale.
 3. Copia del código con `git ls-files` + `tar` (incluía cambios aún sin commit) y `pscp` de PuTTY. **Desde entonces el método recomendado es `git archive`** (sección 3, paso 5), que parte de un commit y es reproducible.
 4. Claves nuevas de producción generadas con `secrets` de Python (distintas a las de desarrollo), guardadas en `~/mollendo/.env` (permisos `600`).
 5. Primera construcción: falló `npm ci` porque el `package-lock.json` lo generó npm 12 y la imagen trae npm 10. Se fijó npm 12.0.2 en los dos Dockerfile y se reconstruyó sin errores.
-6. `up -d`: el backend aplicó las 9 migraciones sobre la base vacía. Seed: empresa interna, `admin@mollendo.local` y `vigilancia@mollendo.local`. Base sin personal (los datos de prueba de desarrollo no se copiaron).
+6. `up -d`: el backend aplicó las 9 migraciones sobre la base vacía. Seed: empresa interna, `admin@monteazulsur.com.pe` y `vigilancia@monteazulsur.com.pe`. Base sin personal (los datos de prueba de desarrollo no se copiaron).
 
 **Verificación (desde la PC de desarrollo, por Tailscale)**
 
@@ -905,9 +905,9 @@ Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), 
 | `G4PRO_SN_PERMITIDOS` | En la nube | Números de serie de los G4 Pro que pueden comunicarse con el servidor (`/iclock`), separados por coma. Cualquier otro recibe 403. Vacía = se acepta cualquiera (solo en la red local). En la nube `docker compose` no arranca sin ella. Ver [seguridad](../seguridad/Seguridad.md#31-números-de-serie-permitidos-del-g4-pro). | Etiqueta del equipo o "Sistema y APIs" → Equipo (G4 Pro) |
 | `G4PRO_IPS_PERMITIDAS` | Recomendada en la nube | IP pública de la sede desde donde se conecta el G4 Pro, separadas por coma (en Azure, `190.119.170.73`). Con ella, aunque alguien conozca el número de serie no puede hacerse pasar por el equipo. Vacía = cualquier IP. Si la sede cambia de IP, el G4 queda rechazado: ver `deploy/nube/README.md`. | En el servidor: `sudo tcpdump -nn -q -c 5 -i eth0 "tcp dst port 3001"` |
 | `CORS_ORIGIN` | No | Direcciones desde las que se abre el portal, separadas por coma. | Las IPs del servidor con `:3000` |
-| `ADMIN_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `admin@mollendo.local`. Después del seed no se usa. | Al menos 10 caracteres, con letras y números (la misma regla del portal) |
-| `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@mollendo.local`. | Igual que la anterior |
-| `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@mollendo.local` y `vigilancia@mollendo.local`). | — |
+| `ADMIN_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `admin@monteazulsur.com.pe`. Después del seed no se usa. | Al menos 10 caracteres, con letras y números (la misma regla del portal) |
+| `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@monteazulsur.com.pe`. | Igual que la anterior |
+| `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@monteazulsur.com.pe` y `vigilancia@monteazulsur.com.pe`). | — |
 | `G4PRO_HORA_SINCRONIZACION` | No | Valor inicial de la sincronización diaria con los G4 Pro (0 a 23, hora de Lima; `off` la desactiva). Después se activa, desactiva o cambia de hora desde "Sistema y APIs", y eso se guarda en el servidor (`sincronizacion-diaria.json` en el volumen de documentos) y manda sobre este valor. | Por defecto `0` (medianoche); hoy `off` en la nube |
 | `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). | Por defecto `00:00`; en la nube `04:00` desde el 14/10/2026 |
 | `DIAS_RESPALDO` | No | Días que se guardan los respaldos (diarios y previos a actualizaciones; de estos últimos siempre queda el más reciente). Un valor no válido cuenta como 14. | Por defecto `14`; en la nube `30` desde el 14/10/2026 |

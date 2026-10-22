@@ -32,6 +32,7 @@ import type {
   SinLector,
   TarjetaContingencia,
   TipoTarjeta,
+  UsuarioCuenta,
   TipoDocumento,
   UsoTarjetaContingencia,
 } from "./types";
@@ -47,6 +48,17 @@ export interface UsuarioSesion {
 export interface LoginResponse {
   usuario: UsuarioSesion;
 }
+/** Cuentas del sistema (solo el administrador): crear, cambiar la contraseña, dar de baja o reactivar. */
+export const usuariosApi = {
+  listar: () => apiRequest<UsuarioCuenta[]>("/usuarios"),
+  crear: (datos: { correo: string; rol: RolUsuario; password: string }) =>
+    apiRequest<UsuarioCuenta>("/usuarios", { method: "POST", body: datos }),
+  actualizar: (id: number, cambios: { correo?: string; password?: string; estadoCuenta?: "activo" | "baja" }) =>
+    apiRequest<UsuarioCuenta>(`/usuarios/${id}`, { method: "PATCH", body: cambios }),
+  /** Solo si nunca se usó. */
+  eliminar: (id: number) => apiRequest<{ ok: true }>(`/usuarios/${id}`, { method: "DELETE" }),
+};
+
 export const authApi = {
   /** El servidor guarda la sesión en sus cookies; el portal solo recibe quién es el usuario. */
   login: (correo: string, password: string) =>

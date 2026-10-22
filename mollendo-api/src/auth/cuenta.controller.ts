@@ -4,6 +4,7 @@ import { guardarSesion } from './cookies-sesion.js';
 import { AuthService } from './auth.service.js';
 import { CambiarPasswordDto } from './dto/cambiar-password.dto.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import { Roles } from '../common/decorators/roles.decorator.js';
 import type { AuthenticatedUser } from './types/authenticated-user.type.js';
 
 /**
@@ -21,7 +22,9 @@ export class CuentaController {
   }
 
   // Tokens nuevos (también en las cookies): los anteriores, de esta y otras sesiones, dejan de valer.
+  // Solo el administrador: la contraseña del vigilante se la cambia el administrador (Usuarios).
   @Patch('password')
+  @Roles('administrador')
   async cambiarPassword(
     @Body() dto: CambiarPasswordDto,
     @CurrentUser() user: AuthenticatedUser,

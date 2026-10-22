@@ -17,6 +17,7 @@ import {
   LockLineIcon,
   PieChartIcon,
   PlugInIcon,
+  UserCircleIcon,
 } from "../icons/index";
 import type { RolUsuario } from "@/lib/api/types";
 
@@ -70,6 +71,7 @@ const navItems: NavItem[] = [
     ],
   },
   { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
+  { icon: <UserCircleIcon />, name: "Usuarios", path: "/usuarios", roles: ["administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },
   { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador"] },
   { icon: <InfoIcon />, name: "Manual", path: "/manual", roles: ["administrador", "vigilancia"] },

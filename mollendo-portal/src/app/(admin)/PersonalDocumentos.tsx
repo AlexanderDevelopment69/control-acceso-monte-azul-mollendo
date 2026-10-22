@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { empresasApi, personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
-import type { Empresa, Persona } from "@/lib/api/types";
+import type { Cumplimiento, Empresa, Persona } from "@/lib/api/types";
 import Button from "@/components/ui/button/Button";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import TarjetaIndicador from "@/components/ui/tarjeta/TarjetaIndicador";
@@ -32,10 +32,20 @@ const FILAS_POR_TANDA = 100;
 /** Filtro de perfil de la lista: todos o uno de los perfiles. */
 type PerfilFiltro = "todos" | Perfil;
 
-/** Dentro de "No pueden": por documentos (sin cargar o vencidos) o dados de baja. */
-type MotivoFiltro = "todos" | "documentos" | "baja";
+/** Dentro de "No pueden": por documentos (sin cargar o vencidos), fuera del período o dados de baja. */
+type MotivoFiltro = "todos" | "documentos" | "periodo" | "baja";
 /** En el orden de las píldoras (para deslizar el fondo de la elegida). */
-const MOTIVOS: MotivoFiltro[] = ["todos", "documentos", "baja"];
+const MOTIVOS: MotivoFiltro[] = ["todos", "documentos", "periodo", "baja"];
+
+/** Activo que no puede ingresar por sus documentos (no solo por el período). */
+function porDocumentos(c: Cumplimiento | undefined) {
+  if (!c || c.habilitado || c.dadoDeBaja) return false;
+  return c.sinDocumentos || c.documentosVencidos.length > 0 || !c.fueraDePeriodo;
+}
+/** Activo que hoy está fuera de su período de autorización (puede tener además documentos pendientes). */
+function porPeriodo(c: Cumplimiento | undefined) {
+  return !!c && !c.habilitado && !c.dadoDeBaja && !!c.fueraDePeriodo;
+}
 
 /**
  * Pantalla principal del administrador (alcance base, "una sola vista"):
@@ -157,11 +167,14 @@ export function PersonalDocumentos({ soloLectura = false }: { soloLectura?: bool
   });
   const noHabilitados = visibles.filter((p) => p.cumplimiento && !p.cumplimiento.habilitado).length;
   const deBaja = visibles.filter((p) => p.cumplimiento?.dadoDeBaja).length;
+  const conDocumentos = visibles.filter((p) => porDocumentos(p.cumplimiento)).length;
+  const fueraPeriodo = visibles.filter((p) => porPeriodo(p.cumplimiento)).length;
   const filtradas = visibles.filter((p) => {
     if (filtro === "habilitados") return !!p.cumplimiento?.habilitado;
     if (filtro === "no-habilitados") {
       if (p.cumplimiento?.habilitado) return false;
-      if (motivoFiltro === "documentos") return !p.cumplimiento?.dadoDeBaja;
+      if (motivoFiltro === "documentos") return porDocumentos(p.cumplimiento);
+      if (motivoFiltro === "periodo") return porPeriodo(p.cumplimiento);
       if (motivoFiltro === "baja") return !!p.cumplimiento?.dadoDeBaja;
     }
     return true;
@@ -300,7 +313,7 @@ export function PersonalDocumentos({ soloLectura = false }: { soloLectura?: bool
                 {/* Fondo rojo que se desliza hasta la píldora elegida (como las pestañas de arriba). */}
                 <span
                   aria-hidden
-                  className="absolute inset-y-0 left-0 w-[calc((100%-0.5rem)/3)] rounded-full bg-error-50 transition-transform duration-200 ease-out dark:bg-error-500/15"
+                  className="absolute inset-y-0 left-0 w-[calc((100%-0.75rem)/4)] rounded-full bg-error-50 transition-transform duration-200 ease-out dark:bg-error-500/15"
                   style={{ transform: `translateX(calc(${MOTIVOS.indexOf(motivoFiltro)} * (100% + 0.25rem)))` }}
                 />
                 {(
@@ -308,9 +321,10 @@ export function PersonalDocumentos({ soloLectura = false }: { soloLectura?: bool
                     ["todos", `Todos (${noHabilitados})`, "Todos los que no pueden ingresar"],
                     [
                       "documentos",
-                      `Documentos (${noHabilitados - deBaja})`,
+                      `Documentos (${conDocumentos})`,
                       "Activos con documentos sin cargar o vencidos: podrán ingresar al regularizarlos",
                     ],
+                    ["periodo", `Período (${fueraPeriodo})`, "Fuera de su período de autorización"],
                     ["baja", `De baja (${deBaja})`, "Dados de baja: no pueden ingresar"],
                   ] as [MotivoFiltro, string, string][]
                 ).map(([id, label, ayuda]) => (
@@ -450,7 +464,7 @@ export function PersonalDocumentos({ soloLectura = false }: { soloLectura?: bool
                       id: "no-habilitados",
                       titulo: "No pueden ingresar",
                       valor: noHabilitados,
-                      detalle: "Vencidos o de baja",
+                      detalle: "Documentos, período o baja",
                       icono: <CloseLineIcon />,
                       fondo: "bg-error-500",
                     },

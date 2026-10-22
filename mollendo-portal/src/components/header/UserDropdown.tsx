@@ -73,6 +73,8 @@ export default function UserDropdown() {
             {user.correo}
           </span>
         </div>
+        {/* El vigilante no cambia su contraseña: se la cambia el administrador (Usuarios). */}
+        {user.rol === "administrador" && (
         <button
           onClick={() => {
             closeDropdown();
@@ -98,6 +100,7 @@ export default function UserDropdown() {
           </svg>
           Cambiar contraseña
         </button>
+        )}
         <button
           onClick={() => {
             closeDropdown();

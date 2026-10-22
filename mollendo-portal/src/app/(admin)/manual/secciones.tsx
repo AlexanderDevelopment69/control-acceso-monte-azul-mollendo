@@ -84,6 +84,9 @@ export const SECCIONES: SeccionManual[] = [
                     <b>Por documentos:</b> sin cargar o vencidos. Podrán ingresar en cuanto se regularicen.
                   </li>
                   <li>
+                    <b>Por el período:</b> hoy está fuera de su período de autorización.
+                  </li>
+                  <li>
                     <b>Dados de baja.</b>
                   </li>
                 </Lista>
@@ -1245,10 +1248,45 @@ export const SECCIONES: SeccionManual[] = [
     ],
   },
   {
+    id: "usuarios",
+    titulo: "Usuarios",
+    descripcion: "Cuentas del sistema: crear, cambiar el correo o la contraseña, dar de baja y eliminar.",
+    roles: ["administrador"],
+    pantallas: [
+      {
+        titulo: "Usuarios",
+        descripcion: "Las cuentas del sistema",
+        contenido: (
+          <p>
+            Lista las cuentas del sistema con su tipo y su estado. <b>+ Nueva cuenta de vigilancia</b>: correo y contraseña (al menos 10
+            caracteres, con letras y números). <b>Cambiar correo</b>, en todas las cuentas (también la suya): se entra con el correo nuevo y la
+            misma contraseña, y se cierran sus sesiones abiertas. En cada cuenta de vigilancia, además: <b>Cambiar contraseña</b> (se cierran
+            sus sesiones abiertas y debe entrar con la nueva), <b>Dar de baja</b> (ya no puede entrar; su historial se conserva) o{" "}
+            <b>Reactivar</b>, y <b>Eliminar</b>, solo si la cuenta nunca se usó (por ejemplo, creada por error). Todo queda en la Auditoría.
+          </p>
+        ),
+      },
+    ],
+  },
+  {
+    // El vigilante no cambia su contraseña: se la cambia el administrador (Usuarios).
+    id: "cuenta-vigilancia",
+    titulo: "Su contraseña",
+    descripcion: "Se la cambia el administrador.",
+    roles: ["vigilancia"],
+    pantallas: [
+      {
+        titulo: "Su contraseña",
+        descripcion: "La cambia el administrador",
+        contenido: <p>Su contraseña la cambia el administrador. Si la olvidó o hay que cambiarla, pídasela.</p>,
+      },
+    ],
+  },
+  {
     id: "cuenta",
     titulo: "Su cuenta y contraseña",
     descripcion: "Cambie su contraseña desde su nombre, arriba a la derecha.",
-    roles: ["administrador", "vigilancia"],
+    roles: ["administrador"],
     pantallas: [
       {
         titulo: "Cambiar contraseña",

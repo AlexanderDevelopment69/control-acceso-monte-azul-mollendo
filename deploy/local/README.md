@@ -40,7 +40,7 @@ npm install
 npm run dev
 ```
 
-Abrir `http://localhost:3000` y entrar con `admin@mollendo.local` y la contraseña `ADMIN_SEED_PASSWORD` de `mollendo-api/.env`.
+Abrir `http://localhost:3000` y entrar con `admin@monteazulsur.com.pe` y la contraseña `ADMIN_SEED_PASSWORD` de `mollendo-api/.env`.
 
 ## Día a día
 

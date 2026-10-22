@@ -13,7 +13,7 @@ import { crc32, deflateSync } from 'node:zlib';
 import { perfilDemo } from './perfil-demo.js';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001/api/v1';
-const ADMIN_CORREO = process.env.ADMIN_CORREO ?? 'admin@mollendo.local';
+const ADMIN_CORREO = process.env.ADMIN_CORREO ?? 'admin@monteazulsur.com.pe';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? '';
 const DEVICE_API_KEY = process.env.DEVICE_API_KEY ?? '';
 const SIN_FOTOS = process.env.SIN_FOTOS === '1';

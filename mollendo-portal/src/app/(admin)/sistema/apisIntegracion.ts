@@ -433,7 +433,7 @@ Persona 12345678 encolada para 1 equipo(s), con foto
 {
   "facialPrimero": true,
   "desde": "2026-10-20T08:36:57.000Z",
-  "cambiadoPor": "admin@mollendo.local"
+  "cambiadoPor": "admin@monteazulsur.com.pe"
 }`,
     notas:
       "El cambio rige al instante, sin reiniciar nada; los paneles abiertos lo reciben por el canal en vivo (evento modo-ingreso). desde y cambiadoPor son los del último cambio, en cualquiera de los dos sentidos.",
@@ -464,7 +464,7 @@ Persona 12345678 encolada para 1 equipo(s), con foto
     "activa": true,
     "hora": 0,
     "desde": "2026-10-20T08:45:00.000Z",
-    "cambiadoPor": "admin@mollendo.local"
+    "cambiadoPor": "admin@monteazulsur.com.pe"
   },
   "enCurso": false,
   "ultima": { … }

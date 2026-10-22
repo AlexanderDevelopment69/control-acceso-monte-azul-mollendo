@@ -110,7 +110,7 @@ sudo docker compose run --rm -T api npm run db:seed
 - G4 Pro (*Cloud Service Settings*): servidor `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto `3001`. Después, en **Sistema y APIs**, "Sincronizar" para enviarle al personal con su foto.
 - Controlador de la garita: en su `.env`, `SERVIDOR_URL=https://accesos.monteazulsur.com.pe` y la **misma** `DEVICE_API_KEY` (ver [`../controlador`](../controlador/README.md)).
 
-7. Entra a `https://accesos.monteazulsur.com.pe` con `admin@mollendo.local` y cambia las contraseñas iniciales (también la de `vigilancia@mollendo.local`).
+7. Entra a `https://accesos.monteazulsur.com.pe` con `admin@monteazulsur.com.pe` y cambia las contraseñas iniciales (también la de `vigilancia@monteazulsur.com.pe`).
 
 ## Actualizar a una versión nueva
 
