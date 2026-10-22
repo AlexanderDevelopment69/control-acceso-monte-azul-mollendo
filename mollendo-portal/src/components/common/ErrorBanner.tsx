@@ -8,15 +8,18 @@ export function ErrorBanner({
   children,
   className = "",
   tono = "error",
+  animado = true,
 }: {
   children: React.ReactNode;
   className?: string;
   tono?: "error" | "exito" | "info" | "aviso";
+  /** false = aparece de golpe, con su alto final (para poder llevarlo a la vista en el mismo momento). */
+  animado?: boolean;
 }) {
   // Aparece con una transición de alto en vez de saltar de golpe: dentro de un
   // modal centrado con flexbox, un cambio de alto instantáneo recoloca todo el
   // modal de un salto y se percibe como un parpadeo.
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(!animado);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));

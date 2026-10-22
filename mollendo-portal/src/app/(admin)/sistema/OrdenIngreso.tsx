@@ -19,7 +19,7 @@ const ORDENES = {
       "Pasa su DNI por el lector de ingreso: se revisan sus documentos.",
       <>
         Si están en regla, tiene <strong>1 minuto</strong> para hacer rostro y prueba de alcohol en el equipo facial (el Panel muestra
-        “en espera”).
+        <b>en espera</b>).
       </>,
       "Si aprueba, se abre el molinete. Si da alcohol, se deniega con su nombre.",
       "Si hace rostro y alcohol sin haber pasado antes su DNI, la prueba no vale.",
@@ -30,10 +30,12 @@ const ORDENES = {
     pasos: [
       "Rostro y prueba de alcohol en el equipo facial.",
       <>
-        Cuando el equipo dice “correcto”, pasa su DNI: tiene <strong>30 segundos</strong> desde que el Panel muestra “pase su DNI”.
+        Cuando el equipo dice <b>correcto</b>, pasa su DNI: tiene <strong>30 segundos</strong> desde que el Panel muestra <b>pase su DNI</b>.
       </>,
       "Se abre el molinete si el DNI es de quien sopló y sus documentos están en regla.",
-      "Si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (“DNI antes del facial”).",
+      <>
+        Si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (<b>DNI antes del facial</b>).
+      </>,
     ],
   },
 };
@@ -166,7 +168,7 @@ export function OrdenIngreso() {
       <Modal isOpen={confirmar !== null} onClose={() => setConfirmar(null)} className="max-w-lg p-6 sm:p-8">
         {confirmar !== null && (
           <>
-            <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Activar “{ordenDe(confirmar).nombre}”</h2>
+            <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Activar {ordenDe(confirmar).nombre}</h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">Desde ahora, el ingreso será así:</p>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300">
               {ordenDe(confirmar).pasos.map((paso, i) => (
@@ -174,7 +176,7 @@ export function OrdenIngreso() {
               ))}
             </ol>
             <p className="mt-3 text-sm text-gray-600 dark:text-gray-300">
-              Avise al personal antes de activarlo. Puede volver a “{ordenDe(!confirmar).nombre}” cuando quiera.
+              Avise al personal antes de activarlo. Puede volver a <b>{ordenDe(!confirmar).nombre}</b> cuando quiera.
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setConfirmar(null)}>

@@ -360,7 +360,7 @@ function TarjetasContent() {
   const [usos, setUsos] = useState<Paginado<UsoTarjetaContingencia> | null>(null);
   const [pagina, setPagina] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<React.ReactNode>(null);
   const [nueva, setNueva] = useState(false);
   const [imprimiendo, setImprimiendo] = useState<TarjetaContingencia | null>(null);
   // La recién creada: el carrusel va hasta ella y queda marcada unos segundos.
@@ -390,7 +390,7 @@ function TarjetasContent() {
   // Cada vez que se pasa una tarjeta por un lector, se actualizan los usos.
   useEffect(() => escucharEventos({ "tarjeta-contingencia-uso": recargar }, recargar), [recargar]);
 
-  function listo(texto: string) {
+  function listo(texto: React.ReactNode) {
     setAviso(texto);
     setNueva(false);
     setVencimiento(null);
@@ -447,7 +447,17 @@ function TarjetasContent() {
       {!tarjetas && !error && <p className="mb-8 text-sm text-gray-400">Cargando…</p>}
       {tarjetas?.length === 0 && (
         <div className="mb-8 rounded-2xl border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-          {esAdministrador ? "Todavía no hay tarjetas. Use “+ Nueva tarjeta”." : "Todavía no hay tarjetas."}
+          {esAdministrador ? (
+            <>
+              Todavía no hay tarjetas. Use{" "}
+              <button type="button" onClick={() => setNueva(true)} className="font-semibold underline-offset-2 hover:underline text-gray-700 dark:text-gray-300">
+                + Nueva tarjeta
+              </button>
+              .
+            </>
+          ) : (
+            "Todavía no hay tarjetas."
+          )}
         </div>
       )}
       {!!tarjetas?.length && (
@@ -541,7 +551,15 @@ function TarjetasContent() {
         onCerrar={() => setNueva(false)}
         onGuardar={async (venceEl) => {
           const t = await tarjetasContingenciaApi.crear(venceEl);
-          listo(`Se creó la ${t.nombre.toLowerCase()}. Use “Imprimir” y entréguela al vigilante.`);
+          listo(
+            <>
+              Se creó la {t.nombre.toLowerCase()}. Use{" "}
+              <button type="button" onClick={() => setImprimiendo(t)} className="font-semibold underline-offset-2 hover:underline">
+                Imprimir
+              </button>{" "}
+              y entréguela al vigilante.
+            </>,
+          );
           setCreada(t.id);
           setTimeout(() => setCreada((actual) => (actual === t.id ? null : actual)), 4000);
         }}

@@ -129,9 +129,11 @@ describe("Ficha de la persona", () => {
 
   it("de baja: muestra el motivo, “Reactivar” y el DNI en falla", async () => {
     await montar(persona({ dadoDeBaja: true }, { estado: "inactivo", motivoBaja: "Renuncia", fechaBaja: null }));
-    expect(within(tarjeta()).getByText("Dado de baja. Motivo: Renuncia. Para que vuelva a ingresar, use “Reactivar”.")).toBeInTheDocument();
-    expect(within(tarjeta()).queryByRole("button")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reactivar" })).toBeInTheDocument();
+    expect(tarjeta()).toHaveTextContent("Dado de baja. Motivo: Renuncia.Para que vuelva a ingresar, use Reactivar.");
+    // "Reactivar" del aviso y el de arriba abren la misma ventana.
+    expect(within(tarjeta()).getAllByRole("button")).toHaveLength(1);
+    await userEvent.click(within(tarjeta()).getByRole("button", { name: "Reactivar" }));
+    expect(screen.getByRole("heading", { name: "Reactivar" })).toBeInTheDocument();
     expect(paso("DNI")).toContain("Dado de baja");
   });
 
@@ -139,7 +141,8 @@ describe("Ficha de la persona", () => {
     await montar(persona({ dadoDeBaja: true }, { estado: "inactivo", motivoBaja: "Renuncia", fechaBaja: null }));
     api.updateEstado.mockResolvedValueOnce(undefined);
 
-    await userEvent.click(screen.getByRole("button", { name: "Reactivar" }));
+    // El de arriba (el del aviso abre la misma ventana).
+    await userEvent.click(screen.getAllByRole("button", { name: "Reactivar" })[0]);
     const ventana = screen.getByRole("heading", { name: "Reactivar" }).parentElement!;
     await userEvent.click(within(ventana).getByRole("button", { name: "Reactivar" }));
     expect(within(ventana).getByText("Escriba el motivo de la reactivación")).toBeInTheDocument();
@@ -161,7 +164,8 @@ describe("Ficha de la persona", () => {
     await montar(persona({ habilitado: true }, { fotoUrl: null }));
     expect(screen.getByText(/Sin foto: no podrá identificarse por reconocimiento facial/)).toBeInTheDocument();
     expect(paso("Rostro")).toContain("Sin foto");
-    expect(screen.getByRole("button", { name: "Subir foto" })).toBeInTheDocument();
+    // El de debajo de la foto y el del aviso.
+    expect(screen.getAllByRole("button", { name: "Subir foto" })).toHaveLength(2);
   });
 
   it("dar de baja con motivo: pide confirmación y guarda el motivo", async () => {
@@ -214,7 +218,8 @@ describe("Ficha de la persona", () => {
         { estado: "inactivo", documentosActuales: [doc(1, "SCTR", false, "2026-03-15T00:00:00.000Z")] },
       ),
     );
-    await userEvent.click(screen.getByRole("button", { name: "Reactivar" }));
+    // El de arriba (el del aviso abre la misma ventana).
+    await userEvent.click(screen.getAllByRole("button", { name: "Reactivar" })[0]);
     expect(screen.getByText("Aun reactivado no podrá ingresar hasta regularizar: Vencido: SCTR.")).toBeInTheDocument();
   });
 

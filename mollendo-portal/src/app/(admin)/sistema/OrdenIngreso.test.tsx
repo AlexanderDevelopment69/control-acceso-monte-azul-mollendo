@@ -19,7 +19,7 @@ describe("Orden del ingreso", () => {
     render(<OrdenIngreso />);
     await userEvent.click(await screen.findByRole("switch", { name: "DNI → Facial + Alcohol → Molinete" }));
 
-    expect(screen.getByText("Activar “DNI → Facial + Alcohol → Molinete”")).toBeInTheDocument();
+    expect(screen.getByText("Activar DNI → Facial + Alcohol → Molinete")).toBeInTheDocument();
     expect(screen.getByText(/para hacer rostro y prueba de alcohol/)).toHaveTextContent("1 minuto");
     expect(cambiarModoIngreso).not.toHaveBeenCalled();
 
@@ -32,7 +32,7 @@ describe("Orden del ingreso", () => {
     render(<OrdenIngreso />);
     await userEvent.click(await screen.findByRole("switch", { name: "Facial + Alcohol → DNI → Molinete" }));
 
-    expect(screen.getByText("Activar “Facial + Alcohol → DNI → Molinete”")).toBeInTheDocument();
+    expect(screen.getByText("Activar Facial + Alcohol → DNI → Molinete")).toBeInTheDocument();
     expect(screen.getByText(/pasa su DNI: tiene/)).toHaveTextContent("30 segundos");
   });
 
@@ -40,6 +40,6 @@ describe("Orden del ingreso", () => {
     facialPrimero = false;
     render(<OrdenIngreso />);
     await userEvent.click(await screen.findByRole("switch", { name: "DNI → Facial + Alcohol → Molinete" }));
-    expect(screen.queryByText(/^Activar “/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Activar (DNI|Facial)/)).not.toBeInTheDocument();
   });
 });

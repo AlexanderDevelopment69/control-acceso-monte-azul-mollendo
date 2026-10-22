@@ -118,7 +118,7 @@ export class DocumentosService {
       nombre: `${base}${extension}`,
       enLinea: tipo === 'application/pdf' || tipo.startsWith('image/'),
       // Para la Auditoría (quién abrió qué).
-      descripcion: `Abrió el archivo de “${documento.tipoDocumento.nombre}” v${documento.version} de ${documento.persona.apellidos}, ${documento.persona.nombres}`,
+      descripcion: `Abrió el archivo de ${documento.tipoDocumento.nombre} v${documento.version} de ${documento.persona.apellidos}, ${documento.persona.nombres}`,
     };
   }
 

@@ -60,7 +60,11 @@ export function DocumentosActuales({
     >
       {actuales.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Todavía no tiene documentos: sin documentos no puede ingresar. Use “+ Agregar documento”.
+          Todavía no tiene documentos: sin documentos no puede ingresar. Use{" "}
+          <button type="button" onClick={onAgregar} className="font-semibold text-gray-700 underline-offset-2 hover:underline dark:text-gray-300">
+            + Agregar documento
+          </button>
+          .
         </p>
       ) : (
         <>

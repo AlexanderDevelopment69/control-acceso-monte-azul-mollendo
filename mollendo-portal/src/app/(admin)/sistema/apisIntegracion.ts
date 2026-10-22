@@ -216,7 +216,7 @@ DNI leído en ingreso: pendiente_verificacion`,
       "La salida queda con la tarjeta y con quién eligió al personal (\"Tarjeta de contingencia · correo\" en el Panel). Elegir y cancelar quedan en la Auditoría.",
   },
   {
-    nombre: "Contingencia “sin lector” (lector de DNI desconectado)",
+    nombre: "Contingencia sin lector (lector de DNI desconectado)",
     endpoint: "/eventos-acceso/sin-lector · /eventos-acceso/salida-sin-lector",
     metodo: "GET · POST",
     descripcion:

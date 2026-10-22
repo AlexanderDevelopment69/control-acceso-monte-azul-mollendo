@@ -133,9 +133,9 @@ function Paso({
 }: {
   n: number;
   titulo: string;
-  detalle: string;
+  detalle: React.ReactNode;
   /** Cuánto tarda o cuánto tiempo hay (medido con el equipo real). */
-  tiempo?: string;
+  tiempo?: React.ReactNode;
   Icono: React.ComponentType<PropsIcono>;
   final?: boolean;
   /** El último paso (se abre el molinete), en verde. */
@@ -191,7 +191,7 @@ type Punto = {
   /** Rótulo en una segunda fila, para que no se monte con el del punto anterior. */
   abajo?: boolean;
   cuando: string;
-  detalle: string;
+  detalle: React.ReactNode;
 };
 type Tramo = { desde: number; hasta: number; color: "azul" | "ambar"; rotulo: string };
 
@@ -217,9 +217,9 @@ const TIEMPOS: Record<"facialPrimero" | "dniPrimero", { titulo: string; desde: s
     ],
     puntos: [
       { s: 0, color: "azul", rotulo: "Mira al equipo", lado: "start", cuando: "0 s", detalle: "Reconoce su rostro y le pide soplar." },
-      { s: 20, color: "azul", rotulo: "“Correcto”", lado: "end", cuando: "unos 20 s", detalle: "El Panel muestra “Aprobó … pase su DNI” en 1 segundo." },
+      { s: 20, color: "azul", rotulo: "Correcto", lado: "end", cuando: "unos 20 s", detalle: <>El Panel muestra <b>Aprobó … pase su DNI</b> en 1 segundo.</> },
       { s: 25, color: "verde", rotulo: "Pasa su DNI y se abre", lado: "start", cuando: "ej. a los 25 s", detalle: "El molinete se abre al pasarlo." },
-      { s: 50, color: "rojo", rotulo: "Fin del plazo", lado: "end", cuando: "unos 50 s", detalle: "Sin DNI: “No pasó su DNI a tiempo”." },
+      { s: 50, color: "rojo", rotulo: "Fin del plazo", lado: "end", cuando: "unos 50 s", detalle: <>Sin DNI: <b>No pasó su DNI a tiempo</b>.</> },
     ],
   },
   dniPrimero: {
@@ -229,10 +229,10 @@ const TIEMPOS: Record<"facialPrimero" | "dniPrimero", { titulo: string; desde: s
     paso: 10,
     tramos: [{ desde: 0, hasta: 60, color: "ambar", rotulo: "Tiempo para hacer rostro y alcohol · 1 minuto" }],
     puntos: [
-      { s: 0, color: "azul", rotulo: "Pasa su DNI", lado: "start", cuando: "0 s", detalle: "Se revisan sus documentos; el Panel lo muestra “en espera”." },
+      { s: 0, color: "azul", rotulo: "Pasa su DNI", lado: "start", cuando: "0 s", detalle: <>Se revisan sus documentos; el Panel lo muestra <b>en espera</b>.</> },
       { s: 15, color: "azul", rotulo: "Sopla", lado: "middle", cuando: "ej. a los 15 s", detalle: "Hace rostro y alcohol en el equipo facial." },
-      { s: 25, color: "verde", rotulo: "Se abre", lado: "middle", cuando: "unos 25 s", detalle: "Al decir “correcto”." },
-      { s: 60, color: "rojo", rotulo: "Fin del plazo", lado: "end", cuando: "60 s", detalle: "Sin prueba: “No completó rostro y alcohol”." },
+      { s: 25, color: "verde", rotulo: "Se abre", lado: "middle", cuando: "unos 25 s", detalle: <>Al decir <b>correcto</b>.</> },
+      { s: 60, color: "rojo", rotulo: "Fin del plazo", lado: "end", cuando: "60 s", detalle: <>Sin prueba: <b>No completó rostro y alcohol</b>.</> },
     ],
   },
 };
@@ -337,8 +337,8 @@ export function RecorridoAcceso() {
           {facialPrimero ? (
             <>
               <Paso n={1} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el equipo facial lo reconoce" tiempo="rostro y soplido: unos 20 s" />
-              <Paso n={2} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro; el equipo dice “correcto”" tiempo="el Panel lo muestra al instante" />
-              <Paso n={3} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso, en 30 segundos" tiempo="máximo 30 s desde “pase su DNI”" />
+              <Paso n={2} Icono={IconoAlcohol} titulo="Sopla" detalle={<>en el alcoholímetro; el equipo dice <b>correcto</b></>} tiempo="el Panel lo muestra al instante" />
+              <Paso n={3} Icono={IconoDni} titulo="Pasa su DNI" detalle="por el lector de ingreso, en 30 segundos" tiempo={<>máximo 30 s desde <b>pase su DNI</b></>} />
               <Paso n={4} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" tiempo="al instante" />
               <Paso n={5} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" tiempo="al pasar el DNI" final exito />
             </>
@@ -348,7 +348,7 @@ export function RecorridoAcceso() {
               <Paso n={2} Icono={IconoDocumentos} titulo="Se revisan sus documentos" detalle="registrado, activo y sin vencidos" tiempo="al instante" />
               <Paso n={3} Icono={IconoRostro} titulo="Muestra su rostro" detalle="el equipo facial lo reconoce" tiempo="tiene 1 minuto desde que pasó el DNI" />
               <Paso n={4} Icono={IconoAlcohol} titulo="Sopla" detalle="en el alcoholímetro" tiempo="rostro y soplido: unos 20 s" />
-              <Paso n={5} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" tiempo="al decir “correcto”" final exito />
+              <Paso n={5} Icono={IconoMolinete} titulo="Se abre el molinete" detalle="y queda en el Panel de vigilancia" tiempo={<>al decir <b>correcto</b></>} final exito />
             </>
           )}
         </ol>

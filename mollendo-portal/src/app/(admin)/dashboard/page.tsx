@@ -100,7 +100,7 @@ function Bloque({
   className = "",
 }: {
   titulo: string;
-  descripcion?: string;
+  descripcion?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -421,7 +421,12 @@ function DashboardContent() {
             {/* Ingresos por perfil */}
             <Bloque
               titulo="Ingresos por perfil"
-              descripcion="Ingresos autorizados del periodo según el perfil de la persona. “Sin perfil”: registradas antes de que existiera el perfil."
+              descripcion={
+                <>
+                  Ingresos autorizados del periodo según el perfil de la persona. <b>Sin perfil</b>: registradas antes de que existiera el
+                  perfil.
+                </>
+              }
             >
               {d.porPerfil?.length ? (
                 <Grafico

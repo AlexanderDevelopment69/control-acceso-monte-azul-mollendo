@@ -293,7 +293,17 @@ function EmpresasContent() {
                 {!cargando && empresas && visibles.length === 0 && (
                   <TableRow>
                     <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>
-                      {empresas.length ? "Sin resultados para esa búsqueda." : "Todavía no hay empresas. Use “+ Nueva empresa”."}
+                      {empresas.length ? (
+                        "Sin resultados para esa búsqueda."
+                      ) : (
+                        <>
+                          Todavía no hay empresas. Use{" "}
+                          <button type="button" onClick={() => setNueva(true)} className="font-semibold underline-offset-2 hover:underline text-gray-600 dark:text-gray-300">
+                            + Nueva empresa
+                          </button>
+                          .
+                        </>
+                      )}
                     </TableCell>
                   </TableRow>
                 )}

@@ -94,6 +94,7 @@ export function EstadoIngreso({
   cumplimiento,
   onAgregar,
   onRenovar,
+  onReactivar,
 }: {
   persona: Persona;
   cumplimiento: Cumplimiento;
@@ -101,6 +102,8 @@ export function EstadoIngreso({
   onAgregar: () => void;
   /** Abre la ventana para renovar el documento con ese nombre. */
   onRenovar: (nombre: string) => void;
+  /** De baja: abre la ventana de "Reactivar" (la misma del botón de arriba). */
+  onReactivar: () => void;
 }) {
   return (
     <>
@@ -133,9 +136,26 @@ export function EstadoIngreso({
               {cumplimiento.habilitado
                 ? "Todos sus documentos están vigentes. Al ingresar se validan su DNI, su rostro y la prueba de alcohol."
                 : persona.estado === "inactivo"
-                  ? `Dado de baja${persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}${
-                      persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""
-                    }. Para que vuelva a ingresar, use “Reactivar”.`
+                  ? (
+                      // En dos líneas, como el aviso del período: la baja con su motivo; luego qué hacer.
+                      <>
+                        <span className="block">
+                          Dado de baja{persona.fechaBaja ? ` el ${new Date(persona.fechaBaja).toLocaleDateString("es-PE")}` : ""}
+                          {persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""}.
+                        </span>
+                        <span className="block">
+                          Para que vuelva a ingresar, use{" "}
+                          <button
+                            type="button"
+                            onClick={onReactivar}
+                            className="font-semibold text-gray-800 underline-offset-2 hover:underline dark:text-white/90"
+                          >
+                            Reactivar
+                          </button>
+                          .
+                        </span>
+                      </>
+                    )
                   : cumplimiento.fueraDePeriodo
                     ? (
                         // En dos líneas (en una sola se leía como un bloque): el período con su motivo; luego dónde cambiarlo.

@@ -202,7 +202,7 @@ describe("Personal y documentos", () => {
   it("sin personal registrado: indica cómo empezar", async () => {
     api.personas.mockResolvedValue([]);
     render(<PersonalDocumentos />);
-    expect(await screen.findByText("Todavía no hay personal registrado. Use “+ Nuevo personal”.")).toBeInTheDocument();
+    expect(await screen.findByText(/Todavía no hay personal registrado/)).toHaveTextContent("Todavía no hay personal registrado. Use + Nuevo personal.");
   });
 
   it("con muchas personas dibuja la lista por tandas", async () => {

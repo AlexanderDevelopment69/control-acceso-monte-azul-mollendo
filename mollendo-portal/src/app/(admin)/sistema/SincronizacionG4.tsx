@@ -239,7 +239,7 @@ export function SincronizacionG4({
         <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Sincronizar con el G4 Pro</h2>
         <p className="text-sm text-gray-600 dark:text-gray-300">
           Se <strong>borrarán del terminal</strong> los usuarios que el sistema no conoce y se registrará con su foto al
-          personal activo que falte. Conviene usar antes <strong>“Simular”</strong> para ver qué cambiará.
+          personal activo que falte. Conviene usar antes <strong>Simular</strong> para ver qué cambiará.
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={() => setConfirmar(false)}>

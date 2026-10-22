@@ -333,7 +333,19 @@ export function PersonalDocumentos() {
                 {errorCarga && personas.length === 0
                   ? "No se pudo cargar el personal."
                   : personas.length === 0
-                    ? "Todavía no hay personal registrado. Use “+ Nuevo personal”."
+                    ? (
+                        <>
+                          Todavía no hay personal registrado. Use{" "}
+                          <button
+                            type="button"
+                            onClick={() => setModalOpen(true)}
+                            className="font-semibold text-gray-600 underline-offset-2 hover:underline dark:text-gray-300"
+                          >
+                            + Nuevo personal
+                          </button>
+                          .
+                        </>
+                      )
                     : "Sin resultados."}
               </li>
             )}

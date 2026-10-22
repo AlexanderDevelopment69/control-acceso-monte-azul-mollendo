@@ -113,7 +113,7 @@ function OpcionZip({
   marcada: boolean;
   onCambio: (valor: boolean) => void;
   titulo: string;
-  detalle: string;
+  detalle: React.ReactNode;
 }) {
   return (
     <label
@@ -345,13 +345,13 @@ function ReportesContent() {
                   marcada={incluirAnteriores}
                   onCambio={setIncluirAnteriores}
                   titulo="Incluir también los documentos anteriores"
-                  detalle="Los que fueron renovados, con su archivo. En el Excel figuran como “Reemplazado”."
+                  detalle={<>Los que fueron renovados, con su archivo. En el Excel figuran como <b>Reemplazado</b>.</>}
                 />
                 <OpcionZip
                   marcada={incluirFotos}
                   onCambio={setIncluirFotos}
                   titulo="Incluir las fotos del personal"
-                  detalle="La foto de cada persona en su carpeta y una columna “Foto” en el Excel. El ZIP pesa más."
+                  detalle={<>La foto de cada persona en su carpeta y una columna <b>Foto</b> en el Excel. El ZIP pesa más.</>}
                 />
               </div>
             </div>

@@ -51,6 +51,8 @@ export function PersonaFicha({
   const [subiendoDocumento, setSubiendoDocumento] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
+  /** Mensaje verde del recuadro del período tras guardar o quitar. */
+  const [avisoPeriodo, setAvisoPeriodo] = useState<"guardar" | "quitar" | null>(null);
 
   const obtener = useCallback(() => personasApi.get(personaId), [personaId]);
 
@@ -152,6 +154,14 @@ export function PersonaFicha({
     } finally {
       setCambiandoEstado(false);
     }
+  }
+
+  /** Abre la ventana de "Dar de baja" o "Reactivar", según el estado (botón de arriba o enlace del aviso). */
+  function abrirCambioEstado() {
+    if (!persona) return;
+    setErrorEstado(null);
+    setMotivoBaja("");
+    setConfirmarEstado(persona.estado === "activo" ? "inactivo" : "activo");
   }
 
   if (error) {
@@ -256,11 +266,7 @@ export function PersonaFicha({
               size="sm"
               variant="outline"
               disabled={cambiandoEstado}
-              onClick={() => {
-                setErrorEstado(null);
-                setMotivoBaja("");
-                setConfirmarEstado(persona.estado === "activo" ? "inactivo" : "activo");
-              }}
+              onClick={abrirCambioEstado}
             >
               {persona.estado === "activo" ? "Dar de baja" : "Reactivar"}
             </Button>
@@ -290,7 +296,11 @@ export function PersonaFicha({
         </Modal>
         {!persona.fotoUrl && (
           <ErrorBanner tono="aviso" className="mt-4">
-            Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Use “Subir foto”.
+            Sin foto: no podrá identificarse por reconocimiento facial en el terminal. Use{" "}
+            <button type="button" onClick={() => fotoInputRef.current?.click()} className="font-semibold underline-offset-2 hover:underline">
+              Subir foto
+            </button>
+            .
           </ErrorBanner>
         )}
         {cumplimiento && (
@@ -299,6 +309,7 @@ export function PersonaFicha({
             cumplimiento={cumplimiento}
             onAgregar={() => setVentana({ modo: "agregar" })}
             onRenovar={(nombre) => setVentana({ modo: "renovar", nombre })}
+            onReactivar={abrirCambioEstado}
           />
         )}
       </Tarjeta>
@@ -436,7 +447,12 @@ export function PersonaFicha({
       <PeriodoAutorizacionFicha
         key={`${persona.autorizadoDesde}|${persona.autorizadoHasta}|${persona.motivoAutorizacion}`}
         persona={persona}
-        onGuardado={cargar}
+        aviso={avisoPeriodo}
+        onGuardado={(accion) => {
+          setAvisoPeriodo(accion);
+          cargar();
+        }}
+        onCambio={() => setAvisoPeriodo(null)}
       />
 
       {historial.length > actuales.length && (
