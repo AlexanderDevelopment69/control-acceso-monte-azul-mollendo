@@ -193,7 +193,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Período de autorización",
             texto: (
               <p>
-                Fechas y motivo de la autorización. <b>«Guardar período»</b> aplica los cambios y <b>«Quitar período»</b> lo borra. Queda
+                Fechas y motivo de la autorización. <b>Guardar período</b> aplica los cambios y <b>Quitar período</b> lo borra. Queda
                 en la Auditoría.
               </p>
             ),
@@ -557,7 +557,12 @@ export const SECCIONES: SeccionManual[] = [
                   <Motivo m="Documentos ›" hacer="Tiene un documento vencido. Tóquelo para ver cuál; el administrador sube el nuevo." />
                   <Motivo
                     m="Fuera del período autorizado"
-                    hacer="Su período de autorización no incluye hoy. El administrador puede cambiarlo en la ficha, en «Período de autorización»."
+                    hacer={
+                      <>
+                        Su período de autorización no incluye hoy. El administrador puede cambiarlo en la ficha, en{" "}
+                        <b>Período de autorización</b>.
+                      </>
+                    }
                   />
                   <Motivo
                     m="Alcohol"

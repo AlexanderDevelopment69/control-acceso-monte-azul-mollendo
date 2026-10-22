@@ -6,6 +6,7 @@ import { CheckLineIcon, CloseLineIcon, FileIcon } from "@/icons";
 // Los mismos íconos del recorrido de ingreso del manual.
 import { IconoDni, IconoDocumentos, IconoRostro } from "@/app/(admin)/manual/Figuras";
 import { diasDesde, formatearFecha } from "./cumplimiento";
+import { idRecuadroPeriodo } from "./PeriodoAutorizacionFicha";
 
 type EstadoPaso = "ok" | "falla" | "aviso";
 
@@ -136,9 +137,25 @@ export function EstadoIngreso({
                       persona.motivoBaja ? `. Motivo: ${persona.motivoBaja}` : ""
                     }. Para que vuelva a ingresar, use “Reactivar”.`
                   : cumplimiento.fueraDePeriodo
-                    ? `Fuera del período autorizado (${textoPeriodo(persona)})${
-                        persona.motivoAutorizacion ? `. Motivo: ${persona.motivoAutorizacion}` : ""
-                      }. Puede cambiarlo abajo, en «Período de autorización».`
+                    ? (
+                        <>
+                          Fuera del período autorizado ({textoPeriodo(persona)})
+                          {persona.motivoAutorizacion ? `. Motivo: ${persona.motivoAutorizacion}` : ""}. Puede cambiarlo abajo, en{" "}
+                          {/* Lleva al recuadro del período, más abajo en la ficha. */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              document
+                                .getElementById(idRecuadroPeriodo(persona.id))
+                                ?.scrollIntoView({ behavior: "smooth", block: "center" })
+                            }
+                            className="font-semibold text-gray-800 underline-offset-2 hover:underline dark:text-white/90"
+                          >
+                            Período de autorización
+                          </button>
+                          .
+                        </>
+                      )
                   : cumplimiento.sinDocumentos
                     ? "No tiene documentos cargados. Agregue al menos uno para que pueda ingresar."
                     : cumplimiento.documentosVencidos.length === 1

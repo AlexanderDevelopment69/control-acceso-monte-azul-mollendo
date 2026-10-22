@@ -10,6 +10,9 @@ import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { PERIODO_VACIO, cambioPeriodo, periodoDePersona, problemaPeriodo, type Periodo } from "@/lib/periodo";
 import { PeriodoAutorizacionCampos } from "./PeriodoAutorizacionCampos";
 
+/** id del recuadro, para llegar a él desde el aviso "Fuera del período autorizado". */
+export const idRecuadroPeriodo = (personaId: number) => `periodo-autorizacion-${personaId}`;
+
 /**
  * Período de autorización en la ficha (fuera de "Editar datos"): los campos
  * siempre a la vista, "Guardar período" (solo con cambios) y "Quitar período".
@@ -40,7 +43,7 @@ export function PeriodoAutorizacionFicha({ persona, onGuardado }: { persona: Per
   }
 
   return (
-    <Tarjeta as="section" className="p-5">
+    <Tarjeta as="section" id={idRecuadroPeriodo(persona.id)} className="p-5">
       <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Período de autorización</h3>
       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Opcional. Fuera de estas fechas no podrá ingresar.</p>
       {error && <ErrorBanner className="mt-4">{error}</ErrorBanner>}
