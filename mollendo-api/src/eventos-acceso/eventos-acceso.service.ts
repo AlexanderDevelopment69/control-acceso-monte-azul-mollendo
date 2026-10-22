@@ -1452,7 +1452,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'Verificación manual activa: el ingreso lo decide el vigilante en el Panel');
     }
     if (!(await this.modoIngreso.facialPrimero())) {
-      return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'La tarjeta solo es válida con el orden "facial primero"');
+      return this.rechazarTarjeta(tarjeta.id, 'ingreso', 'La tarjeta solo es válida con el orden facial primero');
     }
     if (this.aprobacionesVigentes().length === 0) {
       this.tarjetaEsperandoPrueba = { tarjeta, dto, en: Date.now() };
@@ -1507,7 +1507,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
   private async salidaConTarjeta(tarjeta: TarjetaContingencia, dto: TarjetaLeidaDto) {
     const preparada = this.salidaSinDni;
     if (!preparada || Date.parse(preparada.hasta) < Date.now()) {
-      return this.rechazarTarjeta(tarjeta.id, 'salida', 'Nadie eligió al personal en el Panel ("Salida sin DNI")');
+      return this.rechazarTarjeta(tarjeta.id, 'salida', 'Nadie eligió al personal en el Panel (Salida sin DNI)');
     }
     this.cambiarSalidaSinDni(null);
     const persona = await this.prisma.persona.findUnique({ where: { id: preparada.personaId } });

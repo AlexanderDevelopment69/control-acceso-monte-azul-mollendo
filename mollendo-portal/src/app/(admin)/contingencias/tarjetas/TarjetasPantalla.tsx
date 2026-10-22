@@ -24,7 +24,8 @@ import { diaVisible } from "./imprimir";
 import { ImprimirTarjeta } from "./ImprimirTarjeta";
 import { PaginasTarjetas } from "./PaginasTarjetas";
 
-const POR_PAGINA = 10;
+// Usos de las tarjetas: de 5 en 5.
+const POR_PAGINA = 5;
 
 /** Lo que cambia entre las tarjetas de contingencia y las de acceso. */
 const TEXTOS: Record<TipoTarjeta, { titulo: string; descripcion: string; carne: string; nueva: string }> = {
