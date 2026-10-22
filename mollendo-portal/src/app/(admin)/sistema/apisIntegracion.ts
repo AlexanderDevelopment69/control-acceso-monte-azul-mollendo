@@ -65,7 +65,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/eventos-acceso/ingreso",
     metodo: "POST",
     descripcion:
-      "El DNI del ingreso (lo usan los lectores; también se puede llamar con la clave de equipo). Si la persona no está registrada, está de baja, ya figura dentro, no tiene documentos o tiene alguno vencido, se deniega aquí mismo. Si está en regla, se junta con la prueba de rostro y alcohol del G4 Pro de esa misma persona, según el orden del ingreso (Sistema y APIs → Orden del ingreso). Normal: vale la prueba hecha después del DNI; queda \"en espera\" 1 minuto y, sin prueba, \"No completó rostro y alcohol\". Facial primero: vale la prueba hecha antes del DNI; tiene 30 s desde que el Panel muestra \"pase su DNI\"; si el DNI llega antes que el aviso del G4, espera en silencio hasta 8 s; sin prueba previa, \"DNI antes del facial\". Aprobado → ingreso autorizado y relé de ingreso; alcohol alto → denegado \"Alcohol\" con su nombre.",
+      "El DNI del ingreso (lo usan los lectores; también se puede llamar con la clave de equipo). Si la persona no está registrada, está de baja, ya figura dentro, no tiene documentos o tiene alguno vencido, se deniega aquí mismo. Si está en regla, se junta con la prueba de rostro y alcohol del G4 Pro de esa misma persona, según el orden del ingreso (Sistema y APIs → Orden del ingreso). Normal: vale la prueba hecha después del DNI; queda en espera 1 minuto y, sin prueba, No completó rostro y alcohol. Facial primero: vale la prueba hecha antes del DNI; tiene 30 s desde que el Panel muestra pase su DNI; si el DNI llega antes que el aviso del G4, espera en silencio hasta 8 s; sin prueba previa, DNI antes del facial. Aprobado → ingreso autorizado y relé de ingreso; alcohol alto → denegado Alcohol con su nombre.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -155,14 +155,14 @@ DNI leído en ingreso: pendiente_verificacion`,
   "motivos": { "personaNoRegistrada": true }
 }`,
     notas:
-      "Antipassback estricto: sin un ingreso registrado se deniega (\"No registra ingreso\") y no se abre. Si el controlador estaba sin internet, deja salir y la registra después con su hora.",
+      "Antipassback estricto: sin un ingreso registrado se deniega (No registra ingreso) y no se abre. Si el controlador estaba sin internet, deja salir y la registra después con su hora.",
   },
   {
-    nombre: "Tarjeta de contingencia (sin DNI)",
+    nombre: "Tarjetas de contingencia y de acceso (QR)",
     endpoint: "/eventos-acceso/tarjeta",
     metodo: "POST",
     descripcion:
-      "El QR de una tarjeta de contingencia leído por un lector de DNI (lo manda el controlador). La tarjeta sola no abre: en el ingreso (orden \"facial primero\") entra quien aprobó rostro y alcohol y espera su DNI, si es una sola persona; si la prueba todavía no llegó, la espera hasta 8 s, como un DNI. En la salida, sale el personal elegido en el Panel (\"Salida sin DNI\"). Baja, antipassback y documentos se revisan igual que con el DNI, y el ingreso o la salida queda a nombre del personal, con la tarjeta. Una tarjeta no registrada, desactivada o vencida, o pasada sin nadie esperando, se rechaza: suena el aviso de denegado de esa puerta y queda en los usos de la tarjeta.",
+      "El QR de una tarjeta leído por un lector de DNI (lo manda el controlador; las dos usan el mismo formato y el servidor decide por el tipo). Tarjeta de contingencia (sin DNI): sola no abre; en el ingreso (orden facial primero) entra quien aprobó rostro y alcohol y espera su DNI, si es una sola persona; si la prueba todavía no llegó, la espera hasta 8 s, como un DNI. En la salida, sale el personal elegido en el Panel (Salida sin DNI). Baja, antipassback y documentos se revisan igual que con el DNI, y el ingreso o la salida queda a nombre del personal, con la tarjeta. Tarjeta de acceso (visitas, autoridades): abre sola el molinete de esa puerta, sin rostro, alcohol ni DNI (también con la verificación manual activa o en cualquier orden); queda sin persona, como Tarjeta de acceso N.º …, y no cuenta en Presentes ni en horas-hombre. Una tarjeta no registrada, desactivada o vencida, o una de contingencia pasada sin nadie esperando, se rechaza: suena el aviso de denegado de esa puerta y queda en los usos de la tarjeta.",
     autenticacion: "Clave de equipo (X-API-Key)",
     tipo: "real",
     headers: ["Content-Type: application/json", "X-API-Key: <DEVICE_API_KEY>"],
@@ -183,13 +183,24 @@ DNI leído en ingreso: pendiente_verificacion`,
   "dniQueSoplo": "12345678"
 }
 
+// 201 Created — tarjeta de acceso: abre sola, sin persona
+{
+  "eventoId": 213,
+  "tipoMovimiento": "ingreso",
+  "resultado": "autorizado",
+  "persona": null,
+  "numeroDocumento": null,
+  "motivos": {},
+  "tarjetaAcceso": 1
+}
+
 // 201 Created — rechazada (no abre)
 {
   "resultado": "denegado",
-  "mensaje": "Nadie eligió al personal en el Panel (\"Salida sin DNI\")"
+  "mensaje": "Nadie eligió al personal en el Panel (Salida sin DNI)"
 }`,
     notas:
-      "Las tarjetas las maneja el administrador en Contingencias → Tarjetas de contingencia, en el menú (GET/POST /tarjetas-contingencia, PATCH y DELETE /tarjetas-contingencia/:id (eliminar, solo si nunca se usó), POST /tarjetas-contingencia/:id/cambiar-codigo y GET /tarjetas-contingencia/:id/qr para imprimir); solo el administrador las ve y las administra (también sus usos: GET /tarjetas-contingencia/usos). El código va solo en el QR: la API no lo devuelve. Sin internet, el controlador no la manda y suena el aviso. Con la verificación manual activa o en el orden normal, la tarjeta no sirve.",
+      "Las tarjetas las maneja el administrador en Contingencias → Tarjetas de contingencia y Tarjetas de acceso, en el menú (GET/POST /tarjetas-contingencia, con ?tipo=acceso o tipo: acceso para las de acceso; cada tipo con su numeración; PATCH y DELETE /tarjetas-contingencia/:id (eliminar, solo si nunca se usó), POST /tarjetas-contingencia/:id/cambiar-codigo y GET /tarjetas-contingencia/:id/qr para imprimir); solo el administrador las ve y las administra (también sus usos: GET /tarjetas-contingencia/usos, con ?tipo=acceso para las de acceso). El código va solo en el QR: la API no lo devuelve. Sin internet, el controlador no la manda y suena el aviso (tampoco la de acceso). Con la verificación manual activa o en el orden normal, la de contingencia no sirve; la de acceso sí.",
   },
   {
     nombre: "Salida sin DNI (Panel de vigilancia)",
@@ -213,14 +224,14 @@ DNI leído en ingreso: pendiente_verificacion`,
 
 // 400 — Esa persona figura fuera: no tiene una salida pendiente`,
     notas:
-      "La salida queda con la tarjeta y con quién eligió al personal (\"Tarjeta de contingencia · correo\" en el Panel). Elegir y cancelar quedan en la Auditoría.",
+      "La salida queda con la tarjeta y con quién eligió al personal (Tarjeta de contingencia · correo en el Panel). Elegir y cancelar quedan en la Auditoría.",
   },
   {
     nombre: "Contingencia sin lector (lector de DNI desconectado)",
     endpoint: "/eventos-acceso/sin-lector · /eventos-acceso/salida-sin-lector",
     metodo: "GET · POST",
     descripcion:
-      "Con el lector de DNI de una puerta desconectado y el controlador en línea, la contingencia se activa sola. GET dice qué puertas están sin lector. Ingreso (facial primero): quien aprueba rostro y alcohol entra sin pasar el DNI. Salida: POST abre la salida de quien figura dentro (lo usa \"Salida\" en Presentes ahora); solo con el lector de salida desconectado. En tiempo real se avisa por WebSocket (/ws/eventos): sin-lector.",
+      "Con el lector de DNI de una puerta desconectado y el controlador en línea, la contingencia se activa sola. GET dice qué puertas están sin lector. Ingreso (facial primero): quien aprueba rostro y alcohol entra sin pasar el DNI. Salida: POST abre la salida de quien figura dentro (lo usa Salida en Presentes ahora); solo con el lector de salida desconectado. En tiempo real se avisa por WebSocket (/ws/eventos): sin-lector.",
     autenticacion: "JWT (Administrador / Vigilancia)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
@@ -234,14 +245,14 @@ DNI leído en ingreso: pendiente_verificacion`,
 
 // 400 — El lector de salida ya está conectado: la persona pasa su DNI`,
     notas:
-      "Queda marcado en el Panel (\"Sin lector de DNI: identificado por rostro\" / \"Salida sin lector · correo\"), en el reporte de ingresos y salidas y, la salida, en la Auditoría (\"apertura manual\"). Termina sola al volver el lector.",
+      "Queda marcado en el Panel (Sin lector de DNI: identificado por rostro / Salida sin lector · correo), en el reporte de ingresos y salidas y, la salida, en la Auditoría (apertura manual). Termina sola al volver el lector.",
   },
   {
     nombre: "Verificación manual (equipo facial o alcoholímetro fuera de servicio)",
     endpoint: "/eventos-acceso/verificacion-manual · /eventos-acceso/en-espera/:id/decision",
     metodo: "GET · POST · DELETE",
     descripcion:
-      "La activan el vigilante o el administrador desde el Panel (POST, con motivo obligatorio y la causa: \"terminal\", \"alcoholimetro\" o \"ambar\", según desde dónde se activó) y la terminan con DELETE; GET dice si está activa. Mientras tanto, cada DNI en regla queda esperando la decisión del vigilante (2 minutos): POST /eventos-acceso/en-espera/:id/decision con \"grado\" y lo que marcó el alcoholímetro de repuesto en mg/L (decide el sistema, con el mismo umbral del equipo facial), \"marco-apto\" o \"marco-alcohol\" si no muestra el número, o \"no-es-la-persona\". En tiempo real: verificacion-manual.",
+      "La activan el vigilante o el administrador desde el Panel (POST, con motivo obligatorio y la causa: terminal, alcoholimetro o ambar, según desde dónde se activó) y la terminan con DELETE; GET dice si está activa. Mientras tanto, cada DNI en regla queda esperando la decisión del vigilante (2 minutos): POST /eventos-acceso/en-espera/:id/decision con grado y lo que marcó el alcoholímetro de repuesto en mg/L (decide el sistema, con el mismo umbral del equipo facial), marco-apto o marco-alcohol si no muestra el número, o no-es-la-persona. En tiempo real: verificacion-manual.",
     autenticacion: "JWT (Administrador / Vigilancia)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
@@ -257,14 +268,14 @@ DNI leído en ingreso: pendiente_verificacion`,
 // POST …/decision
 { "ok": true, "autorizado": true }`,
     notas:
-      "El ingreso queda marcado \"Manual\" con el grado (o \"sin número\") y quién decidió, en el Panel y en el reporte (gradoManual, manualSinNumero). Activarla y terminarla quedan en la Auditoría. Con la verificación manual activa, la prueba del equipo facial y la tarjeta de contingencia no se usan.",
+      "El ingreso queda marcado Manual con el grado (o sin número) y quién decidió, en el Panel y en el reporte (gradoManual, manualSinNumero). Activarla y terminarla quedan en la Auditoría. Con la verificación manual activa, la prueba del equipo facial y la tarjeta de contingencia no se usan.",
   },
   {
     nombre: "Ingresos en espera (Panel de vigilancia)",
     endpoint: "/eventos-acceso/en-espera",
     metodo: "GET",
     descripcion:
-      "Lo que el Panel muestra mientras se completa un ingreso: en el orden DNI → Facial + Alcohol, los DNI en regla que esperan su prueba de rostro y alcohol (1 minuto); en \"facial primero\", las aprobaciones del G4 Pro que esperan el DNI de quien sopló (\"Aprobó … pase su DNI\", con su foto, 30 s). En tiempo real se avisan por WebSocket (/ws/eventos): ingreso-en-espera y ingreso-espera-terminada.",
+      "Lo que el Panel muestra mientras se completa un ingreso: en el orden DNI → Facial + Alcohol, los DNI en regla que esperan su prueba de rostro y alcohol (1 minuto); en facial primero, las aprobaciones del G4 Pro que esperan el DNI de quien sopló (Aprobó … pase su DNI, con su foto, 30 s). En tiempo real se avisan por WebSocket (/ws/eventos): ingreso-en-espera y ingreso-espera-terminada.",
     autenticacion: "JWT (Administrador / Vigilancia)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>"],
@@ -300,7 +311,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     "enCola": false
   }
 ]`,
-    notas: "fotoVersion cambia con cada foto nueva: el Panel la usa para no mostrar una foto vieja. La foto se pide aparte (GET /personas/:id/foto, con ?miniatura=1 la reducida de 160 px para las listas). En \"facial primero\", un DNI que espera en silencio el aviso del G4 (hasta 8 s) no aparece en la lista. enCola solo se usa con el G4 en modo control de acceso (se habilita a una persona a la vez).",
+    notas: "fotoVersion cambia con cada foto nueva: el Panel la usa para no mostrar una foto vieja. La foto se pide aparte (GET /personas/:id/foto, con ?miniatura=1 la reducida de 160 px para las listas). En facial primero, un DNI que espera en silencio el aviso del G4 (hasta 8 s) no aparece en la lista. enCola solo se usa con el G4 en modo control de acceso (se habilita a una persona a la vez).",
   },
   {
     nombre: "Comando molinete (relés USB)",
@@ -318,14 +329,14 @@ DNI leído en ingreso: pendiente_verificacion`,
     ejemploRespuesta: `// 201 Created — orden enviada (false si el controlador o el relé no están conectados)
 { "enviado": true }`,
     notas:
-      "torniqueteId: \"ingreso\" o \"salida\". Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). \"cerrar\" no hace nada: el molinete se cierra solo después del paso. Cada apertura queda en la Auditoría (\"apertura manual\", con quién). En la mini PC como servidor local, da el pulso directo en su relé.",
+      "torniqueteId: ingreso o salida. Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). cerrar no hace nada: el molinete se cierra solo después del paso. Cada apertura queda en la Auditoría (apertura manual, con quién). En la mini PC como servidor local, da el pulso directo en su relé.",
   },
   {
     nombre: "Registro de personas y rostros en el G4 Pro (saliente)",
     endpoint: "/personas · /personas/:id/foto · /integraciones/g4pro/sincronizar",
     metodo: "POST",
     descripcion:
-      "Al registrar o editar a una persona, el backend la carga en el G4 Pro con su DNI y su nombre (USERINFO en modo asistencia). Al subir su foto, se la envía convertida (JPG ≤ 20 KB) y el equipo la convierte en el rostro que reconoce: no hace falta registrar rostros a mano en el equipo. POST /integraciones/g4pro/sincronizar (solo Administrador; también a diario si se activa la revisión diaria) deja el equipo igual al sistema: consulta sus usuarios (DATA QUERY USERINFO), borra a quien el sistema no conoce (registrados a mano en el equipo), registra con foto al personal activo que falta y vuelve a poner los datos del sistema a quien tenga datos cambiados a mano en el equipo (contraseña, administrador, tarjeta o nombre; el rostro no cambia). Con ?simular=true solo informa qué haría. También desde la tarjeta \"Sincronización con el G4 Pro\" de esta página.",
+      "Al registrar o editar a una persona, el backend la carga en el G4 Pro con su DNI y su nombre (USERINFO en modo asistencia). Al subir su foto, se la envía convertida (JPG ≤ 20 KB) y el equipo la convierte en el rostro que reconoce: no hace falta registrar rostros a mano en el equipo. POST /integraciones/g4pro/sincronizar (solo Administrador; también a diario si se activa la revisión diaria) deja el equipo igual al sistema: consulta sus usuarios (DATA QUERY USERINFO), borra a quien el sistema no conoce (registrados a mano en el equipo), registra con foto al personal activo que falta y vuelve a poner los datos del sistema a quien tenga datos cambiados a mano en el equipo (contraseña, administrador, tarjeta o nombre; el rostro no cambia). Con ?simular=true solo informa qué haría. También desde la tarjeta Sincronización con el G4 Pro de esta página.",
     autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: multipart/form-data (para la foto)"],
@@ -363,7 +374,7 @@ Persona 12345678 encolada para 1 equipo(s), con foto
     endpoint: "/integraciones/g4pro/marcaciones",
     metodo: "GET",
     descripcion:
-      "Las pruebas de rostro y alcohol que mandó el G4 Pro, por páginas y la más reciente primero (como el Panel: pagina, porPagina hasta 100, busqueda por nombre o DNI, desde/hasta AAAA-MM-DD según la llegada): hora del soplido y N.º de marcación, cuándo llegó y la demora, persona, grado, qué hizo el sistema con la prueba y el ingreso en que terminó. Lo usa la página \"Monitor del G4 Pro\" (botón Abrir monitor de esta página), que con el día de hoy se actualiza al instante con el evento g4-marcacion del canal en vivo (/ws/eventos).",
+      "Las pruebas de rostro y alcohol que mandó el G4 Pro, por páginas y la más reciente primero (como el Panel: pagina, porPagina hasta 100, busqueda por nombre o DNI, desde/hasta AAAA-MM-DD según la llegada): hora del soplido y N.º de marcación, cuándo llegó y la demora, persona, grado, qué hizo el sistema con la prueba y el ingreso en que terminó. Lo usa la página Monitor del G4 Pro (botón Abrir monitor de esta página), que con el día de hoy se actualiza al instante con el evento g4-marcacion del canal en vivo (/ws/eventos).",
     autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>"],
@@ -389,7 +400,7 @@ Persona 12345678 encolada para 1 equipo(s), con foto
       "demoraSegundos": 2,
       "alcohol": "0.00g/L",
       "aprobado": true,
-      "decision": "Aprobó: \"pase su DNI\" (30 s)",
+      "decision": "Aprobó: pase su DNI (30 s)",
       "ingreso": {
         "id": 500,
         "resultado": "autorizado",
@@ -410,7 +421,7 @@ Persona 12345678 encolada para 1 equipo(s), con foto
     endpoint: "/eventos-acceso/modo-ingreso",
     metodo: "GET · PUT",
     descripcion:
-      "Qué orden rige: \"DNI → Facial + Alcohol → Molinete\" (facialPrimero: false) o \"Facial + Alcohol → DNI → Molinete\" (facialPrimero: true). GET lo consulta (también el Panel de vigilancia); PUT lo cambia (solo Administrador; queda en la auditoría con quién y cuándo). Es la tarjeta \"Orden del ingreso\" de esta página.",
+      "Qué orden rige: DNI → Facial + Alcohol → Molinete (facialPrimero: false) o Facial + Alcohol → DNI → Molinete (facialPrimero: true). GET lo consulta (también el Panel de vigilancia); PUT lo cambia (solo Administrador; queda en la auditoría con quién y cuándo). Es la tarjeta Orden del ingreso de esta página.",
     autenticacion: "JWT (GET: Administrador / Vigilancia · PUT: Administrador)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
@@ -432,7 +443,7 @@ Persona 12345678 encolada para 1 equipo(s), con foto
     endpoint: "/integraciones/g4pro/sincronizacion-diaria",
     metodo: "PUT",
     descripcion:
-      "Activa la sincronización automática con el G4 Pro una vez al día, a la hora elegida (0 a 23, hora de Lima), o la desactiva (null). Es el interruptor \"Revisión diaria\" de la tarjeta \"Sincronización con el G4 Pro\". El estado (activa, hora, desde y cambiadoPor) viene en GET /panel/estado-sistema, en sincronizacionG4.diaria.",
+      "Activa la sincronización automática con el G4 Pro una vez al día, a la hora elegida (0 a 23, hora de Lima), o la desactiva (null). Es el interruptor Revisión diaria de la tarjeta Sincronización con el G4 Pro. El estado (activa, hora, desde y cambiadoPor) viene en GET /panel/estado-sistema, en sincronizacionG4.diaria.",
     autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Authorization: Bearer <token>", "Content-Type: application/json"],
