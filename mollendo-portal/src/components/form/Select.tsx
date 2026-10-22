@@ -13,6 +13,8 @@ interface SelectProps {
   defaultValue?: string;
   /** false = sin texto de ayuda (cuando una opción real ya hace de "todos"). */
   mostrarPlaceholder?: boolean;
+  /** Opciones largas: se ven completas en vez de cortarse con "…". */
+  textoCompleto?: boolean;
 }
 
 /**
@@ -26,6 +28,7 @@ const Select: React.FC<SelectProps> = ({
   className = "",
   defaultValue = "",
   mostrarPlaceholder = true,
+  textoCompleto = false,
 }) => {
   const [valor, setValor] = useState(defaultValue);
 
@@ -33,6 +36,7 @@ const Select: React.FC<SelectProps> = ({
     <Combobox
       className={className}
       options={options}
+      textoCompleto={textoCompleto}
       value={valor}
       placeholder={mostrarPlaceholder ? placeholder : (options[0]?.label ?? placeholder)}
       onChange={(v) => {

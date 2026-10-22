@@ -215,7 +215,7 @@ Un único formulario permite registrar a la persona y sus documentos:
 2. **Empresa:** se elige de la lista de empresas activas. Si no está, el enlace "¿No está? Regístrala en Empresas." abre esa vista en otra pestaña (sin perder lo escrito) y, al volver, la lista se actualiza sola. Con el perfil elegido, la lista muestra primero las empresas que ya tienen personal de ese perfil (con cuántos) y después las demás.
 3. **Datos del personal:** tipo de documento (DNI, carné de extranjería o pasaporte), número, nombres y apellidos.
 4. **Foto** (obligatoria): de frente y con buena luz; JPG, PNG o WEBP de hasta 5 MB. El sistema la envía al terminal facial, que la usa para reconocer a la persona; no es necesario registrar el rostro en el equipo.
-5. **Documentos** (al menos uno): nombre del documento (texto libre, por ejemplo "SCTR"), fecha de vencimiento (en blanco si no tiene vencimiento; no se acepta una fecha ya pasada, porque el documento quedaría vencido al instante) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
+5. **Documentos** (al menos uno): nombre del documento, elegido de una **lista fija** (desde el 22/10/2026): SCTR Salud y Pensión; Certificado de Aptitud Médico Ocupacional (CAMO); Certificado de Inducción SSMA – Visitas, – Contratistas o – Personal de Planta, fecha de vencimiento (en blanco si no tiene vencimiento; no se acepta una fecha ya pasada, porque el documento quedaría vencido al instante) y archivo (PDF, JPG, PNG, WEBP o Word, hasta 20 MB). Se pueden agregar varios.
 
 Si ocurre un error durante el registro (por ejemplo, un archivo no válido), la información ya guardada no se duplica al corregir y volver a guardar.
 
@@ -366,7 +366,7 @@ Menú **Contingencias → Tarjetas de contingencia**. Cada tarjeta se muestra co
 | RN-08a | **Antipassback estricto** (decisión del cliente, 17/10/2026): no se puede **ingresar** si el último movimiento autorizado de la persona es un ingreso (motivo **"Ya figura dentro"**), ni **salir** si no lo es (motivo **"No registra ingreso"**). En ambos casos no se abre el molinete y suena el aviso de denegado. **Corrección manual:** el vigilante o el administrador, desde el movimiento denegado en el Panel de vigilancia, registra la salida ("Registrar salida manual") o el ingreso ("Registrar ingreso manual") que faltan, con un **motivo obligatorio**; no abre el molinete (después la persona vuelve a pasar su DNI). La corrección queda marcada como "Corrección manual" en la tabla, en el reporte de ingresos y salidas (columna "Verificación", con quién y el motivo) y en la auditoría, y no suma horas-hombre. **Excepción:** sin internet, el controlador deja salir con la lista del personal guardada (no puede saber quién está dentro); esas salidas se registran como autorizadas al volver la conexión. |
 | RN-09 | Un documento de identidad **no registrado** se deniega, tanto en el ingreso como en la salida, y el intento queda en el historial. |
 | RN-10 | **Documento de identidad:** el DNI tiene 8 dígitos; el carné de extranjería y el pasaporte, letras y números. Se guarda sin espacios y en mayúsculas. No puede haber dos personas con el mismo tipo y número. |
-| RN-11 | Los **nombres de documento** no distinguen mayúsculas: "sctr" y "SCTR" son el mismo tipo de documento. |
+| RN-11 | Los **nombres de documento** se eligen de una lista fija de cinco (sección 4.2); los escritos a mano antes del 22/10/2026 siguen valiendo y se renuevan con su nombre. No distinguen mayúsculas. |
 | RN-12 | **Foto** obligatoria al registrar al personal: JPG, PNG o WEBP de hasta 5 MB. **Archivos de documentos:** PDF, JPG, PNG, WEBP o Word, hasta 20 MB. |
 | RN-13 | **Contraseñas** de al menos 8 caracteres. Al cambiarla se cierran las demás sesiones de esa cuenta. |
 | RN-14 | Toda creación, modificación o eliminación de datos queda en la **Auditoría** con el usuario y la fecha; también los inicios de sesión, las aperturas del molinete sin DNI, la salida sin DNI, la sincronización con el terminal facial, las descargas de reportes, los archivos de documentos abiertos y cada desconexión y vuelta de los equipos (a nombre de "Sistema"). |
@@ -398,7 +398,7 @@ Menú **Contingencias → Tarjetas de contingencia**. Cada tarjeta se muestra co
 |---|---|
 | Empresa | RUC (único), razón social, correo y teléfono de contacto, estado (activa / inactiva). |
 | Persona (personal) | Empresa, perfil (vacío en las registradas antes de que existiera), tipo y número de documento de identidad (únicos juntos), nombres, apellidos, foto, estado (activo / dado de baja). |
-| Tipo de documento | Nombre (único, sin distinguir mayúsculas), por ejemplo "SCTR Salud". |
+| Tipo de documento | Nombre (único, sin distinguir mayúsculas), de la lista fija, por ejemplo "SCTR Salud y Pensión". |
 | Documento de la persona | Persona, tipo de documento, fecha de vencimiento (opcional), archivo y número de versión. |
 | Evento de acceso | Persona (vacía si no está registrada), documento leído, ingreso o salida, resultado, motivos de denegación, fecha y hora, molinete; y cómo se verificó: facial primero (con quién sopló), verificación manual o corrección manual (con quién), tarjeta de contingencia o sin lector. |
 | Prueba del terminal facial | Cada aviso del terminal: hora de la prueba, grado de alcohol, hora de llegada y qué hizo el sistema con ella (monitor). |

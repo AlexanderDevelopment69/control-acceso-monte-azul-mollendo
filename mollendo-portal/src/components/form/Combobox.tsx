@@ -22,6 +22,8 @@ interface ComboboxProps {
   className?: string;
   /** Más bajo (h-9), para usarlo junto a otros controles en una línea. */
   compacto?: boolean;
+  /** Opciones largas: se ven completas (pasan a otra línea) en vez de cortarse con "…". */
+  textoCompleto?: boolean;
   disabled?: boolean;
   "aria-label"?: string;
 }
@@ -39,6 +41,7 @@ export default function Combobox({
   buscable,
   className = "",
   compacto = false,
+  textoCompleto = false,
   disabled = false,
   "aria-label": ariaLabel,
 }: ComboboxProps) {
@@ -130,13 +133,13 @@ export default function Combobox({
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => (abierto ? setAbierto(false) : abrir())}
-        className={`flex ${compacto ? "h-9 px-3" : "h-11 px-4"} w-full disabled:cursor-not-allowed disabled:opacity-60 items-center justify-between gap-2 rounded-lg border bg-transparent text-left text-sm shadow-theme-xs transition-colors focus:outline-hidden dark:bg-gray-900 ${
+        className={`flex ${compacto ? "h-9 px-3" : textoCompleto ? "min-h-11 px-4 py-2" : "h-11 px-4"} w-full disabled:cursor-not-allowed disabled:opacity-60 items-center justify-between gap-2 rounded-lg border bg-transparent text-left text-sm shadow-theme-xs transition-colors focus:outline-hidden dark:bg-gray-900 ${
           abierto
             ? "border-brand-300 ring-3 ring-brand-500/10 dark:border-brand-800"
             : "border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600"
         }`}
       >
-        <span className={`truncate ${elegida ? "text-gray-800 dark:text-white/90" : "text-gray-400"}`}>
+        <span className={`${textoCompleto ? "min-w-0" : "truncate"} ${elegida ? "text-gray-800 dark:text-white/90" : "text-gray-400"}`}>
           {elegida?.label ?? placeholder}
         </span>
         <ChevronDownIcon
@@ -196,7 +199,7 @@ export default function Combobox({
                     i === activa ? "bg-gray-100 dark:bg-white/[0.06]" : ""
                   } ${seleccionada ? "font-medium text-brand-600 dark:text-brand-400" : "text-gray-700 dark:text-gray-300"}`}
                 >
-                  <span className="truncate">{o.label}</span>
+                  <span className={textoCompleto ? "min-w-0" : "truncate"}>{o.label}</span>
                   <span className="flex shrink-0 items-center gap-2">
                     {o.detalle && <span className="text-xs font-normal text-gray-400 dark:text-gray-500">{o.detalle}</span>}
                     {seleccionada && <CheckLineIcon className="size-4 shrink-0" />}

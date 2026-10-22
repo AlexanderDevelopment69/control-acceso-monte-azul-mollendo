@@ -6,6 +6,7 @@ import { documentosApi, personasApi, tiposDocumentoApi } from "@/lib/api/endpoin
 import { ApiError } from "@/lib/api/client";
 import type { Empresa, Persona } from "@/lib/api/types";
 import { OPCIONES_PERFIL, PERFIL_LABEL, type Perfil } from "@/lib/perfiles";
+import { OPCIONES_DOCUMENTO } from "@/lib/documentos";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
@@ -166,7 +167,7 @@ function Formulario({
     for (const [i, f] of filas.entries()) {
       if (f.subido) continue;
       const n = filas.length > 1 ? ` ${i + 1}` : "";
-      if (!f.nombre.trim()) return `Documento${n}: escriba su nombre`;
+      if (!f.nombre.trim()) return n ? `Documento${n}: seleccione el documento` : "Seleccione el documento";
       if (!f.archivo) return `Documento${n}: adjunte el archivo`;
       const problemaArchivo = validarArchivoDocumento(f.archivo);
       if (problemaArchivo) return `Documento${n}: ${problemaArchivo}`;
@@ -336,13 +337,16 @@ function Formulario({
                     <p className="text-sm text-success-600 dark:text-success-500">✔ Documento {i + 1} subido.</p>
                   ) : (
                     <>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {/* Cada campo en su fila, a todo el ancho (los nombres de la lista son largos). */}
+                      <div className="grid grid-cols-1 gap-3">
                         <div>
                           <Label>Nombre del documento</Label>
-                          <Input
-                            placeholder="p. ej. SCTR"
+                          <Select
+                            textoCompleto
                             defaultValue={f.nombre}
-                            onChange={(e) => actualizarFila(f.clave, { nombre: e.target.value })}
+                            onChange={(v) => actualizarFila(f.clave, { nombre: v })}
+                            placeholder="Seleccione un documento"
+                            options={OPCIONES_DOCUMENTO}
                           />
                         </div>
                         <div>
@@ -356,14 +360,14 @@ function Formulario({
                           />
                           <p className="mt-1 text-xs text-gray-400">Vacío si no vence.</p>
                         </div>
-                      </div>
-                      <div>
-                        <Label>Archivo</Label>
-                        <FileInput
-                          accept={ACEPTA_DOCUMENTO}
-                          onChange={(e) => actualizarFila(f.clave, { archivo: e.target.files?.[0] ?? null })}
-                        />
-                        <p className="mt-1 text-xs text-gray-400">{AYUDA_ARCHIVO_DOCUMENTO}</p>
+                        <div>
+                          <Label>Archivo</Label>
+                          <FileInput
+                            accept={ACEPTA_DOCUMENTO}
+                            onChange={(e) => actualizarFila(f.clave, { archivo: e.target.files?.[0] ?? null })}
+                          />
+                          <p className="mt-1 text-xs text-gray-400">{AYUDA_ARCHIVO_DOCUMENTO}</p>
+                        </div>
                       </div>
                     </>
                   )}
