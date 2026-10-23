@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { SinLector } from "@/lib/api/types";
 import { eventosAccesoApi } from "@/lib/api/endpoints";
 import { escucharEventos } from "@/lib/ws";
-import { InfoIcon } from "@/icons";
+import { AvisoPanel } from "./AvisoPanel";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 /*
@@ -42,21 +42,12 @@ export function useSinLector(): SinLector {
   return estado;
 }
 
-/** Franja roja de una contingencia "sin lector", con una acción opcional a la derecha. */
+/** Aviso de una contingencia "sin lector" (píldora roja), con una acción opcional a la derecha. */
 export function FranjaSinLector({ titulo, children, accion }: { titulo: string; children: React.ReactNode; accion?: React.ReactNode }) {
   return (
-    <div
-      role="status"
-      className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-error-300 bg-error-50 px-4 py-3 text-sm dark:border-error-500/40 dark:bg-error-500/10"
-    >
-      <p className="flex min-w-0 items-start gap-2.5 text-gray-700 dark:text-gray-300">
-        <InfoIcon className="mt-0.5 size-5 shrink-0 text-error-600 dark:text-error-400" aria-hidden />
-        <span>
-          <span className="font-semibold text-error-700 dark:text-error-400">{titulo}</span> {children}
-        </span>
-      </p>
-      {accion}
-    </div>
+    <AvisoPanel tono="error" etiqueta="Contingencia" pildora={titulo.replace(/\.$/, "")} acciones={accion}>
+      {children}
+    </AvisoPanel>
   );
 }
 

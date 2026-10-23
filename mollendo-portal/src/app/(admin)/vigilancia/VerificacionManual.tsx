@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { FotoGuardada } from "@/components/personal/FotoPersonal";
-import { CheckCircleIcon, InfoIcon } from "@/icons";
+import { AvisoPanel } from "./AvisoPanel";
 
 /*
  * Verificación manual (contingencia por falla del equipo facial o del
@@ -43,28 +43,25 @@ export function FranjaVerificacionManual({
   const p = estado.periodo;
   if (!estado.activa || !p) return null;
   return (
-    <div
-      role="status"
-      className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-300 bg-brand-50 px-4 py-3 text-sm dark:border-brand-500/40 dark:bg-brand-500/10"
+    <AvisoPanel
+      tono="brand"
+      etiqueta="Verificación manual"
+      pildora="Activa"
+      acciones={
+        <Button type="button" size="sm" variant="outline" disabled={terminando} onClick={onTerminar}>
+          {terminando ? "Volviendo…" : "Volver a modo normal"}
+        </Button>
+      }
     >
-      <p className="flex min-w-0 items-start gap-2.5 leading-relaxed text-gray-700 dark:text-gray-300">
-        <InfoIcon className="mt-0.5 size-5 shrink-0 text-brand-500 dark:text-brand-400" aria-hidden />
-        <span>
-        <span className="font-semibold text-brand-600 dark:text-brand-400">Verificación manual activa</span> desde{" "}
-        {diaYHora(p.desde)}
-        {p.activadaPor && (
-          <>
-            , activada por <strong>{p.activadaPor}</strong>
-          </>
-        )}
-        .<br />
-        Motivo: {p.motivo}
-        </span>
-      </p>
-      <Button type="button" size="sm" variant="outline" disabled={terminando} onClick={onTerminar}>
-        {terminando ? "Volviendo…" : "Volver a modo normal"}
-      </Button>
-    </div>
+      Desde {diaYHora(p.desde)}
+      {p.activadaPor && (
+        <>
+          , activada por <strong className="text-gray-800 dark:text-white/90">{p.activadaPor}</strong>
+        </>
+      )}
+      .<br />
+      Motivo: {p.motivo}
+    </AvisoPanel>
   );
 }
 
@@ -84,26 +81,23 @@ export function AvisoEquipoVolvio({
   onSeguir: () => void;
 }) {
   return (
-    <div
-      role="status"
-      className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success-300 bg-success-50 px-4 py-3 text-sm dark:border-success-500/40 dark:bg-success-500/10"
+    <AvisoPanel
+      tono="success"
+      etiqueta="Verificación manual"
+      pildora={`${equipo} volvió a conectarse`}
+      acciones={
+        <>
+          <Button type="button" size="sm" disabled={terminando} onClick={onVolver}>
+            {terminando ? "Volviendo…" : "Volver a modo normal"}
+          </Button>
+          <Button type="button" size="sm" variant="outline" disabled={terminando} onClick={onSeguir}>
+            Seguir en manual
+          </Button>
+        </>
+      }
     >
-      <p className="flex min-w-0 items-start gap-2.5 text-gray-700 dark:text-gray-300">
-        <CheckCircleIcon className="mt-0.5 size-5 shrink-0 text-success-600 dark:text-success-400" aria-hidden />
-        <span>
-          <span className="font-semibold text-success-700 dark:text-success-400">{equipo} volvió a conectarse.</span> ¿Volver
-          a modo normal?
-        </span>
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" disabled={terminando} onClick={onVolver}>
-          {terminando ? "Volviendo…" : "Volver a modo normal"}
-        </Button>
-        <Button type="button" size="sm" variant="outline" disabled={terminando} onClick={onSeguir}>
-          Seguir en manual
-        </Button>
-      </div>
-    </div>
+      ¿Volver a modo normal?
+    </AvisoPanel>
   );
 }
 

@@ -10,7 +10,7 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { FotoGuardada } from "@/components/personal/FotoPersonal";
 import { useDiferido } from "@/lib/useDiferido";
-import { LockIcon } from "@/icons";
+import { AvisoPanel } from "./AvisoPanel";
 
 /*
  * Salida sin DNI (tarjeta de contingencia): en la salida no hay equipo facial
@@ -123,21 +123,18 @@ export function FranjaSalidaSinDni({ salida, onCancelar }: { salida: SalidaSinDn
   const queda = new Date(salida.hasta).getTime() - ahora;
   if (queda <= 0) return null;
   return (
-    <div
-      role="status"
-      className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning-300 bg-warning-50 px-4 py-3 text-sm dark:border-warning-500/40 dark:bg-warning-500/10"
+    <AvisoPanel
+      tono="warning"
+      etiqueta="Salida sin DNI"
+      pildora={`${salida.nombres} ${salida.apellidos} (DNI ${salida.numeroDocumento})`}
+      acciones={
+        <Button type="button" size="sm" variant="outline" onClick={onCancelar}>
+          Cancelar
+        </Button>
+      }
     >
-      <p className="flex min-w-0 items-start gap-2.5 text-gray-700 dark:text-gray-300">
-        <LockIcon className="mt-0.5 size-5 shrink-0 text-warning-600 dark:text-orange-400" aria-hidden />
-        <span>
-          <span className="font-semibold text-warning-700 dark:text-orange-400">Salida sin DNI:</span> {salida.nombres}{" "}
-          {salida.apellidos} (DNI {salida.numeroDocumento}). Pase la tarjeta por el lector de salida.{" "}
-          <span className="whitespace-nowrap font-medium tabular-nums">Quedan {minutosYSegundos(queda)}</span>
-        </span>
-      </p>
-      <Button type="button" size="sm" variant="outline" onClick={onCancelar}>
-        Cancelar
-      </Button>
-    </div>
+      Pase la tarjeta por el lector de salida.{" "}
+      <span className="whitespace-nowrap font-medium tabular-nums text-gray-800 dark:text-white/90">Quedan {minutosYSegundos(queda)}</span>
+    </AvisoPanel>
   );
 }

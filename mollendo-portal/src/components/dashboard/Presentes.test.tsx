@@ -98,7 +98,7 @@ describe("lista de presentes", () => {
     api.rol.actual = "vigilancia";
     api.sinLector.mockResolvedValue({ ingreso: false, salida: true });
     render(<Presentes />);
-    expect(await screen.findByText("Lector de DNI de salida sin conexión.")).toBeInTheDocument();
+    expect(await screen.findByText("Lector de DNI de salida sin conexión")).toBeInTheDocument();
     // El Excel es solo del administrador.
     expect(screen.queryByRole("button", { name: /Descargar Excel/ })).not.toBeInTheDocument();
     const fila = screen.getByText("Torres, Ana").closest("tr")!;

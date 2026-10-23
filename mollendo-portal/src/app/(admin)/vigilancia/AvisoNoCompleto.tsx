@@ -1,6 +1,7 @@
 import React from "react";
 import type { EventoAcceso } from "@/lib/api/types";
-import { AlertCircleIcon } from "@/icons";
+import Button from "@/components/ui/button/Button";
+import { AvisoPanel } from "./AvisoPanel";
 
 /** Qué revisar cuando alguien no completa rostro y alcohol (contingencias, sección 3.2). */
 export const PISTA_NO_COMPLETO =
@@ -88,42 +89,39 @@ export function AvisoNoCompletoBanner({
 }) {
   const hora = new Date(aviso.fechaHora).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
   return (
-    <div
-      role="status"
-      className="mb-6 flex items-start gap-3 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 text-sm dark:border-warning-500/30 dark:bg-warning-500/10"
-    >
-      <AlertCircleIcon className="mt-0.5 size-5 shrink-0 text-warning-600 dark:text-orange-400" aria-hidden />
-      <p className="min-w-0 flex-1 leading-relaxed text-gray-700 dark:text-gray-300">
-        <span className="font-semibold text-warning-700 dark:text-orange-400">
-          {aviso.persona} no completó rostro y alcohol ({hora}).
-        </span>{" "}
-        {equipoFacialDesconectado ? (
-          PISTA_EQUIPO_DESCONECTADO
-        ) : (
-          // PISTA_NO_COMPLETO, con el nombre del aviso en negrita.
-          <>
-            Si dice que no pudo soplar: revise si arriba dice <b>Alcoholímetro desconectado</b> y avise a soporte.
-          </>
-        )}
-        {onActivarManual && (
+    <AvisoPanel
+      tono="warning"
+      etiqueta="Ingreso"
+      pulso={false}
+      pildora={`${aviso.persona} no completó rostro y alcohol (${hora})`}
+      acciones={
+        <>
+          {onActivarManual && (
+            <Button type="button" size="sm" onClick={onActivarManual}>
+              Activar verificación manual
+            </Button>
+          )}
           <button
             type="button"
-            onClick={onActivarManual}
-            className="mt-2 block rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            onClick={onCerrar}
+            aria-label="Cerrar aviso"
+            title="Cerrar aviso"
+            className="rounded-md px-1.5 text-lg leading-none text-gray-500 hover:text-gray-700 focus-visible:outline-2 focus-visible:outline-brand-500 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            Activar verificación manual
+            ✕
           </button>
-        )}
-      </p>
-      <button
-        type="button"
-        onClick={onCerrar}
-        aria-label="Cerrar aviso"
-        title="Cerrar aviso"
-        className="-mr-1 shrink-0 rounded-md px-1.5 text-lg leading-none text-gray-500 hover:text-gray-700 focus-visible:outline-2 focus-visible:outline-brand-500 dark:text-gray-400 dark:hover:text-gray-200"
-      >
-        ✕
-      </button>
-    </div>
+        </>
+      }
+    >
+      {equipoFacialDesconectado ? (
+        PISTA_EQUIPO_DESCONECTADO
+      ) : (
+        // PISTA_NO_COMPLETO, con el nombre del aviso en negrita.
+        <>
+          Si dice que no pudo soplar: revise si arriba dice <b className="text-gray-800 dark:text-white/90">Alcoholímetro desconectado</b> y
+          avise a soporte.
+        </>
+      )}
+    </AvisoPanel>
   );
 }

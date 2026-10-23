@@ -34,7 +34,7 @@ describe("Verificación manual en el Panel", () => {
     const onTerminar = vi.fn();
     render(<FranjaVerificacionManual estado={ACTIVA} terminando={false} onTerminar={onTerminar} />);
     const franja = screen.getByRole("status");
-    expect(franja).toHaveTextContent("Verificación manual activa");
+    expect(franja).toHaveTextContent("Verificación manualActiva");
     expect(franja).toHaveTextContent("activada por vigilancia@mollendo.local");
     expect(franja).toHaveTextContent("Motivo: Equipo facial desconectado");
     await userEvent.click(screen.getByRole("button", { name: "Volver a modo normal" }));
@@ -48,7 +48,7 @@ describe("Verificación manual en el Panel", () => {
 
   it("si se activó por el alcoholímetro, la pregunta habla del alcoholímetro", () => {
     render(<AvisoEquipoVolvio equipo="El alcoholímetro" terminando={false} onVolver={() => {}} onSeguir={() => {}} />);
-    expect(screen.getByRole("status")).toHaveTextContent("El alcoholímetro volvió a conectarse. ¿Volver a modo normal?");
+    expect(screen.getByRole("status")).toHaveTextContent("El alcoholímetro volvió a conectarse¿Volver a modo normal?");
   });
 
   it("el motivo viene escrito según desde dónde se activa, y el texto dice que el sistema decide", () => {
@@ -63,7 +63,7 @@ describe("Verificación manual en el Panel", () => {
     const onVolver = vi.fn();
     const onSeguir = vi.fn();
     render(<AvisoEquipoVolvio terminando={false} onVolver={onVolver} onSeguir={onSeguir} />);
-    expect(screen.getByRole("status")).toHaveTextContent("El equipo facial volvió a conectarse. ¿Volver a modo normal?");
+    expect(screen.getByRole("status")).toHaveTextContent("El equipo facial volvió a conectarse¿Volver a modo normal?");
     await userEvent.click(screen.getByRole("button", { name: "Seguir en manual" }));
     await userEvent.click(screen.getByRole("button", { name: "Volver a modo normal" }));
     expect(onSeguir).toHaveBeenCalledTimes(1);

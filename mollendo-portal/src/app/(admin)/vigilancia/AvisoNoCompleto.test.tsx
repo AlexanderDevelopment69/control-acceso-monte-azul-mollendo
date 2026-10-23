@@ -80,7 +80,7 @@ describe("Aviso de “no completó rostro y alcohol”", () => {
     const onCerrar = vi.fn();
     render(<AvisoNoCompletoBanner aviso={AVISO} onCerrar={onCerrar} />);
     const hora = new Date(AVISO.fechaHora).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
-    expect(screen.getByRole("status")).toHaveTextContent(`Juan Pérez Quispe no completó rostro y alcohol (${hora}).`);
+    expect(screen.getByRole("status")).toHaveTextContent(`Juan Pérez Quispe no completó rostro y alcohol (${hora})`);
     expect(screen.getByRole("status")).toHaveTextContent(PISTA_NO_COMPLETO);
     await userEvent.click(screen.getByRole("button", { name: "Cerrar aviso" }));
     expect(onCerrar).toHaveBeenCalledTimes(1);

@@ -35,8 +35,8 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
           <TableCell className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
             {/* Foto para comparar con quien está frente al terminal facial. */}
             <div className="flex items-center gap-3">
-              {i.esperaDni && !i.personaId ? (
-                // Facial primero: la aprobación no es de una espera con persona (quién sopló va en el nombre, si se sabe).
+              {!i.personaId ? (
+                // Sin persona todavía: la aprobación de facial primero (quién sopló va en el nombre, si se sabe) o la tarjeta de contingencia que espera rostro y alcohol.
                 <span className="flex size-12 items-center justify-center rounded-full bg-gray-100 text-lg text-gray-400 dark:bg-white/[0.06]">?</span>
               ) : (
                 <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} version={i.fotoVersion} tamano="size-12" miniatura />

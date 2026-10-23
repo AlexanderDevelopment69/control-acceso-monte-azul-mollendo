@@ -628,7 +628,7 @@ export const SECCIONES: SeccionManual[] = [
               El administrador imprime la <b>tarjeta de contingencia</b> (un QR) y se la entrega al vigilante. La tarjeta sola no abre: se usa
               en lugar del DNI del personal.
             </p>
-            <p className="mb-2 font-medium text-gray-800 dark:text-white/90">Para entrar:</p>
+            <p className="mb-2 font-medium text-gray-800 dark:text-white/90">Para entrar, con el orden Facial + Alcohol → DNI:</p>
             <Lista>
               <li>El personal avisa al vigilante <b>antes</b> de hacer rostro y alcohol.</li>
               <li>
@@ -642,6 +642,11 @@ export const SECCIONES: SeccionManual[] = [
             <p className="my-3">
               Si en ese momento hay dos personas esperando su DNI, la tarjeta no sabe a quién dejar pasar y no abre: espere a que pase la
               otra y que el personal repita rostro y alcohol.
+            </p>
+            <p className="mb-3">
+              <b>Con el orden DNI → Facial + Alcohol:</b> el vigilante pasa la tarjeta por el lector de ingreso; en el panel aparece{" "}
+              <b>Tarjeta de contingencia N.º …</b> en espera. En <b>1 minuto</b>, el personal hace rostro y alcohol: se abre el molinete a su
+              nombre, con la marca <Badge color="warning">Tarjeta de contingencia</Badge>. Se usa una tarjeta a la vez.
             </p>
             <p className="mb-2 font-medium text-gray-800 dark:text-white/90">Para salir:</p>
             <Lista>
@@ -691,7 +696,7 @@ export const SECCIONES: SeccionManual[] = [
             </p>
             <Lista>
               <li>
-                <b>Lector de ingreso:</b> el ingreso es solo con rostro y alcohol, sin pasar el DNI (con el orden Facial + Alcohol → DNI).
+                <b>Lector de ingreso:</b> el ingreso es solo con rostro y alcohol, sin pasar el DNI.
                 Queda marcado <Badge color="warning">Sin lector de DNI: identificado por rostro</Badge>.
               </li>
               <li>

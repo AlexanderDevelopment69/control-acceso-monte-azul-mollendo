@@ -37,7 +37,7 @@ describe("tarjeta de contingencia", () => {
         onCancelar={() => undefined}
       />,
     );
-    expect(screen.getByRole("status")).toHaveTextContent("Salida sin DNI: Amiel Bautista (DNI 48058719)");
+    expect(screen.getByRole("status")).toHaveTextContent("Salida sin DNIAmiel Bautista (DNI 48058719)");
     expect(screen.getByRole("status")).toHaveTextContent(/Quedan 1:(29|30)/);
   });
 
