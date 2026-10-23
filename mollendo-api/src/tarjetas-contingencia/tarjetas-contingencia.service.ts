@@ -186,13 +186,47 @@ export class TarjetasContingenciaService {
   }
 
   /** Cada vez que se pasó una tarjeta, más recientes primero, con el trabajador del ingreso o la salida. */
+  /**
+   * Búsqueda en los usos: el número de la tarjeta, el motivo (detalle) o la
+   * persona con la que se entró o salió (nombre, apellido o DNI).
+   */
+  private async filtroBusqueda(busqueda?: string) {
+    const texto = busqueda?.trim();
+    if (!texto) return {};
+    const numero = /^\d+$/.test(texto) ? Number(texto) : null;
+    const eventos = await this.prisma.eventoAcceso.findMany({
+      where: {
+        tarjetaContingenciaId: { not: null },
+        persona: {
+          OR: [
+            { nombres: { contains: texto, mode: 'insensitive' as const } },
+            { apellidos: { contains: texto, mode: 'insensitive' as const } },
+            { numeroDocumento: { contains: texto } },
+          ],
+        },
+      },
+      select: { id: true },
+      take: 500,
+    });
+    return {
+      OR: [
+        { detalle: { contains: texto, mode: 'insensitive' as const } },
+        ...(numero !== null ? [{ tarjeta: { numero } }] : []),
+        ...(eventos.length ? [{ eventoAccesoId: { in: eventos.map((e) => e.id) } }] : []),
+      ],
+    };
+  }
+
   async usos(query: QueryUsosTarjetaDto) {
     const { pagina, porPagina, skip, take } = paginacion(query, 10);
     // Los usos de ese tipo; los de un código no registrado (sin tarjeta) se ven con las de contingencia.
     const tipo = query.tipo ?? 'contingencia';
     const where = {
       fechaHora: rangoDeDias(query.desde, query.hasta),
-      ...(tipo === 'acceso' ? { tarjeta: { tipo } } : { OR: [{ tarjetaId: null }, { tarjeta: { tipo } }] }),
+      AND: [
+        tipo === 'acceso' ? { tarjeta: { tipo } } : { OR: [{ tarjetaId: null }, { tarjeta: { tipo } }] },
+        await this.filtroBusqueda(query.busqueda),
+      ],
     };
     const [filas, total] = await Promise.all([
       this.prisma.usoTarjetaContingencia.findMany({

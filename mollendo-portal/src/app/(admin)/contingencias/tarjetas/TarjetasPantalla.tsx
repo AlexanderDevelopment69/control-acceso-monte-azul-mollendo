@@ -16,6 +16,8 @@ import DatePicker from "@/components/form/date-picker";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
+import { TableSearch } from "@/components/tables/TableSearch";
+import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import Image from "next/image";
 import { CalenderIcon, CheckLineIcon, TrashBinIcon } from "@/icons";
@@ -385,6 +387,9 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
   const [tarjetas, setTarjetas] = useState<TarjetaContingencia[] | null>(null);
   const [usos, setUsos] = useState<Paginado<UsoTarjetaContingencia> | null>(null);
   const [pagina, setPagina] = useState(1);
+  // Buscador de los usos (número de tarjeta, persona o motivo), como en la Auditoría.
+  const [busqueda, setBusqueda] = useState("");
+  const busquedaDiferida = useDiferido(busqueda.trim());
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<React.ReactNode>(null);
   const [nueva, setNueva] = useState(false);
@@ -400,7 +405,7 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
 
   useEffect(() => {
     let activo = true;
-    Promise.all([tarjetasContingenciaApi.listar(tipo), tarjetasContingenciaApi.usos({ pagina, porPagina: POR_PAGINA, tipo })])
+    Promise.all([tarjetasContingenciaApi.listar(tipo), tarjetasContingenciaApi.usos({ pagina, porPagina: POR_PAGINA, tipo, busqueda: busquedaDiferida })])
       .then(([t, u]) => {
         if (!activo) return;
         setTarjetas(t);
@@ -411,7 +416,7 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
     return () => {
       activo = false;
     };
-  }, [pagina, version, tipo]);
+  }, [pagina, version, tipo, busquedaDiferida]);
 
   // Cada vez que se pasa una tarjeta por un lector, se actualizan los usos.
   useEffect(() => escucharEventos({ "tarjeta-contingencia-uso": recargar }, recargar), [recargar]);
@@ -512,6 +517,16 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
 
       <h2 className="text-base font-semibold text-gray-800 dark:text-white/90">Usos de las tarjetas</h2>
       <p className="mb-3 mt-1 text-sm text-gray-500 dark:text-gray-400">{TEXTOS[tipo].usos}</p>
+      <div className="mb-4">
+        <TableSearch
+          value={busqueda}
+          onChange={(v) => {
+            setBusqueda(v);
+            setPagina(1);
+          }}
+          placeholder="Buscar por número de tarjeta, personal (nombre, DNI) o motivo"
+        />
+      </div>
       <Tarjeta className="overflow-hidden">
         <div className="overflow-x-auto [&_th]:whitespace-nowrap">
           <AltoEstable paginaCompleta={datosUsos.length === POR_PAGINA} variasPaginas={(usos?.total ?? 0) > POR_PAGINA}>
@@ -529,7 +544,7 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
                 {usos && datosUsos.length === 0 && (
                   <TableRow>
                     <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>
-                      Todavía no se pasó ninguna tarjeta por los lectores.
+                      {busquedaDiferida ? "Ningún uso coincide con la búsqueda." : "Todavía no se pasó ninguna tarjeta por los lectores."}
                     </TableCell>
                   </TableRow>
                 )}
