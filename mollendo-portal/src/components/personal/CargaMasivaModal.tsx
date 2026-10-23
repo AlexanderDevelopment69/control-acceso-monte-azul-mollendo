@@ -215,21 +215,20 @@ export function CargaMasivaModal({
 
   return (
     <Modal isOpen={isOpen} onClose={cerrar} bloqueado={ocupado === "registrando"} className="max-w-5xl p-6 sm:p-8">
-      {/* Barra arriba (como la de la sincronización con el G4), superpuesta: al revisar, animada; al registrar, cuánto lleva. */}
-      <div
-        aria-hidden
-        className={`pointer-events-none absolute inset-x-0 top-0 h-1.5 overflow-hidden rounded-t-3xl bg-brand-100 transition-opacity duration-300 dark:bg-brand-500/20 ${
-          ocupado === "revisando" || ocupado === "registrando" ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        {progreso ? (
-          <div
-            className="h-full rounded-r-full bg-brand-500 transition-[width] duration-500 ease-out"
-            style={{ width: `${Math.max(3, (progreso.hechas / progreso.total) * 100)}%` }}
-          />
-        ) : (
-          <div className="h-full w-2/5 animate-barra-carga rounded-full bg-brand-500" />
-        )}
+      {/* Barra arriba (como la de la sincronización con el G4), superpuesta: al revisar, animada; al registrar, cuánto lleva.
+          Va dentro de un marco con la forma de la ventana, para que siga sus esquinas redondeadas. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+        <div
+          className={`h-1.5 bg-brand-100 transition-opacity duration-300 dark:bg-brand-500/20 ${
+            ocupado === "revisando" || ocupado === "registrando" ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          {progreso ? (
+            <div className="h-full bg-brand-500 transition-[width] duration-500 ease-out" style={{ width: `${Math.max(3, (progreso.hechas / progreso.total) * 100)}%` }} />
+          ) : (
+            <div className="h-full w-2/5 animate-barra-carga rounded-full bg-brand-500" />
+          )}
+        </div>
       </div>
       <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Carga masiva de personal</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400">
