@@ -2,12 +2,13 @@
 
 **Terminal Monte Azul Mollendo (TMAM) · Alcance base**
 
-Versión 1.1 · 21 de octubre de 2026
+Versión 1.2 · 23 de octubre de 2026
 
 | Versión | Fecha | Descripción |
 |---|---|---|
 | Final | 30/09/2026 | Versión final. |
 | 1.1 | 21/10/2026 | Ingreso con el terminal facial en modo asistencia y sus dos órdenes (DNI → Facial + Alcohol y Facial + Alcohol → DNI) y plazos medidos; verificación manual (con el grado del alcoholímetro de repuesto; también si falla el alcoholímetro); tarjeta de contingencia; contingencia "sin lector"; "Presentes ahora" para el vigilante; orden del ingreso y monitor del terminal en Sistema y APIs; Auditoría con desconexiones de equipos (también del alcoholímetro, revisado cada 10 segundos), aperturas del molinete sin DNI, salida sin DNI, sincronización con el terminal, descargas de reportes y archivos abiertos; aviso de fallas en vivo; HTTPS. |
+| 1.2 | 23/10/2026 | Pantalla Usuarios (cuentas de vigilancia; por ahora sin cuentas nuevas) y contraseña del vigilante a cargo del administrador; período de autorización; tarjeta de acceso; tarjeta de contingencia y contingencia sin lector en los dos órdenes; avisos del Panel por su nombre (Orden del ingreso, Salida sin DNI, Contingencia, Verificación manual e Ingreso); lector con el adaptador sin respuesta; buscador de usos de las tarjetas; tabla de pantallas y de APIs al día. |
 
 ## Contenido
 
@@ -52,6 +53,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Perfil de la persona (sección 4.2): personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica: no cambia la validación del ingreso ni los documentos exigidos.
 - Antipassback estricto (RN-08a) y orden del ingreso **Facial + Alcohol → DNI** (RN-03).
 - Contingencias del punto de acceso: verificación manual si falla el terminal facial o el alcoholímetro, tarjeta de contingencia para el personal sin DNI y contingencia "sin lector" si falla un lector de DNI (sección 4.10 y RN-16 a RN-18). El detalle está en el documento de contingencias.
+- Pantalla **Usuarios** (sección 4.11): el administrador cambia el correo o la contraseña de las cuentas, las da de baja o las elimina si nunca se usaron.
 - Tarjeta de acceso para visitas y autoridades (por ejemplo, una inspección): la pasa el vigilante por el lector y abre el molinete sin rostro, alcohol ni DNI, en el ingreso y en la salida; queda en el Panel y en los reportes como "Tarjeta de acceso N.º …", sin persona. La crea, imprime, vence, desactiva o le cambia el código el administrador (Contingencias → Tarjetas de acceso).
 
 **Fuera del alcance base:**
@@ -59,7 +61,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Autoservicio de empresas contratistas: registro, invitación y activación por correo, y carga de su propio personal y documentos.
 - Aprobación de documentos como paso aparte, con observaciones y subsanación.
 - Perfiles, puestos, zonas o actividades con requisitos de documentos distintos (matriz configurable de requisitos).
-- Roles de usuario adicionales (por ejemplo, Auditor), pantalla de gestión de usuarios y recuperación de contraseña por correo.
+- Roles de usuario adicionales (por ejemplo, Auditor), creación de cuentas nuevas desde el portal y recuperación de contraseña por correo.
 - Solicitud y agenda de visitas, invitaciones de visita y control de equipos personales y materiales (pase y guía de remisión).
 - Auditoría detallada (valor anterior y nuevo, historial de aprobaciones).
 - Activos (vehículos, maquinaria y equipos), operadores y checklists.
@@ -159,7 +161,7 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 ### 3.2. Cuentas
 
 - Al instalar el sistema se crean dos cuentas: **admin@monteazulsur.com.pe** (Administrador) y **vigilancia@monteazulsur.com.pe** (Vigilancia), con contraseñas iniciales generadas en la instalación. Las contraseñas se entregan aparte, en la hoja **"Accesos del sistema"** (confidencial), y deben cambiarse en el primer ingreso: la del administrador, desde su menú (Cambiar contraseña); la de vigilancia, el administrador desde Usuarios.
-- El alcance base no incluye una pantalla de gestión de usuarios: la creación de cuentas adicionales y el restablecimiento de contraseñas los realiza el soporte técnico mediante la API (sección 8).
+- Por ahora no se crean cuentas nuevas: solo existen esas dos. El administrador cambia el correo o la contraseña de la cuenta de vigilancia en **Usuarios** (sección 4.11). Si el administrador olvida su contraseña, la restablece el soporte técnico (no hay recuperación por correo).
 
 ---
 
@@ -179,18 +181,23 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 |---|---|---|
 | Iniciar sesión | `/iniciar-sesion` | Todos |
 | Personal y documentos | `/` | Administrador |
+| Personal y documentos (solo consulta) | `/personal` | Vigilancia |
+| Empresas | `/empresas` | Administrador |
 | Dashboard | `/dashboard` | Administrador |
 | Panel de vigilancia | `/vigilancia` | Administrador y Vigilancia |
-| Presentes ahora | `/dashboard/presentes` | Administrador y Vigilancia |
+| Presentes ahora | `/dashboard/presentes` (Administrador) · `/presentes` (Vigilancia) | Administrador y Vigilancia |
 | Tarjetas de contingencia | `/contingencias/tarjetas` | Administrador |
+| Tarjetas de acceso | `/contingencias/tarjetas-acceso` | Administrador |
 | Reportes | `/reportes` | Administrador |
+| Usuarios | `/usuarios` | Administrador |
 | Auditoría | `/auditoria` | Administrador |
 | Sistema y APIs | `/sistema` | Administrador |
+| Monitor del terminal facial | `/sistema/monitor` | Administrador |
 | Manual | `/manual` | Administrador y Vigilancia |
 
 **Cambio de contraseña**
 
-- Desde el menú de usuario (esquina superior derecha), opción "Cambiar contraseña": se ingresa la contraseña actual y la nueva por duplicado (mínimo 8 caracteres, distinta de la actual). Cada campo permite mostrar u ocultar el texto ingresado.
+- Solo el administrador cambia su propia contraseña: desde el menú de usuario (esquina superior derecha), opción "Cambiar contraseña", ingresa la actual y la nueva por duplicado (al menos 10 caracteres, con letras y números, distinta de la actual). Cada campo permite mostrar u ocultar el texto ingresado. La contraseña del vigilante se la cambia el administrador en Usuarios (sección 4.11).
 - Al cambiarla, **se cierran las sesiones abiertas en otros equipos**; la sesión actual se mantiene.
 - El cambio queda registrado en la Auditoría.
 
@@ -265,10 +272,15 @@ La carga masiva no incluye foto ni documentos (se agregan en la ficha de cada pe
 - Los intentos con un documento **no registrado** también quedan en el historial.
 - **Ingreso en curso**, según el orden del ingreso (RN-03):
   - **DNI → Facial + Alcohol:** al pasar un DNI en regla aparece al instante en la primera fila con resultado **"en espera"**, su **foto**, el motivo "Esperando rostro y alcohol", el tiempo que le queda (1 minuto) y una barra que se va vaciando. Al llegar el resultado del terminal facial, la fila pasa a ser el ingreso autorizado o denegado; si no hizo la prueba, queda denegado con "No completó rostro y alcohol".
-  - **Facial + Alcohol → DNI:** al decir el terminal "correcto", aparece **"Aprobó [nombre] · pase su DNI"**, con su foto y una cuenta de **30 segundos**. Si no pasa su DNI a tiempo, queda "No pasó su DNI a tiempo". Una franja naranja recuerda el orden activo.
+  - **Facial + Alcohol → DNI:** al decir el terminal "correcto", aparece **"Aprobó [nombre] · pase su DNI"**, con su foto y una cuenta de **30 segundos**. Si no pasa su DNI a tiempo, queda "No pasó su DNI a tiempo".
 - **Marcas** junto al motivo: "Tarjeta de contingencia", "Tarjeta de acceso" (sin persona: "Tarjeta de acceso N.º …"), "Sin lector de DNI: identificado por rostro", "Salida sin lector", "Corrección manual" y la verificación manual, con quién decidió.
-- **Salida sin DNI:** botón para elegir a quien sale sin DNI (solo quienes figuran dentro); después el vigilante pasa la tarjeta de contingencia por el lector de salida (RN-17). Una franja ámbar muestra a quién y cuánto tiempo queda (2 minutos).
-- **Franjas de contingencia:** verificación manual activa (RN-16) y lector de DNI de ingreso o de salida sin conexión (RN-18), esta última con el botón "Ir a Presentes ahora".
+- **Salida sin DNI:** botón para elegir a quien sale sin DNI (solo quienes figuran dentro); después el vigilante pasa la tarjeta de contingencia por el lector de salida (RN-17). El aviso **Salida sin DNI** muestra a quién y cuánto tiempo queda (2 minutos).
+- **Avisos** arriba del Panel, cada uno con su nombre y una píldora de color:
+  - **Orden del ingreso:** el orden activo y qué hacer (en los dos órdenes; no se muestra durante la verificación manual).
+  - **Salida sin DNI:** el personal elegido y el tiempo que queda (RN-17).
+  - **Contingencia:** lector de DNI de ingreso o de salida sin conexión o con el adaptador sin respuesta (RN-18); el de salida, con el botón "Ir a Presentes ahora".
+  - **Verificación manual:** activa, con desde cuándo, quién la activó y el motivo (RN-16); en verde, cuando el equipo volvió a conectarse, pregunta si volver a modo normal.
+  - **Ingreso:** una persona no completó rostro y alcohol, con la hora y el botón "Activar verificación manual"; se cierra con la ✕ o solo, cuando la siguiente persona entra bien.
 - **Aviso de servidor fuera de servicio:** si el servidor deja de responder, se muestra "El servidor no responde — no se están validando ingresos" (verificación cada 15 segundos).
 
 ### 4.4. Dashboard (Administrador)
@@ -323,7 +335,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 
 ### 4.7. Sistema y APIs (Administrador)
 
-- **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado"), **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas), **equipos** (cada terminal G4 Pro "En línea" o "Desconectado", con su última actividad), **alcoholímetro** ("Conectado" o "Desconectado" del terminal facial, con la hora de la última revisión: el servidor le pregunta al terminal cada 10 segundos si lo ve conectado; si está conectado pero no mide, no se nota aquí) y **lectores de DNI** de ingreso y salida ("Cable conectado", "Cable desconectado" o "Sin configurar", con la hora de su última lectura; el estado corresponde al cable de datos, ya que el lector solo envía información al leer un DNI) y **relés de los molinetes** ("Conectado" o "No conectado" para ingreso y salida, con la última apertura). Se actualiza en el momento en que un equipo se cae o vuelve (el servidor revisa cada 5 segundos) y, además, cada 15 segundos.
+- **Estado:** backend y base de datos ("En línea" / "Sin conexión"), clave de los equipos ("Configurado"), **respaldos** (fecha y tamaño del último; "Al día" o "Atrasado" si transcurren más de 26 horas), **equipos** (cada terminal G4 Pro "En línea" o "Desconectado", con su última actividad), **alcoholímetro** ("Conectado" o "Desconectado" del terminal facial, con la hora de la última revisión: el servidor le pregunta al terminal cada 10 segundos si lo ve conectado; si está conectado pero no mide, no se nota aquí) y **lectores de DNI** de ingreso y salida ("Cable conectado", "Cable desconectado", "Adaptador sin respuesta" o "Sin configurar", con la hora de su última lectura; el estado corresponde al cable de datos, ya que el lector solo envía información al leer un DNI; el controlador pregunta cada 30 segundos a cada adaptador si responde y, si está trabado, lo marca sin respuesta y activa la contingencia sin lector) y **relés de los molinetes** ("Conectado" o "No conectado" para ingreso y salida, con la última apertura). Se actualiza en el momento en que un equipo se cae o vuelve (el servidor revisa cada 5 segundos) y, además, cada 15 segundos.
 - **Aviso de fallas en todo el portal:** cuando algo de esta pantalla está caído (base de datos, respaldos atrasados, controlador, terminal facial, alcoholímetro, lectores de DNI o relés), aparece un aviso en la parte superior de cualquier página, **para el administrador y para el vigilante** (que así puede informarlo). Muestra un recuadro por cada tarjeta en falla de Sistema y APIs, en rojo como en esa pantalla, con su estado, qué deja de funcionar (por ejemplo, "Nadie puede ingresar") y la última vez que estuvo en línea. El administrador tiene además un enlace a Sistema y APIs. Se actualiza en el momento en que un equipo se cae o vuelve, junto con las tarjetas de esta pantalla (además, se consulta cada 30 segundos), y desaparece solo cuando todo vuelve a estar en línea. El terminal facial y el controlador figuran caídos a los ~20 segundos sin contacto; los lectores y relés, en segundos; el alcoholímetro, en unos 10 segundos. Se puede contraer; se vuelve a abrir si falla algo distinto.
 - **Sincronización con el terminal facial:** un interruptor activa o desactiva la **revisión diaria** y permite elegir su hora (al activarla pide confirmación, porque borra del terminal a quien el sistema no conoce); el resultado de la última (personas agregadas, usuarios borrados, permisos quitados y usuarios del terminal que el sistema no conoce) y los botones **Simular** y **Sincronizar ahora** (con confirmación). La tarjeta del terminal muestra cuántos usuarios y rostros tiene.
 - **Orden del ingreso:** dos interruptores que se excluyen, **DNI → Facial + Alcohol → Molinete** y **Facial + Alcohol → DNI → Molinete**, con los pasos de cada uno, quién lo cambió y desde cuándo (RN-03).
@@ -332,7 +344,7 @@ Descarga de la información del sistema en **Excel** o **PDF**. Se elige el repo
 
 ### 4.8. Manual
 
-Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, empresas, panel de vigilancia (con la tarjeta de contingencia, el lector de DNI caído y la verificación manual), presentes ahora, dashboard, reportes, auditoría, sistema y APIs, y cuenta y contraseña. La introducción incluye un diagrama del recorrido de ingreso y de salida por el punto de acceso (el ingreso, en el orden activo, con el tiempo de cada paso y una línea de tiempo medida con el equipo real), y las secciones de uso diario muestran capturas de la pantalla con números que señalan cada parte y, debajo, qué hace cada una; un clic amplía la captura. Se muestra una sección a la vez, elegida en el índice (o con "Anterior" y "Siguiente"); cada sección tiene su propio enlace (por ejemplo `/manual#reportes`).
+Guía de uso dentro del portal, con secciones para cada rol: introducción, personal y documentos, empresas, panel de vigilancia (con la tarjeta de contingencia, el lector de DNI caído y la verificación manual), presentes ahora, tarjetas, dashboard, reportes, auditoría, sistema y APIs, usuarios, y cuenta y contraseña. La introducción incluye un diagrama del recorrido de ingreso y de salida por el punto de acceso (el ingreso, en el orden activo, con el tiempo de cada paso y una línea de tiempo medida con el equipo real), y las secciones de uso diario muestran capturas de la pantalla con números que señalan cada parte y, debajo, qué hace cada una; un clic amplía la captura. Se muestra una sección a la vez, elegida en el índice (o con "Anterior" y "Siguiente"); cada sección tiene su propio enlace (por ejemplo `/manual#reportes`).
 
 ### 4.9. Características generales del portal
 
@@ -343,12 +355,21 @@ Guía de uso dentro del portal, con secciones para cada rol: introducción, pers
 
 ### 4.10. Contingencias (Administrador)
 
-Menú **Contingencias → Tarjetas de contingencia**. Cada tarjeta se muestra como un carné, en un carrusel, con su último uso y sus acciones:
+Menú **Contingencias**, con dos pantallas que funcionan igual: **Tarjetas de contingencia** (en lugar del DNI del personal, RN-17) y **Tarjetas de acceso** (abren solas, para visitas y autoridades; cada tipo con su numeración). Cada tarjeta se muestra como un carné, en un carrusel, con su último uso y sus acciones:
 
 - **Crear** con vencimiento ("No vence" o "Vence un día") e **imprimir** en tamaño carné (85,6 × 54 mm), con vista previa en el portal. El QR lleva un código al azar, sin datos de ninguna persona; no se muestra en el portal.
 - **Cambiar el vencimiento**, **desactivar / activar**, **cambiar el código** (si se pierde o se copia: la impresa queda anulada) y **eliminar** (solo si nunca se usó).
-- **Lista de usos:** cada vez que se pasó una tarjeta, aceptada o no, con el personal o el motivo.
-- La guarda el vigilante y la pasa por el lector en lugar del DNI (RN-17). Todo cambio queda en la Auditoría.
+- **Usos de las tarjetas:** cada vez que se pasó una tarjeta, aceptada o no, con el personal o el motivo; de 5 en 5 y con un buscador por número de tarjeta, personal (nombre o DNI) o motivo.
+- La guarda el vigilante y la pasa por el lector. Todo cambio queda en la Auditoría.
+
+### 4.11. Usuarios (Administrador)
+
+Lista las cuentas del sistema, cada una con su tipo, su estado y la fecha en que se creó:
+
+- **Cambiar correo**, en todas las cuentas (también la propia): se entra con el correo nuevo y la misma contraseña, y se cierran sus sesiones abiertas. Un correo que ya existe no se acepta.
+- En la cuenta de vigilancia, además: **Cambiar contraseña** (se cierran sus sesiones y debe entrar con la nueva), **Dar de baja** (ya no puede entrar; su historial se conserva) o **Reactivar**, y **Eliminar**, solo si la cuenta nunca se usó.
+- Por ahora **no se crean cuentas nuevas**: solo existen las dos del sistema (sección 3.2). El servidor rechaza la creación.
+- Todo cambio queda en la Auditoría.
 
 ---
 
@@ -374,7 +395,7 @@ Menú **Contingencias → Tarjetas de contingencia**. Cada tarjeta se muestra co
 | RN-13 | **Contraseñas** de al menos 8 caracteres. Al cambiarla se cierran las demás sesiones de esa cuenta. |
 | RN-14 | Toda creación, modificación o eliminación de datos queda en la **Auditoría** con el usuario y la fecha; también los inicios de sesión, las aperturas del molinete sin DNI, la salida sin DNI, la sincronización con el terminal facial, las descargas de reportes, los archivos de documentos abiertos y cada desconexión y vuelta de los equipos (a nombre de "Sistema"). |
 | RN-15 | "Hoy" y los vencimientos se calculan con la **hora de Lima**, independientemente de la configuración del servidor. |
-| RN-16 | **Verificación manual** (falla del terminal facial o del alcoholímetro): la activan el vigilante o el administrador desde el Panel (en el aviso rojo del terminal o del alcoholímetro, o en el aviso ámbar "No completó"). Al pasar un DNI en regla, el Panel muestra su foto; el vigilante compara el rostro, toma la prueba con el alcoholímetro de repuesto y escribe el grado (mg/L), y **el sistema decide** con el mismo umbral del terminal; si el repuesto no muestra el número, el vigilante elige "Marcó apto" o "Marcó alcohol" y queda "sin número". Tiene 2 minutos. Queda marcado "Manual", con el grado y quién decidió. |
+| RN-16 | **Verificación manual** (falla del terminal facial o del alcoholímetro): la activan el vigilante o el administrador desde el Panel (en el aviso rojo del terminal o del alcoholímetro, o en el aviso Ingreso, cuando alguien no completó rostro y alcohol). Al pasar un DNI en regla, el Panel muestra su foto; el vigilante compara el rostro, toma la prueba con el alcoholímetro de repuesto y escribe el grado (mg/L), y **el sistema decide** con el mismo umbral del terminal; si el repuesto no muestra el número, el vigilante elige "Marcó apto" o "Marcó alcohol" y queda "sin número". Tiene 2 minutos. Queda marcado "Manual", con el grado y quién decidió. |
 | RN-17 | **Tarjeta de contingencia** (personal sin DNI o DNI que el lector no lee): sola no abre. En el ingreso, con el orden Facial + Alcohol → DNI, el vigilante la pasa en lugar del DNI y entra quien aprobó rostro y alcohol, con sus documentos revisados (si hay dos personas esperando a la vez, no abre). Con el orden DNI → Facial + Alcohol, la tarjeta va primero, en lugar del DNI: quien hace rostro y alcohol en el minuto siguiente entra a su nombre (el terminal facial dice quién es), con sus documentos revisados; una tarjeta a la vez. En la salida, el vigilante elige al personal en el Panel ("Salida sin DNI") y tiene 2 minutos para pasarla. Desactivada, vencida o con el código cambiado, no abre y suena el aviso. Cada uso queda registrado. |
 | RN-18 | **Contingencia "sin lector":** con el lector de DNI de una puerta desconectado y el controlador en línea, se activa sola y se avisa en el Panel. Ingreso (en los dos órdenes): quien aprueba rostro y alcohol entra sin pasar el DNI, con sus documentos revisados ("Sin lector de DNI: identificado por rostro"). Salida: el vigilante la abre desde "Presentes ahora" a quien figura dentro ("Salida sin lector", con quién la abrió). Termina sola al volver el lector. |
 | RN-19 | **Período de autorización** (opcional, 22/10/2026): al registrar o editar a una persona se puede fijar una **fecha de ingreso**, una **fecha de finalización** (las dos incluidas) y el **motivo**; si se pone, van los tres. Fuera de ese período el ingreso se deniega ("Fuera del período autorizado"), aunque tenga sus documentos al día; la salida siempre se permite. Sin período, no hay límite de fechas. Queda en la Auditoría. |
@@ -419,7 +440,8 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | Método y ruta | Uso | Acceso |
 |---|---|---|
 | `POST /auth/login` · `/auth/refresh-token` | Iniciar sesión y renovarla | Público |
-| `PATCH /cuenta/password` | Cambiar la propia contraseña | Con sesión |
+| `PATCH /cuenta/password` | Cambiar la propia contraseña | Administrador |
+| `GET /usuarios` · `PATCH` · `DELETE /usuarios/:id` | Cuentas: listar, cambiar el correo, la contraseña o el estado, y eliminar una que nunca se usó (`POST /usuarios` responde que por ahora no se crean cuentas nuevas) | Administrador |
 | `GET` · `POST /empresas` · `GET` · `PATCH` · `DELETE /empresas/:id` | Empresas: listar (con personal activo y si se puede eliminar), registrar, ver, modificar y eliminar (solo sin personal ni usuarios) | Administrador |
 | `GET /personas` · `/personas/:id` | Personal con su estado de cumplimiento | Administrador y Vigilancia |
 | `POST /personas` · `PATCH /personas/:id` · `PATCH /personas/:id/estado` | Registrar, modificar, dar de baja o reactivar | Administrador |

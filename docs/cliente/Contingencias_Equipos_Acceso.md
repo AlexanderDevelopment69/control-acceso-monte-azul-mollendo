@@ -4,7 +4,7 @@ Sistema de Control de Accesos — Terminal Monte Azul Mollendo (TMAM)
 
 Este documento describe **qué hacer cuando falla un equipo del punto de acceso**: cómo se detecta, quién hace cada cosa (vigilante, soporte y administrador), qué hace el sistema y cómo se vuelve a la normalidad. Cubre el alcoholímetro, el equipo de reconocimiento facial, el corte de internet, el lector de DNI, el personal sin DNI (tarjeta de contingencia), los relés de los molinetes, el Controlador (PC) y el servidor en la nube.
 
-Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo que dice "por programar" todavía no existe en el sistema.**
+Actualizado al 23/10/2026, con las decisiones del cliente hasta esa fecha. **Lo que dice "por programar" todavía no existe en el sistema.**
 
 ---
 
@@ -12,11 +12,11 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 
 | Si falla… | Qué se hace | Quién | ¿Se pierde algún control? | Estado |
 |---|---|---|---|---|
-| **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3). Si se desconecta, la franja roja lo avisa en unos 10 segundos | El vigilante informa; soporte lo cambia | No | Decidido. Falta comprar el repuesto |
+| **Alcoholímetro** | Se conecta el **alcoholímetro de repuesto** al equipo facial y se sigue normal (sección 3). Si se desconecta, el aviso de fallas lo avisa en unos 10 segundos | El vigilante informa; soporte lo cambia | No | Decidido. Falta comprar el repuesto |
 | **Equipo facial** (y con él el alcoholímetro) | **Verificación manual**: DNI + el vigilante compara la foto + prueba de alcohol a todos con el repuesto; el vigilante escribe el grado y el sistema decide (sección 4) | Vigilante o administrador la activan; el vigilante revisa cada ingreso | No | **Programado** (15/10/2026; con el grado, 21/10/2026); falta la prueba en el punto de acceso y comprar el repuesto |
 | **Internet** del punto de acceso | **Segunda conexión de otro proveedor** que entra sola (sección 5) | TMAM | No | Decidido, a cargo de TMAM |
 | **Lector de DNI** | Mientras tanto, contingencia **"sin lector"**, que se activa sola: el **ingreso** es solo con rostro y alcohol y la **salida** la abre el vigilante desde **"Presentes ahora"**; se conecta el **lector de repuesto** (sección 6) | El vigilante informa y abre las salidas; soporte cambia el lector | En el ingreso, el DNI: la persona se identifica solo por su rostro | **Programado** (21/10/2026); falta probarlo en el punto de acceso y el repuesto |
-| **Personal sin DNI**, o DNI que el lector no lee | El vigilante pasa la **tarjeta de contingencia** en lugar del DNI, después de rostro y alcohol; en la salida elige al personal en el Panel (sección 6.5) | El personal avisa; el vigilante pasa la tarjeta; el administrador la imprime y la administra | No: rostro, alcohol y documentos se revisan igual | **Programado** (20/10/2026); falta probar el QR en el lector. Tarjeta digital pendiente |
+| **Personal sin DNI**, o DNI que el lector no lee | El vigilante pasa la **tarjeta de contingencia** en lugar del DNI, en los dos órdenes del ingreso; en la salida elige al personal en el Panel (sección 6.5) | El personal avisa; el vigilante pasa la tarjeta; el administrador la imprime y la administra | No: rostro, alcohol y documentos se revisan igual | **Programado** (20/10/2026; con el orden DNI → Facial + Alcohol, 22/10/2026); falta probar el QR en el lector. Tarjeta digital pendiente |
 | **Relé de un molinete** | Se cambia por el **relé de repuesto** (sección 7.1) | El vigilante informa; soporte lo cambia | No | Decidido. Falta el repuesto preparado |
 | **Controlador (PC)** | Se cambia por la **PC de repuesto**; si no la hay, se libera el molinete a mano (sección 7.2) | El vigilante informa; soporte la cambia | Con la PC de repuesto, no | Decidido. Falta la PC de repuesto preparada |
 | **Servidor en la nube** | Se recupera solo al reiniciarse; respaldos diarios probados (sección 7.3) | Soporte | No | Funciona hoy |
@@ -30,7 +30,7 @@ Actualizado al 21/10/2026, con las decisiones del cliente hasta esa fecha. **Lo 
 | Rol | Qué hace ante una falla |
 |---|---|
 | **Vigilante** | **Informa** la falla a soporte y al administrador. No cambia ni configura equipos. Sigue operando el punto de acceso con lo que el sistema le muestre (por ejemplo, la verificación manual de la sección 4 o la salida desde "Presentes ahora" de la sección 6.3). Guarda la tarjeta de contingencia y la pasa cuando el personal no tiene DNI (sección 6.5) |
-| **Administrador** | Gestiona la reparación o la compra de repuestos; puede activar y desactivar la verificación manual; crea, imprime y administra las tarjetas de contingencia |
+| **Administrador** | Gestiona la reparación o la compra de repuestos; puede activar y desactivar la verificación manual; crea, imprime y administra las tarjetas de contingencia y de acceso |
 | **Soporte** | **Cambia los equipos** por sus repuestos y hace la **configuración** que haga falta en el Controlador (PC) |
 
 ---
@@ -75,10 +75,10 @@ En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y sue
 
 | Señal | Dónde | Qué fallas muestra | Estado |
 |---|---|---|---|
-| **Franja roja de fallas** | Arriba de todas las pantallas del portal, para el administrador y el vigilante | Equipo facial desconectado (unos 20 segundos sin contacto), alcoholímetro desconectado del equipo facial (unos 10 segundos), lector de DNI con el cable desconectado, relé no conectado, Controlador (PC) desconectado, respaldos atrasados, sin conexión con el servidor. Aparece y desaparece en el momento, junto con "Sistema y APIs" | Ya existe |
+| **Aviso de fallas** (un recuadro rojo por equipo) | Arriba de todas las pantallas del portal, para el administrador y el vigilante | Equipo facial desconectado (unos 20 segundos sin contacto), alcoholímetro desconectado del equipo facial (unos 10 segundos), lector de DNI con el cable desconectado o con el adaptador sin respuesta, relé no conectado, Controlador (PC) desconectado, respaldos atrasados, sin conexión con el servidor. Aparece y desaparece en el momento, junto con "Sistema y APIs" | Ya existe |
 | **"Sistema y APIs"** | Portal del administrador | El estado de cada equipo, en detalle | Ya existe |
 | **Auditoría** | Portal del administrador | Cada desconexión y cada vuelta de un equipo, con cuánto duró (buscar "equipos") | Ya existe |
-| **Panel de vigilancia** | Portal del vigilante | Cada ingreso: "esperando rostro y alcohol" con su cuenta regresiva, y el resultado | Ya existe |
+| **Panel de vigilancia** | Portal del vigilante | Cada ingreso: "esperando rostro y alcohol" con su cuenta regresiva, y el resultado. Arriba, los avisos con su nombre: **Orden del ingreso**, **Salida sin DNI**, **Contingencia** (lector sin conexión), **Verificación manual** e **Ingreso** (alguien no completó rostro y alcohol) | Ya existe |
 | **Pantalla del equipo facial** | En el punto de acceso | Mensajes del propio equipo: *"Probador de alcohol no conectado"* al desconectarlo y *"Por favor, verifique si el probador de alcohol está conectado o encendido"* o *"Fallo al conectar el probador"* si no responde (están en su programa; falta verlos en la prueba física). **No muestra un punto rojo** en el modo actual (el ícono se vio el 07/10, en el modo anterior) | Ya existe |
 | **La propia persona** | En el molinete | Avisa al vigilante si no puede pasar | — |
 
@@ -92,7 +92,7 @@ En los dos órdenes, si la prueba da **alcohol**, se deniega con su nombre y sue
 
 - **Salidas:** normales.
 - **Ingresos:** nadie puede ingresar, pero **nadie entra sin prueba de alcohol** (comprobado el 07/10/2026, anexo B). El equipo facial reconoce el rostro, muestra *"Verificación de identidad completada. Realice una medición de alcohol."* y se queda esperando. Al minuto, el sistema deniega por "No completó rostro y alcohol" y el molinete **no se abre**.
-- **El sistema vigila el alcoholímetro** (21/10/2026): cada 10 segundos le pregunta al equipo facial si lo ve conectado por USB. Si se desconecta, aparece en la franja roja de fallas (*"Nadie puede ingresar: el equipo facial no puede tomar la prueba de alcohol"*), en "Sistema y APIs" (tarjeta "Alcoholímetro (DT1700)") y en la Auditoría. **Límite:** un alcoholímetro conectado pero malogrado (no mide) no se detecta así, porque el equipo solo le habla durante una prueba; para ese caso quedan las señales de la tabla siguiente (pendiente: avisar cuando varias pruebas seguidas empiezan y no dan resultado).
+- **El sistema vigila el alcoholímetro** (21/10/2026): cada 10 segundos le pregunta al equipo facial si lo ve conectado por USB. Si se desconecta, aparece en el aviso de fallas (*"Nadie puede ingresar: el equipo facial no puede tomar la prueba de alcohol"*), en "Sistema y APIs" (tarjeta "Alcoholímetro (DT1700)") y en la Auditoría. **Límite:** un alcoholímetro conectado pero malogrado (no mide) no se detecta así, porque el equipo solo le habla durante una prueba; para ese caso quedan las señales de la tabla siguiente (pendiente: avisar cuando varias pruebas seguidas empiezan y no dan resultado).
 
 ### 3.2. Cómo se detecta
 
@@ -102,28 +102,28 @@ La persona que no puede soplar **no se va**: le avisa al vigilante en ese moment
 |---|---|
 | La persona dice *"miré al equipo pero no me deja soplar"* | — |
 | El Panel muestra "esperando rostro y alcohol" y, al minuto, "Denegado: no completó rostro y alcohol" | Ya existe |
-| **Aviso en el Panel**: en el momento en que alguien no completa, aparece arriba del Panel un aviso ámbar con su nombre y la hora: *"Si dice que no pudo soplar: revise si arriba dice «Alcoholímetro desconectado» y avise a soporte."* Se cierra con la ✕ o desaparece solo cuando la siguiente persona ingresa bien; se mantiene al recargar la página. La etiqueta "No completó rostro y alcohol" de la tabla lleva una ⓘ con la misma explicación | Ya existe |
-| **Franja roja de fallas y "Sistema y APIs"**: "Alcoholímetro (DT1700): Desconectado" (unos 10 segundos) | Ya existe (21/10/2026); falta la prueba desconectándolo de verdad |
+| **Aviso Ingreso en el Panel**: en el momento en que alguien no completa, aparece arriba del Panel el aviso **Ingreso** (ámbar) con su nombre y la hora (*"… no completó rostro y alcohol"*) y el texto *"Si dice que no pudo soplar: revise si arriba dice Alcoholímetro desconectado y avise a soporte."* Se cierra con la ✕ o desaparece solo cuando la siguiente persona ingresa bien; se mantiene al recargar la página. La etiqueta "No completó rostro y alcohol" de la tabla lleva una ⓘ con la misma explicación | Ya existe |
+| **Aviso de fallas y "Sistema y APIs"**: "Alcoholímetro (DT1700): Desconectado" (unos 10 segundos) | Ya existe (21/10/2026); falta la prueba desconectándolo de verdad |
 | Mensaje del equipo facial *"Probador de alcohol no conectado"* (no muestra punto rojo) | Falta verlo en la prueba física |
 
 ### 3.3. Qué se hace
 
-1. **Vigilante:** mira la franja roja de fallas y la pantalla del equipo facial; si dice "Alcoholímetro (DT1700): Desconectado" o el equipo facial muestra *"Probador de alcohol no conectado"*, es el alcoholímetro. **Informa** a soporte y al administrador.
+1. **Vigilante:** mira el aviso de fallas y la pantalla del equipo facial; si dice "Alcoholímetro (DT1700): Desconectado" o el equipo facial muestra *"Probador de alcohol no conectado"*, es el alcoholímetro. **Informa** a soporte y al administrador.
 2. **Soporte:** desconecta el alcoholímetro malogrado y **conecta el de repuesto** al equipo facial.
 3. **Soporte:** comprueba con una persona que el equipo le pida soplar y la apruebe. La persona que no pudo pasar vuelve a pasar su DNI e ingresa normal.
 4. **Administrador:** gestiona la reparación del alcoholímetro malogrado.
 
-Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar, el vigilante o el administrador pueden activar la **verificación manual** de la sección 4 (con el alcoholímetro de repuesto usado solo): el botón **"Activar verificación manual"** está en el recuadro rojo *"Alcoholímetro (DT1700) … Desconectado"* y, si el alcoholímetro está conectado pero no mide, en el aviso ámbar *"No completó"* (desde el 21/10/2026). Cuando el alcoholímetro vuelve a conectarse, el Panel pregunta *"El alcoholímetro volvió a conectarse. ¿Volver a modo normal?"*; si se activó desde el aviso ámbar, se termina a mano con "Volver a modo normal".
+Mientras soporte hace el cambio, nadie puede ingresar. Si el cambio va a demorar, el vigilante o el administrador pueden activar la **verificación manual** de la sección 4 (con el alcoholímetro de repuesto usado solo): el botón **"Activar verificación manual"** está en el recuadro rojo *"Alcoholímetro (DT1700) … Desconectado"* y, si el alcoholímetro está conectado pero no mide, en el aviso **Ingreso** (desde el 21/10/2026). Cuando el alcoholímetro vuelve a conectarse, el Panel pregunta *"El alcoholímetro volvió a conectarse. ¿Volver a modo normal?"*; si se activó desde el aviso Ingreso, se termina a mano con "Volver a modo normal".
 
 ### 3.4. Pendiente: prueba en el punto de acceso
 
 Lo anterior se comprobó con una **simulación** (21/10/2026). Falta probarlo con el equipo real:
 
-1. **Desconectar el alcoholímetro:** que la franja roja y "Sistema y APIs" lo muestren en unos 10 segundos, que el equipo facial muestre *"Probador de alcohol no conectado"* y que nadie entre.
+1. **Desconectar el alcoholímetro:** que el aviso de fallas y "Sistema y APIs" lo muestren en unos 10 segundos, que el equipo facial muestre *"Probador de alcohol no conectado"* y que nadie entre.
 2. **Alcoholímetro conectado pero apagado:** ver qué muestra el equipo facial. Este caso hoy **no** lo detecta el sistema (el equipo solo le habla al alcoholímetro durante una prueba).
 3. **Una persona que no sopla:** confirmar que el equipo abandona la prueba y nadie entra.
 
-Los casos 2 y 3 sirven para saber qué muestra el equipo facial. **No se programa** un aviso de "posible falla" tras varias pruebas sin medir (decisión n.º 6, confirmada el 21/10/2026): el aviso ámbar "No completó" avisa con la primera persona y trae el botón "Activar verificación manual". El detalle técnico está en la guía de depuración del G4 Pro (sección 8).
+Los casos 2 y 3 sirven para saber qué muestra el equipo facial. **No se programa** un aviso de "posible falla" tras varias pruebas sin medir (decisión n.º 6, confirmada el 21/10/2026): el aviso Ingreso avisa con la primera persona y trae el botón "Activar verificación manual". El detalle técnico está en la guía de depuración del G4 Pro (sección 8).
 
 ### 3.5. Requisitos del repuesto
 
@@ -144,7 +144,7 @@ Los casos 2 y 3 sirven para saber qué muestra el equipo facial. **No se program
 - **Salidas:** normales.
 - **Ingresos:** nadie puede ingresar. Sin el equipo no hay prueba de rostro y alcohol: con el orden Facial + Alcohol → DNI, el DNI queda en *"DNI antes del facial"*; con DNI → Facial + Alcohol, al minuto queda *"No completó rostro y alcohol"*. No hay riesgo de ingresos sin control: el molinete no se abre.
 - Como el alcoholímetro está conectado al equipo facial, **también se pierde la prueba de alcohol**.
-- El sistema lo detecta a los **~20 segundos** sin contacto, muestra en la franja roja *"Terminal facial … Desconectado"* y lo registra en la Auditoría.
+- El sistema lo detecta a los **~20 segundos** sin contacto, muestra en el aviso de fallas *"Terminal facial … Desconectado"* y lo registra en la Auditoría.
 
 ### 4.2. Decisiones
 
@@ -158,11 +158,11 @@ Los casos 2 y 3 sirven para saber qué muestra el equipo facial. **No se program
 
 ### 4.3. Paso a paso
 
-**1. Se detecta la falla.** Aparece la franja roja *"Terminal facial desconectado"*, con el botón **"Activar verificación manual"**. Si alguien no completó rostro y alcohol en ese momento, el aviso ámbar del Panel dice *"El equipo facial está desconectado: nadie puede completar rostro y alcohol. Avise a soporte."* y tiene el mismo botón.
+**1. Se detecta la falla.** Aparece en el aviso de fallas *"Terminal facial desconectado"*, con el botón **"Activar verificación manual"**. Si alguien no completó rostro y alcohol en ese momento, el aviso Ingreso del Panel dice *"El equipo facial está desconectado: nadie puede completar rostro y alcohol. Avise a soporte."* y tiene el mismo botón.
 
-**2. Se activa.** El vigilante o el administrador presiona **"Activar verificación manual"** en el Panel de vigilancia y escribe el **motivo**; viene escrito según desde dónde se activa (*"Equipo facial desconectado"*, *"Alcoholímetro desconectado"* o, desde el aviso ámbar, *"El equipo facial no toma la prueba"*) y se puede cambiar. Queda en la **auditoría** quién, cuándo y por qué. Mientras dure, el Panel muestra una franja fija:
+**2. Se activa.** El vigilante o el administrador presiona **"Activar verificación manual"** en el Panel de vigilancia y escribe el **motivo**; viene escrito según desde dónde se activa (*"Equipo facial desconectado"*, *"Alcoholímetro desconectado"* o, desde el aviso Ingreso, *"El equipo facial no toma la prueba"*) y se puede cambiar. Queda en la **auditoría** quién, cuándo y por qué. Mientras dure, el Panel muestra el aviso **Verificación manual** (píldora azul *Activa*), con el botón **"Volver a modo normal"**:
 
-> **Verificación manual activa** desde 15/10 08:30, activada por *vigilante 1*. Motivo: equipo facial apagado.
+> **Verificación manual** · *Activa*. Desde 15/10 08:30, activada por *vigilante 1*. Motivo: equipo facial apagado.
 
 **3. Ingreso de cada persona.**
 
@@ -188,7 +188,7 @@ Si alguien ya esperaba al equipo facial cuando se activó la verificación manua
 
 - Las **salidas** siguen normales.
 - Cada ingreso queda **marcado como "verificación manual"** en el historial y en los reportes, con el grado (o "sin número"), el vigilante y el resultado. En el Excel: *"Verificación manual (vigilante): 0,000 mg/L"*.
-- Si vuelve lo que falló, el Panel avisa: *"El equipo facial volvió a conectarse. ¿Volver a modo normal?"* (o *"El alcoholímetro volvió a conectarse…"*). Si se activó desde el aviso ámbar, no hay aviso: se termina a mano.
+- Si vuelve lo que falló, el Panel avisa en verde: aviso **Verificación manual** con *"Equipo facial volvió a conectarse"* (o el alcoholímetro) y *"¿Volver a modo normal?"*, con los botones **"Volver a modo normal"** y **"Seguir en manual"**. Si se activó desde el aviso Ingreso, no hay aviso: se termina a mano.
 
 **5. Fin.** El vigilante o el administrador presiona **"Volver a modo normal"** (queda en la auditoría). No vuelve solo, a propósito: si el equipo se conectara y desconectara varias veces seguidas, el modo cambiaría a cada rato y el vigilante no sabría en cuál está.
 
@@ -199,12 +199,12 @@ Si alguien ya esperaba al equipo facial cuando se activó la verificación manua
 | Alcoholímetro para la prueba manual | El repuesto DT1700 (sección 3.5): debe funcionar solo y mostrar el número en mg/L. También sirve el que estaba conectado al equipo facial, que funciona solo. **Falta comprarlo** |
 | Foto de cada persona | Ya se guarda en el sistema |
 | Activar y desactivar (vigilante y administrador), con motivo y auditoría | Programado |
-| Franja fija con el modo vigente en el Panel | Programado |
+| Aviso Verificación manual con el modo vigente en el Panel | Programado |
 | Ventana con la foto y los botones, con límite de 2 minutos | Programado |
 | Abrir el molinete desde "Registrar prueba" (decide el sistema con el grado) o "Marcó apto" (sin número) | Programado (21/10/2026) |
 | Marca "Manual" con el grado y quien decidió en historial y reportes; motivo "Rostro no coincide" | Programado (grado: 21/10/2026) |
 | Aviso "¿volver a modo normal?" según lo que falló (equipo facial o alcoholímetro) | Programado (alcoholímetro: 21/10/2026) |
-| Activarla desde el recuadro del alcoholímetro y desde el aviso ámbar "No completó" | Programado (21/10/2026) |
+| Activarla desde el recuadro del alcoholímetro y desde el aviso Ingreso | Programado (21/10/2026) |
 | En modo manual no se envían órdenes al equipo facial (al volver, nadie queda habilitado) | Programado |
 
 Falta la **prueba en el punto de acceso**: apagar el equipo facial, activar la verificación manual, tomar la prueba con el alcoholímetro de repuesto y escribir el grado (checklist 5.17).
@@ -228,7 +228,7 @@ El Controlador (PC) y el equipo facial trabajan con el servidor en la nube, por 
 
 En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se puede ingresar porque el equipo facial y la revisión de documentos dependen del servidor (anexo A).
 
-**Cómo se nota:** la franja roja muestra *"Controlador desconectado"* y *"Equipo facial desconectado"*.
+**Cómo se nota:** el aviso de fallas muestra *"Controlador desconectado"* y *"Equipo facial desconectado"*.
 
 ### 5.2. Lo que debe tener el punto de acceso (a cargo de TMAM)
 
@@ -255,9 +255,9 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 
 - **Ingreso:** sin el DNI, el sistema no puede revisar los documentos de la persona, así que nadie ingresa por la vía normal.
 - **Salida:** nadie sale por el molinete.
-- La franja roja muestra *"Lector de DNI de ingreso (o de salida): cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
+- El aviso de fallas muestra *"Lector de DNI de ingreso (o de salida): cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
 - Mientras tanto, se activa sola la contingencia "sin lector" (sección 6.3).
-- **Adaptador USB trabado** (visto el 20 y 21/10/2026 con el lector de salida): el lector pita, pero el adaptador USB que lo une al Controlador (PC) no entrega nada. Desde el 21/10/2026 el sistema lo detecta en el momento: "Sistema y APIs" muestra *"Adaptador sin respuesta"*, la franja roja lo informa y se activa la contingencia "sin lector". Se arregla desconectando y volviendo a conectar ese adaptador en la mini PC (o reiniciándola); si se repite, se cambia el adaptador por el repuesto.
+- **Adaptador USB trabado** (visto el 20 y 21/10/2026 con el lector de salida): el lector pita, pero el adaptador USB que lo une al Controlador (PC) no entrega nada. Desde el 21/10/2026 el sistema lo detecta en el momento: "Sistema y APIs" muestra *"Adaptador sin respuesta"*, el aviso de fallas lo informa y se activa la contingencia "sin lector". Se arregla desconectando y volviendo a conectar ese adaptador en la mini PC (o reiniciándola); si se repite, se cambia el adaptador por el repuesto.
 
 ### 6.2. Cómo está conectado un lector
 
@@ -274,14 +274,14 @@ Por eso, lo que haya que hacer al cambiarlo depende de qué parte se malogró (s
 
 Hecho el 21/10/2026 (decisión del cliente: que se active sola y que avise). Con el lector de DNI de una puerta desconectado y el Controlador (PC) en línea, el sistema pasa **solo** a esta contingencia y vuelve **solo** al modo normal cuando el lector se conecta. Nadie la activa ni la desactiva.
 
-**Cómo avisa:** además de la franja roja de equipos (en todas las páginas), el Panel de vigilancia muestra una franja por cada puerta:
+**Cómo avisa:** además del aviso de fallas (en todas las páginas), el Panel de vigilancia muestra el aviso **Contingencia** (píldora roja) por cada puerta:
 
 - *"**Lector de DNI de ingreso sin conexión.** El ingreso es solo con rostro y alcohol, sin pasar el DNI."*
-- *"**Lector de DNI de salida sin conexión.** Abra la salida desde «Presentes ahora»."*, con el botón **"Ir a Presentes ahora"**.
+- *"**Lector de DNI de salida sin conexión.** Abra la salida desde Presentes ahora."*, con el botón **"Ir a Presentes ahora"**.
 
 #### Ingreso: solo con rostro y alcohol
 
-Funciona con el orden **"facial primero"**. Con el orden "facial primero", el equipo facial informa quién aprobó rostro y alcohol (por eso el Panel muestra *"Aprobó [nombre]"*), así que no hace falta la prueba con el equipo que se pedía antes.
+Funciona en **los dos órdenes** del ingreso (desde el 22/10/2026; antes, solo con Facial + Alcohol → DNI): el equipo facial, en modo asistencia, informa quién hizo rostro y alcohol, así que no hace falta el DNI para saber quién es.
 
 1. La persona hace rostro y alcohol, como siempre.
 2. El sistema revisa sus documentos, bajas y antipassback, como si hubiera pasado su DNI.
@@ -290,11 +290,11 @@ Funciona con el orden **"facial primero"**. Con el orden "facial primero", el eq
 
 **Qué control se pierde:** el DNI. La persona se identifica **solo por su rostro**; el equipo facial podría confundir a dos personas muy parecidas. Por eso queda marcado en el Panel y en el reporte.
 
-Con el orden **DNI → Facial + Alcohol** no hay ingreso sin lector: el sistema no sabe quién es la persona hasta que pasa el DNI.
+Con el orden **DNI → Facial + Alcohol** funciona igual: quien aprueba rostro y alcohol entra identificado por su rostro (en el historial queda el orden real).
 
 #### Salida: desde "Presentes ahora"
 
-1. El vigilante toca **"Ir a Presentes ahora"** en la franja del Panel. La página muestra a todo el personal que figura dentro, con un buscador por nombre, DNI o empresa.
+1. El vigilante toca **"Ir a Presentes ahora"** en el aviso Contingencia del Panel. La página muestra a todo el personal que figura dentro, con un buscador por nombre, DNI o empresa.
 2. Busca a la persona y toca **"Salida"** en su fila.
 3. Confirma en la ventana *"¿Abrir la salida de … (DNI …)? Se abre el molinete de salida."* con **"Abrir salida"**.
 4. Se abre el molinete de salida. La salida queda **a nombre de la persona**, marcada *"Salida sin lector"* y con el vigilante que la abrió.
@@ -328,7 +328,7 @@ En el Excel de ingresos y salidas, la columna "Verificación" dice *"Sin lector 
 
 **Qué se hace:**
 
-1. **Vigilante:** ve la franja roja *"Lector de DNI: cable desconectado"*, o nota que el lector no lee. **Informa** a soporte y al administrador.
+1. **Vigilante:** ve el aviso de fallas *"Lector de DNI: cable desconectado"*, o nota que el lector no lee. **Informa** a soporte y al administrador.
 2. **Mientras tanto** se sigue operando con la contingencia "sin lector" de la sección 6.3: en el ingreso, solo con rostro y alcohol; en la salida, el vigilante la abre desde "Presentes ahora".
 3. **Soporte:** conecta el repuesto (lector y, si hace falta, su adaptador). Con la opción B funciona solo; con la A, registra el adaptador nuevo.
 4. **Soporte:** comprueba que el aviso desaparezca y que el lector lea un DNI.
@@ -351,7 +351,7 @@ Hecho el 20/10/2026. Sirve cuando el personal **olvidó su DNI** o el lector **n
 
 #### 6.5.2. Dónde está en el portal
 
-Menú **Contingencias → Tarjetas de contingencia**. Las tarjetas se ven como un carné (azul si está vigente; gris si está desactivada o vencida), en un carrusel que se pasa con las flechas, con los puntos de abajo o arrastrando. Al costado de cada una: su último uso, la fecha de su código y los botones. Debajo, la **lista de usos** de todas las tarjetas.
+Menú **Contingencias → Tarjetas de contingencia** (las **tarjetas de acceso**, para visitas y autoridades, están en **Contingencias → Tarjetas de acceso** y funcionan igual en el portal). Las tarjetas se ven como un carné (azul si está vigente; gris si está desactivada o vencida), en un carrusel que se pasa con las flechas, con los puntos de abajo o arrastrando. Al costado de cada una: su último uso, la fecha de su código y los botones. Debajo, **Usos de las tarjetas**: todos los usos, de 5 en 5, con un buscador por número de tarjeta, personal (nombre o DNI) o motivo.
 
 | Qué | Administrador | Vigilante |
 |---|---|---|
@@ -367,7 +367,9 @@ El código no se muestra en el portal: solo va en el QR impreso.
 
 #### 6.5.3. Ingreso paso a paso
 
-Funciona con el orden **"facial primero"** (rostro y alcohol antes del DNI). El Panel no cambia y el vigilante no presiona ningún botón.
+Funciona en los dos órdenes del ingreso. El vigilante no presiona ningún botón.
+
+**Con el orden Facial + Alcohol → DNI:**
 
 1. **Personal:** avisa al vigilante que no tiene su DNI o que el lector no lo reconoce.
 2. **Personal:** hace rostro y alcohol en el equipo facial, como siempre.
@@ -378,13 +380,22 @@ Funciona con el orden **"facial primero"** (rostro y alcohol antes del DNI). El 
 
 Si la tarjeta se pasa un instante antes de que llegue el resultado de la prueba, el sistema la espera hasta 8 segundos, igual que con un DNI.
 
+**Con el orden DNI → Facial + Alcohol** (desde el 22/10/2026), la tarjeta va primero, en lugar del DNI:
+
+1. **Vigilante:** pasa la tarjeta por el **lector de ingreso**.
+2. **Panel:** muestra en espera *"Tarjeta de contingencia N.º …"*, con **1 minuto**.
+3. **Personal:** en ese minuto hace rostro y alcohol en el equipo facial.
+4. **Sistema:** el equipo facial dice quién es; revisa sus documentos, bajas y antipassback y, si todo está en regla, abre el molinete a su nombre, marcado *"Tarjeta de contingencia"*.
+
+Se usa **una tarjeta a la vez**. Una prueba hecha antes de pasar la tarjeta no vale.
+
 #### 6.5.4. Salida paso a paso
 
 En la salida no hay equipo facial que diga quién es, por eso el vigilante lo elige:
 
 1. **Personal:** avisa al vigilante.
 2. **Vigilante:** en el Panel toca **"Salida sin DNI"** y elige al personal (solo aparecen quienes figuran dentro; se puede buscar).
-3. **Panel:** muestra una franja con la cuenta regresiva de **2 minutos** y el botón *"Cancelar"*.
+3. **Panel:** muestra el aviso **Salida sin DNI** con el personal elegido, la cuenta regresiva de **2 minutos** y el botón *"Cancelar"*.
 4. **Vigilante:** pasa la tarjeta por el **lector de salida**.
 5. La salida queda **a nombre del personal**, marcada *"Tarjeta de contingencia"* y con el vigilante que lo eligió.
 
@@ -394,10 +405,11 @@ En todos estos casos el molinete no se abre, **suena el aviso de denegado** de e
 
 | Caso | Motivo en la lista de usos | Qué hacer |
 |---|---|---|
-| Se pasó sin que nadie aprobara rostro y alcohol | *Nadie aprobó rostro y alcohol antes de pasar la tarjeta* | El personal hace primero la prueba |
+| Facial + Alcohol → DNI: se pasó sin que nadie aprobara rostro y alcohol | *Nadie aprobó rostro y alcohol antes de pasar la tarjeta* | El personal hace primero la prueba |
 | Dos personas aprobaron a la vez y esperan su DNI | *Varias personas aprobaron rostro y alcohol a la vez* | Esperar a que pase la otra persona y repetir la prueba |
 | El personal no pasó el alcohol | *No pasó el alcohol* | Igual que con DNI: no ingresa |
-| El orden no es "facial primero" | *La tarjeta solo es válida con el orden "facial primero"* | Solo se usa con ese orden |
+| DNI → Facial + Alcohol: nadie hizo rostro y alcohol en el minuto | *Nadie hizo rostro y alcohol en el minuto después de pasar la tarjeta* | Pasar la tarjeta otra vez y hacer la prueba en el minuto |
+| DNI → Facial + Alcohol: ya hay otra tarjeta esperando | *Ya hay otra tarjeta esperando rostro y alcohol: espere a que termine* | Esperar a que termine la otra |
 | Verificación manual activa (falla del equipo facial) | *Verificación manual activa: el ingreso lo decide el vigilante en el Panel* | La tarjeta no se usa en verificación manual |
 | Salida sin elegir al personal (o pasaron los 2 minutos) | *Nadie eligió al personal en el Panel ("Salida sin DNI")* | Tocar "Salida sin DNI" y elegirlo |
 | Tarjeta desactivada | *Tarjeta desactivada* | El administrador la activa, si corresponde |
@@ -432,13 +444,13 @@ Si la tarjeta es aceptada pero el personal **no cumple** (documentos vencidos, d
 
 **Decidido (15/10/2026):** se cambia **de inmediato** por el **relé de repuesto**.
 
-**Qué pasa cuando falla:** el sistema valida a la persona y da la orden de abrir, pero el molinete **no se abre**. La franja roja muestra el relé como *"No conectado"*. El ingreso o la salida **queda registrado** en el sistema, porque la validación se hizo.
+**Qué pasa cuando falla:** el sistema valida a la persona y da la orden de abrir, pero el molinete **no se abre**. El aviso de fallas muestra el relé como *"No conectado"*. El ingreso o la salida **queda registrado** en el sistema, porque la validación se hizo.
 
 **Qué se hace:**
 
-1. **Vigilante:** ve el aviso del relé en la franja roja (o que el molinete no abre aunque el Panel dice "Autorizado"). **Informa** a soporte y al administrador.
+1. **Vigilante:** ve el relé en el aviso de fallas (o que el molinete no abre aunque el Panel dice "Autorizado"). **Informa** a soporte y al administrador.
 2. **Soporte:** desconecta el relé malogrado del Controlador (PC) y **conecta el de repuesto** en su lugar.
-3. **Soporte:** comprueba en la franja roja que el aviso desaparezca (el sistema reconecta el relé solo) y prueba un paso por el molinete.
+3. **Soporte:** comprueba que desaparezca el aviso del relé (el sistema reconecta el relé solo) y prueba un paso por el molinete.
 4. **Administrador:** gestiona la reparación o la compra de otro repuesto.
 
 **Requisito del repuesto:** cada relé tiene grabada una **serie** que el Controlador (PC) usa para saber cuál es cuál (ingreso `ING01`, salida `SAL01` y, si hay, avisos `DEN01` y `DSA01`). Un relé nuevo viene de fábrica con otra serie, así que **el repuesto debe dejarse preparado por soporte** con la serie que va a reemplazar (`deploy/controlador/README.md`, paso 6). Con un solo repuesto, soporte le graba la serie del molinete que falle, o se tienen dos repuestos ya preparados (uno para ingreso y uno para salida). **Probar el cambio una vez** antes de necesitarlo.
@@ -449,7 +461,7 @@ Si la tarjeta es aceptada pero el personal **no cumple** (documentos vencidos, d
 
 **Decidido (15/10/2026):** se cambia por la **PC de repuesto**; si no la hay a mano, se **libera el molinete a mano**.
 
-**Qué pasa cuando falla:** sin el Controlador (PC) no funcionan los **lectores de DNI** ni los **relés**: nadie pasa por el sistema, ni para ingresar ni para salir. La franja roja muestra *"Controlador desconectado"*. El equipo facial sigue conectado al servidor, pero sin DNI nadie llega a usarlo.
+**Qué pasa cuando falla:** sin el Controlador (PC) no funcionan los **lectores de DNI** ni los **relés**: nadie pasa por el sistema, ni para ingresar ni para salir. El aviso de fallas muestra *"Controlador desconectado"*. El equipo facial sigue conectado al servidor, pero sin DNI nadie llega a usarlo.
 
 El **vigilante informa** a soporte y al administrador. Luego:
 
@@ -457,7 +469,7 @@ El **vigilante informa** a soporte y al administrador. Luego:
 
 1. Desconectar de la PC malograda los lectores de DNI y los relés, y conectarlos a la PC de repuesto, en los mismos puertos.
 2. Encender la PC de repuesto: se conecta sola al servidor y descarga la lista del personal.
-3. Comprobar en la franja roja que desaparezca *"Controlador desconectado"* y que lectores y relés figuren conectados.
+3. Comprobar que desaparezca del aviso de fallas *"Controlador desconectado"* y que lectores y relés figuren conectados.
 4. Probar un ingreso y una salida.
 
 Requisitos: la PC de repuesto debe estar **instalada y configurada por soporte con anticipación** (mismo programa y misma configuración que la principal: dirección del servidor, clave de equipos, lectores y relés) y **probada una vez**. Conviene revisarla cada cierto tiempo, para que esté actualizada.
@@ -484,12 +496,12 @@ Pendientes de la instalación (no de contingencia): copia de los respaldos fuera
 
 | # | Pregunta | Respuesta |
 |---|---|---|
-| 1 | ¿Qué se hace si falla el **alcoholímetro**? | Se reemplaza por el **repuesto** conectado al equipo facial, sin contingencia (15/10/2026). Si el cambio demora, se puede activar la verificación manual desde el aviso del alcoholímetro o el aviso ámbar (21/10/2026) |
+| 1 | ¿Qué se hace si falla el **alcoholímetro**? | Se reemplaza por el **repuesto** conectado al equipo facial, sin contingencia (15/10/2026). Si el cambio demora, se puede activar la verificación manual desde el aviso del alcoholímetro o el aviso Ingreso (21/10/2026) |
 | 2 | ¿Qué se hace si falla el **equipo facial**? | **Verificación manual**, prueba de alcohol a todos (15/10/2026) |
 | 3 | ¿Quién activa la verificación manual? ¿Quién aprueba cada ingreso? | La activan y desactivan **el vigilante y el administrador**; cada ingreso lo revisa el vigilante de turno (15/10/2026). Desde el 21/10/2026 el vigilante escribe el grado del repuesto y **el sistema decide** con el mismo límite del equipo facial |
 | 4 | ¿Habrá un **alcoholímetro de repuesto**? | **Sí**, DT1700 u otro compatible con el equipo facial (15/10/2026); que **funcione solo y muestre el número en mg/L** (21/10/2026, sección 3.5) |
 | 5 | ¿Tiempo máximo para la verificación manual? | **No** (15/10/2026) |
-| 6 | ¿Aviso por "varias personas seguidas sin completar la prueba"? | **No**: la persona avisa al vigilante en ese momento. En su lugar, un aviso en el Panel con la primera persona que no completa (15/10/2026). **Confirmado el 21/10/2026:** no se programa el aviso de "posible falla" tras varias pruebas sin medir; el aviso ámbar trae el botón "Activar verificación manual" |
+| 6 | ¿Aviso por "varias personas seguidas sin completar la prueba"? | **No**: la persona avisa al vigilante en ese momento. En su lugar, un aviso en el Panel con la primera persona que no completa (15/10/2026). **Confirmado el 21/10/2026:** no se programa el aviso de "posible falla" tras varias pruebas sin medir; el aviso Ingreso trae el botón "Activar verificación manual" |
 | 7 | ¿Qué se hace ante un **corte de internet**? | **A cargo de TMAM**: segunda conexión con los requisitos de la sección 5.2. Si fallan las dos, nadie ingresa y las salidas siguen (15/10/2026) |
 | 8 | ¿Qué se hace si falla el **lector de DNI**? | Contingencia **"sin lector"**, que se activa sola y avisa: ingreso solo con rostro y alcohol; la salida la abre el vigilante desde **"Presentes ahora"**. Se conecta el **lector de repuesto** (21/10/2026; reemplaza lo decidido el 15/10/2026) |
 | 9 | ¿Qué se hace si falla el **relé de un molinete**? | Se cambia de inmediato por el **repuesto** (15/10/2026) |
@@ -601,10 +613,10 @@ Mientras se cambia una pieza, el sistema **no deja pasar a nadie sin control**: 
 |---|---|---|---|---|
 | **Lector de DNI** (el aparato que lee el DNI) | No pita ni prende su luz al pasar el DNI | **Sí, una vez:** escanear los códigos de su folleto (11.2) | Conectarlo al mismo adaptador | Falta |
 | **Adaptador USB del lector** (el cable o cajita que une el lector a la mini PC) | El lector pita pero no pasa nada; Sistema y APIs dice *"Adaptador sin respuesta"* o *"Cable desconectado"* | **Sí:** avisarle al sistema su número de serie (11.3) | Opción A: soporte lo registra al cambiarlo. Opción B: funciona solo | Falta |
-| **Relé de un molinete o de aviso** | El Panel dice "Autorizado" pero el molinete no abre; la franja muestra el relé *"No conectado"* | **Sí, una vez:** grabarle la serie (11.4) | Enchufarlo; el sistema lo reconoce en segundos | Falta |
-| **Equipo facial (G4 Pro)** | Franja *"Terminal facial … Desconectado"* | **Sí:** varias cosas (11.5) | Mientras tanto, verificación manual (sección 4) | No previsto |
-| **Alcoholímetro (DT1700)** | Franja *"Alcoholímetro (DT1700) … Desconectado"*, o nadie puede soplar | **No**, si es el mismo modelo (11.6) | Enchufarlo al equipo facial y probar | Falta |
-| **Controlador (PC)** | Franja *"Controlador desconectado"* | **Sí:** instalarla y configurarla (sección 7.2) | Pasarle los lectores y relés | Falta |
+| **Relé de un molinete o de aviso** | El Panel dice "Autorizado" pero el molinete no abre; el aviso de fallas muestra el relé *"No conectado"* | **Sí, una vez:** grabarle la serie (11.4) | Enchufarlo; el sistema lo reconoce en segundos | Falta |
+| **Equipo facial (G4 Pro)** | Aviso de fallas *"Terminal facial … Desconectado"* | **Sí:** varias cosas (11.5) | Mientras tanto, verificación manual (sección 4) | No previsto |
+| **Alcoholímetro (DT1700)** | Aviso de fallas *"Alcoholímetro (DT1700) … Desconectado"*, o nadie puede soplar | **No**, si es el mismo modelo (11.6) | Enchufarlo al equipo facial y probar | Falta |
+| **Controlador (PC)** | Aviso de fallas *"Controlador desconectado"* | **Sí:** instalarla y configurarla (sección 7.2) | Pasarle los lectores y relés | Falta |
 
 **Nada se "reprograma":** los lectores se configuran escaneando códigos impresos; los adaptadores y relés se registran o se les graba un nombre con un comando corto que soporte hace por acceso remoto en unos minutos, sin ir al punto de acceso.
 
