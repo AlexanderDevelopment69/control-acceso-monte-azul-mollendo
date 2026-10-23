@@ -6,7 +6,7 @@ import { documentosApi, personasApi, tiposDocumentoApi } from "@/lib/api/endpoin
 import { ApiError } from "@/lib/api/client";
 import type { Empresa, Persona } from "@/lib/api/types";
 import { OPCIONES_PERFIL, PERFIL_LABEL, type Perfil } from "@/lib/perfiles";
-import { OPCIONES_DOCUMENTO } from "@/lib/documentos";
+import { OPCIONES_DOCUMENTO, DOCUMENTOS_PERSONAL } from "@/lib/documentos";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
@@ -57,9 +57,10 @@ interface FilaDocumento {
   subido: boolean;
 }
 
-const filaVacia = (clave: number): FilaDocumento => ({
+/** El primer documento de cada personal nuevo viene con el SCTR elegido (se puede cambiar); los que se agregan, vacíos. */
+const filaVacia = (clave: number, nombre = ""): FilaDocumento => ({
   clave,
-  nombre: "",
+  nombre,
   fechaVencimiento: "",
   archivo: null,
   subido: false,
@@ -135,7 +136,7 @@ function Formulario({
   // Período de autorización (opcional).
   const [periodo, setPeriodo] = useState<Periodo>(PERIODO_VACIO);
   const [apellidos, setApellidos] = useState("");
-  const [filas, setFilas] = useState<FilaDocumento[]>([filaVacia(0)]);
+  const [filas, setFilas] = useState<FilaDocumento[]>([filaVacia(0, DOCUMENTOS_PERSONAL[0])]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [personaCreada, setPersonaCreada] = useState<Persona | null>(null);
