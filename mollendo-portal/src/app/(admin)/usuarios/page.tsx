@@ -210,14 +210,20 @@ function CambiarCorreo({
 }) {
   const [correo, setCorreo] = useState(cuenta?.correo ?? "");
   const [error, setError] = useState<string | null>(null);
+  // El mismo correo de ahora no es un error: aviso en ámbar, como "No cambió ningún dato." en Editar datos.
+  const [sinCambio, setSinCambio] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (!cuenta) return;
     const nuevo = correo.trim().toLowerCase();
+    setSinCambio(false);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevo)) return setError("Ingrese un correo válido");
-    if (nuevo === cuenta.correo) return setError("Es el mismo correo de ahora");
+    if (nuevo === cuenta.correo) {
+      setError(null);
+      return setSinCambio(true);
+    }
     // Con la lista ya cargada se avisa sin consultar a la API (el mismo mensaje que daría ella).
     if (existentes.some((c) => c.correo === nuevo)) return setError("Ya existe un usuario con ese correo");
     setError(null);
@@ -242,9 +248,18 @@ function CambiarCorreo({
             : "Al guardar, se cierran sus sesiones abiertas y entra con el correo nuevo y la misma contraseña."}
         </p>
         {error && <ErrorBanner>{error}</ErrorBanner>}
+        {sinCambio && !error && <ErrorBanner tono="aviso">Es el mismo correo de ahora</ErrorBanner>}
         <div>
           <Label htmlFor="cuenta-correo-nuevo">Correo</Label>
-          <Input id="cuenta-correo-nuevo" type="email" defaultValue={cuenta?.correo} onChange={(e) => setCorreo(e.target.value)} />
+          <Input
+            id="cuenta-correo-nuevo"
+            type="email"
+            defaultValue={cuenta?.correo}
+            onChange={(e) => {
+              setCorreo(e.target.value);
+              setSinCambio(false);
+            }}
+          />
         </div>
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="outline" disabled={guardando} onClick={onCerrar}>
