@@ -84,7 +84,7 @@ export function CuentasManual() {
         "Registra al personal (uno por uno o con carga masiva), sus empresas y sus documentos.",
         "Ve el Dashboard y descarga Reportes en Excel o PDF.",
         "Supervisa el Panel de vigilancia, la Auditoría y el estado del sistema.",
-        "Crea las cuentas de vigilancia y las tarjetas de contingencia y de acceso.",
+        "Administra las cuentas de vigilancia y crea las tarjetas de contingencia y de acceso.",
       ],
     },
     {

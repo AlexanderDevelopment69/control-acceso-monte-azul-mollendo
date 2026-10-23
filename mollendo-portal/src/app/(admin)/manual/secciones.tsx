@@ -620,7 +620,7 @@ export const SECCIONES: SeccionManual[] = [
                   <Badge color="primary">Manual</Badge> (con el grado y quién decidió).
                 </p>
                 <p>
-                  <b>Aviso ámbar No completó:</b> si dice que no pudo soplar, revise si arriba dice <b>Alcoholímetro desconectado</b>{" "}
+                  <b>Aviso Ingreso (no completó rostro y alcohol):</b> si dice que no pudo soplar, revise si arriba dice <b>Alcoholímetro desconectado</b>{" "}
                   y avise a soporte. Si el cambio va a demorar, use su botón <b>Activar verificación manual</b>. Se cierra con la ✕ o solo,
                   cuando la siguiente persona entra bien.
                 </p>
@@ -673,7 +673,8 @@ export const SECCIONES: SeccionManual[] = [
               motivo.
             </p>
             <p>
-              <b>Administrador:</b> ahí mismo crea la tarjeta (<b>No vence</b> o hasta un día), la imprime, la desactiva o la elimina (solo si nunca se usó). Si se pierde o se copia,
+              <b>Administrador:</b> ahí mismo crea la tarjeta (<b>No vence</b> o hasta un día), la imprime, le cambia el <b>Vencimiento</b>, la desactiva o la
+              elimina (solo si nunca se usó). Si se pierde o se copia,
               use <b>Cambiar código</b>: la impresa queda anulada y debe imprimirse de nuevo. Solo el administrador las ve y las
               administra en el portal.
             </p>
@@ -692,7 +693,8 @@ export const SECCIONES: SeccionManual[] = [
               desactivada o vencida no abre y suena el aviso.
             </p>
             <p>
-              <b>Administrador:</b> las crea, imprime, desactiva o les cambia el código en <b>Contingencias → Tarjetas de acceso</b>.
+              <b>Administrador:</b> las crea (<b>No vence</b> o hasta un día), imprime, les cambia el <b>Vencimiento</b> o el código, las desactiva o
+              las elimina (solo si nunca se usaron) en <b>Contingencias → Tarjetas de acceso</b>.
             </p>
           </>
         ),
@@ -734,7 +736,7 @@ export const SECCIONES: SeccionManual[] = [
               <p>
                 Si el equipo facial deja de responder unos 20 segundos, aparece <b>Terminal facial… Desconectado</b>; si se desconecta el
                 alcoholímetro, <b>Alcoholímetro (DT1700)… Desconectado</b>. Nadie puede completar rostro y alcohol. Si el alcoholímetro
-                está conectado pero no mide, no hay aviso rojo: la persona no puede soplar y aparece el aviso ámbar <b>No completó</b>.
+                está conectado pero no mide, no hay aviso rojo: la persona no puede soplar y aparece el aviso <b>Ingreso</b> (no completó rostro y alcohol).
               </p>
             ),
           },
@@ -743,7 +745,7 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  El botón está en el aviso rojo y en el aviso ámbar <b>No completó</b>. Tóquelo, escriba el motivo y presione{" "}
+                  El botón está en el aviso rojo y en el aviso <b>Ingreso</b>. Tóquelo, escriba el motivo y presione{" "}
                   <b>Activar</b>. Desde ahí <b>usted</b> revisa el rostro y toma la prueba de alcohol a todos. El DNI y los documentos se
                   revisan igual que siempre; las salidas no cambian.
                 </p>
@@ -753,7 +755,7 @@ export const SECCIONES: SeccionManual[] = [
                 </p>
                 <p>
                   Cuando vuelve el equipo facial o el alcoholímetro, el panel pregunta en verde: <b>¿Volver a modo normal?</b>. Si aún no
-                  funciona bien, elija <b>Seguir en manual</b>. Si la activó desde el aviso ámbar, termínela con{" "}
+                  funciona bien, elija <b>Seguir en manual</b>. Si la activó desde el aviso <b>Ingreso</b>, termínela con{" "}
                   <b>Volver a modo normal</b> cuando el alcoholímetro mida de nuevo. No vuelve sola, a propósito, para que siempre sepa en
                   qué modo está.
                 </p>
@@ -891,6 +893,58 @@ export const SECCIONES: SeccionManual[] = [
             si está dada de baja. Para cambiar algo, avise al administrador.
           </p>
         ),
+      },
+    ],
+  },
+  {
+    id: "tarjetas",
+    titulo: "Tarjetas",
+    descripcion: "Tarjetas de contingencia y de acceso: crearlas, imprimirlas y ver sus usos.",
+    roles: ["administrador"],
+    pantallas: [
+      {
+        titulo: "Tarjetas",
+        descripcion: "Contingencias → Tarjetas",
+        clave: "tarjetas",
+        puntos: [
+          {
+            titulo: "+ Nueva tarjeta",
+            texto: (
+              <p>
+                Elija si <b>No vence</b> o hasta qué día sirve. Las dos pantallas, <b>Tarjetas de contingencia</b> y{" "}
+                <b>Tarjetas de acceso</b>, funcionan igual. Para qué sirve cada una se explica en Panel de vigilancia.
+              </p>
+            ),
+          },
+          {
+            titulo: "Imprimir",
+            texto: <p>Imprime la tarjeta con su QR para entregársela al vigilante.</p>,
+          },
+          {
+            titulo: "Vencimiento",
+            texto: <p>Cambia hasta qué día sirve, o la deja sin vencimiento. Una tarjeta vencida no abre.</p>,
+          },
+          {
+            titulo: "Cambiar código",
+            texto: <p>Si se pierde o se copia: la impresa queda anulada y debe imprimirse de nuevo.</p>,
+          },
+          {
+            titulo: "Desactivar",
+            texto: <p>La tarjeta deja de abrir hasta que la vuelva a activar con <b>Activar</b>.</p>,
+          },
+          {
+            titulo: "Eliminar",
+            texto: <p>Solo si la tarjeta nunca se usó. La usada se desactiva, para conservar su historial.</p>,
+          },
+          {
+            titulo: "Usos de las tarjetas",
+            texto: (
+              <p>
+                Cada vez que se pasó una tarjeta por un lector, aceptada o no. Se puede buscar por número de tarjeta, personal o motivo.
+              </p>
+            ),
+          },
+        ],
       },
     ],
   },
@@ -1279,21 +1333,36 @@ export const SECCIONES: SeccionManual[] = [
   {
     id: "usuarios",
     titulo: "Usuarios",
-    descripcion: "Cuentas del sistema: crear, cambiar el correo o la contraseña, dar de baja y eliminar.",
+    descripcion: "Cuentas del sistema: cambiar el correo o la contraseña, dar de baja y eliminar.",
     roles: ["administrador"],
     pantallas: [
       {
         titulo: "Usuarios",
         descripcion: "Las cuentas del sistema",
-        contenido: (
-          <p>
-            Lista las cuentas del sistema con su tipo y su estado. <b>+ Nueva cuenta de vigilancia</b>: correo y contraseña (al menos 10
-            caracteres, con letras y números). <b>Cambiar correo</b>, en todas las cuentas (también la suya): se entra con el correo nuevo y la
-            misma contraseña, y se cierran sus sesiones abiertas. En cada cuenta de vigilancia, además: <b>Cambiar contraseña</b> (se cierran
-            sus sesiones abiertas y debe entrar con la nueva), <b>Dar de baja</b> (ya no puede entrar; su historial se conserva) o{" "}
-            <b>Reactivar</b>, y <b>Eliminar</b>, solo si la cuenta nunca se usó (por ejemplo, creada por error). Todo queda en la Auditoría.
-          </p>
-        ),
+        clave: "usuarios",
+        puntos: [
+          {
+            titulo: "Cambiar correo",
+            texto: (
+              <p>
+                En todas las cuentas, también la suya. Se entra con el correo nuevo y la misma contraseña, y se cierran sus sesiones abiertas.
+              </p>
+            ),
+          },
+          {
+            titulo: "Cambiar contraseña",
+            texto: <p>Solo en la cuenta de vigilancia. Se cierran sus sesiones abiertas y debe entrar con la nueva.</p>,
+          },
+          {
+            titulo: "Dar de baja",
+            texto: (
+              <p>
+                Ya no puede entrar y su historial se conserva. Con <b>Reactivar</b> vuelve a entrar. <b>Eliminar</b> solo aparece si la cuenta
+                nunca se usó. Todo queda en la Auditoría.
+              </p>
+            ),
+          },
+        ],
       },
     ],
   },

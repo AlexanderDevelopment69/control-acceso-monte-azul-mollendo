@@ -37,6 +37,9 @@ function CampoPassword({ id, label, onChange }: { id: string; label: string; onC
   );
 }
 
+/** Crear cuentas nuevas: cerrado por ahora (solo las dos del sistema). Para volver a permitirlo, true aquí y en la API. */
+const CREAR_CUENTAS = false;
+
 /** Nueva cuenta de vigilancia: correo y contraseña (dos veces). */
 function NuevaCuenta({
   abierta,
@@ -445,17 +448,20 @@ function UsuariosContent() {
     <div>
       <PageHeader
         title="Usuarios"
-        description="Cuentas del sistema. Las de vigilancia las crea el administrador, que también les cambia el correo o la contraseña y las da de baja."
+        description="Cuentas del sistema. El administrador les cambia el correo o la contraseña y las da de baja."
         actions={
-          <Button
-            size="sm"
-            onClick={() => {
-              setVez((n) => n + 1);
-              setNueva(true);
-            }}
-          >
-            + Nueva cuenta de vigilancia
-          </Button>
+          // Por ahora no se crean cuentas nuevas (pedido del usuario, 23/10/2026); la API también lo rechaza.
+          CREAR_CUENTAS && (
+            <Button
+              size="sm"
+              onClick={() => {
+                setVez((n) => n + 1);
+                setNueva(true);
+              }}
+            >
+              + Nueva cuenta de vigilancia
+            </Button>
+          )
         }
       />
 

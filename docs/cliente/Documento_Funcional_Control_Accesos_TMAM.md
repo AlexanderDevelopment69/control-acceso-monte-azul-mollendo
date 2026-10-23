@@ -136,7 +136,7 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 
 | Rol | Quién es | Qué hace |
 |---|---|---|
-| Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; da de baja o reactiva; crea las cuentas de vigilancia, les cambia el correo o la contraseña, las da de baja o las elimina si nunca se usaron (Usuarios); cambia el correo de su propia cuenta; consulta el Panel de vigilancia, la Auditoría y el estado del sistema. |
+| Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; da de baja o reactiva; administra las cuentas de vigilancia: les cambia el correo o la contraseña, las da de baja o las elimina si nunca se usaron (Usuarios; por ahora no se crean cuentas nuevas); cambia el correo de su propia cuenta; consulta el Panel de vigilancia, la Auditoría y el estado del sistema. |
 | Vigilancia | Personal de vigilancia | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos; consulta quiénes están dentro ("Presentes ahora"). En las contingencias: activa la verificación manual y decide cada ingreso, pasa la tarjeta de contingencia y abre la salida si el lector de salida está desconectado. Consulta Personal y documentos sin modificar nada. Su contraseña se la cambia el administrador. No puede modificar los datos del personal. |
 
 ### 3.1. Permisos por módulo
@@ -150,7 +150,7 @@ El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta
 | Presentes ahora | Ver (desde el Dashboard) | Ver (en su menú) y abrir la salida si el lector de salida está desconectado |
 | Documentos de una persona (desde el Panel) | Ver | Ver |
 | Contingencias → Tarjetas de contingencia y de acceso | Ver y administrar | — |
-| Usuarios (cuentas de vigilancia) | Crear, cambiar el correo o la contraseña, dar de baja y eliminar (solo si nunca se usó) | — |
+| Usuarios (cuentas de vigilancia) | Cambiar el correo o la contraseña, dar de baja y eliminar (solo si nunca se usó). Por ahora no se crean cuentas nuevas: solo las dos del sistema | — |
 | Auditoría | Ver | — |
 | Sistema y APIs | Ver | — |
 | Manual | Ver | Ver |

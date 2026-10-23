@@ -248,6 +248,31 @@ const CAPTURAS = [
     ],
   },
   {
+    clave: "tarjetas",
+    ruta: "/contingencias/tarjetas",
+    alto: 760,
+    puntos: [
+      { sel: "button::-p-text(+ Nueva tarjeta)", lado: "abajo" },
+      { sel: "button::-p-text(Imprimir)", lado: "dentro-izq" },
+      { sel: "button::-p-text(Vencimiento)", lado: "der" },
+      { sel: "button::-p-text(Cambiar código)", lado: "abajo" },
+      { sel: "button::-p-text(Desactivar)", lado: "der" },
+      { sel: 'button[aria-label="Eliminar tarjeta"]', lado: "der" },
+      { sel: 'input[placeholder*="Buscar por número de tarjeta"]', lado: "texto-buscador" },
+    ],
+  },
+  {
+    // Usuarios: la fila de vigilancia tiene todos los botones.
+    clave: "usuarios",
+    ruta: "/usuarios",
+    alto: 300,
+    puntos: [
+      { sel: "button::-p-text(Cambiar correo)", lado: "arriba" },
+      { sel: "button::-p-text(Cambiar contraseña)", lado: "arriba" },
+      { sel: "button::-p-text(Dar de baja)", lado: "arriba" },
+    ],
+  },
+  {
     clave: "contrasena",
     ruta: "/vigilancia",
     preparar: async (p) => {

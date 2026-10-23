@@ -589,5 +589,79 @@
         "lado": "arriba"
       }
     ]
+  },
+  "usuarios": {
+    "imagen": "/manual/usuarios.webp",
+    "ancho": 1150,
+    "alto": 300,
+    "puntos": [
+      {
+        "n": 1,
+        "x": 89.52,
+        "y": 39.17,
+        "lado": "arriba"
+      },
+      {
+        "n": 2,
+        "x": 74.57,
+        "y": 69.5,
+        "lado": "arriba"
+      },
+      {
+        "n": 3,
+        "x": 86.81,
+        "y": 69.5,
+        "lado": "arriba"
+      }
+    ]
+  },
+  "tarjetas": {
+    "imagen": "/manual/tarjetas.webp",
+    "ancho": 1150,
+    "alto": 760,
+    "puntos": [
+      {
+        "n": 1,
+        "x": 91.49,
+        "y": 8.95,
+        "lado": "abajo"
+      },
+      {
+        "n": 2,
+        "x": 53.48,
+        "y": 32.22,
+        "lado": "izq"
+      },
+      {
+        "n": 3,
+        "x": 78.7,
+        "y": 32.22,
+        "lado": "der"
+      },
+      {
+        "n": 4,
+        "x": 56.74,
+        "y": 41.96,
+        "lado": "abajo"
+      },
+      {
+        "n": 5,
+        "x": 78.7,
+        "y": 39.06,
+        "lado": "der"
+      },
+      {
+        "n": 6,
+        "x": 78.7,
+        "y": 17.5,
+        "lado": "der"
+      },
+      {
+        "n": 7,
+        "x": 40.68,
+        "y": 59.19,
+        "lado": "der"
+      }
+    ]
   }
 }
