@@ -8,6 +8,8 @@ name: mollendo-controlador
 
 services:
   controlador:
+    # Nombre fijo (sin el "-1" que agrega Docker), como los del servidor.
+    container_name: mollendo-controlador
     build: ../../mollendo-api
     image: mollendo-controlador
     restart: unless-stopped

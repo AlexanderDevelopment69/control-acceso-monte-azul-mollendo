@@ -82,7 +82,7 @@ cd ~/mollendo/deploy/nube
 cp .env ~/env-antes-depurar.bak                      # copia por si acaso
 sed -i 's/^PUSH_SDK_DEPURAR=.*/PUSH_SDK_DEPURAR=true/' .env
 sudo docker compose up -d --no-deps api              # recrea solo la API (unos segundos)
-sudo docker exec mollendo-api-1 printenv PUSH_SDK_DEPURAR   # debe decir true
+sudo docker exec mollendo-api printenv PUSH_SDK_DEPURAR   # debe decir true
 ```
 
 Reiniciar la API corta unos segundos la conexión del G4 y del Panel; se reconectan solos. Hágalo cuando nadie esté pasando.
@@ -91,13 +91,13 @@ Reiniciar la API corta unos segundos la conexión del G4 y del Panel; se reconec
 
 ```bash
 # En vivo (Ctrl+C para salir):
-sudo docker logs -f --since 1m mollendo-api-1 2>&1 | grep --line-buffered -A3 G4ProDepurar
+sudo docker logs -f --since 1m mollendo-api 2>&1 | grep --line-buffered -A3 G4ProDepurar
 
 # Solo las pruebas de rostro y alcohol:
-sudo docker logs --since 30m mollendo-api-1 2>&1 | grep -A1 "table=ATTLOG"
+sudo docker logs --since 30m mollendo-api 2>&1 | grep -A1 "table=ATTLOG"
 
 # Lo que decidió el sistema (estas líneas salen siempre, con o sin depuración):
-sudo docker logs --since 30m mollendo-api-1 2>&1 | grep -E "ATTLOG recibido|G4 Pro:|Facial primero"
+sudo docker logs --since 30m mollendo-api 2>&1 | grep -E "ATTLOG recibido|G4 Pro:|Facial primero"
 ```
 
 **Cierre siempre el seguimiento en vivo** (`Ctrl+C`) al terminar. Si quedó abierto desde otra sesión: `pgrep -af "logs -f"` y `kill <pid>`.
@@ -142,7 +142,7 @@ Otros mensajes que aparecen:
 cd ~/mollendo/deploy/nube
 sed -i 's/^PUSH_SDK_DEPURAR=.*/PUSH_SDK_DEPURAR=false/' .env
 sudo docker compose up -d --no-deps api
-sudo docker exec mollendo-api-1 printenv PUSH_SDK_DEPURAR   # debe decir false
+sudo docker exec mollendo-api printenv PUSH_SDK_DEPURAR   # debe decir false
 ```
 
 **Por qué apagarla:** el registro copia todo lo que manda el equipo, incluidas las **plantillas de rostro** y fotos al sincronizar (datos biométricos), y crece rápido. El registro de cada contenedor está limitado a 3 archivos de 10 MB (`x-registro` en `docker-compose.yml`), así que no llena el disco, pero lo viejo se pierde y lo nuevo queda guardado en el servidor.
