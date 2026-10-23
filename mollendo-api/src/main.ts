@@ -51,7 +51,8 @@ async function bootstrap() {
   // El equipo G4 Pro llama rutas fijas en la raíz (/iclock/cdata, etc.), sin
   // prefijo y sin poder configurarlo -- se excluyen del prefijo global.
   app.setGlobalPrefix('api/v1', {
-    exclude: [{ path: 'iclock/(.*)', method: RequestMethod.ALL }],
+    // Formato de rutas de Express 5 ({*ruta}): el viejo "(.*)" da un aviso y dejará de servir.
+    exclude: [{ path: 'iclock/{*ruta}', method: RequestMethod.ALL }],
   });
 
   // El equipo manda los cuerpos de /iclock/* como texto plano, tab/salto de

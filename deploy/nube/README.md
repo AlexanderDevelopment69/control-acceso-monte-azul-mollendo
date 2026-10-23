@@ -133,6 +133,11 @@ cd deploy/nube
 sudo docker compose up -d --build
 sleep 30                                   # espera a que arranque la API
 sudo docker compose logs api | grep -E "migrations|successfully started|Error"
+# Limpieza (cada vez): sin esto, las imágenes viejas y la caché de compilación llenan el disco
+# (el 23/10/2026 ocupaban ~97 GB, 80 % del disco). Deja 5 GB de caché para que la próxima sea rápida.
+sudo docker image prune -af
+sudo docker builder prune -f --keep-storage 5GB
+df -h /
 ```
 
 ## Verificar
