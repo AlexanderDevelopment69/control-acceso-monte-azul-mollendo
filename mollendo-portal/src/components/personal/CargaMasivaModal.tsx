@@ -13,6 +13,9 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { DownloadIcon } from "@/icons";
 
+/** Personas por envío al registrar: así la barra de arriba muestra cuánto lleva. */
+const PERSONAS_POR_ENVIO = 100;
+
 /** Filas que se dibujan por tanda: con 2000, la tabla entera tarda en cambiar de filtro. */
 const FILAS_POR_TANDA = 100;
 
@@ -68,6 +71,8 @@ export function CargaMasivaModal({
   const [claveArchivo, setClaveArchivo] = useState(0);
   const [revision, setRevision] = useState<RevisionCargaMasiva | null>(null);
   const [resultado, setResultado] = useState<ResultadoCargaMasiva | null>(null);
+  // Al registrar: cuántas personas ya se enviaron de cuántas (para la barra y el botón).
+  const [progreso, setProgreso] = useState<{ hechas: number; total: number } | null>(null);
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [ocupado, setOcupado] = useState<null | "plantilla" | "revisando" | "registrando" | "errores">(null);
   const [error, setError] = useState<string | null>(null);
@@ -127,14 +132,31 @@ export function CargaMasivaModal({
     );
   };
 
+  /**
+   * Registra de a PERSONAS_POR_ENVIO, para ir mostrando el avance. Si un envío
+   * falla, se detiene ahí y se muestra lo que alcanzó a registrar.
+   */
   const registrar = () =>
     ejecutar(
       "registrando",
       async () => {
         const personas = (revision?.filas ?? []).flatMap((f) => (f.estado === "lista" && f.persona ? [f.persona] : []));
-        const r = await personasApi.registrarCarga(personas);
-        setResultado(r);
-        onRegistradas();
+        const total: ResultadoCargaMasiva = { registradas: 0, omitidas: [] };
+        setProgreso({ hechas: 0, total: personas.length });
+        try {
+          for (let i = 0; i < personas.length; i += PERSONAS_POR_ENVIO) {
+            const r = await personasApi.registrarCarga(personas.slice(i, i + PERSONAS_POR_ENVIO));
+            total.registradas += r.registradas;
+            total.omitidas.push(...r.omitidas);
+            setProgreso({ hechas: Math.min(i + PERSONAS_POR_ENVIO, personas.length), total: personas.length });
+          }
+        } finally {
+          setProgreso(null);
+          if (total.registradas || total.omitidas.length) {
+            setResultado(total);
+            onRegistradas();
+          }
+        }
       },
       "No se pudo registrar al personal",
     );
@@ -193,6 +215,22 @@ export function CargaMasivaModal({
 
   return (
     <Modal isOpen={isOpen} onClose={cerrar} bloqueado={ocupado === "registrando"} className="max-w-5xl p-6 sm:p-8">
+      {/* Barra arriba (como la de la sincronización con el G4), superpuesta: al revisar, animada; al registrar, cuánto lleva. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-x-0 top-0 h-1.5 overflow-hidden rounded-t-3xl bg-brand-100 transition-opacity duration-300 dark:bg-brand-500/20 ${
+          ocupado === "revisando" || ocupado === "registrando" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {progreso ? (
+          <div
+            className="h-full rounded-r-full bg-brand-500 transition-[width] duration-500 ease-out"
+            style={{ width: `${Math.max(3, (progreso.hechas / progreso.total) * 100)}%` }}
+          />
+        ) : (
+          <div className="h-full w-2/5 animate-barra-carga rounded-full bg-brand-500" />
+        )}
+      </div>
       <h2 className="mb-1 pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Carga masiva de personal</h2>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Registre a muchas personas a la vez desde un Excel.
@@ -356,7 +394,9 @@ export function CargaMasivaModal({
               disabled={!!ocupado || resumen.errores > 0 || resumen.listas === 0}
             >
               {ocupado === "registrando"
-                ? "Registrando…"
+                ? progreso
+                  ? `Registrando ${progreso.hechas} de ${progreso.total}…`
+                  : "Registrando…"
                 : resumen.errores > 0
                   ? "Corrija las filas con error"
                   : resumen.listas
