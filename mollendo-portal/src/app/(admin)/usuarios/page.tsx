@@ -457,7 +457,17 @@ function UsuariosContent() {
         {cuentas?.map((c) => (
           <li key={c.id}>
             <Tarjeta className="flex flex-col gap-3 p-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-3">
+                {/* El círculo con la inicial, como el del nombre arriba a la derecha (gris si está de baja). */}
+                <span
+                  aria-hidden
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-full font-medium text-white ${
+                    c.estadoCuenta === "activo" ? "bg-brand-500" : "bg-gray-300 dark:bg-gray-700"
+                  }`}
+                >
+                  {c.correo.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="min-w-0 break-all text-sm font-medium text-gray-800 dark:text-white/90">
                     {c.correo}
@@ -468,6 +478,7 @@ function UsuariosContent() {
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {tipo(c)} · creada el {new Date(c.creadoEn).toLocaleDateString("es-PE")}
                 </p>
+                </div>
               </div>
               <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
                 {acciones(c, "w-full px-2 sm:w-auto sm:px-4")}
