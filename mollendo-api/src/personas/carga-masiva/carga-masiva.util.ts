@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import { PERFILES, PERFIL_LABEL, type Perfil } from '../perfiles.js';
 import { PERIODO_AL_REVES, PERIODO_INCOMPLETO, normalizarPeriodo } from '../periodo-autorizacion.js';
+import { DOCUMENTOS_PERSONAL, documentoDeLaLista } from '../../tipos-documento/documentos-personal.js';
 
 /**
  * Carga masiva de personal desde Excel: columnas de la plantilla, lectura del
@@ -22,6 +23,9 @@ export const COLUMNAS_CARGA = [
   { clave: 'autorizadoDesde', titulo: 'Fecha de ingreso', ancho: 18, ayuda: 'Opcional. DD/MM/AAAA: desde cuándo puede ingresar. Vacío si no tiene límite de fechas.', opcional: true },
   { clave: 'autorizadoHasta', titulo: 'Fecha de finalización', ancho: 20, ayuda: 'Opcional. DD/MM/AAAA: hasta cuándo puede ingresar (ese día incluido).', opcional: true },
   { clave: 'motivoAutorizacion', titulo: 'Motivo de la autorización', ancho: 36, ayuda: 'Obligatorio si pone las fechas. Por ejemplo: visita técnica, obra hasta fin de mes.', opcional: true },
+  // Documento de la persona (23/10/2026): solo se muestra al revisar; el archivo se sube en su ficha.
+  { clave: 'documento', titulo: 'Documento', ancho: 46, ayuda: 'Opcional. Elija de la lista; si lo deja vacío, es SCTR Salud y Pensión. El archivo se sube después, en la ficha de cada persona.', opcional: true },
+  { clave: 'documentoVence', titulo: 'Documento vence el', ancho: 20, ayuda: 'Opcional. DD/MM/AAAA: vencimiento de ese documento. Vacío si no vence.', opcional: true },
 ] as const;
 
 /** Columnas que la plantilla debe tener (las del período son opcionales: una plantilla anterior sigue sirviendo). */
@@ -55,6 +59,9 @@ export interface FilaRevisada extends FilaCarga {
   campos: ClaveCarga[];
   /** Solo en las filas "lista": los datos tal como se registrarán. */
   persona?: PersonaCarga;
+  /** Solo en las filas "lista": el documento de la lista que le corresponde (vacío en el Excel: el SCTR) y su vencimiento (AAAA-MM-DD, o null). */
+  documentoNombre?: string;
+  documentoVenceEl?: string | null;
 }
 
 export interface EmpresaCarga {
@@ -269,6 +276,14 @@ export function revisarFilasCarga(
       }
     }
 
+    // Documento (opcional, solo se muestra): uno de la lista; vacío, el SCTR.
+    const documentoNombre = fila.documento.trim() ? documentoDeLaLista(fila.documento) : DOCUMENTOS_PERSONAL[0];
+    if (!documentoNombre) marcar('documento', `Documento que no está en la lista: "${fila.documento}"`);
+    const documentoVence = fechaCarga(fila.documentoVence);
+    if (fila.documentoVence && !documentoVence) {
+      marcar('documentoVence', `Fecha de vencimiento del documento no válida: "${fila.documentoVence}" (DD/MM/AAAA)`);
+    }
+
     if (tipo && numero) {
       const clave = clavePersona(tipo, numero);
       const anterior = vistas.get(clave);
@@ -295,6 +310,8 @@ export function revisarFilasCarga(
       motivos,
       campos: [],
       persona: { empresaId: empresa.id, perfil, tipoDocumentoIdentidad: tipo, numeroDocumento: numero, nombres, apellidos, ...periodo },
+      documentoNombre: documentoNombre!,
+      documentoVenceEl: documentoVence,
     };
   });
 }
@@ -326,6 +343,8 @@ export async function generarPlantillaCarga(
     .sort((a, b) => a.localeCompare(b, 'es'));
   perfiles.forEach((p, i) => (listas.getCell(i + 1, 1).value = p));
   activas.forEach((e, i) => (listas.getCell(i + 1, 2).value = e));
+  DOCUMENTOS_PERSONAL.forEach((d, i) => (listas.getCell(i + 1, 3).value = d));
+  const colDocumento = COLUMNAS_CARGA.findIndex((c) => c.clave === 'documento') + 1;
 
   const conMotivo = filas.some((f) => f.motivo);
   const columnas = [...COLUMNAS_CARGA.map((c) => ({ titulo: c.titulo, ancho: c.ancho })), ...(conMotivo ? [{ titulo: 'Motivo', ancho: 60 }] : [])];
@@ -339,7 +358,7 @@ export async function generarPlantillaCarga(
   cabecera.height = 22;
   hoja.getColumn(4).numFmt = '@';
   // Las fechas del período, como las escribe una persona (DD/MM/AAAA).
-  for (const clave of ['autorizadoDesde', 'autorizadoHasta'] as const) {
+  for (const clave of ['autorizadoDesde', 'autorizadoHasta', 'documentoVence'] as const) {
     hoja.getColumn(COLUMNAS_CARGA.findIndex((c) => c.clave === clave) + 1).numFmt = 'dd/mm/yyyy';
   }
 
@@ -370,6 +389,7 @@ export async function generarPlantillaCarga(
     hoja.getCell(f, 1).dataValidation = lista(`Listas!$A$1:$A$${perfiles.length}`, 'Perfil');
     if (activas.length) hoja.getCell(f, 2).dataValidation = lista(`Listas!$B$1:$B$${activas.length}`, 'Empresa');
     hoja.getCell(f, 3).dataValidation = lista('"DNI,CE,PASAPORTE"', 'Tipo de documento');
+    hoja.getCell(f, colDocumento).dataValidation = lista(`Listas!$C$1:$C$${DOCUMENTOS_PERSONAL.length}`, 'Documento');
   }
 
   instrucciones.columns = [{ width: 24 }, { width: 90 }];

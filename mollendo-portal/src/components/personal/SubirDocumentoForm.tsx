@@ -23,6 +23,7 @@ import { OPCIONES_DOCUMENTO } from "@/lib/documentos";
 export function SubirDocumentoForm({
   personaId,
   nombreFijo,
+  nombreInicial = "",
   onSubido,
   onGuardando,
 }: {
@@ -31,9 +32,11 @@ export function SubirDocumentoForm({
   personaId: number;
   /** Renovar: el documento ya existe y su nombre no se puede cambiar. */
   nombreFijo?: string;
+  /** Agregar: el documento que viene elegido (se puede cambiar). */
+  nombreInicial?: string;
   onSubido: () => void;
 }) {
-  const [nombre, setNombre] = useState(nombreFijo ?? "");
+  const [nombre, setNombre] = useState(nombreFijo ?? nombreInicial);
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);

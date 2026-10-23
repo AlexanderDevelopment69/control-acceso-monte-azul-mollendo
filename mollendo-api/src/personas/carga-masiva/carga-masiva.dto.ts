@@ -27,6 +27,8 @@ export class FilaConErrorDto {
   @IsOptional() @IsString() @MaxLength(300) autorizadoDesde = '';
   @IsOptional() @IsString() @MaxLength(300) autorizadoHasta = '';
   @IsOptional() @IsString() @MaxLength(300) motivoAutorizacion = '';
+  @IsOptional() @IsString() @MaxLength(300) documento = '';
+  @IsOptional() @IsString() @MaxLength(300) documentoVence = '';
   @IsOptional() @IsString() @MaxLength(1000) motivo = '';
 
   /** Columnas con error: se pintan en el Excel. */

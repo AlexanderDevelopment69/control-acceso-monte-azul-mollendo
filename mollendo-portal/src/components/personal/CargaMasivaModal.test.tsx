@@ -88,7 +88,7 @@ describe("carga masiva de personal", () => {
     await revisarArchivo();
     await userEvent.click(screen.getByRole("button", { name: "Descargar filas con error" }));
     expect(api.erroresCarga).toHaveBeenCalledWith([
-      { fila: 4, ...base, numeroDocumento: "1234", nombres: "Ana", apellidos: "Rojas", motivo: "Fila 4: El DNI debe tener 8 dígitos", campos: ["numeroDocumento"] },
+      { fila: 4, ...base, numeroDocumento: "1234", nombres: "Ana", apellidos: "Rojas", documento: "", documentoVence: "", motivo: "Fila 4: El DNI debe tener 8 dígitos", campos: ["numeroDocumento"] },
     ]);
     expect(guardarArchivo).toHaveBeenCalledWith(expect.any(Blob), "carga-personal-errores.xlsx");
   });

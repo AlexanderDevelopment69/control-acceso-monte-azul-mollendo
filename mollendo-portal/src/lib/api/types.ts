@@ -471,6 +471,12 @@ export interface FilaCargaMasiva {
   autorizadoDesde: string;
   autorizadoHasta: string;
   motivoAutorizacion: string;
+  /** Documento (opcional) como se escribió en el Excel. */
+  documento?: string;
+  documentoVence?: string;
+  /** Solo en las filas "lista": el documento que le corresponde (vacío en el Excel: el SCTR) y su vencimiento (AAAA-MM-DD, o null). Solo se muestran. */
+  documentoNombre?: string;
+  documentoVenceEl?: string | null;
   /** lista: se registrará; existe: ya está registrado (se omite); error: hay que corregirla. */
   estado: "lista" | "existe" | "error";
   motivos: string[];
@@ -485,6 +491,8 @@ export interface FilaCargaMasiva {
     | "autorizadoDesde"
     | "autorizadoHasta"
     | "motivoAutorizacion"
+    | "documento"
+    | "documentoVence"
   )[];
   persona?: {
     empresaId: number;

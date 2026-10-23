@@ -9,6 +9,7 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { Modal } from "@/components/ui/modal";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { SubirDocumentoForm } from "./SubirDocumentoForm";
+import { DOCUMENTOS_PERSONAL } from "@/lib/documentos";
 import { FotoGuardada, validarFoto } from "./FotoPersonal";
 import { EstadoIngreso } from "./EstadoIngreso";
 import { DocumentosActuales } from "./DocumentosActuales";
@@ -353,7 +354,13 @@ export function PersonaFicha({
           />
         )}
         {ventana?.modo === "agregar" && (
-          <SubirDocumentoForm personaId={persona.id} onSubido={documentoSubido} onGuardando={setSubiendoDocumento} />
+          <SubirDocumentoForm
+            personaId={persona.id}
+            // Viene con el SCTR elegido si todavía no lo tiene (cada persona tiene el suyo).
+            nombreInicial={actuales.some((d) => d.nombre === DOCUMENTOS_PERSONAL[0]) ? "" : DOCUMENTOS_PERSONAL[0]}
+            onSubido={documentoSubido}
+            onGuardando={setSubiendoDocumento}
+          />
         )}
       </Modal>
 

@@ -28,10 +28,38 @@ const fila = (n: number, datos: Partial<FilaCarga> = {}): FilaCarga => ({
   autorizadoDesde: '',
   autorizadoHasta: '',
   motivoAutorizacion: '',
+  documento: '',
+  documentoVence: '',
   ...datos,
 });
 
 describe('revisión de la carga masiva', () => {
+  it('documento (solo se muestra): vacío es el SCTR; de la lista sin importar mayúsculas; fuera de la lista, error', () => {
+    const [vacio, camo, fuera] = revisarFilasCarga(
+      [
+        fila(2),
+        fila(3, { numeroDocumento: '40000002', documento: 'certificado de aptitud médico ocupacional (camo)' }),
+        fila(4, { numeroDocumento: '40000003', documento: 'Licencia' }),
+      ],
+      EMPRESAS,
+      [],
+    );
+    expect(vacio).toMatchObject({ estado: 'lista', documentoNombre: 'SCTR Salud y Pensión' });
+    expect(camo).toMatchObject({ estado: 'lista', documentoNombre: 'Certificado de Aptitud Médico Ocupacional (CAMO)' });
+    expect(fuera).toMatchObject({ estado: 'error', campos: ['documento'] });
+  });
+
+  it('documento vence el (solo se muestra): la fila lista lleva la fecha; mal escrita, error en su columna', () => {
+    const [bien, sin, mal] = revisarFilasCarga(
+      [fila(2, { documentoVence: '31/12/2027' }), fila(3, { numeroDocumento: '40000002' }), fila(4, { numeroDocumento: '40000003', documentoVence: '31/13/2027' })],
+      EMPRESAS,
+      [],
+    );
+    expect(bien).toMatchObject({ estado: 'lista', documentoVenceEl: '2027-12-31' });
+    expect(sin).toMatchObject({ estado: 'lista', documentoVenceEl: null });
+    expect(mal).toMatchObject({ estado: 'error', campos: ['documentoVence'] });
+  });
+
   it('fila correcta: lista para registrar, con la empresa y el perfil resueltos', () => {
     const [r] = revisarFilasCarga([fila(2, { perfil: 'proveedor', empresa: 'demo servicios portuarios islay sa', numeroDocumento: ' 4000 0001 ' })], EMPRESAS, []);
     expect(r.estado).toBe('lista');
@@ -107,8 +135,8 @@ describe('lectura del Excel', () => {
     const filas = await leerFilasCarga(contenido);
     expect(filas).toEqual([
       // Una plantilla anterior, sin las columnas del período, sigue sirviendo: quedan vacías.
-      { fila: 2, perfil: 'Contratista', empresa: 'DEMO Servicios Portuarios Islay S.A.', tipoDocumento: 'DNI', numeroDocumento: '40000001', nombres: 'Juan', apellidos: 'Pérez', autorizadoDesde: '', autorizadoHasta: '', motivoAutorizacion: '' },
-      { fila: 4, perfil: 'Conductor', empresa: '20123456789', tipoDocumento: 'DNI', numeroDocumento: '01234567', nombres: 'Ana', apellidos: 'Rojas', autorizadoDesde: '', autorizadoHasta: '', motivoAutorizacion: '' },
+      { fila: 2, perfil: 'Contratista', empresa: 'DEMO Servicios Portuarios Islay S.A.', tipoDocumento: 'DNI', numeroDocumento: '40000001', nombres: 'Juan', apellidos: 'Pérez', autorizadoDesde: '', autorizadoHasta: '', motivoAutorizacion: '', documento: '', documentoVence: '' },
+      { fila: 4, perfil: 'Conductor', empresa: '20123456789', tipoDocumento: 'DNI', numeroDocumento: '01234567', nombres: 'Ana', apellidos: 'Rojas', autorizadoDesde: '', autorizadoHasta: '', motivoAutorizacion: '', documento: '', documentoVence: '' },
     ]);
   });
 
@@ -130,8 +158,8 @@ describe('lectura del Excel', () => {
     const libro = new ExcelJS.Workbook();
     await libro.xlsx.load(errores as unknown as ArrayBuffer);
     const hoja = libro.getWorksheet('Personal')!;
-    // El motivo va después de las 9 columnas (las 6 de la persona y las 3 del período).
-    expect(hoja.getCell('J2').value).toBe('El DNI debe tener 8 dígitos. Faltan los nombres');
+    // El motivo va después de las 11 columnas (las 6 de la persona, las 3 del período y las 2 del documento).
+    expect(hoja.getCell('L2').value).toBe('El DNI debe tener 8 dígitos. Faltan los nombres');
     // Pintadas en rojo claro: el número (D) y los nombres vacíos (E); las demás no.
     const pintada = (ref: string) => (hoja.getCell(ref).fill as ExcelJS.FillPattern | undefined)?.fgColor?.argb === 'FFFEE4E2';
     expect(['A2', 'B2', 'C2', 'D2', 'E2', 'F2'].map(pintada)).toEqual([false, false, false, true, true, false]);

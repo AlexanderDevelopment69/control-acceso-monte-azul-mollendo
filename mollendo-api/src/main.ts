@@ -59,6 +59,8 @@ async function bootstrap() {
   // Content-Type reconocible -- se fuerza a leerlos como texto siempre, antes
   // de que los parsers por defecto de Nest (json/urlencoded) los ignoren.
   app.use('/iclock', text({ type: () => true, limit: '2mb' }));
+  // La carga masiva manda hasta 2000 personas en un JSON (~0,5 MB); el límite por defecto es 100 KB.
+  app.useBodyParser('json', { limit: '2mb' });
   // Depuración del equipo (PUSH_SDK_DEPURAR=true): anota cada pedido del G4 Pro
   // con su contenido, para estudiar qué informa (p. ej. el estado del alcoholímetro).
   if (process.env.PUSH_SDK_DEPURAR === 'true') {

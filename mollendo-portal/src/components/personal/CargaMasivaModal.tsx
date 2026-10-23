@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { personasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { FilaCargaMasiva, ResultadoCargaMasiva, RevisionCargaMasiva } from "@/lib/api/types";
@@ -13,6 +13,9 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { DownloadIcon } from "@/icons";
 
+/** Filas que se dibujan por tanda: con 2000, la tabla entera tarda en cambiar de filtro. */
+const FILAS_POR_TANDA = 100;
+
 const ACEPTA_EXCEL = ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 type Filtro = "todas" | FilaCargaMasiva["estado"];
@@ -24,6 +27,25 @@ const ESTADO: Record<FilaCargaMasiva["estado"], { texto: string; color: "success
 };
 
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
+
+/** "2026-10-23" → "23/10/2026". */
+const fecha = (iso: string) => iso.split("-").reverse().join("/");
+
+/** Período autorizado de la fila: el ya revisado (lista) o como se escribió en el Excel. */
+function Periodo({ f }: { f: FilaCargaMasiva }) {
+  const desde = f.persona?.autorizadoDesde ? fecha(f.persona.autorizadoDesde) : f.autorizadoDesde;
+  const hasta = f.persona?.autorizadoHasta ? fecha(f.persona.autorizadoHasta) : f.autorizadoHasta;
+  const motivo = f.persona?.motivoAutorizacion ?? f.motivoAutorizacion;
+  if (!desde && !hasta && !motivo) return <span className="text-gray-400">Sin límite</span>;
+  return (
+    <>
+      <span className="block whitespace-nowrap text-gray-800 dark:text-white/90">
+        {desde || "—"} al {hasta || "—"}
+      </span>
+      {motivo && <span className="block text-xs text-gray-500 dark:text-gray-400">{motivo}</span>}
+    </>
+  );
+}
 
 /**
  * Carga masiva de personal desde Excel, en tres pasos: elegir el archivo (con
@@ -134,6 +156,8 @@ export function CargaMasivaModal({
             autorizadoDesde: f.autorizadoDesde ?? "",
             autorizadoHasta: f.autorizadoHasta ?? "",
             motivoAutorizacion: f.motivoAutorizacion ?? "",
+            documento: f.documento ?? "",
+            documentoVence: f.documentoVence ?? "",
             motivo: `Fila ${f.fila}: ${f.motivos.join(". ")}`,
             campos: f.campos,
           }));
@@ -145,6 +169,27 @@ export function CargaMasivaModal({
 
   const resumen = revision?.resumen;
   const filas = (revision?.filas ?? []).filter((f) => filtro === "todas" || f.estado === filtro);
+
+  // Cuántas filas se dibujan (como la lista de personal): vuelve a la primera tanda al cambiar de filtro o de archivo.
+  const claveLista = `${filtro}|${archivo?.name ?? ""}|${resumen?.total ?? 0}`;
+  const [tanda, setTanda] = useState({ clave: claveLista, cantidad: FILAS_POR_TANDA });
+  const cantidad = tanda.clave === claveLista ? tanda.cantidad : FILAS_POR_TANDA;
+  const hayMas = filas.length > cantidad;
+  const tablaRef = useRef<HTMLDivElement>(null);
+  const finalRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    const final = finalRef.current;
+    if (!hayMas || !final) return;
+    // Al acercarse al final de la tabla (600 px antes), se agrega otra tanda.
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) setTanda({ clave: claveLista, cantidad: cantidad + FILAS_POR_TANDA });
+      },
+      { root: tablaRef.current, rootMargin: "600px 0px" },
+    );
+    observador.observe(final);
+    return () => observador.disconnect();
+  }, [hayMas, claveLista, cantidad]);
 
   return (
     <Modal isOpen={isOpen} onClose={cerrar} bloqueado={ocupado === "registrando"} className="max-w-5xl p-6 sm:p-8">
@@ -228,14 +273,14 @@ export function CargaMasivaModal({
             ))}
           </div>
 
-          <div className="max-h-[50vh] overflow-auto rounded-lg border border-gray-100 dark:border-gray-800 [&_th]:whitespace-nowrap">
+          <div ref={tablaRef} className="max-h-[50vh] overflow-auto rounded-lg border border-gray-100 dark:border-gray-800 [&_th]:whitespace-nowrap">
             {filas.length === 0 ? (
               <p className="p-4 text-sm text-gray-400">No hay filas en este grupo.</p>
             ) : (
               <Table>
                 <TableHeader className="sticky top-0 border-b border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900">
                   <TableRow>
-                    {["Fila", "Persona", "Empresa", "Perfil", "Estado"].map((c) => (
+                    {["Fila", "Persona", "Empresa", "Perfil", "Período autorizado", "Documento", "Estado"].map((c) => (
                       <TableCell key={c} isHeader className="px-4 py-3 text-start text-xs font-medium text-gray-500">
                         {c}
                       </TableCell>
@@ -243,7 +288,7 @@ export function CargaMasivaModal({
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {filas.map((f) => (
+                  {filas.slice(0, cantidad).map((f) => (
                     <TableRow key={f.fila}>
                       <TableCell className="px-4 py-3 text-sm text-gray-500">{f.fila}</TableCell>
                       <TableCell className="px-4 py-3 text-sm">
@@ -257,6 +302,16 @@ export function CargaMasivaModal({
                       <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{f.empresa || "—"}</TableCell>
                       <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{f.perfil || "—"}</TableCell>
                       <TableCell className="px-4 py-3 text-sm">
+                        <Periodo f={f} />
+                      </TableCell>
+                      {/* Solo informa qué documento le corresponde: el archivo se sube en su ficha. */}
+                      <TableCell className="px-4 py-3 text-sm">
+                        <span className="block text-gray-800 dark:text-white/90">{f.documentoNombre ?? (f.documento || "—")}</span>
+                        <span className="block whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                          {f.documentoVenceEl ? `Vence el ${fecha(f.documentoVenceEl)}` : f.documentoVence ? `Vence el ${f.documentoVence}` : "No vence"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-sm">
                         <Badge color={ESTADO[f.estado].color}>{ESTADO[f.estado].texto}</Badge>
                         {f.motivos.length > 0 && (
                           <span className={`mt-1 block text-xs ${f.estado === "error" ? "text-error-600 dark:text-error-400" : "text-gray-500"}`}>
@@ -268,6 +323,11 @@ export function CargaMasivaModal({
                   ))}
                 </TableBody>
               </Table>
+            )}
+            {hayMas && (
+              <p ref={finalRef} className="p-3 text-center text-xs text-gray-400">
+                Mostrando {cantidad} de {filas.length}…
+              </p>
             )}
           </div>
 
