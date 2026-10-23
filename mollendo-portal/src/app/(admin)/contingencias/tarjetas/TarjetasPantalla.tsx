@@ -21,6 +21,7 @@ import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import Image from "next/image";
 import { CalenderIcon, CheckLineIcon, TrashBinIcon } from "@/icons";
+import { Ayuda } from "@/components/ui/ayuda/Ayuda";
 import { Movimiento } from "../../vigilancia/CeldasEvento";
 import { diaVisible } from "./imprimir";
 import { ImprimirTarjeta } from "./ImprimirTarjeta";
@@ -161,17 +162,21 @@ function TarjetaVisual({
           </dl>
           {esAdministrador && (
             // Solo una tarjeta que nunca se usó: la usada se desactiva, para conservar su historial.
-            <span title={tarjeta.eliminable ? "Eliminar tarjeta" : "Ya se usó: desactívela para conservar su historial"}>
+            // Deshabilitado, el botón no recibe el mouse: lo recibe el globo (así se ve el porqué).
+            <Ayuda
+              texto={tarjeta.eliminable ? "Eliminar tarjeta" : "Ya se usó: desactívela para conservar su historial"}
+              className={tarjeta.eliminable ? "" : "cursor-not-allowed"}
+            >
               <button
                 type="button"
                 aria-label="Eliminar tarjeta"
                 disabled={!tarjeta.eliminable}
                 onClick={() => onAccion("eliminar")}
-                className="flex size-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 dark:hover:bg-error-500/10"
+                className="flex size-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-error-500/10"
               >
                 <TrashBinIcon className="size-4" />
               </button>
-            </span>
+            </Ayuda>
           )}
         </div>
 

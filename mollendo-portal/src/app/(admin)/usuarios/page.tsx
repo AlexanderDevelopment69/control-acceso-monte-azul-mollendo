@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api/client";
 import type { UsuarioCuenta } from "@/lib/api/types";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
+import { Ayuda } from "@/components/ui/ayuda/Ayuda";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
@@ -391,8 +392,8 @@ function UsuariosContent() {
           {c.estadoCuenta === "activo" ? "Dar de baja" : "Reactivar"}
         </Button>
         {/* Solo una cuenta que nunca se usó: la usada se da de baja, para conservar su historial. */}
-        {/* En el celular, un botón con texto; en pantallas anchas, la papelera (como en las tarjetas). */}
-        <span title={c.eliminable ? "Eliminar cuenta" : "Ya se usó: désela de baja para conservar su historial"} className="contents">
+        {/* En el celular, un botón con texto; en pantallas anchas, la papelera con su globo de ayuda (como en las tarjetas). */}
+        <span title={c.eliminable ? undefined : "Ya se usó: désela de baja para conservar su historial"} className="contents">
           <Button
             type="button"
             size="sm"
@@ -403,16 +404,22 @@ function UsuariosContent() {
           >
             Eliminar
           </Button>
+        </span>
+        {/* Deshabilitada, la papelera no recibe el mouse: lo recibe el globo (así se ve el porqué). */}
+        <Ayuda
+          texto={c.eliminable ? "Eliminar cuenta" : "Ya se usó: désela de baja para conservar su historial"}
+          className={`max-sm:hidden ${c.eliminable ? "" : "cursor-not-allowed"}`}
+        >
           <button
             type="button"
             aria-label="Eliminar cuenta"
             disabled={!c.eliminable}
             onClick={() => setEliminando(c)}
-            className="hidden size-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400 sm:flex dark:hover:bg-error-500/10"
+            className="flex size-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-error-50 hover:text-error-500 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-error-500/10"
           >
             <TrashBinIcon className="size-4" />
           </button>
-        </span>
+        </Ayuda>
       </>
     );
   }
