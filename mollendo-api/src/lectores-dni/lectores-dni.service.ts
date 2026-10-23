@@ -20,6 +20,13 @@ const REINTENTO_MS = 5000;
 const FALLA_USB_MS = 2 * 60 * 1000;
 const REINTENTO_FALLA_USB_MS = 60 * 1000;
 export const MOTIVO_FALLA_USB = 'El adaptador USB no responde (error -71): desconéctelo y vuelva a conectarlo';
+/**
+ * Cada cuánto se pregunta a cada adaptador si responde (tools/sondeo-serie.c).
+ * Un adaptador trabado puede no dejar ningún -71 en el registro del kernel
+ * mientras nadie le hable (22/10/2026: figuró conectado un día entero sin
+ * enviar lecturas); el sondeo lo obliga a contestar.
+ */
+const SONDEO_MS = 30 * 1000;
 
 type Movimiento = 'ingreso' | 'salida';
 
@@ -71,6 +78,8 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
   private cerrando = false;
   private kernel: fs.ReadStream | null = null;
   private sinKernelAvisado = false;
+  private sondeo: NodeJS.Timeout | null = null;
+  private readonly programaSondeo = process.env.SONDEO_SERIE_PROGRAMA?.trim() || '/app/sondeo-serie';
 
   constructor(private readonly registro: RegistroLecturas) {}
 
@@ -98,7 +107,11 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
       this.lectores.push(lector);
       void this.abrir(lector);
     }
-    if (this.lectores.length > 0) this.vigilarKernel();
+    if (this.lectores.length > 0) {
+      this.vigilarKernel();
+      this.sondeo = setInterval(() => void this.sondear(), SONDEO_MS);
+      this.sondeo.unref();
+    }
   }
 
   onModuleDestroy() {
@@ -108,6 +121,7 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
       lector.stream?.destroy();
     }
     this.kernel?.destroy();
+    if (this.sondeo) clearInterval(this.sondeo);
   }
 
   /** Estado de cada lector para "Sistema y APIs". */
@@ -165,6 +179,31 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
     lector.error = motivo;
     const espera = this.enFallaUsb(lector) ? REINTENTO_FALLA_USB_MS : REINTENTO_MS;
     if (!this.cerrando && !lector.reintento) lector.reintento = setTimeout(() => void this.abrir(lector), espera);
+  }
+
+  /**
+   * Pregunta a cada adaptador abierto si responde. Si no (o no contesta en 10 s),
+   * se lo da por trabado igual que con un -71 del kernel: "Sistema y APIs" lo
+   * muestra sin respuesta, se activa la contingencia sin lector y se vuelve a
+   * probar cada minuto. Sin el programa (fuera de Docker) no se sondea.
+   */
+  private async sondear() {
+    if (!fs.existsSync(this.programaSondeo)) return;
+    for (const lector of this.lectores) {
+      if (!lector.stream || this.cerrando) continue;
+      try {
+        await ejecutar(this.programaSondeo, [lector.puerto], { timeout: 10_000 });
+      } catch (error) {
+        // El puerto pudo cerrarse mientras tanto (se reintenta por su cuenta).
+        if (!lector.stream) continue;
+        const salida = (error as { stdout?: string }).stdout?.trim() || (error as Error).message;
+        if (!this.enFallaUsb(lector)) {
+          this.logger.warn(`Lector de DNI de ${lector.movimiento}: el adaptador USB no responde al sondeo (${salida})`);
+        }
+        lector.fallaUsb = new Date();
+        this.desconectado(lector, MOTIVO_FALLA_USB);
+      }
+    }
   }
 
   private enFallaUsb(lector: Lector, ahora = Date.now()): boolean {
