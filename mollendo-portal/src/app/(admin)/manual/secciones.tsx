@@ -188,8 +188,8 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "+ Agregar documento",
             texto: (
               <p>
-                Agrega uno que no tenía: nombre, vencimiento y archivo. Queda <b>válido desde que se carga</b>; no hay que esperar ninguna
-                aprobación.
+                Si la persona todavía no tiene su SCTR, viene con <b>SCTR Salud y Pensión</b> ya elegido. Agrega uno que no tenía: nombre,
+                vencimiento y archivo. Queda <b>válido desde que se carga</b>; no hay que esperar ninguna aprobación.
               </p>
             ),
           },
@@ -334,6 +334,10 @@ export const SECCIONES: SeccionManual[] = [
                   y Motivo de la autorización. Si llena una, van las tres.
                 </p>
                 <p>
+                  También tiene <b>Documento</b> (se elige de la lista; vacío es el SCTR) y <b>Documento vence el</b>. Solo se muestran al
+                  revisar: el archivo se sube después, en la ficha de cada persona.
+                </p>
+                <p>
                   La empresa también se puede escribir por su RUC. Si no está, regístrela primero en <b>Empresas</b> y vuelva a descargar la
                   plantilla: la carga masiva no crea empresas.
                 </p>
@@ -382,6 +386,7 @@ export const SECCIONES: SeccionManual[] = [
                     <Badge color="error">Con error</Badge> tiene algo que corregir.
                   </li>
                 </Lista>
+                <p>Cada fila muestra también su <b>período autorizado</b> y su <b>documento</b> con el vencimiento.</p>
                 <p>Si hay errores, la revisión se abre directo en <b>Con error</b>.</p>
               </>
             ),
@@ -407,10 +412,15 @@ export const SECCIONES: SeccionManual[] = [
           {
             titulo: "Registrar",
             texto: (
-              <p>
-                Mientras haya errores dice <b>Corrija las filas con error</b> y no se puede presionar. Sin errores, dice{" "}
-                <b>Registrar N personas</b> y guarda las filas listas.
-              </p>
+              <>
+                <p>
+                  Mientras haya errores dice <b>Corrija las filas con error</b> y no se puede presionar. Sin errores, dice{" "}
+                  <b>Registrar N personas</b> y guarda las filas listas.
+                </p>
+                <p>
+                  Mientras registra, la barra de arriba y el botón muestran el avance (<b>Registrando 300 de 2000…</b>). No cierre la ventana.
+                </p>
+              </>
             ),
           },
         ],
@@ -654,12 +664,13 @@ export const SECCIONES: SeccionManual[] = [
                 En el panel, toque <b>Salida sin DNI</b>, busque al personal y toque <b>Elegir</b>. Solo aparecen quienes figuran dentro.
               </li>
               <li>
-                Arriba queda una franja ámbar con su nombre: tiene <b>2 minutos</b> para pasar la tarjeta por el lector de salida.
+                Arriba queda el aviso <b>Salida sin DNI</b> con su nombre: tiene <b>2 minutos</b> para pasar la tarjeta por el lector de salida.
               </li>
             </Lista>
             <p className="my-3">
               La tarjeta pasada en otro momento <b>no abre</b>, suena el aviso y queda anotada. Cada uso, aceptado o no, lo ve el administrador
-              en <b>Contingencias → Tarjetas de contingencia</b>.
+              en <b>Contingencias → Tarjetas de contingencia</b>; en <b>Usos de las tarjetas</b> se puede buscar por número de tarjeta, personal o
+              motivo.
             </p>
             <p>
               <b>Administrador:</b> ahí mismo crea la tarjeta (<b>No vence</b> o hasta un día), la imprime, la desactiva o la elimina (solo si nunca se usó). Si se pierde o se copia,
@@ -692,7 +703,8 @@ export const SECCIONES: SeccionManual[] = [
         contenido: (
           <>
             <p className="mb-3">
-              Si se desconecta un lector, el sistema lo detecta solo y muestra una franja roja en el Panel. No hay que activar nada.
+              Si se desconecta un lector o su adaptador deja de responder, el sistema lo detecta solo y muestra el aviso <b>Contingencia</b> en el
+              Panel. No hay que activar nada.
             </p>
             <Lista>
               <li>
@@ -736,7 +748,7 @@ export const SECCIONES: SeccionManual[] = [
                   revisan igual que siempre; las salidas no cambian.
                 </p>
                 <p>
-                  Arriba del panel queda una <b>franja azul</b> con desde cuándo, quién la activó y el motivo, y el botón{" "}
+                  Arriba del panel queda el aviso <b>Verificación manual</b> con desde cuándo, quién la activó y el motivo, y el botón{" "}
                   <b>Volver a modo normal</b>.
                 </p>
                 <p>
