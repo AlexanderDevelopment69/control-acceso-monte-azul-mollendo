@@ -28,18 +28,20 @@ import { PaginasTarjetas } from "./PaginasTarjetas";
 const POR_PAGINA = 5;
 
 /** Lo que cambia entre las tarjetas de contingencia y las de acceso. */
-const TEXTOS: Record<TipoTarjeta, { titulo: string; descripcion: string; carne: string; nueva: string }> = {
+const TEXTOS: Record<TipoTarjeta, { titulo: string; descripcion: string; carne: string; nueva: string; usos: string }> = {
   contingencia: {
     titulo: "Tarjetas de contingencia",
     descripcion: "Reemplazan al DNI cuando el personal lo olvidó o el lector no lo reconoce. Solo las usa el vigilante.",
     carne: "Tarjeta de contingencia",
     nueva: "Nueva tarjeta de contingencia",
+    usos: "Cada vez que se pasó una tarjeta por un lector: con quién entró o salió, o por qué se rechazó.",
   },
   acceso: {
     titulo: "Tarjetas de acceso",
     descripcion: "Abren el molinete sin rostro, alcohol ni DNI, para visitas o autoridades. Solo las usa el vigilante.",
     carne: "Tarjeta de acceso",
     nueva: "Nueva tarjeta de acceso",
+    usos: "Cada vez que se pasó una tarjeta de acceso por un lector y si abrió el molinete.",
   },
 };
 
@@ -508,7 +510,8 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
         </div>
       )}
 
-      <h2 className="mb-3 text-base font-semibold text-gray-800 dark:text-white/90">Usos de las tarjetas</h2>
+      <h2 className="text-base font-semibold text-gray-800 dark:text-white/90">Usos de las tarjetas</h2>
+      <p className="mb-3 mt-1 text-sm text-gray-500 dark:text-gray-400">{TEXTOS[tipo].usos}</p>
       <Tarjeta className="overflow-hidden">
         <div className="overflow-x-auto [&_th]:whitespace-nowrap">
           <AltoEstable paginaCompleta={datosUsos.length === POR_PAGINA} variasPaginas={(usos?.total ?? 0) > POR_PAGINA}>
