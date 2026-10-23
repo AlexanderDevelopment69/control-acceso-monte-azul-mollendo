@@ -485,6 +485,18 @@ export const SECCIONES: SeccionManual[] = [
         clave: "vigilancia",
         puntos: [
           {
+            titulo: "Orden del ingreso",
+            texto: (
+              <p>
+                El recuadro de arriba muestra el orden activo, <b>Facial + Alcohol → DNI</b>. La persona hace primero rostro y alcohol en
+                el equipo facial; cuando el equipo dice <b>correcto</b>, el Panel muestra <b>pase su DNI</b> con su foto y tiene{" "}
+                <b>30 segundos</b> para pasarlo. Se revisan sus documentos y se abre el molinete. Si pasa el DNI sin haber hecho antes
+                rostro y alcohol, no se abre. Con el orden <b>DNI → Facial + Alcohol</b>, primero pasa su DNI y, si está en regla,
+                tiene <b>1 minuto</b> para hacer rostro y alcohol.
+              </p>
+            ),
+          },
+          {
             titulo: "Resumen del día",
             texto: (
               <>
@@ -539,7 +551,7 @@ export const SECCIONES: SeccionManual[] = [
                   </li>
                   <li>
                     <Badge color="success">Pase su DNI</Badge> aprobó rostro y alcohol y tiene <b>30 segundos</b> para pasar su DNI (orden
-                    <b>facial primero</b>). Se ve su foto.
+                    Facial + Alcohol → DNI). Se ve su foto.
                   </li>
                 </ul>
                 <p className="mt-3">
@@ -579,15 +591,15 @@ export const SECCIONES: SeccionManual[] = [
                   />
                   <Motivo
                     m="DNI antes del facial"
-                    hacer={<>En <b>facial primero</b>, pasó su DNI sin haber hecho antes rostro y alcohol. Debe empezar por el terminal facial.</>}
+                    hacer={<>Con el orden <b>Facial + Alcohol → DNI</b>, pasó su DNI sin haber hecho antes rostro y alcohol. Debe empezar por el terminal facial.</>}
                   />
                   <Motivo
                     m="No pasó su DNI a tiempo"
-                    hacer={<>En <b>facial primero</b>, aprobó rostro y alcohol, pero no pasó su DNI en los 30 segundos. Debe empezar otra vez.</>}
+                    hacer={<>Con el orden <b>Facial + Alcohol → DNI</b>, aprobó rostro y alcohol, pero no pasó su DNI en los 30 segundos. Debe empezar otra vez.</>}
                   />
                   <Motivo
                     m="No es quien sopló"
-                    hacer={<>En <b>facial primero</b>, la prueba de rostro y alcohol la hizo otra persona. No puede entrar con esa prueba.</>}
+                    hacer={<>Con el orden <b>Facial + Alcohol → DNI</b>, la prueba de rostro y alcohol la hizo otra persona. No puede entrar con esa prueba.</>}
                   />
                   <Motivo m="Ya figura dentro" hacer="Figura que ya entró y no marcó su salida." />
                   <Motivo m="No registra ingreso" hacer="Quiere salir, pero no figura que haya entrado." />
@@ -1206,7 +1218,7 @@ export const SECCIONES: SeccionManual[] = [
               </li>
             </Lista>
             <p className="mt-3">
-              En <b>facial primero</b>, si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (<b>DNI antes del facial</b>). En los dos
+              Con el orden <b>Facial + Alcohol → DNI</b>, si pasa el DNI sin haber hecho antes rostro y alcohol, se deniega (<b>DNI antes del facial</b>). En los dos
               órdenes vale la primera prueba de alcohol: volver a soplar enseguida no cambia el resultado. Si da alcohol, queda denegado con
               su nombre aunque no pase el DNI.
             </p>

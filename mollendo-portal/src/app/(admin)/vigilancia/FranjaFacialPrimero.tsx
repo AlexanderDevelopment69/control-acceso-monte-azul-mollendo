@@ -3,12 +3,15 @@ import type { EstadoModoIngreso } from "@/lib/api/types";
 import { FotoGuardada } from "@/components/personal/FotoPersonal";
 
 /**
- * Orden "facial primero": el vigilante sabe que el ingreso empieza por el
- * equipo facial. Compacto: un punto de color, ORDEN DEL INGRESO, el orden en
- * una píldora azul (el color del sistema) y la frase debajo (fondo blanco y borde fino).
+ * El orden del ingreso activo (Sistema y APIs → Orden del ingreso), para que el
+ * vigilante sepa siempre cuál rige. Compacto: un punto de color, ORDEN DEL
+ * INGRESO, el orden en una píldora azul (el color del sistema) y la frase debajo
+ * (fondo blanco y borde fino). El detalle de los pasos y los casos está en el manual.
  */
 export function FranjaFacialPrimero({ estado }: { estado: EstadoModoIngreso | null }) {
-  if (!estado?.facialPrimero) return null;
+  // Mientras no se sabe el orden, nada (no se muestra uno que quizá no rige).
+  if (!estado) return null;
+  const facialPrimero = estado.facialPrimero;
   return (
     <div
       role="status"
@@ -24,12 +27,18 @@ export function FranjaFacialPrimero({ estado }: { estado: EstadoModoIngreso | nu
           Orden del ingreso
         </span>
         <span className="rounded-full bg-brand-500 px-3 py-1 text-sm font-semibold text-white shadow-theme-xs">
-          Facial + Alcohol → DNI
+          {facialPrimero ? "Facial + Alcohol → DNI" : "DNI → Facial + Alcohol"}
         </span>
       </div>
       <p className="mt-2 pl-[1.125rem] leading-relaxed text-gray-600 dark:text-gray-300">
-        Primero rostro y alcohol; cuando el equipo dice <b className="text-gray-800 dark:text-white/90">correcto</b>, pasa su DNI en
-        30 segundos.
+        {facialPrimero ? (
+          <>
+            Primero rostro y alcohol; cuando el equipo dice <b className="text-gray-800 dark:text-white/90">correcto</b>, pasa su DNI en
+            30 segundos.
+          </>
+        ) : (
+          <>Primero el DNI; si está en regla, hace rostro y alcohol en el equipo facial en 1 minuto.</>
+        )}
       </p>
     </div>
   );

@@ -166,9 +166,10 @@ const CAPTURAS = [
     clave: "vigilancia",
     ruta: "/vigilancia",
     preparar: async (p) => p.locator("::-p-text(Todos los días)").click(),
-    alto: 640,
+    alto: 720,
     puntos: [
       // Los números van en espacios libres, sin tapar contenido.
+      { sel: "::-p-text(Facial + Alcohol → DNI)", lado: "der" },
       { sel: "::-p-text(Accesos restringidos hoy)", recuadro: ".rounded-xl", lado: "esquina" },
       // El 2 junto al texto del buscador; el 3 en el espacio libre del buscador, pegado al filtro de fecha.
       { sel: 'input[placeholder*="Buscar por nombre o DNI"]', lado: "texto-buscador" },
@@ -402,6 +403,14 @@ const navegador = await puppeteer.launch({
   defaultViewport: { width: 1440, height: 900, deviceScaleFactor: 2 },
 });
 const pagina = await navegador.newPage();
+// El manual muestra el orden que se usa (Facial + Alcohol → DNI) aunque el portal local
+// tenga el otro: solo en este navegador, sin cambiar nada en la base.
+await pagina.setRequestInterception(true);
+pagina.on("request", async (r) => {
+  if (!r.url().includes("/eventos-acceso/modo-ingreso") || r.method() !== "GET") return r.continue();
+  const real = await fetch(r.url(), { headers: r.headers() }).then((x) => x.json()).catch(() => ({}));
+  r.respond({ status: 200, contentType: "application/json", body: JSON.stringify({ ...real, facialPrimero: true }) });
+});
 const { accessToken, refreshToken } = await sesion("ADMIN");
 // La sesión del portal va en las cookies de la API (las mismas que deja el inicio de sesión).
 const { hostname } = new URL(API);
