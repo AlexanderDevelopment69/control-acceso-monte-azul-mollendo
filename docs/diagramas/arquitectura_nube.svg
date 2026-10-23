@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1745 994" width="1745" height="994">
+<title>Arquitectura del Sistema de Control de Accesos: punto de acceso y servidor en Microsoft Azure</title>
+<style>
+  .zona { fill: #f6f8fb; stroke: #1f3864; stroke-width: 4; stroke-dasharray: 18 10; }
+  .zt { font: 700 27px Calibri, "Segoe UI", Arial, sans-serif; fill: #1f3864; }
+  .zs { font: 400 21px Calibri, "Segoe UI", Arial, sans-serif; fill: #555; }
+  .eq { fill: #fff; stroke: #555; stroke-width: 3.5; }
+  .ctl { fill: #fff; stroke: #2e75b6; stroke-width: 3.5; }
+  .az { fill: #deeaf6; stroke: #2e75b6; stroke-width: 3.5; }
+  .t1 { font: 700 29px Calibri, "Segoe UI", Arial, sans-serif; fill: #1f3864; text-anchor: middle; }
+  .t2 { font: 400 21px Calibri, "Segoe UI", Arial, sans-serif; fill: #555; text-anchor: middle; }
+  .et { font: 400 20px Calibri, "Segoe UI", Arial, sans-serif; fill: #1f3864; text-anchor: middle; }
+  .fl { stroke: #1f3864; stroke-width: 3; fill: none; }
+</style>
+<defs>
+  <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1f3864"/></marker>
+</defs>
+<rect width="1745" height="994" fill="#fff"/>
+
+<!-- Punto de acceso -->
+<rect class="zona" x="45" y="45" width="600" height="905" rx="30"/>
+<text class="zt" x="82" y="90">Punto de acceso del terminal</text>
+<text class="zs" x="82" y="133">Requiere conexión a internet</text>
+<rect class="eq" x="108" y="200" width="475" height="148" rx="16"/>
+<text class="t1" x="345" y="262">Terminal facial</text>
+<text class="t2" x="345" y="306">G4 Pro + alcoholímetro DT1700</text>
+<rect class="ctl" x="108" y="446" width="475" height="178" rx="16"/>
+<text class="t1" x="345" y="520">Controlador (PC)</text>
+<text class="t2" x="345" y="566">Lee DNI · consulta al servidor · abre molinetes</text>
+<rect class="eq" x="92" y="722" width="228" height="164" rx="16"/>
+<text class="t1" x="206" y="792">Lectores DNI</text>
+<text class="t2" x="206" y="836">Syble XB-7705H</text>
+<rect class="eq" x="356" y="722" width="242" height="164" rx="16"/>
+<text class="t1" x="477" y="792">Molinetes</text>
+<text class="t2" x="477" y="836">ZKTeco TS2000 Plus</text>
+<path class="fl" d="M206 712 V640" marker-end="url(#p)"/>
+<path class="fl" d="M477 634 V706" marker-end="url(#p)"/>
+
+<!-- Usuarios -->
+<rect class="eq" x="682" y="76" width="273" height="148" rx="16"/>
+<text class="t1" x="818" y="140">Usuarios</text>
+<text class="t2" x="818" y="184">Admin · Vigilancia</text>
+<text class="et" x="818" y="273">Internet (navegador, HTTPS)</text>
+
+<!-- Azure -->
+<rect class="zona" x="990" y="45" width="710" height="905" rx="30"/>
+<text class="zt" x="1028" y="90">Microsoft Azure</text>
+<text class="zs" x="1028" y="133">VM Ubuntu Server 26.04 · Docker · accesos.monteazulsur.com.pe</text>
+<rect class="az" x="1053" y="200" width="584" height="148" rx="16"/>
+<text class="t1" x="1345" y="262">portal</text>
+<text class="t2" x="1345" y="306">Portal web · HTTPS con certificado (caddy)</text>
+<rect class="az" x="1053" y="462" width="584" height="162" rx="16"/>
+<text class="t1" x="1345" y="530">api</text>
+<text class="t2" x="1345" y="580">Backend (API REST)</text>
+<rect class="az" x="1053" y="722" width="274" height="164" rx="16"/>
+<text class="t1" x="1190" y="792">db</text>
+<text class="t2" x="1190" y="836">PostgreSQL 16</text>
+<rect class="az" x="1363" y="722" width="274" height="164" rx="16"/>
+<text class="t1" x="1500" y="792">backup</text>
+<text class="t2" x="1500" y="836">Respaldo diario 04:00</text>
+<path class="fl" d="M1305 360 V446" marker-start="url(#p)" marker-end="url(#p)"/>
+<rect x="1205" y="388" width="200" height="32" fill="#f6f8fb"/>
+<text class="et" x="1305" y="412">HTTPS / WebSocket</text>
+<path class="fl" d="M1190 634 V706" marker-end="url(#p)"/>
+<path class="fl" d="M1336 804 H1350" marker-end="url(#p)"/>
+
+<!-- Conexiones -->
+<path class="fl" d="M962 176 L1040 242" marker-end="url(#p)"/>
+<path class="fl" d="M592 297 L1040 484" marker-end="url(#p)"/>
+<rect x="760" y="364" width="120" height="30" fill="#fff"/>
+<text class="et" x="820" y="386">Internet</text>
+<path class="fl" d="M598 535 H1040" marker-start="url(#p)" marker-end="url(#p)"/>
+<text class="et" x="818" y="512">Internet · API + X-API-Key (HTTPS)</text>
+</svg>

@@ -318,7 +318,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     endpoint: "/integraciones/torniquete/comando",
     metodo: "POST",
     descripcion:
-      "Abre un molinete a mano, sin DNI: para una emergencia o para probar un molinete. Con el servidor en la nube la orden va al controlador (mini PC), como cualquier apertura; sin el controlador conectado no se abre (enviado: false).",
+      "Abre un molinete a mano, sin DNI: para una emergencia o para probar un molinete. Con el servidor en la nube la orden va al Controlador (PC), como cualquier apertura; sin el controlador conectado no se abre (enviado: false).",
     autenticacion: "JWT (Administrador)",
     tipo: "real",
     headers: ["Content-Type: application/json", "Authorization: Bearer <token>"],

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1745 994" width="1745" height="994">
+<title>Diagrama de red del Sistema de Control de Accesos TMAM</title>
+<style>
+  .zona { fill: #f6f8fb; stroke: #1f3864; stroke-width: 4; stroke-dasharray: 18 10; }
+  .zt { font: 700 27px Calibri, "Segoe UI", Arial, sans-serif; fill: #1f3864; }
+  .zs { font: 400 21px Calibri, "Segoe UI", Arial, sans-serif; fill: #555; }
+  .eq { fill: #fff; stroke: #555; stroke-width: 3.5; }
+  .ctl { fill: #fff; stroke: #2e75b6; stroke-width: 3.5; }
+  .az { fill: #deeaf6; stroke: #2e75b6; stroke-width: 3.5; }
+  .t1 { font: 700 27px Calibri, "Segoe UI", Arial, sans-serif; fill: #1f3864; text-anchor: middle; }
+  .t2 { font: 400 20px Calibri, "Segoe UI", Arial, sans-serif; fill: #555; text-anchor: middle; }
+  .ip { font: 700 21px Consolas, "Courier New", monospace; fill: #2e75b6; text-anchor: middle; }
+  .et { font: 400 19px Calibri, "Segoe UI", Arial, sans-serif; fill: #1f3864; text-anchor: middle; }
+  .fl { stroke: #1f3864; stroke-width: 3; fill: none; }
+</style>
+<defs>
+  <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1f3864"/></marker>
+</defs>
+<rect width="1745" height="994" fill="#fff"/>
+
+<!-- Punto de acceso -->
+<rect class="zona" x="40" y="40" width="640" height="914" rx="30"/>
+<text class="zt" x="78" y="86">Punto de acceso · red 172.20.20.128/26</text>
+<text class="zs" x="78" y="126">Puerta de enlace 172.20.20.129 · sale por 190.119.170.73</text>
+
+<rect class="eq" x="100" y="170" width="520" height="150" rx="16"/>
+<text class="t1" x="360" y="220">Terminal facial G4 Pro</text>
+<text class="ip" x="360" y="258">172.20.20.198</text>
+<text class="t2" x="360" y="294">Serie HSR3263100192 · alcoholímetro DT1700 (USB)</text>
+
+<rect class="ctl" x="100" y="400" width="520" height="168" rx="16"/>
+<text class="t1" x="360" y="450">Controlador (PC)</text>
+<text class="ip" x="360" y="490">172.20.20.197</text>
+<text class="t2" x="360" y="528">Tailscale 100.78.153.33 · equipo monteazul</text>
+
+<rect class="eq" x="72" y="660" width="270" height="250" rx="16"/>
+<text class="t1" x="207" y="706">Lectores de DNI</text>
+<text class="t2" x="207" y="744">USB al Controlador (PC)</text>
+<text class="t2" x="207" y="790">Ingreso: FQCLb114J19</text>
+<text class="t2" x="207" y="826">Salida: A&lt;BCb14C705</text>
+<text class="t2" x="207" y="872">Extensores USB-RJ45</text>
+
+<rect class="eq" x="378" y="660" width="270" height="250" rx="16"/>
+<text class="t1" x="513" y="706">Relés (USB)</text>
+<text class="t2" x="513" y="752">Molinete ingreso: ING01</text>
+<text class="t2" x="513" y="790">Molinete salida: SAL01</text>
+<text class="t2" x="513" y="828">Aviso ingreso: DEN01</text>
+<text class="t2" x="513" y="866">Aviso salida: DSA01</text>
+
+<path class="fl" d="M207 650 V584" marker-end="url(#p)"/>
+<path class="fl" d="M513 578 V644" marker-end="url(#p)"/>
+
+<!-- Internet -->
+<text class="et" x="860" y="290">Internet · HTTP, puerto 3001</text>
+<path class="fl" d="M630 262 L1038 262" marker-end="url(#p)"/>
+<text class="et" x="860" y="456">Internet · HTTPS (443)</text>
+<path class="fl" d="M630 484 L1038 484" marker-end="url(#p)"/>
+<rect class="eq" x="745" y="650" width="230" height="130" rx="16"/>
+<text class="t1" x="860" y="702">Usuarios</text>
+<text class="t2" x="860" y="742">Navegador · HTTPS</text>
+<path class="fl" d="M985 700 L1038 650" marker-end="url(#p)"/>
+<text class="et" x="860" y="860">Soporte: SSH con llave (22)</text>
+<path class="fl" d="M985 850 L1038 850" marker-end="url(#p)"/>
+
+<!-- Azure -->
+<rect class="zona" x="1050" y="40" width="655" height="914" rx="30"/>
+<text class="zt" x="1088" y="86">Microsoft Azure · Standard_D4ls_v5</text>
+<text class="zs" x="1088" y="126">IP pública 74.163.89.6 · privada 10.1.1.4</text>
+
+<rect class="az" x="1100" y="170" width="555" height="150" rx="16"/>
+<text class="t1" x="1377" y="222">mollendo-api · puerto 3001</text>
+<text class="t2" x="1377" y="262">Recibe al terminal facial (protocolo PUSH)</text>
+<text class="t2" x="1377" y="296">y la API detrás de caddy</text>
+
+<rect class="az" x="1100" y="400" width="555" height="168" rx="16"/>
+<text class="t1" x="1377" y="452">mollendo-caddy · 80 / 443</text>
+<text class="ip" x="1377" y="492">accesos.monteazulsur.com.pe</text>
+<text class="t2" x="1377" y="530">HTTPS · reparte a portal y API</text>
+
+<rect class="az" x="1100" y="620" width="265" height="120" rx="16"/>
+<text class="t1" x="1232" y="672">mollendo-portal</text>
+<text class="t2" x="1232" y="708">Portal web</text>
+<rect class="az" x="1390" y="620" width="265" height="120" rx="16"/>
+<text class="t1" x="1522" y="672">mollendo-db</text>
+<text class="t2" x="1522" y="708">PostgreSQL 16</text>
+
+<rect class="az" x="1100" y="780" width="555" height="140" rx="16"/>
+<text class="t1" x="1377" y="826">mollendo-backup · 04:00 · 30 días</text>
+<text class="ip" x="1377" y="868">~/mollendo/deploy/nube/backups</text>
+
+<path class="fl" d="M1232 574 V612" marker-end="url(#p)"/>
+<path class="fl" d="M1377 330 V392" marker-start="url(#p)"/>
+<path class="fl" d="M1522 740 V772" marker-end="url(#p)"/>
+</svg>
