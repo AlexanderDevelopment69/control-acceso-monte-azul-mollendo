@@ -1,0 +1,383 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Flujo de contingencias</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Estilo común de los flujos (ingreso y contingencias): una columna de lectura; cada recorrido es una fila de pasos (se apila en el teléfono). Para imprimir en A4 horizontal. */
+:root {
+  --fondo: #f3f5f8; --capa: #ffffff; --capa2: #eef2f7; --linea: #d9dfe8;
+  --tinta: #18202b; --suave: #4f5b6c; --tenue: #7a8596;
+  --azul: #2563c9; --azul-f: #e1ebfa; --verde: #18864c; --verde-f: #e1f4e9;
+  --ambar: #a86a12; --ambar-f: #fbf0dc; --rojo: #c23737; --rojo-f: #fbe5e5;
+  --display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --texto: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--tinta); font: 400 15px/1.5 var(--texto); padding: 0 16px; }
+.pagina { max-width: 1120px; margin: 0 auto; padding-block: 32px 48px; display: flex; flex-direction: column; gap: 36px; }
+.sobre { font: 600 12px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--azul); }
+h1 { font: 700 clamp(30px, 5vw, 42px)/1.05 var(--display); margin: 6px 0 8px; text-wrap: balance; }
+h2 { font: 700 26px/1.1 var(--display); margin: 2px 0 6px; text-wrap: balance; }
+h2 .chip { vertical-align: middle; margin-left: 8px; }
+h3 { font: 700 18px/1.2 var(--display); margin: 0 0 10px; }
+.intro { color: var(--suave); max-width: 80ch; margin: 0; }
+.seccion { display: flex; flex-direction: column; gap: 14px; }
+.etiqueta { font: 600 12px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--suave); }
+.chip { display: inline-block; border-radius: 999px; padding: 3px 11px; font: 600 12.5px var(--texto); }
+.chip.azul { background: var(--azul-f); color: var(--azul); }
+.chip.rojo { background: var(--rojo-f); color: var(--rojo); }
+.chip.ambar { background: var(--ambar-f); color: var(--ambar); }
+.chip.verde { background: var(--verde-f); color: var(--verde); }
+.nota { color: var(--suave); font-size: 14px; margin: 0; }
+
+/* Recorrido de pasos */
+.recorrido { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--pasos, 4), minmax(0, 1fr)); background: var(--capa); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; }
+.paso { position: relative; padding: 16px 16px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.paso + .paso { border-left: 1px solid var(--linea); }
+.paso + .paso::before { content: ""; position: absolute; left: -9px; top: 32px; width: 16px; height: 16px; background: var(--capa); border-top: 1px solid var(--linea); border-right: 1px solid var(--linea); transform: rotate(45deg); }
+.ico { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--azul-f); color: var(--azul); position: relative; flex: none; }
+.ico svg { width: 22px; height: 22px; }
+.ico .n { position: absolute; top: -5px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--azul); color: var(--capa); display: grid; place-items: center; font: 700 12px var(--display); }
+.paso.fin .ico { background: var(--verde-f); color: var(--verde); }
+.paso.fin .ico .n { background: var(--verde); }
+.paso.alerta .ico { background: var(--rojo-f); color: var(--rojo); }
+.paso.alerta .ico .n { background: var(--rojo); }
+.paso b { font: 700 17px/1.2 var(--display); }
+.paso p { margin: 0; color: var(--suave); font-size: 13.5px; }
+.quien { align-self: flex-start; font: 600 11.5px var(--texto); letter-spacing: .02em; color: var(--suave); background: var(--capa2); border-radius: 6px; padding: 1px 7px; }
+.tiempo { align-self: flex-start; font: 600 12px var(--mono); border-radius: 6px; padding: 2px 7px; background: var(--ambar-f); color: var(--ambar); }
+.pantalla { margin-top: 2px; border: 1px dashed var(--linea); border-radius: 8px; padding: 6px 9px; font-size: 12.5px; color: var(--suave); }
+.pantalla strong { color: var(--tinta); font-weight: 600; }
+
+/* Desvíos */
+.desvios { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 10px; }
+.desvio { background: var(--capa); border: 1px solid var(--linea); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 32px 1fr; gap: 3px 12px; align-content: start; }
+.desvio .marca { grid-row: span 3; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; }
+.desvio .marca svg { width: 18px; height: 18px; }
+.desvio .si { font-size: 13px; color: var(--suave); }
+.desvio .que { font-weight: 600; font-size: 14.5px; line-height: 1.4; }
+.desvio .motivo { justify-self: start; margin-top: 3px; font: 600 12px var(--texto); border-radius: 6px; padding: 2px 8px; }
+.rojo .marca, .rojo .motivo { background: var(--rojo-f); color: var(--rojo); }
+.ambar .marca, .ambar .motivo { background: var(--ambar-f); color: var(--ambar); }
+.verde .marca, .verde .motivo { background: var(--verde-f); color: var(--verde); }
+.azul .marca, .azul .motivo { background: var(--azul-f); color: var(--azul); }
+
+/* Línea de tiempo */
+.tiempos { background: var(--capa); border: 1px solid var(--linea); border-radius: 14px; padding: 14px 18px 8px; }
+.tiempos svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.tiempos text { font-family: var(--texto); }
+.leyenda { color: var(--tenue); font-size: 12.5px; margin: 4px 0 0; }
+
+/* Tarjetas de reglas o de resumen */
+.reglas { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 10px; }
+.regla { background: var(--capa); border: 1px solid var(--linea); border-radius: 12px; padding: 13px 15px; display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-content: start; }
+.regla > svg { width: 22px; height: 22px; color: var(--azul); }
+.regla.rojo > svg { color: var(--rojo); } .regla.ambar > svg { color: var(--ambar); } .regla.verde > svg { color: var(--verde); }
+.regla b { display: block; font-weight: 600; }
+.regla span { color: var(--suave); font-size: 13.5px; }
+.regla .chip { display: table; margin-top: 7px; font-size: 11.5px; padding: 2px 9px; }
+.regla strong { color: var(--tinta); font-weight: 600; }
+
+/* Tabla de resumen */
+.tabla { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--capa); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; font-size: 14px; }
+.tabla th { text-align: left; font: 600 12px var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--suave); background: var(--capa2); padding: 9px 14px; }
+.tabla td { padding: 10px 14px; border-top: 1px solid var(--linea); vertical-align: top; color: var(--suave); }
+.tabla td:first-child { color: var(--tinta); font-weight: 600; white-space: nowrap; }
+.tabla td b { color: var(--tinta); }
+
+.dos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.pie { color: var(--tenue); font-size: 12.5px; border-top: 1px solid var(--linea); padding-top: 12px; margin: 0; }
+
+@media (max-width: 760px) {
+  .recorrido, .desvios, .reglas, .dos { grid-template-columns: minmax(0, 1fr); }
+  .paso + .paso { border-left: 0; border-top: 1px solid var(--linea); }
+  .paso + .paso::before { left: 30px; top: -9px; transform: rotate(135deg); }
+  .tiempos { overflow-x: auto; }
+}
+
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  html, body { background: var(--fondo); }
+  body { padding: 9mm 11mm; }
+  .pagina { padding-block: 0; gap: 12px; max-width: none; }
+  .seccion { gap: 10px; }
+  h1 { font-size: 38px; margin-bottom: 4px; }
+  .paso { padding: 13px 15px; gap: 6px; }
+  .desvio { padding: 10px 13px; }
+  .hoja { break-before: page; padding-top: 9mm; }
+  .recorrido, .desvio, .tiempos, .regla, .tabla, .dos > * { break-inside: avoid; }
+}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-dni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h4M14 13h3"/></symbol>
+    <symbol id="i-rostro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="10.5" r="2.5"/><path d="M8.5 16.5c.8-1.3 2-2 3.5-2s2.7.7 3.5 2"/></symbol>
+    <symbol id="i-soplo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a2.5 2.5 0 1 0-2.5-2.5M3 12h15a2.5 2.5 0 1 1-2.5 2.5M3 16h7a2 2 0 1 1-2 2"/></symbol>
+    <symbol id="i-molinete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="2"/><path d="M12 8V3M10.3 11l-4.6 2.7M13.7 11l4.6 2.7M12 12v9M8.5 21h7"/></symbol>
+    <symbol id="i-reloj" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-flechas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-usuarios" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5"/><circle cx="17" cy="9" r="2.3"/><path d="M16.5 14.6c2.2.2 3.8 1.6 4.5 4"/></symbol>
+    <symbol id="i-repetir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/></symbol>
+    <symbol id="i-salida" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></symbol>
+    <symbol id="i-mano" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M5 20c1-4 3.8-6 7-6s6 2 7 6"/></symbol>
+    <symbol id="i-campana" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2M20 14v6h-6M17 18h0"/></symbol>
+    <symbol id="i-lector" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h3M17 5h3v2M20 17v2h-3M7 19H4v-2M8 9v6M11 9v6M14 9v6M16.5 9v6"/></symbol>
+    <symbol id="i-desconectado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-3 3a3.5 3.5 0 0 0 5 5l3-3M15 17l3-3a3.5 3.5 0 0 0-5-5l-3 3M4 4l16 16"/></symbol>
+    <symbol id="i-pantalla" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+    <symbol id="i-lista" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+    <symbol id="i-escribir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14 7.5l2.5 2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></symbol>
+    <symbol id="i-pc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M8 19h8M7 15l-1 4M17 15l1 4"/></symbol>
+    <symbol id="i-rayo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></symbol>
+    <symbol id="i-nube" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.5A3.3 3.3 0 0 0 7 18z"/></symbol>
+  </defs>
+</svg>
+</head><body>
+<main class="pagina">
+  <header>
+    <div class="sobre">Terminal de Mollendo · Control de accesos</div>
+    <h1>Qué hacer si algo falla</h1>
+    <p class="intro">Contingencias del punto de acceso con el orden <b>Facial + Alcohol → DNI → Molinete</b>. En todas, el sistema sigue revisando los documentos y nadie entra sin prueba de alcohol. Cada contingencia queda marcada en el Panel, en los reportes y en la Auditoría.</p>
+  </header>
+
+  <section class="seccion">
+    <div>
+      <div class="etiqueta">Resumen</div>
+      <h2>Cada falla y qué se hace</h2>
+    </div>
+    <table class="tabla">
+      <thead><tr><th>Si falla…</th><th>Qué se hace</th><th>Cómo se activa</th><th>Quién</th></tr></thead>
+      <tbody>
+        <tr><td>Personal sin DNI</td><td><b>Tarjeta de contingencia</b>: el vigilante la pasa por el lector en lugar del DNI.</td><td>El personal avisa al vigilante</td><td>Vigilante</td></tr>
+        <tr><td>Lector de DNI</td><td><b>Contingencia sin lector</b>: ingreso solo con rostro y alcohol; salida desde Presentes ahora.</td><td>Sola, al desconectarse el lector o trabarse su adaptador</td><td>Vigilante; soporte cambia el lector</td></tr>
+        <tr><td>Equipo facial</td><td><b>Verificación manual</b>: el vigilante compara el rostro y toma la prueba con el alcoholímetro de repuesto.</td><td>Botón Activar verificación manual</td><td>Vigilante o administrador</td></tr>
+        <tr><td>Alcoholímetro</td><td>Soporte conecta el <b>alcoholímetro de repuesto</b>. Si demora, verificación manual.</td><td>Aviso rojo o aviso Ingreso</td><td>Soporte</td></tr>
+        <tr><td>Internet</td><td>Nadie ingresa; las <b>salidas siguen</b> con la lista guardada en el controlador.</td><td>Solo: se registran al volver</td><td>TMAM (segunda conexión)</td></tr>
+        <tr><td>Relé o controlador</td><td>Soporte cambia el relé o la PC por su <b>repuesto</b>.</td><td>Aviso rojo de fallas</td><td>Soporte</td></tr>
+      </tbody>
+    </table>
+    <div class="reglas" style="--cols:3">
+      <div class="regla rojo"><svg><use href="#i-pantalla"/></svg><div><b>Aviso de fallas</b><span>Arriba de todas las pantallas, un recuadro rojo por equipo caído: qué falla, qué deja de funcionar y desde cuándo.</span></div></div>
+      <div class="regla ambar"><svg><use href="#i-campana"/></svg><div><b>Avisos del Panel</b><span>Contingencia, Verificación manual, Salida sin DNI e Ingreso (alguien no completó rostro y alcohol), cada uno con su nombre.</span></div></div>
+      <div class="regla"><svg><use href="#i-mano"/></svg><div><b>El vigilante informa</b><span>Avisa a soporte y al administrador. No cambia ni configura equipos: sigue operando con lo que muestra el Panel.</span></div></div>
+    </div>
+  </section>
+
+  <!-- TARJETA DE CONTINGENCIA -->
+  <section class="seccion hoja">
+    <div>
+      <div class="etiqueta">Personal sin DNI, o DNI que el lector no lee</div>
+      <h2>Tarjeta de contingencia</h2>
+      <span class="chip azul">Sola no abre · reemplaza al DNI · la guarda el vigilante</span>
+    </div>
+
+    <h3>Para entrar</h3>
+    <ol class="recorrido" style="--pasos:4" aria-label="Ingreso con la tarjeta">
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-mano"/></svg><span class="n">1</span></span>
+        <b>Avisa al vigilante</b>
+        <span class="quien">Personal</span>
+        <p>Antes de hacer rostro y alcohol.</p>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-rostro"/></svg><span class="n">2</span></span>
+        <b>Hace rostro y alcohol</b>
+        <span class="quien">Personal</span>
+        <p>Como siempre, en el equipo facial.</p>
+        <div class="pantalla">Panel: <strong>Pase su DNI</strong>, con su nombre y su foto</div>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-qr"/></svg><span class="n">3</span></span>
+        <b>Pasa la tarjeta</b>
+        <span class="quien">Vigilante</span>
+        <p>Por el lector de ingreso, donde iría el DNI. Se revisan los documentos de quien aprobó.</p>
+        <span class="tiempo">en los 30 s</span>
+      </li>
+      <li class="paso fin">
+        <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
+        <b>Se abre el molinete</b>
+        <p>El ingreso queda a nombre del personal.</p>
+        <div class="pantalla">Panel: marca <strong>Tarjeta de contingencia</strong></div>
+      </li>
+    </ol>
+
+    <div class="dos">
+      <div>
+        <h3>Para salir</h3>
+        <ol class="recorrido" style="--pasos:3" aria-label="Salida con la tarjeta">
+          <li class="paso">
+            <span class="ico"><svg><use href="#i-lista"/></svg><span class="n">1</span></span>
+            <b>Elige al personal</b>
+            <span class="quien">Vigilante</span>
+            <p>Panel → <b>Salida sin DNI</b> → busca → <b>Elegir</b>. Solo aparecen quienes figuran dentro.</p>
+          </li>
+          <li class="paso">
+            <span class="ico"><svg><use href="#i-qr"/></svg><span class="n">2</span></span>
+            <b>Pasa la tarjeta</b>
+            <span class="quien">Vigilante</span>
+            <p>Por el lector de salida.</p>
+            <span class="tiempo">en 2 min</span>
+          </li>
+          <li class="paso fin">
+            <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
+            <b>Sale</b>
+            <p>A nombre del personal, con quién lo eligió.</p>
+          </li>
+        </ol>
+      </div>
+      <div>
+        <h3>Cuándo no abre</h3>
+        <div class="desvios" style="--cols:1">
+          <div class="desvio ambar"><span class="marca"><svg><use href="#i-usuarios"/></svg></span><span class="si">Nadie aprobó rostro y alcohol, o aprobaron dos a la vez</span><span class="que">Hacer primero la prueba, o esperar a que pase la otra persona y repetirla.</span></div>
+          <div class="desvio rojo"><span class="marca"><svg><use href="#i-qr"/></svg></span><span class="si">Tarjeta desactivada, vencida o con el código cambiado</span><span class="que">Suena el aviso. El administrador la revisa en Contingencias → Tarjetas.</span></div>
+          <div class="desvio azul"><span class="marca"><svg><use href="#i-mano"/></svg></span><span class="si">Verificación manual activa</span><span class="que">La tarjeta no se usa: decide el vigilante en el Panel.</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="nota">Si se pierde o se copia, el administrador usa <b>Cambiar código</b>: la impresa queda anulada. Cada uso, aceptado o no, queda en <b>Usos de las tarjetas</b>.</p>
+  </section>
+
+  <!-- SIN LECTOR -->
+  <section class="seccion hoja">
+    <div>
+      <div class="etiqueta">Lector de DNI desconectado o con el adaptador sin respuesta</div>
+      <h2>Contingencia sin lector</h2>
+      <span class="chip rojo">Se activa sola · termina sola cuando vuelve el lector</span>
+    </div>
+
+    <h3>Lector de ingreso: entra solo con rostro y alcohol</h3>
+    <ol class="recorrido" style="--pasos:4" aria-label="Ingreso sin lector">
+      <li class="paso alerta">
+        <span class="ico"><svg><use href="#i-desconectado"/></svg><span class="n">!</span></span>
+        <b>El sistema lo detecta</b>
+        <p>En segundos. No hay que activar nada.</p>
+        <div class="pantalla">Panel: aviso <strong>Contingencia</strong> · Lector de DNI de ingreso sin conexión</div>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-rostro"/></svg><span class="n">1</span></span>
+        <b>Hace rostro y alcohol</b>
+        <span class="quien">Personal</span>
+        <p>Como siempre. El equipo facial dice quién es.</p>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-doc"/></svg><span class="n">2</span></span>
+        <b>Se revisan sus documentos</b>
+        <p>Baja, período y antipassback, como si hubiera pasado su DNI.</p>
+        <span class="tiempo">al instante</span>
+      </li>
+      <li class="paso fin">
+        <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
+        <b>Se abre sin DNI</b>
+        <p>Se identifica solo por su rostro.</p>
+        <div class="pantalla">Panel: marca <strong>Sin lector de DNI: identificado por rostro</strong></div>
+      </li>
+    </ol>
+
+    <h3>Lector de salida: la abre el vigilante</h3>
+    <ol class="recorrido" style="--pasos:4" aria-label="Salida sin lector">
+      <li class="paso alerta">
+        <span class="ico"><svg><use href="#i-desconectado"/></svg><span class="n">!</span></span>
+        <b>El sistema lo detecta</b>
+        <div class="pantalla">Panel: aviso <strong>Contingencia</strong> con el botón <strong>Ir a Presentes ahora</strong></div>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-lista"/></svg><span class="n">1</span></span>
+        <b>Busca a la persona</b>
+        <span class="quien">Vigilante</span>
+        <p>En Presentes ahora, por nombre, DNI o empresa. Puede pedirle el DNI para estar seguro.</p>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-check"/></svg><span class="n">2</span></span>
+        <b>Salida → Abrir salida</b>
+        <span class="quien">Vigilante</span>
+        <p>Confirma en la ventana.</p>
+      </li>
+      <li class="paso fin">
+        <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
+        <b>Se abre la salida</b>
+        <p>A nombre de la persona, con quién la abrió.</p>
+        <div class="pantalla">Panel: marca <strong>Salida sin lector</strong></div>
+      </li>
+    </ol>
+    <p class="nota">Mientras el lector de salida no funcione, <b>Salida sin DNI</b> no se puede usar (la tarjeta se pasa por ese lector). Si el adaptador quedó sin respuesta, soporte lo desconecta y vuelve a conectar en la mini PC, o la reinicia; si se repite, lo cambia por el repuesto.</p>
+  </section>
+
+  <!-- VERIFICACIÓN MANUAL -->
+  <section class="seccion hoja">
+    <div>
+      <div class="etiqueta">Equipo facial o alcoholímetro sin funcionar</div>
+      <h2>Verificación manual</h2>
+      <span class="chip azul">La activa el vigilante o el administrador · sin tiempo máximo</span>
+    </div>
+
+    <ol class="recorrido" style="--pasos:5" aria-label="Verificación manual">
+      <li class="paso alerta">
+        <span class="ico"><svg><use href="#i-pantalla"/></svg><span class="n">!</span></span>
+        <b>Aparece la falla</b>
+        <p>Aviso rojo del terminal facial o del alcoholímetro, o el aviso <b>Ingreso</b> si alguien no pudo soplar.</p>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-escribir"/></svg><span class="n">1</span></span>
+        <b>Activar verificación manual</b>
+        <span class="quien">Vigilante o administrador</span>
+        <p>Escribe el motivo y presiona Activar.</p>
+        <div class="pantalla">Panel: aviso <strong>Verificación manual · Activa</strong></div>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-dni"/></svg><span class="n">2</span></span>
+        <b>Pasa su DNI</b>
+        <span class="quien">Personal</span>
+        <p>Se revisan sus documentos; si no está en regla, se deniega como siempre.</p>
+        <div class="pantalla">Panel: ventana con su <strong>foto</strong></div>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-soplo"/></svg><span class="n">3</span></span>
+        <b>Compara y toma la prueba</b>
+        <span class="quien">Vigilante</span>
+        <p>Rostro contra la foto y prueba con el alcoholímetro de repuesto, a todos. Escribe el grado.</p>
+        <span class="tiempo">2 min para decidir</span>
+      </li>
+      <li class="paso fin">
+        <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
+        <b>Registrar prueba</b>
+        <p>Decide el sistema con el mismo límite del equipo: bajo él, se abre.</p>
+        <div class="pantalla">Panel: marca <strong>Manual</strong> con el grado y quién decidió</div>
+      </li>
+    </ol>
+
+    <h3>Otros casos</h3>
+    <div class="desvios" style="--cols:4">
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-soplo"/></svg></span><span class="si">Grado igual o sobre el límite</span><span class="que">No se abre y suena el aviso.</span><span class="motivo">Alcohol</span></div>
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-usuarios"/></svg></span><span class="si">No es la persona de la foto</span><span class="que">No se abre y suena el aviso.</span><span class="motivo">Rostro no coincide</span></div>
+      <div class="desvio ambar"><span class="marca"><svg><use href="#i-reloj"/></svg></span><span class="si">Nadie decide en 2 minutos</span><span class="que">Se deniega solo; puede pasar su DNI otra vez.</span><span class="motivo">No completó rostro y alcohol</span></div>
+      <div class="desvio azul"><span class="marca"><svg><use href="#i-escribir"/></svg></span><span class="si">El repuesto no muestra el número</span><span class="que">Mi alcoholímetro no muestra el número → Marcó apto o Marcó alcohol.</span><span class="motivo">Sin número</span></div>
+    </div>
+
+    <div class="reglas" style="--cols:2">
+      <div class="regla verde"><svg><use href="#i-repetir"/></svg><div><b>Volver a modo normal</b><span>Cuando el equipo vuelve, el Panel pregunta en verde ¿Volver a modo normal? (o Seguir en manual). No vuelve solo, a propósito, para que siempre se sepa en qué modo se está.</span></div></div>
+      <div class="regla"><svg><use href="#i-salida"/></svg><div><b>Mientras dure</b><span>Las salidas siguen normales. Si llegan varias personas, se atienden de una en una, en el orden en que pasaron el DNI.</span></div></div>
+    </div>
+  </section>
+
+  <!-- OTRAS FALLAS -->
+  <section class="seccion hoja">
+    <div>
+      <div class="etiqueta">Otras fallas</div>
+      <h2>Alcoholímetro, internet, relés y controlador</h2>
+    </div>
+    <div class="reglas" style="--cols:2">
+      <div class="regla ambar"><svg><use href="#i-soplo"/></svg><div><b>Alcoholímetro</b><span>Si se desconecta, el aviso rojo lo muestra en unos 10 s y nadie puede completar rostro y alcohol. Si está conectado pero no mide, la persona no puede soplar y aparece el aviso Ingreso. Soporte conecta el repuesto al equipo facial; si demora, se activa la verificación manual.</span><span class="chip ambar">El vigilante informa · soporte lo cambia</span></div></div>
+      <div class="regla rojo"><svg><use href="#i-red"/></svg><div><b>Internet del punto de acceso</b><span>Nadie puede ingresar. Las salidas siguen: el controlador guarda la lista del personal y abre el molinete; al volver la conexión envía las salidas con su hora real. Nadie queda encerrado.</span><span class="chip rojo">TMAM · segunda conexión de otro proveedor</span></div></div>
+      <div class="regla ambar"><svg><use href="#i-rayo"/></svg><div><b>Relé de un molinete</b><span>El sistema autoriza, pero el molinete no se abre; el aviso rojo muestra el relé No conectado. El ingreso o la salida queda registrado. Soporte conecta el relé de repuesto.</span><span class="chip ambar">El vigilante informa · soporte lo cambia</span></div></div>
+      <div class="regla rojo"><svg><use href="#i-pc"/></svg><div><b>Controlador (PC)</b><span>Sin él no funcionan los lectores ni los relés: nadie pasa por el sistema. Soporte conecta la PC de repuesto con los lectores y relés; si no la hay, se libera el molinete a mano.</span><span class="chip rojo">El vigilante informa · soporte la cambia</span></div></div>
+      <div class="regla"><svg><use href="#i-nube"/></svg><div><b>Servidor en la nube</b><span>El Panel muestra El servidor no responde: mientras dure, no se valida ningún ingreso. Se recupera solo al reiniciarse y tiene respaldos diarios.</span><span class="chip azul">Soporte</span></div></div>
+      <div class="regla"><svg><use href="#i-mano"/></svg><div><b>Quién hace qué</b><span><strong>Vigilante:</strong> informa y sigue operando con lo que muestra el Panel. <strong>Administrador:</strong> gestiona repuestos y reparaciones, y administra las tarjetas. <strong>Soporte:</strong> cambia y configura los equipos.</span></div></div>
+    </div>
+    <p class="pie">Basado en el documento Contingencias ante fallas de los equipos del punto de acceso. Actualizado al 23/10/2026.</p>
+  </section>
+</main>
+</body></html>

@@ -392,7 +392,7 @@ Lista las cuentas del sistema, cada una con su tipo, su estado y la fecha en que
 | RN-10 | **Documento de identidad:** el DNI tiene 8 dígitos; el carné de extranjería y el pasaporte, letras y números. Se guarda sin espacios y en mayúsculas. No puede haber dos personas con el mismo tipo y número. |
 | RN-11 | Los **nombres de documento** se eligen de una lista fija de cinco (sección 4.2); los escritos a mano antes del 22/10/2026 siguen valiendo y se renuevan con su nombre. No distinguen mayúsculas. |
 | RN-12 | **Foto** obligatoria al registrar al personal: JPG, PNG o WEBP de hasta 5 MB. **Archivos de documentos:** PDF, JPG, PNG, WEBP o Word, hasta 20 MB. |
-| RN-13 | **Contraseñas** de al menos 8 caracteres. Al cambiarla se cierran las demás sesiones de esa cuenta. |
+| RN-13 | **Contraseñas** de al menos 10 caracteres, con letras y números. Al cambiarla se cierran las demás sesiones de esa cuenta. |
 | RN-14 | Toda creación, modificación o eliminación de datos queda en la **Auditoría** con el usuario y la fecha; también los inicios de sesión, las aperturas del molinete sin DNI, la salida sin DNI, la sincronización con el terminal facial, las descargas de reportes, los archivos de documentos abiertos y cada desconexión y vuelta de los equipos (a nombre de "Sistema"). |
 | RN-15 | "Hoy" y los vencimientos se calculan con la **hora de Lima**, independientemente de la configuración del servidor. |
 | RN-16 | **Verificación manual** (falla del terminal facial o del alcoholímetro): la activan el vigilante o el administrador desde el Panel (en el aviso rojo del terminal o del alcoholímetro, o en el aviso Ingreso, cuando alguien no completó rostro y alcohol). Al pasar un DNI en regla, el Panel muestra su foto; el vigilante compara el rostro, toma la prueba con el alcoholímetro de repuesto y escribe el grado (mg/L), y **el sistema decide** con el mismo umbral del terminal; si el repuesto no muestra el número, el vigilante elige "Marcó apto" o "Marcó alcohol" y queda "sin número". Tiene 2 minutos. Queda marcado "Manual", con el grado y quién decidió. |
@@ -472,7 +472,6 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 | `GET /panel/estado-sistema` · `/health` | Estado del sistema y de los respaldos | Administrador · público |
 | `GET /panel/avisos` | Equipos y servicios caídos, para el aviso de la parte superior del portal | Administrador y Vigilancia |
 | `GET /auditoria` | Auditoría paginada, con búsqueda y fechas | Administrador |
-| `GET` · `POST` · `PATCH /usuarios` | Cuentas de usuario (sin pantalla en el alcance base) | Administrador |
 | Socket.IO `/ws/eventos` | Eventos en tiempo real para el Panel | Con sesión |
 
 ---

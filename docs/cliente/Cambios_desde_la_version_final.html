@@ -1,0 +1,169 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cambios desde la versión final</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
+<style>
+:root {
+  --fondo: #ffffff; --capa: #ffffff; --capa2: #eef2f7; --linea: #d9dfe8;
+  --tinta: #18202b; --suave: #4f5b6c; --tenue: #7a8596;
+  --azul: #2563c9; --azul-f: #e1ebfa; --verde: #18864c; --verde-f: #e1f4e9; --ambar: #a86a12; --ambar-f: #fbf0dc;
+  --display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --texto: "Barlow", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--tinta); font: 400 14px/1.5 var(--texto); padding: 0 16px; }
+.pagina { max-width: 860px; margin: 0 auto; padding-block: 32px 48px; }
+.sobre { font: 600 12px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--azul); }
+h1 { font: 700 38px/1.05 var(--display); margin: 6px 0 8px; }
+h2 { font: 700 21px/1.15 var(--display); margin: 26px 0 8px; display: flex; align-items: baseline; gap: 10px; }
+h2 .num { color: var(--azul); }
+p { margin: 0 0 8px; }
+.intro { color: var(--suave); }
+.datos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0 6px; }
+.dato { border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px; }
+.dato b { display: block; font: 700 17px var(--display); }
+.dato b.url { font-size: 14.5px; overflow-wrap: anywhere; }
+.dato span { color: var(--suave); font-size: 12.5px; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--linea); border-radius: 10px; overflow: hidden; }
+th { text-align: left; font: 600 11px var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--suave); background: var(--capa2); padding: 7px 11px; }
+td { padding: 8px 11px; border-top: 1px solid var(--linea); vertical-align: top; color: var(--suave); }
+td:first-child { color: var(--tinta); font-weight: 600; width: 30%; }
+td b { color: var(--tinta); font-weight: 600; }
+tr { break-inside: avoid; }
+.chip { display: inline-block; border-radius: 999px; padding: 0 8px; font: 600 10.5px/1.7 var(--texto); margin-left: 4px; vertical-align: 1px; }
+.nuevo { background: var(--verde-f); color: var(--verde); }
+.cambio { background: var(--azul-f); color: var(--azul); }
+.pie { color: var(--tenue); font-size: 12px; border-top: 1px solid var(--linea); padding-top: 10px; margin-top: 24px; }
+@media (max-width: 640px) { .datos { grid-template-columns: 1fr; } td:first-child { width: auto; } }
+@page { size: A4; margin: 14mm 13mm; }
+@media print {
+  body { padding: 0; font-size: 12.5px; }
+  .pagina { padding: 0; max-width: none; }
+  h2 { break-after: avoid; }
+}
+</style></head><body><main class="pagina">
+
+<div class="sobre">Terminal Monte Azul Mollendo · Sistema de Control de Accesos</div>
+<h1>Cambios desde la versión final</h1>
+<p class="intro">Lo que se agregó o cambió en la plataforma desde el <b>Documento Funcional, versión final del 2 de octubre de 2026</b>, hasta el 23 de octubre de 2026. Cada punto indica si es <span class="chip nuevo">Nuevo</span> o si <span class="chip cambio">Cambió</span> algo que ya existía. El detalle de cada pantalla está en el manual del portal.</p>
+
+<div class="datos">
+  <div class="dato"><b class="url">accesos.monteazulsur.com.pe</b><span>Dirección del portal, con HTTPS</span></div>
+  <div class="dato"><b>Facial + Alcohol → DNI</b><span>Orden del ingreso en uso</span></div>
+  <div class="dato"><b>Respaldo diario 04:00</b><span>Se conservan 30 días</span></div>
+</div>
+
+<h2><span class="num">1</span> Instalación y servidor</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Servidor en Azure en producción <span class="chip nuevo">Nuevo</span></td><td>Desde el 16/10/2026 el sistema funciona en el servidor de Azure de TMAM, en <b>https://accesos.monteazulsur.com.pe</b>, con certificado de seguridad que se renueva solo.</td></tr>
+  <tr><td>Mini PC como Controlador (PC) <span class="chip cambio">Cambió</span></td><td>La mini PC del punto de acceso lee los DNI, abre los molinetes con sus relés e informa el estado de lectores y relés. La conexión la inicia el punto de acceso: no se abren puertos en la red del terminal.</td></tr>
+  <tr><td>Respaldos <span class="chip cambio">Cambió</span></td><td>Diarios a las <b>04:00</b> (antes 00:00) y se conservan <b>30 días</b> (antes 14). Además, un respaldo antes de cada actualización.</td></tr>
+  <tr><td>Mantenimiento del disco <span class="chip nuevo">Nuevo</span></td><td>Cada actualización limpia las imágenes y la caché que ya no se usan, para que el disco del servidor no se llene.</td></tr>
+</table>
+
+<h2><span class="num">2</span> Cuentas y seguridad</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Correos de las cuentas <span class="chip cambio">Cambió</span></td><td><b>admin@monteazulsur.com.pe</b> y <b>vigilancia@monteazulsur.com.pe</b> (antes @mollendo.local).</td></tr>
+  <tr><td>Pantalla Usuarios <span class="chip nuevo">Nuevo</span></td><td>El administrador cambia el correo de cualquier cuenta, y en la de vigilancia cambia la contraseña, la da de baja o la reactiva, y la elimina si nunca se usó. Por ahora <b>no se crean cuentas nuevas</b>: solo existen las dos.</td></tr>
+  <tr><td>Contraseña del vigilante <span class="chip cambio">Cambió</span></td><td>Se la cambia el administrador desde Usuarios; el vigilante ya no tiene Cambiar contraseña en su menú.</td></tr>
+  <tr><td>Contraseñas más seguras <span class="chip cambio">Cambió</span></td><td>Al menos <b>10 caracteres, con letras y números</b> (antes 8).</td></tr>
+  <tr><td>Límite de intentos <span class="chip nuevo">Nuevo</span></td><td>Tras 5 intentos fallidos en un minuto con el mismo correo, ese correo se bloquea un minuto.</td></tr>
+  <tr><td>Sesión <span class="chip cambio">Cambió</span></td><td>Se renueva también al volver al portal después de un rato (sin pedir la contraseña, hasta 7 días) y no se cierra si el servidor no responde por un momento.</td></tr>
+  <tr><td>Protección del servidor <span class="chip nuevo">Nuevo</span></td><td>Solo se aceptan los terminales faciales autorizados por su número de serie; cabeceras de seguridad; documentación técnica (Swagger) desactivada en la nube; al dar de baja una cuenta o cambiar su contraseña se cortan también sus paneles abiertos.</td></tr>
+</table>
+
+<h2><span class="num">3</span> Personal y documentos</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Perfil de la persona <span class="chip nuevo">Nuevo</span></td><td>Personal de planta, contratista, subcontratista / proveedor, conductor, visita o cliente / mayorista. Solo clasifica (lista, Dashboard y reportes); el molinete valida a todos igual. Filtro por perfil en la lista.</td></tr>
+  <tr><td>Pantalla Empresas <span class="chip nuevo">Nuevo</span></td><td>Las empresas se registran, editan, activan o desactivan y eliminan (solo sin personal) en su propia pantalla, con su personal activo. Antes se creaban dentro del formulario de personal.</td></tr>
+  <tr><td>Carga masiva <span class="chip nuevo">Nuevo</span></td><td>Registra hasta <b>2000 personas</b> desde un Excel: plantilla con listas, revisión sin guardar (Lista, Ya registrada, Con error), Excel de filas con error y registro con barra de avance.</td></tr>
+  <tr><td>Editar datos <span class="chip nuevo">Nuevo</span></td><td>Corrige perfil, empresa, documento, nombres y apellidos; el terminal facial se actualiza solo.</td></tr>
+  <tr><td>Nombres de documento <span class="chip cambio">Cambió</span></td><td>Se eligen de una <b>lista fija</b>: SCTR Salud y Pensión, CAMO y Certificado de Inducción SSMA (Visitas, Contratistas o Personal de Planta). El primero viene con el SCTR ya elegido. No se acepta una fecha de vencimiento ya pasada.</td></tr>
+  <tr><td>Ver documento <span class="chip nuevo">Nuevo</span></td><td>Botón Ver: abre el archivo (PDF o imagen) o lo descarga (Word), también en el historial.</td></tr>
+  <tr><td>Período de autorización <span class="chip nuevo">Nuevo</span></td><td>Fecha de ingreso, fecha de finalización y motivo (opcional). Fuera de esas fechas no puede ingresar (<b>Fuera del período autorizado</b>); la salida siempre se permite.</td></tr>
+  <tr><td>Motivo de baja y reactivación <span class="chip nuevo">Nuevo</span></td><td>Obligatorio al dar de baja y al reactivar; se ve en la ficha, en la lista y en el reporte, y queda en la Auditoría.</td></tr>
+  <tr><td>Pestaña No pueden <span class="chip cambio">Cambió</span></td><td>Se separa en Documentos, Período y De baja.</td></tr>
+  <tr><td>Consulta del vigilante <span class="chip nuevo">Nuevo</span></td><td>El vigilante ve Personal y documentos en solo consulta (sin abrir archivos ni cambiar nada).</td></tr>
+</table>
+
+<h2><span class="num">4</span> Ingreso por el molinete</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Terminal facial y alcoholímetro integrados <span class="chip nuevo">Nuevo</span></td><td>El G4 Pro, en modo asistencia, reconoce al personal y envía quién sopló y el grado de alcohol; el sistema decide con el mismo umbral del equipo (0,0001 g/L). Antes la integración era simulada.</td></tr>
+  <tr><td>Orden del ingreso <span class="chip nuevo">Nuevo</span></td><td>Se elige en Sistema y APIs: <b>Facial + Alcohol → DNI</b> (en uso: primero la prueba y luego 30 segundos para pasar el DNI) o DNI → Facial + Alcohol.</td></tr>
+  <tr><td>Relés de los molinetes y de aviso <span class="chip nuevo">Nuevo</span></td><td>El sistema abre cada molinete con su relé. Un relé de aviso se activa en cada ingreso denegado y otro en cada salida denegada (luz o sirena).</td></tr>
+  <tr><td>Antipassback <span class="chip nuevo">Nuevo</span></td><td>No se ingresa dos veces sin salir (<b>Ya figura dentro</b>) ni se sale sin haber entrado (<b>No registra ingreso</b>). El vigilante corrige el caso con una corrección manual con motivo. Estaba fuera del alcance base.</td></tr>
+  <tr><td>Motivos nuevos <span class="chip nuevo">Nuevo</span></td><td>Fuera del período autorizado, Ya figura dentro, No registra ingreso, No completó rostro y alcohol, DNI antes del facial, No pasó su DNI a tiempo y No es quien sopló.</td></tr>
+  <tr><td>Sincronización con el terminal <span class="chip nuevo">Nuevo</span></td><td>El sistema registra al personal en el terminal con su foto (no hay que registrar el rostro a mano) y lo revisa todos los días para dejarlo igual al sistema.</td></tr>
+  <tr><td>Sin internet <span class="chip cambio">Cambió</span></td><td>Nadie ingresa, pero <b>las salidas siguen</b>: el controlador guarda la lista del personal y las registra al volver la conexión. Antes no se validaba nada.</td></tr>
+</table>
+
+<h2><span class="num">5</span> Panel de vigilancia</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Ingreso en curso <span class="chip nuevo">Nuevo</span></td><td>Con el orden en uso, el Panel muestra <b>Pase su DNI</b> con el nombre, la foto y la cuenta de 30 segundos.</td></tr>
+  <tr><td>Foto y perfil <span class="chip nuevo">Nuevo</span></td><td>Cada fila muestra la foto y el perfil de la persona.</td></tr>
+  <tr><td>Avisos con su nombre <span class="chip nuevo">Nuevo</span></td><td>Orden del ingreso, Salida sin DNI, Contingencia, Verificación manual e Ingreso (alguien no completó rostro y alcohol).</td></tr>
+  <tr><td>Marcas junto al motivo <span class="chip nuevo">Nuevo</span></td><td>Tarjeta de contingencia, Tarjeta de acceso, Sin lector de DNI, Salida sin lector, Corrección manual y Manual (con el grado y quién decidió).</td></tr>
+  <tr><td>Contadores <span class="chip cambio">Cambió</span></td><td>Accesos restringidos hoy, Prueba de alcohol test positivo hoy y Documentos vencidos.</td></tr>
+  <tr><td>Reconexión <span class="chip nuevo">Nuevo</span></td><td>Si se corta la conexión en vivo, el Panel se reconecta solo y recupera lo ocurrido.</td></tr>
+  <tr><td>Presentes ahora <span class="chip nuevo">Nuevo</span></td><td>Quiénes están dentro, con buscador, filtro por perfil y tiempo dentro (en naranja más de 12 horas). El vigilante la tiene en su menú; el administrador, desde el Dashboard y con descarga en Excel.</td></tr>
+</table>
+
+<h2><span class="num">6</span> Contingencias</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Aviso de fallas en todo el portal <span class="chip nuevo">Nuevo</span></td><td>Arriba de todas las pantallas, para el administrador y el vigilante: un recuadro rojo por equipo caído, qué deja de funcionar y desde cuándo.</td></tr>
+  <tr><td>Verificación manual <span class="chip nuevo">Nuevo</span></td><td>Si falla el terminal facial o el alcoholímetro: el vigilante compara el rostro con la foto, toma la prueba con el alcoholímetro de repuesto y escribe el grado; el sistema decide.</td></tr>
+  <tr><td>Tarjeta de contingencia <span class="chip nuevo">Nuevo</span></td><td>Para el personal sin DNI: el vigilante la pasa por el lector en lugar del DNI; en la salida elige al personal en el Panel (Salida sin DNI). Sola no abre.</td></tr>
+  <tr><td>Contingencia sin lector <span class="chip nuevo">Nuevo</span></td><td>Si se desconecta un lector de DNI o su adaptador deja de responder, se activa sola: ingreso solo con rostro y alcohol, y salida desde Presentes ahora.</td></tr>
+  <tr><td>Tarjeta de acceso <span class="chip nuevo">Nuevo</span></td><td>Para visitas o autoridades (por ejemplo, una inspección): abre el molinete sin rostro, alcohol ni DNI y queda registrada.</td></tr>
+  <tr><td>Pantallas de tarjetas <span class="chip nuevo">Nuevo</span></td><td>Menú Contingencias: crear, imprimir en tamaño carné, vencimiento, cambiar código, desactivar y eliminar, con los usos de cada tarjeta y un buscador.</td></tr>
+</table>
+
+<h2><span class="num">7</span> Dashboard</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Ingresos en lugar de visitas <span class="chip cambio">Cambió</span></td><td>Los indicadores dicen Ingresos finalizados y Total de ingresos (Visita ahora es un perfil de persona).</td></tr>
+  <tr><td>Permanencia mayor a 12 horas <span class="chip cambio">Cambió</span></td><td>Antes 24 horas.</td></tr>
+  <tr><td>Gráficos nuevos <span class="chip nuevo">Nuevo</span></td><td><b>Ingresos por perfil</b> y <b>Horas-hombre por empresa</b> (tiempo dentro del terminal, de cada ingreso a su salida).</td></tr>
+  <tr><td>Presentes ahora <span class="chip nuevo">Nuevo</span></td><td>La tarjeta Presentes actualmente abre la lista de quiénes son.</td></tr>
+</table>
+
+<h2><span class="num">8</span> Reportes</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Reportes nuevos <span class="chip nuevo">Nuevo</span></td><td><b>Horas-hombre</b> (por empresa y por persona) y <b>Empresas por perfil</b>.</td></tr>
+  <tr><td>Filtro por perfil <span class="chip nuevo">Nuevo</span></td><td>En todos los reportes de personas; el de personal incluye además el período autorizado.</td></tr>
+  <tr><td>Documentos con archivos (ZIP) <span class="chip nuevo">Nuevo</span></td><td>El Excel de documentos con cada archivo en carpetas por empresa y persona, y opcionalmente los documentos anteriores y las fotos.</td></tr>
+  <tr><td>Hoja Leyenda <span class="chip nuevo">Nuevo</span></td><td>Cada Excel y PDF explica sus columnas.</td></tr>
+  <tr><td>Más filas <span class="chip cambio">Cambió</span></td><td>Hasta 100 000 filas en Excel (antes 20 000). Visitas del periodo ahora se llama Ingresos del periodo.</td></tr>
+</table>
+
+<h2><span class="num">9</span> Auditoría</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Desconexiones de equipos <span class="chip nuevo">Nuevo</span></td><td>Cada vez que un equipo se desconecta y vuelve, a nombre de Sistema, con cuánto tiempo estuvo sin conexión (buscar equipos).</td></tr>
+  <tr><td>Más acciones registradas <span class="chip nuevo">Nuevo</span></td><td>Inicios de sesión, aperturas del molinete sin DNI, salida sin DNI, sincronización con el terminal, descargas de reportes y archivos de documentos abiertos, además de bajas y reactivaciones con su motivo.</td></tr>
+  <tr><td>Páginas <span class="chip cambio">Cambió</span></td><td>De 10 en 10 (antes 15).</td></tr>
+</table>
+
+<h2><span class="num">10</span> Sistema y APIs</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Estado de los equipos <span class="chip nuevo">Nuevo</span></td><td>Controlador, terminal facial, alcoholímetro, lectores de DNI (también Adaptador sin respuesta) y relés, en vivo.</td></tr>
+  <tr><td>Sincronización con el terminal <span class="chip nuevo">Nuevo</span></td><td>Revisión diaria con su hora, Simular y Sincronizar ahora.</td></tr>
+  <tr><td>Orden del ingreso <span class="chip nuevo">Nuevo</span></td><td>Los dos interruptores, con quién lo cambió y desde cuándo.</td></tr>
+  <tr><td>Monitor del G4 Pro <span class="chip nuevo">Nuevo</span></td><td>Cada prueba del terminal, en vivo: hora, persona, grado, demora y qué hizo el sistema.</td></tr>
+</table>
+
+<h2><span class="num">11</span> Manual y documentación</h2>
+<table>
+  <tr><th>Qué</th><th>Detalle</th></tr>
+  <tr><td>Manual con capturas <span class="chip cambio">Cambió</span></td><td>Cada pantalla con su captura numerada y qué hace cada parte; diagrama del recorrido de ingreso y salida con los tiempos medidos; secciones nuevas: Empresas, Presentes ahora, Tarjetas y Usuarios.</td></tr>
+  <tr><td>Documentos de entrega <span class="chip nuevo">Nuevo</span></td><td>Flujo de ingreso y Flujo de contingencias (con el orden Facial + Alcohol → DNI), y este documento de cambios.</td></tr>
+</table>
+
+<p class="pie">Actualizado al 23/10/2026. Base de comparación: Documento Funcional, versión final del 02/10/2026.</p>
+</main></body></html>
