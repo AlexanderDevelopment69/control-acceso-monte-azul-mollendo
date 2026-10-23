@@ -36,14 +36,14 @@ const TEXTOS: Record<TipoTarjeta, { titulo: string; descripcion: string; carne: 
     descripcion: "Reemplazan al DNI cuando el personal lo olvidó o el lector no lo reconoce. Solo las usa el vigilante.",
     carne: "Tarjeta de contingencia",
     nueva: "Nueva tarjeta de contingencia",
-    usos: "Cada vez que se pasó una tarjeta por un lector: con quién entró o salió, o por qué se rechazó.",
+    usos: "Cuándo se usó cada tarjeta de contingencia, con qué personal y si se permitió o rechazó el paso.",
   },
   acceso: {
     titulo: "Tarjetas de acceso",
     descripcion: "Abren el molinete sin rostro, alcohol ni DNI, para visitas o autoridades. Solo las usa el vigilante.",
     carne: "Tarjeta de acceso",
     nueva: "Nueva tarjeta de acceso",
-    usos: "Cada vez que se pasó una tarjeta de acceso por un lector y si abrió el molinete.",
+    usos: "Cuándo se usó cada tarjeta de acceso y si se permitió o rechazó el paso.",
   },
 };
 
