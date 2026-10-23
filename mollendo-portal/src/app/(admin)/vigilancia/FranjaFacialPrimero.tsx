@@ -1,21 +1,36 @@
 import React, { useEffect } from "react";
 import type { EstadoModoIngreso } from "@/lib/api/types";
 import { FotoGuardada } from "@/components/personal/FotoPersonal";
-import { InfoIcon } from "@/icons";
 
-/** Orden "facial primero": el vigilante sabe que el ingreso empieza por el equipo facial. */
+/**
+ * Orden "facial primero": el vigilante sabe que el ingreso empieza por el
+ * equipo facial. Compacto: un punto de color, ORDEN DEL INGRESO, el orden en
+ * una píldora azul (el color del sistema) y la frase debajo (fondo blanco y borde fino).
+ */
 export function FranjaFacialPrimero({ estado }: { estado: EstadoModoIngreso | null }) {
   if (!estado?.facialPrimero) return null;
   return (
     <div
       role="status"
-      className="mb-6 flex items-start gap-2.5 rounded-xl border border-warning-300 bg-warning-50 px-4 py-3 text-sm leading-relaxed text-gray-700 dark:border-warning-500/40 dark:bg-warning-500/10 dark:text-gray-300"
+      className="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]"
     >
-      <InfoIcon className="mt-0.5 size-5 shrink-0 text-warning-600 dark:text-orange-400" aria-hidden />
-      <span>
-        <span className="font-semibold text-warning-700 dark:text-orange-400">Orden del ingreso: Facial + Alcohol → DNI.</span> Primero
-        rostro y alcohol; cuando el equipo dice <b>correcto</b>, pasa su DNI en 30 segundos.
-      </span>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          {/* El punto late suave: el orden está activo ahora. */}
+          <span aria-hidden className="relative flex size-2.5">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-400 opacity-60" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-brand-500" />
+          </span>
+          Orden del ingreso
+        </span>
+        <span className="rounded-full bg-brand-500 px-3 py-1 text-sm font-semibold text-white shadow-theme-xs">
+          Facial + Alcohol → DNI
+        </span>
+      </div>
+      <p className="mt-2 pl-[1.125rem] leading-relaxed text-gray-600 dark:text-gray-300">
+        Primero rostro y alcohol; cuando el equipo dice <b className="text-gray-800 dark:text-white/90">correcto</b>, pasa su DNI en
+        30 segundos.
+      </p>
     </div>
   );
 }
