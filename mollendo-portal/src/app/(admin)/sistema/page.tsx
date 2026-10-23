@@ -76,7 +76,7 @@ function SistemaContent() {
     <div className="@container">
       <PageHeader
         title="Sistema y APIs"
-        description="Estado del backend, la base de datos y las integraciones externas."
+        description="Estado del servidor, de los equipos de acceso y de las APIs del sistema."
         actions={
           ultimaActualizacion ? (
             <p className="text-xs text-gray-400">
