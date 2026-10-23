@@ -698,8 +698,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    * - Si su DNI la está esperando y la prueba vale en ese orden
    *   (pruebaValePara): se cierra la espera (ingresa, o se deniega por alcohol).
    * - Si no: con alcohol alto, ingreso denegado con su nombre (en los dos
-   *   órdenes). Si aprobó: en "facial primero" la aprobación espera su DNI
-   *   20 s; en el normal no vale (hace falta pasar antes el DNI): solo se anota.
+   *   órdenes). Si aprobó y el lector de DNI de ingreso está desconectado,
+   *   entra identificado por rostro (en los dos órdenes). Si no: en el orden
+   *   normal la usa la tarjeta de contingencia pasada antes (en su minuto) o no
+   *   vale (hace falta pasar antes el DNI); en "facial primero" la aprobación
+   *   espera su DNI (o la tarjeta) PLAZO_DNI_DESDE_AVISO_MS.
    * Con la verificación manual activa decide el vigilante: solo se anota.
    */
   @OnEvent('dispositivo.attlog')
@@ -797,6 +800,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         return;
       }
       // Orden DNI primero: la tarjeta de contingencia pasada antes de esta prueba (en su minuto) la usa.
+      // (No se sabe quién tiene la tarjeta: la usa la primera prueba aprobada de alguien sin su propio DNI pasado.)
       const conTarjeta = this.tarjetaEsperandoFacial;
       if (!(await this.modoIngreso.facialPrimero()) && conTarjeta && this.pruebaParaTarjeta(conTarjeta, hora)) {
         cuenta();
@@ -818,19 +822,11 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
         return;
       }
       cuenta();
-      const quien: PaseExitoso = { hora: evento.horaDispositivo ?? new Date(), pin: evento.pin, nombre: `${persona.nombres} ${persona.apellidos}` };
+      const quien = quienAprobo;
       // Volvió a aprobar en otro intento: vale solo la última.
       for (const anterior of this.aprobaciones.filter((a) => a.quienSabido?.pin === evento.pin)) this.soltarAprobacion(anterior);
-      const aprobacion: AprobacionSinDni = {
-        id: -evento.verificacionId,
-        en: Date.now(),
-        // PLAZO_DNI_DESDE_AVISO_MS desde que llega el aviso (cuando aparece "pase su DNI" en el Panel).
-        vence: Date.now() + PLAZO_DNI_DESDE_AVISO_MS,
-        verificacionId: evento.verificacionId,
-        quien: Promise.resolve(quien),
-        quienSabido: quien,
-        persona: { id: persona.id, tieneFoto: !!persona.fotoUrl, fotoVersion: versionFoto(persona.fotoUrl) },
-      };
+      // PLAZO_DNI_DESDE_AVISO_MS desde que llega el aviso (cuando aparece "pase su DNI" en el Panel).
+      const aprobacion = aprobacionDe(Date.now() + PLAZO_DNI_DESDE_AVISO_MS);
       // Su DNI ya está esperando (lo pasó antes de que llegara el aviso): si lo pasó después del
       // "correcto" y dentro del plazo, entra ya.
       const dni = this.dniEsperandoPrueba.get(evento.pin);
