@@ -19,58 +19,35 @@ cd control-acceso-monte-azul-mollendo
 
 **El servidor en la nube ya desplegado**, y su `DEVICE_API_KEY` a mano (`cat ~/mollendo/deploy/nube/.env` en el servidor).
 
-## Primer despliegue
+## Primer despliegue (PC vacía)
 
-**1. Instalar Docker en la mini PC:**
+Todo lo hace `instalar.sh`: instala Docker, pone la hora de Lima, crea el `.env` (detecta los lectores conectados), construye y levanta.
+
+**Con una sola línea en el Controlador (PC)** (descarga el programa de GitHub, sin documentos; si ya está instalado, lo actualiza):
 
 ```bash
-ssh ma-admin@100.78.153.33
-sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 docker-buildx
-sudo systemctl enable --now docker
-sudo timedatectl set-timezone America/Lima
-exit
+bash <(curl -fsSL https://raw.githubusercontent.com/AlexanderDevelopment69/control-acceso-monte-azul-mollendo/main/deploy/controlador/instalar.sh)
 ```
 
-**2. Empaquetar y subir el código** (en tu PC; se empaqueta el último commit):
+Instala lo que está en GitHub: antes, subir los commits (`git push`). **O con el paquete** desde la PC, con los cambios aunque no tengan commit:
 
 ```bash
-git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy
+# En tu PC, en la carpeta del proyecto (Git Bash)
+bash deploy/empaquetar.sh
 scp mollendo.tgz ma-admin@100.78.153.33:
+
+# En el Controlador (PC)
+mkdir -p ~/mollendo && tar -xzf ~/mollendo.tgz -C ~/mollendo && rm ~/mollendo.tgz
+bash ~/mollendo/deploy/controlador/instalar.sh
 ```
 
-**3. Descomprimir y ver qué equipos hay** (en la mini PC):
-
-```bash
-mkdir -p ~/mollendo && cd ~/mollendo
-tar -xzf ~/mollendo.tgz && rm ~/mollendo.tgz
-cd deploy/controlador
-cp .env.example .env && chmod 600 .env
-ls /dev/serial/by-id/          # una ruta por lector: anota cuál es el de ingreso y cuál el de salida
-```
-
-**4. Completar el `.env`** (`nano .env`; guardar `Ctrl+O`, salir `Ctrl+X`):
-
-```
-SERVIDOR_URL=https://accesos.monteazulsur.com.pe
-DEVICE_API_KEY=<la misma del servidor en la nube>
-LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/usb-...   (la del lector de ingreso)
-LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/usb-...    (la del lector de salida)
-RELE_INGRESO_SERIE=ING01
-RELE_SALIDA_SERIE=SAL01
-RELE_AVISO_INGRESO_SERIE=DEN01      (si hay relés de aviso; si no, borrar la línea)
-RELE_AVISO_SALIDA_SERIE=DSA01
-```
-
-**5. Levantar:**
-
-```bash
-sudo docker compose up -d --build
-sudo docker compose logs --tail 20 controlador
-```
+Pregunta la dirección del servidor, la `DEVICE_API_KEY` (no se muestra al escribirla), desde dónde copiar los respaldos (`atenasac@74.163.89.6`; Enter para no copiar) y cuál lector es el de ingreso y cuál el de salida. Los relés quedan con `ING01`, `SAL01`, `DEN01` y `DSA01`, con el aviso en modo alterno. Si se cambia algo en `.env`: `sudo docker compose up -d`.
 
 Debe decir "Lector de DNI de ingreso conectado…", "Conectado al servidor" y "Lista del personal actualizada: N personas".
 
-**6. Ponerle la serie a cada relé** (solo con módulos nuevos: todos vienen de fábrica con `S2OD2`). Conectar **un módulo a la vez**:
+**Copia de los respaldos:** al terminar, el instalador muestra una clave. En el servidor: `bash ~/mollendo/deploy/nube/autorizar-copia.sh "<esa clave>"`; luego aquí `sudo docker compose run --rm copia-respaldos ahora` para la primera copia. Después copia sola cada día a las 05:00 (`HORA_COPIA`), en `deploy/controlador/copia/respaldos`, y guarda 30 días (`DIAS_COPIA`). Si se pierde el servidor, el último respaldo está ahí: se lleva al servidor nuevo y se carga con `restaurar.sh`.
+
+**Ponerle la serie a cada relé** (solo con módulos nuevos: todos vienen de fábrica con `S2OD2`). Conectar **un módulo a la vez**:
 
 ```bash
 sudo docker compose exec controlador sh -c 'for h in /sys/class/hidraw/*; do /app/rele-usb /dev-servidor/$(basename $h) estado; done'
@@ -83,20 +60,13 @@ Repetir con cada módulo (`SAL01`, `DEN01`, `DSA01`) y al final `sudo docker com
 ## Actualizar a una versión nueva
 
 ```bash
-# En tu PC (con los cambios ya en un commit)
-git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy
+# En tu PC
+bash deploy/empaquetar.sh
 scp mollendo.tgz ma-admin@100.78.153.33:
-
-# En la mini PC
-cd ~/mollendo
-rm -rf mollendo-api mollendo-portal       # NO borrar deploy/: ahí está el .env
-tar -xzf ~/mollendo.tgz && rm ~/mollendo.tgz
-cd deploy/controlador
-sudo docker compose up -d --build
-sudo docker compose logs --tail 20 controlador
+ssh ma-admin@100.78.153.33 'bash -s' < deploy/controlador/actualizar.sh
 ```
 
-La lista del personal y las salidas pendientes de enviar están en un volumen y no se pierden.
+El `.env`, la lista del personal, las salidas pendientes de enviar y la copia de respaldos no se tocan.
 
 ## Verificar
 

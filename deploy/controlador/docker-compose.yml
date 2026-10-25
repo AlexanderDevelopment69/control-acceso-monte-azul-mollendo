@@ -83,5 +83,28 @@ services:
       # Lista del personal para las salidas sin conexión y salidas pendientes de enviar.
       - datos-controlador:/app/datos-controlador
 
+  # Copia diaria de los respaldos del servidor en esta PC (./copia/respaldos): si se
+  # pierde el servidor, los datos siguen aquí. Solo con el perfil "copia"
+  # (COMPOSE_PROFILES=copia en .env, lo deja instalar.sh). Ver copia-respaldos.sh.
+  copia-respaldos:
+    container_name: mollendo-copia-respaldos
+    image: alpine:3.22
+    profiles: ["copia"]
+    restart: unless-stopped
+    environment:
+      COPIA_ORIGEN: ${COPIA_ORIGEN:-}
+      HORA_COPIA: ${HORA_COPIA:-05:00}
+      DIAS_COPIA: ${DIAS_COPIA:-30}
+      TZ: America/Lima
+    volumes:
+      - ./copia:/copia
+      - ./copia-respaldos.sh:/copia-respaldos.sh:ro
+    entrypoint: ["sh", "/copia-respaldos.sh"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "2"
+
 volumes:
   datos-controlador:

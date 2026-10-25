@@ -67,8 +67,8 @@ services:
       G4PRO_IPS_PERMITIDAS: ${G4PRO_IPS_PERMITIDAS:-}
       RESPALDOS_PATH: /app/respaldos
       # Solo para mostrarlos en "Sistema y APIs" (los usa el contenedor backup).
-      HORA_RESPALDO: ${HORA_RESPALDO:-00:00}
-      DIAS_RESPALDO: ${DIAS_RESPALDO:-14}
+      HORA_RESPALDO: ${HORA_RESPALDO:-04:00}
+      DIAS_RESPALDO: ${DIAS_RESPALDO:-30}
       ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@monteazulsur.com.pe}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
       VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@monteazulsur.com.pe}
@@ -123,8 +123,8 @@ services:
       - caddy_config:/config
 
   # Respaldo diario (base de datos + documentos y fotos) en ./backups, a las
-  # HORA_RESPALDO (por defecto 00:00, hora de Lima); se guardan DIAS_RESPALDO
-  # días (por defecto 14).
+  # HORA_RESPALDO (por defecto 04:00, hora de Lima); se guardan DIAS_RESPALDO
+  # días (por defecto 30). Una copia fuera del servidor: ver ../controlador (copia-respaldos).
   # Ver deploy/comun/respaldo.sh.
   backup:
     container_name: mollendo-backup
@@ -137,8 +137,8 @@ services:
     environment:
       PGPASSWORD: ${DB_PASSWORD}
       TZ: America/Lima
-      HORA_RESPALDO: ${HORA_RESPALDO:-00:00}
-      DIAS_RESPALDO: ${DIAS_RESPALDO:-14}
+      HORA_RESPALDO: ${HORA_RESPALDO:-04:00}
+      DIAS_RESPALDO: ${DIAS_RESPALDO:-30}
     volumes:
       - ./backups:/backups
       - ../comun/respaldo.sh:/respaldo.sh:ro

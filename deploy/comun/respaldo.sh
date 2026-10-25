@@ -1,7 +1,7 @@
 #!/bin/sh
 # Respaldo diario del sistema (corre en el contenedor "backup", ver deploy/nube/docker-compose.yml o deploy/garita/docker-compose.yml).
 #
-# Cada día a la hora HORA_RESPALDO (por defecto 00:00, hora de Lima) guarda en
+# Cada día a la hora HORA_RESPALDO (por defecto 04:00, hora de Lima) guarda en
 # /backups un paquete mollendo-AAAAMMDD-HHMM.tar.gz con:
 #   base-de-datos.sql   copia completa de PostgreSQL
 #   archivos/           documentos (PDF, imágenes, Word) y fotos del personal
@@ -9,15 +9,15 @@
 # horas (p. ej. no hay ninguno, o se cambió la hora a una más tarde), hace uno en
 # ese momento: así "Sistema y APIs" no lo marca como atrasado.
 #
-# Limpieza (después de cada respaldo), con DIAS_RESPALDO días (por defecto 14):
+# Limpieza (después de cada respaldo), con DIAS_RESPALDO días (por defecto 30):
 #   - respaldos diarios (mollendo-*) de más de DIAS_RESPALDO días;
-#   - respaldos previos a actualizaciones (antes-de-actualizar-*) de más de
+#   - respaldos previos a actualizaciones o restauraciones (antes-de-*) de más de
 #     DIAS_RESPALDO días, conservando siempre el más reciente.
 
-HORA="${HORA_RESPALDO:-00:00}"
-DIAS="${DIAS_RESPALDO:-14}"
+HORA="${HORA_RESPALDO:-04:00}"
+DIAS="${DIAS_RESPALDO:-30}"
 # Un valor que no sea un número entero positivo no debe borrar de más: se usan 14.
-case "$DIAS" in '' | *[!0-9]* | 0) echo "DIAS_RESPALDO no válido ($DIAS): se guardan 14 días"; DIAS=14 ;; esac
+case "$DIAS" in '' | *[!0-9]* | 0) echo "DIAS_RESPALDO no válido ($DIAS): se guardan 30 días"; DIAS=30 ;; esac
 DESTINO=/backups
 ARCHIVOS=/storage # volumen de documentos y fotos (solo lectura)
 
@@ -44,8 +44,8 @@ respaldar() {
 
 limpiar() {
   find "$DESTINO" -maxdepth 1 -name 'mollendo-*' -mtime +"$DIAS" -delete
-  ultimo=$(ls -1t "$DESTINO"/antes-de-actualizar-* 2>/dev/null | head -n 1)
-  find "$DESTINO" -maxdepth 1 -name 'antes-de-actualizar-*' -mtime +"$DIAS" | while read -r f; do
+  ultimo=$(ls -1t "$DESTINO"/antes-de-* 2>/dev/null | head -n 1)
+  find "$DESTINO" -maxdepth 1 -name 'antes-de-*' -mtime +"$DIAS" | while read -r f; do
     [ "$f" != "$ultimo" ] && rm -f "$f"
   done
 }

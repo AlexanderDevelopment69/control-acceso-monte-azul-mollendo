@@ -40,49 +40,34 @@ cd control-acceso-monte-azul-mollendo
 
 **El servidor:** Ubuntu con un usuario con `sudo` y estos puertos abiertos (en Azure: grupo de seguridad de red de la máquina → reglas de entrada; los administra TMAM): `22` (SSH), `3000` (portal) y `3001` (API, G4 Pro y controlador); `80` y `443` para el HTTPS con el dominio. En Azure están abiertos los cinco (comprobado el 16/10/2026). Si el internet del terminal tiene IP pública fija, abre el `3001` solo para esa IP (`<IP>/32`): ver [seguridad, 4.2](../../docs/seguridad/Seguridad.md#42-restringir-el-puerto-3001-por-ip).
 
-## Primer despliegue
+## Primer despliegue (servidor vacío)
 
-**1. Instalar Docker en el servidor** (es lo único que se instala en el sistema):
+Todo lo hace `instalar.sh`: instala Docker, pone la hora de Lima, crea el `.env` con claves nuevas, construye, levanta y crea las cuentas iniciales.
+
+**Con una sola línea en el servidor** (descarga el programa de GitHub, sin documentos; si ya está instalado, lo actualiza):
 
 ```bash
-ssh -i ~/.ssh/id_ed25519 atenasac@74.163.89.6
-sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 docker-buildx
-sudo systemctl enable --now docker
-sudo timedatectl set-timezone America/Lima
-exit
+bash <(curl -fsSL https://raw.githubusercontent.com/AlexanderDevelopment69/control-acceso-monte-azul-mollendo/main/deploy/nube/instalar.sh)
 ```
 
-**2. Empaquetar y subir el código** (en tu PC, en la carpeta del proyecto; se empaqueta el último commit):
+Instala lo que está en GitHub: antes, subir los commits (`git push`). **O con el paquete** desde la PC, con los cambios aunque no tengan commit:
 
 ```bash
-git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy
+# En tu PC, en la carpeta del proyecto (Git Bash): empaqueta tal como está, sin documentos
+bash deploy/empaquetar.sh
 scp -i ~/.ssh/id_ed25519 mollendo.tgz atenasac@74.163.89.6:
+
+# En el servidor
+mkdir -p ~/mollendo && tar -xzf ~/mollendo.tgz -C ~/mollendo && rm ~/mollendo.tgz
+bash ~/mollendo/deploy/nube/instalar.sh
 ```
 
-**3. Descomprimir y crear el `.env`** (en el servidor). El bloque genera claves al azar; cambia `CORS_ORIGIN` si la IP es otra y pon en `G4PRO_SN_PERMITIDOS` el número de serie del G4 Pro (está en su etiqueta; varios, separados por coma):
+Pregunta el dominio, el número de serie del G4 Pro (`HSR3263100192`) y la IP pública de la sede (`190.119.170.73`). Al terminar, en `deploy/nube/.env` están las contraseñas iniciales y la `DEVICE_API_KEY` (va también en el Controlador (PC)).
 
-```bash
-mkdir -p ~/mollendo && cd ~/mollendo
-tar -xzf ~/mollendo.tgz && rm ~/mollendo.tgz
-cd deploy/nube
-cat > .env <<EOF
-DB_PASSWORD=$(openssl rand -hex 24)
-JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
-JWT_REFRESH_SECRET=$(openssl rand -base64 48 | tr -d '\n')
-DEVICE_API_KEY=$(openssl rand -hex 32)
-G4PRO_SN_PERMITIDOS=HSR3263100192
-DOMINIO=accesos.monteazulsur.com.pe
-CORS_ORIGIN=https://accesos.monteazulsur.com.pe
-ADMIN_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
-VIGILANCIA_SEED_PASSWORD=$(openssl rand -base64 12 | tr -dc 'A-Za-z0-9')Aa1
-MOLINETES_REMOTOS=true
-G4PRO_HORA_SINCRONIZACION=off
-EOF
-chmod 600 .env
-cat .env      # anota ADMIN_SEED_PASSWORD, VIGILANCIA_SEED_PASSWORD y DEVICE_API_KEY
-```
+- **Si se reinstala tras perder el servidor:** copiar antes el `.env` anterior a `~/mollendo/deploy/nube/.env` (así se conservan la `DEVICE_API_KEY` y el resto de las claves) y, después de instalar, cargar el último respaldo con `restaurar.sh` (abajo). Sin el `.env` anterior se crean claves nuevas: hay que poner la `DEVICE_API_KEY` nueva en el `.env` del Controlador (PC).
+- **Después:** G4 Pro (*Cloud Service Settings*) con servidor `accesos.monteazulsur.com.pe`, puerto `3001`, y en **Sistema y APIs** "Sincronizar". Entrar al portal con `admin@monteazulsur.com.pe` y cambiar las contraseñas iniciales (también la de `vigilancia@monteazulsur.com.pe`).
 
-> No cambies `DB_PASSWORD` después de este paso: la base la guarda al crearse.
+> No cambies `DB_PASSWORD` después de instalar: la base la guarda al crearse.
 >
 > `G4PRO_SN_PERMITIDOS` es obligatoria: sin ella `docker compose` no arranca. El servidor solo atiende a esos terminales (las rutas del G4 Pro no llevan clave).
 >
@@ -92,53 +77,35 @@ cat .env      # anota ADMIN_SEED_PASSWORD, VIGILANCIA_SEED_PASSWORD y DEVICE_API
 >
 > **El G4 dejó de conectarse** (Sistema y APIs lo muestra desconectado) y en `sudo docker compose logs api | grep "Terminal rechazado"` dice "la IP no está en G4PRO_IPS_PERMITIDAS": la sede cambió de IP. Poner la nueva (la que figura en ese mensaje) en `.env` y `sudo docker compose up -d api`. Para salir del paso, dejarla vacía. Swagger (`/api/docs`) queda apagado; para verlo un momento, `SWAGGER=true` en `.env` y `sudo docker compose up -d`.
 
-**4. Levantar** (la primera vez tarda varios minutos):
-
-```bash
-sudo docker compose up -d --build
-sleep 30                                   # espera a que arranque la API
-sudo docker compose logs api | grep -E "migrations|successfully started"
-```
-
-**5. Crear las cuentas iniciales** (solo esta vez):
-
-```bash
-sudo docker compose run --rm -T api npm run db:seed
-```
-
-**6. Conectar los equipos:**
-- G4 Pro (*Cloud Service Settings*): servidor `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto `3001`. Después, en **Sistema y APIs**, "Sincronizar" para enviarle al personal con su foto.
-- Controlador de la garita: en su `.env`, `SERVIDOR_URL=https://accesos.monteazulsur.com.pe` y la **misma** `DEVICE_API_KEY` (ver [`../controlador`](../controlador/README.md)).
-
-7. Entra a `https://accesos.monteazulsur.com.pe` con `admin@monteazulsur.com.pe` y cambia las contraseñas iniciales (también la de `vigilancia@monteazulsur.com.pe`).
-
 ## Actualizar a una versión nueva
 
-Los datos están en volúmenes de Docker y no se tocan.
-
-> Desde la versión del 11/10/2026 el `.env` necesita `G4PRO_SN_PERMITIDOS` (número de serie del G4 Pro). Si tu `.env` es anterior, agrégala antes de levantar: `echo "G4PRO_SN_PERMITIDOS=<número de serie>" >> .env`.
+Respaldo de la base, código nuevo, reconstruir, esperar a la API y limpiar el disco (imágenes viejas y caché; el 23/10/2026 ocupaban ~97 GB). Los datos, el `.env` y los respaldos no se tocan.
 
 ```bash
-# En tu PC (con los cambios ya en un commit)
-git archive --format=tar.gz -o mollendo.tgz HEAD mollendo-api mollendo-portal deploy
+# En tu PC
+bash deploy/empaquetar.sh
 scp -i ~/.ssh/id_ed25519 mollendo.tgz atenasac@74.163.89.6:
-
-# En el servidor
-cd ~/mollendo/deploy/nube
-sudo docker compose exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip | sudo tee backups/antes-de-actualizar-$(date +%Y%m%d-%H%M).sql.gz >/dev/null
-cd ~/mollendo
-rm -rf mollendo-api mollendo-portal       # NO borrar deploy/: ahí están el .env y los respaldos
-tar -xzf ~/mollendo.tgz && rm ~/mollendo.tgz
-cd deploy/nube
-sudo docker compose up -d --build
-sleep 30                                   # espera a que arranque la API
-sudo docker compose logs api | grep -E "migrations|successfully started|Error"
-# Limpieza (cada vez): sin esto, las imágenes viejas y la caché de compilación llenan el disco
-# (el 23/10/2026 ocupaban ~97 GB, 80 % del disco). Deja 5 GB de caché para que la próxima sea rápida.
-sudo docker image prune -af
-sudo docker builder prune -f --keep-storage 5GB
-df -h /
+ssh -i ~/.ssh/id_ed25519 atenasac@74.163.89.6 'bash -s' < deploy/nube/actualizar.sh
 ```
+
+## Restaurar un respaldo
+
+```bash
+ls ~/mollendo/deploy/nube/backups
+bash ~/mollendo/deploy/nube/restaurar.sh mollendo-AAAAMMDD-HHMM.tar.gz
+```
+
+Reemplaza la base de datos y los documentos y fotos (pide escribir `SI`). Con un `antes-de-actualizar-….sql.gz` restaura solo la base. Antes guarda lo que hay en `backups/antes-de-restaurar-….sql.gz`, para volver atrás. Las cuentas quedan con las contraseñas que tenían en el respaldo.
+
+## Copia de los respaldos fuera del servidor
+
+El Controlador (PC) trae cada día a las 05:00 los respaldos del servidor (servicio `copia-respaldos`, ver [`../controlador`](../controlador/README.md)). Para autorizarlo, en el servidor, con la clave que muestra su instalador:
+
+```bash
+bash ~/mollendo/deploy/nube/autorizar-copia.sh "ssh-ed25519 AAAA… copia-respaldos"
+```
+
+Esa clave solo puede leer la carpeta `backups` (no abre una consola ni cambia nada).
 
 ## Verificar
 
@@ -146,7 +113,7 @@ df -h /
 cd ~/mollendo/deploy/nube
 sudo docker compose ps                        # api, portal, backup "Up" y db "healthy"
 curl -s http://localhost:3001/api/v1/health   # {"status":"ok","database":"up",...}
-ls backups                                    # respaldo diario a las 00:00
+ls backups                                    # respaldo diario a las 04:00
 ```
 
 En el portal, **Sistema y APIs**: backend y base de datos "En línea"; controlador y G4 Pro "Conectado" cuando la garita está en línea.
