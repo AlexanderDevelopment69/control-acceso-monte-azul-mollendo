@@ -93,7 +93,7 @@ En el equipo, *Cloud Service Settings*: servidor `accesos.monteazulsur.com.pe`, 
 
 1. Entrar al portal con `admin@monteazulsur.com.pe`; la contraseña inicial está en el servidor, en `ADMIN_SEED_PASSWORD` del archivo `~/mollendo/deploy/nube/.env`.
 2. En **Sistema y APIs**: servidor y base de datos "En línea"; Controlador (PC), lectores, relés y G4 Pro "Conectado".
-3. Cambiar las contraseñas iniciales del administrador y de vigilancia (`vigilancia@monteazulsur.com.pe`, contraseña inicial en `VIGILANCIA_SEED_PASSWORD`).
+3. Cambiar las contraseñas iniciales del administrador, de vigilancia (`vigilancia@monteazulsur.com.pe`, contraseña inicial en `VIGILANCIA_SEED_PASSWORD`) y de soporte (`soporte@monteazulsur.com.pe`, en `SOPORTE_SEED_PASSWORD`). Soporte cambia la suya entrando con su cuenta.
 
 ## 3. Actualizar a una versión nueva
 

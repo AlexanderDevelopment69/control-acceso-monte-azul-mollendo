@@ -8,7 +8,7 @@ import { Roles } from '../common/decorators/roles.decorator.js';
 import type { AuthenticatedUser } from './types/authenticated-user.type.js';
 
 /**
- * Cuenta del usuario que inició sesión (administrador o vigilancia). Va
+ * Cuenta del usuario que inició sesión (administrador, vigilancia o soporte). Va
  * aparte de AuthController porque aquel es público y este requiere sesión.
  */
 @Controller('cuenta')
@@ -22,9 +22,9 @@ export class CuentaController {
   }
 
   // Tokens nuevos (también en las cookies): los anteriores, de esta y otras sesiones, dejan de valer.
-  // Solo el administrador: la contraseña del vigilante se la cambia el administrador (Usuarios).
+  // El administrador y soporte: la contraseña del vigilante se la cambia el administrador (Usuarios).
   @Patch('password')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   async cambiarPassword(
     @Body() dto: CambiarPasswordDto,
     @CurrentUser() user: AuthenticatedUser,

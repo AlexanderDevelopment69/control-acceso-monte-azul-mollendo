@@ -427,7 +427,7 @@ function UsuariosContent() {
     );
   }
 
-  const tipo = (c: UsuarioCuenta) => (c.rol === "administrador" ? "Administrador" : "Vigilancia");
+  const tipo = (c: UsuarioCuenta) => ({ administrador: "Administrador", vigilancia: "Vigilancia", soporte: "Soporte" })[c.rol];
   const estado = (c: UsuarioCuenta) => (
     <span className="whitespace-nowrap">
       <Badge color={c.estadoCuenta === "activo" ? "success" : "light"}>{c.estadoCuenta === "activo" ? "Activa" : "De baja"}</Badge>

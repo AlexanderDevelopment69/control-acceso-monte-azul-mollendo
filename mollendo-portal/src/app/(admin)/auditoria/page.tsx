@@ -259,7 +259,7 @@ function AuditoriaContent() {
 
 export default function AuditoriaPage() {
   return (
-    <RequireRole roles={["administrador"]}>
+    <RequireRole roles={["administrador", "soporte"]}>
       <AuditoriaContent />
     </RequireRole>
   );

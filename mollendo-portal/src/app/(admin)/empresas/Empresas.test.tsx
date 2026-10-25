@@ -8,6 +8,8 @@ import type { Empresa } from "@/lib/api/types";
 const api = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() }));
 vi.mock("@/lib/api/endpoints", () => ({ empresasApi: api }));
 vi.mock("@/lib/auth/RequireRole", () => ({ RequireRole: ({ children }: { children: React.ReactNode }) => children }));
+const sesion = vi.hoisted(() => ({ rol: "administrador" }));
+vi.mock("@/lib/auth/AuthContext", () => ({ useAuth: () => ({ user: { rol: sesion.rol } }) }));
 // jsdom no trae ResizeObserver (lo usa AltoEstable con una página completa).
 vi.stubGlobal(
   "ResizeObserver",
@@ -40,6 +42,7 @@ const EMPRESAS = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  sesion.rol = "administrador";
   api.list.mockResolvedValue(EMPRESAS);
   api.remove.mockResolvedValue({ id: 2, razonSocial: "Transportes Cerrados S.A.C." });
   api.update.mockImplementation(async (id: number, datos: Partial<Empresa>) => ({ ...EMPRESAS.find((e) => e.id === id)!, ...datos }));
@@ -98,5 +101,17 @@ describe("vista Empresas", () => {
     await userEvent.click(screen.getAllByRole("button", { name: "Eliminar" }).at(-1)!);
     expect(api.remove).toHaveBeenCalledWith(2);
     expect(await screen.findByText("Se eliminó Transportes Cerrados S.A.C.")).toBeInTheDocument();
+  });
+});
+
+describe("vista Empresas para soporte", () => {
+  it("solo consulta: sin nueva empresa, editar, desactivar ni eliminar", async () => {
+    sesion.rol = "soporte";
+    render(<EmpresasPage />);
+    expect(await screen.findByText("Estibajes del Sur E.I.R.L.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Nueva empresa/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Desactivar|Activar/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Eliminar" })).not.toBeInTheDocument();
   });
 });

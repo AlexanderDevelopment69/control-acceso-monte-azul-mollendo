@@ -1,6 +1,6 @@
 import type { Perfil } from "@/lib/perfiles";
 
-export type RolUsuario = "administrador" | "vigilancia";
+export type RolUsuario = "administrador" | "vigilancia" | "soporte";
 
 /** Una cuenta del sistema, en la pantalla Usuarios (sin la contraseña). */
 export interface UsuarioCuenta {

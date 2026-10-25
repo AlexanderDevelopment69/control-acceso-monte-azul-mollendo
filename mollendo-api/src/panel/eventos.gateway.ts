@@ -51,7 +51,7 @@ export class EventosGateway implements OnGatewayConnection, OnGatewayDisconnect 
       client.handshake.auth?.['token'] ?? client.handshake.query?.['token'] ?? leerCookie(client.handshake.headers.cookie, COOKIE_ACCESO);
     try {
       const payload = this.jwtService.verify<JwtPayload>(String(token), { secret: process.env.JWT_SECRET });
-      if (payload.rol !== 'administrador' && payload.rol !== 'vigilancia') {
+      if (payload.rol !== 'administrador' && payload.rol !== 'vigilancia' && payload.rol !== 'soporte') {
         throw new Error('Rol no autorizado para el panel de vigilancia');
       }
       const usuario = await this.prisma.usuario.findUnique({ where: { id: payload.sub } });

@@ -32,6 +32,8 @@ enum EstadoCuenta {
 enum RolUsuario {
   administrador
   vigilancia
+  // Equipo técnico que mantiene el sistema: consulta todo y atiende lo técnico (Sistema y APIs).
+  soporte
 
   @@map("rol_usuario")
 }

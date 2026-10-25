@@ -85,6 +85,8 @@ function DniAngosto({ ev }: { ev: EventoAcceso }) {
 function VigilanciaContent() {
   const router = useRouter();
   const { user } = useAuth();
+  // Soporte consulta el panel sin operarlo: sin salida sin DNI, verificación manual ni decisiones.
+  const opera = user?.rol !== "soporte";
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
   const [lista, setLista] = useState<Paginado<EventoAcceso> | null>(null);
   const [enEspera, setEnEspera] = useState<IngresoEnEspera[]>([]);
@@ -229,13 +231,13 @@ function VigilanciaContent() {
     };
     window.addEventListener("activar-verificacion-manual", abrir);
     const pedida = new URLSearchParams(window.location.search).get("activarManual");
-    if (pedida !== null) {
+    if (pedida !== null && opera) {
       setCausaActivar(causaDe(pedida));
       setActivando(true);
       window.history.replaceState(null, "", window.location.pathname);
     }
     return () => window.removeEventListener("activar-verificacion-manual", abrir);
-  }, []);
+  }, [opera]);
   async function activarManual(motivo: string) {
     setManual(await eventosAccesoApi.activarVerificacionManual(motivo, causaActivar));
     setActivando(false);
@@ -443,14 +445,16 @@ function VigilanciaContent() {
           <div className="flex flex-wrap items-center gap-3">
             {servidorCaido && <Badge color="error" size="md">⚠ El servidor no responde — no se están validando ingresos</Badge>}
             {/* La tarjeta se pasa por el lector de salida: sin él, la salida se abre desde "Presentes ahora". */}
-            <Button type="button" variant="outline" size="sm" disabled={sinLector.salida} onClick={() => setEligiendoSalida(true)}>
-              Salida sin DNI
-            </Button>
+            {opera && (
+              <Button type="button" variant="outline" size="sm" disabled={sinLector.salida} onClick={() => setEligiendoSalida(true)}>
+                Salida sin DNI
+              </Button>
+            )}
           </div>
         }
       />
       <ElegirSalidaSinDni abierta={eligiendoSalida} onCerrar={() => setEligiendoSalida(false)} onElegida={setSalidaSinDni} />
-      <FranjaSalidaSinDni salida={salidaSinDni} onCancelar={() => void cancelarSalidaSinDni()} />
+      <FranjaSalidaSinDni salida={salidaSinDni} onCancelar={opera ? () => void cancelarSalidaSinDni() : undefined} />
       <FranjasSinLectorPanel estado={sinLector} />
 
       {errorCarga && (
@@ -466,9 +470,9 @@ function VigilanciaContent() {
       {!manualActiva && <FranjaFacialPrimero estado={modoIngreso} />}
       <CompararFoto ingreso={comparar} onCerrar={cerrarComparar} />
       {manual && (
-        <FranjaVerificacionManual estado={manual} terminando={terminando} onTerminar={() => void terminarManual()} />
+        <FranjaVerificacionManual estado={manual} terminando={terminando} onTerminar={opera ? () => void terminarManual() : undefined} />
       )}
-      {manualActiva && volvioLoQueFallo && !seguirEnManual && (
+      {opera && manualActiva && volvioLoQueFallo && !seguirEnManual && (
         <AvisoEquipoVolvio
           equipo={causaManual === "alcoholimetro" ? "El alcoholímetro" : "El equipo facial"}
           terminando={terminando}
@@ -482,7 +486,7 @@ function VigilanciaContent() {
           equipoFacialDesconectado={!!equipoFacialDesconectado}
           onCerrar={cerrarAviso}
           onActivarManual={
-            manualActiva
+            manualActiva || !opera
               ? undefined
               : () => {
                   setCausaActivar("ambar");
@@ -492,7 +496,7 @@ function VigilanciaContent() {
         />
       )}
       <ActivarVerificacionManual abierta={activando} causa={causaActivar} onCerrar={() => setActivando(false)} onActivar={activarManual} />
-      <DecisionManualVentana ingreso={enEspera.find((i) => i.manual && !i.enCola) ?? null} ahora={ahora} onDecidir={decidir} />
+      <DecisionManualVentana ingreso={opera ? (enEspera.find((i) => i.manual && !i.enCola) ?? null) : null} ahora={ahora} onDecidir={decidir} />
 
       {/* En el celular, los cuatro contadores en dos filas y compactos. */}
       <div className="mb-6 grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
@@ -505,7 +509,7 @@ function VigilanciaContent() {
           icono={<UserIcon />}
           fondoIcono="bg-brand-500"
           detalle="Personas dentro del terminal"
-          onClick={() => router.push(user?.rol === "administrador" ? "/dashboard/presentes" : "/presentes")}
+          onClick={() => router.push(user?.rol === "vigilancia" ? "/presentes" : "/dashboard/presentes")}
           title="Ver quiénes están dentro"
         />
         <TarjetaIndicador
@@ -712,7 +716,7 @@ function VigilanciaContent() {
 
 export default function VigilanciaPage() {
   return (
-    <RequireRole roles={["vigilancia", "administrador"]}>
+    <RequireRole roles={["vigilancia", "administrador", "soporte"]}>
       <VigilanciaContent />
     </RequireRole>
   );

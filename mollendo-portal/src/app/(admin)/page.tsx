@@ -15,6 +15,10 @@ export default function Home() {
     if (user?.rol === "vigilancia") {
       router.replace("/vigilancia");
     }
+    // Soporte empieza en el estado de los equipos.
+    if (user?.rol === "soporte") {
+      router.replace("/sistema");
+    }
   }, [user, router]);
 
   if (!user) {

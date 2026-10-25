@@ -129,31 +129,33 @@ Los contenedores se reinician solos ante una falla y se inician junto con el ser
 
 ## 3. Usuarios y roles
 
-El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta propia: el administrador registra su información.
+El sistema tiene tres tipos de cuenta. Las empresas contratistas no tienen cuenta propia: el administrador registra su información.
 
 | Rol | Quién es | Qué hace |
 |---|---|---|
 | Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; administra las cuentas, las tarjetas y el sistema; consulta todo. |
 | Vigilancia | Personal de vigilancia | Ve en tiempo real cada ingreso y salida; consulta al personal sin modificar nada; opera las contingencias. |
+| Soporte | Equipo técnico | Revisa los equipos en Sistema y APIs, sincroniza el terminal facial y abre un molinete a mano para probarlo; consulta todo sin cambiar datos. |
 
 ### 3.1. Permisos por módulo
 
-| Módulo | Administrador | Vigilancia |
-|---|---|---|
-| Personal y documentos | Ver y modificar | Ver |
-| Empresas | Ver y modificar | — |
-| Dashboard y Reportes | Ver y descargar | — |
-| Panel de vigilancia | Ver | Ver |
-| Presentes ahora | Ver | Ver |
-| Contingencias (tarjetas) | Administrar | — |
-| Usuarios | Administrar | — |
-| Auditoría y Sistema y APIs | Ver | — |
-| Manual | Ver | Ver |
-| Cambiar su propia contraseña | Sí | No (se la cambia el administrador) |
+| Módulo | Administrador | Vigilancia | Soporte |
+|---|---|---|---|
+| Personal y documentos | Ver y modificar | Ver | Ver |
+| Empresas | Ver y modificar | — | Ver |
+| Dashboard y Reportes | Ver y descargar | — | Ver y descargar |
+| Panel de vigilancia | Ver | Ver | Ver (sin operar) |
+| Presentes ahora | Ver | Ver | Ver |
+| Contingencias (tarjetas) | Administrar | — | — |
+| Usuarios | Administrar | — | — |
+| Auditoría | Ver | — | Ver |
+| Sistema y APIs | Ver | — | Ver, sincronizar el terminal facial y abrir un molinete a mano |
+| Manual | Ver | Ver | Ver |
+| Cambiar su propia contraseña | Sí | No (se la cambia el administrador) | Sí |
 
 ### 3.2. Cuentas
 
-- Existen dos cuentas: **admin@monteazulsur.com.pe** (Administrador) y **vigilancia@monteazulsur.com.pe** (Vigilancia). Las contraseñas se entregan aparte, en la hoja "Accesos del sistema".
+- Existen tres cuentas: **admin@monteazulsur.com.pe** (Administrador), **vigilancia@monteazulsur.com.pe** (Vigilancia) y **soporte@monteazulsur.com.pe** (Soporte: equipo técnico; revisa los equipos y consulta todo, sin cambiar datos). Las contraseñas se entregan aparte, en la hoja "Accesos del sistema".
 - Por ahora no se crean cuentas nuevas.
 
 ---

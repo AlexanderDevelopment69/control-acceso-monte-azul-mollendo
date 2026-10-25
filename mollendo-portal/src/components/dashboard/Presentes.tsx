@@ -63,9 +63,10 @@ export function Presentes() {
   const [descargando, setDescargando] = useState(false);
   const [ahora, setAhora] = useState(() => Date.now());
   const { user } = useAuth();
-  const esAdministrador = user?.rol === "administrador";
-  // Lector de DNI de salida desconectado: cada fila tiene "Salida" (contingencia "sin lector").
-  const sinLectorSalida = useSinLector().salida;
+  // El Excel es un reporte: el administrador y soporte.
+  const esAdministrador = user?.rol === "administrador" || user?.rol === "soporte";
+  // Lector de DNI de salida desconectado: cada fila tiene "Salida" (contingencia "sin lector"). Soporte no la abre.
+  const sinLectorSalida = useSinLector().salida && user?.rol !== "soporte";
   const [saliendo, setSaliendo] = useState<PersonaPresente | null>(null);
   const [abriendo, setAbriendo] = useState(false);
   const [errorSalida, setErrorSalida] = useState<string | null>(null);
@@ -182,7 +183,6 @@ export function Presentes() {
           aria-label="Perfil"
           options={[{ value: "todos", label: "Todos los perfiles" }, ...OPCIONES_PERFIL]}
         />
-        {/* El Excel es un reporte: solo el administrador. */}
         {esAdministrador && (
           <Button
             type="button"

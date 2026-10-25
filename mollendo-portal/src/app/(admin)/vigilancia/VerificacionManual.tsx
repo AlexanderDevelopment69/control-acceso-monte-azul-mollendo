@@ -38,7 +38,8 @@ export function FranjaVerificacionManual({
 }: {
   estado: EstadoVerificacionManual;
   terminando: boolean;
-  onTerminar: () => void;
+  /** Sin él (soporte, que solo consulta), la franja se ve sin el botón. */
+  onTerminar?: () => void;
 }) {
   const p = estado.periodo;
   if (!estado.activa || !p) return null;
@@ -48,9 +49,11 @@ export function FranjaVerificacionManual({
       etiqueta="Verificación manual"
       pildora="Activa"
       acciones={
-        <Button type="button" size="sm" variant="outline" disabled={terminando} onClick={onTerminar}>
-          {terminando ? "Volviendo…" : "Volver a modo normal"}
-        </Button>
+        onTerminar && (
+          <Button type="button" size="sm" variant="outline" disabled={terminando} onClick={onTerminar}>
+            {terminando ? "Volviendo…" : "Volver a modo normal"}
+          </Button>
+        )
       }
     >
       Desde {diaYHora(p.desde)}

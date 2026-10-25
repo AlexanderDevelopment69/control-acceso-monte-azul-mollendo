@@ -19,7 +19,7 @@ export class PanelController {
   ) {}
 
   @Get('panel/resumen')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   resumen() {
     return this.panelService.resumen();
   }
@@ -27,14 +27,14 @@ export class PanelController {
   // Indicadores y gráficos del dashboard (solo Administrador): presencia,
   // visitas, ingresos y salidas del periodo, personal y documentos.
   @Get('panel/dashboard')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   dashboard(@Query() query: QueryDashboardDto) {
     return this.dashboardService.obtener(query);
   }
 
   // Lista paginada de la permanencia mayor a 12 horas del dashboard.
   @Get('panel/dashboard/permanencia')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   permanencia(@Query() query: ListaPaginadaDto) {
     return this.dashboardService.permanencia(query);
   }
@@ -42,7 +42,7 @@ export class PanelController {
   // Todas las personas dentro ahora (lista de "Presentes actualmente" del dashboard).
   // También el vigilante: desde ahí abre la salida si se desconecta el lector de salida.
   @Get('panel/dashboard/presentes')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   presentes() {
     return this.dashboardService.presentes();
   }
@@ -66,7 +66,7 @@ export class PanelController {
   // protocolo PUSH ya está implementado (ver push-sdk/), si hay algún equipo
   // conectado de verdad (llamó a /iclock/getrequest en los últimos 2 min).
   @Get('panel/estado-sistema')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   estadoSistema() {
     return this.estadoSistemaService.calcular();
   }
@@ -74,7 +74,7 @@ export class PanelController {
   // Lo que está caído, para la franja que el portal muestra arriba de todas las
   // páginas: también la ve el vigilante, para que pueda informarlo.
   @Get('panel/avisos')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   async avisos() {
     const e = await this.estadoSistemaService.calcular();
     return {

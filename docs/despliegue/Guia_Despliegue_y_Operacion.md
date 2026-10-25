@@ -218,7 +218,7 @@ ls backups
 ### 4.3. Después de verificar
 
 1. **Cambiar las dos contraseñas iniciales** desde el portal: clic en el usuario (arriba a la derecha) → "Cambiar contraseña". Lo mismo entrando con la cuenta de vigilancia.
-2. Opcional: borrar las contraseñas iniciales del `.env` (`ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD`); ya no se usan.
+2. Opcional: borrar las contraseñas iniciales del `.env` (`ADMIN_SEED_PASSWORD`, `VIGILANCIA_SEED_PASSWORD` y `SOPORTE_SEED_PASSWORD`); ya no se usan.
 
 ---
 
@@ -890,7 +890,8 @@ Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), 
 | `CORS_ORIGIN` | No | Direcciones desde las que se abre el portal, separadas por coma. | En la nube `https://accesos.monteazulsur.com.pe` (lo pone `instalar.sh`) |
 | `ADMIN_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `admin@monteazulsur.com.pe`. Después del seed no se usa. | Al menos 10 caracteres, con letras y números (la misma regla del portal) |
 | `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@monteazulsur.com.pe`. | Igual que la anterior |
-| `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@monteazulsur.com.pe` y `vigilancia@monteazulsur.com.pe`). | — |
+| `SOPORTE_SEED_PASSWORD` | Para crear la cuenta de soporte | Contraseña inicial de `soporte@monteazulsur.com.pe` (equipo técnico: consulta todo y atiende Sistema y APIs). Sin ella no se crea. La generan `instalar.sh` y, si falta, `actualizar.sh`. | Igual que la anterior |
+| `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL`, `SOPORTE_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@monteazulsur.com.pe` y `vigilancia@monteazulsur.com.pe`). | — |
 | `G4PRO_HORA_SINCRONIZACION` | No | Valor inicial de la sincronización diaria con los G4 Pro (0 a 23, hora de Lima; `off` la desactiva). Después se activa, desactiva o cambia de hora desde "Sistema y APIs", y eso se guarda en el servidor (`sincronizacion-diaria.json` en el volumen de documentos) y manda sobre este valor. | Por defecto `0` (medianoche); hoy `off` en la nube |
 | `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). | Por defecto `04:00` |
 | `DIAS_RESPALDO` | No | Días que se guardan los respaldos (diarios y previos a actualizaciones; de estos últimos siempre queda el más reciente). Un valor no válido cuenta como 30. | Por defecto `30` |

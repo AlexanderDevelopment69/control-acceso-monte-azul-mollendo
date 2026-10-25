@@ -19,7 +19,7 @@ export class EmpresasController {
 
   // El vigilante también: la usa para filtrar en Personal y documentos (solo lectura).
   @Get()
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   findAll(@Query() query: QueryEmpresasDto) {
     return this.empresasService.findAll(query);
   }

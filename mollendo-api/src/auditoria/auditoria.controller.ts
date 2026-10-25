@@ -4,7 +4,7 @@ import { QueryAuditoriaDto } from './dto/query-auditoria.dto.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 
 @Controller('auditoria')
-@Roles('administrador')
+@Roles('administrador', 'soporte')
 export class AuditoriaController {
   constructor(private readonly auditoriaService: AuditoriaService) {}
 

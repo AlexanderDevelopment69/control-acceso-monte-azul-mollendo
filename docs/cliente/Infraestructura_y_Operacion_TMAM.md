@@ -120,7 +120,7 @@ Los datos están en volúmenes de Docker: `mollendo_db_data` (base de datos) y `
 |---|---|
 | Servidor de Azure | SSH con llave, usuario `atenasac`, a `74.163.89.6` |
 | Controlador (PC) | SSH con llave por Tailscale, usuario `ma-admin`, a `100.78.153.33` |
-| Portal | Cuentas admin@monteazulsur.com.pe y vigilancia@monteazulsur.com.pe |
+| Portal | Cuentas admin@monteazulsur.com.pe, vigilancia@monteazulsur.com.pe y soporte@monteazulsur.com.pe (equipo técnico) |
 
 Las llaves y contraseñas las guarda soporte técnico; no se incluyen en este documento.
 

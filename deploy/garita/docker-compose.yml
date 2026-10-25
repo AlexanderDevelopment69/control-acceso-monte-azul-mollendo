@@ -49,6 +49,8 @@ services:
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
       VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@monteazulsur.com.pe}
       VIGILANCIA_SEED_PASSWORD: ${VIGILANCIA_SEED_PASSWORD:-}
+      SOPORTE_SEED_EMAIL: ${SOPORTE_SEED_EMAIL:-soporte@monteazulsur.com.pe}
+      SOPORTE_SEED_PASSWORD: ${SOPORTE_SEED_PASSWORD:-}
       # Lectores de DNI por RS232 (solo en el servidor que los tiene conectados):
       # en .env, LECTOR_DNI_INGRESO_DISPOSITIVO / LECTOR_DNI_SALIDA_DISPOSITIVO con
       # la ruta fija del adaptador (/dev/serial/by-id/...). Sin esas variables no

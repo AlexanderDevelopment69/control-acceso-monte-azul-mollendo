@@ -44,7 +44,7 @@ export class DocumentosController {
   }
 
   @Get('personas/:personaId/documentos')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   findHistorial(@Param('personaId', ParseIntPipe) personaId: number) {
     return this.documentosService.findHistorial(personaId);
   }
@@ -53,7 +53,7 @@ export class DocumentosController {
   // navegador; Word se descarga. Solo el administrador: el vigilante ve si
   // está vigente o vencido, no el documento.
   @Get('personas/:personaId/documentos/:documentoId/archivo')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   async verArchivo(
     @Param('personaId', ParseIntPipe) personaId: number,
     @Param('documentoId', ParseIntPipe) documentoId: number,

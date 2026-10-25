@@ -404,7 +404,7 @@ function ReportesContent() {
 
 export default function ReportesPage() {
   return (
-    <RequireRole roles={["administrador"]}>
+    <RequireRole roles={["administrador", "soporte"]}>
       <ReportesContent />
     </RequireRole>
   );

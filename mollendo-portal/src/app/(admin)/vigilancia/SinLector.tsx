@@ -54,7 +54,7 @@ export function FranjaSinLector({ titulo, children, accion }: { titulo: string; 
 /** Franjas del Panel de vigilancia: ingreso solo con rostro, y salida desde "Presentes ahora". */
 export function FranjasSinLectorPanel({ estado }: { estado: SinLector }) {
   // Cada uno a su dirección de Presentes ahora (el vigilante no tiene Dashboard).
-  const administrador = useAuth().user?.rol === "administrador";
+  const conDashboard = useAuth().user?.rol !== "vigilancia";
   return (
     <>
       {estado.ingreso && (
@@ -67,7 +67,7 @@ export function FranjasSinLectorPanel({ estado }: { estado: SinLector }) {
           titulo="Lector de DNI de salida sin conexión."
           accion={
             <Link
-              href={administrador ? "/dashboard/presentes" : "/presentes"}
+              href={conDashboard ? "/dashboard/presentes" : "/presentes"}
               className="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600"
             >
               Ir a Presentes ahora

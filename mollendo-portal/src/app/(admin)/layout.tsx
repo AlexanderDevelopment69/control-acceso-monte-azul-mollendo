@@ -31,7 +31,7 @@ export default function AdminLayout({
   const mainContentMargin = isMobileOpen ? "ml-0" : isExpanded ? "lg:ml-[290px]" : "lg:ml-[90px]";
 
   return (
-    <RequireRole roles={["administrador", "vigilancia"]}>
+    <RequireRole roles={["administrador", "vigilancia", "soporte"]}>
       <div className="min-h-screen xl:flex">
         {/* Sidebar and Backdrop */}
         <AppSidebar />

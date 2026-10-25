@@ -83,13 +83,13 @@ export class PersonasController {
   }
 
   @Get()
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   findAll(@Query() query: QueryPersonasDto) {
     return this.personasService.findAll(query);
   }
 
   @Get(':id')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.personasService.findOne(id);
   }
@@ -130,7 +130,7 @@ export class PersonasController {
   }
 
   @Get(':id/foto')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   async verFoto(
     @Param('id', ParseIntPipe) id: number,
     @Query('miniatura') miniatura: string | undefined,

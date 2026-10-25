@@ -25,12 +25,19 @@ rm -rf mollendo-api mollendo-portal
 tar -xzf "$PAQUETE" && rm -f "$PAQUETE"
 
 cd deploy/nube
+# Cuentas que agregan las versiones nuevas (p. ej. soporte, 25/10/2026): su contraseña inicial va al .env.
+if ! grep -q '^SOPORTE_SEED_PASSWORD=' .env; then
+  echo "SOPORTE_SEED_PASSWORD=$(openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 14)Aa1" >> .env
+  echo "Agregada a .env la contraseña inicial de soporte@monteazulsur.com.pe (SOPORTE_SEED_PASSWORD)"
+fi
 dc up -d --build 2>&1 | grep -vE '^ *#|^\s*$' | tail -6
 for i in $(seq 1 60); do
   curl -fsS http://localhost:3001/api/v1/health >/dev/null 2>&1 && break
   [ "$i" -eq 60 ] && echo "AVISO: la API no respondió en 5 minutos"
   sleep 5
 done
+# Crea las cuentas que falten; las existentes no se tocan.
+dc run --rm -T api npm run db:seed 2>&1 | grep -E '^ +(Administrador|Vigilancia|Soporte):' || true
 dc ps --format '{{.Service}}: {{.Status}}'
 dc logs api 2>&1 | grep -E 'migrations|successfully started|ERROR' | tail -4 | cut -c1-200
 

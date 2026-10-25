@@ -1,5 +1,6 @@
 // Semilla inicial (alcance base): crea la empresa interna (OTP/MAS — operador
-// del Terminal), el administrador único y una cuenta de Vigilancia. Luego el
+// del Terminal), el administrador único, una cuenta de Vigilancia y la de Soporte
+// (equipo técnico; solo si SOPORTE_SEED_PASSWORD está definida). Luego el
 // administrador puede crear más cuentas desde Configuración → Usuarios. Las
 // empresas proveedoras reales las carga el administrador desde el portal.
 import 'dotenv/config';
@@ -15,6 +16,9 @@ const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD || 'Cambiar123!';
 
 const VIGILANCIA_CORREO = process.env.VIGILANCIA_SEED_EMAIL || 'vigilancia@monteazulsur.com.pe';
 const VIGILANCIA_PASSWORD = process.env.VIGILANCIA_SEED_PASSWORD || 'Cambiar123!';
+
+const SOPORTE_CORREO = process.env.SOPORTE_SEED_EMAIL || 'soporte@monteazulsur.com.pe';
+const SOPORTE_PASSWORD = process.env.SOPORTE_SEED_PASSWORD;
 
 async function main() {
   const empresaInterna = await prisma.empresa.upsert({
@@ -55,10 +59,25 @@ async function main() {
     },
   });
 
+  // Soporte: sin contraseña en .env no se crea (nunca con una contraseña de ejemplo).
+  if (SOPORTE_PASSWORD) {
+    await prisma.usuario.upsert({
+      where: { correo: SOPORTE_CORREO },
+      update: {},
+      create: {
+        empresaId: empresaInterna.id,
+        rol: 'soporte',
+        correo: SOPORTE_CORREO,
+        passwordHash: await hash(SOPORTE_PASSWORD, 10),
+        estadoCuenta: 'activo',
+      },
+    });
+  }
 
   console.log('Cuentas listas:');
   console.log(`  Administrador:  ${ADMIN_CORREO} / ${process.env.ADMIN_SEED_PASSWORD ? '(definida en .env)' : ADMIN_PASSWORD}`);
   console.log(`  Vigilancia:     ${VIGILANCIA_CORREO} / ${process.env.VIGILANCIA_SEED_PASSWORD ? '(definida en .env)' : VIGILANCIA_PASSWORD}`);
+  console.log(`  Soporte:        ${SOPORTE_PASSWORD ? `${SOPORTE_CORREO} / (definida en .env)` : 'no se creó (falta SOPORTE_SEED_PASSWORD en .env)'}`);
 }
 
 main()

@@ -21,7 +21,8 @@ const leerHash = () => decodeURIComponent(window.location.hash.slice(1));
 
 function ManualContent() {
   const { user } = useAuth();
-  const secciones = SECCIONES.filter((s) => !user || s.roles.includes(user.rol));
+  // Soporte consulta el manual del administrador.
+  const secciones = SECCIONES.filter((s) => !user || s.roles.includes(user.rol === "soporte" ? "administrador" : user.rol));
   const hash = useSyncExternalStore(suscribirHash, leerHash, () => "");
   const indice = Math.max(0, secciones.findIndex((s) => s.id === hash));
   const activa = secciones[indice];
@@ -102,7 +103,7 @@ function ManualContent() {
 
 export default function ManualPage() {
   return (
-    <RequireRole roles={["administrador", "vigilancia"]}>
+    <RequireRole roles={["administrador", "vigilancia", "soporte"]}>
       <ManualContent />
     </RequireRole>
   );

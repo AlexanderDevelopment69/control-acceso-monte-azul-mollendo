@@ -44,7 +44,7 @@ export class ReportesController {
    * los archivos). Solo Administrador.
    */
   @Get(':tipo')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   async descargar(@Param('tipo') tipo: string, @Query() query: QueryReporteDto, @CurrentUser() usuario: AuthenticatedUser): Promise<StreamableFile> {
     if (!TIPOS_REPORTE.includes(tipo as TipoReporte)) {
       throw new BadRequestException(`Reporte desconocido. Opciones: ${TIPOS_REPORTE.join(', ')}`);

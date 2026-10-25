@@ -53,14 +53,14 @@ function IconoTarjetaAcceso() {
 }
 
 const navItems: NavItem[] = [
-  { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador"] },
+  { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador", "soporte"] },
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
-  { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador"] },
-  { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador"] },
+  { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador", "soporte"] },
+  { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador", "soporte"] },
   // El administrador llega desde el Dashboard; el vigilante la tiene en el menú.
   { icon: <GroupIcon />, name: "Presentes ahora", path: "/presentes", roles: ["vigilancia"] },
   // El vigilante, solo para consultar (el administrador la tiene en "/").
-  { icon: <GroupIcon />, name: "Personal y documentos", path: "/personal", roles: ["vigilancia"] },
+  { icon: <GroupIcon />, name: "Personal y documentos", path: "/personal", roles: ["vigilancia", "soporte"] },
   {
     icon: <LockLineIcon />,
     name: "Contingencias",
@@ -70,11 +70,11 @@ const navItems: NavItem[] = [
       { name: "Tarjetas de acceso", path: "/contingencias/tarjetas-acceso", icon: <IconoTarjetaAcceso /> },
     ],
   },
-  { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
+  { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador", "soporte"] },
   { icon: <UserCircleIcon />, name: "Usuarios", path: "/usuarios", roles: ["administrador"] },
-  { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador"] },
-  { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador"] },
-  { icon: <InfoIcon />, name: "Manual", path: "/manual", roles: ["administrador", "vigilancia"] },
+  { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador", "soporte"] },
+  { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador", "soporte"] },
+  { icon: <InfoIcon />, name: "Manual", path: "/manual", roles: ["administrador", "vigilancia", "soporte"] },
 ];
 
 const AppSidebar: React.FC = () => {

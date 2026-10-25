@@ -17,28 +17,28 @@ export class IntegracionesController {
 
   /** Monitor del G4 Pro: las pruebas de rostro y alcohol y qué hizo el sistema con cada una (por día, búsqueda y página). */
   @Get('g4pro/marcaciones')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   marcacionesG4Pro(@Query() query: ListaPaginadaDto) {
     return this.monitorG4.listar(query);
   }
 
   // Abre sin DNI (queda en la Auditoría): solo el administrador, para una emergencia o para probar un molinete.
   @Post('torniquete/comando')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   enviarComandoTorniquete(@Body() dto: TorniqueteComandoDto, @CurrentUser() usuario: AuthenticatedUser) {
     return this.integracionesService.enviarComandoTorniquete(dto, usuario.id);
   }
 
   /** Registra a todo el personal (con foto) en los G4 Pro; por ejemplo, al instalar un equipo nuevo. */
   @Post('g4pro/sincronizar')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   sincronizarG4Pro(@Query('simular') simular?: string, @CurrentUser() usuario?: AuthenticatedUser) {
     return this.integracionesService.sincronizarTodas(simular === 'true', 'manual', usuario?.id);
   }
 
   /** Activa (hora 0..23) o desactiva (null) la sincronización diaria; se guarda en el servidor. */
   @Put('g4pro/sincronizacion-diaria')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   cambiarSincronizacionDiaria(@Body() dto: SincronizacionDiariaDto, @CurrentUser() usuario: AuthenticatedUser) {
     return this.integracionesService.cambiarDiaria(dto.hora ?? null, usuario.correo, usuario.id);
   }

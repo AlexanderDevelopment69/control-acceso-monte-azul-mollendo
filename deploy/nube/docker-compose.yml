@@ -73,6 +73,8 @@ services:
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
       VIGILANCIA_SEED_EMAIL: ${VIGILANCIA_SEED_EMAIL:-vigilancia@monteazulsur.com.pe}
       VIGILANCIA_SEED_PASSWORD: ${VIGILANCIA_SEED_PASSWORD:-}
+      SOPORTE_SEED_EMAIL: ${SOPORTE_SEED_EMAIL:-soporte@monteazulsur.com.pe}
+      SOPORTE_SEED_PASSWORD: ${SOPORTE_SEED_PASSWORD:-}
       # true cuando los lectores y relés están en un controlador conectado por
       # internet (servidor en la nube; ver deploy/controlador): la orden de
       # abrir los molinetes se le manda a él.

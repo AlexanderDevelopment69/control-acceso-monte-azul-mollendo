@@ -46,7 +46,7 @@ export class EventosAccesoController {
 
   /** Puertas con el lector de DNI desconectado (contingencia "sin lector"). */
   @Get('sin-lector')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   sinLector() {
     return this.eventosAccesoService.sinLector();
   }
@@ -60,7 +60,7 @@ export class EventosAccesoController {
 
   /** Salida sin DNI elegida en el Panel que espera la tarjeta (null: ninguna). */
   @Get('salida-sin-dni')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   salidaSinDni() {
     return this.eventosAccesoService.salidaSinDniPreparada();
   }
@@ -87,14 +87,14 @@ export class EventosAccesoController {
 
   /** DNI en regla esperando el rostro y el alcohol del G4 Pro, o al vigilante (Panel de vigilancia). */
   @Get('en-espera')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   enEspera() {
     return this.eventosAccesoService.ingresosEnEspera();
   }
 
   /** Verificación manual vigente (contingencia por falla del equipo facial). */
   @Get('verificacion-manual')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   verificacionManualEstado() {
     return this.verificacionManual.estado();
   }
@@ -113,7 +113,7 @@ export class EventosAccesoController {
 
   /** Orden del ingreso: DNI → Facial + Alcohol o Facial + Alcohol → DNI. */
   @Get('modo-ingreso')
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   modoIngresoEstado() {
     return this.modoIngreso.estado();
   }
@@ -142,7 +142,7 @@ export class EventosAccesoController {
   }
 
   @Get()
-  @Roles('administrador', 'vigilancia')
+  @Roles('administrador', 'vigilancia', 'soporte')
   findAll(@Query() query: QueryEventosAccesoDto) {
     return this.eventosAccesoService.findAll(query);
   }

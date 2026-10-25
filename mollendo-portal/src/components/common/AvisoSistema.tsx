@@ -59,6 +59,9 @@ export function AvisoSistema() {
   const { user } = useAuth();
   const pathname = usePathname();
   const esAdmin = user?.rol === "administrador";
+  // Soporte ve Sistema y APIs como el administrador, pero no opera el panel (no activa la verificación manual).
+  const veSistema = esAdmin || user?.rol === "soporte";
+  const opera = user?.rol !== "soporte";
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [revisado, setRevisado] = useState<Date | null>(null);
   const [manualActiva, setManualActiva] = useState(true);
@@ -150,7 +153,7 @@ export function AvisoSistema() {
           {revisado && <span className="text-xs text-white/80">Revisado {revisado.toLocaleTimeString("es-PE")}</span>}
         </p>
         <div className="ml-auto flex items-center gap-2">
-          {esAdmin && pathname !== "/sistema" && (
+          {veSistema && pathname !== "/sistema" && (
             <Link href="/sistema" className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-medium hover:bg-white/25">
               Ver Sistema y APIs
             </Link>
@@ -194,7 +197,7 @@ export function AvisoSistema() {
                     <p className="mt-0.5 text-xs leading-snug text-gray-500 dark:text-gray-400">{a.impacto}</p>
                     {a.desde && <p className="mt-1 text-xs text-gray-400">Última vez en línea: {fechaCorta(a.desde)}</p>}
                     {/* Contingencia por falla del equipo facial o del alcoholímetro (contingencias, secciones 3 y 4). */}
-                    {(a.tipo === "terminal" || a.tipo === "alcoholimetro") && !manualActiva && (
+                    {opera && (a.tipo === "terminal" || a.tipo === "alcoholimetro") && !manualActiva && (
                       <button
                         type="button"
                         onClick={() =>
@@ -212,7 +215,7 @@ export function AvisoSistema() {
               );
             })}
           </ul>
-          {!esAdmin && (
+          {!veSistema && (
             <p className="border-t border-gray-100 px-4 py-2.5 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400 sm:px-5">
               Informe al administrador o al soporte técnico.
             </p>

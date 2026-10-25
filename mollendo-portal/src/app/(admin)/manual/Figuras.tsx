@@ -64,6 +64,13 @@ function IconoAdministrador({ className }: PropsIcono) {
     </svg>
   );
 }
+function IconoSoporte({ className }: PropsIcono) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
+      <path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L4 16.7 7.3 20l5.3-5.3a4 4 0 0 0 5.1-5.4l-2.5 2.5-2.4-.6-.6-2.4z" />
+    </svg>
+  );
+}
 function IconoVigilancia({ className }: PropsIcono) {
   return (
     <svg className={className} viewBox="0 0 24 24" {...trazo} aria-hidden>
@@ -73,7 +80,7 @@ function IconoVigilancia({ className }: PropsIcono) {
   );
 }
 
-/** Las dos cuentas del sistema, cada una con lo que hace. */
+/** Las tres cuentas del sistema, cada una con lo que hace. */
 export function CuentasManual() {
   const cuentas = [
     {
@@ -98,9 +105,19 @@ export function CuentasManual() {
         "Recibe el aviso cuando se cae un equipo y activa la verificación manual si falla el terminal facial.",
       ],
     },
+    {
+      titulo: "Soporte",
+      Icono: IconoSoporte,
+      color: "bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400",
+      puntos: [
+        "Revisa el estado de los equipos en Sistema y APIs y sincroniza el terminal facial.",
+        "Abre un molinete a mano para probarlo.",
+        "Consulta el personal, las empresas, el Panel de vigilancia, el Dashboard, los Reportes y la Auditoría, sin cambiar nada.",
+      ],
+    },
   ];
   return (
-    <div className="my-2 grid gap-3 sm:grid-cols-2">
+    <div className="my-2 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {cuentas.map(({ titulo, Icono, color, puntos }) => (
         <div key={titulo} className="rounded-xl border border-gray-200 p-4 dark:border-gray-800">
           <div className="mb-3 flex items-center gap-3">

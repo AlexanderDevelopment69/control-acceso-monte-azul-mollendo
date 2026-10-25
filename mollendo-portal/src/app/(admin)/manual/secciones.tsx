@@ -26,7 +26,7 @@ export const SECCIONES: SeccionManual[] = [
         contenido: (
           <>
             <p className="mb-3">
-              Este sistema controla el ingreso y salida de personas al Terminal de Mollendo. Hay dos tipos de cuenta y cada una ve en el
+              Este sistema controla el ingreso y salida de personas al Terminal de Mollendo. Hay tres tipos de cuenta y cada una ve en el
               menú solo las secciones que le corresponden:
             </p>
             <CuentasManual />

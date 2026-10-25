@@ -78,6 +78,7 @@ DOMINIO=$DOMINIO
 CORS_ORIGIN=https://$DOMINIO
 ADMIN_SEED_PASSWORD=$(clave 14)Aa1
 VIGILANCIA_SEED_PASSWORD=$(clave 14)Aa1
+SOPORTE_SEED_PASSWORD=$(clave 14)Aa1
 MOLINETES_REMOTOS=true
 G4PRO_HORA_SINCRONIZACION=off
 HORA_RESPALDO=04:00
@@ -109,7 +110,7 @@ cat <<EOF
 
 LISTO. Portal: https://$(grep '^DOMINIO=' .env | cut -d= -f2)
 - Contraseñas iniciales y clave de equipos: en $CARPETA/.env
-  (ADMIN_SEED_PASSWORD, VIGILANCIA_SEED_PASSWORD; la DEVICE_API_KEY va también en el Controlador (PC)).
+  (ADMIN_SEED_PASSWORD, VIGILANCIA_SEED_PASSWORD, SOPORTE_SEED_PASSWORD; la DEVICE_API_KEY va también en el Controlador (PC)).
 - Para cargar un respaldo:  bash $CARPETA/restaurar.sh <archivo>
 - Terminal facial: servidor $(grep '^DOMINIO=' .env | cut -d= -f2), puerto 3001.
 EOF

@@ -97,7 +97,7 @@ Responder: servidor `https://accesos.monteazulsur.com.pe`, la clave de equipos d
 
 **Paso 3. G4 Pro.** En el equipo, *Cloud Service Settings*: servidor `accesos.monteazulsur.com.pe`, puerto `3001`. En el portal, **Sistema y APIs** → **Sincronizar**.
 
-**Paso 4. Comprobar.** Entrar a https://accesos.monteazulsur.com.pe con `admin@monteazulsur.com.pe` (contraseña inicial: `ADMIN_SEED_PASSWORD` del `.env` del servidor). En **Sistema y APIs**: servidor y base de datos "En línea"; Controlador (PC), lectores, relés y G4 Pro "Conectado". Cambiar las contraseñas iniciales (también la de `vigilancia@monteazulsur.com.pe`).
+**Paso 4. Comprobar.** Entrar a https://accesos.monteazulsur.com.pe con `admin@monteazulsur.com.pe` (contraseña inicial: `ADMIN_SEED_PASSWORD` del `.env` del servidor). En **Sistema y APIs**: servidor y base de datos "En línea"; Controlador (PC), lectores, relés y G4 Pro "Conectado". Cambiar las contraseñas iniciales (también las de `vigilancia@monteazulsur.com.pe` y `soporte@monteazulsur.com.pe`).
 
 ## Actualizar a una versión nueva
 
@@ -171,7 +171,7 @@ bash ~/mollendo/deploy/nube/autorizar-copia.sh "ssh-ed25519 AAAA… copia-respal
 | Máquina | Ubuntu 26.04, 4 CPU, 7,7 GB de memoria, 124 GB de disco, hora de Lima |
 | Instalado | 16/10/2026, limpio (sin datos de prueba). Respaldos diarios a las 04:00, se guardan 30 días |
 
-Las contraseñas iniciales quedaron en `~/mollendo/deploy/nube/.env` (`ADMIN_SEED_PASSWORD`, `VIGILANCIA_SEED_PASSWORD`): cambiarlas desde el portal después de entrar.
+Las contraseñas iniciales quedaron en `~/mollendo/deploy/nube/.env` (`ADMIN_SEED_PASSWORD`, `VIGILANCIA_SEED_PASSWORD`, `SOPORTE_SEED_PASSWORD`): cambiarlas desde el portal después de entrar. La de soporte la agrega `actualizar.sh` la primera vez (25/10/2026).
 
 ### HTTPS (dominio)
 

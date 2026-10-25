@@ -13,7 +13,7 @@ export default function PresentesPage() {
   // el enlace de vuelta es solo para el administrador, que llega desde el Dashboard.
   const administrador = useAuth().user?.rol === "administrador";
   return (
-    <RequireRole roles={["administrador", "vigilancia"]}>
+    <RequireRole roles={["administrador", "vigilancia", "soporte"]}>
       {administrador && (
         <Link
           href="/dashboard"

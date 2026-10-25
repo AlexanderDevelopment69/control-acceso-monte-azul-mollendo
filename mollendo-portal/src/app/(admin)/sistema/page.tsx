@@ -217,7 +217,7 @@ function SistemaContent() {
 
 export default function SistemaPage() {
   return (
-    <RequireRole roles={["administrador"]}>
+    <RequireRole roles={["administrador", "soporte"]}>
       <SistemaContent />
     </RequireRole>
   );

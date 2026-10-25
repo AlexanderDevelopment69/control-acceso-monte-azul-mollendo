@@ -112,7 +112,8 @@ export function ElegirSalidaSinDni({
 }
 
 /** Franja mientras la salida elegida espera la tarjeta: a quién, cuánto queda y para cancelar. */
-export function FranjaSalidaSinDni({ salida, onCancelar }: { salida: SalidaSinDni | null; onCancelar: () => void }) {
+// Sin onCancelar (soporte, que solo consulta), la franja se ve sin el botón.
+export function FranjaSalidaSinDni({ salida, onCancelar }: { salida: SalidaSinDni | null; onCancelar?: () => void }) {
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
     if (!salida) return;
@@ -128,9 +129,11 @@ export function FranjaSalidaSinDni({ salida, onCancelar }: { salida: SalidaSinDn
       etiqueta="Salida sin DNI"
       pildora={`${salida.nombres} ${salida.apellidos} (DNI ${salida.numeroDocumento})`}
       acciones={
-        <Button type="button" size="sm" variant="outline" onClick={onCancelar}>
-          Cancelar
-        </Button>
+        onCancelar && (
+          <Button type="button" size="sm" variant="outline" onClick={onCancelar}>
+            Cancelar
+          </Button>
+        )
       }
     >
       Pase la tarjeta por el lector de salida.{" "}

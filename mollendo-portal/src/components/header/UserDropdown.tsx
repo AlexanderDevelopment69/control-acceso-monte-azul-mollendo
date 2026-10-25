@@ -7,6 +7,7 @@ import { CambiarPasswordModal } from "./CambiarPasswordModal";
 const ROL_LABEL: Record<string, string> = {
   administrador: "Administrador",
   vigilancia: "Vigilancia",
+  soporte: "Soporte",
 };
 
 export default function UserDropdown() {
@@ -74,7 +75,7 @@ export default function UserDropdown() {
           </span>
         </div>
         {/* El vigilante no cambia su contraseña: se la cambia el administrador (Usuarios). */}
-        {user.rol === "administrador" && (
+        {user.rol !== "vigilancia" && (
         <button
           onClick={() => {
             closeDropdown();
