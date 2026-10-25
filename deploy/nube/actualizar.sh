@@ -37,7 +37,7 @@ for i in $(seq 1 60); do
   sleep 5
 done
 # Crea las cuentas que falten; las existentes no se tocan.
-dc run --rm -T api npm run db:seed 2>&1 | grep -E '^ +(Administrador|Vigilancia|Soporte):' || true
+dc run --rm -T api npm run db:seed </dev/null 2>&1 | grep -E '^ +(Administrador|Vigilancia|Soporte):' || true
 dc ps --format '{{.Service}}: {{.Status}}'
 dc logs api 2>&1 | grep -E 'migrations|successfully started|ERROR' | tail -4 | cut -c1-200
 

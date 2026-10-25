@@ -2,11 +2,12 @@
 
 **Terminal Monte Azul Mollendo (TMAM)**
 
-Versión 1.0 · 23 de octubre de 2026
+Versión 1.1 · 25 de octubre de 2026
 
 | Versión | Fecha | Descripción |
 |---|---|---|
 | 1.0 | 23/10/2026 | Instalación en Azure, punto de acceso, respaldos y operación. |
+| 1.1 | 25/10/2026 | Instalación, actualización y restauración con scripts; cuenta de soporte. |
 
 Documento para soporte técnico: dónde y cómo está instalado el sistema. Lo que hace el sistema está en el Documento Funcional. Las contraseñas no se incluyen: están en la hoja "Accesos del sistema" (confidencial).
 
@@ -110,7 +111,7 @@ Los datos están en volúmenes de Docker: `mollendo_db_data` (base de datos) y `
 | Tamaño actual | Unos 3,5 MB por respaldo diario |
 | Estado | Se ve en Sistema y APIs |
 
-**Restaurar:** reemplaza los datos actuales; antes se saca un respaldo de lo que hay. Se descomprime el respaldo elegido, se carga la base de datos y se copian los documentos y fotos al volumen. El paso a paso está en la guía de despliegue (sección 7.3).
+**Restaurar:** reemplaza los datos actuales; antes se saca un respaldo de lo que hay. Se descomprime el respaldo elegido, se carga la base de datos y se copian los documentos y fotos al volumen. Se hace con el script `restaurar.sh` del servidor (Guía de instalación, sección 4).
 
 **Recomendación:** hoy los respaldos están en el mismo disco del servidor. Activar Azure Backup de la máquina virtual o copiarlos a otro lugar.
 
@@ -127,7 +128,7 @@ Las llaves y contraseñas las guarda soporte técnico; no se incluyen en este do
 ## 8. Operación diaria y actualizaciones
 
 - **Revisar el estado:** pantalla Sistema y APIs del portal (servidor, respaldos y cada equipo).
-- **Actualizar:** se sube la versión nueva al servidor, se saca un respaldo de la base, se reconstruyen los contenedores y se limpian las imágenes viejas. Las migraciones de la base se aplican solas.
+- **Actualizar:** con el script `actualizar.sh` (Guía de instalación, sección 3): se sube la versión nueva al servidor, se saca un respaldo de la base, se reconstruyen los contenedores y se limpian las imágenes viejas. Las migraciones de la base se aplican solas.
 - **Reiniciar el Controlador (PC):** se recupera sola y se reconecta al servidor en unos dos minutos.
 - **Lector con el adaptador sin respuesta:** desconectar y volver a conectar el adaptador, o reiniciar el Controlador (PC).
 - **Disco del servidor:** se revisa en cada actualización (hoy 10 % usado).

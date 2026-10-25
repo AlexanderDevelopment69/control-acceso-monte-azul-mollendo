@@ -2,13 +2,14 @@
 
 **Terminal Monte Azul Mollendo (TMAM) · Alcance base**
 
-Versión 1.2 · 23 de octubre de 2026
+Versión 1.3 · 25 de octubre de 2026
 
 | Versión | Fecha | Descripción |
 |---|---|---|
 | Final | 02/10/2026 | Versión final. |
 | 1.1 | 21/10/2026 | Integración con el terminal facial y el alcoholímetro, orden del ingreso, contingencias, Presentes ahora, aviso de fallas y HTTPS. |
 | 1.2 | 23/10/2026 | Usuarios, período de autorización, tarjeta de acceso y avisos del Panel. |
+| 1.3 | 25/10/2026 | Cuenta de soporte. |
 
 ## Contenido
 

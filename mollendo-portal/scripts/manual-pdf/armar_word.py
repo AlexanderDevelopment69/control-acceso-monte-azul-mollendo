@@ -10,8 +10,8 @@ from html.parser import HTMLParser
 from xml.sax.saxutils import escape
 
 ORIGINAL, CARPETA, SALIDA, NOMBRE, DESCRIPCION_VERSION = sys.argv[1:6]
-VERSION = 'Versión 1.0 · 24 de octubre de 2026'
-VERSION_PIE = 'Versión 1.0 · 24/10/2026'
+VERSION = 'Versión 1.1 · 25 de octubre de 2026'
+VERSION_PIE = 'Versión 1.1 · 25/10/2026'
 
 z = zipfile.ZipFile(ORIGINAL)
 doc = z.read('word/document.xml').decode('utf8')
@@ -158,7 +158,7 @@ salida = [els[0],
           cambiar_texto(els[4], 'Versión final · 2 de octubre de 2026', VERSION),
           els[5]]
 w = [1800, 1800, 6038]
-filas = [('Versión', 'Fecha', 'Descripción'), ('1.0', '24/10/2026', DESCRIPCION_VERSION)]
+filas = [('Versión', 'Fecha', 'Descripción'), ('1.0', '24/10/2026', DESCRIPCION_VERSION), ('1.1', '25/10/2026', 'Cuenta de soporte.')]
 tv = f'<w:tbl>{TBLPR}<w:tblGrid>' + ''.join(f'<w:gridCol w:w="{a}"/>' for a in w) + '</w:tblGrid>'
 for i, f in enumerate(filas):
     trpr = '<w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>' if i == 0 else '<w:trPr><w:cantSplit/></w:trPr>'

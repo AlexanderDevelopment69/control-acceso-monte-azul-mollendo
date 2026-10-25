@@ -100,7 +100,7 @@ for i in $(seq 1 60); do
 done
 
 paso "5/6 Cuentas iniciales (si ya existen, no se cambian)"
-dc run --rm -T api npm run db:seed 2>&1 | tail -2
+dc run --rm -T api npm run db:seed </dev/null 2>&1 | tail -2
 
 paso "6/6 Limpieza y estado"
 sudo docker image prune -f >/dev/null 2>&1 || true
