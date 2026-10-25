@@ -198,7 +198,7 @@ function ContenidoEquipo({
   );
 }
 
-/** Lectores de DNI: por RS232 en la mini PC, no por red. Configurado, cable de datos conectado (puerto abierto) y la hora de la última lectura: el lector no avisa si está encendido, solo envía cuando lee un DNI. */
+/** Lectores de DNI: por RS232 en el Controlador (PC), no por red. Configurado, cable de datos conectado (puerto abierto) y la hora de la última lectura: el lector no avisa si está encendido, solo envía cuando lee un DNI. */
 export function LectoresDniEstado({
   comprobando,
   lectoresDni,
@@ -248,7 +248,7 @@ export function LectoresDniEstado({
   );
 }
 
-/** Controlador (mini PC en la garita conectada al servidor en la nube). */
+/** Controlador (PC) del punto de acceso, conectado al servidor en la nube. */
 export function ControladorGaritaEstado({ comprobando, controlador }: { comprobando: boolean; controlador?: EstadoControladorGarita }) {
   if (comprobando) {
     return (

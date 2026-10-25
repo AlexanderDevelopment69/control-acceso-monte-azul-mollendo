@@ -310,7 +310,7 @@ model EventoAcceso {
 // ---------------------------------------------------------------------
 // INGRESO_PENDIENTE (DNI ya validado, esperando el resultado del G4 Pro)
 // El G4 Pro abre el ingreso con su propio relé y no espera permiso de la
-// mini PC (confirmado con el equipo real que no soporta ser "habilitado" por
+// Controlador (PC) (confirmado con el equipo real que no soporta ser "habilitado" por
 // fecha/hora -- ver Analisis_Control_Acceso_Mollendo.md sección 6.0), así
 // que el DNI y el resultado facial+alcohol llegan en dos momentos separados.
 // Esta tabla es el puente: se crea al pasar el DNI y se consume cuando llega

@@ -60,7 +60,7 @@ export type EstadoReleUsb = Record<'ingreso' | 'salida', EstadoReleMolinete> & {
 };
 
 /**
- * Módulos de relés USB DCTTECH "USBRelay" conectados a la mini PC, que abren
+ * Módulos de relés USB DCTTECH "USBRelay" conectados al Controlador (PC), que abren
  * los molinetes con un pulso de `RELE_PULSO_MS` (1000 por defecto).
  *
  * Cada molinete se asigna a un módulo por su número de serie

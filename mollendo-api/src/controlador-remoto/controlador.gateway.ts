@@ -26,7 +26,7 @@ export interface EstadoReportado {
   listaPersonal: { personas: number; actualizado: string | null };
   /** Salidas hechas sin conexión que todavía no llegaron al servidor. */
   salidasPendientes: number;
-  /** IP de la mini PC en la red de la garita (los controladores anteriores no la envían). */
+  /** IP del Controlador (PC) en la red de la garita (los controladores anteriores no la envían). */
   ipLocal?: string | null;
 }
 
@@ -43,11 +43,11 @@ interface Conexion {
   estado: EstadoReportado | null;
 }
 
-/** ¿Los molinetes los abre un controlador conectado por internet (y no la API en la misma mini PC)? */
+/** ¿Los molinetes los abre un controlador conectado por internet (y no la API en el mismo Controlador (PC))? */
 export const molinetesRemotos = () => process.env.MOLINETES_REMOTOS === 'true';
 
 /**
- * Canal con el controlador (la mini PC en la garita, con
+ * Canal con el controlador (el Controlador (PC) en la garita, con
  * `node dist/controlador/main.js`; ver src/controlador/). El controlador se
  * conecta desde la garita hacia el servidor (no hay que abrir puertos en la
  * garita), se identifica con la clave de equipos (DEVICE_API_KEY), recibe aquí
@@ -179,7 +179,7 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
   estado() {
     const conexion = [...this.conexiones.values()].sort((a, b) => b.desde.localeCompare(a.desde))[0] ?? null;
     // El controlador informa su estado cada ~5 s. Si el socket sigue en memoria
-    // pero dejó de reportar (p. ej. la mini PC perdió luz), socket.io tarda ~45 s
+    // pero dejó de reportar (p. ej. el Controlador (PC) perdió luz), socket.io tarda ~45 s
     // en darlo por caído; acá lo marcamos "Desconectado" a los ~18 s por la
     // frescura del último reporte, sin tocar la conexión (la orden de abrir
     // molinete no se ve afectada). Se cuenta desde el último reporte o, si recién

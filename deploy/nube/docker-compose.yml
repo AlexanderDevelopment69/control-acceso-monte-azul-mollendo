@@ -1,6 +1,6 @@
 # Entorno NUBE: servidor en la nube (Azure, 74.163.89.6) con el portal, la
 # API, la base de datos y los respaldos. Los lectores de DNI y los relés están
-# en la mini PC de la garita (ver ../controlador). Ver README.md de esta carpeta.
+# en el Controlador (PC) del punto de acceso (ver ../controlador). Ver README.md de esta carpeta.
 #   cp .env.example .env    (y completar)
 #   docker compose up -d --build
 name: mollendo

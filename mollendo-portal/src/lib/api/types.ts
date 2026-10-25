@@ -305,7 +305,7 @@ export interface EstadoSistema {
   lectoresDni: { ingreso: EstadoLectorDni; salida: EstadoLectorDni };
   releMolinetes: EstadoReleUsb;
   sincronizacionG4: EstadoSincronizacionG4;
-  /** Controlador (mini PC conectada por internet) cuando el servidor está en la nube. */
+  /** Controlador (PC) conectado por internet, cuando el servidor está en la nube. */
   controladorGarita?: EstadoControladorGarita;
   respaldos: EstadoRespaldos;
   websocket: { namespace: string };
@@ -404,7 +404,7 @@ export interface ResumenRespaldo {
   tamanoBytes: number;
 }
 
-/** Respaldos del servidor; `disponible` es false fuera de la mini PC (p. ej. en desarrollo). */
+/** Respaldos del servidor; `disponible` es false fuera del Controlador (PC) (p. ej. en desarrollo). */
 export interface EstadoRespaldos {
   disponible: boolean;
   ultimoAutomatico: ResumenRespaldo | null;
@@ -455,7 +455,7 @@ export interface EstadoControladorGarita {
   estado: {
     listaPersonal: { personas: number; actualizado: string | null };
     salidasPendientes: number;
-    /** IP de la mini PC en la red de la garita. */
+    /** IP del Controlador (PC) en la red de la garita. */
     ipLocal?: string | null;
   } | null;
 }

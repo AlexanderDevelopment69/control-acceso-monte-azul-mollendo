@@ -27,11 +27,11 @@ interface SalidaPendiente {
 class SinConexion extends Error {}
 
 /**
- * Controlador: la mini PC en la garita cuando el servidor está en la
+ * Controlador: el Controlador (PC) en la garita cuando el servidor está en la
  * nube. Manda al servidor cada DNI leído (`POST /eventos-acceso/ingreso|salida`
  * con la clave de equipos), recibe por un canal permanente la orden de abrir
  * cada molinete (lo abre el relé USB) e informa el estado de lectores y relés.
- * El canal lo abre la mini PC hacia el servidor: no hay que abrir puertos en
+ * El canal lo abre el Controlador (PC) hacia el servidor: no hay que abrir puertos en
  * la garita.
  *
  * Sin conexión (opción B): nadie puede entrar, pero sí salir. Se deja salir a
@@ -42,7 +42,7 @@ class SinConexion extends Error {}
  * Configuración: SERVIDOR_URL (p. ej. https://accesos.empresa.com),
  * DEVICE_API_KEY (la misma clave de equipos del servidor), CONTROLADOR_DATOS
  * (carpeta de la lista del personal y las salidas pendientes) y las de lectores y relés
- * (LECTOR_DNI_*, RELE_*), iguales que en el servidor de la mini PC.
+ * (LECTOR_DNI_*, RELE_*), iguales que en el servidor del Controlador (PC).
  */
 @Injectable()
 export class ControladorService implements RegistroLecturas, OnModuleInit, OnModuleDestroy {

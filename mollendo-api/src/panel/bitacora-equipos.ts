@@ -16,7 +16,7 @@ export interface Falla {
 export const alcoholimetroSinDatos = (e: EstadoParaAvisos) =>
   e.dispositivos.some((d) => !d.enLinea || d.alcoholimetro === undefined || d.alcoholimetro.conectado === null);
 
-/** Lo que depende del controlador (mini PC): sin él no se puede saber su estado. */
+/** Lo que depende del Controlador (PC): sin él no se puede saber su estado. */
 export const dependeDelControlador = (etiqueta: string) => etiqueta.startsWith('Lector de DNI') || etiqueta.startsWith('Relé');
 
 /**

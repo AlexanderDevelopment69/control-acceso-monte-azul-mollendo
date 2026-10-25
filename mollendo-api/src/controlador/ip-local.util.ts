@@ -1,8 +1,8 @@
 import os from 'node:os';
 
 /**
- * IP de la mini PC en la red de la garita, para "Sistema y APIs". El
- * controlador usa la red de la mini PC (network_mode: host), así que ve sus
+ * IP del Controlador (PC) en la red de la garita, para "Sistema y APIs". El
+ * controlador usa la red del Controlador (PC) (network_mode: host), así que ve sus
  * interfaces reales; se descartan las internas (Docker, Tailscale, loopback).
  */
 export function ipLocalDelEquipo(interfaces = os.networkInterfaces()): string | null {

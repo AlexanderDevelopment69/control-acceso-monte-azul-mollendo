@@ -4,7 +4,7 @@ import { ipLocalDelEquipo } from './ip-local.util.js';
 const ip = (address: string, family: 'IPv4' | 'IPv6' = 'IPv4', internal = false) =>
   ({ address, family, internal, netmask: '', mac: '', cidr: null }) as os.NetworkInterfaceInfo;
 
-describe('IP de la mini PC en la garita', () => {
+describe('IP del Controlador (PC) en la garita', () => {
   it('la de la tarjeta de red, sin las de Docker, Tailscale ni loopback', () => {
     expect(
       ipLocalDelEquipo({

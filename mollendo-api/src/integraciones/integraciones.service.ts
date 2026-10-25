@@ -59,7 +59,7 @@ const RESUMEN_VACIO = {
  *   Analisis_Control_Acceso_Mollendo.md sección 6.0), así que esta
  *   integración ya no necesita "habilitar" a nadie, solo mantener
  *   sincronizados nombre y rostro.
- * - Molinetes TS2000 Plus: los abre la mini PC con un módulo de relés USB
+ * - Molinetes TS2000 Plus: los abre el Controlador (PC) con un módulo de relés USB
  *   para cada uno (ver rele-usb.service.ts), con cada
  *   salida autorizada y con cada ingreso autorizado por el G4 Pro (rostro =
  *   DNI y alcohol conforme), según docs/diagramas/ingreso.svg y salida.svg.
@@ -123,7 +123,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   @OnEvent('evento-acceso.registrado')
   async avisarDenegado(evento: { tipoMovimiento?: string; resultado?: string }): Promise<void> {
     if (evento.resultado !== 'denegado' || (evento.tipoMovimiento !== 'ingreso' && evento.tipoMovimiento !== 'salida')) return;
-    // Con controlador, el aviso lo lleva ControladorGateway a la mini PC.
+    // Con controlador, el aviso lo lleva ControladorGateway al Controlador (PC).
     if (process.env.MOLINETES_REMOTOS === 'true') return;
     await this.releUsb.pulso(AVISO_DE[evento.tipoMovimiento]);
   }
@@ -137,7 +137,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
 
   @OnEvent('molinete.abrir')
   async abrirMolinete(evento: AbrirMolineteEvent): Promise<void> {
-    // Con controlador, la orden la lleva ControladorGateway a la mini PC.
+    // Con controlador, la orden la lleva ControladorGateway al Controlador (PC).
     if (process.env.MOLINETES_REMOTOS === 'true') return;
     await this.releUsb.pulso(evento.tipoMovimiento);
   }
@@ -325,7 +325,7 @@ export class IntegracionesService implements OnModuleInit, OnModuleDestroy {
   /**
    * Orden manual: "abrir" da un pulso en el relé del molinete ("ingreso" o
    * "salida"; también "Ingreso"/"Salida", como los nombra el lector). Con el
-   * servidor en la nube va al controlador (mini PC), como cualquier apertura;
+   * servidor en la nube va al Controlador (PC), como cualquier apertura;
    * sin él conectado no se abre. El molinete se cierra solo después del paso,
    * así que "cerrar" no hace nada.
    */

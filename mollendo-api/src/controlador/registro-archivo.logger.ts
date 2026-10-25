@@ -7,7 +7,7 @@ const MAX_BYTES = 5 * 1024 * 1024;
 const ARCHIVOS = 5;
 
 /**
- * Registro del controlador (mini PC) también en un archivo de su carpeta de
+ * Registro del Controlador (PC) también en un archivo de su carpeta de
  * datos, además de la consola: el de Docker se pierde cada vez que se
  * reinstala el contenedor, y así se puede revisar qué pasó días atrás. Al
  * pasar de MAX_BYTES se renombra a .1 (y así hasta ARCHIVOS): ocupa a lo sumo

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" width="1400" height="940" role="img" aria-labelledby="sal-t">
-<title id="sal-t">Salida: el lector envía el DNI a la mini PC de la garita, que lo manda al servidor en la nube; el servidor verifica que esté registrado, guarda la salida y ordena a la mini PC un pulso del relé que abre el molinete de salida</title>
+<title id="sal-t">Salida: el lector envía el DNI al Controlador (PC) de la garita, que lo manda al servidor en la nube; el servidor verifica que esté registrado, guarda la salida y ordena al Controlador (PC) un pulso del relé que abre el molinete de salida</title>
 <style>
   text { font-family: Segoe UI, Arial, sans-serif; }
   .bx { fill: #ffffff; stroke: #c3ccd4; stroke-width: 1.5; }
@@ -38,8 +38,8 @@
 <circle cx="498" cy="152" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="498" y="152">4</text>
 <text class="dl" x="518" y="156"><tspan class="dlb">Guarda</tspan> la salida (también si está de baja)</text>
 <circle cx="498" cy="186" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="498" y="186">5</text>
-<text class="dl" x="518" y="190"><tspan class="dlb">Ordena</tspan> a la mini PC abrir el molinete</text>
-<text class="tg" x="486" y="232">DECIDE SI SE ABRE · DA LA ORDEN A LA MINI PC</text>
+<text class="dl" x="518" y="190"><tspan class="dlb">Ordena</tspan> al Controlador (PC) abrir el molinete</text>
+<text class="tg" x="486" y="232">DECIDE SI SE ABRE · DA LA ORDEN A EL CONTROLADOR (PC)</text>
 
 <!-- Panel -->
 <rect class="bx" x="1040" y="64" width="230" height="92" rx="10"/>
@@ -73,7 +73,7 @@
 <text class="tg" x="206" y="486">USB-COM · LEE EL REVERSO</text>
 
 <rect class="bxm" x="420" y="396" width="320" height="132" rx="10"/>
-<text class="ti" x="436" y="424">Mini PC · controlador</text>
+<text class="ti" x="436" y="424">Controlador (PC)</text>
 <text class="su" x="436" y="444">en la garita · solo lectores y relés</text>
 <rect x="436" y="458" width="140" height="56" rx="8" fill="#fdf1f0" stroke="#c0392b" stroke-width="1.2"/>
 <text class="dlb" x="448" y="480">Relé de aviso</text>
@@ -89,7 +89,7 @@
 
 <rect x="1090" y="404" width="260" height="124" rx="10" fill="#ffffff" stroke="#d5dce2" stroke-dasharray="4 4"/>
 <text class="dlb" x="1108" y="432">Sin internet</text>
-<text class="su" x="1108" y="452">la mini PC deja salir a quien está</text>
+<text class="su" x="1108" y="452">el Controlador (PC) deja salir a quien está</text>
 <text class="su" x="1108" y="469">en la lista del personal guardada</text>
 <text class="su" x="1108" y="486">(se renueva cada 10 min) y envía</text>
 <text class="su" x="1108" y="503">las salidas al volver la conexión</text>
@@ -107,15 +107,15 @@
 <path d="M104 452 L184 452" stroke="#c77700" stroke-width="2.4" fill="none" marker-end="url(#mp)"/>
 <circle cx="144" cy="452" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="144" y="452">1</text>
 <text class="lp" x="144" y="432" text-anchor="middle">pasa su DNI</text>
-<!-- 2 lector → mini PC -->
+<!-- 2 lector → Controlador (PC) -->
 <path d="M370 452 L414 452" stroke="#1f67a8" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" fill="none" marker-end="url(#mb)"/>
 <circle cx="392" cy="452" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="392" y="452">2</text>
 <text class="tg" x="392" y="484" text-anchor="middle" fill="#1f67a8">USB</text>
-<!-- 3 mini PC → nube -->
+<!-- 3 Controlador (PC) → nube -->
 <path d="M520 396 L520 256" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
 <circle cx="520" cy="320" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="520" y="320">3</text>
 <text class="lb" x="502" y="314" text-anchor="end">envía el DNI</text><text class="lb" x="502" y="331" text-anchor="end">por internet</text>
-<!-- 5 nube → mini PC -->
+<!-- 5 nube → Controlador (PC) -->
 <path d="M660 250 L660 390" stroke="#1f67a8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
 <circle cx="660" cy="320" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="660" y="320">5</text>
 <text class="lb" x="678" y="314">orden de apertura</text><text class="lb" x="678" y="331">(pulso de 1 s)</text>
@@ -136,15 +136,15 @@
 <circle cx="52" cy="790" r="12" fill="#c77700" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="790">1</text>
 <text class="st" x="72" y="794">La persona pasa su DNI (reverso) por el lector de salida.</text>
 <circle cx="52" cy="820" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="820">2</text>
-<text class="st" x="72" y="824">El lector envía el número a la mini PC de la garita (USB).</text>
+<text class="st" x="72" y="824">El lector envía el número al Controlador (PC) de la garita (USB).</text>
 <circle cx="52" cy="850" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="850">3</text>
-<text class="st" x="72" y="854">La mini PC envía el DNI al servidor en la nube, por internet.</text>
+<text class="st" x="72" y="854">El Controlador (PC) envía el DNI al servidor en la nube, por internet.</text>
 <circle cx="52" cy="880" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="52" y="880">4</text>
 <text class="st" x="72" y="884">El servidor verifica que esté registrado y guarda la salida.</text>
 <circle cx="732" cy="790" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="790">5</text>
-<text class="st" x="752" y="794">El servidor ordena a la mini PC abrir el molinete de salida.</text>
+<text class="st" x="752" y="794">El servidor ordena al Controlador (PC) abrir el molinete de salida.</text>
 <circle cx="732" cy="820" r="12" fill="#23865a" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="820">6</text>
-<text class="st" x="752" y="824">La mini PC activa el relé de salida (pulso de 1 s) y el molinete se abre.</text>
+<text class="st" x="752" y="824">El Controlador (PC) activa el relé de salida (pulso de 1 s) y el molinete se abre.</text>
 <circle cx="732" cy="850" r="12" fill="#1f67a8" stroke="#fff" stroke-width="2"/><text class="num" x="732" y="850">7</text>
 <text class="st" x="752" y="854">La salida aparece en el Panel de vigilancia.</text>
 

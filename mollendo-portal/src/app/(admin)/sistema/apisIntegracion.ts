@@ -329,7 +329,7 @@ DNI leído en ingreso: pendiente_verificacion`,
     ejemploRespuesta: `// 201 Created — orden enviada (false si el controlador o el relé no están conectados)
 { "enviado": true }`,
     notas:
-      "torniqueteId: ingreso o salida. Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). cerrar no hace nada: el molinete se cierra solo después del paso. Cada apertura queda en la Auditoría (apertura manual, con quién). En la mini PC como servidor local, da el pulso directo en su relé.",
+      "torniqueteId: ingreso o salida. Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). cerrar no hace nada: el molinete se cierra solo después del paso. Cada apertura queda en la Auditoría (apertura manual, con quién). En el Controlador (PC) como servidor local, da el pulso directo en su relé.",
   },
   {
     nombre: "Registro de personas y rostros en el G4 Pro (saliente)",

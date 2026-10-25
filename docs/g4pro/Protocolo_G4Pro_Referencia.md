@@ -3,7 +3,7 @@
 Proyecto: Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM)
 Última actualización: 05/oct/2026
 
-Este documento reúne **todo lo confirmado con el equipo real** sobre cómo se comunica el sistema con el G4 Pro: conexión, rutas, comandos, respuestas, códigos de evento y particularidades del firmware. Para el historial de las pruebas, ver `Historial_Integracion_G4Pro.md` (en esta misma carpeta); para la instalación, `docs/despliegue/Registro_Despliegue_MiniPC.md` (sección 8e).
+Este documento reúne **todo lo confirmado con el equipo real** sobre cómo se comunica el sistema con el G4 Pro: conexión, rutas, comandos, respuestas, códigos de evento y particularidades del firmware. Para el historial de las pruebas, ver `Historial_Integracion_G4Pro.md` (en esta misma carpeta); para la instalación, `docs/despliegue/Guia_Despliegue_y_Operacion.md` (sección 8e).
 
 **Equipo probado:** G4 Pro, serie `HSR3263100192`, firmware `4.1.109-OCM-4101-3`, PushVersion `Ver 2.0.38-20220623`, tipo de firmware **Acceso** (ACC), con alcoholímetro DT1700 por USB.
 
@@ -11,7 +11,7 @@ Este documento reúne **todo lo confirmado con el equipo real** sobre cómo se c
 
 ## 1. Resumen
 
-- El G4 Pro habla el protocolo **PUSH (ADMS) de ZKTeco, variante de control de acceso**. Es el equipo el que se conecta al servidor (la mini PC), por HTTP, y le pregunta cada ~2 segundos si tiene órdenes.
+- El G4 Pro habla el protocolo **PUSH (ADMS) de ZKTeco, variante de control de acceso**. Es el equipo el que se conecta al servidor (el Controlador (PC)), por HTTP, y le pregunta cada ~2 segundos si tiene órdenes.
 - **Los comandos del protocolo de asistencia (`USERINFO`) no sirven** en este firmware: los rechaza con `-629`. Se usan las tablas de control de acceso: `user`, `extuser`, `biophoto`, `userauthorize`.
 - No se usa ningún software del fabricante (ZKBio): todo lo implementa `mollendo-api`.
 
@@ -28,7 +28,7 @@ Este documento reúne **todo lo confirmado con el equipo real** sobre cómo se c
 
 ## 2. Conexión
 
-- En el G4 Pro: **Menú → COMM. → Cloud Server Setting**: dirección = IP de la mini PC, puerto **3001**, sin dominio, sin HTTPS, sin proxy. En **Configuración avanzada → Tipo de firmware**: "Acceso".
+- En el G4 Pro: **Menú → COMM. → Cloud Server Setting**: dirección = IP del Controlador (PC), puerto **3001**, sin dominio, sin HTTPS, sin proxy. En **Configuración avanzada → Tipo de firmware**: "Acceso".
 - Las rutas `/iclock/*` van **sin** el prefijo `/api/v1` (el equipo no permite configurarlo) y **sin autenticación** (el equipo no envía token).
 - El equipo casi nunca manda un `Content-Type` reconocible: el servidor lee siempre el cuerpo como **texto plano**.
 - El equipo está "En línea" si consultó al servidor en los últimos 2 minutos (`dispositivo_acceso.ultima_actividad`).
@@ -144,7 +144,7 @@ sitecode=0  linkid=0  maskflag=255  temperature=0  convtemperature=0  Concentrat
 time=2026-10-04 04:02:41  sensor=02  relay=01  alarm=0000000000000000  door=01
 ```
 
-`relay=01` cuando el equipo activa **su propio relé** (en cada `event=0`, por 5 segundos). En este proyecto el relé del G4 Pro **no está conectado** al molinete: lo abre la mini PC con su relé USB.
+`relay=01` cuando el equipo activa **su propio relé** (en cada `event=0`, por 5 segundos). En este proyecto el relé del G4 Pro **no está conectado** al molinete: lo abre el Controlador (PC) con su relé USB.
 
 ---
 
@@ -168,13 +168,13 @@ time=2026-10-04 04:02:41  sensor=02  relay=01  alarm=0000000000000000  door=01
 - **Nunca registrar personas a mano en el G4 Pro.** Un usuario creado desde la pantalla del equipo recibe **permiso de paso permanente** (un usuario manual dejó `userauthorize=50`). Como los éxitos llegan sin `pin`, podría verificarse mientras otra persona está habilitada y el sistema se lo atribuiría a esa persona. La sincronización diaria los borra.
 - **No usar al personal como administradores del equipo** (`Privilege=14`): al editar a la persona, el sistema vuelve a enviar `Privilege=0`.
 - **Nombre "..."** en el aviso "¡Verificación Exitosa!": el nombre está guardado (`user.Name` y `extuser`), y la lista de usuarios a veces lo muestra y a veces no. Pendiente de investigar.
-- El **reloj** del G4 Pro conviene que coincida con el de la mini PC (el `rtlog` trae la hora del equipo y se usa como hora del ingreso).
+- El **reloj** del G4 Pro conviene que coincida con el del Controlador (PC) (el `rtlog` trae la hora del equipo y se usa como hora del ingreso).
 
 ---
 
 ## 9. Enviar un comando a mano (soporte)
 
-En la mini PC, dentro de `~/mollendo`:
+En el Controlador (PC), dentro de `~/mollendo`:
 
 ```bash
 sudo docker compose exec -T db psql -U mollendo -d mollendo_control_acceso -c \
@@ -343,7 +343,7 @@ Investigación del 19/10 (equipo + protocolo oficial + software ZKTeco + interne
 4. **Fernando sopla con alcohol** (buche de enjuague bucal con alcohol) → rechazo por alcohol. Es para el hueco 2 (sección 10.8): ver si la foto del rechazo trae su DNI (`ls /sdcard/ZKTeco/data/capture/bad`) y consultar enseguida la tabla `transaction` por si guarda el rechazo con el usuario. **Revisarlo el mismo día**: el G4 borra sus fotos cada noche a las 02:46.
 5. Con esos mismos pases: ¿llegó `Captura (ATTPHOTO) recibida: … dniDerivado=<DNI>` al log? (sección 10.5) y leer el logcat (sección 10.5).
 
-- **Ya probado (19/10):** la desconexión rápida de la mini PC (`docker pause`: "Desconectado" a los ~19 s sin reporte).
+- **Ya probado (19/10):** la desconexión rápida del Controlador (PC) (`docker pause`: "Desconectado" a los ~19 s sin reporte).
 - **Limpieza tras la prueba:** `SET OPTION SaveBioPhotoFunOn=0` + `RELOAD OPTIONS`, y `PUSH_SDK_DEPURAR=false` (+ `docker compose up -d api`). La confirmación de quién sopló **no** depende de la depuración.
 
 ### 10.8. Qué datos da el G4 y dónde (guía para pruebas futuras, 19/10/2026)

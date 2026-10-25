@@ -3,10 +3,7 @@
 # relés de los molinetes y la copia de los respaldos del servidor. Se puede
 # volver a ejecutar: no cambia un .env que ya exista.
 #
-# Con una sola línea en el Controlador (PC) (descarga el programa de GitHub; si ya
-# está instalado, lo actualiza con actualizar.sh):
-#   bash <(curl -fsSL https://raw.githubusercontent.com/AlexanderDevelopment69/control-acceso-monte-azul-mollendo/main/deploy/controlador/instalar.sh)
-# O con el paquete de deploy/empaquetar.sh en la carpeta del usuario:
+# En el equipo, con el paquete de deploy/empaquetar.sh en la carpeta del usuario:
 #   mkdir -p ~/mollendo && tar -xzf ~/mollendo.tgz -C ~/mollendo && rm ~/mollendo.tgz
 #   bash ~/mollendo/deploy/controlador/instalar.sh
 #
@@ -16,19 +13,21 @@
 #   COPIA_ORIGEN    usuario@servidor para la copia de respaldos (Enter = sin copia)
 set -euo pipefail
 
-REPOSITORIO="${MOLLENDO_REPOSITORIO:-https://github.com/AlexanderDevelopment69/control-acceso-monte-azul-mollendo}"
 BASE="${MOLLENDO_BASE:-$HOME/mollendo}"
 
-# Ejecutado solo (sin el programa al lado): lo descarga de GitHub, sin documentos.
+# Ejecutado solo (sin el programa al lado): lo descarga del repositorio que se
+# indique en MOLLENDO_REPOSITORIO (dirección de GitHub), sin documentos; si ya
+# está instalado, lo actualiza con actualizar.sh.
 if [ ! -f "$(dirname "$0")/docker-compose.yml" ]; then
-  echo "== Descargando el programa de GitHub"
+  [ -n "${MOLLENDO_REPOSITORIO:-}" ] || { echo "Falta el programa: copiar y descomprimir mollendo.tgz en ~/mollendo (ver la guía de instalación)"; exit 1; }
+  echo "== Descargando el programa"
   TEMPORAL="$(mktemp -d)"
-  curl -fsSL "$REPOSITORIO/archive/refs/heads/${MOLLENDO_RAMA:-main}.tar.gz" | tar -xz -C "$TEMPORAL" --strip-components=1
+  curl -fsSL "$MOLLENDO_REPOSITORIO/archive/refs/heads/${MOLLENDO_RAMA:-main}.tar.gz" | tar -xz -C "$TEMPORAL" --strip-components=1
   find "$TEMPORAL" -name '*.md' -delete
   rm -rf "$TEMPORAL/mollendo-api/.agents" "$TEMPORAL/mollendo-api/skills-lock.json"
   tar -czf "$HOME/mollendo.tgz" -C "$TEMPORAL" mollendo-api mollendo-portal deploy
   rm -rf "$TEMPORAL"
-  if [ -f "$BASE/deploy/controlador/.env" ]; then
+  if [ -f "$BASE/deploy/controlador/.env" ] && [ -f "$BASE/deploy/controlador/docker-compose.yml" ]; then
     echo "Ya está instalado en $BASE: se actualiza."
     exec bash "$BASE/deploy/controlador/actualizar.sh" "$HOME/mollendo.tgz"
   fi

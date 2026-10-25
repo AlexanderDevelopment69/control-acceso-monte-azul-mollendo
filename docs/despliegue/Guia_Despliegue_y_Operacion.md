@@ -1,13 +1,13 @@
 # Guía de despliegue y operación
 
 Proyecto: Sistema de Control de Accesos · Terminal Monte Azul Mollendo (TMAM) · Alcance base
-Última actualización: 09/10/2026
+Última actualización: 25/10/2026
 
-Esta guía explica cómo desplegar el sistema (portal web, backend y base de datos) en cada entorno —el servidor en la nube, la mini PC de la garita como controlador y, como opción, la mini PC como servidor completo—, cómo actualizarlo y cómo operarlo. Los pasos de despliegue de cada entorno están en el README de su carpeta en `deploy/`; esta guía reúne todo lo demás. Está pensada para que la siga cualquier persona con acceso al servidor, aunque no haya participado en el desarrollo. Al final (anexo A) está el registro del primer despliegue.
+Esta guía explica cómo desplegar el sistema (portal web, backend y base de datos) en cada entorno —el servidor en la nube, el Controlador (PC) del punto de acceso y, como opción, el Controlador (PC) como servidor completo (garita)—, cómo actualizarlo y cómo operarlo. La instalación se hace con scripts (`instalar.sh`, `actualizar.sh`, `restaurar.sh`), cuyos pasos están en el README de cada carpeta de `deploy/`; esta guía reúne todo lo demás. Está pensada para que la siga cualquier persona con acceso al servidor, aunque no haya participado en el desarrollo. Al final (anexo A) está el registro del primer despliegue.
 
 > **Esta guía no incluye contraseñas ni claves, porque se versiona en git.** Están solo en cada servidor, en el `.env` de su entorno (`~/mollendo/deploy/<entorno>/.env`); quien tenga acceso SSH puede verlas con `cat`. Para desplegar o actualizar no hace falta conocerlas.
 
-> **Cada entorno tiene su carpeta en `deploy/`** (`nube`, `controlador`, `garita`, `local`), con su `docker-compose.yml`, la plantilla de su `.env` y un README con los pasos de despliegue. **Los comandos `docker compose` de esta guía se ejecutan dentro de la carpeta del entorno** (`~/mollendo/deploy/nube`, `~/mollendo/deploy/garita` o `~/mollendo/deploy/controlador`), donde también están su `.env` y su carpeta `backups/`. Hasta el 09/10/2026 los archivos estaban en `~/mollendo` (`docker-compose.prod.yml`, `docker-compose.controlador.yml`, `.env`, `controlador.env`); cómo pasar a la estructura nueva está en el README de cada entorno.
+> **Cada entorno tiene su carpeta en `deploy/`** (`nube`, `controlador`, `garita`, `local`), con su `docker-compose.yml`, la plantilla de su `.env` y un README con los pasos de despliegue. **Los comandos `docker compose` de esta guía se ejecutan dentro de la carpeta del entorno** (`~/mollendo/deploy/nube`, `~/mollendo/deploy/garita` o `~/mollendo/deploy/controlador`), donde también están su `.env` y su carpeta `backups/`.
 
 ---
 
@@ -26,8 +26,8 @@ Esta guía explica cómo desplegar el sistema (portal web, backend y base de dat
 8c. [Lectores de DNI](#8c-lectores-de-dni)
 8d. [Relés de los molinetes](#8d-relés-de-los-molinetes)
 8e. [Terminal facial G4 Pro](#8e-terminal-facial-g4-pro)
-8f. [Mini PC como controlador (servidor en la nube)](#8f-mini-pc-como-controlador-servidor-en-la-nube)
-8g. [Configuraciones de la mini PC y del G4 Pro (para pruebas)](#8g-configuraciones-de-la-mini-pc-y-del-g4-pro-para-pruebas)
+8f. [Controlador (PC) con el servidor en la nube](#8f-controlador-pc-con-el-servidor-en-la-nube)
+8g. [Configuraciones del Controlador (PC) y del G4 Pro (para pruebas)](#8g-configuraciones-del-controlador-pc-y-del-g4-pro-para-pruebas)
 9. [Seguridad y recomendaciones](#9-seguridad-y-recomendaciones)
 - [Anexo A. Registro del primer despliegue (28/09/2026)](#anexo-a-registro-del-primer-despliegue-28092026)
 - [Anexo B. Variables del archivo .env](#anexo-b-variables-del-archivo-env)
@@ -41,9 +41,9 @@ El mismo código corre en cuatro lugares. Lo que cambia es la configuración: ca
 | Entorno | Dónde | Qué corre | Carpeta | Cómo se levanta |
 |---|---|---|---|---|
 | **local** | PC de desarrollo | PostgreSQL en Docker; API y portal con Node | `deploy/local/` (el `.env` va en `mollendo-api/` y `mollendo-portal/`) | `docker compose up -d`, luego `npm run start:dev` (API) y `npm run dev` (portal) |
-| **nube** | Azure (`74.163.89.6`; antes AWS para pruebas) | Portal, API, base de datos y respaldos | `deploy/nube/` | `docker compose up -d --build` |
-| **controlador** | Mini PC de la garita | Solo lectores de DNI y relés, conectados a la nube | `deploy/controlador/` | `docker compose up -d --build` |
-| **garita** (opcional, hoy no se usa) | Mini PC de la garita | Servidor completo, con lectores y relés por USB | `deploy/garita/` | `docker compose up -d --build` |
+| **nube** | Azure (`74.163.89.6`; AWS queda para pruebas) | Portal, API, base de datos, HTTPS y respaldos | `deploy/nube/` | `instalar.sh` |
+| **controlador** | Controlador (PC) del punto de acceso | Solo lectores de DNI y relés, conectados a la nube | `deploy/controlador/` | `instalar.sh` |
+| **garita** (opcional, hoy no se usa) | Controlador (PC) del punto de acceso | Servidor completo, con lectores y relés por USB | `deploy/garita/` | `docker compose up -d --build` |
 
 Opciones que distinguen a cada entorno:
 
@@ -57,7 +57,7 @@ El controlador es otro programa (`src/controlador/main.ts`) y usa solo su `.env`
 
 - **Los `.env` no están en git.** Cada máquina tiene el suyo, con sus claves. Al agregar una opción nueva, se agrega también a la plantilla de cada entorno donde corresponda.
 - **El código es el mismo en todos.** Si dos entornos se ven distintos, la diferencia está en el `.env` o en los datos de cada base, no en el código.
-- **El `.env` y `backups/` de cada carpeta no se borran al actualizar**: al reemplazar el código se borran solo `mollendo-api/` y `mollendo-portal/`.
+- **El `.env` y `backups/` de cada carpeta no se borran al actualizar**: `actualizar.sh` reemplaza solo `mollendo-api/` y `mollendo-portal/`.
 
 ---
 
@@ -69,14 +69,15 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 |---|---|---|
 | `db` | Base de datos PostgreSQL 16. Los datos están en el volumen `mollendo_db_data` | ninguno (solo red interna) |
 | `api` | Backend (NestJS). Al arrancar aplica las migraciones pendientes de la base de datos | `3001`: equipos físicos y Swagger |
-| `portal` | Portal web (Next.js). Reenvía al backend las llamadas a la API y el tiempo real | `3000`: el que se abre en el navegador |
-| `backup` | Respaldo diario de la base de datos y los archivos en `backups/`, dentro de la carpeta del entorno. Guarda 14 días (o `DIAS_RESPALDO`) | ninguno |
+| `portal` | Portal web (Next.js). Reenvía al backend las llamadas a la API y el tiempo real | `3000` (en la nube, solo dentro del servidor) |
+| `caddy` | Solo en la nube: HTTPS con el dominio `accesos.monteazulsur.com.pe` (certificado de Let's Encrypt que saca y renueva solo) | `80` y `443` |
+| `backup` | Respaldo diario de la base de datos y los archivos en `backups/`, dentro de la carpeta del entorno, a las 04:00. Guarda 30 días (o `DIAS_RESPALDO`) | ninguno |
 
 ```
                  Navegador (administrador / vigilante)
-                              │  http://<IP de la mini PC>:3000
+                              │  https://accesos.monteazulsur.com.pe (caddy)
                               ▼
-┌──────────────────────── mini PC (Docker) ────────────────────────┐
+┌──────────────────────── servidor (Docker) ───────────────────────┐
 │                                                                   │
 │   ┌──────────┐  /api/v1, /api/docs,   ┌──────────┐     ┌──────┐   │
 │   │  portal  │ ─────────────────────► │   api    │ ──► │  db  │   │
@@ -89,19 +90,22 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 └───────────────────────────────────────────────────────────────────┘
         ▲ :3001 (con la clave X-API-Key)
         │
-   Equipos físicos (cuando se integren)
+   G4 Pro y Controlador (PC)
 ```
 
 - Los documentos y fotos subidos se guardan en el volumen `mollendo_documentos`.
-- Si un contenedor se cae, se reinicia solo. Al encender la mini PC, todo arranca solo.
+- Si un contenedor se cae, se reinicia solo. Al encender el equipo, todo arranca solo.
 - Los contenedores usan la hora de Lima.
 
 **Archivos del proyecto que intervienen:**
 
 | Archivo | Para qué sirve |
 |---|---|
-| `deploy/nube/docker-compose.yml`, `deploy/garita/docker-compose.yml` | Definen los 4 contenedores, los volúmenes y los puertos (la garita además da acceso a los USB) |
-| `deploy/controlador/docker-compose.yml` | El contenedor del controlador |
+| `deploy/nube/docker-compose.yml`, `deploy/garita/docker-compose.yml` | Definen los contenedores, los volúmenes y los puertos (la garita además da acceso a los USB) |
+| `deploy/nube/instalar.sh`, `actualizar.sh`, `restaurar.sh` | Instalar, actualizar y restaurar el servidor (ver `deploy/nube/README.md`) |
+| `deploy/controlador/instalar.sh`, `actualizar.sh` | Instalar y actualizar el Controlador (PC) |
+| `deploy/empaquetar.sh` | En la PC, crea `mollendo.tgz` con el programa, sin documentos |
+| `deploy/controlador/docker-compose.yml` | El contenedor del controlador (y la copia de respaldos, opcional) |
 | `deploy/<entorno>/.env.example` | Plantilla del `.env` de cada entorno (ver [sección 0](#0-entornos)) |
 | `deploy/comun/respaldo.sh` | Script del respaldo diario |
 | `mollendo-api/Dockerfile` | Cómo se construye la imagen del backend |
@@ -120,10 +124,10 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 | Recursos | 4 CPU, 7,7 GB de memoria, 124 GB de disco |
 | Usuario | `atenasac`, con `sudo` sin contraseña |
 | Acceso | SSH con llave (`ssh -i ~/.ssh/id_ed25519 atenasac@74.163.89.6`) |
-| Puertos que deben estar abiertos (grupo de seguridad de red de Azure, lo administra TMAM) | `22` (SSH), `3000` (portal), `3001` (API: G4 Pro y controlador); `80` y `443` para el HTTPS. Los cinco abiertos (16/10/2026) |
+| Puertos que deben estar abiertos (grupo de seguridad de red de Azure, lo administra TMAM) | `22` (SSH), `80` y `443` (portal con HTTPS), `3001` (G4 Pro) |
 | Dirección | `74.163.89.6`; portal en **https://accesos.monteazulsur.com.pe** (HTTPS con Caddy y Let's Encrypt, ver `deploy/nube/README.md`) |
 
-### 2.2. La mini PC de la garita (entornos `controlador` y `garita`)
+### 2.2. El Controlador (PC) del punto de acceso (entornos `controlador` y `garita`)
 
 | Requisito | Valor actual |
 |---|---|
@@ -132,38 +136,42 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 | Usuario | Uno con permisos de `sudo` (hoy: `ma-admin`) |
 | Acceso | SSH (puerto 22) |
 | Internet | Como controlador, siempre (habla con el servidor en la nube). Como servidor completo, solo al construir las imágenes |
-| Puertos libres | `3000` y `3001` |
+| Puertos libres | Como controlador, ninguno (solo conexiones de salida). Como servidor completo, `3000` y `3001` |
 
 Direcciones actuales:
 - **Tailscale:** `100.78.153.33` (sirve desde cualquier lugar con Tailscale activo)
-- **Red local:** `192.168.0.165` (Wi-Fi; puede cambiar si el router la reasigna, ver sección 9)
+- **Red local:** `172.20.20.197` (red de TMAM, IP fija; nombre del equipo `monteazul`)
 
 ### 2.3. La PC desde donde se despliega
 
-- **Git** (para empaquetar el código).
+- **Git Bash** (para `deploy/empaquetar.sh`).
 - **Cliente SSH** (`ssh` y `scp`). Windows 10/11 ya los trae: se usan desde PowerShell o desde Git Bash.
 - Acceso de red al servidor (misma red local o Tailscale conectado).
-- El proyecto clonado, con los cambios a desplegar **ya confirmados con commit** (el paquete se arma desde el último commit).
+- La carpeta del proyecto (el paquete incluye los cambios aunque no tengan commit) y las llaves SSH: `~/.ssh/id_ed25519` (servidor) y `~/.ssh/controlador_pc_key` (Controlador (PC)).
 
-### 2.4. Datos que necesitas
+### 2.4. Datos necesarios
 
-- Acceso SSH al servidor: llave `id_ed25519` para la nube (Azure); usuario y contraseña (o llave) para la mini PC.
-- Para un primer despliegue: nada más (las claves se generan en el servidor).
+- Acceso SSH: llave `id_ed25519` para la nube (Azure) y `controlador_pc_key` para el Controlador (PC).
+- Para un primer despliegue: el número de serie del G4 Pro (`HSR3263100192`) y la IP pública del punto de acceso (`190.119.170.73`). Las claves las genera `instalar.sh` en el servidor.
 - Para una actualización: nada más (las claves ya están en el `.env` del entorno, `~/mollendo/deploy/<entorno>/.env`).
 
 ---
 
 ## 3. Primer despliegue (servidor nuevo)
 
-Los pasos completos (instalar Docker, empaquetar el código, crear el `.env`, levantar y crear las cuentas iniciales) están en el README de cada entorno:
+Se hace con scripts, siempre en este orden: servidor, Controlador (PC), G4 Pro y comprobar. Los comandos exactos, con qué responder a cada pregunta, están en `deploy/nube/README.md`, sección "Instalar todo desde cero". En resumen:
 
-- Nube: `deploy/nube/README.md`, sección 2.
-- Controlador (mini PC de la garita): `deploy/controlador/README.md`, sección 2.
-- Garita (opcional): `deploy/garita/README.md`, sección 2.
+1. En la PC: `bash deploy/empaquetar.sh` (crea `mollendo.tgz`).
+2. Servidor: copiar `mollendo.tgz`, descomprimirlo en `~/mollendo` y ejecutar `bash ~/mollendo/deploy/nube/instalar.sh`. Instala Docker y la hora de Lima, crea el `.env` con claves nuevas, levanta todo y crea las cuentas iniciales.
+3. Controlador (PC): lo mismo con `bash ~/mollendo/deploy/controlador/instalar.sh` (pide la dirección del servidor, la clave de equipos y los lectores).
+4. G4 Pro: servidor `accesos.monteazulsur.com.pe`, puerto `3001`; en el portal, **Sistema y APIs** → **Sincronizar**.
+5. Verificar (sección 4) y cambiar las contraseñas iniciales.
 
-Para entrar a la mini PC: `ssh ma-admin@100.78.153.33` (por Tailscale). La primera vez pregunta si confías en el servidor; la huella correcta es `SHA256:7E0UUb8X7/RlEWjbISN3pl3P5GW23mxXKQVhB2GaWDg`.
+Garita (opcional, hoy no se usa): `deploy/garita/README.md`.
 
-> **No cambies `DB_PASSWORD` después del primer arranque.** PostgreSQL la guarda al crear la base; si la cambias en `.env`, el backend ya no podrá conectarse (ver [sección 8](#8-solución-de-problemas)).
+Para entrar al Controlador (PC): `ssh -i ~/.ssh/controlador_pc_key ma-admin@100.78.153.33` (por Tailscale). La primera vez pregunta si se confía en el equipo; la huella correcta es `SHA256:7E0UUb8X7/RlEWjbISN3pl3P5GW23mxXKQVhB2GaWDg`.
+
+> **No cambiar `DB_PASSWORD` después de instalar.** PostgreSQL la guarda al crear la base; si se cambia en `.env`, el backend ya no puede conectarse (ver [sección 8](#8-solución-de-problemas)).
 
 ---
 
@@ -176,14 +184,15 @@ cd ~/mollendo/deploy/nube      # o deploy/garita
 sudo docker compose ps
 ```
 
-Los cuatro deben estar `Up` y `db` además `(healthy)`:
+Todos deben estar `Up` y `db` además `(healthy)`:
 
 ```
 SERVICE   STATUS                   PORTS
 api       Up ...                   0.0.0.0:3001->3001/tcp
 backup    Up ...
+caddy     Up ...                   0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
 db        Up ... (healthy)
-portal    Up ...                   0.0.0.0:3000->3000/tcp
+portal    Up ...                   127.0.0.1:3000->3000/tcp
 ```
 
 ```bash
@@ -191,37 +200,39 @@ curl -s http://localhost:3001/api/v1/health
 # {"status":"ok","database":"up",...}
 
 ls backups
-# mollendo-AAAAMMDD-HHMM.sql.gz   (el primer respaldo se hace al arrancar)
+# mollendo-AAAAMMDD-HHMM.tar.gz   (el primer respaldo se hace al arrancar)
 ```
 
 ### 4.2. En el navegador
 
 | Qué abrir | Qué debe pasar |
 |---|---|
-| Nube: `https://accesos.monteazulsur.com.pe`. Mini PC como servidor: `http://100.78.153.33:3000` (o `http://192.168.0.165:3000` en la red local) | Aparece "Iniciar sesión" |
+| Nube: `https://accesos.monteazulsur.com.pe`. Garita (servidor completo): `http://100.78.153.33:3000` | Aparece "Iniciar sesión" |
 | Entrar con `admin@monteazulsur.com.pe` y la contraseña inicial | Entra a "Personal y documentos" |
 | Menú **Sistema y APIs** | Backend y base de datos "En línea"; clave de equipos "Configurado" |
-| Botón de Swagger en Sistema y APIs (o `http://<servidor>:3000/api/docs`) | Abre la documentación de la API |
+| Botón de Swagger en Sistema y APIs (en la nube está apagado: `SWAGGER=true` en `.env` para verlo un momento) | Abre la documentación de la API |
 | Menú **Panel de vigilancia** | Carga sin errores; sin el aviso "El servidor no responde" |
 | Menú **Dashboard** | Muestra los indicadores y los gráficos del día (vacíos si todavía no hay ingresos) |
 | Menú **Reportes** → "Personal y empresas" → **Descargar Excel** y **Descargar PDF** | Se descargan los dos archivos con el personal registrado |
 
 ### 4.3. Después de verificar
 
-1. **Cambia las dos contraseñas iniciales** desde el portal: clic en el usuario (arriba a la derecha) → "Cambiar contraseña". Haz lo mismo entrando con la cuenta de vigilancia.
-2. Opcional: borra las contraseñas iniciales del `.env` (`ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD`); ya no se usan.
+1. **Cambiar las dos contraseñas iniciales** desde el portal: clic en el usuario (arriba a la derecha) → "Cambiar contraseña". Lo mismo entrando con la cuenta de vigilancia.
+2. Opcional: borrar las contraseñas iniciales del `.env` (`ADMIN_SEED_PASSWORD` y `VIGILANCIA_SEED_PASSWORD`); ya no se usan.
 
 ---
 
 ## 5. Actualizar a una versión nueva
 
-Los pasos están en el README de cada entorno (sección 3 de `deploy/nube/README.md`, `deploy/controlador/README.md` y `deploy/garita/README.md`). En resumen: empaquetar el código con `git archive` en la PC, sacar un respaldo, reemplazar **solo** `mollendo-api/` y `mollendo-portal/` (nunca `deploy/`, donde están el `.env` y los respaldos) y ejecutar `docker compose up -d --build` en la carpeta del entorno. Los datos no se pierden: están en los volúmenes. Si la versión trae migraciones, el backend las aplica solo al arrancar.
+Con `actualizar.sh`, desde la PC (comandos exactos en `deploy/nube/README.md`, sección "Actualizar a una versión nueva"): `bash deploy/empaquetar.sh`, copiar `mollendo.tgz` a cada equipo y ejecutar su `actualizar.sh`; primero el servidor, después el Controlador (PC).
+
+En el servidor, `actualizar.sh` saca un respaldo de la base (`backups/antes-de-actualizar-…`), reemplaza **solo** `mollendo-api/` y `mollendo-portal/` (nunca `deploy/`, donde están el `.env` y los respaldos), reconstruye, espera a la API y limpia las imágenes viejas y la caché. Los datos no se pierden: están en los volúmenes. Si la versión trae migraciones, el backend las aplica solo al arrancar.
 
 ---
 
 ## 6. Operación del día a día
 
-Todos los comandos se ejecutan en el servidor, dentro de la carpeta del entorno (`~/mollendo/deploy/nube` o `~/mollendo/deploy/garita`). Para escribir menos, puedes definir un atajo en la sesión:
+Todos los comandos se ejecutan en el servidor, dentro de la carpeta del entorno (`~/mollendo/deploy/nube` o `~/mollendo/deploy/garita`). Para escribir menos, se puede definir un atajo en la sesión:
 
 ```bash
 cd ~/mollendo/deploy/nube      # o deploy/garita
@@ -240,11 +251,11 @@ alias dc='sudo docker compose'
 | Uso de disco de Docker | `sudo docker system df` |
 | Entrar a la base de datos (consola SQL; salir con `\q`) | `dc exec db psql -U mollendo -d mollendo_control_acceso` |
 
-> **Nunca uses `docker compose down -v`**: la opción `-v` borra los volúmenes, es decir, **toda la base de datos y los documentos subidos**. `dc down` (sin `-v`) sí es seguro: detiene y elimina los contenedores, pero no los datos.
+> **Nunca usar `docker compose down -v`**: la opción `-v` borra los volúmenes, es decir, **toda la base de datos y los documentos subidos**. `dc down` (sin `-v`) sí es seguro: detiene y elimina los contenedores, pero no los datos.
 
 ### Restablecer una contraseña olvidada
 
-Si alguien olvidó su contraseña y no puede entrar (no hay recuperación por correo). Reemplaza `NuevaClave2026` y el correo:
+Si alguien olvidó su contraseña y no puede entrar (no hay recuperación por correo). Reemplazar `NuevaClave2026` y el correo:
 
 ```bash
 cd ~/mollendo/deploy/nube      # o deploy/garita
@@ -261,7 +272,7 @@ Debe responder `UPDATE 1`. La persona entra con la contraseña nueva y conviene 
 
 ### 7.1. Respaldo automático
 
-El contenedor `backup` (script `deploy/comun/respaldo.sh`) hace **un respaldo completo por día a las 00:00** (hora de Lima; se cambia con `HORA_RESPALDO`) en `backups/mollendo-AAAAMMDD-HHMM.tar.gz`, dentro de la carpeta del entorno. Cada paquete contiene:
+El contenedor `backup` (script `deploy/comun/respaldo.sh`) hace **un respaldo completo por día a las 04:00** (hora de Lima; se cambia con `HORA_RESPALDO`) en `backups/mollendo-AAAAMMDD-HHMM.tar.gz`, dentro de la carpeta del entorno. Cada paquete contiene:
 
 | Dentro del paquete | Qué es |
 |---|---|
@@ -269,7 +280,7 @@ El contenedor `backup` (script `deploy/comun/respaldo.sh`) hace **un respaldo co
 | `archivos/` | Los archivos subidos: documentos (PDF, imágenes, Word) y fotos del personal |
 
 - Al arrancar el contenedor (por ejemplo, después de un corte de luz o al cambiar la hora), si del último respaldo al próximo programado pasarían más de 24 horas, hace uno en ese momento.
-- Después de cada respaldo, borra los diarios de más de **14 días** y los previos a actualizaciones (`antes-de-actualizar-*`) de más de 14 días, conservando siempre el más reciente. Los días se cambian con `DIAS_RESPALDO`.
+- Después de cada respaldo, borra los diarios de más de **30 días** y los previos a actualizaciones o restauraciones (`antes-de-*`) de más de 30 días, conservando siempre el más reciente. Los días se cambian con `DIAS_RESPALDO`.
 - La hora y los días se cambian en el `.env` con `HORA_RESPALDO=HH:MM` y `DIAS_RESPALDO=N` (y `dc up -d backup api`, para que Sistema y APIs muestre los valores nuevos).
 - **Sistema y APIs** muestra la fecha y el tamaño del último respaldo automático, en rojo ("Atrasado") si tiene más de 26 horas.
 
@@ -298,60 +309,46 @@ sudo docker compose run --rm -T backup ahora
 
 ### 7.3. Restaurar un respaldo
 
-Restaurar **reemplaza** los datos actuales. Hazlo solo si es necesario y, antes, saca un respaldo manual de lo que hay (7.2). Reemplaza `mollendo-AAAAMMDD-HHMM.tar.gz` por el archivo que quieres restaurar.
+Restaurar **reemplaza** los datos actuales. En el servidor:
 
 ```bash
-cd ~/mollendo/deploy/nube      # o deploy/garita
-alias dc='sudo docker compose'
-R=mollendo-AAAAMMDD-HHMM.tar.gz
-
-# 1. Descomprimir en una carpeta temporal
-mkdir -p /tmp/restaurar && tar -xzf backups/$R -C /tmp/restaurar
-
-# 2. Base de datos (nadie escribe mientras se restaura)
-dc stop api portal
-dc exec -T db dropdb -U mollendo mollendo_control_acceso
-dc exec -T db createdb -U mollendo mollendo_control_acceso
-dc exec -T db psql -q -U mollendo -d mollendo_control_acceso < /tmp/restaurar/base-de-datos.sql
-
-# 3. Archivos (documentos y fotos)
-sudo docker run --rm -v mollendo_documentos:/datos -v /tmp/restaurar/archivos:/respaldo:ro alpine \
-  sh -c 'rm -rf /datos/* && cp -a /respaldo/. /datos/'
-
-# 4. Volver a arrancar y limpiar
-dc start api portal
-rm -rf /tmp/restaurar
+ls ~/mollendo/deploy/nube/backups
+bash ~/mollendo/deploy/nube/restaurar.sh mollendo-AAAAMMDD-HHMM.tar.gz
 ```
 
-Para un respaldo `.sql.gz` (solo base de datos), el paso 2 es `gunzip -c backups/ARCHIVO.sql.gz | dc exec -T db psql -q -U mollendo -d mollendo_control_acceso` y no hay paso 3. Luego verifica como en la sección 4.
+`restaurar.sh` pide escribir `SI`, guarda antes lo que hay (`backups/antes-de-restaurar-….sql.gz`, para volver atrás con el mismo comando), detiene la API, el portal y el respaldo, reemplaza la base de datos y los documentos y fotos, y vuelve a arrancar. Con un `.sql.gz` (respaldo previo a una actualización) restaura solo la base. Las cuentas quedan con las contraseñas que tenían en el respaldo. Luego verificar como en la sección 4.
+
+Si se perdió el servidor: instalar uno nuevo con el `.env` anterior y restaurar el respaldo (`deploy/nube/README.md`, "Reinstalar el servidor con los datos de un respaldo").
 
 ### 7.4. Copiar los respaldos fuera del servidor
 
-Los respaldos quedan en el mismo disco que la base de datos: si el disco falla, se pierden los dos. Cópialos con regularidad a otra computadora o a un disco externo. Desde la PC:
+Los respaldos quedan en el mismo disco que la base de datos: si se pierde el servidor, se pierden los dos. Copiarlos con regularidad a otra computadora, junto con el `.env` (tiene las claves; guardarlo en un lugar seguro). Desde la PC:
 
 ```bash
-scp -r atenasac@74.163.89.6:mollendo/deploy/nube/backups ./respaldos-mollendo
-# mini PC como servidor: scp -r ma-admin@100.78.153.33:mollendo/deploy/garita/backups ./respaldos-mollendo
+scp -i ~/.ssh/id_ed25519 "atenasac@74.163.89.6:~/mollendo/deploy/nube/backups/mollendo-*.tar.gz" .
+scp -i ~/.ssh/id_ed25519 atenasac@74.163.89.6:~/mollendo/deploy/nube/.env env-servidor
 ```
+
+Opcional (no activada): copia automática diaria en el Controlador (PC), con `copia-respaldos` y `autorizar-copia.sh` (ver `deploy/controlador/README.md`).
 
 ---
 
 ## 8. Solución de problemas
 
-Primero mira siempre el estado y el log: `dc ps` y `dc logs --tail 100 api`.
+Primero mirar siempre el estado y el log: `dc ps` y `dc logs --tail 100 api`.
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
-| El navegador no abre `http://<IP>:3000` | El contenedor `portal` no está arriba, o no hay conexión con el servidor | `dc ps`; si no está `Up`, `dc up -d`. Prueba en el servidor `curl -I http://localhost:3000`. Si responde, el problema es de red (Tailscale desconectado, otra red, IP cambiada). |
+| El portal no abre | El contenedor `portal` o `caddy` no está arriba, o no hay conexión con el servidor | `dc ps`; si no está `Up`, `dc up -d`. Probar en el servidor `curl -I http://localhost:3000`. Si responde, revisar `caddy` (`dc logs --tail 50 caddy`), el dominio en Cloudflare ("DNS only") y los puertos 80 y 443 en Azure. |
 | El portal abre pero dice que no puede contactar al backend | `api` detenido o reiniciándose | `dc ps` y `dc logs --tail 100 api`. |
-| `api` se reinicia una y otra vez; el log dice `P1000` o "Authentication failed" | Se cambió `DB_PASSWORD` en `.env` después de crear la base | Vuelve a poner la contraseña original en `.env` y `dc up -d`. |
-| El log de `api` muestra un error de migración | Una migración nueva falló | No borres nada. Restaura el respaldo previo a la actualización (7.3) y vuelve a la versión anterior (sección 5). Revisa la migración en la PC de desarrollo. |
-| `build` falla en `npm ci` con "package.json and package-lock.json are not in sync" | El `package-lock.json` no corresponde al `package.json` | En la PC: `npm install` en `mollendo-api` o `mollendo-portal`, confirma el `package-lock.json` con commit y vuelve a empaquetar. Los Dockerfile usan npm 12.0.2, la misma versión con la que se generó el lockfile. |
-| `build` falla por falta de conexión | El servidor no tiene internet | Construir necesita internet. Revisa la red del servidor (`curl -I https://registry.npmjs.org`). |
+| `api` se reinicia una y otra vez; el log dice `P1000` o "Authentication failed" | Se cambió `DB_PASSWORD` en `.env` después de crear la base | Volver a poner la contraseña original en `.env` y `dc up -d`. |
+| El log de `api` muestra un error de migración | Una migración nueva falló | No borrar nada. Restaurar el respaldo previo a la actualización (7.3) y volver a la versión anterior (sección 5). Revisar la migración en la PC de desarrollo. |
+| `build` falla en `npm ci` con "package.json and package-lock.json are not in sync" | El `package-lock.json` no corresponde al `package.json` | En la PC: `npm install` en `mollendo-api` o `mollendo-portal` y volver a empaquetar. Los Dockerfile usan npm 12.0.2, la misma versión con la que se generó el lockfile. |
+| `build` falla por falta de conexión | El servidor no tiene internet | Construir necesita internet. Revisar la red del servidor (`curl -I https://registry.npmjs.org`). |
 | "port is already allocated" al levantar | Otro programa usa el puerto 3000 o 3001 | `sudo ss -tlnp \| grep -E ':3000\|:3001'` para ver cuál. |
-| El Panel de vigilancia no muestra eventos en vivo | La conexión de tiempo real no llega al backend | Revisa que `api` esté arriba. Recarga la página con `Ctrl+F5`. |
-| Un comando `dc run ...` dentro de un script "se come" las líneas siguientes | `docker compose run` lee la entrada estándar | Usa `run -T` (como en esta guía) o agrega `</dev/null`. |
-| El disco se llena | Imágenes viejas de actualizaciones anteriores | `sudo docker image prune -f` (borra solo imágenes sin uso; no toca datos). |
+| El Panel de vigilancia no muestra eventos en vivo | La conexión de tiempo real no llega al backend | Revisar que `api` esté arriba. Recargar la página con `Ctrl+F5`. |
+| Un comando `dc run ...` dentro de un script "se come" las líneas siguientes | `docker compose run` lee la entrada estándar | Usar `run -T` (como en esta guía) o agregar `</dev/null`. |
+| El disco se llena | Imágenes viejas y caché de compilación | `sudo docker image prune -af && sudo docker builder prune -f` (no tocan datos). `actualizar.sh` ya lo hace en cada versión. |
 | Nadie puede entrar al portal | Contraseña olvidada | [Restablecer una contraseña](#restablecer-una-contraseña-olvidada). |
 
 ---
@@ -367,7 +364,7 @@ Para mostrar el sistema funcionando sin datos reales, se puede cargar un conjunt
 **Cargar** (desde la PC, en `mollendo-api`, con el servidor accesible):
 
 ```bash
-API_URL=http://100.78.153.33:3000/api/v1 \
+API_URL=https://accesos.monteazulsur.com.pe/api/v1 \
 ADMIN_PASSWORD='<contraseña del administrador>' \
 DEVICE_API_KEY='<DEVICE_API_KEY del .env del servidor>' \
 npx tsx prisma/datos-demo.ts
@@ -390,7 +387,7 @@ Se borra con el mismo `limpiar-demo.sh` (son personas de las empresas DEMO y eve
 
 **Archivo de los documentos de la carga masiva (opcional):** esos documentos se crean sin archivo ("Ver" dice "El archivo del documento no está disponible"). `prisma/archivos-demo.ts` les asigna un PDF de una página ("Documento de prueba"): se guarda una vez (`demo-documento-prueba.pdf`, 753 bytes) y cada documento recibe un enlace duro en la carpeta de su persona, así ocupa lo de un archivo y borrar o reemplazar un documento no afecta a los demás. Solo toca documentos de empresas DEMO sin archivo. Se copia y se corre igual que los otros scripts DEMO. Se copia y se corre igual que la carga masiva (`... cp mollendo-api/prisma/movimientos-demo.ts api:/app/prisma/` y `... exec -T api npx tsx prisma/movimientos-demo.ts`); no pasa por la API ni por el G4 Pro. **No sincronizar el G4 Pro mientras estén cargadas**: registraría a ~480 personas DEMO en el equipo.
 
-**En un servidor con un G4 Pro real (por ejemplo AWS):** no cargues fotos ni ingresos por la API. Cada foto se registra en el equipo y cada ingreso por DNI queda pendiente de verificación, así que el siguiente rostro real se le asignaría a una persona DEMO. Para cargar los datos de prueba sin tocar el equipo:
+**En un servidor con un G4 Pro real:** no cargar fotos ni ingresos por la API. Cada foto se registra en el equipo y cada ingreso por DNI queda pendiente de verificación, así que el siguiente rostro real se le asignaría a una persona DEMO. Para cargar los datos de prueba sin tocar el equipo:
 
 1. Personas y documentos sin fotos ni eventos: `SIN_FOTOS=1` y sin `DEVICE_API_KEY`.
 2. Historial con el día de hoy hasta la hora actual, escrito directo en la base: `INCLUIR_HOY=1`. Con un túnel SSH (`ssh -L 13001:localhost:3001 -L 15432:<IP del contenedor db>:5432 …`) se usa `API_URL=http://localhost:13001/api/v1` y `DATABASE_URL=postgresql://mollendo:<DB_PASSWORD>@localhost:15432/mollendo_control_acceso`.
@@ -401,11 +398,11 @@ Se borra con el mismo `limpiar-demo.sh` (son personas de las empresas DEMO y eve
 sudo sh mollendo-api/prisma/limpiar-demo.sh
 ```
 
-> Antes de empezar a usar el sistema con datos reales, **borra los datos de demostración**.
+> Antes de empezar a usar el sistema con datos reales, **borrar los datos de demostración**.
 
 ### Enlace público temporal (para una muestra)
 
-Para que cualquiera pueda ver el portal desde internet, sin Tailscale ni estar en la red local, hay un contenedor opcional `muestra` (túnel rápido de Cloudflare, sin cuenta). Está **apagado por defecto** y no afecta a los demás contenedores. En el servidor, dentro de `~/mollendo`:
+Para que cualquiera pueda ver el portal desde internet, sin Tailscale ni estar en la red local, hay un contenedor opcional `muestra` (túnel rápido de Cloudflare, sin cuenta). Está **apagado por defecto** y no afecta a los demás contenedores. En el servidor, dentro de `~/mollendo/deploy/nube`:
 
 ```bash
 # Encender
@@ -417,14 +414,14 @@ sudo docker compose --profile muestra rm -sf muestra
 ```
 
 - El enlace **cambia cada vez** que se enciende.
-- Cualquiera con el enlace llega a la pantalla de inicio de sesión (y a Swagger en `/api/docs`). Para entrar necesita usuario y contraseña: **no compartas las contraseñas reales**; para una muestra, usa datos de demostración y cambia las contraseñas después.
-- Apágalo cuando termine la muestra.
+- Cualquiera con el enlace llega a la pantalla de inicio de sesión (y a Swagger en `/api/docs`). Para entrar necesita usuario y contraseña: **no compartir las contraseñas reales**; para una muestra, usar datos de demostración y cambiar las contraseñas después.
+- Apagarlo cuando termine la muestra.
 
 ---
 
 ## 8c. Lectores de DNI
 
-Los lectores **Syble XB-7705H** leen el **código de barras del reverso del DNI** y envían el número seguido de un salto de línea (`48058719` + CR LF). Se conectan a la mini PC por **RS232**: el cable del lector tiene un conector DB9, que va a un **adaptador USB-serial** (ATEN), y una punta USB que solo da energía.
+Los lectores **Syble XB-7705H** leen el **código de barras del reverso del DNI** y envían el número seguido de un salto de línea (`48058719` + CR LF). Se conectan al Controlador (PC) por **RS232**: el cable del lector tiene un conector DB9, que va a un **adaptador USB-serial** (ATEN), y una punta USB que solo da energía.
 
 ### Configurar el lector (una vez)
 
@@ -459,7 +456,7 @@ Si se desconecta el adaptador, el sistema reintenta cada 5 s y se reconecta solo
 
 ### Qué identifica a cada lector
 
-El sistema reconoce cada lector por el **número de serie de su adaptador USB-serial** (el blanco), no por el puerto USB de la mini PC donde se enchufe:
+El sistema reconoce cada lector por el **número de serie de su adaptador USB-serial** (el blanco), no por el puerto USB del Controlador (PC) donde se enchufe:
 
 | Adaptador (número de serie) | Lector |
 |---|---|
@@ -469,12 +466,12 @@ El sistema reconoce cada lector por el **número de serie de su adaptador USB-se
 **En simple:** el sistema no reconoce al lector, reconoce **el cable blanco** (adaptador) al que está conectado. Cada cable blanco trae de fábrica un número único, como la placa de un auto, y en `.env` quedó anotado qué número es ingreso y cuál salida. Cuando alguien pasa el DNI:
 
 1. el lector envía el número por su cable blanco;
-2. la mini PC ve **por cuál cable llegó**;
+2. el Controlador (PC) ve **por cuál cable llegó**;
 3. según el cable, lo registra como **ingreso** o como **salida**.
 
 A diferencia de los relés (que venían todos con la misma serie y hubo que cambiársela), los cables blancos ya vienen con números distintos: no hay que configurar nada para distinguirlos.
 
-- Los adaptadores se pueden conectar **en cualquier puerto USB** de la mini PC: el sistema los encuentra igual (también si Linux les cambia el número, `ttyUSB0`, `ttyUSB1`…).
+- Los adaptadores se pueden conectar **en cualquier puerto USB** del Controlador (PC): el sistema los encuentra igual (también si Linux les cambia el número, `ttyUSB0`, `ttyUSB1`…).
 - Lo que importa es que **cada lector siga conectado a su propio adaptador**. Si se intercambian los adaptadores entre los lectores, el de ingreso pasaría a registrar salidas y al revés.
 - **Etiquetar cada adaptador** ("INGRESO" / "SALIDA") para que no se crucen al reinstalar.
 - Si se **reemplaza un adaptador** por uno nuevo, hay que poner su ruta en `.env` (`LECTOR_DNI_INGRESO_DISPOSITIVO` o `LECTOR_DNI_SALIDA_DISPOSITIVO`, ver `ls /dev/serial/by-id/`) y ejecutar `sudo docker compose up -d`.
@@ -508,11 +505,11 @@ Cualquier lector nuevo debe **leer el código de barras del reverso del DNI** (p
 
 ### Lector de salida (o para cambiar un lector)
 
-Instalados en la mini PC (04/10/2026): **ingreso** con el adaptador `...Serial_Controller_FQCLb114J19...` y **salida** con `...Serial_Controller_A_BCb14C705...`. Para instalar el de salida (o reemplazar un lector o su adaptador):
+Instalados en el Controlador (PC) (04/10/2026): **ingreso** con el adaptador `...Serial_Controller_FQCLb114J19...` y **salida** con `...Serial_Controller_A_BCb14C705...`. Para instalar el de salida (o reemplazar un lector o su adaptador):
 
-1. **Hardware:** un **segundo adaptador USB-serial** (como el ATEN) para el cable DB9 del lector de salida. Su punta USB de energía va a otro puerto USB de la mini PC.
+1. **Hardware:** un **segundo adaptador USB-serial** (como el ATEN) para el cable DB9 del lector de salida. Su punta USB de energía va a otro puerto USB del Controlador (PC).
 2. **Configurar el lector** con el folleto, igual que el de ingreso: Factory Default → RS232 → 115200 → desenchufar y volver a enchufar la energía.
-3. **Identificar su adaptador** en la mini PC: `ls /dev/serial/by-id/`. Aparece una segunda ruta `usb-...-port0` (cada adaptador tiene su número de serie; la del ingreso es la que termina en `FQCLb114J19-if00-port0`).
+3. **Identificar su adaptador** en el Controlador (PC): `ls /dev/serial/by-id/`. Aparece una segunda ruta `usb-...-port0` (cada adaptador tiene su número de serie; la del ingreso es la que termina en `FQCLb114J19-if00-port0`).
 4. **Agregar en el `.env` del entorno (`deploy/controlador/.env` o `deploy/garita/.env`):** `LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/<la ruta nueva>`.
 5. **Aplicar:** `sudo docker compose up -d`.
 6. **Comprobar:** en el registro del backend, `Lector de DNI de salida conectado`. En **Sistema y APIs**, salida "Cable conectado". Al pasar un DNI registrado, el Panel muestra una **salida autorizada**.
@@ -523,7 +520,7 @@ Probado con el lector real: un DNI registrado queda como **salida autorizada** y
 
 ## 8d. Relés de los molinetes
 
-Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", placa verde con un relé azul HONG WEI y bornera de 3 tornillos), conectado a un USB de la mini PC. Se controla sin drivers. Al autorizar una **salida** (o un **ingreso** que el G4 Pro aprobó), el sistema activa el relé **1 segundo**: suena un clic y se prende un LED rojo; su contacto (NO + COM) va a la bornera J3 del molinete (K1 + COM).
+Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", placa verde con un relé azul HONG WEI y bornera de 3 tornillos), conectado a un USB del Controlador (PC). Se controla sin drivers. Al autorizar una **salida** (o un **ingreso** que el G4 Pro aprobó), el sistema activa el relé **1 segundo**: suena un clic y se prende un LED rojo; su contacto (NO + COM) va a la bornera J3 del molinete (K1 + COM).
 
 | Molinete | Módulo (número de serie) | Relé |
 |---|---|---|
@@ -552,7 +549,7 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 | Salida | DNI no registrado, sin conexión a internet (con controlador) | `DSA01` | Al instante: lo activa el controlador si el DNI no está en la lista del personal guardada |
 | Ingreso o salida | Autorizado | — | No se activa |
 
-**Configuración** (sin número de serie, el aviso no se usa). Va en `deploy/garita/.env` (mini PC como servidor) o en `deploy/controlador/.env` (como controlador):
+**Configuración** (sin número de serie, el aviso no se usa). Va en `deploy/garita/.env` (Controlador (PC) como servidor completo) o en `deploy/controlador/.env` (como controlador):
 
 | Variable | Valor | Para qué |
 |---|---|---|
@@ -565,7 +562,7 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 
 - **Con controlador:** el servidor en la nube le manda el aviso al controlador por el mismo canal de las aperturas, indicando la puerta.
 - **En "Sistema y APIs":** aparecen en la tarjeta de relés como **"Aviso ingreso denegado"** y **"Aviso salida denegada"**, con la hora del último aviso.
-- **Prueba (08/10/2026, con AWS):** los dos módulos llegaron con la serie de fábrica `S2OD2` y se cambiaron a `DEN01` y `DSA01`. Un ingreso y una salida de DNI no registrados en AWS activaron, cada uno, el pulso de su relé en la mini PC.
+- **Prueba (08/10/2026, con AWS):** los dos módulos llegaron con la serie de fábrica `S2OD2` y se cambiaron a `DEN01` y `DSA01`. Un ingreso y una salida de DNI no registrados en AWS activaron, cada uno, el pulso de su relé en el Controlador (PC).
 
 > El módulo se identifica como "USBRelay2", pero la placa tiene **un solo relé** (el 1). Por eso se usa un módulo por molinete.
 >
@@ -584,7 +581,7 @@ RELE_SALIDA_SERIE=SAL01
 
 Después: `sudo docker compose up -d`.
 
-- Con la mini PC como **controlador**, en los comandos de esta sección va `controlador` en lugar de `api` (en `~/mollendo/deploy/controlador`).
+- Hoy los relés están en el **controlador**: en los comandos de esta sección va `controlador` en lugar de `api` (en `~/mollendo/deploy/controlador`). `api` es solo para la garita.
 - **Número de serie de un módulo:** con el módulo conectado, `sudo docker compose exec api sh -c 'for h in /sys/class/hidraw/*; do /app/rele-usb /dev-servidor/$(basename $h) estado; done'` muestra la serie y el estado de cada uno (por ejemplo `S2OD2 0`).
 - Los módulos se pueden conectar **en cualquier USB**: el sistema los busca por su número de serie en cada apertura (también si se desconectan y se vuelven a conectar).
 - Sin número de serie, un molinete usa el único módulo conectado que no esté asignado al otro.
@@ -625,7 +622,7 @@ El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila
 
 **Recomendación para operación continua:** los módulos actuales son placas sueltas, pensadas para pruebas o proyectos chicos. Para el terminal conviene un **relé industrial de red (Ethernet)**, uno por molinete, como planteaba el diseño original (`docs/g4pro/Historial_Integracion_G4Pro.md`, Parte A):
 
-- va **junto al molinete**, por cable de red, sin depender de que la mini PC esté cerca ni de un cable USB;
+- va **junto al molinete**, por cable de red, sin depender de que el Controlador (PC) esté cerca ni de un cable USB;
 - viene en **caja para riel DIN**, más resistente al polvo, la vibración y la humedad;
 - si usa **Modbus TCP** (protocolo estándar), el programa queda compatible con varias marcas.
 
@@ -639,13 +636,13 @@ Instalado (`ING01`, 04/10/2026). Se activa cuando el **G4 Pro aprueba el rostro 
 
 ## 8e. Terminal facial G4 Pro
 
-El G4 Pro (con el alcoholímetro DT1700) se conecta **directo a la mini PC** por la red local, con el protocolo PUSH de ZKTeco en su variante de **control de acceso**. No usa ningún software del fabricante. Referencia técnica completa (rutas, comandos, respuestas, códigos): `docs/g4pro/Protocolo_G4Pro_Referencia.md`.
+El G4 Pro (con el alcoholímetro DT1700) se conecta **directo al servidor** (en la nube, por internet), con el protocolo PUSH de ZKTeco en su variante de **control de acceso**. No usa ningún software del fabricante. Referencia técnica completa (rutas, comandos, respuestas, códigos): `docs/g4pro/Protocolo_G4Pro_Referencia.md`.
 
-### Apuntar el G4 Pro a la mini PC
+### Apuntar el G4 Pro al servidor
 
-1. La mini PC necesita una **IP fija** en la red local (reservarla en el router; hoy es `192.168.0.165`, por Wi-Fi: conviene pasarla a cable). Se ve con `ip -4 addr`.
-2. En el G4 Pro: **Menú → COMM. → Cloud Server Setting**: dirección `192.168.0.165` (la IP de la mini PC), puerto **`3001`**, sin dominio, sin HTTPS y sin proxy. En **Ethernet**, una IP de la misma red (DHCP sirve).
-3. A los pocos segundos el equipo se registra solo. En el registro del backend: `Nuevo equipo registrado: HSR3263100192`. En **Sistema y APIs**, "Equipos (G4 Pro)": **En línea**.
+1. En el G4 Pro: **Menú → COMM. → Cloud Server Setting**: dirección `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto **`3001`**, sin HTTPS y sin proxy. Hoy el equipo tiene la IP `172.20.20.198` en la red de TMAM.
+2. A los pocos segundos el equipo se registra solo. En el registro del backend: `Nuevo equipo registrado: HSR3263100192`. En **Sistema y APIs**, "Equipos (G4 Pro)": **En línea**.
+3. Con el Controlador (PC) como servidor completo (garita), la dirección es la IP del Controlador (PC) en la red local (`172.20.20.197`), con IP fija.
 
 ### Umbral de alcohol (obligatorio)
 
@@ -671,8 +668,8 @@ El G4 Pro no informa el valor medido al sistema, solo si la persona pasó o no: 
 
 - **Nunca registrar personas a mano en el G4 Pro.** Un usuario creado desde la pantalla del equipo recibe **permiso de paso permanente** (se vio: un usuario manual dejó 50 permisos) y queda fuera del control del sistema: podría verificarse mientras otra persona está habilitada y el sistema se lo atribuiría a esa persona. Tampoco usar personas del sistema como **administradores del equipo**: el sistema les vuelve a poner privilegio normal al editarlas.
 - **No se registran a mano en el equipo.** Al dar de alta o editar a una persona en el portal, el sistema la carga en el G4 Pro con su **DNI como número de usuario** y su nombre; al subir su foto, se la envía y el equipo la convierte en el rostro que reconoce.
-- **Sincronización:** desde **Sistema y APIs → "Sincronización con el G4 Pro"** (botones **Simular** y **Sincronizar ahora**, que pide confirmación), o con `POST /api/v1/integraciones/g4pro/sincronizar` (Administrador) deja el equipo igual al sistema: **borra a los usuarios que el sistema no conoce** (por ejemplo, registrados a mano), **quita los permisos de paso sueltos** y **registra con foto al personal activo que falta**. Se hace sola **todos los días a medianoche** (la hora se cambia con `G4PRO_HORA_SINCRONIZACION` en `.env`, de 0 a 23; con `off` se desactiva y queda solo la manual). **Hoy está desactivada en la mini PC (`off`) mientras existan los datos DEMO**: activarla (quitar la línea o poner `0`) después de borrarlos. Con `?simular=true` solo informa qué haría (`usuariosABorrar`, `agregadas`, `permisosQuitados`). Usarla al instalar un equipo nuevo o reinstalado.
-- En **Sistema y APIs**, la tarjeta del G4 Pro muestra cuántos **usuarios** y **rostros** tiene el equipo (y los usuarios **sin rostro**), según la última sincronización o simulación; la tarjeta de sincronización muestra si la diaria está activa y el último resultado, incluidos los **usuarios que el sistema no conoce**. Ese resultado queda guardado en la base de datos (tabla `sincronizacion_g4`, con el historial de todas las sincronizaciones y simulaciones), así que se sigue viendo aunque se reinicie la API o la mini PC.
+- **Sincronización:** desde **Sistema y APIs → "Sincronización con el G4 Pro"** (botones **Simular** y **Sincronizar ahora**, que pide confirmación), o con `POST /api/v1/integraciones/g4pro/sincronizar` (Administrador) deja el equipo igual al sistema: **borra a los usuarios que el sistema no conoce** (por ejemplo, registrados a mano), **quita los permisos de paso sueltos** y **registra con foto al personal activo que falta**. Se hace sola **todos los días a medianoche** (la hora se cambia con `G4PRO_HORA_SINCRONIZACION` en `.env`, de 0 a 23; con `off` se desactiva y queda solo la manual). **Hoy está desactivada en la nube (`off`)**: activarla desde Sistema y APIs (o con `0` en `.env`) cuando se decida; antes, borrar los datos DEMO si los hubiera. Con `?simular=true` solo informa qué haría (`usuariosABorrar`, `agregadas`, `permisosQuitados`). Usarla al instalar un equipo nuevo o reinstalado.
+- En **Sistema y APIs**, la tarjeta del G4 Pro muestra cuántos **usuarios** y **rostros** tiene el equipo (y los usuarios **sin rostro**), según la última sincronización o simulación; la tarjeta de sincronización muestra si la diaria está activa y el último resultado, incluidos los **usuarios que el sistema no conoce**. Ese resultado queda guardado en la base de datos (tabla `sincronizacion_g4`, con el historial de todas las sincronizaciones y simulaciones), así que se sigue viendo aunque se reinicie la API o el servidor.
 - **Ojo con los datos de demostración:** la sincronización registra en el equipo a todo el personal **activo**, también al DEMO (con fotos que no son rostros). Borrar los datos DEMO antes de operar (8b).
 - La **foto** debe ser de frente, con buena luz y el rostro centrado. Se registran con su número de documento (DNI, carné de extranjería o pasaporte; el equipo acepta letras). **Pero los lectores solo reconocen el DNI**: el personal con carné de extranjería o pasaporte todavía no puede pasar su documento por el lector (pendiente, ver Estado 0.5).
 - Ninguna persona tiene **permiso de paso** en el equipo, salvo la que está en su minuto de espera: el sistema se lo da al pasar su DNI en regla y se lo quita al terminar (una persona a la vez; las demás quedan "en cola").
@@ -709,20 +706,20 @@ El sistema ya borra las tres tablas cuando le cambia el documento a una persona.
 - [ ] **Datos de demostración borrados** (8b), incluida la persona de prueba "Amiel Bautista" (DNI 48058719), y su usuario borrado del G4 Pro.
 - [ ] **Personal real cargado** en el portal, con foto de frente, y registrado en el G4 Pro (`POST /api/v1/integraciones/g4pro/sincronizar`).
 - [ ] **Adaptadores y módulos etiquetados** ("INGRESO" / "SALIDA").
-- [ ] **IP fija** de la mini PC reservada en el router (el G4 Pro apunta a ella).
+- [ ] **IP fija** del Controlador (PC) y del G4 Pro en la red de TMAM.
 - [ ] Prueba completa con una persona real: DNI → rostro → alcohol → molinete de ingreso; y salida.
 
 ---
 
-## 8f. Mini PC como controlador (servidor en la nube)
+## 8f. Controlador (PC) con el servidor en la nube
 
-Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube (AWS hoy, Azure después) y la mini PC en la garita **solo como controlador**: lee los DNI, los manda al servidor por internet y abre los molinetes cuando el servidor lo ordena. El G4 Pro se conecta directo al servidor.
+Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube (Azure) y el Controlador (PC) en el punto de acceso **solo como controlador**: lee los DNI, los manda al servidor por internet y abre los molinetes cuando el servidor lo ordena. El G4 Pro se conecta directo al servidor.
 
 **Cómo funciona**
 
 - Es el **mismo programa** (`mollendo-api`, misma imagen de Docker) arrancado en modo controlador: `node dist/controlador/main.js` (`src/controlador/`). Usa el mismo código de lectores de DNI y relés.
 - Cada DNI leído se manda con la clave de equipos a `POST /api/v1/eventos-acceso/ingreso|salida` del servidor.
-- La mini PC abre un **canal permanente hacia el servidor** (socket.io, `/ws/controlador`, validado con `DEVICE_API_KEY`): por ahí recibe "abrir el molinete de ingreso/salida" e informa cada 5 s el estado de lectores y relés (se ve en "Sistema y APIs" → "Controlador"). Lo abre la garita hacia afuera: **no hay que abrir puertos en la red del terminal**. Si se corta, se reconecta solo.
+- El Controlador (PC) abre un **canal permanente hacia el servidor** (socket.io, `/ws/controlador`, validado con `DEVICE_API_KEY`): por ahí recibe "abrir el molinete de ingreso/salida" e informa cada 5 s el estado de lectores y relés (se ve en "Sistema y APIs" → "Controlador"). Lo abre el punto de acceso hacia afuera: **no hay que abrir puertos en la red del terminal**. Si se corta, se reconecta solo.
 - En el servidor, `MOLINETES_REMOTOS=true` en `.env`: la orden de abrir va al controlador (no a un relé local).
 - **Registro del controlador en archivo** (desde el 21/10/2026): además de `docker logs`, queda en el volumen de datos, `/app/datos-controlador/registro/controlador.log` (y `.1` a `.4`, 5 MB cada uno). No se pierde al reinstalar el contenedor. Verlo: `docker exec mollendo-controlador tail -n 50 /app/datos-controlador/registro/controlador.log`.
 - **Si el servidor rechaza una lectura** con un error (no es falta de conexión ni un "denegado" normal), el controlador no abre, hace sonar el aviso de denegado de esa puerta y lo anota como "El servidor rechazó la lectura".
@@ -732,7 +729,7 @@ Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube 
 **Sin internet, en detalle**
 
 - **Cómo se da cuenta el controlador:** cada DNI leído se manda al servidor y se espera la respuesta **hasta 5 segundos**. Si no llega (sin internet, servidor caído o demasiado lento), actúa por su cuenta. El canal permanente se reconecta solo cuando vuelve la conexión.
-- **La lista del personal:** se descarga del servidor al conectarse y cada **10 minutos**, y se guarda en el disco de la mini PC (`lista-personal.json`). Así sirve aunque la mini PC se reinicie sin internet.
+- **La lista del personal:** se descarga del servidor al conectarse y cada **10 minutos**, y se guarda en el disco del Controlador (PC) (`lista-personal.json`). Así sirve aunque el Controlador (PC) se reinicie sin internet.
 
 | Qué pasa sin internet | Molinete | Relé de aviso | ¿Queda en el historial? |
 |---|---|---|---|
@@ -751,60 +748,46 @@ Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube 
   - **Con pruebas automáticas:** la salida con y sin lista, el envío posterior con su hora y los avisos DEN01 y DSA01.
   - **Pendiente:** la prueba física completa sin internet (DNI en el ingreso → DEN01; DNI de alguien registrado en la salida → se abre y llega después al historial).
 
-**Instalación en la mini PC:** ver `deploy/controlador/README.md` (`.env` con `SERVIDOR_URL`, la **misma** `DEVICE_API_KEY` del servidor, lectores y relés; luego `docker compose up -d --build` en `~/mollendo/deploy/controlador`). El registro debe decir "Lector de DNI … conectado", "Conectado al servidor" y "Lista del personal actualizada: N personas". Los lectores no pueden estar abiertos a la vez por el controlador y por una API en la mini PC: si el entorno `garita` está levantado, hay que apagarlo antes (sección 8g).
+**Instalación:** con `deploy/controlador/instalar.sh` (ver `deploy/controlador/README.md`): pide `SERVIDOR_URL`, la **misma** `DEVICE_API_KEY` del servidor y los lectores. El registro debe decir "Lector de DNI … conectado", "Conectado al servidor" y "Lista del personal actualizada: N personas". Los lectores no pueden estar abiertos a la vez por el controlador y por una API en el mismo equipo: si el entorno `garita` está levantado, hay que apagarlo antes (sección 8g).
 
-**Prueba del 07/10/2026 (AWS como nube):** controlador en la mini PC conectado a `http://54.147.214.38:3001`; AWS lo ve conectado con los dos lectores y los dos relés (ING01, SAL01) y la lista del personal; una salida registrada en AWS abrió el relé SAL01 de la mini PC; al reiniciar la API de AWS el controlador se reconectó solo. Configuración anterior de la mini PC guardada en `.env.antes-controlador-20261007-0953`.
+**Prueba del 07/10/2026 (AWS como nube):** controlador conectado a `http://54.147.214.38:3001`; AWS lo vio conectado con los dos lectores y los dos relés (ING01, SAL01) y la lista del personal; una salida registrada en AWS abrió el relé SAL01; al reiniciar la API de AWS el controlador se reconectó solo.
 
-**Volver a la mini PC como servidor completo:** ver la sección 8g.
+**Volver al Controlador (PC) como servidor completo:** ver la sección 8g.
 
-**Pendiente para el ingreso completo:** el G4 Pro sigue apuntando a la mini PC; para probar un ingreso con el servidor en la nube hay que cambiar en el equipo la dirección del servidor (Cloud Server) a la de la nube, y registrar allí al personal con su foto.
+## 8g. Configuraciones del Controlador (PC) y del G4 Pro (para pruebas)
 
-## 8g. Configuraciones de la mini PC y del G4 Pro (para pruebas)
-
-La garita puede trabajar de dos maneras. Para pasar de una a otra hay que cambiar **dos cosas**: cómo arranca la mini PC y a qué servidor apunta el G4 Pro.
+El punto de acceso puede trabajar de dos maneras. Para pasar de una a otra hay que cambiar **dos cosas**: cómo arranca el Controlador (PC) y a qué servidor apunta el G4 Pro.
 
 ### Las dos configuraciones
 
-| | **A. Mini PC como servidor completo** (entorno `garita`) | **B. Mini PC como controlador (servidor en la nube)** (entornos `controlador` + `nube`) |
+| | **A. Controlador (PC) como servidor completo** (entorno `garita`) | **B. Controlador (PC) con el servidor en la nube** (entornos `controlador` + `nube`) |
 |---|---|---|
-| Portal, API, base de datos | En la mini PC (`deploy/garita/`) | En la nube (`deploy/nube/`; Azure `74.163.89.6`) |
-| Lectores de DNI y relés | Los maneja la API de la mini PC | Los maneja el **controlador** de la mini PC (`deploy/controlador/`) |
-| G4 Pro apunta a (Cloud Server) | `192.168.0.165`, puerto `3001` | `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto `3001` |
-| Desde dónde llega el G4 al servidor | Red local de la garita | Internet, desde la IP pública de la garita (`38.25.53.235` el 07/10/2026) |
-| Personal y fotos en el G4 | Los de la base de la mini PC | Los de la base de la nube |
+| Portal, API, base de datos | En el Controlador (PC) (`deploy/garita/`) | En la nube (`deploy/nube/`; Azure `74.163.89.6`) |
+| Lectores de DNI y relés | Los maneja la API del Controlador (PC) | Los maneja el **controlador** (`deploy/controlador/`) |
+| G4 Pro apunta a (Cloud Server) | `172.20.20.197`, puerto `3001` | `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto `3001` |
+| Desde dónde llega el G4 al servidor | Red local del punto de acceso | Internet, desde la IP pública del punto de acceso (`190.119.170.73`) |
+| Personal y fotos en el G4 | Los de la base del Controlador (PC) | Los de la base de la nube |
 
 **El G4 Pro habla con un solo servidor**: el que tenga configurado. El otro lo ve "Desconectado" (solo guarda la última vez que lo vio). Al cambiar de servidor, el nuevo le envía los comandos que tenía pendientes; revisarlos antes (`select … from comando_dispositivo where estado = 'pendiente'`).
 
-### Estado actual (16/10/2026): configuración B con Azure
+### Estado actual: configuración B con Azure
 
-- **Servidor:** Azure `74.163.89.6`, instalado limpio el 16/10/2026 (sin datos de prueba). Persona de prueba: **Amiel Bautista (48058719)**, con foto y SCTR Salud hasta el 23/10/2026.
-- **Mini PC:** IP fija `172.20.20.197` en la red de TMAM (biométricos), controlador con `SERVIDOR_URL=https://accesos.monteazulsur.com.pe` desde el 16/10/2026 17:15 (antes, `http://74.163.89.6:3001` desde las 16:24; copia en `.env.antes-https-*`) (configuración anterior en `deploy/controlador/.env.antes-azure-20261016-1624`; para volver a AWS, restaurarla y `docker compose up -d`). El controlador usa la red de la mini PC (`network_mode: host`).
-- **G4 Pro:** IP `172.20.20.198`, conectado a Azure desde el 16/10/2026 16:54 (sincronizado: tiene a Amiel con su rostro). Conviene poner en su menú el dominio `accesos.monteazulsur.com.pe` en vez de la IP.
-- **AWS (`54.147.214.38`):** queda de respaldo con los datos de prueba; ya no recibe al controlador.
-
-### Estado anterior (08/10/2026): configuración B con AWS
-
-Con la estructura de archivos anterior al 09/10/2026 (`controlador.env`, `.env` y `docker-compose.prod.yml` en `~/mollendo`); al actualizar cada equipo se pasa a `deploy/` como indica el README de su entorno.
-
-- **Mini PC:**
-  - `controlador` corriendo con `controlador.env`: `SERVIDOR_URL=http://54.147.214.38:3001`, la clave de equipos de AWS, lectores y relés.
-  - La API local sigue corriendo, pero sin lectores (comentados en `.env`) y con `MOLINETES_REMOTOS=true`.
-  - Su configuración anterior está guardada en `.env.antes-controlador-20261007-0953`.
-- **AWS:** `MOLINETES_REMOTOS=true` y `G4PRO_HORA_SINCRONIZACION=off` en `.env`. Tiene la persona de prueba **Amiel (48058719)**, con foto y un documento SCTR Salud vigente hasta el 31/12/2027, para probar el ingreso completo.
-- **G4 Pro:** apunta a AWS (`54.147.214.38:3001`), cambiado el 08/10/2026.
-- **Pendiente:** el ingreso completo con AWS no se completó: el G4 **no reconoció el rostro de Amiel** en dos intentos (todo lo demás funcionó). Probar primero el rostro sin DNI (si lo reconoce, el G4 envía `event=23` con su DNI); si no, reiniciar el G4 y repetir.
+- **Servidor:** Azure `74.163.89.6`, https://accesos.monteazulsur.com.pe, instalado el 16/10/2026.
+- **Controlador (PC):** IP fija `172.20.20.197` en la red de TMAM, con `SERVIDOR_URL=https://accesos.monteazulsur.com.pe`. Usa la red del equipo (`network_mode: host`). Es lo único que corre en él.
+- **G4 Pro:** IP `172.20.20.198`, conectado a Azure desde el 16/10/2026.
+- **AWS (`54.147.214.38`):** solo para pruebas; no recibe al controlador ni al G4 Pro.
 
 ### Pasar de B (controlador) a A (servidor completo)
 
-1. **En el G4 Pro** (menú de comunicación → servidor en la nube): dirección `192.168.0.165`, puerto `3001`.
-2. **En la mini PC**, con `deploy/garita/.env` ya preparado (lectores y relés activos, `MOLINETES_REMOTOS=false`; ver `deploy/garita/README.md`):
+1. **En el G4 Pro** (menú de comunicación → servidor en la nube): dirección `172.20.20.197`, puerto `3001`.
+2. **En el Controlador (PC)**, con `deploy/garita/.env` ya preparado (lectores y relés activos, `MOLINETES_REMOTOS=false`; ver `deploy/garita/README.md`):
 
 ```bash
 cd ~/mollendo/deploy/controlador && sudo docker compose down     # sin -v
 cd ~/mollendo/deploy/garita && sudo docker compose up -d --build
 ```
 
-3. **Comprobar** en "Sistema y APIs" de la mini PC:
+3. **Comprobar** en "Sistema y APIs" del Controlador (PC):
    - el G4 "En línea";
    - los lectores con "Cable conectado";
    - los relés "Conectado";
@@ -812,10 +795,10 @@ cd ~/mollendo/deploy/garita && sudo docker compose up -d --build
 
 ### Pasar de A (servidor completo) a B (controlador)
 
-1. **En la mini PC** (los lectores no pueden estar abiertos por la API y el controlador a la vez):
+1. **En el Controlador (PC)** (los lectores no pueden estar abiertos por la API y el controlador a la vez):
 
 ```bash
-cd ~/mollendo/deploy/garita && sudo docker compose down          # sin -v: los datos de la mini PC se conservan
+cd ~/mollendo/deploy/garita && sudo docker compose down          # sin -v: los datos del Controlador (PC) se conservan
 cd ~/mollendo/deploy/controlador && sudo docker compose up -d --build
 ```
 
@@ -832,21 +815,21 @@ cd ~/mollendo/deploy/controlador && sudo docker compose up -d --build
 
 ## 9. Seguridad y recomendaciones
 
-1. **Contraseña del servidor**: cámbiala si alguna vez se compartió por chat o correo (`passwd` en el servidor). Lo recomendable es entrar con **llave SSH** y desactivar el acceso por contraseña.
+1. **Acceso a los equipos**: con **llave SSH** (el servidor de Azure solo acepta llave). Si una contraseña se compartió por chat o correo, cambiarla (`passwd`).
 2. **El `.env` de cada entorno** (`~/mollendo/deploy/<entorno>/.env`) tiene todas las claves. Debe tener permisos `600` (`chmod 600 .env`) y no copiarse a git, correos ni chats.
 3. **Contraseñas del portal**: cambiar las iniciales después del primer ingreso.
-4. **IP fija en la red local**: los equipos (G4 Pro, relé) necesitarán una dirección estable. Reservar la IP de la mini PC en el router o conectarla por cable.
-5. **UPS** para la mini PC, el switch, el relé y el G4 Pro (ver `docs/g4pro/Historial_Integracion_G4Pro.md`, Parte A, sección 7).
+4. **IP fija en la red local**: el Controlador (PC) (`172.20.20.197`) y el G4 Pro (`172.20.20.198`) tienen IP fija en la red de TMAM; mantenerlas.
+5. **UPS** para el Controlador (PC), el switch, los relés y el G4 Pro (ver `docs/g4pro/Historial_Integracion_G4Pro.md`, Parte A, sección 7).
 6. **Respaldos fuera del servidor**, con regularidad (7.4).
 7. **Actualizaciones de Ubuntu**: el sistema tiene las actualizaciones automáticas de seguridad de Ubuntu. Docker se actualiza con ellas.
-8. **Integración de equipos**: los lectores de DNI (8c), los relés de los molinetes (8d) y el G4 Pro (8e) funcionan con la mini PC como controlador (8f) o como servidor completo. El rechazo por alcohol está confirmado (`event=1`); falta que el cliente defina el umbral de alcohol del G4 Pro (8e).
-9. **Servidor en la nube**: dejar abiertos en el Security Group solo los puertos `22`, `3000` y `3001`. Hoy el portal se abre por `http://` con la IP (el navegador lo marca "No es seguro"); para operación conviene un dominio con HTTPS.
+8. **Integración de equipos**: los lectores de DNI (8c), los relés de los molinetes (8d) y el G4 Pro (8e) funcionan con el Controlador (PC) conectado a la nube (8f) o como servidor completo. El rechazo por alcohol está confirmado (`event=1`); falta que el cliente defina el umbral de alcohol del G4 Pro (8e).
+9. **Servidor en la nube**: dejar abiertos en Azure solo los puertos `22`, `80`, `443` y `3001`. El portal se abre por HTTPS con el dominio `accesos.monteazulsur.com.pe` desde el 16/10/2026; el `3001` puede limitarse a la IP del punto de acceso (`docs/seguridad/Seguridad.md`, 4.2).
 
 ---
 
 ## Anexo A. Registro del primer despliegue (28/09/2026)
 
-Hecho desde la PC de desarrollo (Windows), por SSH sobre Tailscale.
+Registro histórico: la primera instalación se hizo en el Controlador (PC) como servidor completo, desde la PC de desarrollo (Windows), por SSH sobre Tailscale.
 
 **Servidor**
 
@@ -864,7 +847,7 @@ Hecho desde la PC de desarrollo (Windows), por SSH sobre Tailscale.
 
 1. Instalación de Docker 29.1.3 y Docker Compose 2.40.3 (paquetes de Ubuntu).
 2. **Incidente (resuelto):** antes de decidir usar contenedores se lanzó una instalación de Node.js, npm y PostgreSQL directo en el sistema. El usuario la rechazó, pero ya se había ejecutado: instaló 542 paquetes (PostgreSQL 18 quedó activo en `127.0.0.1:5432`) y cambió la zona horaria a `America/Lima`. Con autorización del usuario se desinstalaron exactamente esos 542 paquetes (lista tomada de `/var/log/apt/history.log`), se borraron los datos vacíos de PostgreSQL y el usuario `postgres` del sistema. Se verificó que no quedó nada instalado y que el puerto 5432 quedó libre. La zona horaria se dejó en Lima por decisión del usuario.
-3. Copia del código con `git ls-files` + `tar` (incluía cambios aún sin commit) y `pscp` de PuTTY. **Desde entonces el método recomendado es `git archive`** (sección 3, paso 5), que parte de un commit y es reproducible.
+3. Copia del código con `git ls-files` + `tar` (incluía cambios aún sin commit) y `pscp` de PuTTY. Hoy se usa `deploy/empaquetar.sh` (sección 3).
 4. Claves nuevas de producción generadas con `secrets` de Python (distintas a las de desarrollo), guardadas en `~/mollendo/.env` (permisos `600`).
 5. Primera construcción: falló `npm ci` porque el `package-lock.json` lo generó npm 12 y la imagen trae npm 10. Se fijó npm 12.0.2 en los dos Dockerfile y se reconstruyó sin errores.
 6. `up -d`: el backend aplicó las 9 migraciones sobre la base vacía. Seed: empresa interna, `admin@monteazulsur.com.pe` y `vigilancia@monteazulsur.com.pe`. Base sin personal (los datos de prueba de desarrollo no se copiaron).
@@ -891,28 +874,28 @@ No se probó el acceso desde un navegador en la red local (`192.168.0.165`).
 
 ## Anexo B. Variables del archivo .env
 
-Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), `~/mollendo/deploy/controlador/.env` (controlador) o `~/mollendo/deploy/garita/.env` (mini PC como servidor completo). La plantilla es el `.env.example` de esa misma carpeta (ver [sección 0](#0-entornos)). En desarrollo, `mollendo-api/.env` (plantilla `mollendo-api/.env.example`).
+Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), `~/mollendo/deploy/controlador/.env` (controlador) o `~/mollendo/deploy/garita/.env` (Controlador (PC) como servidor completo). La plantilla es el `.env.example` de esa misma carpeta (ver [sección 0](#0-entornos)). En desarrollo, `mollendo-api/.env` (plantilla `mollendo-api/.env.example`).
 
 ### B.1. Servidor (nube y garita)
 
 | Variable | Obligatoria | Para qué sirve | Cómo generarla |
 |---|---|---|---|
 | `MOLINETES_REMOTOS` | En la nube | `true`: los lectores y relés están en el controlador de la garita y la orden de abrir se le manda a él. | — |
-| `DB_PASSWORD` | Sí | Contraseña del usuario `mollendo` de PostgreSQL. **No cambiarla después del primer arranque.** | `openssl rand -hex 24` |
+| `DB_PASSWORD` | Sí | Contraseña del usuario `mollendo` de PostgreSQL. **No cambiarla después del primer arranque.** | La genera `instalar.sh` |
 | `JWT_SECRET` | Sí | Firma de las sesiones del portal. Si cambia, todos deben volver a iniciar sesión. | `openssl rand -base64 48` |
 | `JWT_REFRESH_SECRET` | Sí | Firma de la renovación de sesiones. Distinta de `JWT_SECRET`. | `openssl rand -base64 48` |
 | `DEVICE_API_KEY` | Sí | Clave de los equipos físicos (cabecera `X-API-Key` en las rutas de ingreso y salida). Si cambia, hay que actualizarla en los equipos. | `openssl rand -hex 32` |
 | `G4PRO_SN_PERMITIDOS` | En la nube | Números de serie de los G4 Pro que pueden comunicarse con el servidor (`/iclock`), separados por coma. Cualquier otro recibe 403. Vacía = se acepta cualquiera (solo en la red local). En la nube `docker compose` no arranca sin ella. Ver [seguridad](../seguridad/Seguridad.md#31-números-de-serie-permitidos-del-g4-pro). | Etiqueta del equipo o "Sistema y APIs" → Equipo (G4 Pro) |
 | `G4PRO_IPS_PERMITIDAS` | Recomendada en la nube | IP pública de la sede desde donde se conecta el G4 Pro, separadas por coma (en Azure, `190.119.170.73`). Con ella, aunque alguien conozca el número de serie no puede hacerse pasar por el equipo. Vacía = cualquier IP. Si la sede cambia de IP, el G4 queda rechazado: ver `deploy/nube/README.md`. | En el servidor: `sudo tcpdump -nn -q -c 5 -i eth0 "tcp dst port 3001"` |
-| `CORS_ORIGIN` | No | Direcciones desde las que se abre el portal, separadas por coma. | Las IPs del servidor con `:3000` |
+| `CORS_ORIGIN` | No | Direcciones desde las que se abre el portal, separadas por coma. | En la nube `https://accesos.monteazulsur.com.pe` (lo pone `instalar.sh`) |
 | `ADMIN_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `admin@monteazulsur.com.pe`. Después del seed no se usa. | Al menos 10 caracteres, con letras y números (la misma regla del portal) |
 | `VIGILANCIA_SEED_PASSWORD` | Solo para el seed | Contraseña inicial de `vigilancia@monteazulsur.com.pe`. | Igual que la anterior |
 | `ADMIN_SEED_EMAIL`, `VIGILANCIA_SEED_EMAIL` | No | Cambian los correos de las cuentas iniciales (por defecto `admin@monteazulsur.com.pe` y `vigilancia@monteazulsur.com.pe`). | — |
 | `G4PRO_HORA_SINCRONIZACION` | No | Valor inicial de la sincronización diaria con los G4 Pro (0 a 23, hora de Lima; `off` la desactiva). Después se activa, desactiva o cambia de hora desde "Sistema y APIs", y eso se guarda en el servidor (`sincronizacion-diaria.json` en el volumen de documentos) y manda sobre este valor. | Por defecto `0` (medianoche); hoy `off` en la nube |
-| `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). | Por defecto `00:00`; en la nube `04:00` desde el 14/10/2026 |
-| `DIAS_RESPALDO` | No | Días que se guardan los respaldos (diarios y previos a actualizaciones; de estos últimos siempre queda el más reciente). Un valor no válido cuenta como 14. | Por defecto `14`; en la nube `30` desde el 14/10/2026 |
+| `HORA_RESPALDO` | No | Hora del respaldo diario (`HH:MM`, hora de Lima). | Por defecto `04:00` |
+| `DIAS_RESPALDO` | No | Días que se guardan los respaldos (diarios y previos a actualizaciones; de estos últimos siempre queda el más reciente). Un valor no válido cuenta como 30. | Por defecto `30` |
 | `PUSH_SDK_DEPURAR` | No | `true`: anota en el registro de la API todo lo que envía el G4 Pro (para estudiar el equipo). Volver a `false` al terminar. | Por defecto `false` |
-| `SWAGGER` | No | `true`: publica la documentación de la API (`/api/docs`). En la nube va apagada por seguridad (mostraría todas las rutas); en la mini PC está activa. | Por defecto `false` en la nube |
+| `SWAGGER` | No | `true`: publica la documentación de la API (`/api/docs`). En la nube va apagada por seguridad (mostraría todas las rutas); en la garita está activa. | Por defecto `false` en la nube |
 
 ### B.2. Lectores de DNI (controlador y garita)
 

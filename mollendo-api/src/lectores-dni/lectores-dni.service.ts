@@ -57,7 +57,7 @@ interface Lector {
 
 /**
  * Lee los lectores de DNI (Syble XB-7705H en modo RS232) conectados a la
- * mini PC y registra cada lectura como ingreso o salida, igual que
+ * Controlador (PC) y registra cada lectura como ingreso o salida, igual que
  * `POST /eventos-acceso/ingreso|salida` (en el servidor, directo en la base de
  * datos; en el controlador, mandándola al servidor: ver RegistroLecturas).
  *

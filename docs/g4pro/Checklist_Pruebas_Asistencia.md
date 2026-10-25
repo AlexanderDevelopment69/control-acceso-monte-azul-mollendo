@@ -117,10 +117,10 @@ Interruptor "Facial + Alcohol → DNI → Molinete" **encendido**.
 | 5.1 | Persona que no está registrada se para frente al G4 | No pasa nada en el Panel; si pasa un DNI no registrado: **"No registrado"** | [ ] |
 | 5.2 | Desconectar el G4 de la red (o apagarlo) | Sistema y APIs y la franja roja lo marcan **desconectado** en unos 20 s, a la vez; nadie entra (no hay prueba); queda en la Auditoría ("equipos"). Probado el 21/10 reiniciándolo por el protocolo (08:56 y 09:11): 1 min 10-20 s sin conexión | [x] |
 | 5.3 | Volver a conectar el G4 | Se reconecta solo; las pruebas hechas sin conexión llegan tarde, se guardan y **no abren** nada (más de 2 min) | [ ] |
-| 5.4 | Cortar internet de la garita (mini PC sin conexión) | Ingreso: **no se permite**, con aviso. Salida: se deja salir y se registra al volver | [ ] |
+| 5.4 | Cortar internet de la garita (Controlador (PC) sin conexión) | Ingreso: **no se permite**, con aviso. Salida: se deja salir y se registra al volver | [ ] |
 | 5.5 | Volver internet | El controlador se reconecta solo y sube las salidas pendientes | [ ] |
 | 5.6 | Pasar el DNI dos veces seguidas (doble lectura) | Una sola fila (las lecturas repetidas de menos de 3 s se ignoran) | [ ] |
-| 5.7 | Desconectar el lector de DNI de la entrada | Sistema y APIs lo muestra desconectado, el Panel muestra la franja "sin lector" (ingreso solo con rostro y alcohol) y queda en la Auditoría; al volver a conectarlo, se reabre solo. El 21/10 se simuló desde la mini PC (sin tocar cables): falta desconectar el cable de verdad | [ ] |
+| 5.7 | Desconectar el lector de DNI de la entrada | Sistema y APIs lo muestra desconectado, el Panel muestra la franja "sin lector" (ingreso solo con rostro y alcohol) y queda en la Auditoría; al volver a conectarlo, se reabre solo. El 21/10 se simuló desde el Controlador (PC) (sin tocar cables): falta desconectar el cable de verdad | [ ] |
 | 5.8 | Reinicio del sistema (actualización) en medio de un pase | Quien estaba esperando pierde el pase y debe repetirlo; nadie entra sin prueba | [ ] |
 | 5.9 | Hora del G4 | Sigue igual a la del servidor (diferencia de 1-2 s); si se desajusta, avisar | [ ] |
 | 5.10 | Alcoholímetro desconectado del G4 | El equipo no deja hacer la prueba: nadie entra. En unos 10 segundos, la franja de fallas y Sistema y APIs muestran "Alcoholímetro (DT1700): Desconectado" y queda en la Auditoría; al conectarlo, vuelve solo | [ ] |

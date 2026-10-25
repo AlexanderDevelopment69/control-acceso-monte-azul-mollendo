@@ -54,7 +54,7 @@ export function ipEquipoAutorizada(ip: string | undefined): boolean {
  * ¿Se atiende este pedido que llegó directo al puerto de la API? El puerto da a
  * internet solo para el G4 Pro (/iclock, que no sabe usar HTTPS). Lo demás
  * (inicio de sesión, datos) entra por el proxy HTTPS o desde la red interna
- * (el proxy, el portal, la propia máquina o la red local de la mini PC): así
+ * (el proxy, el portal, la propia máquina o la red local del Controlador (PC)): así
  * nadie puede iniciar sesión ni leer datos sin cifrar.
  */
 export function atendidoPorPuertoDirecto(ruta: string, ipConexion: string | undefined): boolean {

@@ -50,7 +50,7 @@ export class EstadoSistemaService {
     // Cada equipo facial con su alcoholímetro (se revisa cada 10 s: AlcoholimetroService).
     const dispositivos = (await this.pushSdk.listarEstadoDispositivos()).map((d) => ({ ...d, alcoholimetro: this.alcoholimetro.estado(d.serialNumber) }));
     // Con controlador (MOLINETES_REMOTOS=true), los lectores y los relés
-    // están en la mini PC de la garita: se muestra lo que ella informa.
+    // están en el Controlador (PC) de la garita: se muestra lo que ella informa.
     const controlador = this.controlador.estado();
     const remotos = controlador.remoto ? controlador.estado : null;
 
@@ -73,12 +73,12 @@ export class EstadoSistemaService {
         enLinea: dispositivos.filter((d) => d.enLinea).length,
         dispositivos,
       },
-      // Lectores de DNI (RS232 en la mini PC, ver lectores-dni/): si están
+      // Lectores de DNI (RS232 en el Controlador (PC), ver lectores-dni/): si están
       // configurados, si el puerto está abierto y la hora de la última lectura.
       lectoresDni: remotos?.lectoresDni ?? (controlador.remoto ? sinConfigurarLectores() : this.lectoresDni.estado()),
       // Módulos de relés USB que abren los molinetes (uno por molinete).
       releMolinetes: remotos?.releMolinetes ?? (controlador.remoto ? sinConectarReles() : await this.releUsb.estado()),
-      // Controlador (mini PC conectada por internet), si los molinetes se abren a distancia.
+      // Controlador (PC) conectado por internet, si los molinetes se abren a distancia.
       controladorGarita: controlador,
       // Sincronización con los G4 Pro: diaria activa o no, en curso y el último resultado.
       sincronizacionG4: await this.integraciones.estadoSincronizacion(),

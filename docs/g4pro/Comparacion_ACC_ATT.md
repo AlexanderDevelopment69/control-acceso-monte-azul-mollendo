@@ -163,7 +163,7 @@ Por indicación del soporte, se cambió en el equipo: menú *firmware type setti
 - Textos de "Facial primero" (aviso del Panel, confirmación y manual): 15 s desde que aparece "pase su DNI" (30 s desde el 21/10/2026).
 
 **Garita (19/10)**
-- El puerto USB 9 de la mini PC reconocía el adaptador del lector, pero no le pasaba los datos. Se resolvió cambiando el adaptador de entrada a otro puerto.
+- El puerto USB 9 del Controlador (PC) reconocía el adaptador del lector, pero no le pasaba los datos. Se resolvió cambiando el adaptador de entrada a otro puerto.
 - El lector a veces envía `71988749 JOSE VILCHEZ` (número y nombre), un formato que el sistema ignora. Falta confirmar qué documento lo produce.
 
 ## 4. Conclusión

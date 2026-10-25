@@ -1,4 +1,4 @@
-# Entorno CONTROLADOR: mini PC de la garita cuando el servidor está en la nube.
+# Entorno CONTROLADOR: Controlador (PC) del punto de acceso cuando el servidor está en la nube.
 # Solo lectores de DNI y relés de los molinetes, conectada al servidor; usa la
 # misma imagen que la API, arrancada en modo controlador (src/controlador/).
 # Sin base de datos ni portal. Ver README.md de esta carpeta.
@@ -14,7 +14,7 @@ services:
     image: mollendo-controlador
     restart: unless-stopped
     command: ["node", "dist/controlador/main.js"]
-    # Usa la red de la mini PC (no una red interna de Docker): así informa su IP
+    # Usa la red del Controlador (PC) (no una red interna de Docker): así informa su IP
     # real en la garita y no puede chocar con las redes de TMAM (el 16/10/2026 la
     # red interna 172.20.0.0/16 chocaba con la de los biométricos, 172.20.20.x).
     # El controlador solo hace conexiones de salida: no publica puertos.
@@ -45,7 +45,7 @@ services:
       RELE_AVISO_INGRESO_MODO: ${RELE_AVISO_INGRESO_MODO:-}
       RELE_AVISO_SALIDA_MODO: ${RELE_AVISO_SALIDA_MODO:-}
       RELE_AVISO_ALTERNO_MS: ${RELE_AVISO_ALTERNO_MS:-3000}
-    # Igual que la API de la mini PC: puertos serie USB (lectores) y hidraw (relés).
+    # Igual que la API de la garita: puertos serie USB (lectores) y hidraw (relés).
     # Registro del kernel (/dev/kmsg, solo lectura): para detectar un adaptador USB de
     # lector trabado (error -71; visto el 20-21/10/2026). SYSLOG es el permiso para leerlo.
     cap_add:

@@ -86,7 +86,7 @@ ${cuerpo}` : ''}`);
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );
 
-  // En producción solo si SWAGGER=true (p. ej. en la mini PC, red interna);
+  // En producción solo si SWAGGER=true (p. ej. en el Controlador (PC), red interna);
   // en la nube va apagado: mostraría a cualquiera todas las rutas de la API.
   if (swaggerActivo()) {
     const config = new DocumentBuilder()

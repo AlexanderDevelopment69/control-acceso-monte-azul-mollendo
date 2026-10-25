@@ -44,7 +44,7 @@ Corresponde al **alcance base** acordado: una aplicación web en la que el **adm
 - Validación del ingreso: persona no dada de baja, al menos un documento, ninguno vencido y prueba de alcohol conforme.
 - Panel de vigilancia en tiempo real, Auditoría, Sistema y APIs, y Manual de uso.
 - Dos tipos de cuenta: Administrador y Vigilancia.
-- Instalación en un servidor en la nube (máquina virtual Ubuntu Server en Microsoft Azure), con respaldos diarios. En el punto de acceso, la mini PC opera como Controlador (PC) de los equipos.
+- Instalación en un servidor en la nube (máquina virtual Ubuntu Server en Microsoft Azure), con respaldos diarios. En el punto de acceso, el Controlador (PC) opera como Controlador (PC) de los equipos.
 
 **Desarrollos adicionales al alcance base, solicitados por el cliente:**
 
@@ -89,14 +89,14 @@ Controlar que solo ingrese al terminal el personal habilitado: registrado, no da
 | Almacenamiento de archivos | Documentos (PDF, imágenes, Word) y fotos del personal. |
 | Respaldos | Copia diaria automática de la base de datos y de los archivos. |
 | Servidor en la nube | Máquina virtual Ubuntu Server 26.04 en Microsoft Azure, donde se ejecutan el portal, el backend, la base de datos y los respaldos. Portal en **https://accesos.monteazulsur.com.pe**. |
-| Controlador (PC) | Mini PC ubicada junto a los molinetes: lee el DNI en los lectores, envía la lectura al servidor, recibe su respuesta y abre los molinetes con sus relés. |
+| Controlador (PC) | Computadora ubicada junto a los molinetes: lee el DNI en los lectores, envía la lectura al servidor, recibe su respuesta y abre los molinetes con sus relés. |
 | Equipos del punto de acceso | Terminal facial ZKTeco G4 Pro con alcoholímetro DT1700, dos lectores de DNI Syble XB-7705H, dos molinetes ZKTeco TS2000 Plus. |
 
 ### 2.3. Arquitectura
 
 El sistema se ejecuta en un **servidor en la nube**: una máquina virtual Ubuntu Server 26.04 en Microsoft Azure de TMAM, en uso desde el 16/10/2026. El portal está en **https://accesos.monteazulsur.com.pe**, con certificado de seguridad que se renueva solo. Cada componente se despliega en un **contenedor Docker**, lo que mantiene los servicios aislados entre sí y del sistema operativo del servidor.
 
-En el punto de acceso, la mini PC trabaja como **Controlador (PC)**:
+En el punto de acceso, el Controlador (PC) trabaja como **Controlador (PC)**:
 
 - lee los DNI y los envía al servidor por internet, con la clave de equipos;
 - recibe del servidor la orden de abrir cada molinete y activa su relé;
@@ -494,7 +494,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 - **Librerías** revisadas y actualizadas, sin vulnerabilidades conocidas en lo que se instala en el servidor.
 - **Panel en vivo:** la conexión en tiempo real exige una sesión válida y una cuenta activa; al dar de baja una cuenta o cambiar su contraseña, se cortan también sus paneles abiertos.
 - **Auditoría** de todos los cambios de datos.
-- **Red:** en el servidor solo están abiertos el portal y la API por HTTPS y el acceso de administración (SSH, únicamente con llave); la base de datos no es accesible desde fuera. La mini PC no abre puertos: inicia ella la conexión con el servidor y soporte la administra por la VPN Tailscale. Las credenciales de producción se almacenan únicamente en el servidor.
+- **Red:** en el servidor solo están abiertos el portal y la API por HTTPS y el acceso de administración (SSH, únicamente con llave); la base de datos no es accesible desde fuera. El Controlador (PC) no abre puertos: inicia ella la conexión con el servidor y soporte la administra por la VPN Tailscale. Las credenciales de producción se almacenan únicamente en el servidor.
 - **Cifrado HTTPS** (https://accesos.monteazulsur.com.pe), con certificado que se renueva solo.
 
 ---
@@ -503,7 +503,7 @@ Todas las rutas empiezan con `/api/v1`. El portal se autentica con un token de s
 
 ### 10.1. Instalación
 
-El sistema se encuentra instalado en la máquina virtual de Microsoft Azure (Ubuntu Server 26.04) mediante contenedores Docker, desde el 16/10/2026; la mini PC del punto de acceso está configurada como Controlador (PC), también con Docker. Se dispone de una guía de despliegue que detalla la instalación desde cero, las actualizaciones, la operación diaria y la solución de problemas.
+El sistema se encuentra instalado en la máquina virtual de Microsoft Azure (Ubuntu Server 26.04) mediante contenedores Docker, desde el 16/10/2026; el Controlador (PC) del punto de acceso también funciona con Docker. Se dispone de una guía de despliegue que detalla la instalación desde cero, las actualizaciones, la operación diaria y la solución de problemas.
 
 ### 10.2. Actualizaciones
 
@@ -521,7 +521,7 @@ Antes de cada actualización se genera un respaldo de la base de datos; luego se
 | Situación | Comportamiento |
 |---|---|
 | Reinicio de la máquina virtual | El sistema se inicia automáticamente al arrancar el servidor. Los datos guardados se conservan. |
-| Corte de luz o reinicio de la mini PC | El controlador se inicia solo al volver la energía y se reconecta con el servidor. Mientras esté apagado, no se leen DNI ni se abren los molinetes por el sistema. |
+| Corte de luz o reinicio del Controlador (PC) | El controlador se inicia solo al volver la energía y se reconecta con el servidor. Mientras esté apagado, no se leen DNI ni se abren los molinetes por el sistema. |
 | Falla del backend | Se reinicia automáticamente. El Panel avisa "El servidor no responde". |
 | Emergencia o corte de luz en los molinetes | Los brazos de los molinetes se liberan automáticamente (función propia del equipo). |
 | Sin conexión a internet en el punto de acceso | El controlador detecta la falta de conexión cuando el servidor no responde en 5 segundos. **Nadie puede ingresar**: se activa el aviso de ingreso denegado. **Sí se puede salir**: el Controlador (PC) guarda la lista del personal registrado (se actualiza cada 10 minutos) y deja salir a quien está en ella; quien no está, no sale y se activa el aviso de salida denegada. Al volver la conexión, las salidas realizadas se registran con su hora real. |
@@ -570,9 +570,9 @@ El detalle de cada contingencia está en el documento de contingencias.
 | Dado de baja | Persona inactiva en el sistema (por ejemplo, porque ya no labora en el terminal); no puede ingresar. |
 | Documento vigente / vencido | Según su fecha de vencimiento respecto de hoy (RN-04). |
 | Evento de acceso | Registro de un intento de ingreso o salida, autorizado o denegado. |
-| Mini PC | Computadora ubicada junto a los molinetes; trabaja como Controlador (PC). |
+| Controlador (PC) | Computadora ubicada junto a los molinetes; lee los DNI y abre los molinetes. |
 | Máquina virtual (VM) | Servidor en Microsoft Azure con Ubuntu Server 26.04 donde se ejecuta el sistema. |
-| Controlador (PC) | Papel de la mini PC con el servidor en la nube: lee los DNI, abre los molinetes y se conecta con el servidor. En el portal figura como "Controlador". |
+| Controlador (PC) | Papel del Controlador (PC) con el servidor en la nube: lee los DNI, abre los molinetes y se conecta con el servidor. En el portal figura como "Controlador". |
 | Molinete | Torniquete de paso (ZKTeco TS2000 Plus). |
 | Protocolo PUSH | Protocolo de comunicación del fabricante ZKTeco entre el terminal facial y el sistema. |
 | Modo asistencia | Modo del terminal facial en uso desde el 19/10/2026: reconoce a todo el personal registrado y envía quién sopló y el grado de alcohol; decide el sistema (RN-03). |
@@ -582,5 +582,5 @@ El detalle de cada contingencia está en el documento de contingencias.
 | Permiso de paso, habilitación y en cola | Términos del modo control de acceso del terminal facial (el usado hasta el 19/10/2026): el sistema daba permiso de paso solo a quien pasó su DNI, una persona a la vez, y las demás esperaban en cola. |
 | Visita | Perfil de persona: alguien de afuera que viene de visita (no un trabajador). Hasta el 16/10/2026 el Dashboard llamaba "visita" a cada ingreso; ahora dice "ingreso". |
 | Respaldo | Copia de la base de datos y de los archivos para recuperar la información. |
-| Tailscale | Red privada virtual (VPN) con la que soporte administra la mini PC sin exponerla a internet. |
+| Tailscale | Red privada virtual (VPN) con la que soporte administra el Controlador (PC) sin exponerla a internet. |
 | X-API-Key | Clave con la que se identifican los equipos ante el sistema. |

@@ -20,7 +20,7 @@
   .c { text-anchor: middle; }
 </style>
 <rect width="1040" height="900" fill="#ffffff"/>
-<title>Arquitectura de software del Sistema de Control de Accesos: servidor en la nube y mini PC de la garita como controlador</title>
+<title>Arquitectura de software del Sistema de Control de Accesos: servidor en la nube y Controlador (PC) de la garita como controlador</title>
 <defs>
   <marker id="hd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="md"/></marker>
   <marker id="hm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="mm"/></marker>
@@ -96,7 +96,7 @@
 <text class="zl" x="50" y="716">GARITA · CONECTADA AL SERVIDOR POR INTERNET</text>
 
 <rect class="bx-main" x="60" y="730" width="540" height="140" rx="8"/>
-<text class="t1" x="80" y="758">Mini PC · controlador</text>
+<text class="t1" x="80" y="758">Controlador (PC)</text>
 <text class="tm" x="80" y="778">contenedor controlador · la misma imagen del backend, en modo controlador</text>
 <g>
   <rect class="ch" x="80" y="792" width="150" height="30" rx="6"/><text class="tc" x="155" y="807">Lectores de DNI (USB)</text>

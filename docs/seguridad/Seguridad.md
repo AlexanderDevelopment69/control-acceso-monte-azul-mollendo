@@ -55,7 +55,7 @@ Sin problemas graves conocidos. Lo que cubre:
 | 🟠 | **Respaldos fuera del servidor:** hoy los respaldos diarios están en el mismo disco del servidor de Azure; si se pierde o se compromete, se pierden datos y respaldos. Opciones: Azure Backup de la máquina virtual (desde el portal de Azure) o copiar cada respaldo a un Azure Storage (Blob) | Quien administre Azure (TMAM) | Pendiente |
 | ✅ | **Puerto 3001 solo para la IP del terminal** ([4.2](#42-restringir-el-puerto-3001-por-ip)): en la API, con `G4PRO_IPS_PERMITIDAS=190.119.170.73` (IP fija de la sede) | Soporte | Hecho el 18/10/2026. Opcional además: la misma regla en el grupo de seguridad de red de Azure (TMAM) |
 | 🟠 | **Proxy de Cloudflare** (nube naranja) contra ataques web y DDoS ([4.3](#43-otros)) | TMAM (maneja el DNS en Cloudflare) | Pendiente |
-| 🟠 | **Actualizar la mini PC** cuando vuelva a estar en línea: no tiene las correcciones del 10 y 11/10/2026 (`deploy/controlador/README.md`, sección 5) | Soporte | Pendiente |
+| 🟠 | **Actualizar el Controlador (PC)** cuando vuelva a estar en línea: no tiene las correcciones del 10 y 11/10/2026 (`deploy/controlador/README.md`, sección 5) | Soporte | Pendiente |
 
 ## 1. Resumen
 
@@ -131,7 +131,7 @@ Sin problemas graves conocidos. Lo que cubre:
 
 - Variable `G4PRO_SN_PERMITIDOS`: números de serie separados por coma (sin importar mayúsculas ni espacios).
 - Guarda `SerieG4Guard` en todas las rutas `/iclock/*` (`mollendo-api/src/common/guards/serie-g4.guard.ts`): un número de serie que no está en la lista recibe **403** y queda en el registro (`Terminal rechazado: SN=… desde <IP>`, una vez por número de serie e IP).
-- Vacía = se acepta cualquiera (solo desarrollo y la mini PC en la red local). **En la nube es obligatoria**: `docker compose` no arranca sin ella.
+- Vacía = se acepta cualquiera (solo desarrollo y el Controlador (PC) en la red local). **En la nube es obligatoria**: `docker compose` no arranca sin ella.
 - "Sistema y APIs" → tarjeta "Clave de equipos físicos" muestra qué terminales se aceptan, o avisa en ámbar si falta la lista.
 - Dónde ver el número de serie: etiqueta del equipo, o "Sistema y APIs" → "Equipos de acceso" → Equipo (G4 Pro).
 - Si se cambia el equipo, hay que agregar el número de serie nuevo y reiniciar la API (`docker compose up -d`).
@@ -160,7 +160,7 @@ Sin problemas graves conocidos. Lo que cubre:
 
 ### 3.4. Swagger
 
-- `SWAGGER: ${SWAGGER:-false}` en `deploy/nube/docker-compose.yml`. En la mini PC (red local) y en desarrollo sigue activo.
+- `SWAGGER: ${SWAGGER:-false}` en `deploy/nube/docker-compose.yml`. En el Controlador (PC) (red local) y en desarrollo sigue activo.
 - "Sistema y APIs" muestra "Desactivada en este servidor por seguridad" en lugar del enlace.
 - Para revisarla un momento: `SWAGGER=true` en `.env`, `docker compose up -d`, y luego volver a `false`.
 
@@ -185,7 +185,7 @@ Sin problemas graves conocidos. Lo que cubre:
 **Equipos y puerto 3001 (18/10/2026)**
 
 - **IP de la sede para el G4 Pro:** variable `G4PRO_IPS_PERMITIDAS` (IPs separadas por coma; en Azure, `190.119.170.73`, fija según el usuario). `SerieG4Guard` exige el número de serie **y** que la conexión venga de esa IP. La IP se toma de la conexión (`socket.remoteAddress`), no de `X-Forwarded-For`, que cualquiera puede escribir. Rechazo: **403** y en el registro `Terminal rechazado: SN=… desde <IP> (la IP no está en G4PRO_IPS_PERMITIDAS)`. Vacía = cualquier IP (se avisa al arrancar la API).
-- **El 3001 solo para el G4 Pro:** `atendidoPorPuertoDirecto` (`mollendo-api/src/common/seguridad/equipos.util.ts`, aplicado en `main.ts`): un pedido que llega directo desde internet solo se atiende si es `/iclock`; el resto responde **404**, salvo un navegador que abre una página (`GET` que acepta HTML): a ese se le redirige al portal por HTTPS (el primer origen `https://` de `CORS_ORIGIN`; `portalParaNavegador`). Lo que viene de la red interna se atiende normal: el proxy HTTPS (Caddy), el portal, la propia máquina y la red local de la mini PC.
+- **El 3001 solo para el G4 Pro:** `atendidoPorPuertoDirecto` (`mollendo-api/src/common/seguridad/equipos.util.ts`, aplicado en `main.ts`): un pedido que llega directo desde internet solo se atiende si es `/iclock`; el resto responde **404**, salvo un navegador que abre una página (`GET` que acepta HTML): a ese se le redirige al portal por HTTPS (el primer origen `https://` de `CORS_ORIGIN`; `portalParaNavegador`). Lo que viene de la red interna se atiende normal: el proxy HTTPS (Caddy), el portal, la propia máquina y la red local del Controlador (PC).
 - **Librerías:** `compression` 1.8.2 (fuga de memoria con conexiones cortadas) y `prisma`, `@prisma/client` y `@prisma/adapter-pg` 7.10.1 (`allowScripts` en `package.json` actualizado a esa versión). Quedan 2 avisos moderados en `exceljs` → `uuid`: la falla solo ocurre con un uso de `uuid` que exceljs no hace, y el "arreglo" de npm es bajar a exceljs 3.
 
 - **Direcciones del portal que no existen** (por ejemplo `https://accesos.monteazulsur.com.pe/dewdw`): página propia "Página no encontrada" (404, en español, con "Volver al inicio"; `mollendo-portal/src/app/not-found.tsx`). No se redirige al inicio a propósito: quien escribió mal la dirección o abrió un enlace viejo entiende qué pasó, y la página no muestra nada interno del sistema. Criterio: el **puerto 3001** sí redirige porque es la entrada equivocada (sin cifrar, solo para el G4) y ahí no hay páginas; en el **dominio**, una página que no existe se informa. Una página que sí existe, abierta sin sesión (por ejemplo `/vigilancia`), lleva al inicio de sesión.
@@ -218,7 +218,7 @@ Sin problemas graves conocidos. Lo que cubre:
 - **Proxy de Cloudflare (nube naranja):** el dominio ya está en Cloudflare, pero en "DNS only" (comprobado el 18/10/2026: apunta directo a `74.163.89.6` y las respuestas no traen `cf-ray`). Con la nube naranja, Cloudflare filtra ataques web, bots y DDoS antes de llegar al servidor, gratis. Lo activa TMAM: registro `accesos` en "Proxied", SSL/TLS en "Full (strict)" y "Always Use HTTPS" apagado (el servidor ya redirige y así el certificado se renueva). Antes, en el servidor: que Caddy confíe en las IP de Cloudflare para seguir viendo la IP real de cada usuario. El G4 no se afecta (entra por IP y puerto 3001).
 - **Contraseñas de las 2 cuentas** (administrador y vigilancia): son anteriores a la regla de 10 caracteres (comprobado el 18/10/2026). Cambiarlas desde "Cambiar contraseña".
 - **Respaldos legibles por cualquier usuario del servidor** (carpeta `backups/` con permisos 755 y archivos 644): solo importa si alguien más entra al servidor; conviene dejarlos solo para su dueño.
-- `ufw` está inactivo en el servidor de Azure: el filtro lo hace el grupo de seguridad de red de Azure (abiertos 22, 80, 443 y 3001; el 3000 solo escucha en la propia máquina). En la mini PC, revisar que solo estén abiertos los puertos necesarios.
+- `ufw` está inactivo en el servidor de Azure: el filtro lo hace el grupo de seguridad de red de Azure (abiertos 22, 80, 443 y 3001; el 3000 solo escucha en la propia máquina). En el Controlador (PC), revisar que solo estén abiertos los puertos necesarios.
 - Las 5 alertas de `npm audit` en herramientas de desarrollo del portal (eslint y similares) requieren versiones mayores; no se despliegan.
 
 ---

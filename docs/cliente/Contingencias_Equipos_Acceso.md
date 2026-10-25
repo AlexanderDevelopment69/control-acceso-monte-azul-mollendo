@@ -257,7 +257,7 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 - **Salida:** nadie sale por el molinete.
 - El aviso de fallas muestra *"Lector de DNI de ingreso (o de salida): cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
 - Mientras tanto, se activa sola la contingencia "sin lector" (sección 6.3).
-- **Adaptador USB trabado** (visto el 20 y 21/10/2026 con el lector de salida): el lector pita, pero el adaptador USB que lo une al Controlador (PC) no entrega nada. Desde el 21/10/2026 el sistema lo detecta en el momento: "Sistema y APIs" muestra *"Adaptador sin respuesta"*, el aviso de fallas lo informa y se activa la contingencia "sin lector". Se arregla desconectando y volviendo a conectar ese adaptador en la mini PC (o reiniciándola); si se repite, se cambia el adaptador por el repuesto.
+- **Adaptador USB trabado** (visto el 20 y 21/10/2026 con el lector de salida): el lector pita, pero el adaptador USB que lo une al Controlador (PC) no entrega nada. Desde el 21/10/2026 el sistema lo detecta en el momento: "Sistema y APIs" muestra *"Adaptador sin respuesta"*, el aviso de fallas lo informa y se activa la contingencia "sin lector". Se arregla desconectando y volviendo a conectar ese adaptador en el Controlador (PC) (o reiniciándola); si se repite, se cambia el adaptador por el repuesto.
 
 ### 6.2. Cómo está conectado un lector
 
@@ -612,7 +612,7 @@ Mientras se cambia una pieza, el sistema **no deja pasar a nadie sin control**: 
 | Pieza | Cómo se nota que falló | ¿Hay que configurar algo? | El día del cambio | Repuesto hoy |
 |---|---|---|---|---|
 | **Lector de DNI** (el aparato que lee el DNI) | No pita ni prende su luz al pasar el DNI | **Sí, una vez:** escanear los códigos de su folleto (11.2) | Conectarlo al mismo adaptador | Falta |
-| **Adaptador USB del lector** (el cable o cajita que une el lector a la mini PC) | El lector pita pero no pasa nada; Sistema y APIs dice *"Adaptador sin respuesta"* o *"Cable desconectado"* | **Sí:** avisarle al sistema su número de serie (11.3) | Opción A: soporte lo registra al cambiarlo. Opción B: funciona solo | Falta |
+| **Adaptador USB del lector** (el cable o cajita que une el lector al Controlador (PC)) | El lector pita pero no pasa nada; Sistema y APIs dice *"Adaptador sin respuesta"* o *"Cable desconectado"* | **Sí:** avisarle al sistema su número de serie (11.3) | Opción A: soporte lo registra al cambiarlo. Opción B: funciona solo | Falta |
 | **Relé de un molinete o de aviso** | El Panel dice "Autorizado" pero el molinete no abre; el aviso de fallas muestra el relé *"No conectado"* | **Sí, una vez:** grabarle la serie (11.4) | Enchufarlo; el sistema lo reconoce en segundos | Falta |
 | **Equipo facial (G4 Pro)** | Aviso de fallas *"Terminal facial … Desconectado"* | **Sí:** varias cosas (11.5) | Mientras tanto, verificación manual (sección 4) | No previsto |
 | **Alcoholímetro (DT1700)** | Aviso de fallas *"Alcoholímetro (DT1700) … Desconectado"*, o nadie puede soplar | **No**, si es el mismo modelo (11.6) | Enchufarlo al equipo facial y probar | Falta |
@@ -631,13 +631,13 @@ Mientras se cambia una pieza, el sistema **no deja pasar a nadie sin control**: 
 - El adaptador **no se configura**: se enchufa. Pero el sistema reconoce cada lector por el **número de serie de su adaptador**, así que un adaptador nuevo hay que **avisárselo** al Controlador (PC).
 - **Opción A** (hoy): al cambiarlo, soporte registra el adaptador nuevo en el Controlador (PC) y lo reinicia (unos minutos, por acceso remoto).
 - **Opción B** (recomendada; decisión n.º 11, pendiente): el adaptador de repuesto queda registrado desde antes y funciona apenas se conecta. Requiere un cambio pequeño de programación (sección 6.4).
-- **El adaptador de salida actual (serie terminada en …C705) conviene cambiarlo:** se trabó el 20/10 y el 21/10/2026 al reabrirse su puerto. Desde el 21/10/2026 el sistema detecta ese caso (*"Adaptador sin respuesta"*) y activa solo la contingencia "sin lector"; se arregla desconectándolo y volviéndolo a conectar, o reiniciando la mini PC.
+- **El adaptador de salida actual (serie terminada en …C705) conviene cambiarlo:** se trabó el 20/10 y el 21/10/2026 al reabrirse su puerto. Desde el 21/10/2026 el sistema detecta ese caso (*"Adaptador sin respuesta"*) y activa solo la contingencia "sin lector"; se arregla desconectándolo y volviéndolo a conectar, o reiniciando el Controlador (PC).
 - Conviene **etiquetar** los adaptadores ("INGRESO", "SALIDA", "REPUESTO").
 
 ### 11.4. Relé (molinete o aviso)
 
 - Cada relé tiene grabada una **serie** que el sistema usa para saber cuál es cuál: ingreso `ING01`, salida `SAL01`, aviso de ingreso `DEN01`, aviso de salida `DSA01`. Un relé nuevo viene con otra serie.
-- **Antes (una vez):** conectar el relé de repuesto a la mini PC y **grabarle la serie** del que va a reemplazar (soporte, por acceso remoto; `deploy/controlador/README.md`, paso 6). En el sistema no se cambia nada.
+- **Antes (una vez):** conectar el relé de repuesto al Controlador (PC) y **grabarle la serie** del que va a reemplazar (soporte, por acceso remoto; `deploy/controlador/README.md`, paso 6). En el sistema no se cambia nada.
 - **El día del cambio:** desenchufar el relé malogrado y enchufar el repuesto. El sistema lo reconoce solo en segundos; probar un paso.
 - Lo ideal son **dos repuestos ya grabados** (uno `ING01` y otro `SAL01`), porque cada relé tiene una sola serie a la vez. Con uno solo, se le graba la serie del que falle en el momento (unos minutos). Los relés de aviso no son urgentes: sin ellos solo se pierde la señal de "denegado".
 
