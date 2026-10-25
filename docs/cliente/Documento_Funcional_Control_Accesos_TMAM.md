@@ -263,7 +263,7 @@ Guía de uso dentro del portal, por rol, con capturas numeradas de cada pantalla
 | RN-06 | Los documentos no requieren aprobación. |
 | RN-07 | Eliminar un documento borra todas sus versiones. |
 | RN-08 | La salida se permite a toda persona registrada con un ingreso previo, aunque esté de baja. |
-| RN-08a | **Antipassback:** no se ingresa dos veces sin salir ni se sale sin haber entrado; el vigilante puede corregirlo con motivo. |
+| RN-08a | **Antipassback:** no se ingresa dos veces sin salir ni se sale sin haber entrado. |
 | RN-09 | Un documento de identidad no registrado se deniega y queda en el historial. |
 | RN-10 | DNI de 8 dígitos; no puede haber dos personas con el mismo documento. |
 | RN-11 | Los nombres de documento se eligen de una lista fija. |

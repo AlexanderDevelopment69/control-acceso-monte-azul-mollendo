@@ -213,6 +213,8 @@ export interface EventoAcceso {
 }
 
 export interface ResumenPanel {
+  /** Personas dentro del terminal ahora (último movimiento autorizado: ingreso). */
+  presentesAhora: number;
   denegacionesHoy: number;
   alcoholNoConformeHoy: number;
   documentosVencidos: number;

@@ -511,7 +511,8 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <>
                 <p>
-                  Cuántos no pudieron pasar hoy, cuántos dieron alcohol positivo y cuántos tienen documentos vencidos. Cada ingreso o salida
+                  <b>Cuántas personas están dentro del terminal</b> (al tocarlo abre Presentes ahora), cuántos no pudieron pasar hoy,
+                  cuántos dieron alcohol positivo y cuántos tienen documentos vencidos. Cada ingreso o salida
                   aparece arriba de la tabla apenas ocurre, resaltado unos segundos.
                 </p>
                 <p className="font-medium text-gray-800 dark:text-white/90">Avisos que pueden aparecer arriba:</p>
@@ -845,8 +846,8 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Buscar",
             texto: (
               <p>
-                Por nombre, DNI o empresa. Útil, por ejemplo, en una evacuación. Se actualiza sola con cada ingreso o salida. El
-                administrador regresa con <b>‹ Dashboard</b>.
+                Por nombre, DNI o empresa. Útil, por ejemplo, en una evacuación. Se actualiza sola con cada ingreso o salida. También se
+                abre tocando <b>Presentes ahora</b> en el Panel. El administrador regresa con <b>‹ Dashboard</b>.
               </p>
             ),
           },
@@ -1007,8 +1008,7 @@ export const SECCIONES: SeccionManual[] = [
               <>
                 <p>Quienes ingresaron hace más de 12 horas y no registran salida. Al final de la página está la lista con su tiempo dentro.</p>
                 <p>
-                  Tras una emergencia con los brazos del molinete liberados, quienes salieron así siguen figurando dentro hasta que el
-                  vigilante registre su salida manual.
+                  Tras una emergencia con los brazos del molinete liberados, quienes salieron así siguen figurando dentro.
                 </p>
               </>
             ),

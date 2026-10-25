@@ -170,7 +170,8 @@ const CAPTURAS = [
     puntos: [
       // Los números van en espacios libres, sin tapar contenido.
       { sel: "::-p-text(Facial + Alcohol → DNI)", lado: "der" },
-      { sel: "::-p-text(Accesos restringidos hoy)", recuadro: ".rounded-xl", lado: "esquina" },
+      // El resumen del día empieza por Presentes ahora (la primera tarjeta).
+      { sel: "::-p-text(Personas dentro del terminal)", recuadro: "button", lado: "esquina" },
       // El 2 junto al texto del buscador; el 3 en el espacio libre del buscador, pegado al filtro de fecha.
       { sel: 'input[placeholder*="Buscar por nombre o DNI"]', lado: "texto-buscador" },
       { sel: 'input[placeholder="Todos los días"]', lado: "izq" },

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { escucharEventos } from "@/lib/ws";
 import { eventosAccesoApi, panelApi } from "@/lib/api/endpoints";
@@ -28,7 +30,7 @@ import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import DatePicker from "@/components/form/date-picker";
-import { AlertCircleIcon, CheckLineIcon, CloseLineIcon, DocsIcon } from "@/icons";
+import { AlertCircleIcon, CheckLineIcon, CloseLineIcon, DocsIcon, UserIcon } from "@/icons";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { FilasEnEspera } from "./FilasEnEspera";
 import { CompararFoto, FranjaFacialPrimero, type IngresoParaComparar } from "./FranjaFacialPrimero";
@@ -81,6 +83,8 @@ function DniAngosto({ ev }: { ev: EventoAcceso }) {
 }
 
 function VigilanciaContent() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
   const [lista, setLista] = useState<Paginado<EventoAcceso> | null>(null);
   const [enEspera, setEnEspera] = useState<IngresoEnEspera[]>([]);
@@ -490,8 +494,20 @@ function VigilanciaContent() {
       <ActivarVerificacionManual abierta={activando} causa={causaActivar} onCerrar={() => setActivando(false)} onActivar={activarManual} />
       <DecisionManualVentana ingreso={enEspera.find((i) => i.manual && !i.enCola) ?? null} ahora={ahora} onDecidir={decidir} />
 
-      {/* En el celular, los tres contadores en una fila y compactos. */}
-      <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-4">
+      {/* En el celular, los cuatro contadores en dos filas y compactos. */}
+      <div className="mb-6 grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
+        {/* Cuántos están dentro ahora; abre la lista de Presentes ahora (cada rol, su dirección). */}
+        <TarjetaIndicador
+          tamano="celular"
+          titulo="Presentes ahora"
+          valor={resumen?.presentesAhora ?? null}
+          colorValor="text-brand-500"
+          icono={<UserIcon />}
+          fondoIcono="bg-brand-500"
+          detalle="Personas dentro del terminal"
+          onClick={() => router.push(user?.rol === "administrador" ? "/dashboard/presentes" : "/presentes")}
+          title="Ver quiénes están dentro"
+        />
         <TarjetaIndicador
           tamano="celular"
           titulo="Accesos restringidos hoy"

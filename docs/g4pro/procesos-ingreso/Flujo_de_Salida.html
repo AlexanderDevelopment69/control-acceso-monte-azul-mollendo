@@ -1,0 +1,201 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Flujo de salida</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Estilo común de los flujos (ingreso y contingencias): una columna de lectura; cada recorrido es una fila de pasos (se apila en el teléfono). Para imprimir en A4 horizontal. */
+:root {
+  --fondo: #f3f5f8; --capa: #ffffff; --capa2: #eef2f7; --linea: #d9dfe8;
+  --tinta: #18202b; --suave: #4f5b6c; --tenue: #7a8596;
+  --azul: #2563c9; --azul-f: #e1ebfa; --verde: #18864c; --verde-f: #e1f4e9;
+  --ambar: #a86a12; --ambar-f: #fbf0dc; --rojo: #c23737; --rojo-f: #fbe5e5;
+  --display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --texto: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--tinta); font: 400 15px/1.5 var(--texto); padding: 0 16px; }
+.pagina { max-width: 1120px; margin: 0 auto; padding-block: 32px 48px; display: flex; flex-direction: column; gap: 36px; }
+.sobre { font: 600 12px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--azul); }
+h1 { font: 700 clamp(30px, 5vw, 42px)/1.05 var(--display); margin: 6px 0 8px; text-wrap: balance; }
+h2 { font: 700 26px/1.1 var(--display); margin: 2px 0 6px; text-wrap: balance; }
+h2 .chip { vertical-align: middle; margin-left: 8px; }
+h3 { font: 700 18px/1.2 var(--display); margin: 0 0 10px; }
+.intro { color: var(--suave); max-width: 80ch; margin: 0; }
+.seccion { display: flex; flex-direction: column; gap: 14px; }
+.etiqueta { font: 600 12px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--suave); }
+.chip { display: inline-block; border-radius: 999px; padding: 3px 11px; font: 600 12.5px var(--texto); }
+.chip.azul { background: var(--azul-f); color: var(--azul); }
+.chip.rojo { background: var(--rojo-f); color: var(--rojo); }
+.chip.ambar { background: var(--ambar-f); color: var(--ambar); }
+.chip.verde { background: var(--verde-f); color: var(--verde); }
+.nota { color: var(--suave); font-size: 14px; margin: 0; }
+
+/* Recorrido de pasos */
+.recorrido { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--pasos, 4), minmax(0, 1fr)); background: var(--capa); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; }
+.paso { position: relative; padding: 16px 16px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.paso + .paso { border-left: 1px solid var(--linea); }
+.paso + .paso::before { content: ""; position: absolute; left: -9px; top: 32px; width: 16px; height: 16px; background: var(--capa); border-top: 1px solid var(--linea); border-right: 1px solid var(--linea); transform: rotate(45deg); }
+.ico { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--azul-f); color: var(--azul); position: relative; flex: none; }
+.ico svg { width: 22px; height: 22px; }
+.ico .n { position: absolute; top: -5px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--azul); color: var(--capa); display: grid; place-items: center; font: 700 12px var(--display); }
+.paso.fin .ico { background: var(--verde-f); color: var(--verde); }
+.paso.fin .ico .n { background: var(--verde); }
+.paso.alerta .ico { background: var(--rojo-f); color: var(--rojo); }
+.paso.alerta .ico .n { background: var(--rojo); }
+.paso b { font: 700 17px/1.2 var(--display); }
+.paso p { margin: 0; color: var(--suave); font-size: 13.5px; }
+.quien { align-self: flex-start; font: 600 11.5px var(--texto); letter-spacing: .02em; color: var(--suave); background: var(--capa2); border-radius: 6px; padding: 1px 7px; }
+.tiempo { align-self: flex-start; font: 600 12px var(--mono); border-radius: 6px; padding: 2px 7px; background: var(--ambar-f); color: var(--ambar); }
+.pantalla { margin-top: 2px; border: 1px dashed var(--linea); border-radius: 8px; padding: 6px 9px; font-size: 12.5px; color: var(--suave); }
+.pantalla strong { color: var(--tinta); font-weight: 600; }
+
+/* Desvíos */
+.desvios { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 10px; }
+.desvio { background: var(--capa); border: 1px solid var(--linea); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 32px 1fr; gap: 3px 12px; align-content: start; }
+.desvio .marca { grid-row: span 3; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; }
+.desvio .marca svg { width: 18px; height: 18px; }
+.desvio .si { font-size: 13px; color: var(--suave); }
+.desvio .que { font-weight: 600; font-size: 14.5px; line-height: 1.4; }
+.desvio .motivo { justify-self: start; margin-top: 3px; font: 600 12px var(--texto); border-radius: 6px; padding: 2px 8px; }
+.rojo .marca, .rojo .motivo { background: var(--rojo-f); color: var(--rojo); }
+.ambar .marca, .ambar .motivo { background: var(--ambar-f); color: var(--ambar); }
+.verde .marca, .verde .motivo { background: var(--verde-f); color: var(--verde); }
+.azul .marca, .azul .motivo { background: var(--azul-f); color: var(--azul); }
+
+/* Línea de tiempo */
+.tiempos { background: var(--capa); border: 1px solid var(--linea); border-radius: 14px; padding: 14px 18px 8px; }
+.tiempos svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.tiempos text { font-family: var(--texto); }
+.leyenda { color: var(--tenue); font-size: 12.5px; margin: 4px 0 0; }
+
+/* Tarjetas de reglas o de resumen */
+.reglas { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 10px; }
+.regla { background: var(--capa); border: 1px solid var(--linea); border-radius: 12px; padding: 13px 15px; display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-content: start; }
+.regla > svg { width: 22px; height: 22px; color: var(--azul); }
+.regla.rojo > svg { color: var(--rojo); } .regla.ambar > svg { color: var(--ambar); } .regla.verde > svg { color: var(--verde); }
+.regla b { display: block; font-weight: 600; }
+.regla span { color: var(--suave); font-size: 13.5px; }
+.regla .chip { display: table; margin-top: 7px; font-size: 11.5px; padding: 2px 9px; }
+.regla strong { color: var(--tinta); font-weight: 600; }
+
+/* Tabla de resumen */
+.tabla { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--capa); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; font-size: 14px; }
+.tabla th { text-align: left; font: 600 12px var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--suave); background: var(--capa2); padding: 9px 14px; }
+.tabla td { padding: 10px 14px; border-top: 1px solid var(--linea); vertical-align: top; color: var(--suave); }
+.tabla td:first-child { color: var(--tinta); font-weight: 600; white-space: nowrap; }
+.tabla td b { color: var(--tinta); }
+
+.dos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.pie { color: var(--tenue); font-size: 12.5px; border-top: 1px solid var(--linea); padding-top: 12px; margin: 0; }
+
+@media (max-width: 760px) {
+  .recorrido, .desvios, .reglas, .dos { grid-template-columns: minmax(0, 1fr); }
+  .paso + .paso { border-left: 0; border-top: 1px solid var(--linea); }
+  .paso + .paso::before { left: 30px; top: -9px; transform: rotate(135deg); }
+  .tiempos { overflow-x: auto; }
+}
+
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  html, body { background: var(--fondo); }
+  body { padding: 9mm 11mm; }
+  .pagina { padding-block: 0; gap: 12px; max-width: none; }
+  .seccion { gap: 10px; }
+  h1 { font-size: 38px; margin-bottom: 4px; }
+  .paso { padding: 13px 15px; gap: 6px; }
+  .desvio { padding: 10px 13px; }
+  .hoja { break-before: page; padding-top: 9mm; }
+  .recorrido, .desvio, .tiempos, .regla, .tabla, .dos > * { break-inside: avoid; }
+}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-dni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h4M14 13h3"/></symbol>
+    <symbol id="i-rostro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="10.5" r="2.5"/><path d="M8.5 16.5c.8-1.3 2-2 3.5-2s2.7.7 3.5 2"/></symbol>
+    <symbol id="i-soplo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a2.5 2.5 0 1 0-2.5-2.5M3 12h15a2.5 2.5 0 1 1-2.5 2.5M3 16h7a2 2 0 1 1-2 2"/></symbol>
+    <symbol id="i-molinete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="2"/><path d="M12 8V3M10.3 11l-4.6 2.7M13.7 11l4.6 2.7M12 12v9M8.5 21h7"/></symbol>
+    <symbol id="i-reloj" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-flechas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-usuarios" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5"/><circle cx="17" cy="9" r="2.3"/><path d="M16.5 14.6c2.2.2 3.8 1.6 4.5 4"/></symbol>
+    <symbol id="i-repetir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/></symbol>
+    <symbol id="i-salida" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></symbol>
+    <symbol id="i-mano" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M5 20c1-4 3.8-6 7-6s6 2 7 6"/></symbol>
+    <symbol id="i-campana" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-calendario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2M20 14v6h-6M17 18h0"/></symbol>
+    <symbol id="i-lector" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h3M17 5h3v2M20 17v2h-3M7 19H4v-2M8 9v6M11 9v6M14 9v6M16.5 9v6"/></symbol>
+    <symbol id="i-desconectado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-3 3a3.5 3.5 0 0 0 5 5l3-3M15 17l3-3a3.5 3.5 0 0 0-5-5l-3 3M4 4l16 16"/></symbol>
+    <symbol id="i-pantalla" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+    <symbol id="i-lista" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+    <symbol id="i-escribir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14 7.5l2.5 2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></symbol>
+    <symbol id="i-pc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M8 19h8M7 15l-1 4M17 15l1 4"/></symbol>
+    <symbol id="i-rayo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></symbol>
+    <symbol id="i-nube" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.4 1.5A3.3 3.3 0 0 0 7 18z"/></symbol>
+  </defs>
+</svg>
+</head><body>
+<main class="pagina">
+  <header>
+    <div class="sobre">Terminal de Mollendo · Control de accesos</div>
+    <h1>Cómo se sale</h1>
+    <p class="intro">Usa el lector de DNI de salida y el molinete. No pasa por el equipo facial ni por el alcoholímetro.</p>
+  </header>
+
+  <section class="seccion">
+    <div>
+      <div class="etiqueta">El recorrido</div>
+      <h2>DNI → Molinete <span class="chip azul">Sin rostro ni alcohol · al instante</span></h2>
+    </div>
+
+    <ol class="recorrido" style="--pasos:3" aria-label="Pasos de la salida">
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-dni"/></svg><span class="n">1</span></span>
+        <b>Pasa su DNI</b>
+        <p>Por el lector de salida.</p>
+        <span class="tiempo">al instante</span>
+      </li>
+      <li class="paso">
+        <span class="ico"><svg><use href="#i-doc"/></svg><span class="n">2</span></span>
+        <b>El sistema revisa</b>
+        <p>Que la persona esté registrada y que figure dentro (tenga un ingreso registrado).</p>
+        <span class="tiempo">al instante</span>
+      </li>
+      <li class="paso fin">
+        <span class="ico"><svg><use href="#i-molinete"/></svg><span class="n">✓</span></span>
+        <b>Se abre el molinete de salida</b>
+        <p>Queda registrada su salida y deja de figurar en Presentes ahora.</p>
+        <div class="pantalla">Panel: <strong>Autorizado</strong> · Salida</div>
+      </li>
+    </ol>
+
+    <h3>Si algo no sale así</h3>
+    <div class="desvios" style="--cols:3">
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-usuarios"/></svg></span><span class="si">Si el DNI no está en el sistema</span><span class="que">No se abre y suena el aviso de salida denegada.</span><span class="motivo">No registrado</span></div>
+      <div class="desvio rojo"><span class="marca"><svg><use href="#i-flechas"/></svg></span><span class="si">Si no figura que haya entrado</span><span class="que">No se abre y suena el aviso de salida denegada.</span><span class="motivo">No registra ingreso</span></div>
+      <div class="desvio azul"><span class="marca"><svg><use href="#i-qr"/></svg></span><span class="si">Si olvidó su DNI</span><span class="que">El vigilante toca Salida sin DNI, lo elige y pasa la tarjeta de contingencia en 2 minutos.</span><span class="motivo">Tarjeta de contingencia</span></div>
+      <div class="desvio ambar"><span class="marca"><svg><use href="#i-desconectado"/></svg></span><span class="si">Si el lector de salida no funciona</span><span class="que">El vigilante abre la salida desde Presentes ahora: Salida → Abrir salida.</span><span class="motivo">Salida sin lector</span></div>
+      <div class="desvio ambar"><span class="marca"><svg><use href="#i-red"/></svg></span><span class="si">Si no hay internet</span><span class="que">Sale igual: el Controlador (PC) usa la lista guardada y registra la salida al volver la conexión.</span><span class="motivo">Se registra después</span></div>
+      <div class="desvio verde"><span class="marca"><svg><use href="#i-mano"/></svg></span><span class="si">Visitas y autoridades</span><span class="que">El vigilante pasa la tarjeta de acceso por el lector de salida.</span><span class="motivo">Tarjeta de acceso</span></div>
+    </div>
+  </section>
+
+  <section class="seccion hoja">
+    <div>
+      <div class="etiqueta">Siempre</div>
+      <h2>Reglas de la salida</h2>
+    </div>
+    <div class="reglas" style="--cols:3">
+      <div class="regla"><svg><use href="#i-salida"/></svg><div><b>Siempre puede salir</b><span>Aunque esté dado de baja, tenga documentos vencidos o esté fuera de su período de autorización.</span></div></div>
+      <div class="regla"><svg><use href="#i-repetir"/></svg><div><b>Antipassback</b><span>Solo sale quien figura dentro. Después de salir, para volver a entrar hace el ingreso completo.</span></div></div>
+      <div class="regla"><svg><use href="#i-lista"/></svg><div><b>Presentes ahora</b><span>Cada salida descuenta a la persona del contador del Panel y de la lista de quiénes están dentro.</span></div></div>
+      <div class="regla ambar"><svg><use href="#i-campana"/></svg><div><b>Aviso de salida denegada</b><span>Cuando no se abre, se activa la luz o sirena de la salida.</span></div></div>
+      <div class="regla"><svg><use href="#i-red"/></svg><div><b>Sin internet nadie queda encerrado</b><span>La lista del personal se guarda en el Controlador (PC) y se renueva cada 10 minutos.</span></div></div>
+      <div class="regla rojo"><svg><use href="#i-rayo"/></svg><div><b>Emergencia</b><span>Con los brazos del molinete liberados, quien sale sin pasar su DNI sigue figurando dentro.</span></div></div>
+    </div>
+    <p class="pie">Actualizado al 23/10/2026. Contingencias en detalle: documento Flujo de contingencias.</p>
+  </section>
+</main>
+</body></html>

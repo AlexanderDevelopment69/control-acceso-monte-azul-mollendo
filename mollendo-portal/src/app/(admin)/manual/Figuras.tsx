@@ -92,10 +92,10 @@ export function CuentasManual() {
       Icono: IconoVigilancia,
       color: "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500",
       puntos: [
-        "Ve en tiempo real cada ingreso y salida por el molinete.",
+        "Ve en tiempo real cada ingreso y salida por el molinete, y cuántas personas hay dentro del terminal.",
         "Ve por qué se autoriza o se deniega cada uno.",
         "Consulta el personal y sus documentos, sin cambiar nada.",
-        "Recibe el aviso cuando se cae un equipo, corrige ingresos o salidas sin marcar y activa la verificación manual si falla el terminal facial.",
+        "Recibe el aviso cuando se cae un equipo y activa la verificación manual si falla el terminal facial.",
       ],
     },
   ];
@@ -219,7 +219,7 @@ const TIEMPOS: Record<"facialPrimero" | "dniPrimero", { titulo: string; desde: s
     ],
     puntos: [
       { s: 0, color: "azul", rotulo: "Mira al equipo", lado: "start", cuando: "0 s", detalle: "Reconoce su rostro y le pide soplar." },
-      { s: 20, color: "azul", rotulo: "Correcto", lado: "end", cuando: "unos 20 s", detalle: <>El Panel muestra <b>Aprobó … pase su DNI</b> en 1 segundo.</> },
+      { s: 20, color: "azul", rotulo: "Correcto", lado: "end", cuando: "unos 20 s", detalle: <>El Panel muestra <b>Pase su DNI</b> en 1 segundo.</> },
       { s: 25, color: "verde", rotulo: "Pasa su DNI y se abre", lado: "start", cuando: "ej. a los 25 s", detalle: "El molinete se abre al pasarlo." },
       { s: 50, color: "rojo", rotulo: "Fin del plazo", lado: "end", cuando: "unos 50 s", detalle: <>Sin DNI: <b>No pasó su DNI a tiempo</b>.</> },
     ],
