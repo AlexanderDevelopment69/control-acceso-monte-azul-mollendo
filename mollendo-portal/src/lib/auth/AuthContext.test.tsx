@@ -88,6 +88,15 @@ describe("AuthProvider", () => {
     expect(await screen.findByText("sin sesión")).toBeInTheDocument();
   });
 
+  it("la cuenta de soporte entra (25/10/2026 no entraba: el rol faltaba en la lista)", async () => {
+    fetchFalso.mockResolvedValueOnce(estado(false));
+    montar();
+    await screen.findByText("sin sesión");
+    fetchFalso.mockResolvedValueOnce(json(200, { usuario: usuario("soporte") }));
+    await act(async () => screen.getByText("entrar").click());
+    expect(await screen.findByText("soporte soporte@mollendo.pe")).toBeInTheDocument();
+  });
+
   it("al iniciar sesión muestra al usuario que devuelve el servidor", async () => {
     fetchFalso.mockResolvedValueOnce(estado(false));
     montar();

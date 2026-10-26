@@ -16,7 +16,7 @@ interface AuthContextValue {
   logout: () => void;
 }
 
-const ROLES_VALIDOS: RolUsuario[] = ["administrador", "vigilancia"];
+const ROLES_VALIDOS: RolUsuario[] = ["administrador", "vigilancia", "soporte"];
 
 /** Espera antes de volver a preguntar por la sesión si el servidor no responde. */
 const REINTENTO_MS = 5000;
