@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { hash } from 'bcryptjs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -76,6 +76,10 @@ export class UsuariosService {
     }
     const correo = dto.correo?.trim().toLowerCase();
     const cambiaCorreo = !!correo && correo !== usuario.correo;
+    // El correo de soporte es fijo (soporte@monteazulsur.com.pe): con él entra el equipo técnico.
+    if (cambiaCorreo && usuario.rol === 'soporte') {
+      throw new ForbiddenException('El correo de la cuenta de soporte no se puede cambiar');
+    }
     if (cambiaCorreo && (await this.prisma.usuario.findUnique({ where: { correo } }))) {
       throw new ConflictException('Ya existe un usuario con ese correo');
     }

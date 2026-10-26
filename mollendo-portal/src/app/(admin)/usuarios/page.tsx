@@ -349,11 +349,13 @@ function UsuariosContent() {
   }, [version]);
 
   /**
-   * Botones de una cuenta: Cambiar correo (todas, también la propia); en las de
-   * vigilancia, además Cambiar contraseña, Dar de baja / Reactivar y Eliminar
-   * (solo si nunca se usó). La propia contraseña se cambia desde el nombre, arriba.
+   * Botones de una cuenta: Cambiar correo (todas, también la propia, menos la de
+   * soporte, que no tiene botones); en las de vigilancia, además Cambiar contraseña,
+   * Dar de baja / Reactivar y Eliminar (solo si nunca se usó). La propia contraseña
+   * se cambia desde el nombre, arriba.
    */
   function acciones(c: UsuarioCuenta, className = "") {
+    if (c.rol === "soporte") return null;
     const correo = (
       <Button
         type="button"
