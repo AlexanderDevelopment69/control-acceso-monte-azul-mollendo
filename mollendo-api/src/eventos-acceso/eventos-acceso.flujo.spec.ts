@@ -583,6 +583,36 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
       expect(de('molinete.abrir')).toHaveLength(1);
     });
 
+    it('lectura repetida justo después de entrar: se ignora (sin fila roja ni aviso); pasados 20 s, "ya figura dentro"', async () => {
+      const id = agregarPersona(base, '11111111');
+      base.eventos.push({ id: 9500, personaId: id, numeroDocumento: '11111111', tipoMovimiento: 'ingreso', resultado: 'autorizado', fechaHora: new Date(ahora) });
+      avanzar(5_000);
+      expect(await ingreso('11111111')).toMatchObject({ estado: 'lectura repetida (ignorada)' });
+      expect(base.eventos).toHaveLength(1);
+      expect(de('aviso.denegado')).toHaveLength(0);
+      avanzar(16_000);
+      expect(await ingreso('11111111')).toMatchObject({ resultado: 'denegado', motivos: { yaDentro: true } });
+    });
+
+    it('lectura repetida justo después de salir: se ignora (no abre otra vez ni queda "no registra ingreso")', async () => {
+      agregarPersona(base, '11111111');
+      yaIngreso('11111111');
+      expect(await salida('11111111')).toMatchObject({ resultado: 'autorizado' });
+      avanzar(3_000);
+      expect(await salida('11111111')).toMatchObject({ estado: 'lectura repetida (ignorada)' });
+      expect(base.eventos.filter((e) => e.tipoMovimiento === 'salida')).toHaveLength(1);
+      expect(de('molinete.abrir')).toHaveLength(1);
+      avanzar(20_000);
+      expect(await salida('11111111')).toMatchObject({ resultado: 'denegado', motivos: { sinIngreso: true } });
+    });
+
+    it('la repetición solo vale para la misma puerta: recién entró y pasa por la salida, sale', async () => {
+      const id = agregarPersona(base, '11111111');
+      base.eventos.push({ id: 9501, personaId: id, numeroDocumento: '11111111', tipoMovimiento: 'ingreso', resultado: 'autorizado', fechaHora: new Date(ahora) });
+      avanzar(5_000);
+      expect(await salida('11111111')).toMatchObject({ resultado: 'autorizado' });
+    });
+
     it('sin conexión, la salida que el controlador ya dejó pasar se registra igual (no puede saber quién está dentro)', async () => {
       agregarPersona(base, '11111111');
       const r = await servicio.registrarSalida({
@@ -1001,12 +1031,12 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(de('molinete.abrir')).toHaveLength(1);
       });
 
-      it('va primero al DNI sin rostro y alcohol: sin cuenta regresiva; a los 8 s "DNI antes del facial"', async () => {
+      it('va primero al DNI sin rostro y alcohol: sin cuenta regresiva; a los 12 s "DNI antes del facial"', async () => {
         agregarPersona(base, '11111111');
         expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
         expect(de('ingreso.en-espera')).toHaveLength(0);
         expect(base.pendientes).toHaveLength(0);
-        avanzar(5_000);
+        avanzar(9_000);
         await vencidos();
         expect(base.eventos).toHaveLength(0);
         avanzar(4_000);
@@ -1046,7 +1076,7 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         await attlog('11111111', '0.00g/L', correcto);
         avanzar(31_000);
         expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
-        avanzar(9_000);
+        avanzar(13_000);
         await vencidos();
         expect(base.eventos.find((e) => e.denegadoSinFacial)).toBeDefined();
         expect(de('molinete.abrir')).toHaveLength(0);
@@ -1069,7 +1099,7 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         await attlog('22222222');
         expect(await ingreso('11111111')).toMatchObject({ estado: 'pendiente_verificacion' });
         expect(await ingreso('22222222')).toMatchObject({ resultado: 'autorizado' });
-        avanzar(9_000);
+        avanzar(13_000);
         await vencidos();
         expect(base.eventos.find((e) => e.numeroDocumento === '11111111')).toMatchObject({ denegadoSinFacial: true });
         expect(de('molinete.abrir')).toHaveLength(1);
@@ -1169,9 +1199,12 @@ describe('Ingreso con el G4 Pro (habilitación, cola, resultado y vencimiento)',
         expect(de('molinete.abrir')).toHaveLength(1);
       });
 
-      it('sin nadie que aprobó rostro y alcohol: a los 8 s queda rechazada, suena el aviso y no abre', async () => {
+      it('sin nadie que aprobó rostro y alcohol: a los 12 s queda rechazada, suena el aviso y no abre', async () => {
         expect(await tarjeta()).toMatchObject({ estado: 'pendiente_verificacion' });
         avanzar(9_000);
+        await vencidos();
+        expect(usosTarjeta).toHaveLength(0);
+        avanzar(4_000);
         await vencidos();
         expect(usosTarjeta).toEqual([expect.objectContaining({ aceptada: false, detalle: 'Nadie aprobó rostro y alcohol antes de pasar la tarjeta' })]);
         expect(de('aviso.denegado')).toEqual([{ tipoMovimiento: 'ingreso' }]);

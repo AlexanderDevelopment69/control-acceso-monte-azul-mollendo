@@ -378,7 +378,7 @@ Funciona en los dos órdenes del ingreso. El vigilante no presiona ningún botó
 5. **Sistema:** revisa la tarjeta y los documentos de quien aprobó y, si todo está en regla, abre el molinete.
 6. El ingreso queda **a nombre del personal**, marcado *"Tarjeta de contingencia"* en el Panel.
 
-Si la tarjeta se pasa un instante antes de que llegue el resultado de la prueba, el sistema la espera hasta 8 segundos, igual que con un DNI.
+Si la tarjeta se pasa un instante antes de que llegue el resultado de la prueba, el sistema la espera hasta 12 segundos, igual que con un DNI.
 
 **Con el orden DNI → Facial + Alcohol** (desde el 22/10/2026), la tarjeta va primero, en lugar del DNI:
 

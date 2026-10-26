@@ -94,14 +94,25 @@ const RECHAZO_ALCOHOL_RECIENTE_MS = 60 * 1000;
 const PLAZO_DNI_DESDE_AVISO_MS = 30 * 1000;
 
 /**
+ * Lectura repetida del mismo DNI justo después de entrar o salir (pedido de TMAM,
+ * 26/10/2026): quien pasa el DNI varias veces mientras espera el "correcto" seguía
+ * pasándolo después de abrir el molinete, y quedaba una fila roja "Ya figura dentro"
+ * con el aviso sonando aunque entró bien. En este tiempo se ignora: no queda registro
+ * ni suena el aviso. Después, rige el antipassback de siempre.
+ */
+const REPETICION_IGNORADA_MS = 20 * 1000;
+
+/**
  * G4 Pro en asistencia, "facial primero": el aviso de la prueba llega al
  * servidor 10-12 s después del soplido, ~1 s después del "correcto" (Verify.txt
  * del G4, 21/10/2026); si la persona pasa el DNI apenas oye "correcto", puede
  * llegar antes que el aviso. Un DNI sin aprobación espera en silencio (sin
  * mostrarse en el Panel) hasta esto a que llegue su prueba, hecha antes del
- * DNI; si no llega, "DNI antes del facial".
+ * DNI; si no llega, "DNI antes del facial". Eran 8 s; desde el 26/10/2026, 12 s:
+ * quien pasa el DNI apenas termina de soplar espera hasta ~9 s el aviso (el G4
+ * sigue ~8 s antes del "correcto"), y con 8 s se lo denegaba habiendo soplado bien.
  */
-const ESPERA_PRUEBA_EN_CAMINO_MS = 8 * 1000;
+const ESPERA_PRUEBA_EN_CAMINO_MS = 12 * 1000;
 
 /**
  * G4 Pro en asistencia: en cada pase vale solo la primera marcación del
@@ -400,6 +411,8 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     if (!persona) {
       return this.registrarNoRegistrada(dto, 'ingreso');
     }
+    const repetida = await this.lecturaRepetida(persona, 'ingreso');
+    if (repetida) return repetida;
 
     // Con la verificación manual activa, decide el vigilante: ni el G4 Pro ni el orden "facial primero".
     const manual = await this.verificacionManual.activa();
@@ -438,6 +451,28 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       mensaje: manual
         ? 'Documentos en regla. Verificación manual: el vigilante compara el rostro y toma la prueba de alcohol.'
         : 'Documentos en regla. Esperando el resultado del equipo (rostro + alcoholímetro).',
+    };
+  }
+
+  /**
+   * Si la persona acaba de entrar (o salir) por esa misma puerta hace menos de
+   * REPETICION_IGNORADA_MS, la lectura se ignora: sin registro, sin aviso y sin abrir.
+   */
+  private async lecturaRepetida(persona: Persona, tipoMovimiento: 'ingreso' | 'salida') {
+    const ultimo = await this.prisma.eventoAcceso.findFirst({
+      where: { personaId: persona.id, resultado: 'autorizado' },
+      orderBy: { fechaHora: 'desc' },
+      select: { tipoMovimiento: true, fechaHora: true },
+    });
+    if (!ultimo || ultimo.tipoMovimiento !== tipoMovimiento || Date.now() - ultimo.fechaHora.getTime() >= REPETICION_IGNORADA_MS) {
+      return null;
+    }
+    this.logger.log(`DNI ${persona.numeroDocumento}: lectura repetida en ${tipoMovimiento} justo después de pasar; se ignora`);
+    return {
+      estado: 'lectura repetida (ignorada)' as const,
+      persona: { id: persona.id, nombres: persona.nombres, apellidos: persona.apellidos },
+      numeroDocumento: persona.numeroDocumento,
+      mensaje: tipoMovimiento === 'ingreso' ? 'Acaba de ingresar: se ignora la lectura repetida.' : 'Acaba de salir: se ignora la lectura repetida.',
     };
   }
 
@@ -1288,12 +1323,12 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`Salida sin DNI de ${this.salidaSinDni.numeroDocumento}: no se pasó la tarjeta a tiempo`);
       this.cambiarSalidaSinDni(null);
     }
-    // Facial primero: aprobaciones cuyo dueño no pasó su DNI en 20 s.
+    // Facial primero: aprobaciones cuyo dueño no pasó su DNI en el plazo (PLAZO_DNI_DESDE_AVISO_MS).
     const vigentes = this.aprobacionesVigentes(ahora);
     for (const vencida of this.aprobaciones.filter((a) => !vigentes.includes(a))) {
       this.soltarAprobacion(vencida);
       const quien = vencida.quienSabido ?? null;
-      this.logger.log(`Facial primero: ${quien ? `el DNI ${quien.pin}` : 'nadie'} no pasó su DNI en 20 s después de aprobar`);
+      this.logger.log(`Facial primero: ${quien ? `el DNI ${quien.pin}` : 'nadie'} no pasó su DNI en ${PLAZO_DNI_DESDE_AVISO_MS / 1000} s después de aprobar`);
       await this.registrarSinPersona({ denegadoSinDni: true, dniQueSoplo: quien?.pin }, vencida.verificacionId);
     }
     const vencidas = (
@@ -1371,6 +1406,17 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
    * su hora, como autorizada, y no se abre.
    */
   async registrarSalida(dto: SalidaDto) {
+    // DNI leído por el lector de salida: la lectura repetida justo después de salir se ignora.
+    if (!dto.sinConexion) {
+      const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
+      const repetida = persona && (await this.lecturaRepetida(persona, 'salida'));
+      if (repetida) return repetida;
+    }
+    return this.registrarSalidaEvento(dto);
+  }
+
+  /** La salida en sí (también la de los caminos del Panel: sin lector, sin DNI). */
+  private async registrarSalidaEvento(dto: SalidaDto) {
     const fechaHora = dto.sinConexion ? fechaSinConexion(dto.fechaHora) : undefined;
     const persona = await this.findPersonaPorDocumento(dto.tipoDocumentoIdentidad, dto.numeroDocumento);
     if (!persona) {
@@ -1624,7 +1670,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     const persona = await this.prisma.persona.findUnique({ where: { id: preparada.personaId } });
     if (!persona) return this.rechazarTarjeta(tarjeta.id, 'salida', 'El personal elegido ya no está en el sistema');
     this.logger.log(`Tarjeta de contingencia ${tarjeta.numero}: salida de ${persona.numeroDocumento} (eligió ${preparada.preparadaPor})`);
-    const respuesta = await this.registrarSalida({
+    const respuesta = await this.registrarSalidaEvento({
       tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
       numeroDocumento: persona.numeroDocumento,
       torniqueteId: dto.torniqueteId,
@@ -1677,7 +1723,7 @@ export class EventosAccesoService implements OnModuleInit, OnModuleDestroy {
     return this.enSerie(async () => {
       if (!(await this.figuraDentro(persona.id))) throw new BadRequestException('Esa persona figura fuera: no tiene una salida pendiente');
       this.logger.log(`Salida sin lector: ${persona.numeroDocumento} (abrió ${usuario.correo})`);
-      const respuesta = await this.registrarSalida({
+      const respuesta = await this.registrarSalidaEvento({
         tipoDocumentoIdentidad: persona.tipoDocumentoIdentidad,
         numeroDocumento: persona.numeroDocumento,
         torniqueteId: 'Salida',
