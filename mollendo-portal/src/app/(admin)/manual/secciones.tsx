@@ -1345,7 +1345,7 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Cambiar correo",
             texto: (
               <p>
-                En todas las cuentas, también la suya. Se entra con el correo nuevo y la misma contraseña, y se cierran sus sesiones abiertas.
+                En todas las cuentas menos la de soporte, también la suya. Se entra con el correo nuevo y la misma contraseña, y se cierran sus sesiones abiertas.
               </p>
             ),
           },

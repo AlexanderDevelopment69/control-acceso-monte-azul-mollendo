@@ -137,34 +137,36 @@ Los contenedores se reinician automáticamente ante una falla y se inician junto
 
 ## 3. Usuarios y roles
 
-El sistema tiene dos tipos de cuenta. Las empresas contratistas no tienen cuenta propia: el administrador registra su información.
+El sistema tiene tres tipos de cuenta. Las empresas contratistas no tienen cuenta propia: el administrador registra su información.
 
 | Rol | Quién es | Qué hace |
 |---|---|---|
 | Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; da de baja o reactiva; administra las cuentas de vigilancia: les cambia el correo o la contraseña, las da de baja o las elimina si nunca se usaron (Usuarios; por ahora no se crean cuentas nuevas); cambia el correo de su propia cuenta; consulta el Panel de vigilancia, la Auditoría y el estado del sistema. |
 | Vigilancia | Personal de vigilancia | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos; consulta quiénes están dentro ("Presentes ahora"). En las contingencias: activa la verificación manual y decide cada ingreso, pasa la tarjeta de contingencia y abre la salida si el lector de salida está desconectado. Consulta Personal y documentos sin modificar nada. Su contraseña se la cambia el administrador. No puede modificar los datos del personal. |
+| Soporte | Equipo técnico | Revisa los equipos en Sistema y APIs y sincroniza el terminal facial; consulta todo sin cambiar datos. Cambia su propia contraseña. Su correo no se puede cambiar. |
 
 ### 3.1. Permisos por módulo
 
-| Módulo | Administrador | Vigilancia |
-|---|---|---|
-| Personal y documentos | Ver y modificar | Ver (sin abrir los archivos de los documentos) |
-| Dashboard | Ver | — |
-| Reportes (Excel y PDF) | Descargar | — |
-| Panel de vigilancia | Ver | Ver |
-| Presentes ahora | Ver (desde el Dashboard) | Ver (en su menú) y abrir la salida si el lector de salida está desconectado |
-| Documentos de una persona (desde el Panel) | Ver | Ver |
-| Contingencias → Tarjetas de contingencia y de acceso | Ver y administrar | — |
-| Usuarios (cuentas de vigilancia) | Cambiar el correo o la contraseña, dar de baja y eliminar (solo si nunca se usó). Por ahora no se crean cuentas nuevas: solo las dos del sistema | — |
-| Auditoría | Ver | — |
-| Sistema y APIs | Ver | — |
-| Manual | Ver | Ver |
-| Cambiar su propia contraseña | Sí | No (se la cambia el administrador) |
+| Módulo | Administrador | Vigilancia | Soporte |
+|---|---|---|---|
+| Personal y documentos | Ver y modificar | Ver (sin abrir los archivos de los documentos) | Ver |
+| Empresas | Ver y modificar | — | Ver |
+| Dashboard | Ver | — | Ver |
+| Reportes (Excel y PDF) | Descargar | — | Descargar |
+| Panel de vigilancia | Ver | Ver | Ver (sin operar) |
+| Presentes ahora | Ver (desde el Dashboard) | Ver (en su menú) y abrir la salida si el lector de salida está desconectado | Ver (desde el Dashboard) |
+| Documentos de una persona (desde el Panel) | Ver | Ver | Ver |
+| Contingencias → Tarjetas de contingencia y de acceso | Ver y administrar | — | — |
+| Usuarios (cuentas de vigilancia) | Cambiar el correo o la contraseña, dar de baja y eliminar (solo si nunca se usó). Por ahora no se crean cuentas nuevas: solo las tres del sistema. La cuenta de soporte no se modifica desde aquí | — | — |
+| Auditoría | Ver | — | Ver |
+| Sistema y APIs | Ver | — | Ver y sincronizar el terminal facial (el orden del ingreso solo lo ve) |
+| Manual | Ver | Ver | Ver (el del administrador) |
+| Cambiar su propia contraseña | Sí | No (se la cambia el administrador) | Sí |
 
 ### 3.2. Cuentas
 
-- Al instalar el sistema se crean dos cuentas: **admin@monteazulsur.com.pe** (Administrador) y **vigilancia@monteazulsur.com.pe** (Vigilancia), con contraseñas iniciales generadas en la instalación. Las contraseñas se entregan aparte, en la hoja **"Accesos del sistema"** (confidencial), y deben cambiarse en el primer ingreso: la del administrador, desde su menú (Cambiar contraseña); la de vigilancia, el administrador desde Usuarios.
-- Por ahora no se crean cuentas nuevas: solo existen esas dos. El administrador cambia el correo o la contraseña de la cuenta de vigilancia en **Usuarios** (sección 4.11). Si el administrador olvida su contraseña, la restablece el soporte técnico (no hay recuperación por correo).
+- Al instalar el sistema se crean tres cuentas: **admin@monteazulsur.com.pe** (Administrador), **vigilancia@monteazulsur.com.pe** (Vigilancia) y **soporte@monteazulsur.com.pe** (Soporte: equipo técnico), con contraseñas iniciales generadas en la instalación. Las contraseñas se entregan aparte, en la hoja **"Accesos del sistema"** (confidencial), y deben cambiarse en el primer ingreso: la del administrador, desde su menú (Cambiar contraseña); la de vigilancia, el administrador desde Usuarios.
+- Por ahora no se crean cuentas nuevas: solo existen esas tres. El administrador cambia el correo o la contraseña de la cuenta de vigilancia en **Usuarios** (sección 4.11). Si el administrador olvida su contraseña, la restablece el soporte técnico (no hay recuperación por correo).
 
 ---
 
@@ -369,9 +371,9 @@ Menú **Contingencias**, con dos pantallas que funcionan igual: **Tarjetas de co
 
 Lista las cuentas del sistema, cada una con su tipo, su estado y la fecha en que se creó:
 
-- **Cambiar correo**, en todas las cuentas (también la propia): se entra con el correo nuevo y la misma contraseña, y se cierran sus sesiones abiertas. Un correo que ya existe no se acepta.
+- **Cambiar correo**, en todas las cuentas menos la de soporte (también la propia): se entra con el correo nuevo y la misma contraseña, y se cierran sus sesiones abiertas. Un correo que ya existe no se acepta.
 - En la cuenta de vigilancia, además: **Cambiar contraseña** (se cierran sus sesiones y debe entrar con la nueva), **Dar de baja** (ya no puede entrar; su historial se conserva) o **Reactivar**, y **Eliminar**, solo si la cuenta nunca se usó.
-- Por ahora **no se crean cuentas nuevas**: solo existen las dos del sistema (sección 3.2). El servidor rechaza la creación.
+- Por ahora **no se crean cuentas nuevas**: solo existen las tres del sistema (sección 3.2). La de soporte aparece en la lista sin botones. El servidor rechaza la creación.
 - Todo cambio queda en la Auditoría.
 
 ---

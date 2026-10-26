@@ -43,7 +43,7 @@ tr { break-inside: avoid; }
 
 <div class="sobre">Terminal Monte Azul Mollendo · Sistema de Control de Accesos</div>
 <h1>Cambios desde la versión final</h1>
-<p class="intro">Cambios desde el <b>Documento Funcional del 02/10/2026</b> hasta el 23/10/2026. <span class="chip nuevo">Nuevo</span> es una función agregada; <span class="chip cambio">Cambió</span>, una que ya existía. El detalle está en el Documento Funcional v1.2.</p>
+<p class="intro">Cambios desde el <b>Documento Funcional del 02/10/2026</b> hasta el 26/10/2026. <span class="chip nuevo">Nuevo</span> es una función agregada; <span class="chip cambio">Cambió</span>, una que ya existía. El detalle está en el Documento Funcional v1.3.</p>
 
 <h2><span class="num">1</span> Instalación y servidor</h2>
 <table>
@@ -51,12 +51,14 @@ tr { break-inside: avoid; }
   <tr><td>Servidor en Azure <span class="chip nuevo">Nuevo</span></td><td>En producción desde el 16/10/2026 en <b>https://accesos.monteazulsur.com.pe</b>, con certificado HTTPS que se renueva solo.</td></tr>
   <tr><td>Controlador (PC) <span class="chip cambio">Cambió</span></td><td>Lee los DNI, abre los molinetes con sus relés e informa su estado; no abre puertos en la red del terminal.</td></tr>
   <tr><td>Respaldos <span class="chip cambio">Cambió</span></td><td>Diarios a las 04:00, se guardan 30 días (antes 00:00 y 14 días), y uno antes de cada actualización.</td></tr>
+  <tr><td>Instalación con scripts <span class="chip nuevo">Nuevo</span></td><td>El servidor y el Controlador (PC) se instalan, actualizan y restauran con un comando cada uno.</td></tr>
 </table>
 
 <h2><span class="num">2</span> Cuentas y seguridad</h2>
 <table>
   <tr><th>Qué</th><th>Detalle</th></tr>
   <tr><td>Pantalla Usuarios <span class="chip nuevo">Nuevo</span></td><td>Cambiar correo, contraseña del vigilante, dar de baja o eliminar cuentas. Por ahora no se crean cuentas nuevas.</td></tr>
+  <tr><td>Cuenta de soporte <span class="chip nuevo">Nuevo</span></td><td>Para el equipo técnico: revisa los equipos en Sistema y APIs, sincroniza el terminal facial y consulta todo sin cambiar datos.</td></tr>
   <tr><td>Contraseñas y acceso <span class="chip cambio">Cambió</span></td><td>Mínimo 10 caracteres con letras y números; bloqueo de 1 minuto tras 5 intentos fallidos. Correos @monteazulsur.com.pe.</td></tr>
   <tr><td>Protección del servidor <span class="chip nuevo">Nuevo</span></td><td>Solo terminales faciales autorizados por número de serie, cabeceras de seguridad y Swagger desactivado en la nube.</td></tr>
 </table>
@@ -117,5 +119,5 @@ tr { break-inside: avoid; }
   <tr><td>Documentos de entrega <span class="chip nuevo">Nuevo</span></td><td>Documento Funcional v1.2, Infraestructura y Operación v1.0, Flujos de ingreso, de salida y de contingencias, y este documento.</td></tr>
 </table>
 
-<p class="pie">Actualizado al 23/10/2026.</p>
+<p class="pie">Actualizado al 26/10/2026.</p>
 </main></body></html>
