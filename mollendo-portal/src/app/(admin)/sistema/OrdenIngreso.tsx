@@ -10,6 +10,7 @@ import Badge from "@/components/ui/badge/Badge";
 import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
 import { ComprobandoBadge } from "./Insignias";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 /** Los dos órdenes del ingreso (por el valor de "facial primero"): nombre y pasos que se muestran al activarlo. */
 const ORDENES = {
@@ -109,6 +110,8 @@ export function OrdenIngreso() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const facialPrimero = !!estado?.facialPrimero;
+  // El orden lo cambia el administrador; soporte lo ve sin poder cambiarlo.
+  const soloVer = useAuth().user?.rol === "soporte";
 
   useEffect(() => {
     eventosAccesoApi
@@ -144,7 +147,7 @@ export function OrdenIngreso() {
                 nombre={ORDENES.normal.nombre}
                 detalle="Primero el DNI: lo pasa por el lector de ingreso y después hace rostro y alcohol."
                 activo={!facialPrimero}
-                deshabilitado={guardando}
+                deshabilitado={guardando || soloVer}
                 onClick={() => facialPrimero && setConfirmar(false)}
                 desde={facialPrimero ? null : estado.desde}
                 cambiadoPor={estado.cambiadoPor}
@@ -153,7 +156,7 @@ export function OrdenIngreso() {
                 nombre={ORDENES.facialPrimero.nombre}
                 detalle="Primero el facial: rostro y alcohol en el equipo facial, y al final el DNI."
                 activo={facialPrimero}
-                deshabilitado={guardando}
+                deshabilitado={guardando || soloVer}
                 onClick={() => !facialPrimero && setConfirmar(true)}
                 desde={facialPrimero ? estado.desde : null}
                 cambiadoPor={estado.cambiadoPor}

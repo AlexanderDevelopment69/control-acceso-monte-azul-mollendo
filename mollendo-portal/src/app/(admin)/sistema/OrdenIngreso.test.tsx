@@ -12,6 +12,8 @@ vi.mock("@/lib/api/endpoints", () => ({
     cambiarModoIngreso: (valor: boolean) => cambiarModoIngreso(valor),
   },
 }));
+const sesion = vi.hoisted(() => ({ rol: "administrador" }));
+vi.mock("@/lib/auth/AuthContext", () => ({ useAuth: () => ({ user: { rol: sesion.rol } }) }));
 
 describe("Orden del ingreso", () => {
   it("activar el orden normal también pide confirmación, con sus pasos", async () => {
@@ -41,5 +43,14 @@ describe("Orden del ingreso", () => {
     render(<OrdenIngreso />);
     await userEvent.click(await screen.findByRole("switch", { name: "DNI → Facial + Alcohol → Molinete" }));
     expect(screen.queryByText(/^Activar (DNI|Facial)/)).not.toBeInTheDocument();
+  });
+
+  it("soporte lo ve, pero no puede cambiarlo", async () => {
+    sesion.rol = "soporte";
+    facialPrimero = true;
+    render(<OrdenIngreso />);
+    const normal = await screen.findByRole("switch", { name: "DNI → Facial + Alcohol → Molinete" });
+    expect(normal).toBeDisabled();
+    sesion.rol = "administrador";
   });
 });

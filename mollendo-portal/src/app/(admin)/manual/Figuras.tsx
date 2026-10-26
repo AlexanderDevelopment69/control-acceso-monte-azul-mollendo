@@ -111,7 +111,6 @@ export function CuentasManual() {
       color: "bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-orange-400",
       puntos: [
         "Revisa el estado de los equipos en Sistema y APIs y sincroniza el terminal facial.",
-        "Abre un molinete a mano para probarlo.",
         "Consulta el personal, las empresas, el Panel de vigilancia, el Dashboard, los Reportes y la Auditoría, sin cambiar nada.",
       ],
     },

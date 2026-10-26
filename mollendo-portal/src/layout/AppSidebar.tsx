@@ -55,12 +55,14 @@ function IconoTarjetaAcceso() {
 const navItems: NavItem[] = [
   { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador", "soporte"] },
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
+  // Soporte: la misma consulta que el vigilante (/personal), en el mismo lugar del menú que el administrador.
+  { icon: <GroupIcon />, name: "Personal y documentos", path: "/personal", roles: ["soporte"] },
   { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador", "soporte"] },
   { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador", "soporte"] },
   // El administrador llega desde el Dashboard; el vigilante la tiene en el menú.
   { icon: <GroupIcon />, name: "Presentes ahora", path: "/presentes", roles: ["vigilancia"] },
   // El vigilante, solo para consultar (el administrador la tiene en "/").
-  { icon: <GroupIcon />, name: "Personal y documentos", path: "/personal", roles: ["vigilancia", "soporte"] },
+  { icon: <GroupIcon />, name: "Personal y documentos", path: "/personal", roles: ["vigilancia"] },
   {
     icon: <LockLineIcon />,
     name: "Contingencias",
