@@ -18,7 +18,7 @@ export const SECCIONES: SeccionManual[] = [
     id: "introduccion",
     titulo: "Introducción",
     descripcion: "Qué hace el sistema, quién lo usa y cómo entra y sale una persona.",
-    roles: ["administrador", "vigilancia"],
+    roles: ["administrador", "vigilancia", "soporte"],
     pantallas: [
       {
         titulo: "Las cuentas",
@@ -487,7 +487,7 @@ export const SECCIONES: SeccionManual[] = [
     id: "vigilancia",
     titulo: "Panel de vigilancia",
     descripcion: "Vea en vivo quién entra y sale, por qué alguien no pasó y qué hacer si falla un equipo.",
-    roles: ["vigilancia", "administrador"],
+    roles: ["vigilancia", "administrador", "soporte"],
     pantallas: [
       {
         titulo: "El panel",
@@ -1106,7 +1106,7 @@ export const SECCIONES: SeccionManual[] = [
     id: "auditoria",
     titulo: "Auditoría",
     descripcion: "Quién hizo cada cambio o acción en el sistema y cuándo, y cuándo se desconectó un equipo. Solo se puede ver.",
-    roles: ["administrador"],
+    roles: ["administrador", "soporte"],
     pantallas: [
       {
         titulo: "Auditoría",
@@ -1160,7 +1160,7 @@ export const SECCIONES: SeccionManual[] = [
     id: "sistema-apis",
     titulo: "Sistema y APIs",
     descripcion: "Estado del servidor y de los equipos de acceso, y sincronización con el terminal facial.",
-    roles: ["administrador"],
+    roles: ["administrador", "soporte"],
     pantallas: [
       {
         titulo: "Estado",
@@ -1384,7 +1384,7 @@ export const SECCIONES: SeccionManual[] = [
     id: "cuenta",
     titulo: "Su cuenta y contraseña",
     descripcion: "Cambie su contraseña desde su nombre, arriba a la derecha.",
-    roles: ["administrador"],
+    roles: ["administrador", "soporte"],
     pantallas: [
       {
         titulo: "Cambiar contraseña",

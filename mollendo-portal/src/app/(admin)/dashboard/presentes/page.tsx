@@ -11,9 +11,9 @@ import { useAuth } from "@/lib/auth/AuthContext";
 export default function PresentesPage() {
   // El vigilante la tiene en el menú (y abre ahí la salida si el lector de salida se desconecta):
   // el enlace de vuelta es solo para el administrador, que llega desde el Dashboard.
-  const administrador = useAuth().user?.rol !== "vigilancia";
+  const administrador = useAuth().user?.rol === "administrador";
   return (
-    <RequireRole roles={["administrador", "vigilancia", "soporte"]}>
+    <RequireRole roles={["administrador", "vigilancia"]}>
       {administrador && (
         <Link
           href="/dashboard"

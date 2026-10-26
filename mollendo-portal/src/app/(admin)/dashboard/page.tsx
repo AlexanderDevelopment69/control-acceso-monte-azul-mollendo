@@ -646,7 +646,7 @@ function SinDatos({ texto }: { texto: string }) {
 
 export default function DashboardPage() {
   return (
-    <RequireRole roles={["administrador", "soporte"]}>
+    <RequireRole roles={["administrador"]}>
       <DashboardContent />
     </RequireRole>
   );

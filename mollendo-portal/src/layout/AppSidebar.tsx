@@ -53,11 +53,9 @@ function IconoTarjetaAcceso() {
 }
 
 const navItems: NavItem[] = [
-  { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador", "soporte"] },
+  { icon: <PieChartIcon />, name: "Dashboard", path: "/dashboard", roles: ["administrador"] },
   { icon: <GroupIcon />, name: "Personal y documentos", path: "/", roles: ["administrador"] },
-  // Soporte: la misma consulta que el vigilante (/personal), en el mismo lugar del menú que el administrador.
-  { icon: <GroupIcon />, name: "Personal y documentos", path: "/personal", roles: ["soporte"] },
-  { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador", "soporte"] },
+  { icon: <BuildingIcon />, name: "Empresas", path: "/empresas", roles: ["administrador"] },
   { icon: <EyeLineIcon />, name: "Panel de vigilancia", path: "/vigilancia", roles: ["vigilancia", "administrador", "soporte"] },
   // El administrador llega desde el Dashboard; el vigilante la tiene en el menú.
   { icon: <GroupIcon />, name: "Presentes ahora", path: "/presentes", roles: ["vigilancia"] },
@@ -72,7 +70,7 @@ const navItems: NavItem[] = [
       { name: "Tarjetas de acceso", path: "/contingencias/tarjetas-acceso", icon: <IconoTarjetaAcceso /> },
     ],
   },
-  { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador", "soporte"] },
+  { icon: <DocsIcon />, name: "Reportes", path: "/reportes", roles: ["administrador"] },
   { icon: <UserCircleIcon />, name: "Usuarios", path: "/usuarios", roles: ["administrador"] },
   { icon: <ListIcon />, name: "Auditoría", path: "/auditoria", roles: ["administrador", "soporte"] },
   { icon: <PlugInIcon />, name: "Sistema y APIs", path: "/sistema", roles: ["administrador", "soporte"] },

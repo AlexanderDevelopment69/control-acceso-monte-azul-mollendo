@@ -143,24 +143,24 @@ El sistema tiene tres tipos de cuenta. Las empresas contratistas no tienen cuent
 |---|---|---|
 | Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; da de baja o reactiva; administra las cuentas de vigilancia: les cambia el correo o la contraseña, las da de baja o las elimina si nunca se usaron (Usuarios; por ahora no se crean cuentas nuevas); cambia el correo de su propia cuenta; consulta el Panel de vigilancia, la Auditoría y el estado del sistema. |
 | Vigilancia | Personal de vigilancia | Visualiza en tiempo real cada ingreso y salida y el motivo de las denegaciones; consulta el estado (vigente o vencido) de los documentos de una persona, sin abrir los archivos; consulta quiénes están dentro ("Presentes ahora"). En las contingencias: activa la verificación manual y decide cada ingreso, pasa la tarjeta de contingencia y abre la salida si el lector de salida está desconectado. Consulta Personal y documentos sin modificar nada. Su contraseña se la cambia el administrador. No puede modificar los datos del personal. |
-| Soporte | Equipo técnico | Revisa los equipos en Sistema y APIs y sincroniza el terminal facial; consulta todo sin cambiar datos. Cambia su propia contraseña. Su correo no se puede cambiar. |
+| Soporte | Equipo técnico | Revisa los equipos en Sistema y APIs y sincroniza el terminal facial; consulta el Panel de vigilancia y la Auditoría sin cambiar datos. Cambia su propia contraseña. Su correo no se puede cambiar. |
 
 ### 3.1. Permisos por módulo
 
 | Módulo | Administrador | Vigilancia | Soporte |
 |---|---|---|---|
-| Personal y documentos | Ver y modificar | Ver (sin abrir los archivos de los documentos) | Ver |
-| Empresas | Ver y modificar | — | Ver |
-| Dashboard | Ver | — | Ver |
-| Reportes (Excel y PDF) | Descargar | — | Descargar |
+| Personal y documentos | Ver y modificar | Ver (sin abrir los archivos de los documentos) | — |
+| Empresas | Ver y modificar | — | — |
+| Dashboard | Ver | — | — |
+| Reportes (Excel y PDF) | Descargar | — | — |
 | Panel de vigilancia | Ver | Ver | Ver (sin operar) |
-| Presentes ahora | Ver (desde el Dashboard) | Ver (en su menú) y abrir la salida si el lector de salida está desconectado | Ver (desde el Dashboard) |
-| Documentos de una persona (desde el Panel) | Ver | Ver | Ver |
+| Presentes ahora | Ver (desde el Dashboard) | Ver (en su menú) y abrir la salida si el lector de salida está desconectado | — |
+| Documentos de una persona (desde el Panel) | Ver | Ver | — |
 | Contingencias → Tarjetas de contingencia y de acceso | Ver y administrar | — | — |
 | Usuarios (cuentas de vigilancia) | Cambiar el correo o la contraseña, dar de baja y eliminar (solo si nunca se usó). Por ahora no se crean cuentas nuevas: solo las tres del sistema. La cuenta de soporte no se modifica desde aquí | — | — |
 | Auditoría | Ver | — | Ver |
 | Sistema y APIs | Ver | — | Ver y sincronizar el terminal facial (el orden del ingreso solo lo ve) |
-| Manual | Ver | Ver | Ver (el del administrador) |
+| Manual | Ver | Ver | Ver (Panel, Auditoría, Sistema y APIs) |
 | Cambiar su propia contraseña | Sí | No (se la cambia el administrador) | Sí |
 
 ### 3.2. Cuentas

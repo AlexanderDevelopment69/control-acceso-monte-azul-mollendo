@@ -11,14 +11,14 @@ export class TarjetasContingenciaController {
   constructor(private readonly tarjetas: TarjetasContingenciaService) {}
 
   @Get()
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   listar(@Query() query: QueryTipoTarjetaDto) {
     return this.tarjetas.listar(query.tipo ?? 'contingencia');
   }
 
   /** Cada vez que se pasó una tarjeta por un lector, aceptada o no. */
   @Get('usos')
-  @Roles('administrador')
+  @Roles('administrador', 'soporte')
   usos(@Query() query: QueryUsosTarjetaDto) {
     return this.tarjetas.usos(query);
   }

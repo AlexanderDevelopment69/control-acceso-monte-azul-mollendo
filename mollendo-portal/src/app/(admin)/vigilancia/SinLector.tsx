@@ -54,7 +54,8 @@ export function FranjaSinLector({ titulo, children, accion }: { titulo: string; 
 /** Franjas del Panel de vigilancia: ingreso solo con rostro, y salida desde "Presentes ahora". */
 export function FranjasSinLectorPanel({ estado }: { estado: SinLector }) {
   // Cada uno a su dirección de Presentes ahora (el vigilante no tiene Dashboard).
-  const conDashboard = useAuth().user?.rol !== "vigilancia";
+  const rol = useAuth().user?.rol;
+  const conDashboard = rol === "administrador";
   return (
     <>
       {estado.ingreso && (

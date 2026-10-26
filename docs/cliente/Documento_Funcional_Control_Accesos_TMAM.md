@@ -136,17 +136,17 @@ El sistema tiene tres tipos de cuenta. Las empresas contratistas no tienen cuent
 |---|---|---|
 | Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; administra las cuentas, las tarjetas y el sistema; consulta todo. |
 | Vigilancia | Personal de vigilancia | Ve en tiempo real cada ingreso y salida; consulta al personal sin modificar nada; opera las contingencias. |
-| Soporte | Equipo técnico | Revisa los equipos en Sistema y APIs y sincroniza el terminal facial; consulta todo sin cambiar datos. |
+| Soporte | Equipo técnico | Revisa los equipos en Sistema y APIs y sincroniza el terminal facial; consulta el Panel de vigilancia y la Auditoría sin cambiar datos. |
 
 ### 3.1. Permisos por módulo
 
 | Módulo | Administrador | Vigilancia | Soporte |
 |---|---|---|---|
-| Personal y documentos | Ver y modificar | Ver | Ver |
-| Empresas | Ver y modificar | — | Ver |
-| Dashboard y Reportes | Ver y descargar | — | Ver y descargar |
+| Personal y documentos | Ver y modificar | Ver | — |
+| Empresas | Ver y modificar | — | — |
+| Dashboard y Reportes | Ver y descargar | — | — |
 | Panel de vigilancia | Ver | Ver | Ver (sin operar) |
-| Presentes ahora | Ver | Ver | Ver |
+| Presentes ahora | Ver | Ver | — |
 | Contingencias (tarjetas) | Administrar | — | — |
 | Usuarios | Administrar | — | — |
 | Auditoría | Ver | — | Ver |
@@ -156,7 +156,7 @@ El sistema tiene tres tipos de cuenta. Las empresas contratistas no tienen cuent
 
 ### 3.2. Cuentas
 
-- Existen tres cuentas: **admin@monteazulsur.com.pe** (Administrador), **vigilancia@monteazulsur.com.pe** (Vigilancia) y **soporte@monteazulsur.com.pe** (Soporte: equipo técnico; revisa los equipos y consulta todo, sin cambiar datos). Las contraseñas se entregan aparte, en la hoja "Accesos del sistema".
+- Existen tres cuentas: **admin@monteazulsur.com.pe** (Administrador), **vigilancia@monteazulsur.com.pe** (Vigilancia) y **soporte@monteazulsur.com.pe** (Soporte: equipo técnico; revisa los equipos y consulta el Panel de vigilancia y la Auditoría, sin cambiar datos). Las contraseñas se entregan aparte, en la hoja "Accesos del sistema".
 - Por ahora no se crean cuentas nuevas.
 
 ---

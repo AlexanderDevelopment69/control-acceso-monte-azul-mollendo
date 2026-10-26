@@ -38,7 +38,8 @@ export function MotivoDenegacion({
     | "denegadoNoEsQuienSoplo"
     | "dniQueSoplo"
   >;
-  onVerDocumentos: () => void;
+  /** Sin él (soporte), el motivo se ve sin enlace a los documentos. */
+  onVerDocumentos?: () => void;
 }) {
   if (evento.denegadoNoRegistrado) return <Badge color="error">No registrado</Badge>;
   if (evento.denegadoPorBaja) return <Badge color="error">Dado de baja</Badge>;
@@ -89,7 +90,7 @@ export function MotivoDenegacion({
   return (
     <div className="flex flex-wrap gap-1">
       {motivos.map((m) =>
-        m === "Alcohol" ? (
+        m === "Alcohol" || !onVerDocumentos ? (
           <Badge key={m} color="error">{m}</Badge>
         ) : (
           // Documentos: clic para ver qué debe regularizar.

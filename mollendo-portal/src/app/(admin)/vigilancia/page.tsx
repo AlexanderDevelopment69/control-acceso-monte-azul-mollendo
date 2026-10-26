@@ -85,7 +85,8 @@ function DniAngosto({ ev }: { ev: EventoAcceso }) {
 function VigilanciaContent() {
   const router = useRouter();
   const { user } = useAuth();
-  // Soporte consulta el panel sin operarlo: sin salida sin DNI, verificación manual ni decisiones.
+  // Soporte consulta el panel sin operarlo: sin salida sin DNI, verificación manual ni decisiones,
+  // y sin abrir Presentes ahora ni los documentos de una persona.
   const opera = user?.rol !== "soporte";
   const [resumen, setResumen] = useState<ResumenPanel | null>(null);
   const [lista, setLista] = useState<Paginado<EventoAcceso> | null>(null);
@@ -509,8 +510,8 @@ function VigilanciaContent() {
           icono={<UserIcon />}
           fondoIcono="bg-brand-500"
           detalle="Personas dentro del terminal"
-          onClick={() => router.push(user?.rol === "vigilancia" ? "/presentes" : "/dashboard/presentes")}
-          title="Ver quiénes están dentro"
+          onClick={opera ? () => router.push(user?.rol === "vigilancia" ? "/presentes" : "/dashboard/presentes") : undefined}
+          title={opera ? "Ver quiénes están dentro" : undefined}
         />
         <TarjetaIndicador
           tamano="celular"
@@ -691,7 +692,7 @@ function VigilanciaContent() {
                       <div className="flex flex-wrap items-center gap-1">
                         <MotivoDenegacion
                           evento={ev}
-                          onVerDocumentos={() => setPersonaDocumentos(ev.personaId)}
+                          onVerDocumentos={opera ? () => setPersonaDocumentos(ev.personaId) : undefined}
                         />
                         <MarcaVerificacionManual evento={ev} />
                         <MarcaCorreccionManual evento={ev} />

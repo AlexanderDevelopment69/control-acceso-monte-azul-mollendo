@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { empresasApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import type { Empresa } from "@/lib/api/types";
@@ -168,8 +167,6 @@ function ConfirmarEliminar({
 }
 
 function EmpresasContent() {
-  // Soporte solo consulta: sin registrar, editar, activar ni eliminar.
-  const soloLectura = useAuth().user?.rol === "soporte";
   const [empresas, setEmpresas] = useState<Empresa[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -222,13 +219,11 @@ function EmpresasContent() {
     <div>
       <PageHeader
         title="Empresas"
-        description={soloLectura ? "Empresas del personal." : "Empresas del personal: regístrelas, corrija sus datos y actívelas o desactívelas."}
+        description="Empresas del personal: regístrelas, corrija sus datos y actívelas o desactívelas."
         actions={
-          soloLectura ? undefined : (
-            <Button size="sm" onClick={() => setNueva(true)}>
-              + Nueva empresa
-            </Button>
-          )
+          <Button size="sm" onClick={() => setNueva(true)}>
+            + Nueva empresa
+          </Button>
         }
       />
 
@@ -300,8 +295,6 @@ function EmpresasContent() {
                     <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>
                       {empresas.length ? (
                         "Sin resultados para esa búsqueda."
-                      ) : soloLectura ? (
-                        "Todavía no hay empresas."
                       ) : (
                         <>
                           Todavía no hay empresas. Use{" "}
@@ -330,29 +323,27 @@ function EmpresasContent() {
                         <Badge color={e.estado === "activa" ? "success" : "light"}>{e.estado === "activa" ? "Activa" : "Inactiva"}</Badge>
                       </TableCell>
                       <TableCell className="px-5 py-4 text-sm">
-                        {!soloLectura && (
-                          <div className="flex justify-end gap-2 whitespace-nowrap">
-                            <Button type="button" size="sm" variant="outline" onClick={() => setEditando(e)}>
-                              Editar
+                        <div className="flex justify-end gap-2 whitespace-nowrap">
+                          <Button type="button" size="sm" variant="outline" onClick={() => setEditando(e)}>
+                            Editar
+                          </Button>
+                          {/* Con personal o usuarios no se puede eliminar: se explica al pasar el mouse. */}
+                          <span title={e.eliminable ? undefined : "Tiene personal o usuarios registrados: se puede desactivar, no eliminar"}>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={e.estado === "activa" ? "outline-danger" : "outline"}
+                              onClick={() => setCambiandoEstado(e)}
+                            >
+                              {e.estado === "activa" ? "Desactivar" : "Activar"}
                             </Button>
-                            {/* Con personal o usuarios no se puede eliminar: se explica al pasar el mouse. */}
-                            <span title={e.eliminable ? undefined : "Tiene personal o usuarios registrados: se puede desactivar, no eliminar"}>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant={e.estado === "activa" ? "outline-danger" : "outline"}
-                                onClick={() => setCambiandoEstado(e)}
-                              >
-                                {e.estado === "activa" ? "Desactivar" : "Activar"}
-                              </Button>
-                            </span>
-                            {e.eliminable && (
-                              <Button type="button" size="sm" variant="danger" onClick={() => setEliminando(e)}>
-                                Eliminar
-                              </Button>
-                            )}
-                          </div>
-                        )}
+                          </span>
+                          {e.eliminable && (
+                            <Button type="button" size="sm" variant="danger" onClick={() => setEliminando(e)}>
+                              Eliminar
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -402,7 +393,7 @@ function EmpresasContent() {
 
 export default function EmpresasPage() {
   return (
-    <RequireRole roles={["administrador", "soporte"]}>
+    <RequireRole roles={["administrador"]}>
       <EmpresasContent />
     </RequireRole>
   );

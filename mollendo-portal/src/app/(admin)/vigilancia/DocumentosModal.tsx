@@ -15,8 +15,8 @@ import { formatearFecha } from "@/components/personal/cumplimiento";
 export function DocumentosModal({ personaId, onClose }: { personaId: number | null; onClose: () => void }) {
   const [persona, setPersona] = useState<Persona | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // El vigilante solo ve si está vigente o vencido; abrir el archivo es del administrador y soporte.
-  const puedeVerArchivo = useAuth().user?.rol !== "vigilancia";
+  // El vigilante solo ve si está vigente o vencido; abrir el archivo es del administrador.
+  const puedeVerArchivo = useAuth().user?.rol === "administrador";
 
   useEffect(() => {
     if (personaId === null) return;
