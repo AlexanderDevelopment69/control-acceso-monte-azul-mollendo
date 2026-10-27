@@ -10,8 +10,6 @@ from html.parser import HTMLParser
 from xml.sax.saxutils import escape
 
 ORIGINAL, CARPETA, SALIDA, NOMBRE, DESCRIPCION_VERSION = sys.argv[1:6]
-VERSION = 'Versión 1.2 · 26 de octubre de 2026'
-VERSION_PIE = 'Versión 1.2 · 26/10/2026'
 
 z = zipfile.ZipFile(ORIGINAL)
 doc = z.read('word/document.xml').decode('utf8')
@@ -142,9 +140,9 @@ def cambiar_texto(p, viejo, nuevo):
 salida = [els[0],
           cambiar_texto(els[1], 'DOCUMENTO FUNCIONAL', NOMBRE.upper()),
           els[2],
-          cambiar_texto(els[3], 'Terminal Monte Azul Mollendo (TMAM) · Alcance base', 'Terminal Monte Azul Mollendo (TMAM)'),
-          cambiar_texto(els[4], 'Versión final · 2 de octubre de 2026', VERSION)]
-# Sin la tabla "Control de versiones" (pedido de TMAM, 26/10/2026): la versión queda en la portada y el pie.
+          cambiar_texto(els[3], 'Terminal Monte Azul Mollendo (TMAM) · Alcance base', 'Terminal Monte Azul Mollendo (TMAM)')]
+# Los manuales no llevan versión (pedido de TMAM, 27/10/2026): ni la línea de la portada
+# (els[4]), ni la tabla "Control de versiones", ni la versión del pie.
 salida.append(els[7])
 salida.append(els[8])
 for i, s in enumerate(manual, 1):
@@ -184,7 +182,7 @@ with zipfile.ZipFile(SALIDA, 'w', zipfile.ZIP_DEFLATED) as out:
                            for rid, nombre, _ in imagenes)
             datos = datos.decode('utf8').replace('</Relationships>', rels + '</Relationships>').encode('utf8')
         elif item.filename == 'word/footer1.xml':
-            datos = datos.decode('utf8').replace('Versión final · 02/10/2026', VERSION_PIE).encode('utf8')
+            datos = datos.decode('utf8').replace('Versión final · 02/10/2026', '').encode('utf8')
         elif item.filename == 'word/header1.xml':
             datos = datos.decode('utf8').replace('Documento funcional', escape(NOMBRE)).encode('utf8')
         out.writestr(item, datos)

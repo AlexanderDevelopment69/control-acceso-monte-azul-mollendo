@@ -68,6 +68,15 @@ const CAPTURAS = [
     ],
   },
   {
+    // Personal y documentos del vigilante (/personal): solo consulta, con su cuenta.
+    clave: "personal-vigilante",
+    ruta: "/personal",
+    rol: "VIGILANCIA",
+    preparar: async (p) => p.locator("::-p-text(Apaza Condori, Jorge Luis)").click(),
+    completa: true,
+    puntos: [{ sel: 'input[placeholder*="Buscar por nombre, DNI o empresa"]', lado: "der" }],
+  },
+  {
     // El formulario de Nuevo personal (alto: necesita una ventana más alta).
     clave: "nuevo-personal",
     ruta: "/",
@@ -437,19 +446,28 @@ pagina.on("request", async (r) => {
   const real = await fetch(r.url(), { headers: r.headers() }).then((x) => x.json()).catch(() => ({}));
   r.respond({ status: 200, contentType: "application/json", body: JSON.stringify({ ...real, facialPrimero: true }) });
 });
-const { accessToken, refreshToken } = await sesion("ADMIN");
+const { accessToken } = await sesion("ADMIN");
 // La sesión del portal va en las cookies de la API (las mismas que deja el inicio de sesión).
+// Cada captura entra con la cuenta de su `rol` (por defecto, el administrador).
 const { hostname } = new URL(API);
-await pagina.setCookie(
-  { name: "mollendo_sesion", value: accessToken, domain: hostname, path: "/api/v1", httpOnly: true, sameSite: "Strict" },
-  { name: "mollendo_renovacion", value: refreshToken, domain: hostname, path: "/api/v1/auth", httpOnly: true, sameSite: "Strict" },
-);
+let rolActual = null;
+async function entrarComo(rol) {
+  if (rol === rolActual) return;
+  const s = await sesion(rol);
+  await pagina.setCookie(
+    { name: "mollendo_sesion", value: s.accessToken, domain: hostname, path: "/api/v1", httpOnly: true, sameSite: "Strict" },
+    { name: "mollendo_renovacion", value: s.refreshToken, domain: hostname, path: "/api/v1/auth", httpOnly: true, sameSite: "Strict" },
+  );
+  rolActual = rol;
+}
+await entrarComo("ADMIN");
 await pagina.goto(`${PORTAL}/iniciar-sesion`, { waitUntil: "networkidle2" });
 await pagina.evaluate(() => localStorage.setItem("theme", "light"));
 
 // Con CAPTURAS=…, las demás se conservan tal como están.
 const resultado = SOLO ? JSON.parse(fs.readFileSync(SALIDA_JSON, "utf8")) : {};
 for (const c of CAPTURAS.filter((c) => !SOLO || SOLO.includes(c.clave))) {
+  await entrarComo(c.rol ?? "ADMIN");
   await pagina.goto(`${PORTAL}${c.ruta}`, { waitUntil: "networkidle2" });
   await pagina.addStyleTag({ content: OCULTAR + (c.conAviso ? "" : OCULTAR_AVISO) });
   await espera(2000);

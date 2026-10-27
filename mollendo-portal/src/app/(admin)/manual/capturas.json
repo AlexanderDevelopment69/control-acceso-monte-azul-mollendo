@@ -663,5 +663,18 @@
         "lado": "der"
       }
     ]
+  },
+  "personal-vigilante": {
+    "imagen": "/manual/personal-vigilante.webp",
+    "ancho": 1150,
+    "alto": 947,
+    "puntos": [
+      {
+        "n": 1,
+        "x": 28.43,
+        "y": 14.68,
+        "lado": "der"
+      }
+    ]
   }
 }

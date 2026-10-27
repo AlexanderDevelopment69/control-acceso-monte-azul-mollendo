@@ -1,7 +1,7 @@
 import React from "react";
 import type { RolUsuario } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
-import { CuentasManual, RecorridoAcceso, SoloPara } from "./Figuras";
+import { CuentasManual, RecorridoAcceso, SoloPara, TarjetaMuestra } from "./Figuras";
 import { Lista, Motivo, type PantallaManual } from "./Recorrido";
 
 /** Texto del manual: cada sección con su título, para qué perfiles es y sus pantallas con números. */
@@ -639,6 +639,10 @@ export const SECCIONES: SeccionManual[] = [
               El administrador imprime la <b>tarjeta de contingencia</b> (un QR) y se la entrega al vigilante. La tarjeta sola no abre: se usa
               en lugar del DNI del personal.
             </p>
+            <TarjetaMuestra tipo="contingencia" />
+            <p className="mb-3">
+              Así es la tarjeta de contingencia: azul, con su número y su vencimiento. Se pasa por el lector con el QR hacia el lector.
+            </p>
             <p className="mb-2 font-medium text-gray-800 dark:text-white/90">Para entrar, con el orden Facial + Alcohol → DNI:</p>
             <Lista>
               <li>El personal avisa al vigilante <b>antes</b> de hacer rostro y alcohol.</li>
@@ -673,12 +677,14 @@ export const SECCIONES: SeccionManual[] = [
               en <b>Contingencias → Tarjetas de contingencia</b>; en <b>Usos de las tarjetas</b> se puede buscar por número de tarjeta, personal o
               motivo.
             </p>
-            <p>
-              <b>Administrador:</b> ahí mismo crea la tarjeta (<b>No vence</b> o hasta un día), la imprime, le cambia el <b>Vencimiento</b>, la desactiva o la
-              elimina (solo si nunca se usó). Si se pierde o se copia,
-              use <b>Cambiar código</b>: la impresa queda anulada y debe imprimirse de nuevo. Solo el administrador las ve y las
-              administra en el portal.
-            </p>
+            <SoloPara roles={["administrador", "soporte"]}>
+              <p>
+                <b>Administrador:</b> ahí mismo crea la tarjeta (<b>No vence</b> o hasta un día), la imprime, le cambia el <b>Vencimiento</b>, la desactiva o la
+                elimina (solo si nunca se usó). Si se pierde o se copia,
+                use <b>Cambiar código</b>: la impresa queda anulada y debe imprimirse de nuevo. Solo el administrador las ve y las
+                administra en el portal.
+              </p>
+            </SoloPara>
           </>
         ),
       },
@@ -690,6 +696,10 @@ export const SECCIONES: SeccionManual[] = [
             <p className="mb-3">
               Para visitas o autoridades que vienen, por ejemplo, a una inspección. La tarjeta la guarda y la pasa el vigilante; no se
               entrega a la visita.
+            </p>
+            <TarjetaMuestra tipo="acceso" />
+            <p className="mb-3">
+              Así es la tarjeta de acceso: oscura, con su número y su vencimiento. Se pasa por el lector con el QR hacia el lector.
             </p>
             <p className="mb-2">
               <b>1. Al entrar:</b> pase la tarjeta por el lector de DNI de <b>ingreso</b>. El molinete se abre solo, sin rostro, alcohol ni DNI.
@@ -901,12 +911,18 @@ export const SECCIONES: SeccionManual[] = [
       {
         titulo: "Personal y documentos (solo consulta)",
         descripcion: "Quién puede ingresar y por qué",
-        contenido: (
-          <p>
-            Busque a una persona para ver si puede ingresar hoy y por qué: sus documentos con su vencimiento, su período de autorización y
-            si está dada de baja. Para cambiar algo, avise al administrador.
-          </p>
-        ),
+        clave: "personal-vigilante",
+        puntos: [
+          {
+            titulo: "Buscar a una persona",
+            texto: (
+              <p>
+                Busque a una persona para ver si puede ingresar hoy y por qué: sus documentos con su vencimiento, su período de autorización y
+                si está dada de baja. Para cambiar algo, avise al administrador.
+              </p>
+            ),
+          },
+        ],
       },
     ],
   },

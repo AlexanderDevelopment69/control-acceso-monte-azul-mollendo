@@ -88,6 +88,76 @@ export function SoloPara({ roles, children }: { roles: RolUsuario[]; children: R
   return rol && roles.includes(rol) ? <>{children}</> : null;
 }
 
+/** Un QR de muestra (dibujo, no se puede leer): solo para que la tarjeta del manual se vea como la impresa. */
+function QrMuestra() {
+  const n = 21;
+  // Las tres esquinas del QR (7 × 7 y su margen blanco).
+  const esquina = (x: number, y: number) => x < 8 && y < 8;
+  const enEsquina = (x: number, y: number) => esquina(x, y) || esquina(n - 1 - x, y) || esquina(x, n - 1 - y);
+  const celdas: React.ReactNode[] = [];
+  // Siempre el mismo dibujo: un generador fijo de números "al azar".
+  let semilla = 7;
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++) {
+      semilla = (semilla * 1103515245 + 12345) % 2147483648;
+      const relleno = !enEsquina(x, y) && semilla / 2147483648 < 0.5;
+      if (relleno) celdas.push(<rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" />);
+    }
+  const ojo = (x: number, y: number) => (
+    <g key={`ojo-${x}-${y}`}>
+      <rect x={x} y={y} width="7" height="7" />
+      <rect x={x + 1} y={y + 1} width="5" height="5" fill="#fff" />
+      <rect x={x + 2} y={y + 2} width="3" height="3" />
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${n} ${n}`} className="block size-full" fill="#101828" shapeRendering="crispEdges" aria-hidden>
+      {celdas}
+      {ojo(0, 0)}
+      {ojo(n - 7, 0)}
+      {ojo(0, n - 7)}
+    </svg>
+  );
+}
+
+/**
+ * La tarjeta tal como sale impresa (mismo diseño que contingencias/tarjetas/imprimir.ts),
+ * con un QR de muestra. La de acceso es oscura; la de contingencia, azul.
+ */
+export function TarjetaMuestra({ tipo }: { tipo: "acceso" | "contingencia" }) {
+  const acceso = tipo === "acceso";
+  return (
+    <div
+      className="relative my-4 flex aspect-[85.6/54] w-full max-w-[340px] flex-col justify-between overflow-hidden rounded-xl px-[18px] py-4 text-white shadow-theme-md"
+      style={{ background: acceso ? "linear-gradient(135deg, #1d2939 0%, #0c111d 100%)" : "linear-gradient(135deg, #465fff 0%, #252dae 100%)" }}
+    >
+      <span className="absolute -right-9 -top-9 size-36 rounded-full bg-white/10" />
+      <span className="absolute -bottom-20 right-[72px] size-[136px] rounded-full bg-white/[0.06]" />
+      <div className="relative flex items-center justify-between gap-3">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide">
+          {/* eslint-disable-next-line @next/next/no-img-element -- el logo, en blanco como en la tarjeta impresa */}
+          <img src="/images/logo/marca-monteazul.png" alt="" className="h-[17px] w-auto brightness-0 invert" />
+          Monte Azul Sur
+        </span>
+        <span className="rounded-full bg-white/20 px-2 py-0.5 text-[9px] font-semibold">Solo vigilancia</span>
+      </div>
+      <div className="relative flex items-end justify-between gap-3">
+        <div>
+          <div className="text-[14px] font-semibold leading-tight">{acceso ? "Tarjeta de acceso" : "Tarjeta de contingencia"}</div>
+          <div className="text-[30px] font-bold leading-none">N.º 1</div>
+          <div className="mt-1.5 text-[10px] text-white/85">No vence</div>
+          <div className="mt-0.5 max-w-40 text-[9px] text-white/70">
+            {acceso ? "Abre el molinete sin rostro, alcohol ni DNI." : "Se pasa por el lector en lugar del DNI."}
+          </div>
+        </div>
+        <div className="size-[100px] flex-none rounded-lg bg-white p-1.5">
+          <QrMuestra />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Las tres cuentas del sistema, cada una con lo que hace. */
 export function CuentasManual() {
   const cuentas = [
