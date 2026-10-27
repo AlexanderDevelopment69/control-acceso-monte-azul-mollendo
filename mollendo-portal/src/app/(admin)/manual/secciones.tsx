@@ -1,7 +1,7 @@
 import React from "react";
 import type { RolUsuario } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
-import { CuentasManual, RecorridoAcceso } from "./Figuras";
+import { CuentasManual, RecorridoAcceso, SoloPara } from "./Figuras";
 import { Lista, Motivo, type PantallaManual } from "./Recorrido";
 
 /** Texto del manual: cada sección con su título, para qué perfiles es y sus pantallas con números. */
@@ -688,15 +688,28 @@ export const SECCIONES: SeccionManual[] = [
         contenido: (
           <>
             <p className="mb-3">
-              Para visitas o autoridades que vienen, por ejemplo, a una inspección. El vigilante pasa la tarjeta por el lector del molinete
-              y se abre, sin rostro, alcohol ni DNI: por el de ingreso al entrar y por el de salida al salir. En el panel queda como{" "}
-              <b>Tarjeta de acceso N.º …</b>, sin nombre, con la marca <Badge color="warning">Tarjeta de acceso</Badge>. Una tarjeta
-              desactivada o vencida no abre y suena el aviso.
+              Para visitas o autoridades que vienen, por ejemplo, a una inspección. La tarjeta la guarda y la pasa el vigilante; no se
+              entrega a la visita.
             </p>
-            <p>
-              <b>Administrador:</b> las crea (<b>No vence</b> o hasta un día), imprime, les cambia el <b>Vencimiento</b> o el código, las desactiva o
-              las elimina (solo si nunca se usaron) en <b>Contingencias → Tarjetas de acceso</b>.
+            <p className="mb-2">
+              <b>1. Al entrar:</b> pase la tarjeta por el lector de DNI de <b>ingreso</b>. El molinete se abre solo, sin rostro, alcohol ni DNI.
             </p>
+            <p className="mb-2">
+              <b>2. Al salir:</b> pase la tarjeta por el lector de DNI de <b>salida</b>. Se abre el molinete de salida.
+            </p>
+            <p className="mb-2">
+              <b>3. En el Panel</b> queda como <b>Tarjeta de acceso N.º …</b>, sin nombre, con la marca{" "}
+              <Badge color="warning">Tarjeta de acceso</Badge>.
+            </p>
+            <p className="mb-3">
+              <b>4. Si no abre y suena el aviso:</b> la tarjeta está desactivada o vencida. Avise al administrador.
+            </p>
+            <SoloPara roles={["administrador", "soporte"]}>
+              <p>
+                <b>Administrador:</b> las crea (<b>No vence</b> o hasta un día), imprime, les cambia el <b>Vencimiento</b> o el código, las desactiva
+                o las elimina (solo si nunca se usaron) en <b>Contingencias → Tarjetas de acceso</b>.
+              </p>
+            </SoloPara>
           </>
         ),
       },

@@ -23,6 +23,8 @@ echo "Respaldo: $RESPALDO ($(sudo du -h "$RESPALDO" | cut -f1))"
 cd "$BASE"
 rm -rf mollendo-api mollendo-portal
 tar -xzf "$PAQUETE" && rm -f "$PAQUETE"
+# El paquete no lleva documentos (.md); se borran los que dejaron versiones anteriores.
+find deploy -name '*.md' -type f -delete
 
 cd deploy/nube
 # Cuentas que agregan las versiones nuevas (p. ej. soporte, 25/10/2026): su contraseña inicial va al .env.

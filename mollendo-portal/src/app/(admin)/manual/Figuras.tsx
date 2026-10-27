@@ -3,6 +3,8 @@
 // Figuras del manual: las cuentas del sistema y el recorrido de ingreso y salida.
 import React, { useEffect, useState } from "react";
 import { eventosAccesoApi } from "@/lib/api/endpoints";
+import type { RolUsuario } from "@/lib/api/types";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 type PropsIcono = { className?: string };
 const trazo = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round" } as const;
@@ -78,6 +80,12 @@ function IconoVigilancia({ className }: PropsIcono) {
       <circle cx="12" cy="12" r="3" />
     </svg>
   );
+}
+
+/** Parte del manual que solo ven esas cuentas (p. ej. lo que hace el administrador, no el vigilante). */
+export function SoloPara({ roles, children }: { roles: RolUsuario[]; children: React.ReactNode }) {
+  const rol = useAuth().user?.rol;
+  return rol && roles.includes(rol) ? <>{children}</> : null;
 }
 
 /** Las tres cuentas del sistema, cada una con lo que hace. */

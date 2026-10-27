@@ -80,6 +80,8 @@ tr { break-inside: avoid; }
   <tr><th>Qué</th><th>Detalle</th></tr>
   <tr><td>G4 Pro y alcoholímetro integrados <span class="chip nuevo">Nuevo</span></td><td>Modo asistencia: el terminal envía quién sopló y el grado; el sistema decide (umbral 0,0001 g/L).</td></tr>
   <tr><td>Orden del ingreso <span class="chip nuevo">Nuevo</span></td><td>En uso Facial + Alcohol → DNI: prueba primero y 30 segundos para pasar el DNI.</td></tr>
+  <tr><td>DNI antes del "correcto" <span class="chip cambio">Cambió</span></td><td>El DNI se pasa después de que el equipo diga "correcto". Si la persona lo pasa antes, el sistema espera hasta 12 segundos su resultado (antes 8), para no denegarle el ingreso habiendo soplado bien.</td></tr>
+  <tr><td>Lectura repetida <span class="chip nuevo">Nuevo</span></td><td>Si la persona vuelve a pasar su DNI por la misma puerta en los 20 segundos siguientes a entrar o salir, se ignora: sin aviso ni fila roja en el Panel.</td></tr>
   <tr><td>Relés y antipassback <span class="chip nuevo">Nuevo</span></td><td>Relé por molinete y relé de aviso al denegar. No se ingresa dos veces sin salir ni se sale sin haber entrado.</td></tr>
   <tr><td>Sincronización con el terminal <span class="chip nuevo">Nuevo</span></td><td>El personal se carga solo en el G4 Pro con su foto y se revisa cada día.</td></tr>
   <tr><td>Sin internet <span class="chip cambio">Cambió</span></td><td>Nadie ingresa, pero las salidas siguen con la lista guardada en el controlador.</td></tr>
@@ -115,9 +117,9 @@ tr { break-inside: avoid; }
 <table>
   <tr><th>Qué</th><th>Detalle</th></tr>
   <tr><td>Sistema y APIs <span class="chip nuevo">Nuevo</span></td><td>Estado en vivo de controlador, G4 Pro, alcoholímetro, lectores y relés; sincronización, orden del ingreso y Monitor del G4 Pro.</td></tr>
-  <tr><td>Manual <span class="chip cambio">Cambió</span></td><td>Capturas numeradas de cada pantalla y diagrama del recorrido de ingreso y salida.</td></tr>
-  <tr><td>Documentos de entrega <span class="chip nuevo">Nuevo</span></td><td>Documento Funcional v1.2, Infraestructura y Operación v1.0, Flujos de ingreso, de salida y de contingencias, y este documento.</td></tr>
+  <tr><td>Manual <span class="chip cambio">Cambió</span></td><td>Capturas numeradas de cada pantalla y diagrama del recorrido de ingreso y salida. Se descarga en PDF desde la plataforma (botón "Descargar PDF"), el del administrador o el del vigilante según la cuenta.</td></tr>
+  <tr><td>Documentos de entrega <span class="chip nuevo">Nuevo</span></td><td>Documento Funcional v1.4, Infraestructura y Operación v1.1, Flujos de ingreso, de salida y de contingencias, Manual del Administrador y Manual del Vigilante (v1.2) y este documento.</td></tr>
 </table>
 
-<p class="pie">Actualizado al 26/10/2026.</p>
+<p class="pie">Actualizado al 27/10/2026.</p>
 </main></body></html>

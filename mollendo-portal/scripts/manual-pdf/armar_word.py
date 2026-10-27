@@ -10,8 +10,8 @@ from html.parser import HTMLParser
 from xml.sax.saxutils import escape
 
 ORIGINAL, CARPETA, SALIDA, NOMBRE, DESCRIPCION_VERSION = sys.argv[1:6]
-VERSION = 'Versión 1.1 · 25 de octubre de 2026'
-VERSION_PIE = 'Versión 1.1 · 25/10/2026'
+VERSION = 'Versión 1.2 · 26 de octubre de 2026'
+VERSION_PIE = 'Versión 1.2 · 26/10/2026'
 
 z = zipfile.ZipFile(ORIGINAL)
 doc = z.read('word/document.xml').decode('utf8')
@@ -134,19 +134,7 @@ def imagen(archivo):
     return x
 
 
-# ---------- Portada, versiones e índice ----------
-TBLPR = re.search(r'<w:tblPr>.*?</w:tblPr>', els[54], re.S).group(0)
-BORDES = re.search(r'<w:tcBorders>.*?</w:tcBorders>', els[54], re.S).group(0)
-MARGEN = '<w:tcMar><w:top w:w="70" w:type="dxa"/><w:left w:w="110" w:type="dxa"/><w:bottom w:w="70" w:type="dxa"/><w:right w:w="110" w:type="dxa"/></w:tcMar><w:vAlign w:val="center"/>'
-
-
-def celda(ancho, texto, cabecera):
-    fondo = '<w:shd w:val="clear" w:color="auto" w:fill="1F3864"/>' if cabecera else ''
-    base = '<w:color w:val="FFFFFF"/><w:sz w:val="20"/><w:szCs w:val="20"/>' if cabecera else '<w:sz w:val="20"/><w:szCs w:val="20"/>'
-    return (f'<w:tc><w:tcPr><w:tcW w:w="{ancho}" w:type="dxa"/>{BORDES}{fondo}{MARGEN}</w:tcPr>'
-            f'<w:p><w:pPr><w:spacing w:line="264" w:lineRule="auto"/></w:pPr>{run(texto, cabecera, base)}</w:p></w:tc>')
-
-
+# ---------- Portada e índice ----------
 def cambiar_texto(p, viejo, nuevo):
     return p.replace(f'<w:t>{viejo}</w:t>', f'<w:t>{escape(nuevo)}</w:t>')
 
@@ -155,15 +143,8 @@ salida = [els[0],
           cambiar_texto(els[1], 'DOCUMENTO FUNCIONAL', NOMBRE.upper()),
           els[2],
           cambiar_texto(els[3], 'Terminal Monte Azul Mollendo (TMAM) · Alcance base', 'Terminal Monte Azul Mollendo (TMAM)'),
-          cambiar_texto(els[4], 'Versión final · 2 de octubre de 2026', VERSION),
-          els[5]]
-w = [1800, 1800, 6038]
-filas = [('Versión', 'Fecha', 'Descripción'), ('1.0', '24/10/2026', DESCRIPCION_VERSION), ('1.1', '25/10/2026', 'Cuenta de soporte.')]
-tv = f'<w:tbl>{TBLPR}<w:tblGrid>' + ''.join(f'<w:gridCol w:w="{a}"/>' for a in w) + '</w:tblGrid>'
-for i, f in enumerate(filas):
-    trpr = '<w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>' if i == 0 else '<w:trPr><w:cantSplit/></w:trPr>'
-    tv += f'<w:tr>{trpr}' + ''.join(celda(w[j], t, i == 0) for j, t in enumerate(f)) + '</w:tr>'
-salida.append(tv + '</w:tbl>')
+          cambiar_texto(els[4], 'Versión final · 2 de octubre de 2026', VERSION)]
+# Sin la tabla "Control de versiones" (pedido de TMAM, 26/10/2026): la versión queda en la portada y el pie.
 salida.append(els[7])
 salida.append(els[8])
 for i, s in enumerate(manual, 1):

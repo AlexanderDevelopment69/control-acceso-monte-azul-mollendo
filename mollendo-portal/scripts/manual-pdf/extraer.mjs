@@ -2,6 +2,8 @@
 //   node scripts/manual-pdf/extraer.mjs ADMIN <carpeta>   (o VIGILANCIA)
 //   python scripts/manual-pdf/armar_word.py <Documento_Funcional_..._Actualizado.docx> <carpeta> <salida.docx> "Manual del Administrador" "<descripción>"
 //   y exportar el Word a PDF (Word: Guardar como PDF, con los campos actualizados).
+//   Después, copiar los dos PDF a docs/entrega y a mollendo-api/manual (los descarga el portal
+//   con "Descargar PDF" en Manual) y subir a Azure.
 // Recorre el manual del portal con una cuenta y guarda, por sección y pantalla,
 // la captura con sus números (PNG) y el texto de cada punto (JSON).
 import fs from "node:fs";

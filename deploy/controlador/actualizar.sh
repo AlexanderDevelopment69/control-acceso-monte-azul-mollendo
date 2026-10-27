@@ -19,6 +19,8 @@ cd "$BASE"
 rm -rf mollendo-api mollendo-portal 2>/dev/null ||
   $D run --rm -v "$BASE:/base" --entrypoint sh alpine:3.22 -c 'rm -rf /base/mollendo-api /base/mollendo-portal'
 tar -xzf "$PAQUETE" && rm -f "$PAQUETE"
+# El paquete no lleva documentos (.md); se borran los que dejaron versiones anteriores.
+find deploy -name '*.md' -type f -delete
 
 cd deploy/controlador
 $D compose up -d --build </dev/null 2>&1 | grep -vE '^ *#|^\s*$' | tail -4

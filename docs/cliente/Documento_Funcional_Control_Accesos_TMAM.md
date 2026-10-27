@@ -2,7 +2,7 @@
 
 **Terminal Monte Azul Mollendo (TMAM) · Alcance base**
 
-Versión 1.3 · 25 de octubre de 2026
+Versión 1.4 · 27 de octubre de 2026
 
 | Versión | Fecha | Descripción |
 |---|---|---|
@@ -10,6 +10,7 @@ Versión 1.3 · 25 de octubre de 2026
 | 1.1 | 21/10/2026 | Integración con el terminal facial y el alcoholímetro, orden del ingreso, contingencias, Presentes ahora, aviso de fallas y HTTPS. |
 | 1.2 | 23/10/2026 | Usuarios, período de autorización, tarjeta de acceso y avisos del Panel. |
 | 1.3 | 25/10/2026 | Cuenta de soporte. |
+| 1.4 | 27/10/2026 | Espera del DNI pasado antes del «correcto», lectura repetida y manual en PDF. |
 
 ## Contenido
 
@@ -231,7 +232,7 @@ En Excel o PDF, con filtros por periodo, empresa y perfil.
 
 ### 4.8. Manual
 
-Guía de uso dentro del portal, por rol, con capturas numeradas de cada pantalla y el recorrido de ingreso y salida.
+Guía de uso dentro del portal, por rol, con capturas numeradas de cada pantalla y el recorrido de ingreso y salida. El manual se descarga en PDF con el botón «Descargar PDF»: el del administrador (también para soporte) o el del vigilante.
 
 ### 4.9. Características generales del portal
 
@@ -260,13 +261,14 @@ Guía de uso dentro del portal, por rol, con capturas numeradas de cada pantalla
 | RN-02 | Una persona dada de baja se deniega de inmediato. |
 | RN-03 | El ingreso combina el DNI y la prueba de rostro y alcohol del terminal facial. Orden en uso: **Facial + Alcohol → DNI**. |
 | RN-03a | **DNI → Facial + Alcohol:** tras el DNI tiene 1 minuto para hacer la prueba. |
-| RN-03b | **Facial + Alcohol → DNI:** tras aprobar la prueba tiene 30 segundos para pasar su DNI. |
+| RN-03b | **Facial + Alcohol → DNI:** tras aprobar la prueba tiene 30 segundos para pasar su DNI. Lo normal es pasar el DNI después del «correcto». Si lo pasa antes, el sistema espera hasta 12 segundos el resultado de la prueba. |
 | RN-04 | Un documento vale hasta el día de su vencimiento, incluido. |
 | RN-05 | De cada documento cuenta solo la última versión. |
 | RN-06 | Los documentos no requieren aprobación. |
 | RN-07 | Eliminar un documento borra todas sus versiones. |
 | RN-08 | La salida se permite a toda persona registrada con un ingreso previo, aunque esté de baja. |
 | RN-08a | **Antipassback:** no se ingresa dos veces sin salir ni se sale sin haber entrado. |
+| RN-08b | **Lectura repetida:** si una persona pasa su DNI dentro de los 20 segundos siguientes a su ingreso o salida, la lectura se ignora (sin registro ni aviso); después rige el antipassback. |
 | RN-09 | Un documento de identidad no registrado se deniega y queda en el historial. |
 | RN-10 | DNI de 8 dígitos; no puede haber dos personas con el mismo documento. |
 | RN-11 | Los nombres de documento se eligen de una lista fija. |

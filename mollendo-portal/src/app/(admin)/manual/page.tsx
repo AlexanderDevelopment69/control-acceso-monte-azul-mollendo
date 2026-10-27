@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useEffect, useRef, useSyncExternalStore } from "react";
+import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { RequireRole } from "@/lib/auth/RequireRole";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
+import { ErrorBanner } from "@/components/common/ErrorBanner";
+import Button from "@/components/ui/button/Button";
+import { DownloadIcon } from "@/icons";
+import { manualApi } from "@/lib/api/endpoints";
+import { ApiError } from "@/lib/api/client";
+import { guardarArchivo } from "@/lib/descargas";
 import { Recorrido } from "./Recorrido";
 import { SECCIONES } from "./secciones";
 
@@ -25,6 +31,22 @@ function ManualContent() {
   const hash = useSyncExternalStore(suscribirHash, leerHash, () => "");
   const indice = Math.max(0, secciones.findIndex((s) => s.id === hash));
   const activa = secciones[indice];
+  const [descargando, setDescargando] = useState(false);
+  const [errorPdf, setErrorPdf] = useState<string | null>(null);
+
+  // El manual en PDF de su cuenta (lo da el servidor según quién inició sesión).
+  async function descargarPdf() {
+    setDescargando(true);
+    setErrorPdf(null);
+    try {
+      const { blob, nombre } = await manualApi.pdf();
+      guardarArchivo(blob, nombre);
+    } catch (err) {
+      setErrorPdf(err instanceof ApiError ? err.message : "No se pudo descargar el manual");
+    } finally {
+      setDescargando(false);
+    }
+  }
 
   // Una sección a la vez: elegir otra la muestra arriba, desde su primera pantalla.
   function ir(id: string) {
@@ -48,7 +70,16 @@ function ManualContent() {
 
   return (
     <div>
-      <PageHeader title="Manual" description="Guía de uso del sistema, dividida por secciones." />
+      <PageHeader
+        title="Manual"
+        description="Guía de uso del sistema, dividida por secciones."
+        actions={
+          <Button type="button" variant="outline" size="sm" onClick={() => void descargarPdf()} disabled={descargando} startIcon={<DownloadIcon className="size-4" />}>
+            {descargando ? "Descargando…" : "Descargar PDF"}
+          </Button>
+        }
+      />
+      {errorPdf && <ErrorBanner className="mb-4">{errorPdf}</ErrorBanner>}
 
       <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
         {/* Secciones: en la computadora, la lista de la izquierda; en el celular se deslizan de lado,

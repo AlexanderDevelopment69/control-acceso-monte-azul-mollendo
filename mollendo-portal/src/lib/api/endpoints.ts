@@ -251,6 +251,12 @@ export const reportesApi = {
     apiRequest<{ blob: Blob; nombre: string }>(`/reportes/${tipo}${consulta(params)}`, { responseType: "archivo" }),
 };
 
+// ---- manual ----
+export const manualApi = {
+  /** El manual en PDF de la cuenta que inició sesión (administrador, vigilante o soporte). */
+  pdf: () => apiRequest<{ blob: Blob; nombre: string }>("/manual/pdf", { responseType: "archivo" }),
+};
+
 // ---- panel ----
 export const panelApi = {
   resumen: () => apiRequest<ResumenPanel>("/panel/resumen"),

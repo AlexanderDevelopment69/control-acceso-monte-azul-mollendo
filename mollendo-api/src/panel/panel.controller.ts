@@ -1,4 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, StreamableFile } from '@nestjs/common';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { PanelService } from './panel.service.js';
 import { DashboardService } from './dashboard.service.js';
 import { QueryDashboardDto } from './dto/query-dashboard.dto.js';
@@ -8,6 +10,19 @@ import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { avisosDelSistema } from './avisos-sistema.js';
 import { EstadoSistemaService } from './estado-sistema.service.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type.js';
+
+/**
+ * Manual en PDF de cada cuenta (pedido de TMAM, 26/10/2026): son los de docs/entrega,
+ * copiados en mollendo-api/manual. Al cambiar el manual del portal hay que regenerarlos
+ * (mollendo-portal/scripts/manual-pdf) y volver a copiarlos aquí.
+ */
+const MANUAL_PDF = {
+  administrador: 'Manual_Administrador_TMAM.pdf',
+  soporte: 'Manual_Administrador_TMAM.pdf',
+  vigilancia: 'Manual_Vigilante_TMAM.pdf',
+} as const;
 
 @Controller()
 export class PanelController {
@@ -65,6 +80,19 @@ export class PanelController {
   // datos, reporta si la clave de equipos está configurada y, ahora que el
   // protocolo PUSH ya está implementado (ver push-sdk/), si hay algún equipo
   // conectado de verdad (llamó a /iclock/getrequest en los últimos 2 min).
+  /** El manual en PDF que le corresponde a quien lo pide (solo con sesión). */
+  @Get('manual/pdf')
+  @Roles('administrador', 'vigilancia', 'soporte')
+  async manualPdf(@CurrentUser() usuario: AuthenticatedUser): Promise<StreamableFile> {
+    const archivo = MANUAL_PDF[usuario.rol];
+    const contenido = await readFile(path.join(process.cwd(), 'manual', archivo));
+    return new StreamableFile(contenido, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${archivo}"`,
+      length: contenido.length,
+    });
+  }
+
   @Get('panel/estado-sistema')
   @Roles('administrador', 'soporte')
   estadoSistema() {
