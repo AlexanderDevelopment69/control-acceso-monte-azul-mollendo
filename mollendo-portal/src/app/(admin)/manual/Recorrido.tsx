@@ -53,6 +53,12 @@ function dentro(m: { x: number; y: number; lado: string }) {
 /** Pasos de una pantalla: uno por número; una pantalla sin captura cuenta como uno. */
 const pasos = (p: PantallaManual) => ("puntos" in p ? p.puntos.length : 1);
 
+/** Las capturas de esas pantallas (para descargarlas antes de mostrarlas). */
+export const capturasDe = (pantallas: PantallaManual[]) => pantallas.flatMap((p) => ("clave" in p ? [capturas[p.clave].imagen] : []));
+
+/** Capturas ya mostradas una vez: al volver a ellas no se muestra "Cargando la imagen…". */
+const capturasCargadas = new Set<string>();
+
 export function Recorrido({
   pantallas,
   siguienteSeccion,
@@ -216,6 +222,18 @@ function PantallaConCaptura({
   children: React.ReactNode;
 }) {
   const c = capturas[p.clave];
+  // Mientras llega la imagen: el aviso en su lugar y sin los números (que quedarían sobre un recuadro vacío).
+  // Si ya estaba descargada, `complete` es verdadero desde el inicio.
+  const imagen = useRef<HTMLImageElement>(null);
+  const [cargada, setCargada] = useState(() => capturasCargadas.has(c.imagen));
+  function listo() {
+    capturasCargadas.add(c.imagen);
+    setCargada(true);
+  }
+  useEffect(() => {
+    if (imagen.current?.complete && imagen.current.naturalWidth > 0) listo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al mostrar la captura
+  }, []);
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
       {/* La pantalla real con sus números */}
@@ -223,8 +241,21 @@ function PantallaConCaptura({
         {/* Una captura ancha no se achica de más en el celular: se desliza de lado. Una chica (una ventana) entra entera. */}
         <div className={`relative mx-auto ${c.ancho < 700 ? "" : "min-w-[560px] sm:min-w-0"}`} style={{ maxWidth: c.ancho < 700 ? 600 : undefined }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- captura estática con números encima */}
-          <img src={c.imagen} alt={p.titulo} width={c.ancho} height={c.alto} className="block h-auto w-full rounded-lg shadow-theme-md" />
-          {c.puntos.map((m, i) => {
+          <img
+            ref={imagen}
+            src={c.imagen}
+            alt={p.titulo}
+            width={c.ancho}
+            height={c.alto}
+            onLoad={listo}
+            className={`block h-auto w-full rounded-lg shadow-theme-md transition-opacity ${cargada ? "opacity-100" : "opacity-0"}`}
+          />
+          {!cargada && (
+            <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-white text-sm text-gray-400 dark:bg-gray-900">
+              Cargando la imagen…
+            </span>
+          )}
+          {cargada && c.puntos.map((m, i) => {
             const activo = i === punto;
             return (
               <button

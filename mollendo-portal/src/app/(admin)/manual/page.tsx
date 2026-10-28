@@ -10,7 +10,7 @@ import { DownloadIcon } from "@/icons";
 import { manualApi } from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import { guardarArchivo } from "@/lib/descargas";
-import { Recorrido } from "./Recorrido";
+import { capturasDe, Recorrido } from "./Recorrido";
 import { SECCIONES } from "./secciones";
 
 // La sección elegida vive en el "#" de la dirección (/manual#reportes): se puede
@@ -58,6 +58,27 @@ function ManualContent() {
   }
 
   const siguiente = secciones[indice + 1];
+
+  // Las capturas se descargan de antemano: primero las de la sección abierta, después las que siguen
+  // y al final las anteriores. Así, al navegar, ya están listas (el navegador las guarda: next.config.ts).
+  const ordenCapturas = [...secciones.slice(indice), ...secciones.slice(0, indice)].flatMap((s) => capturasDe(s.pantallas)).join("|");
+  // Una por una, para que en un celular lento la de la sección abierta no comparta la conexión con las demás.
+  useEffect(() => {
+    if (!ordenCapturas) return;
+    let activo = true;
+    const pendientes = ordenCapturas.split("|");
+    const descargarSiguiente = () => {
+      const src = pendientes.shift();
+      if (!activo || !src) return;
+      const imagen = new Image();
+      imagen.onload = imagen.onerror = descargarSiguiente;
+      imagen.src = src;
+    };
+    descargarSiguiente();
+    return () => {
+      activo = false;
+    };
+  }, [ordenCapturas]);
 
   // En el celular las secciones se deslizan de lado: la elegida queda a la vista.
   const lista = useRef<HTMLElement>(null);

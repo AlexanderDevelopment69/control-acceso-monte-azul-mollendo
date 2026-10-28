@@ -11,6 +11,7 @@
 //   CAPTURAS=verificacion-activar,verificacion-ventana node scripts/capturas-manual.mjs
 //
 // Usa datos de demostración (personas DEMO). Nunca ejecutarlo contra datos reales.
+import crypto from "node:crypto";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
@@ -540,7 +541,10 @@ for (const c of CAPTURAS.filter((c) => !SOLO || SOLO.includes(c.clave))) {
   }
   const archivo = `${c.clave}.webp`;
   await pagina.screenshot({ path: path.join(SALIDA_IMG, archivo), type: "webp", quality: 82, clip: recorte, captureBeyondViewport: true });
-  resultado[c.clave] = { imagen: `/manual/${archivo}`, ancho: recorte.width, alto: recorte.height, puntos };
+  // ?v= cambia con cada captura nueva: el navegador la guarda sin volver a preguntar (next.config.ts)
+  // y descarga la nueva cuando cambia.
+  const version = crypto.createHash("md5").update(fs.readFileSync(path.join(SALIDA_IMG, archivo))).digest("hex").slice(0, 8);
+  resultado[c.clave] = { imagen: `/manual/${archivo}?v=${version}`, ancho: recorte.width, alto: recorte.height, puntos };
   console.log(`ok ${archivo} (${puntos.length} puntos)`);
   if (c.despues) await c.despues(pagina);
 }

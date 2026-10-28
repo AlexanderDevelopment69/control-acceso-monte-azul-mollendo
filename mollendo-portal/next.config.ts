@@ -43,7 +43,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   async headers() {
-    return [{ source: "/:path*", headers: CABECERAS_SEGURIDAD }];
+    return [
+      { source: "/:path*", headers: CABECERAS_SEGURIDAD },
+      // Capturas del Manual: llevan ?v=<huella> (scripts/capturas-manual.mjs), así que
+      // el navegador las guarda un año sin volver a preguntar; una captura nueva cambia la huella.
+      { source: "/manual/:archivo*.webp", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+    ];
   },
 
   // Reenvía las llamadas a la API hacia el backend local. Sirve para poder

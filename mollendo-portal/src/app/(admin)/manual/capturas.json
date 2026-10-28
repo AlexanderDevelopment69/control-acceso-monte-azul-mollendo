@@ -1,6 +1,6 @@
 {
   "personal": {
-    "imagen": "/manual/personal.webp",
+    "imagen": "/manual/personal.webp?v=2feb2bd7",
     "ancho": 1150,
     "alto": 1424,
     "puntos": [
@@ -85,7 +85,7 @@
     ]
   },
   "nuevo-personal": {
-    "imagen": "/manual/nuevo-personal.webp",
+    "imagen": "/manual/nuevo-personal.webp?v=77488bdd",
     "ancho": 1312,
     "alto": 755,
     "puntos": [
@@ -146,7 +146,7 @@
     ]
   },
   "carga-masiva": {
-    "imagen": "/manual/carga-masiva.webp",
+    "imagen": "/manual/carga-masiva.webp?v=7fc01d84",
     "ancho": 1056,
     "alto": 492,
     "puntos": [
@@ -177,7 +177,7 @@
     ]
   },
   "carga-revision": {
-    "imagen": "/manual/carga-revision.webp",
+    "imagen": "/manual/carga-revision.webp?v=1ff8631c",
     "ancho": 1056,
     "alto": 606,
     "puntos": [
@@ -214,7 +214,7 @@
     ]
   },
   "empresas": {
-    "imagen": "/manual/empresas.webp",
+    "imagen": "/manual/empresas.webp?v=01f365fd",
     "ancho": 1150,
     "alto": 760,
     "puntos": [
@@ -251,7 +251,7 @@
     ]
   },
   "presentes": {
-    "imagen": "/manual/presentes.webp",
+    "imagen": "/manual/presentes.webp?v=15d8dfb7",
     "ancho": 1150,
     "alto": 1180,
     "puntos": [
@@ -294,7 +294,7 @@
     ]
   },
   "vigilancia": {
-    "imagen": "/manual/vigilancia.webp",
+    "imagen": "/manual/vigilancia.webp?v=5c2eef4b",
     "ancho": 1150,
     "alto": 720,
     "puntos": [
@@ -337,7 +337,7 @@
     ]
   },
   "dashboard": {
-    "imagen": "/manual/dashboard.webp",
+    "imagen": "/manual/dashboard.webp?v=8e2248b2",
     "ancho": 1150,
     "alto": 640,
     "puntos": [
@@ -368,7 +368,7 @@
     ]
   },
   "reportes": {
-    "imagen": "/manual/reportes.webp",
+    "imagen": "/manual/reportes.webp?v=6b37431f",
     "ancho": 1150,
     "alto": 1000,
     "puntos": [
@@ -405,7 +405,7 @@
     ]
   },
   "sincronizacion": {
-    "imagen": "/manual/sincronizacion.webp",
+    "imagen": "/manual/sincronizacion.webp?v=a7505d3c",
     "ancho": 1124,
     "alto": 278,
     "puntos": [
@@ -436,7 +436,7 @@
     ]
   },
   "sistema": {
-    "imagen": "/manual/sistema.webp",
+    "imagen": "/manual/sistema.webp?v=46de68ed",
     "ancho": 1150,
     "alto": 1010,
     "puntos": [
@@ -461,7 +461,7 @@
     ]
   },
   "auditoria": {
-    "imagen": "/manual/auditoria.webp",
+    "imagen": "/manual/auditoria.webp?v=60e45fd3",
     "ancho": 1150,
     "alto": 640,
     "puntos": [
@@ -498,7 +498,7 @@
     ]
   },
   "contrasena": {
-    "imagen": "/manual/contrasena.webp",
+    "imagen": "/manual/contrasena.webp?v=195af9ba",
     "ancho": 480,
     "alto": 478,
     "puntos": [
@@ -529,7 +529,7 @@
     ]
   },
   "verificacion-activar": {
-    "imagen": "/manual/verificacion-activar.webp",
+    "imagen": "/manual/verificacion-activar.webp?v=53b4b257",
     "ancho": 394.671875,
     "alto": 195,
     "puntos": [
@@ -548,7 +548,7 @@
     ]
   },
   "verificacion-ventana": {
-    "imagen": "/manual/verificacion-ventana.webp",
+    "imagen": "/manual/verificacion-ventana.webp?v=5cbdace9",
     "ancho": 608,
     "alto": 524,
     "puntos": [
@@ -591,7 +591,7 @@
     ]
   },
   "usuarios": {
-    "imagen": "/manual/usuarios.webp",
+    "imagen": "/manual/usuarios.webp?v=165508b8",
     "ancho": 1150,
     "alto": 300,
     "puntos": [
@@ -616,7 +616,7 @@
     ]
   },
   "tarjetas": {
-    "imagen": "/manual/tarjetas.webp",
+    "imagen": "/manual/tarjetas.webp?v=decf2c78",
     "ancho": 1150,
     "alto": 760,
     "puntos": [
@@ -665,7 +665,7 @@
     ]
   },
   "personal-vigilante": {
-    "imagen": "/manual/personal-vigilante.webp",
+    "imagen": "/manual/personal-vigilante.webp?v=9ed2005b",
     "ancho": 1150,
     "alto": 947,
     "puntos": [
