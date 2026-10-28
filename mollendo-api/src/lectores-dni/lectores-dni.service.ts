@@ -148,6 +148,12 @@ export class LectoresDniService implements OnModuleInit, OnModuleDestroy {
       await ejecutar('stty', ['-F', lector.puerto, baudios, 'raw', '-echo', 'clocal', 'cs8', '-cstopb', '-parenb', '-crtscts']);
       const fd = fs.openSync(lector.puerto, fs.constants.O_RDONLY | fs.constants.O_NOCTTY | fs.constants.O_NONBLOCK);
       const stream = new tty.ReadStream(fd);
+      // Node (libuv) reabre el tty y pone la copia también en `fd`, pero al cerrar el
+      // stream solo cierra su copia: sin esto, cada reapertura dejaba el puerto abierto
+      // (28/10/2026: 137 en el lector de salida trabado) y el adaptador nunca se
+      // cerraba del todo, así que reabrirlo no lo reiniciaba. Cerrar `fd` no corta el stream.
+      const fdDelStream = (stream as unknown as { _handle?: { fd?: number } })._handle?.fd;
+      if (typeof fdDelStream === 'number' && fdDelStream >= 0 && fdDelStream !== fd) fs.closeSync(fd);
       stream.on('data', (pedazo: Buffer) => this.recibir(lector, pedazo));
       stream.on('error', (error) => this.desconectado(lector, error.message));
       stream.on('close', () => this.desconectado(lector, 'el puerto se cerró'));
