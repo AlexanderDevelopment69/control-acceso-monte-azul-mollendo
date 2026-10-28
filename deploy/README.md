@@ -17,9 +17,9 @@ El sistema es el mismo código en todos lados. Cada entorno tiene **su propia ca
 |---|---|---|---|
 | **Nube** | [`nube/`](nube/README.md) | Servidor en la nube (Azure, `74.163.89.6`, `https://accesos.monteazulsur.com.pe`) | Portal, API, base de datos y respaldos |
 | **Controlador** | [`controlador/`](controlador/README.md) | Controlador (PC) del punto de acceso | Solo lectores de DNI y relés de los molinetes, conectado a la nube |
-| **Garita** (opcional, hoy no se usa) | [`garita/`](garita/README.md) | Controlador (PC) del punto de acceso | Servidor completo, con lectores y relés por USB, sin depender de internet |
+| **Todo en controlador** (opcional, hoy no se usa) | [`todo-en-controlador/`](todo-en-controlador/README.md) | Controlador (PC) del punto de acceso | Servidor completo, con lectores y relés por USB, sin depender de internet |
 | **Local** | [`local/`](local/README.md) | PC de desarrollo | PostgreSQL en Docker; API y portal con Node (no es una instalación del sistema) |
-| — | `comun/` | — | Lo que comparten la nube y la garita |
+| — | `comun/` | — | Lo que comparten la nube y todo-en-controlador |
 
 Hoy se trabaja con **nube + controlador**.
 
@@ -40,7 +40,7 @@ Hoy se trabaja con **nube + controlador**.
 ## Igual en todos los servidores
 
 ```bash
-cd ~/mollendo/deploy/<entorno>      # nube, controlador o garita
+cd ~/mollendo/deploy/<entorno>      # nube, controlador o todo-en-controlador
 sudo docker compose up -d --build   # recrea con el .env actual (instalar.sh crea el .env la primera vez)
 ```
 

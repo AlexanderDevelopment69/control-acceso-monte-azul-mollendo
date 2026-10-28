@@ -5,9 +5,9 @@
 # quedan sin uso. No toca ningún otro dato.
 #
 # Uso, en el servidor (dentro de ~/mollendo); ENTORNO es la carpeta de deploy/
-# donde corre el sistema (nube por defecto, o garita):
+# donde corre el sistema (nube por defecto, o todo-en-controlador):
 #   sudo sh mollendo-api/prisma/limpiar-demo.sh
-#   sudo ENTORNO=garita sh mollendo-api/prisma/limpiar-demo.sh
+#   sudo ENTORNO=todo-en-controlador sh mollendo-api/prisma/limpiar-demo.sh
 set -e
 cd "$(dirname "$0")/../../deploy/${ENTORNO:-nube}"
 DC="docker compose"

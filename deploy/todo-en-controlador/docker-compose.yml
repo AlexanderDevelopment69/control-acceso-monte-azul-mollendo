@@ -1,4 +1,4 @@
-# Entorno GARITA (opcional, hoy no se usa): el Controlador (PC) como servidor completo
+# Entorno TODO EN CONTROLADOR (opcional, hoy no se usa): el Controlador (PC) como servidor completo
 # (portal, API, base de datos, respaldos) con los lectores de DNI y los relés
 # conectados por USB. Ver README.md de esta carpeta.
 #   cp .env.example .env    (y completar)

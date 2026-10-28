@@ -7,7 +7,7 @@ Esta guía explica cómo desplegar el sistema (portal web, backend y base de dat
 
 > **Esta guía no incluye contraseñas ni claves, porque se versiona en git.** Están solo en cada servidor, en el `.env` de su entorno (`~/mollendo/deploy/<entorno>/.env`); quien tenga acceso SSH puede verlas con `cat`. Para desplegar o actualizar no hace falta conocerlas.
 
-> **Cada entorno tiene su carpeta en `deploy/`** (`nube`, `controlador`, `garita`, `local`), con su `docker-compose.yml`, la plantilla de su `.env` y un README con los pasos de despliegue. **Los comandos `docker compose` de esta guía se ejecutan dentro de la carpeta del entorno** (`~/mollendo/deploy/nube`, `~/mollendo/deploy/garita` o `~/mollendo/deploy/controlador`), donde también están su `.env` y su carpeta `backups/`.
+> **Cada entorno tiene su carpeta en `deploy/`** (`nube`, `controlador`, `todo-en-controlador`, `local`), con su `docker-compose.yml`, la plantilla de su `.env` y un README con los pasos de despliegue. **Los comandos `docker compose` de esta guía se ejecutan dentro de la carpeta del entorno** (`~/mollendo/deploy/nube`, `~/mollendo/deploy/todo-en-controlador` o `~/mollendo/deploy/controlador`), donde también están su `.env` y su carpeta `backups/`.
 
 ---
 
@@ -43,7 +43,7 @@ El mismo código corre en cuatro lugares. Lo que cambia es la configuración: ca
 | **local** | PC de desarrollo | PostgreSQL en Docker; API y portal con Node | `deploy/local/` (el `.env` va en `mollendo-api/` y `mollendo-portal/`) | `docker compose up -d`, luego `npm run start:dev` (API) y `npm run dev` (portal) |
 | **nube** | Azure (`74.163.89.6`; AWS queda para pruebas) | Portal, API, base de datos, HTTPS y respaldos | `deploy/nube/` | `instalar.sh` |
 | **controlador** | Controlador (PC) del punto de acceso | Solo lectores de DNI y relés, conectados a la nube | `deploy/controlador/` | `instalar.sh` |
-| **garita** (opcional, hoy no se usa) | Controlador (PC) del punto de acceso | Servidor completo, con lectores y relés por USB | `deploy/garita/` | `docker compose up -d --build` |
+| **todo-en-controlador** (opcional, hoy no se usa) | Controlador (PC) del punto de acceso | Servidor completo, con lectores y relés por USB | `deploy/todo-en-controlador/` | `docker compose up -d --build` |
 
 Opciones que distinguen a cada entorno:
 
@@ -101,7 +101,7 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 
 | Archivo | Para qué sirve |
 |---|---|
-| `deploy/nube/docker-compose.yml`, `deploy/garita/docker-compose.yml` | Definen los contenedores, los volúmenes y los puertos (la garita además da acceso a los USB) |
+| `deploy/nube/docker-compose.yml`, `deploy/todo-en-controlador/docker-compose.yml` | Definen los contenedores, los volúmenes y los puertos (todo-en-controlador además da acceso a los USB) |
 | `deploy/nube/instalar.sh`, `actualizar.sh`, `restaurar.sh` | Instalar, actualizar y restaurar el servidor (ver `deploy/nube/README.md`) |
 | `deploy/controlador/instalar.sh`, `actualizar.sh` | Instalar y actualizar el Controlador (PC) |
 | `deploy/empaquetar.sh` | En la PC, crea `mollendo.tgz` con el programa, sin documentos |
@@ -127,7 +127,7 @@ Todo corre en **contenedores de Docker**. En el sistema operativo solo se instal
 | Puertos que deben estar abiertos (grupo de seguridad de red de Azure, lo administra TMAM) | `22` (SSH), `80` y `443` (portal con HTTPS), `3001` (G4 Pro) |
 | Dirección | `74.163.89.6`; portal en **https://accesos.monteazulsur.com.pe** (HTTPS con Caddy y Let's Encrypt, ver `deploy/nube/README.md`) |
 
-### 2.2. El Controlador (PC) del punto de acceso (entornos `controlador` y `garita`)
+### 2.2. El Controlador (PC) del punto de acceso (entornos `controlador` y `todo-en-controlador`)
 
 | Requisito | Valor actual |
 |---|---|
@@ -167,7 +167,7 @@ Se hace con scripts, siempre en este orden: servidor, Controlador (PC), G4 Pro y
 4. G4 Pro: servidor `accesos.monteazulsur.com.pe`, puerto `3001`; en el portal, **Sistema y APIs** → **Sincronizar**.
 5. Verificar (sección 4) y cambiar las contraseñas iniciales.
 
-Garita (opcional, hoy no se usa): `deploy/garita/README.md`.
+Todo en controlador (opcional, hoy no se usa): `deploy/todo-en-controlador/README.md`.
 
 Para entrar al Controlador (PC): `ssh -i ~/.ssh/controlador_pc_key ma-admin@100.78.153.33` (por Tailscale). La primera vez pregunta si se confía en el equipo; la huella correcta es `SHA256:7E0UUb8X7/RlEWjbISN3pl3P5GW23mxXKQVhB2GaWDg`.
 
@@ -180,7 +180,7 @@ Para entrar al Controlador (PC): `ssh -i ~/.ssh/controlador_pc_key ma-admin@100.
 ### 4.1. En el servidor
 
 ```bash
-cd ~/mollendo/deploy/nube      # o deploy/garita
+cd ~/mollendo/deploy/nube      # o deploy/todo-en-controlador
 sudo docker compose ps
 ```
 
@@ -232,10 +232,10 @@ En el servidor, `actualizar.sh` saca un respaldo de la base (`backups/antes-de-a
 
 ## 6. Operación del día a día
 
-Todos los comandos se ejecutan en el servidor, dentro de la carpeta del entorno (`~/mollendo/deploy/nube` o `~/mollendo/deploy/garita`). Para escribir menos, se puede definir un atajo en la sesión:
+Todos los comandos se ejecutan en el servidor, dentro de la carpeta del entorno (`~/mollendo/deploy/nube` o `~/mollendo/deploy/todo-en-controlador`). Para escribir menos, se puede definir un atajo en la sesión:
 
 ```bash
-cd ~/mollendo/deploy/nube      # o deploy/garita
+cd ~/mollendo/deploy/nube      # o deploy/todo-en-controlador
 alias dc='sudo docker compose'
 ```
 
@@ -258,7 +258,7 @@ alias dc='sudo docker compose'
 Si alguien olvidó su contraseña y no puede entrar (no hay recuperación por correo). Reemplazar `NuevaClave2026` y el correo:
 
 ```bash
-cd ~/mollendo/deploy/nube      # o deploy/garita
+cd ~/mollendo/deploy/nube      # o deploy/todo-en-controlador
 H=$(sudo docker compose exec -T api node -e "require('bcryptjs').hash(process.argv[1], 10).then(console.log)" 'NuevaClave2026' </dev/null)
 echo "UPDATE usuario SET password_hash = :'h', password_cambiado_en = now() WHERE correo = 'admin@monteazulsur.com.pe';" \
   | sudo docker compose exec -T db psql -U mollendo -d mollendo_control_acceso -v h="$H"
@@ -296,14 +296,14 @@ Los respaldos anteriores a este cambio (28/09/2026) son `.sql.gz` y solo tienen 
 Solo la base de datos (rápido; es el que se saca antes de cada actualización):
 
 ```bash
-cd ~/mollendo/deploy/nube      # o deploy/garita
+cd ~/mollendo/deploy/nube      # o deploy/todo-en-controlador
 sudo docker compose exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip > backups/antes-de-actualizar-$(date +%Y%m%d-%H%M).sql.gz
 ```
 
 Completo (base de datos y archivos), igual al automático, en el momento:
 
 ```bash
-cd ~/mollendo/deploy/nube      # o deploy/garita
+cd ~/mollendo/deploy/nube      # o deploy/todo-en-controlador
 sudo docker compose run --rm -T backup ahora
 ```
 
@@ -434,7 +434,7 @@ El lector viene de fábrica en modo USB (teclado): así pita al leer, pero no en
 
 ### Configurar el servidor
 
-En el `.env` del entorno que tiene los lectores (`deploy/controlador/.env` o `deploy/garita/.env`), la ruta fija del adaptador (no cambia aunque se conecten otros USB). Se ve con `ls /dev/serial/by-id/`:
+En el `.env` del entorno que tiene los lectores (`deploy/controlador/.env` o `deploy/todo-en-controlador/.env`), la ruta fija del adaptador (no cambia aunque se conecten otros USB). Se ve con `ls /dev/serial/by-id/`:
 
 ```bash
 LECTOR_DNI_INGRESO_DISPOSITIVO=/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_FQCLb114J19-if00-port0
@@ -510,7 +510,7 @@ Instalados en el Controlador (PC) (04/10/2026): **ingreso** con el adaptador `..
 1. **Hardware:** un **segundo adaptador USB-serial** (como el ATEN) para el cable DB9 del lector de salida. Su punta USB de energía va a otro puerto USB del Controlador (PC).
 2. **Configurar el lector** con el folleto, igual que el de ingreso: Factory Default → RS232 → 115200 → desenchufar y volver a enchufar la energía.
 3. **Identificar su adaptador** en el Controlador (PC): `ls /dev/serial/by-id/`. Aparece una segunda ruta `usb-...-port0` (cada adaptador tiene su número de serie; la del ingreso es la que termina en `FQCLb114J19-if00-port0`).
-4. **Agregar en el `.env` del entorno (`deploy/controlador/.env` o `deploy/garita/.env`):** `LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/<la ruta nueva>`.
+4. **Agregar en el `.env` del entorno (`deploy/controlador/.env` o `deploy/todo-en-controlador/.env`):** `LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/<la ruta nueva>`.
 5. **Aplicar:** `sudo docker compose up -d`.
 6. **Comprobar:** en el registro del backend, `Lector de DNI de salida conectado`. En **Sistema y APIs**, salida "Cable conectado". Al pasar un DNI registrado, el Panel muestra una **salida autorizada**.
 
@@ -549,7 +549,7 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 | Salida | DNI no registrado, sin conexión a internet (con controlador) | `DSA01` | Al instante: lo activa el controlador si el DNI no está en la lista del personal guardada |
 | Ingreso o salida | Autorizado | — | No se activa |
 
-**Configuración** (sin número de serie, el aviso no se usa). Va en `deploy/garita/.env` (Controlador (PC) como servidor completo) o en `deploy/controlador/.env` (como controlador):
+**Configuración** (sin número de serie, el aviso no se usa). Va en `deploy/todo-en-controlador/.env` (Controlador (PC) como servidor completo) o en `deploy/controlador/.env` (como controlador):
 
 | Variable | Valor | Para qué |
 |---|---|---|
@@ -570,7 +570,7 @@ Cada molinete se abre con un **módulo de relés USB** (DCTTECH "USBRelay", plac
 
 ### Configurar el servidor
 
-En el `.env` del entorno que tiene los relés (`deploy/controlador/.env` o `deploy/garita/.env`), el número de serie del módulo de cada molinete:
+En el `.env` del entorno que tiene los relés (`deploy/controlador/.env` o `deploy/todo-en-controlador/.env`), el número de serie del módulo de cada molinete:
 
 ```bash
 RELE_INGRESO_SERIE=ING01
@@ -599,7 +599,7 @@ Volver a leer las series para comprobarlo, poner la serie en `.env` y ejecutar `
 
 ### Cómo funciona
 
-El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila al construir la imagen), que envía los comandos HID al módulo, y tiene permiso solo para dispositivos HID en bruto (`hidraw`) además de los puertos serie (`device_cgroup_rules` en `deploy/garita/docker-compose.yml` y `deploy/controlador/docker-compose.yml`).
+El contenedor `api` trae `rele-usb` (`mollendo-api/tools/rele-usb.c`, se compila al construir la imagen), que envía los comandos HID al módulo, y tiene permiso solo para dispositivos HID en bruto (`hidraw`) además de los puertos serie (`device_cgroup_rules` en `deploy/todo-en-controlador/docker-compose.yml` y `deploy/controlador/docker-compose.yml`).
 
 ### Comprobar
 
@@ -642,7 +642,7 @@ El G4 Pro (con el alcoholímetro DT1700) se conecta **directo al servidor** (en 
 
 1. En el G4 Pro: **Menú → COMM. → Cloud Server Setting**: dirección `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto **`3001`**, sin HTTPS y sin proxy. Hoy el equipo tiene la IP `172.20.20.198` en la red de TMAM.
 2. A los pocos segundos el equipo se registra solo. En el registro del backend: `Nuevo equipo registrado: HSR3263100192`. En **Sistema y APIs**, "Equipos (G4 Pro)": **En línea**.
-3. Con el Controlador (PC) como servidor completo (garita), la dirección es la IP del Controlador (PC) en la red local (`172.20.20.197`), con IP fija.
+3. Con el Controlador (PC) como servidor completo (todo-en-controlador), la dirección es la IP del Controlador (PC) en la red local (`172.20.20.197`), con IP fija.
 
 ### Umbral de alcohol (obligatorio)
 
@@ -748,7 +748,7 @@ Arquitectura con el servidor (portal, API, base de datos, respaldos) en la nube 
   - **Con pruebas automáticas:** la salida con y sin lista, el envío posterior con su hora y los avisos DEN01 y DSA01.
   - **Pendiente:** la prueba física completa sin internet (DNI en el ingreso → DEN01; DNI de alguien registrado en la salida → se abre y llega después al historial).
 
-**Instalación:** con `deploy/controlador/instalar.sh` (ver `deploy/controlador/README.md`): pide `SERVIDOR_URL`, la **misma** `DEVICE_API_KEY` del servidor y los lectores. El registro debe decir "Lector de DNI … conectado", "Conectado al servidor" y "Lista del personal actualizada: N personas". Los lectores no pueden estar abiertos a la vez por el controlador y por una API en el mismo equipo: si el entorno `garita` está levantado, hay que apagarlo antes (sección 8g).
+**Instalación:** con `deploy/controlador/instalar.sh` (ver `deploy/controlador/README.md`): pide `SERVIDOR_URL`, la **misma** `DEVICE_API_KEY` del servidor y los lectores. El registro debe decir "Lector de DNI … conectado", "Conectado al servidor" y "Lista del personal actualizada: N personas". Los lectores no pueden estar abiertos a la vez por el controlador y por una API en el mismo equipo: si el entorno `todo-en-controlador` está levantado, hay que apagarlo antes (sección 8g).
 
 **Prueba del 07/10/2026 (AWS como nube):** controlador conectado a `http://54.147.214.38:3001`; AWS lo vio conectado con los dos lectores y los dos relés (ING01, SAL01) y la lista del personal; una salida registrada en AWS abrió el relé SAL01; al reiniciar la API de AWS el controlador se reconectó solo.
 
@@ -760,9 +760,9 @@ El punto de acceso puede trabajar de dos maneras. Para pasar de una a otra hay q
 
 ### Las dos configuraciones
 
-| | **A. Controlador (PC) como servidor completo** (entorno `garita`) | **B. Controlador (PC) con el servidor en la nube** (entornos `controlador` + `nube`) |
+| | **A. Controlador (PC) como servidor completo** (entorno `todo-en-controlador`) | **B. Controlador (PC) con el servidor en la nube** (entornos `controlador` + `nube`) |
 |---|---|---|
-| Portal, API, base de datos | En el Controlador (PC) (`deploy/garita/`) | En la nube (`deploy/nube/`; Azure `74.163.89.6`) |
+| Portal, API, base de datos | En el Controlador (PC) (`deploy/todo-en-controlador/`) | En la nube (`deploy/nube/`; Azure `74.163.89.6`) |
 | Lectores de DNI y relés | Los maneja la API del Controlador (PC) | Los maneja el **controlador** (`deploy/controlador/`) |
 | G4 Pro apunta a (Cloud Server) | `172.20.20.197`, puerto `3001` | `accesos.monteazulsur.com.pe` (o `74.163.89.6`), puerto `3001` |
 | Desde dónde llega el G4 al servidor | Red local del punto de acceso | Internet, desde la IP pública del punto de acceso (`190.119.170.73`) |
@@ -780,11 +780,11 @@ El punto de acceso puede trabajar de dos maneras. Para pasar de una a otra hay q
 ### Pasar de B (controlador) a A (servidor completo)
 
 1. **En el G4 Pro** (menú de comunicación → servidor en la nube): dirección `172.20.20.197`, puerto `3001`.
-2. **En el Controlador (PC)**, con `deploy/garita/.env` ya preparado (lectores y relés activos, `MOLINETES_REMOTOS=false`; ver `deploy/garita/README.md`):
+2. **En el Controlador (PC)**, con `deploy/todo-en-controlador/.env` ya preparado (lectores y relés activos, `MOLINETES_REMOTOS=false`; ver `deploy/todo-en-controlador/README.md`):
 
 ```bash
 cd ~/mollendo/deploy/controlador && sudo docker compose down     # sin -v
-cd ~/mollendo/deploy/garita && sudo docker compose up -d --build
+cd ~/mollendo/deploy/todo-en-controlador && sudo docker compose up -d --build
 ```
 
 3. **Comprobar** en "Sistema y APIs" del Controlador (PC):
@@ -798,7 +798,7 @@ cd ~/mollendo/deploy/garita && sudo docker compose up -d --build
 1. **En el Controlador (PC)** (los lectores no pueden estar abiertos por la API y el controlador a la vez):
 
 ```bash
-cd ~/mollendo/deploy/garita && sudo docker compose down          # sin -v: los datos del Controlador (PC) se conservan
+cd ~/mollendo/deploy/todo-en-controlador && sudo docker compose down          # sin -v: los datos del Controlador (PC) se conservan
 cd ~/mollendo/deploy/controlador && sudo docker compose up -d --build
 ```
 
@@ -874,7 +874,7 @@ No se probó el acceso desde un navegador en la red local (`192.168.0.165`).
 
 ## Anexo B. Variables del archivo .env
 
-Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), `~/mollendo/deploy/controlador/.env` (controlador) o `~/mollendo/deploy/garita/.env` (Controlador (PC) como servidor completo). La plantilla es el `.env.example` de esa misma carpeta (ver [sección 0](#0-entornos)). En desarrollo, `mollendo-api/.env` (plantilla `mollendo-api/.env.example`).
+Archivo `.env` en la carpeta del entorno: `~/mollendo/deploy/nube/.env` (nube), `~/mollendo/deploy/controlador/.env` (controlador) o `~/mollendo/deploy/todo-en-controlador/.env` (Controlador (PC) como servidor completo). La plantilla es el `.env.example` de esa misma carpeta (ver [sección 0](#0-entornos)). En desarrollo, `mollendo-api/.env` (plantilla `mollendo-api/.env.example`).
 
 ### B.1. Servidor (nube y garita)
 
@@ -922,7 +922,7 @@ Cada relé se identifica por el número de serie de su módulo (5 caracteres; c�
 | `RELE_AVISO_PULSO_MS` | No | Duración del aviso, en milisegundos. | Por defecto, la misma que `RELE_PULSO_MS` |
 | `RELE_AVISO_INGRESO_MODO`, `RELE_AVISO_SALIDA_MODO` | No | `alterno` cuando lo conectado al aviso se prende con un contacto y se apaga con el siguiente, como el pitido de los torniquetes de la garita: el sistema da un pulso para prenderlo y otro, `RELE_AVISO_ALTERNO_MS` después, para apagarlo. Si llega otro denegado mientras suena, solo alarga el tiempo (nunca da un pulso de más); si el apagado falla, lo reintenta hasta 3 veces y deja el error en "Sistema y APIs". Vacío = un solo pulso (luz o sirena común) | Vacío; en la garita `alterno` (desde el 15/10/2026, primero la salida) |
 | `RELE_AVISO_ALTERNO_MS` | No | Con el modo `alterno`, milisegundos entre el pulso que prende y el que apaga. | `3000` |
-| ~~`RELE_USB_HIDRAW_MAJOR`~~ | Ya no se usa (15/10/2026) | El número de los relés (`hidraw`) lo da el kernel al arrancar y puede cambiar en cada reinicio; los `docker-compose.yml` de `controlador` y `garita` permiten todo el rango dinámico (234 a 254). Si un `.env` antiguo lo tiene, se ignora | — |
+| ~~`RELE_USB_HIDRAW_MAJOR`~~ | Ya no se usa (15/10/2026) | El número de los relés (`hidraw`) lo da el kernel al arrancar y puede cambiar en cada reinicio; los `docker-compose.yml` de `controlador` y `todo-en-controlador` permiten todo el rango dinámico (234 a 254). Si un `.env` antiguo lo tiene, se ignora | — |
 
 ### B.4. Solo del controlador
 

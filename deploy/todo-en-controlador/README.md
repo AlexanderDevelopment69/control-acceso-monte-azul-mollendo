@@ -1,10 +1,10 @@
-# Entorno GARITA — Controlador (PC) como servidor completo (opcional)
+# Entorno TODO EN CONTROLADOR — Controlador (PC) como servidor completo (opcional)
 
 > **Hoy no se usa**: se trabaja con [`../nube`](../nube/README.md) + [`../controlador`](../controlador/README.md). Queda documentado por si se vuelve a esta forma.
 
 Todo en el Controlador (PC) del punto de acceso: portal, API, base de datos y respaldos, con los lectores de DNI y los relés conectados por USB al mismo equipo. El G4 Pro se conecta por la red local. No depende de internet.
 
-Los comandos `docker compose` se ejecutan en `~/mollendo/deploy/garita` (ahí están el `.env` y `backups/`).
+Los comandos `docker compose` se ejecutan en `~/mollendo/deploy/todo-en-controlador` (ahí están el `.env` y `backups/`).
 
 ## Índice
 
@@ -54,7 +54,7 @@ scp mollendo.tgz ma-admin@100.78.153.33:
 ```bash
 mkdir -p ~/mollendo && cd ~/mollendo
 tar -xzf ~/mollendo.tgz && rm ~/mollendo.tgz
-cd deploy/garita
+cd deploy/todo-en-controlador
 cat > .env <<EOF
 DB_PASSWORD=$(openssl rand -hex 24)
 JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
@@ -105,12 +105,12 @@ bash deploy/empaquetar.sh
 scp mollendo.tgz ma-admin@100.78.153.33:
 
 # En el Controlador (PC)
-cd ~/mollendo/deploy/garita
+cd ~/mollendo/deploy/todo-en-controlador
 sudo docker compose exec -T db pg_dump -U mollendo mollendo_control_acceso | gzip | sudo tee backups/antes-de-actualizar-$(date +%Y%m%d-%H%M).sql.gz >/dev/null
 cd ~/mollendo
 rm -rf mollendo-api mollendo-portal       # NO borrar deploy/: ahí están el .env y los respaldos
 tar -xzf ~/mollendo.tgz && rm ~/mollendo.tgz
-cd deploy/garita
+cd deploy/todo-en-controlador
 sudo docker compose up -d --build
 ```
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Respaldo diario del sistema (corre en el contenedor "backup", ver deploy/nube/docker-compose.yml o deploy/garita/docker-compose.yml).
+# Respaldo diario del sistema (corre en el contenedor "backup", ver deploy/nube/docker-compose.yml o deploy/todo-en-controlador/docker-compose.yml).
 #
 # Cada día a la hora HORA_RESPALDO (por defecto 04:00, hora de Lima) guarda en
 # /backups un paquete mollendo-AAAAMMDD-HHMM.tar.gz con:

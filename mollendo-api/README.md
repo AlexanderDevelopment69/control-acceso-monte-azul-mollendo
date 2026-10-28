@@ -74,7 +74,7 @@ Detalle y variables en la guía de despliegue (sección 8b).
 
 Herramienta solo para desarrollo, retirada el 10/10/2026 porque se trabaja con los equipos oficiales. Inventaba ingresos y salidas con el personal registrado y los enviaba a la API como si fueran el lector de DNI y el G4 Pro, para ver el Panel de vigilancia en vivo sin equipos. Para aceptar esos resultados se registraba como un terminal falso llamado `SIMULADOR`, que después aparece desconectado en "Sistema y APIs" y en el aviso de fallas.
 
-> **Nunca en un servidor con equipos reales (nube o garita):** mezcla ingresos inventados con los reales. Solo en la PC de desarrollo.
+> **Nunca en un servidor con equipos reales (nube o todo-en-controlador):** mezcla ingresos inventados con los reales. Solo en la PC de desarrollo.
 
 **Recuperarlo** (desde la raíz del proyecto; está en el commit `e10110d`; si la API cambió mucho desde entonces, puede necesitar ajustes):
 
