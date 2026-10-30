@@ -1167,8 +1167,8 @@ export const SECCIONES: SeccionManual[] = [
             titulo: "Acción",
             texto: (
               <p>
-                Qué se hizo: crear, modificar o eliminar un dato, abrir el molinete sin DNI, sincronizar con el equipo facial, descargar un
-                reporte o abrir el archivo de un documento. Sirve para responder <b>¿quién hizo esto?</b>.
+                Qué se hizo: crear, modificar o eliminar un dato, abrir el molinete sin DNI, sincronizar con el equipo facial, reiniciar el
+                Controlador (PC), descargar un reporte o abrir el archivo de un documento. Sirve para responder <b>¿quién hizo esto?</b>.
               </p>
             ),
           },
@@ -1225,7 +1225,9 @@ export const SECCIONES: SeccionManual[] = [
             texto: (
               <Lista>
                 <li>
-                  <b>Controlador:</b> lee los DNI y abre los molinetes. Desconectado, nadie puede ingresar; se sale con la lista guardada.
+                  <b>Controlador:</b> lee los DNI y abre los molinetes. Desconectado, nadie puede ingresar; se sale con la lista guardada. Con{" "}
+                  <b>Reiniciar</b> (arriba a la derecha) se reinicia el equipo, por ejemplo si un lector quedó trabado: pide el motivo, tarda
+                  unos 2 minutos y queda en la Auditoría.
                 </li>
                 <li>
                   <b>Terminal facial (G4 Pro):</b> en línea o no, su última actividad y cuántas personas y rostros tiene.
@@ -1236,7 +1238,8 @@ export const SECCIONES: SeccionManual[] = [
                 </li>
                 <li>
                   <b>Lectores de DNI:</b> ingreso y salida, con su última lectura. Si no pita al pasar un DNI, revise su alimentación. Si dice
-                  <b>Adaptador sin respuesta</b>, desconecte y vuelva a conectar el adaptador USB de ese lector en el Controlador (PC).
+                  <b>Adaptador sin respuesta</b>, use <b>Reiniciar</b> en el recuadro del Controlador, o desconecte y vuelva a conectar el
+                  adaptador USB de ese lector en el Controlador (PC).
                 </li>
                 <li>
                   <b>Relés:</b> de molinetes y de aviso, con su última apertura o aviso.

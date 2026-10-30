@@ -436,13 +436,13 @@
     ]
   },
   "sistema": {
-    "imagen": "/manual/sistema.webp?v=46de68ed",
+    "imagen": "/manual/sistema.webp?v=0e1664d9",
     "ancho": 1150,
     "alto": 1010,
     "puntos": [
       {
         "n": 1,
-        "x": 32.96,
+        "x": 32.62,
         "y": 5.2,
         "lado": "der"
       },

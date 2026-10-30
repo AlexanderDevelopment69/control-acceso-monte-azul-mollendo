@@ -213,10 +213,14 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
     // pero dejó de reportar (p. ej. el Controlador (PC) perdió luz), socket.io tarda ~45 s
     // en darlo por caído; acá lo marcamos "Desconectado" a los ~18 s por la
     // frescura del último reporte, sin tocar la conexión (la orden de abrir
-    // molinete no se ve afectada). Se cuenta desde el último reporte o, si recién
-    // se conectó y aún no reportó, desde que se conectó.
+    // molinete no se ve afectada).
+    // Recién conectado y sin reporte todavía (lo envía al conectarse; llega en
+    // segundos) cuenta como desconectado: sin su reporte no se sabe cómo están
+    // los lectores y relés, y darlos por caídos dejaba en la Auditoría una
+    // caída y una vuelta falsas de cada uno ("estuvo 5 s sin conexión") tras cada
+    // reinicio del Controlador (PC) (30/10/2026).
     const UMBRAL_REPORTE_MS = 18 * 1000;
-    const referencia = conexion?.ultimoReporte ?? conexion?.desde ?? null;
+    const referencia = conexion?.ultimoReporte ?? null;
     const fresco = !!conexion && !!referencia && Date.now() - new Date(referencia).getTime() < UMBRAL_REPORTE_MS;
     return {
       remoto: molinetesRemotos(),

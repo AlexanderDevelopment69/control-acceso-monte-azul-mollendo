@@ -2,12 +2,13 @@
 
 **Terminal Monte Azul Mollendo (TMAM)**
 
-Versión 1.1 · 25 de octubre de 2026
+Versión 1.2 · 30 de octubre de 2026
 
 | Versión | Fecha | Descripción |
 |---|---|---|
 | 1.0 | 23/10/2026 | Instalación en Azure, punto de acceso, respaldos y operación. |
 | 1.1 | 25/10/2026 | Instalación, actualización y restauración con scripts; cuenta de soporte. |
+| 1.2 | 30/10/2026 | Botón para reiniciar el Controlador (PC) desde Sistema y APIs. |
 
 Documento para soporte técnico: dónde y cómo está instalado el sistema. Lo que hace el sistema está en el Documento Funcional. Las contraseñas no se incluyen: están en la hoja "Accesos del sistema" (confidencial).
 
@@ -100,6 +101,8 @@ Los datos están en volúmenes de Docker: `mollendo_db_data` (base de datos) y `
 |---|---|
 | `mollendo-controlador` | Lee los DNI, consulta al servidor y abre los molinetes |
 
+Además, fuera de Docker, el servicio `mollendo-reinicio` (systemd) reinicia el equipo cuando se pulsa **Reiniciar** en Sistema y APIs; se instala con `instalar.sh` (o, en un equipo ya instalado, con `sudo bash ~/mollendo/deploy/controlador/instalar-reinicio.sh`).
+
 ## 6. Respaldos y restauración
 
 | Elemento | Valor |
@@ -129,8 +132,8 @@ Las llaves y contraseñas las guarda soporte técnico; no se incluyen en este do
 
 - **Revisar el estado:** pantalla Sistema y APIs del portal (servidor, respaldos y cada equipo).
 - **Actualizar:** con el script `actualizar.sh` (Guía de instalación, sección 3): se sube la versión nueva al servidor, se saca un respaldo de la base, se reconstruyen los contenedores y se limpian las imágenes viejas. Las migraciones de la base se aplican solas.
-- **Reiniciar el Controlador (PC):** se recupera sola y se reconecta al servidor en unos dos minutos.
-- **Lector con el adaptador sin respuesta:** desconectar y volver a conectar el adaptador, o reiniciar el Controlador (PC).
+- **Reiniciar el Controlador (PC):** con el botón **Reiniciar** de Sistema y APIs (administrador o soporte); vuelve solo y se reconecta al servidor en unos dos minutos.
+- **Lector con el adaptador sin respuesta:** reiniciar el Controlador (PC) con el botón **Reiniciar**, o desconectar y volver a conectar el adaptador.
 - **Disco del servidor:** se revisa en cada actualización (hoy 10 % usado).
 
 ## 9. Repuestos y cambio de equipos

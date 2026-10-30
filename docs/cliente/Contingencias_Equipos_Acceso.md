@@ -257,7 +257,7 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 - **Salida:** nadie sale por el molinete.
 - El aviso de fallas muestra *"Lectores de DNI · Desconectado: ingreso"* (o *salida*). El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
 - Mientras tanto, se activa sola la contingencia "sin lector" (sección 6.3).
-- **Adaptador USB trabado** (visto el 20 y 21/10/2026 con el lector de salida): el lector pita, pero el adaptador USB que lo une al Controlador (PC) no entrega nada. Desde el 21/10/2026 el sistema lo detecta en el momento: "Sistema y APIs" muestra *"Adaptador sin respuesta"*, el aviso de fallas lo informa y se activa la contingencia "sin lector". Se arregla desconectando y volviendo a conectar ese adaptador en el Controlador (PC) (o reiniciándola); si se repite, se cambia el adaptador por el repuesto.
+- **Adaptador USB trabado** (visto el 20 y 21/10/2026 con el lector de salida): el lector pita, pero el adaptador USB que lo une al Controlador (PC) no entrega nada. Desde el 21/10/2026 el sistema lo detecta en el momento: "Sistema y APIs" muestra *"Adaptador sin respuesta"*, el aviso de fallas lo informa y se activa la contingencia "sin lector". Se arregla con el botón **Reiniciar** de Sistema y APIs (recuadro Controlador), o desconectando y volviendo a conectar ese adaptador en el Controlador (PC); si se repite, se cambia el adaptador por el repuesto.
 
 ### 6.2. Cómo está conectado un lector
 

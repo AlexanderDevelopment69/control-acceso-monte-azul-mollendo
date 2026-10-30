@@ -10,13 +10,34 @@ function crear({ conectado = true, respuesta }: { conectado?: boolean; respuesta
   const gateway = new ControladorGateway({ emit: vi.fn() } as unknown as EventEmitter2);
   const emitWithAck = vi.fn(respuesta ?? (() => Promise.resolve([{ ok: true }])));
   gateway.server = { timeout: () => ({ emitWithAck }) } as unknown as ControladorGateway['server'];
-  if (conectado) gateway.handleConnection({ id: 'c1', handshake: { auth: { clave: 'x' }, address: '10.0.0.5' } } as unknown as Socket);
+  if (conectado) {
+    gateway.handleConnection({ id: 'c1', handshake: { auth: { clave: 'x' }, address: '10.0.0.5' } } as unknown as Socket);
+    informar(gateway, 'c1');
+  }
   return { gateway, emitWithAck };
+}
+
+/** El controlador envió su estado (sin escribirlo en disco, como haría recibirEstado). */
+function informar(gateway: ControladorGateway, id: string) {
+  const conexiones = (gateway as unknown as { conexiones: Map<string, { ultimoReporte: string | null; estado: unknown }> }).conexiones;
+  const conexion = conexiones.get(id)!;
+  conexion.ultimoReporte = new Date().toISOString();
+  conexion.estado = { lectoresDni: {}, releMolinetes: {}, listaPersonal: { personas: 0, actualizado: null }, salidasPendientes: 0 };
 }
 
 describe('ControladorGateway: reiniciar el Controlador (PC)', () => {
   beforeEach(() => vi.stubEnv('MOLINETES_REMOTOS', 'true'));
   afterEach(() => vi.unstubAllEnvs());
+
+  it('recién conectado y sin su primer informe cuenta como desconectado (no se inventan caídas de lectores y relés)', () => {
+    const { gateway } = crear({ conectado: false });
+    gateway.handleConnection({ id: 'c9', handshake: { auth: { clave: 'x' }, address: '10.0.0.5' } } as unknown as Socket);
+    // Desconectado: la bitácora de equipos no revisa sus lectores y relés (dependen del controlador).
+    expect(gateway.estado().conectado).toBe(false);
+
+    informar(gateway, 'c9');
+    expect(gateway.estado().conectado).toBe(true);
+  });
 
   it('sin controlador conectado no envía la orden', async () => {
     const { gateway, emitWithAck } = crear({ conectado: false });

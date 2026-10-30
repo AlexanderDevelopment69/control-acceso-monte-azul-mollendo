@@ -2,7 +2,7 @@
 
 **Terminal Monte Azul Mollendo (TMAM) · Alcance base**
 
-Versión 1.4 · 27 de octubre de 2026
+Versión 1.5 · 30 de octubre de 2026
 
 | Versión | Fecha | Descripción |
 |---|---|---|
@@ -11,6 +11,7 @@ Versión 1.4 · 27 de octubre de 2026
 | 1.2 | 23/10/2026 | Usuarios, período de autorización, tarjeta de acceso y avisos del Panel. |
 | 1.3 | 25/10/2026 | Cuenta de soporte. |
 | 1.4 | 27/10/2026 | Espera del DNI pasado antes del «correcto», lectura repetida y manual en PDF. |
+| 1.5 | 30/10/2026 | Botón para reiniciar el Controlador (PC) desde Sistema y APIs. |
 
 ## Contenido
 
@@ -137,7 +138,7 @@ El sistema tiene tres tipos de cuenta. Las empresas contratistas no tienen cuent
 |---|---|---|
 | Administrador | Personal de administración de OTP/MAS | Registra empresas, personal y documentos; administra las cuentas, las tarjetas y el sistema; consulta todo. |
 | Vigilancia | Personal de vigilancia | Ve en tiempo real cada ingreso y salida; consulta al personal sin modificar nada; opera las contingencias. |
-| Soporte | Equipo técnico | Revisa los equipos en Sistema y APIs y sincroniza el terminal facial; consulta el Panel de vigilancia y la Auditoría sin cambiar datos. |
+| Soporte | Equipo técnico | Revisa los equipos en Sistema y APIs, sincroniza el terminal facial y reinicia el Controlador (PC); consulta el Panel de vigilancia y la Auditoría sin cambiar datos. |
 
 ### 3.1. Permisos por módulo
 
@@ -151,7 +152,7 @@ El sistema tiene tres tipos de cuenta. Las empresas contratistas no tienen cuent
 | Contingencias (tarjetas) | Administrar | — | — |
 | Usuarios | Administrar | — | — |
 | Auditoría | Ver | — | Ver |
-| Sistema y APIs | Ver | — | Ver y sincronizar el terminal facial |
+| Sistema y APIs | Ver y reiniciar el Controlador (PC) | — | Ver, sincronizar el terminal facial y reiniciar el Controlador (PC) |
 | Manual | Ver | Ver | Ver |
 | Cambiar su propia contraseña | Sí | No (se la cambia el administrador) | Sí |
 
@@ -226,6 +227,7 @@ En Excel o PDF, con filtros por periodo, empresa y perfil.
 - **Estado** del servidor, los respaldos y los equipos (controlador, terminal facial, alcoholímetro, lectores de DNI y relés).
 - **Aviso de fallas:** recuadro rojo en todas las pantallas cuando cae un equipo.
 - **Sincronización** con el terminal facial (diaria o manual).
+- **Reiniciar el Controlador (PC):** botón en su recuadro, con motivo; vuelve solo en unos 2 minutos y queda en la Auditoría.
 - **Orden del ingreso:** DNI → Facial + Alcohol o Facial + Alcohol → DNI.
 - **Monitor del G4 Pro:** cada prueba de rostro y alcohol, en vivo.
 - Documentación de las APIs de integración.
@@ -366,7 +368,7 @@ Antes de cada actualización se genera un respaldo. La información existente se
 | Corte de luz del Controlador (PC) | El controlador se inicia solo al volver la energía. |
 | Sin internet en el punto de acceso | Nadie ingresa; las salidas siguen y se registran al volver la conexión. |
 | Falla del terminal facial o del alcoholímetro | Verificación manual (RN-16). |
-| Falla de un lector de DNI | Contingencia sin lector (RN-18). |
+| Falla de un lector de DNI | Contingencia sin lector (RN-18). Si su adaptador quedó trabado, se reinicia el Controlador (PC) con el botón Reiniciar de Sistema y APIs. |
 | Personal sin DNI | Tarjeta de contingencia (RN-17). |
 | Emergencia en los molinetes | Los brazos se liberan solos (función del equipo). |
 

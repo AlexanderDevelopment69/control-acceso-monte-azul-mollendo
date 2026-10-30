@@ -112,7 +112,9 @@ def html_a_word(html, sangria=0):
 
 # ---------- Imágenes ----------
 imagenes = []  # (rId, nombre en media, datos)
-PLANTILLA_IMG = els[60]
+# La primera imagen del Documento Funcional (la Figura 1), no una posición fija: el
+# documento crece con cada versión (en la v1.4 el elemento 60 ya era una tabla).
+PLANTILLA_IMG = next(e for e in els if '<w:drawing' in e)
 
 
 def imagen(archivo):
