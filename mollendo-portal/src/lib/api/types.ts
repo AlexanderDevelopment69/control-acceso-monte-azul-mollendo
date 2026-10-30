@@ -464,6 +464,8 @@ export interface EstadoControladorGarita {
     /** IP del Controlador (PC) en la red de la garita. */
     ipLocal?: string | null;
   } | null;
+  /** Desde cuándo se espera que vuelva tras la orden de reinicio (null: no se está reiniciando). */
+  reiniciandoDesde?: string | null;
 }
 
 /** Carga masiva de personal: una fila del Excel ya revisada por el servidor. */

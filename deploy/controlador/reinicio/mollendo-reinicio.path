@@ -1,0 +1,12 @@
+# Botón "Reiniciar" de Sistema y APIs: el contenedor del controlador deja el archivo
+# "reiniciar" en /var/lib/mollendo-reinicio y este vigilante reinicia el Controlador (PC).
+# Lo instala deploy/controlador/instalar-reinicio.sh.
+[Unit]
+Description=Mollendo: espera la orden de reiniciar el Controlador (PC)
+
+[Path]
+PathExists=/var/lib/mollendo-reinicio/reiniciar
+Unit=mollendo-reinicio.service
+
+[Install]
+WantedBy=multi-user.target

@@ -25,7 +25,6 @@ interface SalidaPendiente {
 
 /** El servidor no respondió (sin internet, caído o demasiado lento): no es un rechazo. */
 class SinConexion extends Error {}
-
 /**
  * Controlador: el Controlador (PC) en la garita cuando el servidor está en la
  * nube. Manda al servidor cada DNI leído (`POST /eventos-acceso/ingreso|salida`
@@ -50,6 +49,8 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
   private readonly servidor = (process.env.SERVIDOR_URL ?? '').trim().replace(/\/+$/, '');
   private readonly clave = process.env.DEVICE_API_KEY ?? '';
   private readonly carpeta = process.env.CONTROLADOR_DATOS?.trim() || '/app/datos-controlador';
+  /** Carpeta compartida con el vigilante del reinicio del equipo (/var/lib/mollendo-reinicio). */
+  private readonly carpetaReinicio = process.env.REINICIO_CARPETA?.trim() || '/app/reinicio';
   private socket: Socket | null = null;
   private listaPersonal = new Set<string>();
   private listaPersonalActualizada: string | null = null;
@@ -92,6 +93,7 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
       this.logger.log(`Orden del servidor: abrir el molinete de ${orden.tipoMovimiento}`);
       void this.releUsb.pulso(orden.tipoMovimiento);
     });
+    this.socket.on('reiniciar', (responder: (respuesta: { ok: boolean; error?: string }) => void) => this.reiniciarEquipo(responder));
 
     this.temporizadores.push(setInterval(() => void this.enviarEstado(), ESTADO_CADA_MS));
     this.temporizadores.push(setInterval(() => void this.actualizarListaPersonal(), LISTA_PERSONAL_CADA_MS));
@@ -235,6 +237,34 @@ export class ControladorService implements RegistroLecturas, OnModuleInit, OnMod
     } finally {
       this.enviandoPendientes = false;
     }
+  }
+
+  // ---------------------------------------------------------------- reinicio
+
+  /**
+   * Orden del servidor (botón de "Sistema y APIs"): reinicia el Controlador (PC).
+   * El contenedor no puede reiniciar el equipo: deja el archivo "reiniciar" en
+   * la carpeta compartida y el vigilante del equipo (systemd, instalado con
+   * deploy/controlador/instalar-reinicio.sh, que deja "instalado") hace un
+   * reinicio normal, no un corte. Responde al servidor y, un segundo después,
+   * deja la orden.
+   */
+  private reiniciarEquipo(responder: (respuesta: { ok: boolean; error?: string }) => void) {
+    this.logger.warn('Orden del servidor: reiniciar el Controlador (PC)');
+    if (!fs.existsSync(path.join(this.carpetaReinicio, 'instalado'))) {
+      const motivo = 'falta instalar el reinicio en el equipo (instalar-reinicio.sh)';
+      this.logger.error(`No se puede reiniciar el Controlador (PC): ${motivo}`);
+      responder({ ok: false, error: motivo });
+      return;
+    }
+    responder({ ok: true });
+    setTimeout(() => {
+      try {
+        fs.writeFileSync(path.join(this.carpetaReinicio, 'reiniciar'), new Date().toISOString());
+      } catch (error) {
+        this.logger.error(`No se pudo dejar la orden de reinicio: ${(error as Error).message}`);
+      }
+    }, 1000);
   }
 
   // ---------------------------------------------------------------- disco

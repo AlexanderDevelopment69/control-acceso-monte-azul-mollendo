@@ -47,6 +47,8 @@ if ! command -v docker >/dev/null || ! sudo docker compose version >/dev/null 2>
 fi
 sudo systemctl enable --now docker >/dev/null 2>&1
 sudo timedatectl set-timezone America/Lima
+# Vigilante del botón "Reiniciar" de Sistema y APIs (systemd; el contenedor no puede reiniciar el equipo).
+sudo bash "$CARPETA/instalar-reinicio.sh" >/dev/null
 echo "Docker $(sudo docker --version | cut -d' ' -f3 | tr -d ,) · hora $(date +%H:%M)"
 
 paso "2/4 Configuración (.env)"

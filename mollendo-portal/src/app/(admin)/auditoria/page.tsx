@@ -32,6 +32,7 @@ const TABLA_LABEL: Record<string, string> = {
   tarjeta_contingencia: "Tarjeta de contingencia",
   equipo: "Equipos",
   molinete: "Molinete",
+  controlador: "Controlador (PC)",
   salida_sin_dni: "Salida sin DNI",
   sincronizacion_g4: "Sincronización con el equipo facial",
   reporte: "Reporte",

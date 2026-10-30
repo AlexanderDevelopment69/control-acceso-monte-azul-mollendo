@@ -332,6 +332,23 @@ DNI leído en ingreso: pendiente_verificacion`,
       "torniqueteId: ingreso o salida. Cada molinete usa el módulo con su número de serie (RELE_INGRESO_SERIE / RELE_SALIDA_SERIE en .env). cerrar no hace nada: el molinete se cierra solo después del paso. Cada apertura queda en la Auditoría (apertura manual, con quién). En el Controlador (PC) como servidor local, da el pulso directo en su relé.",
   },
   {
+    nombre: "Reiniciar el Controlador (PC)",
+    endpoint: "/controlador/reiniciar",
+    metodo: "POST",
+    descripcion:
+      "Reinicia el Controlador (PC) de la garita: un reinicio normal del sistema, no un corte de energía. Vuelve solo en unos 2 minutos; mientras tanto los lectores de DNI y los molinetes no funcionan y se activa la contingencia. También con el botón Reiniciar del recuadro Controlador de esta página.",
+    autenticacion: "JWT (Administrador o Soporte)",
+    tipo: "real",
+    headers: ["Content-Type: application/json", "Authorization: Bearer <token>"],
+    ejemploRequest: `{
+  "motivo": "el lector de salida no responde"
+}`,
+    ejemploRespuesta: `// 201 Created — el controlador recibió la orden y se está reiniciando
+{ "enviado": true }`,
+    notas:
+      "motivo: obligatorio, hasta 150 caracteres; queda en la Auditoría (Controlador (PC), con quién lo pidió). Responde 400 si el controlador no está conectado o no pudo reiniciarse (el mensaje dice por qué). Mientras vuelve, GET /panel/estado-sistema trae controladorGarita.reiniciandoDesde.",
+  },
+  {
     nombre: "Registro de personas y rostros en el G4 Pro (saliente)",
     endpoint: "/personas · /personas/:id/foto · /integraciones/g4pro/sincronizar",
     metodo: "POST",

@@ -25,6 +25,7 @@ import { SincronizacionG4 } from "./SincronizacionG4";
 import { OrdenIngreso } from "./OrdenIngreso";
 import { ListaApis } from "./ListaApis";
 import { TarjetaMonitorG4 } from "./MonitorG4";
+import { ReiniciarControlador } from "./ReiniciarControlador";
 
 const DOCS_URL = `${API_BASE}/api/docs`;
 
@@ -140,7 +141,15 @@ function SistemaContent() {
       <TituloSeccion>Equipos de acceso</TituloSeccion>
       <div className={`mb-4 grid grid-cols-1 gap-4 @lg:grid-cols-2 ${columnasEquipos}`}>
         {estado?.controladorGarita?.remoto && (
-          <StatusCard icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}>
+          <StatusCard
+            icon={<BoxIcon className="text-gray-800 size-6 dark:text-white/90" />}
+            cargando={!!estado.controladorGarita.reiniciandoDesde}
+            accion={
+              !comprobando && (
+                <ReiniciarControlador reiniciando={!!estado.controladorGarita.reiniciandoDesde} onEnviado={() => setVersion((v) => v + 1)} />
+              )
+            }
+          >
             <p className="text-sm text-gray-500 dark:text-gray-400">Controlador</p>
             <ControladorGaritaEstado comprobando={comprobando} controlador={estado.controladorGarita} />
           </StatusCard>

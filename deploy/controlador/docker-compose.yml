@@ -82,6 +82,9 @@ services:
       - /dev:/dev-servidor:ro
       # Lista del personal para las salidas sin conexión y salidas pendientes de enviar.
       - datos-controlador:/app/datos-controlador
+      # Botón "Reiniciar" de Sistema y APIs: el controlador deja aquí la orden y el vigilante
+      # del equipo (systemd, instalar-reinicio.sh) reinicia el Controlador (PC).
+      - /var/lib/mollendo-reinicio:/app/reinicio
 
   # Copia diaria de los respaldos del servidor en esta PC (./copia/respaldos): si se
   # pierde el servidor, los datos siguen aquí. Solo con el perfil "copia"

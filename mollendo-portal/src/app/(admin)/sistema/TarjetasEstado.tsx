@@ -327,11 +327,37 @@ export function ReleEstado({ comprobando, rele, avisos = false }: { comprobando:
   );
 }
 
-export function StatusCard({ icon, children, className = "" }: { icon: React.ReactNode; children: React.ReactNode; className?: string }) {
+/**
+ * `accion`: botón en la esquina superior derecha, a la altura del ícono (p. ej. Reiniciar del Controlador).
+ * `cargando`: barra arriba, como en la sincronización con el G4 Pro (p. ej. mientras el Controlador se reinicia).
+ */
+export function StatusCard({
+  icon,
+  accion,
+  cargando = false,
+  children,
+  className = "",
+}: {
+  icon: React.ReactNode;
+  accion?: React.ReactNode;
+  cargando?: boolean;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className={`rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 ${className}`}>
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
-        {icon}
+    <div className={`relative rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 ${className}`}>
+      {/* Superpuesta: no mueve el contenido (con las esquinas de la tarjeta). */}
+      <div
+        aria-hidden
+        className={`absolute inset-x-0 top-0 h-1 overflow-hidden rounded-t-2xl bg-brand-100 transition-opacity duration-300 dark:bg-brand-500/20 ${cargando ? "opacity-100" : "opacity-0"}`}
+      >
+        {cargando && <div className="h-full w-2/5 animate-barra-carga rounded-full bg-brand-500" />}
+      </div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+          {icon}
+        </div>
+        {accion}
       </div>
       <div className="mt-5">{children}</div>
     </div>

@@ -104,3 +104,44 @@ describe('Hora de una salida registrada sin conexión', () => {
     expect(() => fechaSinConexion(undefined, ahora)).toThrow('fecha y hora');
   });
 });
+
+/** Botón "Reiniciar" de Sistema y APIs: el controlador deja la orden al vigilante del equipo (systemd). */
+describe('Controlador: orden de reiniciar el Controlador (PC)', () => {
+  let carpeta: string;
+  let servicio: ControladorService;
+
+  beforeEach(() => {
+    carpeta = fs.mkdtempSync(path.join(os.tmpdir(), 'reinicio-'));
+    process.env.SERVIDOR_URL = 'http://servidor.prueba';
+    process.env.DEVICE_API_KEY = 'clave';
+    process.env.REINICIO_CARPETA = carpeta;
+    servicio = new ControladorService({} as never, {} as never);
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    delete process.env.REINICIO_CARPETA;
+    fs.rmSync(carpeta, { recursive: true, force: true });
+  });
+
+  const reiniciar = () => {
+    const respuestas: { ok: boolean; error?: string }[] = [];
+    (servicio as unknown as { reiniciarEquipo: (r: (x: { ok: boolean; error?: string }) => void) => void }).reiniciarEquipo((r) => respuestas.push(r));
+    return respuestas;
+  };
+
+  it('sin el vigilante instalado en el equipo, responde que no puede y no deja la orden', () => {
+    expect(reiniciar()).toEqual([{ ok: false, error: 'falta instalar el reinicio en el equipo (instalar-reinicio.sh)' }]);
+    vi.advanceTimersByTime(2000);
+    expect(fs.existsSync(path.join(carpeta, 'reiniciar'))).toBe(false);
+  });
+
+  it('con el vigilante instalado, responde que sí y un segundo después deja la orden', () => {
+    fs.writeFileSync(path.join(carpeta, 'instalado'), '2026-10-30');
+    expect(reiniciar()).toEqual([{ ok: true }]);
+    expect(fs.existsSync(path.join(carpeta, 'reiniciar'))).toBe(false);
+    vi.advanceTimersByTime(1000);
+    expect(fs.existsSync(path.join(carpeta, 'reiniciar'))).toBe(true);
+  });
+});

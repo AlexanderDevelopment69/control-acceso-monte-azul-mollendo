@@ -74,6 +74,16 @@ ssh -i ~/.ssh/controlador_pc_key ma-admin@100.78.153.33 'bash -s' < deploy/contr
 
 El `.env`, la lista del personal, las salidas pendientes de enviar y la copia de respaldos no se tocan.
 
+## Botón "Reiniciar" (Sistema y APIs)
+
+El administrador o soporte reinicia el Controlador (PC) desde el recuadro **Controlador** de Sistema y APIs (con motivo; queda en la Auditoría). El contenedor no puede reiniciar el equipo: deja el archivo `reiniciar` en `/var/lib/mollendo-reinicio` y un vigilante de systemd (`mollendo-reinicio.path`) hace un reinicio normal. Una orden de más de 2 minutos se descarta (no reinicia en bucle). `instalar.sh` lo instala; en un equipo instalado antes del 30/10/2026, una sola vez:
+
+```bash
+sudo bash ~/mollendo/deploy/controlador/instalar-reinicio.sh
+```
+
+Sin él, el botón avisa "falta instalar el reinicio en el equipo". Revisar: `systemctl status mollendo-reinicio.path` (activo) y `journalctl -t mollendo-reinicio`.
+
 ## Verificar
 
 - `sudo docker compose ps` → `controlador` "Up".

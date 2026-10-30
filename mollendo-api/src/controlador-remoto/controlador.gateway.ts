@@ -78,6 +78,8 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
   /** Último estado "sin lector" avisado, para avisar solo cuando cambia. */
   private sinLectorAvisado: SinLector = { ingreso: false, salida: false };
   private revision: ReturnType<typeof setInterval> | null = null;
+  /** Desde cuándo se espera que vuelva el Controlador (PC) tras la orden de reinicio (null: no se pidió). */
+  private reiniciandoDesde: string | null = null;
 
   onModuleInit() {
     // También cambia cuando el controlador deja de reportar sin cortar la conexión (ver estado()).
@@ -101,6 +103,8 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
       ultimoReporte: null,
       estado: null,
     });
+    // Volvió (tras el reinicio pedido o por su cuenta): ya no se está reiniciando.
+    this.reiniciandoDesde = null;
     this.logger.log(`Controlador conectado desde ${cliente.handshake.address}`);
   }
 
@@ -175,6 +179,33 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
     this.server.emit('aviso-denegado', { tipoMovimiento: aviso.tipoMovimiento, numeroDocumento: null });
   }
 
+  /**
+   * Orden de reiniciar el Controlador (PC) (botón de "Sistema y APIs"). El
+   * controlador responde si puede hacerlo y luego se reinicia; vuelve solo en
+   * unos 2 minutos. `error`: por qué no se envió o no se pudo.
+   */
+  async reiniciar(): Promise<{ enviado: boolean; error?: string }> {
+    if (!molinetesRemotos() || !this.estado().conectado) {
+      return { enviado: false, error: 'El controlador no está conectado: no se le puede enviar la orden.' };
+    }
+    let respuestas: { ok: boolean; error?: string }[];
+    try {
+      respuestas = await this.server.timeout(ESPERA_REINICIO_MS).emitWithAck('reiniciar');
+    } catch {
+      // Sin respuesta: un controlador anterior (no conoce la orden) o se cortó la conexión.
+      this.logger.warn('Reiniciar el Controlador (PC): no respondió a la orden');
+      return { enviado: false, error: 'El Controlador (PC) no respondió a la orden; no se reinició.' };
+    }
+    const fallo = respuestas.find((r) => !r?.ok);
+    if (fallo) {
+      this.logger.error(`Reiniciar el Controlador (PC): no se pudo (${fallo.error ?? 'sin detalle'})`);
+      return { enviado: false, error: `El Controlador (PC) no pudo reiniciarse: ${fallo.error ?? 'sin detalle'}.` };
+    }
+    this.reiniciandoDesde = new Date().toISOString();
+    this.logger.warn('Orden de reiniciar enviada al Controlador (PC)');
+    return { enviado: true };
+  }
+
   /** Para "Sistema y APIs": el controlador conectado (el más reciente) y lo que informó. */
   estado() {
     const conexion = [...this.conexiones.values()].sort((a, b) => b.desde.localeCompare(a.desde))[0] ?? null;
@@ -196,9 +227,17 @@ export class ControladorGateway implements OnGatewayConnection, OnGatewayDisconn
       // Fresco: lo que informó. Caído o sin reportar hace rato: lo último conocido
       // con lectores y relés como no conectados.
       estado: fresco ? conexion!.estado : this.ultimoConocido ? comoDesconectado(this.ultimoConocido.estado) : null,
+      // Se deja de esperar a los 10 minutos: si no volvió, ya no se está reiniciando (otra falla).
+      reiniciandoDesde:
+        this.reiniciandoDesde && Date.now() - new Date(this.reiniciandoDesde).getTime() < MAX_REINICIO_MS ? this.reiniciandoDesde : null,
     };
   }
 }
+
+/** Cuánto se espera a que el controlador confirme la orden de reinicio. */
+const ESPERA_REINICIO_MS = 10_000;
+/** Pasado este tiempo sin volver, el portal deja de mostrar "Reiniciando…". */
+const MAX_REINICIO_MS = 10 * 60_000;
 
 /** Archivo con el último estado informado por el controlador (en el volumen de documentos). */
 const ARCHIVO_ULTIMO = path.join(path.dirname(process.env.DOCUMENTOS_STORAGE_PATH ?? './storage/documentos'), 'controlador-ultimo-estado.json');

@@ -291,6 +291,13 @@ export const integracionesApi = {
     apiRequest<Paginado<MarcacionG4>>(`/integraciones/g4pro/marcaciones${consulta({ ...params })}`),
 };
 
+// ---- controlador ----
+export const controladorApi = {
+  /** Reinicia el Controlador (PC); el motivo queda en la Auditoría. */
+  reiniciar: (motivo: string) =>
+    apiRequest<{ enviado: boolean }>("/controlador/reiniciar", { method: "POST", body: { motivo } }),
+};
+
 // ---- auditoria ----
 export const auditoriaApi = {
   /** Paginada en el servidor, más recientes primero. */

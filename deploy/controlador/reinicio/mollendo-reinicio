@@ -1,0 +1,13 @@
+#!/bin/sh
+# Reinicia el Controlador (PC) si la orden es reciente (de los últimos 2 minutos).
+# Una orden vieja (p. ej. quedó de antes de un apagón) solo se borra: así nunca
+# se reinicia en bucle. La orden se borra siempre antes de reiniciar.
+ORDEN=/var/lib/mollendo-reinicio/reiniciar
+RECIENTE=$(find "$ORDEN" -mmin -2 2>/dev/null)
+rm -f "$ORDEN"
+if [ -n "$RECIENTE" ]; then
+  logger -t mollendo-reinicio "Reinicio pedido desde Sistema y APIs"
+  systemctl reboot
+else
+  logger -t mollendo-reinicio "Orden de reinicio vieja: se descarta"
+fi

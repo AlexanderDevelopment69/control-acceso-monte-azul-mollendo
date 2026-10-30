@@ -1,2 +1,4 @@
 # Los scripts de shell corren en Linux (contenedores): siempre con finales de línea LF.
 *.sh text eol=lf
+# Vigilante del reinicio del Controlador (PC) (systemd): también LF.
+deploy/controlador/reinicio/* text eol=lf

@@ -1,0 +1,7 @@
+# Lo arranca mollendo-reinicio.path cuando llega la orden de reiniciar.
+[Unit]
+Description=Mollendo: reiniciar el Controlador (PC) (botón de Sistema y APIs)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/mollendo-reinicio
