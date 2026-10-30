@@ -214,7 +214,7 @@
     ]
   },
   "empresas": {
-    "imagen": "/manual/empresas.webp?v=01f365fd",
+    "imagen": "/manual/empresas.webp?v=09f69bfb",
     "ancho": 1150,
     "alto": 760,
     "puntos": [
@@ -232,7 +232,7 @@
       },
       {
         "n": 3,
-        "x": 58.17,
+        "x": 50.51,
         "y": 23.85,
         "lado": "izq"
       },
@@ -251,7 +251,7 @@
     ]
   },
   "presentes": {
-    "imagen": "/manual/presentes.webp?v=15d8dfb7",
+    "imagen": "/manual/presentes.webp?v=5b5002c1",
     "ancho": 1150,
     "alto": 1180,
     "puntos": [
@@ -275,26 +275,26 @@
       },
       {
         "n": 4,
-        "x": 76.99,
-        "y": 27.29,
-        "lado": "izq"
+        "x": 83.89,
+        "y": 27.22,
+        "lado": "der"
       },
       {
         "n": 5,
         "x": 21.27,
-        "y": 99.39,
+        "y": 97.35,
         "lado": "der"
       },
       {
         "n": 6,
-        "x": 92.15,
-        "y": 30.91,
+        "x": 92.5,
+        "y": 30.4,
         "lado": "arriba"
       }
     ]
   },
   "vigilancia": {
-    "imagen": "/manual/vigilancia.webp?v=5c2eef4b",
+    "imagen": "/manual/vigilancia.webp?v=b00512d7",
     "ancho": 1150,
     "alto": 720,
     "puntos": [
@@ -324,20 +324,20 @@
       },
       {
         "n": 5,
-        "x": 64.73,
-        "y": 72.53,
+        "x": 68.21,
+        "y": 72.74,
         "lado": "der"
       },
       {
         "n": 6,
-        "x": 80.14,
-        "y": 70.59,
+        "x": 85.65,
+        "y": 70.8,
         "lado": "der"
       }
     ]
   },
   "dashboard": {
-    "imagen": "/manual/dashboard.webp?v=8e2248b2",
+    "imagen": "/manual/dashboard.webp?v=5e1a2d36",
     "ancho": 1150,
     "alto": 640,
     "puntos": [
@@ -461,7 +461,7 @@
     ]
   },
   "auditoria": {
-    "imagen": "/manual/auditoria.webp?v=60e45fd3",
+    "imagen": "/manual/auditoria.webp?v=4c565954",
     "ancho": 1150,
     "alto": 640,
     "puntos": [
@@ -479,20 +479,20 @@
       },
       {
         "n": 3,
-        "x": 35.56,
+        "x": 51.75,
         "y": 28.2,
         "lado": "der"
       },
       {
         "n": 4,
-        "x": 87.31,
+        "x": 85.7,
         "y": 28.2,
         "lado": "der"
       },
       {
         "n": 5,
-        "x": 28.7,
-        "y": 35.94,
+        "x": 29.07,
+        "y": 37.27,
         "lado": "der"
       }
     ]
@@ -616,7 +616,7 @@
     ]
   },
   "tarjetas": {
-    "imagen": "/manual/tarjetas.webp?v=decf2c78",
+    "imagen": "/manual/tarjetas.webp?v=6b607379",
     "ancho": 1150,
     "alto": 760,
     "puntos": [

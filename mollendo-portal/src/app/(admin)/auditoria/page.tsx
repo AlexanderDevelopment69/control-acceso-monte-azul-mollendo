@@ -12,6 +12,7 @@ import { ErrorBanner } from "@/components/common/ErrorBanner";
 import Button from "@/components/ui/button/Button";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
+import { AvisoTarjetas, ListaTarjetas, TarjetaFila } from "@/components/tables/TarjetaFila";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
@@ -66,6 +67,44 @@ const ACCION_LABEL: Record<string, string> = {
 const DEL_SISTEMA = ["equipo", "sincronizacion_g4"];
 
 const esInicioSesion = (accion: string) => accion === "inicio_sesion" || accion === "inicio_sesion_fallido";
+
+/** Quién lo hizo: el usuario; si no hay (inicio rechazado, equipos, cargas), lo que corresponda. */
+function quienLoHizo(entrada: AuditoriaEntry): string {
+  return (
+    entrada.usuario?.correo ??
+    (esInicioSesion(entrada.accion)
+      ? (entrada.detalle?.split(" · ")[0] ?? "—")
+      : DEL_SISTEMA.includes(entrada.tablaAfectada)
+        ? "Sistema"
+        : "Carga de datos (script)")
+  );
+}
+
+/**
+ * Columna Registro: desde dónde se inició sesión (y por qué se rechazó), o qué se hizo.
+ * `completo`: todo el texto (en la tarjeta del celular, donde no se puede pasar el mouse para verlo).
+ */
+function Registro({ entrada, completo = false }: { entrada: AuditoriaEntry; completo?: boolean }) {
+  if (esInicioSesion(entrada.accion)) {
+    // Inicio de sesión: desde dónde y, si se rechazó, por qué.
+    return (
+      <span className="text-xs">
+        {entrada.ip ? `IP ${entrada.ip}` : "—"}
+        {entrada.detalle?.includes(" · ") && <span className="block text-gray-500">{entrada.detalle.split(" · ")[1]}</span>}
+      </span>
+    );
+  }
+  // Qué se hizo: el equipo y cuánto estuvo sin conexión, el reporte y sus filtros, el documento abierto…
+  // En la tabla, hasta dos líneas (completo al pasar el mouse): todas las filas miden lo mismo.
+  if (entrada.detalle) {
+    return (
+      <span className={`text-xs ${completo ? "break-words" : "line-clamp-2"}`} title={completo ? undefined : entrada.detalle}>
+        {entrada.detalle}
+      </span>
+    );
+  }
+  return <>{`#${entrada.registroId}`}</>;
+}
 
 const POR_PAGINA = 10;
 
@@ -181,18 +220,21 @@ function AuditoriaContent() {
         </div>
       </div>
 
-      <Tarjeta className="overflow-hidden">
-        {/* Una línea por celda: en el celular la tabla se desliza hacia los lados. */}
-        <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+      <Tarjeta className="@container overflow-hidden">
+        {/* Con espacio, la tabla; en el celular, una tarjeta por registro. */}
+        <div className="overflow-x-auto [&_th]:whitespace-nowrap">
           <AltoEstable paginaCompleta={entradas.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
-            <Table>
+            {/* Todas las columnas en porcentaje, según su contenido, y la tabla nunca más angosta que la suma de los contenidos:
+                en pantalla ancha el espacio se reparte entre todas, nada se pega en el ancho mínimo y las columnas
+                no cambian de lugar al pasar de página. */}
+            <Table className="hidden w-[max(100%,58rem)] table-fixed @4xl:table">
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Fecha</TableCell>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Usuario</TableCell>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Dato</TableCell>
+                  <TableCell isHeader className="w-[22%] px-5 py-3 text-start text-xs font-medium text-gray-500">Fecha</TableCell>
+                  <TableCell isHeader className="w-[26%] px-5 py-3 text-start text-xs font-medium text-gray-500">Usuario</TableCell>
+                  <TableCell isHeader className="w-[12%] px-5 py-3 text-start text-xs font-medium text-gray-500">Dato</TableCell>
                   <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Registro</TableCell>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Acción</TableCell>
+                  <TableCell isHeader className="w-[17%] px-5 py-3 text-start text-xs font-medium text-gray-500">Acción</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -214,41 +256,51 @@ function AuditoriaContent() {
                   </TableRow>
                 )}
                 {!loading && entradas.map((entrada) => (
-                  <TableRow key={entrada.id}>
-                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                  // Todas las filas con el alto de las de dos líneas (inicio de sesión con su motivo, un dato largo; el detalle, hasta dos):
+                  // así cada página mide lo mismo y el paginador no se mueve.
+                  <TableRow key={entrada.id} className="h-[4.625rem]">
+                    <TableCell className="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {new Date(entrada.fechaHora).toLocaleString("es-PE")}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {entrada.usuario?.correo ??
-                        (esInicioSesion(entrada.accion)
-                          ? (entrada.detalle?.split(" · ")[0] ?? "—")
-                          : DEL_SISTEMA.includes(entrada.tablaAfectada)
-                            ? "Sistema"
-                            : "Carga de datos (script)")}
-                    </TableCell>
+                    <TableCell className="break-words px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{quienLoHizo(entrada)}</TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{tablaLabel(entrada.tablaAfectada)}</TableCell>
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {esInicioSesion(entrada.accion) ? (
-                        // Inicio de sesión: desde dónde y, si se rechazó, por qué.
-                        <span className="text-xs">
-                          {entrada.ip ? `IP ${entrada.ip}` : "—"}
-                          {entrada.detalle?.includes(" · ") && <span className="block text-gray-500">{entrada.detalle.split(" · ")[1]}</span>}
-                        </span>
-                      ) : entrada.detalle ? (
-                        // Qué se hizo: el equipo y cuánto estuvo sin conexión, el reporte y sus filtros, el documento abierto…
-                        // Texto largo: en varias líneas, para que no empuje la columna Acción fuera de la vista.
-                        <span className="block min-w-60 max-w-md text-xs whitespace-normal">{entrada.detalle}</span>
-                      ) : (
-                        `#${entrada.registroId}`
-                      )}
+                      <Registro entrada={entrada} />
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-sm">
+                    <TableCell className="whitespace-nowrap px-5 py-4 text-sm">
                       <Badge color={ACCION_COLOR[entrada.accion] ?? "light"}>{ACCION_LABEL[entrada.accion] ?? entrada.accion}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            <ListaTarjetas>
+              {loading && <AvisoTarjetas>Cargando…</AvisoTarjetas>}
+              {!loading && error && !lista && <AvisoTarjetas>No se pudo cargar la auditoría.</AvisoTarjetas>}
+              {!loading && lista && entradas.length === 0 && (
+                <AvisoTarjetas>{filtrando ? "Sin resultados para esa búsqueda o esas fechas." : "Sin registros de auditoría todavía."}</AvisoTarjetas>
+              )}
+              {!loading &&
+                entradas.map((entrada) => {
+                  const d = new Date(entrada.fechaHora);
+                  return (
+                    <TarjetaFila
+                      key={entrada.id}
+                      titulo={quienLoHizo(entrada)}
+                      subtitulo={tablaLabel(entrada.tablaAfectada)}
+                      hora={d.toLocaleTimeString("es-PE")}
+                      fecha={d.toLocaleDateString("es-PE")}
+                    >
+                      <div>
+                        <Badge color={ACCION_COLOR[entrada.accion] ?? "light"}>{ACCION_LABEL[entrada.accion] ?? entrada.accion}</Badge>
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        <Registro entrada={entrada} completo />
+                      </div>
+                    </TarjetaFila>
+                  );
+                })}
+            </ListaTarjetas>
           </AltoEstable>
         </div>
         {!loading && <TableFooter {...pie} onPageChange={setPagina} />}

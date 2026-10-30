@@ -16,6 +16,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { COLORES, Grafico } from "@/components/dashboard/Grafico";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
+import { ListaTarjetas, TarjetaFila } from "@/components/tables/TarjetaFila";
+import { FotoGuardada } from "@/components/personal/FotoPersonal";
 import { pieDePagina } from "@/lib/paginaServidor";
 import { SelectorPeriodo, usePeriodo } from "@/components/common/SelectorPeriodo";
 import { agruparTendencia } from "@/components/dashboard/agruparTendencia";
@@ -519,20 +521,31 @@ function DashboardContent() {
               {!permanencia || permanencia.total === 0 ? (
                 <SinDatos texto="Nadie lleva más de 12 horas dentro." />
               ) : (
-                // Con poco espacio, el documento va bajo el nombre y el ingreso en dos líneas: cabe sin cortarse.
+                // Con espacio, la tabla (el documento va bajo el nombre hasta que hay sitio para su columna); en el celular, una tarjeta por persona.
                 <div className="@container overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
                   <AltoEstable
                     paginaCompleta={permanencia.datos.length === POR_PAGINA_PERMANENCIA}
                     variasPaginas={permanencia.total > POR_PAGINA_PERMANENCIA}
                   >
-                    <Table>
+                    {/* Todas las columnas en porcentaje, según su contenido, y la tabla nunca más angosta que la suma de los contenidos:
+                              el espacio se reparte entre todas; y filas del mismo alto: las columnas y el paginador
+                              no se mueven al cambiar de página. */}
+                    <Table className="hidden w-[max(100%,52rem)] table-fixed @min-[52rem]:table">
                       <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                         <TableRow>
-                          {["Persona", "Documento", "Empresa", "Ingreso", "Tiempo dentro"].map((c) => (
+                          {(
+                            [
+                              ["Persona", ""],
+                              ["Documento", "hidden w-[12%] @5xl:table-cell"],
+                              ["Empresa", "w-[35%]"],
+                              ["Ingreso", "w-[15%]"],
+                              ["Tiempo dentro", "w-[14%]"],
+                            ] as const
+                          ).map(([c, ancho]) => (
                             <TableCell
                               key={c}
                               isHeader
-                              className={`${c === "Documento" ? "hidden @5xl:table-cell " : ""}px-4 py-3 text-start text-xs font-medium text-gray-500`}
+                              className={`${ancho} px-4 py-3 text-start text-xs font-medium text-gray-500`}
                             >
                               {c}
                             </TableCell>
@@ -541,18 +554,31 @@ function DashboardContent() {
                       </TableHeader>
                       <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
                         {permanencia.datos.map((p) => (
-                          <TableRow key={p.personaId}>
+                          <TableRow key={p.personaId} className="h-16">
                             <TableCell className="px-4 py-3 text-sm text-gray-800 dark:text-white/90">
-                              {p.nombres} {p.apellidos}
-                              <span className="block text-xs text-gray-500 @5xl:hidden dark:text-gray-400">{p.numeroDocumento}</span>
+                              {/* Con su foto; el nombre en una línea (si no entra, con "…"; completo al pasar el mouse). */}
+                              <div className="flex min-w-0 items-center gap-3">
+                                <FotoGuardada personaId={p.personaId} tieneFoto={p.tieneFoto} version={p.fotoVersion} tamano="size-10" miniatura />
+                                <span className="min-w-0">
+                                  <span className="block truncate" title={`${p.nombres} ${p.apellidos}`}>
+                                    {p.nombres} {p.apellidos}
+                                  </span>
+                                  <span className="block text-xs text-gray-500 @5xl:hidden dark:text-gray-400">{p.numeroDocumento}</span>
+                                </span>
+                              </div>
                             </TableCell>
                             <TableCell className="hidden px-4 py-3 text-sm text-gray-600 @5xl:table-cell dark:text-gray-300">
                               {p.numeroDocumento}
                             </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{p.empresa}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                              {/* Hasta dos líneas (la fila ya mide dos por el ingreso); más largo, con "…". */}
+                              <span className="line-clamp-2 whitespace-normal" title={p.empresa}>
+                                {p.empresa}
+                              </span>
+                            </TableCell>
                             <TableCell className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                               {new Date(p.ingreso).toLocaleDateString("es-PE")}
-                              <span className="block @5xl:inline @5xl:before:content-[',_'] text-gray-500 dark:text-gray-400">
+                              <span className="block text-gray-500 dark:text-gray-400">
                                 {new Date(p.ingreso).toLocaleTimeString("es-PE")}
                               </span>
                             </TableCell>
@@ -563,6 +589,25 @@ function DashboardContent() {
                         ))}
                       </TableBody>
                     </Table>
+                    <ListaTarjetas ocultar="@min-[52rem]:hidden">
+                      {permanencia.datos.map((p) => {
+                        const ingreso = new Date(p.ingreso);
+                        return (
+                          <TarjetaFila
+                            key={p.personaId}
+                            foto={<FotoGuardada personaId={p.personaId} tieneFoto={p.tieneFoto} version={p.fotoVersion} tamano="size-11" miniatura />}
+                            titulo={`${p.nombres} ${p.apellidos}`}
+                            subtitulo={`DNI ${p.numeroDocumento}`}
+                            hora={<span className="text-warning-600 dark:text-orange-400">{tiempoDentro(p.ingreso, d.generadoEn)}</span>}
+                          >
+                            <p>{p.empresa}</p>
+                            <p className="text-gray-500 dark:text-gray-400">
+                              Ingresó: {ingreso.toLocaleDateString("es-PE")}, {ingreso.toLocaleTimeString("es-PE")}
+                            </p>
+                          </TarjetaFila>
+                        );
+                      })}
+                    </ListaTarjetas>
                   </AltoEstable>
                 </div>
               )}

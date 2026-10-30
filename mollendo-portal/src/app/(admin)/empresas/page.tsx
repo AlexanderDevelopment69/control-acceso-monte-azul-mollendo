@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { TableSearch } from "@/components/tables/TableSearch";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
+import { AvisoTarjetas, ListaTarjetas, TarjetaFila } from "@/components/tables/TarjetaFila";
 import { EmpresaModal } from "@/components/empresas/EmpresaModal";
 import { normalizarBusqueda } from "@/lib/busqueda";
 
@@ -215,6 +216,42 @@ function EmpresasContent() {
     void cargar();
   }
 
+
+  // Sin filas (sin empresas o sin resultados): el mismo aviso en la tabla y en las tarjetas.
+  const sinFilas =
+    !cargando && empresas && visibles.length === 0 ? (
+      empresas.length ? (
+        "Sin resultados para esa búsqueda."
+      ) : (
+        <>
+          Todavía no hay empresas. Use{" "}
+          <button type="button" onClick={() => setNueva(true)} className="font-semibold underline-offset-2 hover:underline text-gray-600 dark:text-gray-300">
+            + Nueva empresa
+          </button>
+          .
+        </>
+      )
+    ) : null;
+
+  // Los botones de cada empresa: los mismos en la tabla y en las tarjetas.
+  const botones = (e: Empresa) => (
+    <>
+      <Button type="button" size="sm" variant="outline" onClick={() => setEditando(e)}>
+        Editar
+      </Button>
+      {/* Con personal o usuarios no se puede eliminar: se explica al pasar el mouse. */}
+      <span title={e.eliminable ? undefined : "Tiene personal o usuarios registrados: se puede desactivar, no eliminar"}>
+        <Button type="button" size="sm" variant={e.estado === "activa" ? "outline-danger" : "outline"} onClick={() => setCambiandoEstado(e)}>
+          {e.estado === "activa" ? "Desactivar" : "Activar"}
+        </Button>
+      </span>
+      {e.eliminable && (
+        <Button type="button" size="sm" variant="danger" onClick={() => setEliminando(e)}>
+          Eliminar
+        </Button>
+      )}
+    </>
+  );
   return (
     <div>
       <PageHeader
@@ -268,15 +305,22 @@ function EmpresasContent() {
         />
       </div>
 
-      <Tarjeta className="overflow-hidden">
-        {/* En el celular la tabla se desliza hacia los lados. */}
+      <Tarjeta className="@container overflow-hidden">
+        {/* Con espacio, la tabla; en el celular, una tarjeta por empresa. */}
         <div className="overflow-x-auto [&_th]:whitespace-nowrap">
           <AltoEstable paginaCompleta={enPagina.length === POR_PAGINA} variasPaginas={totalPaginas > 1}>
-            <Table>
+            {/* Todas las columnas en porcentaje, según su contenido, y la tabla nunca más angosta que la suma de los contenidos. */}
+            <Table className="hidden w-[max(100%,58rem)] table-fixed @4xl:table">
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  {["Empresa", "Contacto", "Personal activo", "Estado", ""].map((c, i) => (
-                    <TableCell key={i} isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">
+                  {[
+                    ["Empresa", ""],
+                    ["Contacto", "w-[23%]"],
+                    ["Personal activo", "w-[14%]"],
+                    ["Estado", "w-[11%]"],
+                    ["", "w-[24%]"],
+                  ].map(([c, ancho], i) => (
+                    <TableCell key={i} isHeader className={`${ancho} px-5 py-3 text-start text-xs font-medium text-gray-500`}>
                       {c}
                     </TableCell>
                   ))}
@@ -290,20 +334,10 @@ function EmpresasContent() {
                     </TableCell>
                   </TableRow>
                 )}
-                {!cargando && empresas && visibles.length === 0 && (
+                {sinFilas && (
                   <TableRow>
                     <TableCell className="px-5 py-4 text-sm text-gray-400" colSpan={5}>
-                      {empresas.length ? (
-                        "Sin resultados para esa búsqueda."
-                      ) : (
-                        <>
-                          Todavía no hay empresas. Use{" "}
-                          <button type="button" onClick={() => setNueva(true)} className="font-semibold underline-offset-2 hover:underline text-gray-600 dark:text-gray-300">
-                            + Nueva empresa
-                          </button>
-                          .
-                        </>
-                      )}
+                      {sinFilas}
                     </TableCell>
                   </TableRow>
                 )}
@@ -315,7 +349,7 @@ function EmpresasContent() {
                         <span className="block text-xs text-gray-500 dark:text-gray-400">RUC {e.ruc}</span>
                       </TableCell>
                       <TableCell className="px-5 py-4 text-sm">
-                        <span className="block text-gray-600 dark:text-gray-300">{e.correoContacto}</span>
+                        <span className="block truncate text-gray-600 dark:text-gray-300" title={e.correoContacto}>{e.correoContacto}</span>
                         {e.telefonoContacto && <span className="block text-xs text-gray-500 dark:text-gray-400">{e.telefonoContacto}</span>}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">{e.personalActivo ?? 0}</TableCell>
@@ -323,32 +357,36 @@ function EmpresasContent() {
                         <Badge color={e.estado === "activa" ? "success" : "light"}>{e.estado === "activa" ? "Activa" : "Inactiva"}</Badge>
                       </TableCell>
                       <TableCell className="px-5 py-4 text-sm">
-                        <div className="flex justify-end gap-2 whitespace-nowrap">
-                          <Button type="button" size="sm" variant="outline" onClick={() => setEditando(e)}>
-                            Editar
-                          </Button>
-                          {/* Con personal o usuarios no se puede eliminar: se explica al pasar el mouse. */}
-                          <span title={e.eliminable ? undefined : "Tiene personal o usuarios registrados: se puede desactivar, no eliminar"}>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={e.estado === "activa" ? "outline-danger" : "outline"}
-                              onClick={() => setCambiandoEstado(e)}
-                            >
-                              {e.estado === "activa" ? "Desactivar" : "Activar"}
-                            </Button>
-                          </span>
-                          {e.eliminable && (
-                            <Button type="button" size="sm" variant="danger" onClick={() => setEliminando(e)}>
-                              Eliminar
-                            </Button>
-                          )}
-                        </div>
+                        <div className="flex justify-end gap-2 whitespace-nowrap">{botones(e)}</div>
                       </TableCell>
                     </TableRow>
                   ))}
               </TableBody>
             </Table>
+            <ListaTarjetas>
+              {cargando && <AvisoTarjetas>Cargando…</AvisoTarjetas>}
+              {sinFilas && <AvisoTarjetas>{sinFilas}</AvisoTarjetas>}
+              {!cargando &&
+                enPagina.map((e) => {
+                  const activos = e.personalActivo ?? 0;
+                  return (
+                    <TarjetaFila
+                      key={e.id}
+                      titulo={e.razonSocial}
+                      subtitulo={`RUC ${e.ruc}`}
+                      hora={<Badge color={e.estado === "activa" ? "success" : "light"}>{e.estado === "activa" ? "Activa" : "Inactiva"}</Badge>}
+                    >
+                      {/* Completo, en otra línea si no entra: en el celular no se puede pasar el mouse para verlo. */}
+                      <p className="break-words">
+                        {e.correoContacto}
+                        {e.telefonoContacto ? ` · ${e.telefonoContacto}` : ""}
+                      </p>
+                      <p className="text-gray-500 dark:text-gray-400">{activos === 1 ? "1 persona activa" : `${activos} personas activas`}</p>
+                      <div className="flex gap-2 pt-1.5">{botones(e)}</div>
+                    </TarjetaFila>
+                  );
+                })}
+            </ListaTarjetas>
           </AltoEstable>
         </div>
         {!cargando && (

@@ -103,6 +103,25 @@ export function MotivoDenegacion({
   );
 }
 
+/** Si el evento tiene un motivo de denegación que mostrar (lo que dibuja MotivoDenegacion). */
+export function hayMotivo(evento: Parameters<typeof MotivoDenegacion>[0]["evento"]): boolean {
+  return !!(
+    evento.denegadoNoRegistrado ||
+    evento.denegadoPorBaja ||
+    evento.denegadoYaDentro ||
+    evento.denegadoSinIngreso ||
+    evento.denegadoFueraPeriodo ||
+    evento.denegadoSinVerificacion ||
+    evento.denegadoRostroNoCoincide ||
+    evento.denegadoSinFacial ||
+    evento.denegadoNoEsQuienSoplo ||
+    evento.denegadoSinDni ||
+    evento.denegadoSinDocumentos ||
+    evento.denegadoPorAlcohol ||
+    evento.denegadoPorDocumentos
+  );
+}
+
 /** Documento con el que se identificó (el leído por el equipo; si falta, el de la persona). */
 export function documentoDelEvento(ev: EventoAcceso): string {
   const tipo = ev.tipoDocumentoIdentidad ?? ev.persona?.tipoDocumentoIdentidad;

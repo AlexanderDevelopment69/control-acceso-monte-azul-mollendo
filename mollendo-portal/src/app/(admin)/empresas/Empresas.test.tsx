@@ -62,21 +62,27 @@ describe("datos de la empresa", () => {
   });
 });
 
+// Con espacio se ve la tabla y en el celular las tarjetas (jsdom no aplica los estilos: están las dos).
+const tabla = () => within(screen.getByRole("table"));
+const tarjetas = () => within(screen.getByRole("list"));
+
 describe("vista Empresas", () => {
   it("lista con personal activo y estado, y busca sin importar tildes", async () => {
     render(<EmpresasPage />);
-    expect(await screen.findByText("Estibajes del Sur E.I.R.L.")).toBeInTheDocument();
-    expect(screen.getByText("Inactiva")).toBeInTheDocument();
+    await screen.findAllByText("Estibajes del Sur E.I.R.L.");
+    expect(tabla().getByText("Estibajes del Sur E.I.R.L.")).toBeInTheDocument();
+    expect(tabla().getByText("Inactiva")).toBeInTheDocument();
     expect(screen.getByText("Mostrando 1 a 3 de 3 registros")).toBeInTheDocument();
 
     await userEvent.type(screen.getByPlaceholderText(/Buscar/), "jose galvez");
-    expect(screen.getByText("Agencia José Gálvez S.A.")).toBeInTheDocument();
+    expect(tabla().getByText("Agencia José Gálvez S.A.")).toBeInTheDocument();
     expect(screen.queryByText("Estibajes del Sur E.I.R.L.")).not.toBeInTheDocument();
   });
 
   it("al desactivar una empresa con personal activo, avisa que seguirán pudiendo ingresar", async () => {
     render(<EmpresasPage />);
-    const fila = (await screen.findByText("Estibajes del Sur E.I.R.L.")).closest("tr")!;
+    await screen.findAllByText("Estibajes del Sur E.I.R.L.");
+    const fila = tabla().getByText("Estibajes del Sur E.I.R.L.").closest("tr")!;
     await userEvent.click(within(fila).getByRole("button", { name: "Desactivar" }));
     expect(screen.getByText(/tiene 12 personas activas/)).toHaveTextContent("seguirán pudiendo ingresar");
 
@@ -89,14 +95,27 @@ describe("vista Empresas", () => {
 
   it("solo una empresa sin personal ni usuarios se puede eliminar, con confirmación", async () => {
     render(<EmpresasPage />);
-    await screen.findByText("Estibajes del Sur E.I.R.L.");
-    expect(screen.getAllByRole("button", { name: "Eliminar" })).toHaveLength(1);
+    await screen.findAllByText("Estibajes del Sur E.I.R.L.");
+    expect(tabla().getAllByRole("button", { name: "Eliminar" })).toHaveLength(1);
 
-    const fila = screen.getByText("Transportes Cerrados S.A.C.").closest("tr")!;
+    const fila = tabla().getByText("Transportes Cerrados S.A.C.").closest("tr")!;
     await userEvent.click(within(fila).getByRole("button", { name: "Eliminar" }));
     expect(screen.getByText(/se borra/)).toHaveTextContent("No tiene personal registrado");
     await userEvent.click(screen.getAllByRole("button", { name: "Eliminar" }).at(-1)!);
     expect(api.remove).toHaveBeenCalledWith(2);
     expect(await screen.findByText("Se eliminó Transportes Cerrados S.A.C.")).toBeInTheDocument();
+  });
+
+  it("en el celular, una tarjeta por empresa: RUC, estado, contacto, personal activo y los botones", async () => {
+    render(<EmpresasPage />);
+    await screen.findAllByText("Estibajes del Sur E.I.R.L.");
+    const estibajes = tarjetas().getByText("Estibajes del Sur E.I.R.L.").closest("li")!;
+    expect(within(estibajes).getByText("12 personas activas")).toBeInTheDocument();
+    expect(within(estibajes).getByText("Activa")).toBeInTheDocument();
+    const agencia = tarjetas().getByText("Agencia José Gálvez S.A.").closest("li")!;
+    expect(within(agencia).getByText("1 persona activa")).toBeInTheDocument();
+    expect(within(agencia).getByText(/054-123456/)).toBeInTheDocument();
+    await userEvent.click(within(estibajes).getByRole("button", { name: "Desactivar" }));
+    expect(screen.getByText(/tiene 12 personas activas/)).toBeInTheDocument();
   });
 });

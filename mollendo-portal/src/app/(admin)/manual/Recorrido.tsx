@@ -151,9 +151,10 @@ export function Recorrido({
 
   return (
     <div className="space-y-4">
-      {/* Pantallas de la sección */}
+      {/* Pantallas de la sección: en el celular se deslizan de lado, sin barra (como las pestañas de arriba);
+          el paso cortado al borde indica que hay más. */}
       {pantallas.length > 1 && (
-        <div ref={fila} className="relative -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
+        <div ref={fila} className="no-scrollbar relative -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
           {pantallas.map((x, i) => (
             <button
               key={x.titulo}

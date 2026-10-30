@@ -77,7 +77,7 @@ El `.env`, la lista del personal, las salidas pendientes de enviar y la copia de
 ## Verificar
 
 - `sudo docker compose ps` → `controlador` "Up".
-- En el portal de la nube, **Sistema y APIs** → "Controlador: Conectado", con los dos lectores ("Cable conectado") y los relés ("Conectado").
+- En el portal de la nube, **Sistema y APIs** → "Controlador: Conectado", con los dos lectores y los relés ("Conectado").
 - Pasar un DNI registrado por la salida: se abre el molinete y la salida aparece en el Panel de vigilancia.
 
 ## Configuración de los lectores de DNI (Syble, "2D Barcode Scanner User Manual")

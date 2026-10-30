@@ -15,7 +15,9 @@ import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { EtiquetaPerfil } from "@/components/personal/EtiquetaPerfil";
-import { OPCIONES_PERFIL, type Perfil } from "@/lib/perfiles";
+import { FotoGuardada } from "@/components/personal/FotoPersonal";
+import { OPCIONES_PERFIL, textoPerfil, type Perfil } from "@/lib/perfiles";
+import { ListaTarjetas, TarjetaFila } from "@/components/tables/TarjetaFila";
 import { DownloadIcon } from "@/icons";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -197,8 +199,8 @@ export function Presentes() {
         )}
       </div>
 
-      <Tarjeta className="overflow-hidden">
-        {/* En el celular la tabla se desliza hacia los lados. */}
+      <Tarjeta className="@container overflow-hidden">
+        {/* Con espacio, la tabla; en el celular, una tarjeta por persona. */}
         <div className="overflow-x-auto [&_th]:whitespace-nowrap">
           <AltoEstable paginaCompleta={enPagina.length === POR_PAGINA} variasPaginas={totalPaginas > 1}>
             {presentes === null && !error ? (
@@ -208,60 +210,123 @@ export function Presentes() {
                 {presentes?.length ? "Sin resultados." : "No hay nadie dentro del terminal en este momento."}
               </p>
             ) : (
-              <Table>
-                <TableHeader className="border-b border-gray-100 dark:border-gray-800">
-                  <TableRow>
-                    {["Persona", "Perfil", "Empresa", "Ingreso", "Tiempo dentro", ...(sinLectorSalida ? [""] : [])].map((c) => (
-                      <TableCell key={c} isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">
-                        {c}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <>
+                {/* Todas las columnas en porcentaje, según su contenido, y la tabla nunca más angosta que la suma de los contenidos.
+                    Con la columna Salida (lector de salida desconectado) necesita más ancho: 64rem; con menos, las tarjetas. */}
+                <Table className={`hidden table-fixed ${sinLectorSalida ? "w-[max(100%,64rem)] @5xl:table" : "w-[max(100%,56rem)] @4xl:table"}`}>
+                  <TableHeader className="border-b border-gray-100 dark:border-gray-800">
+                    <TableRow>
+                      {(sinLectorSalida
+                        ? [
+                            ["Persona", ""],
+                            ["Perfil", "w-[18%]"],
+                            ["Empresa", "w-[20%]"],
+                            ["Ingreso", "w-[14%]"],
+                            ["Tiempo dentro", "w-[12%]"],
+                            ["", "w-[10.5%]"],
+                          ]
+                        : [
+                            ["Persona", ""],
+                            ["Perfil", "w-[20.5%]"],
+                            ["Empresa", "w-[23%]"],
+                            ["Ingreso", "w-[15.5%]"],
+                            ["Tiempo dentro", "w-[12.5%]"],
+                          ]
+                      ).map(([c, ancho]) => (
+                        <TableCell key={c} isHeader className={`${ancho} px-4 py-3 text-start text-xs font-medium text-gray-500`}>
+                          {c}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {enPagina.map((p) => {
+                      const largo = ahora - new Date(p.ingreso).getTime() > MS_PERMANENCIA_LARGA;
+                      return (
+                        // Todas las filas con el mismo alto (un perfil largo pasa a dos líneas): el paginador no se mueve.
+                        <TableRow key={p.personaId} className="h-[4.625rem]">
+                          <TableCell className="px-4 py-4 text-sm">
+                            {/* Con su foto, como en el Panel: el vigilante reconoce a la persona. */}
+                            <div className="flex min-w-0 items-center gap-3">
+                              <FotoGuardada personaId={p.personaId} tieneFoto={p.tieneFoto} version={p.fotoVersion} tamano="size-10" miniatura />
+                              <span className="min-w-0">
+                                <span className="block truncate text-gray-800 dark:text-white/90" title={`${p.apellidos}, ${p.nombres}`}>
+                                  {p.apellidos}, {p.nombres}
+                                </span>
+                                <span className="block text-xs text-gray-500 dark:text-gray-400">{p.numeroDocumento}</span>
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-4 py-4 text-sm whitespace-nowrap">
+                            <EtiquetaPerfil perfil={p.perfil} />
+                          </TableCell>
+                          <TableCell className="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">{p.empresa}</TableCell>
+                          <TableCell className="px-4 py-4 text-sm whitespace-nowrap text-gray-600 dark:text-gray-300">
+                            {horaIngreso(p.ingreso)}
+                          </TableCell>
+                          <TableCell
+                            className={`px-4 py-4 text-sm whitespace-nowrap ${largo ? "font-medium text-warning-600 dark:text-orange-400" : "text-gray-600 dark:text-gray-300"}`}
+                          >
+                            {/* En naranja: más de 12 horas dentro (permanencia larga). */}
+                            <span title={largo ? "Más de 12 horas dentro" : undefined}>{tiempoDentro(p.ingreso, ahora)}</span>
+                          </TableCell>
+                          {sinLectorSalida && (
+                            <TableCell className="px-4 py-4 text-end">
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => {
+                                  setErrorSalida(null);
+                                  setSalio(null);
+                                  setSaliendo(p);
+                                }}
+                              >
+                                Salida
+                              </Button>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+                <ListaTarjetas ocultar={sinLectorSalida ? "@5xl:hidden" : "@4xl:hidden"}>
                   {enPagina.map((p) => {
                     const largo = ahora - new Date(p.ingreso).getTime() > MS_PERMANENCIA_LARGA;
                     return (
-                      <TableRow key={p.personaId}>
-                        <TableCell className="px-5 py-4 text-sm">
-                          <span className="block text-gray-800 dark:text-white/90">
-                            {p.apellidos}, {p.nombres}
+                      <TarjetaFila
+                        key={p.personaId}
+                        foto={<FotoGuardada personaId={p.personaId} tieneFoto={p.tieneFoto} version={p.fotoVersion} tamano="size-11" miniatura />}
+                        titulo={`${p.apellidos}, ${p.nombres}`}
+                        subtitulo={`DNI ${p.numeroDocumento} · ${textoPerfil(p.perfil)}`}
+                        hora={
+                          // En naranja: más de 12 horas dentro (permanencia larga).
+                          <span className={largo ? "text-warning-600 dark:text-orange-400" : ""} title={largo ? "Más de 12 horas dentro" : undefined}>
+                            {tiempoDentro(p.ingreso, ahora)}
                           </span>
-                          <span className="block text-xs text-gray-500 dark:text-gray-400">{p.numeroDocumento}</span>
-                        </TableCell>
-                        <TableCell className="px-5 py-4 text-sm whitespace-nowrap">
-                          <EtiquetaPerfil perfil={p.perfil} />
-                        </TableCell>
-                        <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">{p.empresa}</TableCell>
-                        <TableCell className="px-5 py-4 text-sm whitespace-nowrap text-gray-600 dark:text-gray-300">
-                          {horaIngreso(p.ingreso)}
-                        </TableCell>
-                        <TableCell
-                          className={`px-5 py-4 text-sm whitespace-nowrap ${largo ? "font-medium text-warning-600 dark:text-orange-400" : "text-gray-600 dark:text-gray-300"}`}
-                        >
-                          {/* En naranja: más de 12 horas dentro (permanencia larga). */}
-                          <span title={largo ? "Más de 12 horas dentro" : undefined}>{tiempoDentro(p.ingreso, ahora)}</span>
-                        </TableCell>
+                        }
+                        fecha={horaIngreso(p.ingreso)}
+                      >
+                        <p>{p.empresa}</p>
                         {sinLectorSalida && (
-                          <TableCell className="px-5 py-4 text-end">
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => {
-                                setErrorSalida(null);
-                                setSalio(null);
-                                setSaliendo(p);
-                              }}
-                            >
-                              Salida
-                            </Button>
-                          </TableCell>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="mt-1.5 w-full"
+                            onClick={() => {
+                              setErrorSalida(null);
+                              setSalio(null);
+                              setSaliendo(p);
+                            }}
+                          >
+                            Salida
+                          </Button>
                         )}
-                      </TableRow>
+                      </TarjetaFila>
                     );
                   })}
-                </TableBody>
-              </Table>
+                </ListaTarjetas>
+              </>
             )}
           </AltoEstable>
         </div>

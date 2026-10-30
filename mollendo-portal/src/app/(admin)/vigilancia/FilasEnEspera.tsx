@@ -3,6 +3,7 @@ import type { IngresoEnEspera } from "@/lib/api/types";
 import Badge from "@/components/ui/badge/Badge";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { FotoGuardada } from "@/components/personal/FotoPersonal";
+import { RenglonTarjeta, TarjetaFila } from "@/components/tables/TarjetaFila";
 import { Movimiento } from "./CeldasEvento";
 
 /** Segundos que faltan hasta `hasta`, como "1:42". */
@@ -16,6 +17,26 @@ function fraccionRestante(i: IngresoEnEspera, ahora: number): number {
   if (!i.hasta) return 1;
   const total = new Date(i.hasta).getTime() - new Date(i.desde).getTime();
   return total > 0 ? Math.min(1, Math.max(0, (new Date(i.hasta).getTime() - ahora) / total)) : 0;
+}
+
+/** Lo que dice la insignia de la espera: "en cola", "pase su DNI" o "en espera". */
+function estadoEspera(i: IngresoEnEspera): string {
+  return i.enCola ? "en cola" : i.esperaDni ? "pase su DNI" : "en espera";
+}
+
+/** Qué falta para completar el ingreso. */
+function textoEspera(i: IngresoEnEspera): string {
+  return i.esperaDni
+    ? i.numeroDocumento !== "—"
+      ? "Falta que pase su DNI"
+      : "Falta que pase su DNI (consultando quién sopló)"
+    : i.manual
+      ? i.enCola
+        ? "Esperando su turno (verificación manual)"
+        : "Verificación manual: el vigilante decide"
+      : i.enCola
+        ? "Esperando su turno en el terminal facial"
+        : "Esperando rostro y alcohol";
 }
 
 /**
@@ -56,24 +77,12 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
           <TableCell className="px-5 py-4 text-sm">
             <Badge color={i.enCola ? "light" : "success"}>
               <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden />
-              {i.enCola ? "en cola" : i.esperaDni ? "pase su DNI" : "en espera"}
+              {estadoEspera(i)}
             </Badge>
           </TableCell>
           <TableCell className="px-5 py-4 text-sm">
             <div className="flex items-center justify-between gap-3 text-gray-700 dark:text-gray-300">
-              <span>
-                {i.esperaDni
-                  ? i.numeroDocumento !== "—"
-                    ? "Falta que pase su DNI"
-                    : "Falta que pase su DNI (consultando quién sopló)"
-                  : i.manual
-                  ? i.enCola
-                    ? "Esperando su turno (verificación manual)"
-                    : "Verificación manual: el vigilante decide"
-                  : i.enCola
-                    ? "Esperando su turno en el terminal facial"
-                    : "Esperando rostro y alcohol"}
-              </span>
+              <span>{textoEspera(i)}</span>
               {i.hasta && (
                 <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400" title={i.esperaDni ? "Tiempo para pasar su DNI" : "Tiempo para completar el ingreso en el terminal facial"}>
                   {tiempoRestante(i.hasta, ahora)}
@@ -88,6 +97,50 @@ export function FilasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]
             </div>
           </TableCell>
         </TableRow>
+      ))}
+    </>
+  );
+}
+
+/** Las mismas esperas en tarjetas, para el celular (con el orden de TarjetaEvento en page.tsx). */
+export function TarjetasEnEspera({ ingresos, ahora }: { ingresos: IngresoEnEspera[]; ahora: number }) {
+  return (
+    <>
+      {ingresos.map((i) => (
+        <TarjetaFila
+          key={`espera-${i.id}`}
+          estado="espera"
+          foto={
+            !i.personaId ? (
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800">?</span>
+            ) : (
+              <FotoGuardada personaId={i.personaId} tieneFoto={i.tieneFoto} version={i.fotoVersion} tamano="size-11" miniatura />
+            )
+          }
+          titulo={`${i.nombres} ${i.apellidos}`}
+          subtitulo={i.numeroDocumento && i.numeroDocumento !== "—" ? `DNI ${i.numeroDocumento}` : undefined}
+          hora={new Date(i.desde).toLocaleTimeString("es-PE")}
+        >
+          <RenglonTarjeta
+            izquierda={<Movimiento tipo="ingreso" />}
+            derecha={
+              <Badge color={i.enCola ? "light" : "success"}>
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" aria-hidden />
+                {estadoEspera(i)}
+              </Badge>
+            }
+          />
+          <RenglonTarjeta
+            izquierda={textoEspera(i)}
+            derecha={i.hasta && <span className="tabular-nums text-xs text-gray-500 dark:text-gray-400">{tiempoRestante(i.hasta, ahora)}</span>}
+          />
+          <div className={`h-1 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 ${i.enCola ? "invisible" : ""}`}>
+            <div
+              className="h-full rounded-full bg-success-500 transition-[width] duration-1000 ease-linear"
+              style={{ width: `${fraccionRestante(i, ahora) * 100}%` }}
+            />
+          </div>
+        </TarjetaFila>
       ))}
     </>
   );

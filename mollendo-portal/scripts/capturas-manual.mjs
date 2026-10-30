@@ -167,7 +167,8 @@ const CAPTURAS = [
       { sel: 'input[placeholder*="Buscar por nombre, DNI o empresa"]', lado: "texto-buscador" },
       'button[aria-label="Perfil"]',
       { sel: "button::-p-text(Descargar Excel)", lado: "arriba" },
-      "::-p-text(Tiempo dentro)",
+      // A la derecha: a la izquierda quedaba junto a "Ingreso" y parecía señalarlo.
+      { sel: "::-p-text(Tiempo dentro)", texto: true, lado: "der" },
       { sel: "::-p-text(Mostrando)", texto: true, lado: "der" },
       { sel: "tbody button::-p-text(Salida)", lado: "arriba" },
     ],

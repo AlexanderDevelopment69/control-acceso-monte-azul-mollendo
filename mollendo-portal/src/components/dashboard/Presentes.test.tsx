@@ -11,6 +11,9 @@ const api = vi.hoisted(() => ({
   rol: { actual: "administrador" },
 }));
 vi.mock("@/lib/ws", () => ({ escucharEventos: () => () => {}, canalConectado: () => false }));
+vi.mock("@/components/personal/FotoPersonal", () => ({
+  FotoGuardada: ({ personaId, tieneFoto }: { personaId: number; tieneFoto: boolean }) => <span>{tieneFoto ? `foto de ${personaId}` : "sin foto"}</span>,
+}));
 vi.mock("@/lib/api/endpoints", () => ({
   panelApi: { presentes: api.presentes },
   reportesApi: { descargar: api.descargar },
@@ -37,8 +40,8 @@ beforeEach(() => {
   api.presentes.mockReset().mockResolvedValue({
     generadoEn: AHORA.toISOString(),
     datos: [
-      { personaId: 1, nombres: "Ana", apellidos: "Torres", numeroDocumento: "40000001", perfil: "conductor", empresa: "Transportes Norte", ingreso: hace(14) },
-      { personaId: 2, nombres: "Luis", apellidos: "Pérez", numeroDocumento: "40000002", perfil: "contratista", empresa: "Agencia Sur", ingreso: hace(2.5) },
+      { personaId: 1, nombres: "Ana", apellidos: "Torres", numeroDocumento: "40000001", perfil: "conductor", tieneFoto: true, fotoVersion: "a.jpg", empresa: "Transportes Norte", ingreso: hace(14) },
+      { personaId: 2, nombres: "Luis", apellidos: "Pérez", numeroDocumento: "40000002", perfil: "contratista", tieneFoto: false, fotoVersion: null, empresa: "Agencia Sur", ingreso: hace(2.5) },
     ],
   });
 });
@@ -52,23 +55,28 @@ describe("tiempo dentro", () => {
   });
 });
 
+// Con espacio se ve la tabla y en el celular las tarjetas (jsdom no aplica los estilos: están las dos).
+const tabla = () => within(screen.getByRole("table"));
+const tarjetas = () => within(screen.getByRole("list"));
+
 describe("lista de presentes", () => {
   it("muestra a todos, resalta a quien lleva más de 12 h y filtra por búsqueda y perfil", async () => {
     render(<Presentes />);
-    expect(await screen.findByText("Torres, Ana")).toBeInTheDocument();
+    await screen.findByRole("table");
+    expect(tabla().getByText("Torres, Ana")).toBeInTheDocument();
     expect(screen.getByText("Mostrando 1 a 2 de 2 registros")).toBeInTheDocument();
-    expect(screen.getByTitle("Más de 12 horas dentro")).toHaveTextContent("14 h 00 min");
+    expect(tabla().getByTitle("Más de 12 horas dentro")).toHaveTextContent("14 h 00 min");
 
     await userEvent.type(screen.getByPlaceholderText(/Buscar/), "agencia");
     expect(screen.queryByText("Torres, Ana")).not.toBeInTheDocument();
-    expect(screen.getByText("Pérez, Luis")).toBeInTheDocument();
+    expect(tabla().getByText("Pérez, Luis")).toBeInTheDocument();
     expect(screen.getByText("Filtrando: 1 de 2 personas dentro")).toBeInTheDocument();
 
     await userEvent.clear(screen.getByPlaceholderText(/Buscar/));
     const perfil = screen.getByRole("combobox", { name: "Perfil" });
     await userEvent.click(perfil);
     await userEvent.click(within(document.getElementById(perfil.getAttribute("aria-controls")!)!).getByRole("option", { name: "Conductor" }));
-    expect(screen.getByText("Torres, Ana")).toBeInTheDocument();
+    expect(tabla().getByText("Torres, Ana")).toBeInTheDocument();
     expect(screen.queryByText("Pérez, Luis")).not.toBeInTheDocument();
   });
 
@@ -81,16 +89,19 @@ describe("lista de presentes", () => {
         apellidos: "Prueba",
         numeroDocumento: String(40000100 + i),
         perfil: "contratista",
+        tieneFoto: false,
+        fotoVersion: null,
         empresa: "Agencia Sur",
         ingreso: hace(20 - i),
       })),
     });
     render(<Presentes />);
-    expect(await screen.findByText("Prueba, Persona1")).toBeInTheDocument();
+    await screen.findByRole("table");
+    expect(tabla().getByText("Prueba, Persona1")).toBeInTheDocument();
     expect(screen.getByText("Mostrando 1 a 10 de 20 registros")).toBeInTheDocument();
     expect(screen.queryByText("Prueba, Persona11")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "2" }));
-    expect(screen.getByText("Prueba, Persona11")).toBeInTheDocument();
+    expect(tabla().getByText("Prueba, Persona11")).toBeInTheDocument();
     expect(screen.getByText("Mostrando 11 a 20 de 20 registros")).toBeInTheDocument();
   });
 
@@ -101,7 +112,7 @@ describe("lista de presentes", () => {
     expect(await screen.findByText("Lector de DNI de salida sin conexión")).toBeInTheDocument();
     // El Excel es solo del administrador.
     expect(screen.queryByRole("button", { name: /Descargar Excel/ })).not.toBeInTheDocument();
-    const fila = screen.getByText("Torres, Ana").closest("tr")!;
+    const fila = tabla().getByText("Torres, Ana").closest("tr")!;
     await userEvent.click(within(fila).getByRole("button", { name: "Salida" }));
     expect(screen.getByText(/¿Abrir la salida de Ana Torres \(DNI 40000001\)\?/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Abrir salida" }));
@@ -111,9 +122,30 @@ describe("lista de presentes", () => {
 
   it("con el lector de salida conectado no hay botón de salida", async () => {
     render(<Presentes />);
-    expect(await screen.findByText("Torres, Ana")).toBeInTheDocument();
+    await screen.findByRole("table");
+    expect(tabla().getByText("Torres, Ana")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Salida" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Descargar Excel/ })).toBeInTheDocument();
+  });
+
+  it("en el celular, una tarjeta por persona: nombre, ingreso, tiempo dentro, perfil y empresa, y Salida si falta el lector", async () => {
+    api.rol.actual = "vigilancia";
+    api.sinLector.mockResolvedValue({ ingreso: false, salida: true });
+    render(<Presentes />);
+    await screen.findByRole("list");
+    const ana = tarjetas().getByText("Torres, Ana").closest("li")!;
+    expect(within(ana).getByText(/DNI 40000001/)).toBeInTheDocument();
+    expect(within(ana).getByTitle("Más de 12 horas dentro")).toHaveTextContent("14 h 00 min");
+    expect(within(ana).getByText("Transportes Norte")).toBeInTheDocument();
+    await userEvent.click(within(ana).getByRole("button", { name: "Salida" }));
+    expect(screen.getByText(/¿Abrir la salida de Ana Torres \(DNI 40000001\)\?/)).toBeInTheDocument();
+  });
+
+  it("cada persona con su foto, en la tabla y en la tarjeta", async () => {
+    render(<Presentes />);
+    await screen.findByRole("table");
+    expect(within(tabla().getByText("Torres, Ana").closest("tr")!).getByText("foto de 1")).toBeInTheDocument();
+    expect(within(tarjetas().getByText("Torres, Ana").closest("li")!).getByText("foto de 1")).toBeInTheDocument();
   });
 
   it("sin nadie dentro lo dice", async () => {

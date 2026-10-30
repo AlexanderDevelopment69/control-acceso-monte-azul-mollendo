@@ -449,7 +449,7 @@ Cómo accede el contenedor: ve el `/dev` del servidor en solo lectura (`/dev-ser
 ### Comprobar
 
 - En el registro del backend: `Lector de DNI de ingreso conectado en /dev/lector-dni-ingreso (115200 baudios)`, y por cada lectura `DNI leído en ingreso: …`.
-- En **Sistema y APIs**: el lector "Cable conectado" con la hora de su última lectura. Indica el cable de datos (adaptador blanco), no la energía del lector: con el cable negro desconectado sigue diciendo "Cable conectado", porque el lector no envía nada hasta que lee un DNI. **Si el lector no pita al pasar un DNI, revisar su alimentación (cable negro).**
+- En **Sistema y APIs**: el lector "Conectado" con la hora de su última lectura. Indica el cable de datos (adaptador blanco), no la energía del lector: con el cable negro desconectado sigue diciendo "Conectado", porque el lector no envía nada hasta que lee un DNI. **Si el lector no pita al pasar un DNI, revisar su alimentación (cable negro).**
 - En el **Panel de vigilancia**: cada DNI aparece al instante (un DNI no registrado, como "No registrado").
 
 Si se desconecta el adaptador, el sistema reintenta cada 5 s y se reconecta solo al volver a conectarlo (probado: 30 s después de reconectarlo, con el adaptador pasando de `ttyUSB1` a `ttyUSB0`).
@@ -512,7 +512,7 @@ Instalados en el Controlador (PC) (04/10/2026): **ingreso** con el adaptador `..
 3. **Identificar su adaptador** en el Controlador (PC): `ls /dev/serial/by-id/`. Aparece una segunda ruta `usb-...-port0` (cada adaptador tiene su número de serie; la del ingreso es la que termina en `FQCLb114J19-if00-port0`).
 4. **Agregar en el `.env` del entorno (`deploy/controlador/.env` o `deploy/todo-en-controlador/.env`):** `LECTOR_DNI_SALIDA_DISPOSITIVO=/dev/serial/by-id/<la ruta nueva>`.
 5. **Aplicar:** `sudo docker compose up -d`.
-6. **Comprobar:** en el registro del backend, `Lector de DNI de salida conectado`. En **Sistema y APIs**, salida "Cable conectado". Al pasar un DNI registrado, el Panel muestra una **salida autorizada**.
+6. **Comprobar:** en el registro del backend, `Lector de DNI de salida conectado`. En **Sistema y APIs**, salida "Conectado". Al pasar un DNI registrado, el Panel muestra una **salida autorizada**.
 
 Probado con el lector real: un DNI registrado queda como **salida autorizada** y uno no registrado como **salida denegada "No registrado"**, al instante. La salida autorizada activa el relé de salida (sección 8d).
 
@@ -789,7 +789,7 @@ cd ~/mollendo/deploy/todo-en-controlador && sudo docker compose up -d --build
 
 3. **Comprobar** en "Sistema y APIs" del Controlador (PC):
    - el G4 "En línea";
-   - los lectores con "Cable conectado";
+   - los lectores con "Conectado";
    - los relés "Conectado";
    - **sin** la tarjeta "Controlador".
 

@@ -263,6 +263,9 @@ export interface PersonaPresente {
   apellidos: string;
   numeroDocumento: string;
   perfil: Perfil | null;
+  /** Si tiene foto y su versión (para pedir la nueva cuando cambia). */
+  tieneFoto: boolean;
+  fotoVersion: string | null;
   empresa: string;
   ingreso: string;
 }
@@ -273,6 +276,9 @@ export interface PersonaPermanencia {
   nombres: string;
   apellidos: string;
   numeroDocumento: string;
+  /** Si tiene foto y su versión (para pedir la nueva cuando cambia). */
+  tieneFoto: boolean;
+  fotoVersion: string | null;
   empresa: string;
   ingreso: string;
 }

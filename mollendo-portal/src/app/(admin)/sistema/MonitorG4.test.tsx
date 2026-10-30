@@ -48,6 +48,10 @@ vi.mock("@/lib/api/endpoints", () => ({
   },
 }));
 
+// Con espacio se ve la tabla y en el celular las tarjetas (jsdom no aplica los estilos: están las dos).
+const tabla = () => within(screen.getByRole("table"));
+const tarjetas = () => within(screen.getByRole("list"));
+
 describe("Monitor del G4 Pro", () => {
   it("la tarjeta de Sistema lleva a la página del monitor, sin la tabla", () => {
     render(<TarjetaMonitorG4 />);
@@ -57,7 +61,7 @@ describe("Monitor del G4 Pro", () => {
 
   it("la página empieza en hoy, de a 10 pruebas, con el total abajo", async () => {
     render(<MonitorG4 />);
-    await screen.findByText("Jose Vilchez");
+    await screen.findAllByText("Jose Vilchez");
     expect(pedidos.at(-1)).toMatchObject({ pagina: 1, porPagina: 10, busqueda: "", desde: hoy(), hasta: hoy() });
     expect(screen.getByPlaceholderText("Buscar por nombre o DNI…")).toBeInTheDocument();
     expect(screen.getByText(/Mostrando 1 a 2 de 2/)).toBeInTheDocument();
@@ -65,17 +69,31 @@ describe("Monitor del G4 Pro", () => {
 
   it("la página muestra cada prueba: persona, grado, decisión, ingreso, demora y las que no llegaron", async () => {
     render(<MonitorG4 />);
-    const fila = (await screen.findByText("Jose Vilchez")).closest("tr")!;
+    await screen.findAllByText("Jose Vilchez");
+    const fila = tabla().getByText("Jose Vilchez").closest("tr")!;
     expect(within(fila).getByText("0.00 g/L")).toBeInTheDocument();
     expect(within(fila).getByText('Aprobó: "pase su DNI" (30 s)')).toBeInTheDocument();
     expect(within(fila).getByText("Autorizado")).toBeInTheDocument();
     expect(within(fila).getByText("2 s después")).toBeInTheDocument();
-    expect(screen.getByText(/No llegaron 2 pruebas \(N\.º 26 a 27\)/)).toBeInTheDocument();
+    expect(tabla().getByText(/No llegaron 2 pruebas \(N\.º 26 a 27\)/)).toBeInTheDocument();
 
-    const otra = screen.getByText("No está en el sistema").closest("tr")!;
+    const otra = tabla().getByText("No está en el sistema").closest("tr")!;
     expect(within(otra).getByText("0.000379 g/L")).toBeInTheDocument();
     expect(within(otra).getByText("Denegado")).toBeInTheDocument();
     expect(within(otra).getByText(/Alcohol ·/)).toBeInTheDocument();
+  });
+
+  it("en el celular, una tarjeta por prueba: persona, alcohol, resultado, motivo y qué hizo el sistema", async () => {
+    render(<MonitorG4 />);
+    await screen.findAllByText("Jose Vilchez");
+    const jose = tarjetas().getByText("Jose Vilchez").closest("li")!;
+    expect(within(jose).getByText("Alcohol 0.00 g/L")).toBeInTheDocument();
+    expect(within(jose).getByText("Autorizado")).toBeInTheDocument();
+    expect(within(jose).getByText('Qué hizo el sistema: Aprobó: "pase su DNI" (30 s)')).toBeInTheDocument();
+    const otra = tarjetas().getByText("No está en el sistema").closest("li")!;
+    expect(within(otra).getByText("Denegado")).toBeInTheDocument();
+    expect(within(otra).getByText(/^Motivo: Alcohol/)).toBeInTheDocument();
+    expect(tarjetas().getByText(/No llegaron 2 pruebas/)).toBeInTheDocument();
   });
 
   it("formatos: grado con espacio y la prueba con el día; llegada e ingreso solo si cambia", () => {

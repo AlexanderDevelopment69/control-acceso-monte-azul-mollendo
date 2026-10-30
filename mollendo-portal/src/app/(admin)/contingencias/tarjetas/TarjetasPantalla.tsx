@@ -16,6 +16,7 @@ import DatePicker from "@/components/form/date-picker";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { AltoEstable } from "@/components/tables/AltoEstable";
+import { AvisoTarjetas, ListaTarjetas, RenglonTarjeta, TarjetaFila } from "@/components/tables/TarjetaFila";
 import { TableSearch } from "@/components/tables/TableSearch";
 import { useDiferido } from "@/lib/useDiferido";
 import { hoy, pieDePagina } from "@/lib/paginaServidor";
@@ -532,14 +533,22 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
           placeholder="Buscar por número de tarjeta, personal (nombre, DNI) o motivo"
         />
       </div>
-      <Tarjeta className="overflow-hidden">
+      <Tarjeta className="@container overflow-hidden">
+        {/* Con espacio, la tabla; en el celular, una tarjeta por uso. */}
         <div className="overflow-x-auto [&_th]:whitespace-nowrap">
           <AltoEstable paginaCompleta={datosUsos.length === POR_PAGINA} variasPaginas={(usos?.total ?? 0) > POR_PAGINA}>
-            <Table>
+            {/* Todas las columnas en porcentaje, según su contenido, y la tabla nunca más angosta que la suma de los contenidos. */}
+            <Table className="hidden w-[max(100%,58rem)] table-fixed @4xl:table">
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  {["Fecha y hora", "Tarjeta", "Movimiento", "Resultado", "Personal o motivo"].map((c) => (
-                    <TableCell key={c} isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">
+                  {[
+                    ["Fecha y hora", "w-[21%]"],
+                    ["Tarjeta", "w-[21%]"],
+                    ["Movimiento", "w-[12.5%]"],
+                    ["Resultado", "w-[14.5%]"],
+                    ["Personal o motivo", ""],
+                  ].map(([c, ancho]) => (
+                    <TableCell key={c} isHeader className={`${ancho} px-5 py-3 text-start text-xs font-medium text-gray-500`}>
                       {c}
                     </TableCell>
                   ))}
@@ -554,7 +563,8 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
                   </TableRow>
                 )}
                 {datosUsos.map((u) => (
-                  <TableRow key={u.id}>
+                  // Todas las filas con el alto de las de dos líneas (personal con su DNI): el paginador no se mueve.
+                  <TableRow key={u.id} className="h-[4.375rem]">
                     <TableCell className="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{fechaYHora(u.fechaHora)}</TableCell>
                     <TableCell className="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {u.tarjeta ?? <span className="text-gray-400">No registrada</span>}
@@ -587,6 +597,46 @@ export function TarjetasPantalla({ tipo }: { tipo: TipoTarjeta }) {
                 ))}
               </TableBody>
             </Table>
+            <ListaTarjetas>
+              {usos && datosUsos.length === 0 && (
+                <AvisoTarjetas>
+                  {busquedaDiferida ? "Ningún uso coincide con la búsqueda." : "Todavía no se pasó ninguna tarjeta por los lectores."}
+                </AvisoTarjetas>
+              )}
+              {datosUsos.map((u) => {
+                const autorizado = u.aceptada && u.resultado === "autorizado";
+                const d = new Date(u.fechaHora);
+                return (
+                  <TarjetaFila
+                    key={u.id}
+                    estado={autorizado ? "autorizado" : "denegado"}
+                    titulo={u.tarjeta ?? <span className="font-medium text-gray-400">No registrada</span>}
+                    hora={d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
+                    fecha={d.toLocaleDateString("es-PE")}
+                  >
+                    <RenglonTarjeta
+                      izquierda={<Movimiento tipo={u.tipoMovimiento} />}
+                      derecha={
+                        autorizado ? <Badge color="success">Autorizado</Badge> : <Badge color="error">{u.aceptada ? "Denegado" : "Rechazada"}</Badge>
+                      }
+                    />
+                    {u.persona ? (
+                      <div>
+                        <p>{u.persona}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          DNI {u.numeroDocumento}
+                          {u.resultado === "denegado" ? " · ver el motivo en el Panel" : ""}
+                        </p>
+                      </div>
+                    ) : autorizado ? (
+                      u.detalle && <p>{u.detalle}</p>
+                    ) : (
+                      u.detalle && <p className="font-medium text-error-600 dark:text-error-500">Motivo: {u.detalle}</p>
+                    )}
+                  </TarjetaFila>
+                );
+              })}
+            </ListaTarjetas>
           </AltoEstable>
         </div>
         {usos && <TableFooter {...pieDePagina(usos)} onPageChange={setPagina} />}

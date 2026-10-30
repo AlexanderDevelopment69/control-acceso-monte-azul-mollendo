@@ -58,7 +58,7 @@ POST /iclock/cdata?SN=HSR3263100192&table=ATTLOG&Stamp=9999
 Lector de DNI de ingreso conectado en /dev-servidor/serial/by-id/usb-Prolific…-port0 (115200 baudios)
 DNI leído en ingreso: pendiente_verificacion`,
     notas:
-      "El lector viene en modo USB: se configura con el folleto de la caja (Factory Default → RS232 → 115200). Se ignora la misma lectura dentro de 3 s; si el adaptador se desconecta, se reintenta cada 5 s. El estado (Cable conectado / desconectado) corresponde al cable de datos, no a la energía del lector. Si lee el QR de una tarjeta de contingencia (TMAM-CONT-…), la manda a POST /eventos-acceso/tarjeta en lugar de un DNI.",
+      "El lector viene en modo USB: se configura con el folleto de la caja (Factory Default → RS232 → 115200). Se ignora la misma lectura dentro de 3 s; si el adaptador se desconecta, se reintenta cada 5 s. El estado (Conectado / Desconectado) corresponde al cable de datos, no a la energía del lector. Si lee el QR de una tarjeta de contingencia (TMAM-CONT-…), la manda a POST /eventos-acceso/tarjeta en lugar de un DNI.",
   },
   {
     nombre: "Ingreso",

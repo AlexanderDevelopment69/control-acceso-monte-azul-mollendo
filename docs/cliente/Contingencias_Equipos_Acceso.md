@@ -255,7 +255,7 @@ En resumen: sin internet **nadie entra, pero nadie queda encerrado**. No se pued
 
 - **Ingreso:** sin el DNI, el sistema no puede revisar los documentos de la persona, así que nadie ingresa por la vía normal.
 - **Salida:** nadie sale por el molinete.
-- El aviso de fallas muestra *"Lector de DNI de ingreso (o de salida): cable desconectado"*. El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
+- El aviso de fallas muestra *"Lectores de DNI · Desconectado: ingreso"* (o *salida*). El sistema intenta reconectarlo cada 5 segundos y se recupera solo cuando el lector vuelve a funcionar.
 - Mientras tanto, se activa sola la contingencia "sin lector" (sección 6.3).
 - **Adaptador USB trabado** (visto el 20 y 21/10/2026 con el lector de salida): el lector pita, pero el adaptador USB que lo une al Controlador (PC) no entrega nada. Desde el 21/10/2026 el sistema lo detecta en el momento: "Sistema y APIs" muestra *"Adaptador sin respuesta"*, el aviso de fallas lo informa y se activa la contingencia "sin lector". Se arregla desconectando y volviendo a conectar ese adaptador en el Controlador (PC) (o reiniciándola); si se repite, se cambia el adaptador por el repuesto.
 
@@ -328,7 +328,7 @@ En el Excel de ingresos y salidas, la columna "Verificación" dice *"Sin lector 
 
 **Qué se hace:**
 
-1. **Vigilante:** ve el aviso de fallas *"Lector de DNI: cable desconectado"*, o nota que el lector no lee. **Informa** a soporte y al administrador.
+1. **Vigilante:** ve el aviso de fallas *"Lectores de DNI · Desconectado"*, o nota que el lector no lee. **Informa** a soporte y al administrador.
 2. **Mientras tanto** se sigue operando con la contingencia "sin lector" de la sección 6.3: en el ingreso, solo con rostro y alcohol; en la salida, el vigilante la abre desde "Presentes ahora".
 3. **Soporte:** conecta el repuesto (lector y, si hace falta, su adaptador). Con la opción B funciona solo; con la A, registra el adaptador nuevo.
 4. **Soporte:** comprueba que el aviso desaparezca y que el lector lea un DNI.

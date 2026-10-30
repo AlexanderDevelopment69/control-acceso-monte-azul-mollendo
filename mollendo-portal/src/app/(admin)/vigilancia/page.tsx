@@ -32,10 +32,11 @@ import { hoy, pieDePagina } from "@/lib/paginaServidor";
 import DatePicker from "@/components/form/date-picker";
 import { AlertCircleIcon, CheckLineIcon, CloseLineIcon, DocsIcon, UserIcon } from "@/icons";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
-import { FilasEnEspera } from "./FilasEnEspera";
+import { FilasEnEspera, TarjetasEnEspera } from "./FilasEnEspera";
 import { CompararFoto, FranjaFacialPrimero, type IngresoParaComparar } from "./FranjaFacialPrimero";
 import {
   documentoDelEvento,
+  hayMotivo,
   MarcaCorreccionManual,
   MarcaFacialPrimero,
   MarcaTarjetaContingencia,
@@ -61,6 +62,8 @@ import {
   FranjaVerificacionManual,
 } from "./VerificacionManual";
 import { EtiquetaPerfil } from "@/components/personal/EtiquetaPerfil";
+import { textoPerfil } from "@/lib/perfiles";
+import { AvisoTarjetas, COMO_TEXTO, ListaTarjetas, RenglonTarjeta, TarjetaFila } from "@/components/tables/TarjetaFila";
 import { FotoGuardada } from "@/components/personal/FotoPersonal";
 
 // Cuánto tiempo queda resaltado el último evento (si no llega otro antes).
@@ -80,6 +83,85 @@ function DniAngosto({ ev }: { ev: EventoAcceso }) {
   const documento = documentoDelEvento(ev);
   if (documento === "—") return null;
   return <span className="block basis-full text-xs text-gray-500 @5xl:hidden dark:text-gray-400">DNI {documento}</span>;
+}
+
+/**
+ * Un movimiento en tarjeta (celular), en el orden quién → cuándo → qué pasó → por qué: foto, nombre,
+ * DNI y perfil, y la hora; debajo, movimiento y resultado, el motivo y las marcas en texto.
+ */
+function TarjetaEvento({
+  ev,
+  dia,
+  resaltado,
+  onVerDocumentos,
+}: {
+  ev: EventoAcceso;
+  dia: boolean;
+  resaltado: boolean;
+  onVerDocumentos?: () => void;
+}) {
+  const fecha = new Date(ev.fechaHora);
+  const documento = documentoDelEvento(ev);
+  const autorizado = ev.resultado === "autorizado";
+  const conocido = !!ev.persona || ev.tarjetaContingencia?.tipo === "acceso";
+  return (
+    <TarjetaFila
+      estado={autorizado ? "autorizado" : "denegado"}
+      resaltado={resaltado}
+      foto={
+        ev.persona ? (
+          <FotoGuardada personaId={ev.persona.id} tieneFoto={!!ev.persona.tieneFoto} version={ev.persona.fotoVersion} tamano="size-11" miniatura />
+        ) : (
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800">?</span>
+        )
+      }
+      titulo={
+        <span className={conocido ? "" : "font-medium text-gray-400"}>
+          {ev.persona
+            ? `${ev.persona.nombres} ${ev.persona.apellidos}`
+            : ev.tarjetaContingencia?.tipo === "acceso"
+              ? `Tarjeta de acceso N.º ${ev.tarjetaContingencia.numero}`
+              : ev.facialPrimero
+                ? "Sin identificar"
+                : "No registrado"}
+        </span>
+      }
+      // Solo si tiene perfil, como en la tabla: al vigilante no le sirve ver "Sin perfil".
+      subtitulo={[documento !== "—" ? `DNI ${documento}` : null, ev.persona?.perfil ? textoPerfil(ev.persona.perfil) : null]
+        .filter(Boolean)
+        .join(" · ") || undefined}
+      hora={fecha.toLocaleTimeString("es-PE")}
+      fecha={dia ? undefined : fecha.toLocaleDateString("es-PE")}
+    >
+      <RenglonTarjeta
+        izquierda={<Movimiento tipo={ev.tipoMovimiento} />}
+        derecha={
+          autorizado ? (
+            <Badge color="success" startIcon={<CheckLineIcon className="size-3.5" />}>
+              Autorizado
+            </Badge>
+          ) : (
+            <Badge color="error" startIcon={<CloseLineIcon className="size-3.5" />}>
+              Denegado
+            </Badge>
+          )
+        }
+      />
+      {hayMotivo(ev) && (
+        <div className={`flex flex-wrap items-baseline gap-x-1 font-medium text-error-600 dark:text-error-500 ${COMO_TEXTO}`}>
+          <span>Motivo:</span>
+          <MotivoDenegacion evento={ev} onVerDocumentos={onVerDocumentos} />
+        </div>
+      )}
+      <div className={`flex flex-col gap-0.5 text-xs text-gray-500 empty:hidden dark:text-gray-400 ${COMO_TEXTO}`}>
+        <MarcaVerificacionManual evento={ev} />
+        <MarcaCorreccionManual evento={ev} />
+        <MarcaFacialPrimero evento={ev} />
+        <MarcaTarjetaContingencia evento={ev} />
+        <MarcaSinLector evento={ev} />
+      </div>
+    </TarjetaFila>
+  );
 }
 
 function VigilanciaContent() {
@@ -596,20 +678,23 @@ function VigilanciaContent() {
       </div>
 
       <Tarjeta className="@container overflow-hidden">
-        {/* Una línea por celda: en el celular la tabla se desliza hacia los lados. Con poco espacio
-            (pantalla mediana, o el menú abierto), celdas más angostas y el DNI bajo el nombre: así
+        {/* La tabla, desde 56rem de ancho (en el celular, las tarjetas de abajo). Una línea por celda; con poco
+            espacio (pantalla mediana, o el menú abierto), celdas más angostas y el DNI bajo el nombre: así
             caben el resultado y el motivo, que es lo que más se mira. */}
-        <div className="overflow-x-auto [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap [&_td]:px-3 [&_th]:px-3 @5xl:[&_td]:px-5 @5xl:[&_th]:px-5">
+        <div className="hidden overflow-x-auto @4xl:block [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap [&_td]:px-3 [&_th]:px-3 @5xl:[&_td]:px-5 @5xl:[&_th]:px-5">
           <AltoEstable paginaCompleta={eventos.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
-            <Table>
+            {/* Todas las columnas en porcentaje, según su contenido, y la tabla nunca más angosta que la suma de los contenidos:
+                en pantalla ancha el espacio se reparte entre todas, nada se pega en el ancho mínimo y las columnas
+                no cambian de lugar al pasar de página ni al llegar un movimiento. */}
+            <Table className="w-[max(100%,56rem)] table-fixed">
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Hora</TableCell>
-                  <TableCell isHeader className="hidden @5xl:table-cell px-5 py-3 text-start text-xs font-medium text-gray-500">DNI</TableCell>
+                  <TableCell isHeader className="w-[13%] px-5 py-3 text-start text-xs font-medium text-gray-500">Hora</TableCell>
+                  <TableCell isHeader className="hidden w-[11%] @5xl:table-cell px-5 py-3 text-start text-xs font-medium text-gray-500">DNI</TableCell>
                   <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Persona</TableCell>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Movimiento</TableCell>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Resultado</TableCell>
-                  <TableCell isHeader className="px-5 py-3 text-start text-xs font-medium text-gray-500">Motivo</TableCell>
+                  <TableCell isHeader className="w-[11%] px-5 py-3 text-start text-xs font-medium text-gray-500">Movimiento</TableCell>
+                  <TableCell isHeader className="w-[16%] px-5 py-3 text-start text-xs font-medium text-gray-500">Resultado</TableCell>
+                  <TableCell isHeader className="w-[26%] px-5 py-3 text-start text-xs font-medium text-gray-500">Motivo</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -632,7 +717,7 @@ function VigilanciaContent() {
                 {!loading && eventos.map((ev) => (
                   <TableRow
                     key={ev.id}
-                    className={`transition-colors duration-700 ${ev.id === ultimo ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
+                    className={`h-[5.5rem] transition-colors duration-700 ${ev.id === ultimo ? "bg-brand-50 dark:bg-brand-500/10" : ""}`}
                   >
                     <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {dia ? (
@@ -648,21 +733,27 @@ function VigilanciaContent() {
                     <TableCell className="hidden @5xl:table-cell px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {documentoDelEvento(ev)}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <TableCell className="whitespace-normal! px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {ev.persona ? (
                         <span className="flex items-center gap-3">
                           <FotoGuardada personaId={ev.persona.id} tieneFoto={!!ev.persona.tieneFoto} version={ev.persona.fotoVersion} tamano="size-10" miniatura />
-                          <span className="flex flex-wrap items-center gap-2">
-                            {ev.persona.nombres} {ev.persona.apellidos}
-                            {/* Solo si tiene perfil: al vigilante no le sirve ver "Sin perfil". */}
-                            {ev.persona.perfil && <EtiquetaPerfil perfil={ev.persona.perfil} />}
-                            <DniAngosto ev={ev} />
+                          {/* El nombre en una sola línea (si no entra, con "…"; completo al pasar el mouse) y el perfil debajo:
+                              así todas las filas miden lo mismo y el paginador no se mueve. */}
+                          <span className="min-w-0">
+                            <span className="block truncate" title={`${ev.persona.nombres} ${ev.persona.apellidos}`}>
+                              {ev.persona.nombres} {ev.persona.apellidos}
+                            </span>
+                            <span className="flex flex-wrap items-center gap-2">
+                              {/* Solo si tiene perfil: al vigilante no le sirve ver "Sin perfil". */}
+                              {ev.persona.perfil && <EtiquetaPerfil perfil={ev.persona.perfil} />}
+                              <DniAngosto ev={ev} />
+                            </span>
                           </span>
                         </span>
                       ) : (
                         <span className="flex items-center gap-3">
                           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-400 dark:bg-gray-800">?</span>
-                          <span className={ev.tarjetaContingencia?.tipo === "acceso" ? "text-gray-700 dark:text-gray-300" : "text-gray-400"}>
+                          <span className={`min-w-0 truncate ${ev.tarjetaContingencia?.tipo === "acceso" ? "text-gray-700 dark:text-gray-300" : "text-gray-400"}`}>
                             {/* Tarjeta de acceso: no se sabe quién pasó, se dice con qué tarjeta. */}
                             {ev.tarjetaContingencia?.tipo === "acceso"
                               ? `Tarjeta de acceso N.º ${ev.tarjetaContingencia.numero}`
@@ -688,8 +779,10 @@ function VigilanciaContent() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-sm">
-                      <div className="flex flex-wrap items-center gap-1">
+                    <TableCell className="whitespace-normal! px-5 py-4 text-sm">
+                      {/* Cada marca en su línea; si no entra (p. ej. "Manual · … · correo"), se corta con "…" en vez de
+                          salirse de la columna: así no aparece la barra horizontal y el paginador no se mueve. */}
+                      <div className="flex min-w-0 flex-col items-start gap-1 [&_span]:whitespace-nowrap [&>*]:max-w-full [&_.inline-flex]:block [&_.inline-flex]:max-w-full [&_.inline-flex]:truncate">
                         <MotivoDenegacion
                           evento={ev}
                           onVerDocumentos={opera ? () => setPersonaDocumentos(ev.personaId) : undefined}
@@ -707,6 +800,23 @@ function VigilanciaContent() {
             </Table>
           </AltoEstable>
         </div>
+        {/* Sin espacio para la tabla (celular): cada movimiento en una tarjeta, con los mismos datos. */}
+        <ListaTarjetas>
+          {loading && <AvisoTarjetas>Cargando…</AvisoTarjetas>}
+          {!loading && errorCarga && !lista && <AvisoTarjetas>No se pudo cargar el historial.</AvisoTarjetas>}
+          {!loading && <TarjetasEnEspera ingresos={esperasVisibles} ahora={ahora} />}
+          {!loading && lista && eventos.length === 0 && esperasVisibles.length === 0 && <AvisoTarjetas>{sinEventos}</AvisoTarjetas>}
+          {!loading &&
+            eventos.map((ev) => (
+              <TarjetaEvento
+                key={ev.id}
+                ev={ev}
+                dia={!!dia}
+                resaltado={ev.id === ultimo}
+                onVerDocumentos={opera ? () => setPersonaDocumentos(ev.personaId) : undefined}
+              />
+            ))}
+        </ListaTarjetas>
         {!loading && <TableFooter {...pie} onPageChange={setPagina} />}
       </Tarjeta>
 

@@ -14,6 +14,7 @@ import {
 } from './dashboard.util.js';
 import { calcularHorasHombre, horasDecimales } from './horas-hombre.util.js';
 import { PERFIL_LABEL, PERFILES, SIN_PERFIL } from '../personas/perfiles.js';
+import { versionFoto } from '../common/archivos-persona.util.js';
 
 /**
  * Para las horas-hombre se leen también los movimientos de 7 días antes y
@@ -202,6 +203,7 @@ export class DashboardService {
         nombres: true,
         apellidos: true,
         numeroDocumento: true,
+        fotoUrl: true,
         empresa: { select: { razonSocial: true } },
       },
     });
@@ -213,6 +215,9 @@ export class DashboardService {
         nombres: persona.nombres,
         apellidos: persona.apellidos,
         numeroDocumento: persona.numeroDocumento,
+        // La foto, como en "Presentes ahora": solo si hay y su versión.
+        tieneFoto: !!persona.fotoUrl,
+        fotoVersion: versionFoto(persona.fotoUrl),
         empresa: persona.empresa.razonSocial,
         ingreso: p.fechaHora.toISOString(),
       };
@@ -236,6 +241,7 @@ export class DashboardService {
         apellidos: true,
         numeroDocumento: true,
         perfil: true,
+        fotoUrl: true,
         empresa: { select: { razonSocial: true } },
       },
     });
@@ -250,6 +256,9 @@ export class DashboardService {
           apellidos: p.apellidos,
           numeroDocumento: p.numeroDocumento,
           perfil: p.perfil,
+          // La foto, para verla en la lista (la ruta no sale: solo si hay y su versión, como en el Panel).
+          tieneFoto: !!p.fotoUrl,
+          fotoVersion: versionFoto(p.fotoUrl),
           empresa: p.empresa.razonSocial,
           ingreso: d.fechaHora.toISOString(),
         };

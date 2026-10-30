@@ -232,9 +232,9 @@ export function LectoresDniEstado({
           ) : lector.adaptadorSinRespuesta ? (
             <Falla>Adaptador sin respuesta</Falla>
           ) : lector.conectado ? (
-            <Activo>Cable conectado</Activo>
+            <Activo>Conectado</Activo>
           ) : (
-            <Falla>Cable desconectado</Falla>
+            <Falla>Desconectado</Falla>
           )}
           <p className="mt-1 text-xs text-gray-400">
             {etiqueta}

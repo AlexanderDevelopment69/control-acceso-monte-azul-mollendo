@@ -11,6 +11,7 @@ import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 import DatePicker from "@/components/form/date-picker";
 import { AltoEstable } from "@/components/tables/AltoEstable";
+import { AvisoTarjetas, ListaTarjetas, RenglonTarjeta, TarjetaFila } from "@/components/tables/TarjetaFila";
 import { TableFooter } from "@/components/tables/TableFooter";
 import { TableSearch } from "@/components/tables/TableSearch";
 import Tarjeta from "@/components/ui/tarjeta/Tarjeta";
@@ -92,7 +93,7 @@ function FilaMarcacion({ m }: { m: MarcacionG4 }) {
             <Badge color={m.ingreso.resultado === "autorizado" ? "success" : "error"}>
               {m.ingreso.resultado === "autorizado" ? "Autorizado" : "Denegado"}
             </Badge>
-            <span className="block pt-1 text-xs text-gray-400">
+            <span className="block truncate pt-1 text-xs text-gray-400" title={m.ingreso.motivo ?? undefined}>
               {m.ingreso.motivo ? `${m.ingreso.motivo} · ` : ""}
               {horaCorta(m.ingreso.fechaHora, m.horaPrueba)}
             </span>
@@ -105,15 +106,71 @@ function FilaMarcacion({ m }: { m: MarcacionG4 }) {
   );
 }
 
-/** Aviso entre filas: el número de marcación saltó (pruebas que no llegaron al servidor). */
-function FilaFaltantes({ m }: { m: MarcacionG4 }) {
+/** La misma prueba en tarjeta (celular): quién y a qué hora; alcohol e ingreso; qué hizo el sistema. */
+function TarjetaMarcacion({ m }: { m: MarcacionG4 }) {
+  return (
+    <TarjetaFila
+      estado={m.ingreso ? (m.ingreso.resultado === "autorizado" ? "autorizado" : "denegado") : undefined}
+      foto={
+        m.persona ? (
+          <FotoGuardada personaId={m.persona.id} tieneFoto={m.persona.tieneFoto} version={m.persona.fotoVersion} tamano="size-11" miniatura />
+        ) : (
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-white/[0.06]">?</span>
+        )
+      }
+      titulo={m.persona ? `${m.persona.nombres} ${m.persona.apellidos}` : <span className="font-medium text-gray-500 dark:text-gray-400">No está en el sistema</span>}
+      subtitulo={`DNI ${m.dni ?? "—"}${m.numero !== null ? ` · N.º ${m.numero}` : ""}`}
+      hora={m.horaPrueba ? horaCorta(m.horaPrueba) : "—"}
+      fecha={
+        m.demoraSegundos !== null && (
+          <span className={m.demoraSegundos > DEMORA_ALTA_S ? "text-warning-600 dark:text-orange-400" : ""}>{m.demoraSegundos} s después</span>
+        )
+      }
+    >
+      <RenglonTarjeta
+        izquierda={
+          m.alcohol ? (
+            <span className={m.aprobado ? "text-success-600 dark:text-success-500" : "font-medium text-error-600 dark:text-error-500"}>
+              Alcohol {grado(m.alcohol)}
+            </span>
+          ) : (
+            <span className="text-gray-400">Alcohol sin grado</span>
+          )
+        }
+        derecha={
+          m.ingreso ? (
+            <Badge color={m.ingreso.resultado === "autorizado" ? "success" : "error"}>
+              {m.ingreso.resultado === "autorizado" ? "Autorizado" : "Denegado"}
+            </Badge>
+          ) : (
+            <span className="text-gray-400">—</span>
+          )
+        }
+      />
+      {m.ingreso?.motivo && (
+        // En rojo solo si se denegó (como en el Panel); si no, es un dato más.
+        <p className={m.ingreso.resultado === "denegado" ? "font-medium text-error-600 dark:text-error-500" : "text-gray-600 dark:text-gray-400"}>
+          Motivo: {m.ingreso.motivo}
+        </p>
+      )}
+      {m.decision && <p className="text-gray-600 dark:text-gray-400">Qué hizo el sistema: {m.decision}</p>}
+    </TarjetaFila>
+  );
+}
+
+/** Pruebas que no llegaron al servidor antes de esta (el número de marcación saltó). */
+function textoFaltantes(m: MarcacionG4): string {
   const desde = (m.numero ?? 0) - m.faltanAntes;
   const hasta = (m.numero ?? 0) - 1;
+  return `${m.faltanAntes === 1 ? `No llegó la prueba N.º ${desde}` : `No llegaron ${m.faltanAntes} pruebas (N.º ${desde} a ${hasta})`} del equipo ${m.serialNumber}.`;
+}
+
+/** Aviso entre filas: el número de marcación saltó (pruebas que no llegaron al servidor). */
+function FilaFaltantes({ m }: { m: MarcacionG4 }) {
   return (
     <TableRow>
       <TableCell colSpan={6} className="bg-warning-50 px-4 py-2 text-xs text-warning-700 dark:bg-warning-500/10 dark:text-orange-300">
-        {m.faltanAntes === 1 ? `No llegó la prueba N.º ${desde}` : `No llegaron ${m.faltanAntes} pruebas (N.º ${desde} a ${hasta})`}{" "}
-        del equipo {m.serialNumber}.
+        {textoFaltantes(m)}
       </TableCell>
     </TableRow>
   );
@@ -288,18 +345,22 @@ export function MonitorG4() {
         </div>
       </div>
 
-      <Tarjeta className="overflow-hidden">
+      <Tarjeta className="@container overflow-hidden">
+        {/* Con espacio, la tabla; en el celular, una tarjeta por prueba. */}
         <div className="overflow-x-auto">
           <AltoEstable paginaCompleta={marcaciones.length === POR_PAGINA} variasPaginas={(lista?.total ?? 0) > POR_PAGINA}>
-            <Table>
+            {/* Todas las columnas en porcentaje, según su contenido, y la tabla nunca más angosta que la suma de los contenidos:
+                el espacio se reparte entre todas y las columnas no cambian de lugar al pasar de página ni al llegar una prueba;
+                "Qué hizo el sistema" pasa a otra línea si es largo. */}
+            <Table className="hidden w-[max(100%,58rem)] table-fixed @4xl:table">
               <TableHeader className="border-b border-gray-100 dark:border-gray-800">
                 <TableRow>
-                  <TableCell isHeader className={encabezado}>Prueba</TableCell>
-                  <TableCell isHeader className={encabezado}>Llegó</TableCell>
+                  <TableCell isHeader className={`w-[11%] ${encabezado}`}>Prueba</TableCell>
+                  <TableCell isHeader className={`w-[12%] ${encabezado}`}>Llegó</TableCell>
                   <TableCell isHeader className={encabezado}>Persona</TableCell>
-                  <TableCell isHeader className={encabezado}>Alcohol</TableCell>
-                  <TableCell isHeader className={encabezado}>Qué hizo el sistema</TableCell>
-                  <TableCell isHeader className={encabezado}>Ingreso</TableCell>
+                  <TableCell isHeader className={`w-[13.5%] ${encabezado}`}>Alcohol</TableCell>
+                  <TableCell isHeader className={`w-[24%] ${encabezado}`}>Qué hizo el sistema</TableCell>
+                  <TableCell isHeader className={`w-[20%] ${encabezado}`}>Ingreso</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -325,6 +386,24 @@ export function MonitorG4() {
                 ))}
               </TableBody>
             </Table>
+            <ListaTarjetas>
+              {!lista && !error && (
+                <AvisoTarjetas>
+                  <ComprobandoBadge />
+                </AvisoTarjetas>
+              )}
+              {lista && marcaciones.length === 0 && <AvisoTarjetas>{sinPruebas}</AvisoTarjetas>}
+              {marcaciones.map((m) => (
+                <React.Fragment key={m.id}>
+                  <TarjetaMarcacion m={m} />
+                  {m.faltanAntes > 0 && (
+                    <li className="bg-warning-50 px-4 py-2 text-xs text-warning-700 dark:bg-warning-500/10 dark:text-orange-300">
+                      {textoFaltantes(m)}
+                    </li>
+                  )}
+                </React.Fragment>
+              ))}
+            </ListaTarjetas>
           </AltoEstable>
         </div>
         {lista && <TableFooter {...pie} onPageChange={setPagina} />}

@@ -116,6 +116,6 @@ sudo docker compose up -d --build
 
 ## Verificar
 
-`sudo docker compose ps` (api, portal, backup "Up"; db "healthy") y en **Sistema y APIs**: G4 Pro "En línea", lectores "Cable conectado", relés "Conectado" y sin la tarjeta "Controlador". Problemas comunes: los mismos de [`../nube`](../nube/README.md) y [`../controlador`](../controlador/README.md) (lectores y relés).
+`sudo docker compose ps` (api, portal, backup "Up"; db "healthy") y en **Sistema y APIs**: G4 Pro "En línea", lectores y relés "Conectado" y sin la tarjeta "Controlador". Problemas comunes: los mismos de [`../nube`](../nube/README.md) y [`../controlador`](../controlador/README.md) (lectores y relés).
 
 Pasar de este modo a nube + controlador, o al revés: [guía, sección 8g](../../docs/despliegue/Guia_Despliegue_y_Operacion.md).
